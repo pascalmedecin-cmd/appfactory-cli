@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Bootstrap — Phase A (scaffold workflow)
+**Statut :** Phase A — Jour 1 termine, Jour 2 a venir
 **Derniere mise a jour :** 2026-04-02
 **Prochain bug :** #001
-**Session precedente :** G33 — Creation repo, scaffold structure, decisions pivot validees
+**Session precedente :** G34 — Phase A Jour 1 complete (SvelteKit + Tailwind + Supabase Auth + Vercel deploy)
 
 ---
 
@@ -109,15 +109,21 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ---
 
+## INFRA EN PLACE
+
+- **Vercel** : https://template-rho-three.vercel.app (prod)
+- **Supabase** : projet `appfactory` (fmflvjubjtpidvxwhqab), region EU
+- **Google OAuth** : projet `appfactory-492107`, client ID `705315536802-...`
+- **Auth** : Google OAuth via Supabase, redirect callback configure
+- **Runtime** : Node.js 22.x sur Vercel
+
 ## OBJECTIF PROCHAINE SESSION
 
-Phase A Jour 1 : Init projet SvelteKit + Supabase + Tailwind.
-- `npm create svelte@latest` dans template/
-- Configurer Tailwind CSS
-- Setup Supabase (projet + tables initiales)
-- Auth Google OAuth via Supabase Auth
-- Premier deploy Vercel
-- Objectif mesurable : URL Vercel qui affiche une page de login fonctionnelle
+Phase A Jour 2 : Schema BDD — migration tables Sheets -> PostgreSQL + RLS.
+- Definir le schema FilmPro (tables, relations, types)
+- Creer les tables dans Supabase (migrations SQL)
+- Configurer RLS (Row Level Security) pour chaque table
+- Objectif mesurable : tables creees avec RLS, accessibles via l'API Supabase
 
 ---
 
