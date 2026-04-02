@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 2 termine, Jour 3-4 a venir
+**Statut :** Phase A — Jour 2 termine, Jour 3-4 a venir (specs revisees)
 **Derniere mise a jour :** 2026-04-02
 **Prochain bug :** #001
-**Session precedente :** G35 — Phase A Jour 2 complete (Schema BDD 8 tables + FK + RLS + migration donnees + types TS)
+**Session precedente :** G36 — Revue UX complete + specs prospection + architecture donnees multi-sources
 
 ---
 
@@ -77,13 +77,15 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## PLANNING INITIAL
 
-### Phase A — Migration CRM FilmPro (jours 1-7)
-- Jour 1 : Init SvelteKit + Supabase + Tailwind + Auth Google OAuth + deploy Vercel
-- Jour 2 : Schema BDD — migration tables Sheets -> PostgreSQL + RLS
-- Jour 3-4 : Pages CRUD — composants liste, detail, formulaire, sidebar, navigation
-- Jour 5 : Dashboard + logique metier — stats, graphiques, relances, regles
-- Jour 6 : Design system Figma + responsive + tests Playwright
-- Jour 7 : Extraction template reutilisable vs code specifique CRM
+### Phase A — Migration CRM FilmPro (jours 1-9)
+- Jour 1 : Init SvelteKit + Supabase + Tailwind + Auth Google OAuth + deploy Vercel ✓
+- Jour 2 : Schema BDD — migration tables Sheets -> PostgreSQL + RLS ✓
+- Jour 3-4 : Layout + design system + pages Contacts + Entreprises + Dashboard
+- Jour 5 : Pipeline kanban + opportunites + signaux d'affaires
+- Jour 6 : Prospection multi-sources (table prospect_leads, UI, scoring, dedup, batch)
+- Jour 7 : Integration APIs (Zefix/LINDAS, SIMAP, search.ch, SITG)
+- Jour 8 : Alertes automatiques + recherches sauvegardees + responsive + tests
+- Jour 9 : Page Aide (doc utilisateur integree) + extraction template reutilisable
 
 ### Phase B — Plugin Figma + Outillage (jours 1-5, parallele)
 - Jour 1-2 : Design system Figma (composants de base, tokens)
@@ -107,6 +109,30 @@ Pilotage depuis le terminal via Claude Code skills.
 - HTML temporaires pour previsualisations client a chaque etape cle
 - Ancien projet AppFactory v1 (Apps Script) = archive consultable, pas de migration
 
+### Decisions UX (G36)
+
+- **6 ecrans principaux** au lieu de 15 : Dashboard, Contacts, Entreprises, Pipeline, Prospection, Signaux + Parametres en menu secondaire
+- **Slide-out panels** au lieu de pages detail separees (liste reste visible)
+- **Saisie rapide** (6 champs) + accordeon "Plus de details" pour les formulaires
+- **Pas de page Prescripteurs** : filtre + badge dans Contacts
+- **Pas de page Journal equipe** : section dashboard + timeline sur les fiches
+- **Relances du jour** : bandeau dashboard + badges pipeline (pas une page separee)
+- **Prospection = page a part entiere** avec multi-sources, scoring, alertes, dedup, actions batch
+- **Page Aide** : vide pour l'instant, alimentee en dernier quand tout fonctionne
+- **Documentation au fil de l'eau** : USER_GUIDE_DRAFT.md + MAINTAINER_GUIDE_DRAFT.md mis a jour a chaque session
+
+### Decisions Prospection (G36)
+
+- **100% sources gratuites** : Zefix REST + LINDAS SPARQL + SIMAP + SITG (GE) + search.ch + FOSC
+- **Pas de Google Places** ni source payante
+- **Modele unifie `prospect_leads`** : toutes les sources alimentent une table unique
+- **Scoring automatique** (0-13 points) : canton, secteur, signal chaud, recence, enrichissement
+- **Dedup a l'import** sur source+source_id, leads ecartes/transferes jamais reimportes
+- **Selection multiple + actions batch** : interesse / ecarter / transferer vers CRM
+- **Raccourcis clavier** pour traitement rapide en volume
+- **Recherches sauvegardees + alertes** (cron quotidien/hebdomadaire)
+- **Specs completes** : voir `docs/SPECS_PROSPECTION.md`
+
 ---
 
 ## INFRA EN PLACE
@@ -118,16 +144,55 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Runtime** : Node.js 22.x sur Vercel
 - **Supabase CLI** : v2.84.2, projet linke (fmflvjubjtpidvxwhqab)
 - **BDD** : 8 tables PostgreSQL, FK, index, RLS (authenticated full access), types TS generes
+- **Zefix REST** : credentials demandes (email envoye a zefix@bj.admin.ch) — en attente
+
+## DOCUMENTATION
+
+- `docs/SPECS_PROSPECTION.md` — Specs completes module prospection (sources, modele, scoring, UI, dedup)
+- `docs/USER_GUIDE_DRAFT.md` — Guide utilisateur, alimente au fil du dev
+- `docs/MAINTAINER_GUIDE_DRAFT.md` — Guide mainteneur, alimente au fil du dev
 
 ## OBJECTIF PROCHAINE SESSION
 
-Phase A Jour 3-4 : Pages CRUD — composants liste, detail, formulaire, sidebar, navigation.
-- Tables disponibles dans Supabase avec types TS (`src/lib/database.types.ts`)
-- Commencer par la page liste des contacts (table principale)
-- Composants : sidebar navigation, tableau avec tri/filtre, fiche detail, formulaire edition
-- Layout : sidebar persistante + zone contenu principale
-- Utiliser les types `Database` pour le typage strict des queries Supabase
-- Objectif mesurable : navigation entre les pages, CRUD contacts fonctionnel avec donnees reelles
+Phase A Jour 3-4 : Layout + pages CRM core.
+
+**Etape 1 — Layout + design system**
+- CSS variables FilmPro (primary #152A45, accent #3B6CB7, font DM Sans)
+- Sidebar 220px (collapsible 56px) avec nav : Dashboard, Contacts, Entreprises, Pipeline, Prospection, Signaux
+- Header 48px avec user info + deconnexion
+- Page Aide vide (route `/aide`, placeholder)
+
+**Etape 2 — Composants reutilisables**
+- DataTable (tri, recherche, selection multiple, pagination)
+- SlideOut panel (detail sans quitter la liste)
+- ModalForm (saisie rapide + accordeon details)
+- FilterBar (multi-select, recherche texte, date range)
+- Badges (score, statut, prescripteur)
+- EmptyState, ActivityTimeline
+
+**Etape 3 — Pages contacts**
+- `/contacts` : liste avec DataTable + filtres + recherche
+- Click → SlideOut fiche detail (timeline activites, opportunites liees, stats prescripteur)
+- Bouton "Ajouter" → ModalForm saisie rapide (6 champs) + accordeon
+- CRUD complet avec donnees Supabase
+
+**Etape 4 — Pages entreprises**
+- `/entreprises` : meme pattern que contacts
+- Fiche detail avec contacts rattaches + opportunites
+
+**Etape 5 — Dashboard**
+- Stats cards (opportunites, relances, signaux, prescripteurs)
+- Bandeau relances du jour
+- Derniere activite equipe (5 lignes)
+- Raccourcis navigation
+
+**Etape 6 — Deploy + verification**
+
+**Prerequis :**
+- Specs wizard validees (table SPECS dans Google Sheets, app_key "filmpro-crm", step 4)
+- Design system FilmPro : primary #152A45, accent #3B6CB7, font DM Sans, sidebar 220px
+- Types TS : `src/lib/database.types.ts`
+- Objectif mesurable : CRUD contacts fonctionnel, navigation sidebar, donnees reelles Supabase
 
 ---
 
@@ -146,3 +211,6 @@ Phase A Jour 3-4 : Pages CRUD — composants liste, detail, formulaire, sidebar,
 - Tests automatises avant mise en preview
 - project.yaml comme source de verite des specs
 - Extraire le generique (template) du specifique (app client) en continu
+- Mettre a jour USER_GUIDE_DRAFT.md apres chaque feature implementee
+- Mettre a jour MAINTAINER_GUIDE_DRAFT.md apres chaque decision technique
+- Checklist fin de session : docs/USER_GUIDE_DRAFT.md et docs/MAINTAINER_GUIDE_DRAFT.md a jour ?
