@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 1 termine, Jour 2 a venir
+**Statut :** Phase A — Jour 2 termine, Jour 3-4 a venir
 **Derniere mise a jour :** 2026-04-02
 **Prochain bug :** #001
-**Session precedente :** G34 — Phase A Jour 1 complete (SvelteKit + Tailwind + Supabase Auth + Vercel deploy)
+**Session precedente :** G35 — Phase A Jour 2 complete (Schema BDD 8 tables + FK + RLS + migration donnees + types TS)
 
 ---
 
@@ -116,18 +116,18 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Google OAuth** : projet `appfactory-492107`, client ID `705315536802-...`
 - **Auth** : Google OAuth via Supabase, redirect callback configure
 - **Runtime** : Node.js 22.x sur Vercel
+- **Supabase CLI** : v2.84.2, projet linke (fmflvjubjtpidvxwhqab)
+- **BDD** : 8 tables PostgreSQL, FK, index, RLS (authenticated full access), types TS generes
 
 ## OBJECTIF PROCHAINE SESSION
 
-Phase A Jour 2 : Schema BDD — migration tables Sheets -> PostgreSQL + RLS.
-- Schema source : 8 tables FilmPro CRM_DB (voir memoire reference_filmpro_crm_db.md)
-- Definir les types PostgreSQL pour chaque colonne (text, int, timestamp, boolean, etc.)
-- Creer les tables dans Supabase via SQL (migrations)
-- Configurer les foreign keys (relations documentees dans la memoire)
-- Configurer RLS (Row Level Security) pour chaque table
-- Migrer les donnees existantes du Sheet vers Supabase
-- Prerequis OK : gws CLI authentifie, APIs Drive + Sheets activees
-- Objectif mesurable : tables creees avec RLS + donnees migrees, accessibles via l'API Supabase
+Phase A Jour 3-4 : Pages CRUD — composants liste, detail, formulaire, sidebar, navigation.
+- Tables disponibles dans Supabase avec types TS (`src/lib/database.types.ts`)
+- Commencer par la page liste des contacts (table principale)
+- Composants : sidebar navigation, tableau avec tri/filtre, fiche detail, formulaire edition
+- Layout : sidebar persistante + zone contenu principale
+- Utiliser les types `Database` pour le typage strict des queries Supabase
+- Objectif mesurable : navigation entre les pages, CRUD contacts fonctionnel avec donnees reelles
 
 ---
 
