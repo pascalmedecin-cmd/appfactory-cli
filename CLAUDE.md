@@ -120,10 +120,14 @@ Pilotage depuis le terminal via Claude Code skills.
 ## OBJECTIF PROCHAINE SESSION
 
 Phase A Jour 2 : Schema BDD — migration tables Sheets -> PostgreSQL + RLS.
-- Definir le schema FilmPro (tables, relations, types)
-- Creer les tables dans Supabase (migrations SQL)
+- Schema source : 8 tables FilmPro CRM_DB (voir memoire reference_filmpro_crm_db.md)
+- Definir les types PostgreSQL pour chaque colonne (text, int, timestamp, boolean, etc.)
+- Creer les tables dans Supabase via SQL (migrations)
+- Configurer les foreign keys (relations documentees dans la memoire)
 - Configurer RLS (Row Level Security) pour chaque table
-- Objectif mesurable : tables creees avec RLS, accessibles via l'API Supabase
+- Migrer les donnees existantes du Sheet vers Supabase
+- Prerequis OK : gws CLI authentifie, APIs Drive + Sheets activees
+- Objectif mesurable : tables creees avec RLS + donnees migrees, accessibles via l'API Supabase
 
 ---
 
