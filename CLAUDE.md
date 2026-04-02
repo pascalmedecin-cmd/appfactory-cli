@@ -1,4 +1,4 @@
-# AppFactory CLI — CLAUDE.md
+# AppFactory - CLI — CLAUDE.md
 
 **Statut :** Bootstrap — Phase A (scaffold workflow)
 **Derniere mise a jour :** 2026-04-02
