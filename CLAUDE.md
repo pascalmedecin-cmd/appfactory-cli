@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 9 termine + polish UX, Phase B a venir
+**Statut :** Phase A — Jour 9 termine + extraction template, Phase B a venir
 **Derniere mise a jour :** 2026-04-03
 **Prochain bug :** #001
-**Session precedente :** UX polish — toasts notifications (21 form actions), animations SlideOut/ModalForm, coherence design tokens (login + dashboard + prospection), focus visible CSS, nettoyage ActionData inutilise. Decision : pas de Figma Pro ni shadcn/ui migration, ameliorations ciblees de l'existant
+**Session precedente :** Extraction template — script yaml-to-config.ts fonctionnel (project.yaml → config.ts), migration prospection vers config.ts (scoring, sources, cantons), page login photo fond pleine page + bouton deconnexion sidebar, USER_GUIDE_DRAFT.md finalise
 
 ---
 
@@ -179,25 +179,27 @@ Pilotage depuis le terminal via Claude Code skills.
 - **API Cron** : `src/routes/api/cron/alertes/` — execution recherches sauvegardees, comptage nouveaux leads
 - **UI Import** : modal 3 sources (LINDAS, Zefix, SIMAP), bouton "Enrichir telephone" dans SlideOut, notifications succes/erreur
 - **Page Aide** : documentation utilisateur integree, sommaire cliquable, recherche texte, IntersectionObserver pour section active, 8 sections (connexion, navigation, dashboard, contacts, entreprises, pipeline, prospection, signaux)
-- **Extraction template** : `project.yaml` (source de verite specs client) + `src/lib/config.ts` (miroir TS importe par le code). scoring.ts, Sidebar.svelte, pipeline/+page.svelte et lindas/+server.ts migres pour lire la config
+- **Extraction template** : `project.yaml` (source de verite specs client) + `src/lib/config.ts` (GENERE par `scripts/yaml-to-config.ts`). scoring.ts, Sidebar.svelte, pipeline/+page.svelte, lindas/+server.ts et prospection/+page.svelte migres pour lire la config
+- **Script yaml-to-config** : `scripts/yaml-to-config.ts` (npx tsx ou npm run generate:config) — lit project.yaml, convertit snake_case→camelCase (preserve cles sources), genere config.ts avec `as const`, preserve loginBackground
+- **Page login** : photo fond pleine page conditionnelle (`config.branding.loginBackground`), overlay sombre, glassmorphism
+- **Bouton deconnexion** : sidebar bas gauche (icone logout, hover rouge), retire du header
 
 ## OBJECTIF PROCHAINE SESSION
 
-Continuer l'extraction template :
-- Script de generation config.ts depuis project.yaml (eviter maintenance manuelle des deux fichiers)
-- Migrer les pages restantes (contacts, entreprises, signaux, dashboard, prospection) pour lire config.ts
-- Finaliser les sections "A documenter" du USER_GUIDE_DRAFT.md (Connexion details, Dashboard, Contacts, Entreprises, Parametres)
+Phase B — Plugin Figma + Outillage, ou bien finaliser les derniers elements Phase A :
+- Migrer contacts, entreprises, dashboard si des valeurs hardcodees restent (audit rapide montre qu'ils sont deja propres)
+- Commencer Phase B Jour 1-2 : Design system Figma (composants de base, tokens)
 
 **En attente :**
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
 
 **Decisions session :**
-- Figma Pro non necessaire pour le workflow actuel (pas de client qui attend des maquettes, pas de gain tokens)
-- Pas de migration shadcn/ui (risque regression, version Svelte moins mature), ameliorations ciblees a la place
-- Objectif design best-in-class : references visuelles + bonnes pratiques UI directement dans le code
+- config.ts est desormais un fichier GENERE — ne plus le modifier a la main
+- Les cles de sources prospection (lindas, search_ch, etc.) sont preservees en snake_case (identifiants DB)
+- cantonNoms mapping dans prospection page (pas dans config — specifique UI)
 
 **Prerequis :**
-- Objectif mesurable : script yaml→config.ts fonctionnel
+- Aucun bloquant technique
 
 ---
 
