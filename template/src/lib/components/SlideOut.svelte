@@ -1,0 +1,53 @@
+<script lang="ts">
+	import type { Snippet } from 'svelte';
+
+	let {
+		open = $bindable(false),
+		title = '',
+		width = '480px',
+		children,
+	}: {
+		open?: boolean;
+		title?: string;
+		width?: string;
+		children?: Snippet;
+	} = $props();
+
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape') open = false;
+	}
+</script>
+
+<svelte:window onkeydown={handleKeydown} />
+
+{#if open}
+	<!-- Backdrop -->
+	<button
+		class="fixed inset-0 bg-black/20 z-40 cursor-default"
+		onclick={() => open = false}
+		tabindex="-1"
+		aria-label="Fermer le panneau"
+	></button>
+
+	<!-- Panel -->
+	<div
+		class="fixed top-0 right-0 h-full bg-white shadow-xl z-50 flex flex-col overflow-hidden"
+		style="width: {width}"
+	>
+		<div class="h-(--header-height) flex items-center justify-between px-5 border-b border-border shrink-0">
+			<h2 class="font-semibold text-text">{title}</h2>
+			<button
+				onclick={() => open = false}
+				class="text-text-muted hover:text-text cursor-pointer"
+			>
+				<span class="material-symbols-outlined text-[20px]">close</span>
+			</button>
+		</div>
+
+		<div class="flex-1 overflow-y-auto p-5">
+			{#if children}
+				{@render children()}
+			{/if}
+		</div>
+	</div>
+{/if}

@@ -9,3 +9,5 @@ build/
 .DS_Store
 *.log
 .regen_secret
+supabase/.temp/
+**/supabase/.temp/
