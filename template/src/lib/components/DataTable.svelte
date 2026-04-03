@@ -15,6 +15,7 @@
 		searchable = true,
 		searchPlaceholder = 'Rechercher…',
 		selectable = false,
+		selectedIds = $bindable(new Set<string>()),
 		onRowClick,
 		pageSize = 25,
 		emptyMessage = 'Aucun résultat',
@@ -25,6 +26,7 @@
 		searchable?: boolean;
 		searchPlaceholder?: string;
 		selectable?: boolean;
+		selectedIds?: Set<string>;
 		onRowClick?: (row: T) => void;
 		pageSize?: number;
 		emptyMessage?: string;
@@ -35,7 +37,6 @@
 	let sortKey = $state('');
 	let sortAsc = $state(true);
 	let currentPage = $state(0);
-	let selectedIds = $state<Set<string>>(new Set());
 
 	const filtered = $derived.by(() => {
 		let result = data;

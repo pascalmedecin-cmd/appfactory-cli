@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       activites: {
@@ -422,6 +397,147 @@ export type Database = {
           },
         ]
       }
+      prospect_leads: {
+        Row: {
+          adresse: string | null
+          canton: string | null
+          date_import: string
+          date_modification: string
+          date_publication: string | null
+          description: string | null
+          email: string | null
+          id: string
+          localite: string | null
+          montant: number | null
+          mots_cles_match: string[] | null
+          nom_contact: string | null
+          npa: string | null
+          raison_sociale: string
+          score_pertinence: number | null
+          secteur_detecte: string | null
+          site_web: string | null
+          source: string
+          source_id: string | null
+          source_url: string | null
+          statut: string
+          telephone: string | null
+          transfere_vers_contact_id: string | null
+          transfere_vers_entreprise_id: string | null
+        }
+        Insert: {
+          adresse?: string | null
+          canton?: string | null
+          date_import?: string
+          date_modification?: string
+          date_publication?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          localite?: string | null
+          montant?: number | null
+          mots_cles_match?: string[] | null
+          nom_contact?: string | null
+          npa?: string | null
+          raison_sociale: string
+          score_pertinence?: number | null
+          secteur_detecte?: string | null
+          site_web?: string | null
+          source: string
+          source_id?: string | null
+          source_url?: string | null
+          statut?: string
+          telephone?: string | null
+          transfere_vers_contact_id?: string | null
+          transfere_vers_entreprise_id?: string | null
+        }
+        Update: {
+          adresse?: string | null
+          canton?: string | null
+          date_import?: string
+          date_modification?: string
+          date_publication?: string | null
+          description?: string | null
+          email?: string | null
+          id?: string
+          localite?: string | null
+          montant?: number | null
+          mots_cles_match?: string[] | null
+          nom_contact?: string | null
+          npa?: string | null
+          raison_sociale?: string
+          score_pertinence?: number | null
+          secteur_detecte?: string | null
+          site_web?: string | null
+          source?: string
+          source_id?: string | null
+          source_url?: string | null
+          statut?: string
+          telephone?: string | null
+          transfere_vers_contact_id?: string | null
+          transfere_vers_entreprise_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_leads_transfere_vers_contact_id_fkey"
+            columns: ["transfere_vers_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_leads_transfere_vers_entreprise_id_fkey"
+            columns: ["transfere_vers_entreprise_id"]
+            isOneToOne: false
+            referencedRelation: "entreprises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recherches_sauvegardees: {
+        Row: {
+          alerte_active: boolean | null
+          cantons: string[] | null
+          date_creation: string
+          dernier_check: string | null
+          frequence_alerte: string | null
+          id: string
+          mots_cles: string[] | null
+          nb_nouveaux: number | null
+          nom: string
+          score_minimum: number | null
+          secteurs: string[] | null
+          sources: string[] | null
+        }
+        Insert: {
+          alerte_active?: boolean | null
+          cantons?: string[] | null
+          date_creation?: string
+          dernier_check?: string | null
+          frequence_alerte?: string | null
+          id?: string
+          mots_cles?: string[] | null
+          nb_nouveaux?: number | null
+          nom: string
+          score_minimum?: number | null
+          secteurs?: string[] | null
+          sources?: string[] | null
+        }
+        Update: {
+          alerte_active?: boolean | null
+          cantons?: string[] | null
+          date_creation?: string
+          dernier_check?: string | null
+          frequence_alerte?: string | null
+          id?: string
+          mots_cles?: string[] | null
+          nb_nouveaux?: number | null
+          nom?: string
+          score_minimum?: number | null
+          secteurs?: string[] | null
+          sources?: string[] | null
+        }
+        Relationships: []
+      }
       signaux_affaires: {
         Row: {
           architecte_bureau: string | null
@@ -658,9 +774,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

@@ -146,6 +146,57 @@ export const SignalCreateOpportuniteSchema = z.object({
 	entreprise_id: optionalUUID,
 });
 
+// -- Prospect Leads --
+
+export const SOURCES_LEAD = [
+	'zefix', 'lindas', 'simap', 'sitg', 'search_ch', 'fosc', 'manuel',
+] as const;
+
+export const STATUTS_LEAD = [
+	'nouveau', 'interesse', 'ecarte', 'transfere',
+] as const;
+
+export const CANTONS_LEAD = [
+	'GE', 'VD', 'VS', 'NE', 'FR', 'JU', 'Autre',
+] as const;
+
+export const LeadCreateSchema = z.object({
+	source: z.enum(SOURCES_LEAD),
+	source_id: optionalString,
+	source_url: optionalString,
+	raison_sociale: z.string().min(1, 'La raison sociale est requise').max(500),
+	nom_contact: optionalString,
+	adresse: optionalString,
+	npa: z.string().max(10).optional().or(z.literal('')),
+	localite: optionalString,
+	canton: z.enum(CANTONS_LEAD).optional().or(z.literal('')),
+	telephone: z.string().max(30).optional().or(z.literal('')),
+	site_web: z.string().max(500).optional().or(z.literal('')),
+	email: z.string().email('Email invalide').optional().or(z.literal('')),
+	secteur_detecte: optionalString,
+	description: optionalText,
+	montant: z.coerce.number().min(0).optional().or(z.literal('')),
+	date_publication: z.string().max(30).optional().or(z.literal('')),
+});
+
+export const LeadUpdateSchema = LeadCreateSchema.extend({
+	id: z.string().uuid(),
+});
+
+export const LeadUpdateStatutSchema = z.object({
+	id: z.string().uuid(),
+	statut: z.enum(STATUTS_LEAD),
+});
+
+export const LeadBatchStatutSchema = z.object({
+	ids: z.array(z.string().uuid()).min(1, 'Selectionnez au moins un lead'),
+	statut: z.enum(STATUTS_LEAD),
+});
+
+export const LeadTransfertSchema = z.object({
+	id: z.string().uuid(),
+});
+
 // -- Generic validation helper --
 
 export function validate<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {
