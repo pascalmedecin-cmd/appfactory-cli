@@ -7,6 +7,7 @@
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import { config } from '$lib/config';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -42,10 +43,7 @@
 	let filterCanton = $state('');
 	let filterStatut = $state('');
 
-	const TYPES_SIGNAL = [
-		'appel_offres', 'permis_construire', 'creation_entreprise',
-		'demenagement', 'expansion', 'fusion_acquisition', 'autre',
-	];
+	const TYPES_SIGNAL = config.signaux.types.map(t => t.key);
 
 	const STATUTS = [
 		{ key: 'nouveau', label: 'Nouveau', variant: 'warning' as const },

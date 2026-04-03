@@ -23,10 +23,11 @@
 
 ## 1. Connexion
 
-*A documenter lors de l'implementation.*
+### Se connecter
+FilmPro utilise la connexion Google. Sur la page de login, cliquez **Se connecter avec Google** et selectionnez votre compte professionnel. Seuls les comptes autorises par l'administrateur peuvent acceder a l'application.
 
-- Se connecter avec son compte Google
-- Deconnexion
+### Se deconnecter
+Cliquez sur votre email en haut a droite de l'ecran, puis **Deconnexion**.
 
 ---
 
@@ -41,31 +42,59 @@
 
 ## 3. Tableau de bord
 
-*A documenter lors de l'implementation.*
+### 3.1 Indicateurs
+4 cartes en haut de page affichent les compteurs en temps reel :
+- Nombre de contacts
+- Nombre d'entreprises
+- Opportunites en cours (hors Gagne/Perdu)
+- Signaux neufs a traiter
+
+### 3.2 Relances du jour
+Les opportunites dont la date de relance est aujourd'hui ou depassee apparaissent dans un bandeau dedie. Cliquer sur une relance pour ouvrir le pipeline.
+
+### 3.3 Alertes prospection
+Si des recherches sauvegardees ont detecte de nouveaux leads, un bandeau orange s'affiche avec le nombre de leads. Cliquer pour acceder a la prospection.
+
+### 3.4 Activite recente
+Les dernieres actions (creation, modification, transfert) sont listees avec leur date.
 
 ---
 
 ## 4. Contacts
 
-*A documenter lors de l'implementation.*
-
 ### 4.1 Voir la liste des contacts
+La page affiche tous les contacts dans un tableau triable. Utiliser la barre de recherche pour filtrer par nom, entreprise, email ou telephone.
+
 ### 4.2 Creer un contact (saisie rapide)
+Cliquer **Nouveau contact**. Les 6 champs principaux apparaissent : nom, prenom, entreprise, email, telephone, fonction. Valider avec **Enregistrer**.
+
 ### 4.3 Voir la fiche d'un contact
+Cliquer sur un contact dans la liste. Le panneau lateral s'ouvre avec toutes les informations : coordonnees, entreprise rattachee, historique.
+
 ### 4.4 Modifier un contact
+Dans le panneau lateral, cliquer **Modifier**. Le formulaire d'edition apparait avec tous les champs.
+
 ### 4.5 Archiver un contact
+Dans le panneau lateral, cliquer **Archiver**. Le contact passe en statut archive et n'apparait plus dans la liste par defaut.
+
 ### 4.6 Marquer comme prescripteur
+Un prescripteur est un contact qui recommande vos services. Activer le badge prescripteur depuis la fiche du contact. Les prescripteurs sont identifies par un badge violet dans la liste.
 
 ---
 
 ## 5. Entreprises
 
-*A documenter lors de l'implementation.*
-
 ### 5.1 Voir la liste des entreprises
+Toutes les entreprises dans un tableau triable avec recherche. Les colonnes affichent : raison sociale, secteur, canton, taille estimee, statut.
+
 ### 5.2 Creer une entreprise
+Cliquer **Nouvelle entreprise**. Remplir : raison sociale (obligatoire), secteur d'activite, canton, adresse, site web, notes.
+
 ### 5.3 Voir la fiche d'une entreprise
-### 5.4 Modifier une entreprise
+Cliquer sur une entreprise pour ouvrir le panneau lateral. Vous y trouverez les details de l'entreprise et la liste des contacts rattaches.
+
+### 5.4 Modifier / Supprimer
+Depuis le panneau lateral : **Modifier** pour editer, **Supprimer** pour retirer definitivement (attention, action irreversible).
 
 ---
 

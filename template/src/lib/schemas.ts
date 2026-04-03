@@ -24,8 +24,8 @@ export const STATUTS_TRAITEMENT = [
 ] as const;
 
 export const TYPES_SIGNAL = [
-	'permis_construire', 'appel_offres', 'creation_entreprise', 'demenagement',
-	'fusion_acquisition', 'nouveau_projet', 'autre',
+	'appel_offres', 'permis_construire', 'creation_entreprise', 'demenagement',
+	'expansion', 'fusion_acquisition', 'autre',
 ] as const;
 
 // -- Form extraction helper --
