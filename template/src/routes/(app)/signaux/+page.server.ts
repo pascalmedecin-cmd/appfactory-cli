@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { randomUUID } from 'crypto';
+import { SignalCreateSchema, SignalUpdateSchema, SignalUpdateStatutSchema, SignalCreateOpportuniteSchema, extractForm, validate } from '$lib/schemas';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { data: signaux, error } = await locals.supabase
@@ -16,23 +17,31 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return { signaux: signaux ?? [] };
 };
 
+const SIGNAL_FIELDS = [
+	'type_signal', 'description_projet', 'maitre_ouvrage', 'architecte_bureau',
+	'canton', 'commune', 'source_officielle', 'date_publication', 'notes_libres', 'responsable_filmpro',
+];
+
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
 		const form = await request.formData();
-		const now = new Date().toISOString();
+		const raw = extractForm(form, SIGNAL_FIELDS);
+		const parsed = validate(SignalCreateSchema, raw);
+		if (!parsed.success) return fail(400, { error: parsed.error });
 
+		const now = new Date().toISOString();
 		const { error } = await locals.supabase.from('signaux_affaires').insert({
 			id: randomUUID(),
-			type_signal: form.get('type_signal') as string || null,
-			description_projet: form.get('description_projet') as string || null,
-			maitre_ouvrage: form.get('maitre_ouvrage') as string || null,
-			architecte_bureau: form.get('architecte_bureau') as string || null,
-			canton: form.get('canton') as string || null,
-			commune: form.get('commune') as string || null,
-			source_officielle: form.get('source_officielle') as string || null,
-			date_publication: form.get('date_publication') as string || null,
-			notes_libres: form.get('notes_libres') as string || null,
-			responsable_filmpro: form.get('responsable_filmpro') as string || null,
+			type_signal: parsed.data.type_signal || null,
+			description_projet: parsed.data.description_projet || null,
+			maitre_ouvrage: parsed.data.maitre_ouvrage || null,
+			architecte_bureau: parsed.data.architecte_bureau || null,
+			canton: parsed.data.canton || null,
+			commune: parsed.data.commune || null,
+			source_officielle: parsed.data.source_officielle || null,
+			date_publication: parsed.data.date_publication || null,
+			notes_libres: parsed.data.notes_libres || null,
+			responsable_filmpro: parsed.data.responsable_filmpro || null,
 			statut_traitement: 'nouveau',
 			date_detection: now,
 		});
@@ -43,24 +52,26 @@ export const actions: Actions = {
 
 	update: async ({ request, locals }) => {
 		const form = await request.formData();
-		const id = form.get('id') as string;
+		const raw = extractForm(form, ['id', ...SIGNAL_FIELDS, 'statut_traitement']);
+		const parsed = validate(SignalUpdateSchema, raw);
+		if (!parsed.success) return fail(400, { error: parsed.error });
 
 		const { error } = await locals.supabase
 			.from('signaux_affaires')
 			.update({
-				type_signal: form.get('type_signal') as string || null,
-				description_projet: form.get('description_projet') as string || null,
-				maitre_ouvrage: form.get('maitre_ouvrage') as string || null,
-				architecte_bureau: form.get('architecte_bureau') as string || null,
-				canton: form.get('canton') as string || null,
-				commune: form.get('commune') as string || null,
-				source_officielle: form.get('source_officielle') as string || null,
-				date_publication: form.get('date_publication') as string || null,
-				notes_libres: form.get('notes_libres') as string || null,
-				responsable_filmpro: form.get('responsable_filmpro') as string || null,
-				statut_traitement: form.get('statut_traitement') as string || null,
+				type_signal: parsed.data.type_signal || null,
+				description_projet: parsed.data.description_projet || null,
+				maitre_ouvrage: parsed.data.maitre_ouvrage || null,
+				architecte_bureau: parsed.data.architecte_bureau || null,
+				canton: parsed.data.canton || null,
+				commune: parsed.data.commune || null,
+				source_officielle: parsed.data.source_officielle || null,
+				date_publication: parsed.data.date_publication || null,
+				notes_libres: parsed.data.notes_libres || null,
+				responsable_filmpro: parsed.data.responsable_filmpro || null,
+				statut_traitement: parsed.data.statut_traitement || null,
 			})
-			.eq('id', id);
+			.eq('id', parsed.data.id);
 
 		if (error) return fail(400, { error: error.message });
 		return { success: true };
@@ -68,13 +79,13 @@ export const actions: Actions = {
 
 	updateStatut: async ({ request, locals }) => {
 		const form = await request.formData();
-		const id = form.get('id') as string;
-		const statut = form.get('statut_traitement') as string;
+		const parsed = validate(SignalUpdateStatutSchema, extractForm(form, ['id', 'statut_traitement']));
+		if (!parsed.success) return fail(400, { error: parsed.error });
 
 		const { error } = await locals.supabase
 			.from('signaux_affaires')
-			.update({ statut_traitement: statut })
-			.eq('id', id);
+			.update({ statut_traitement: parsed.data.statut_traitement })
+			.eq('id', parsed.data.id);
 
 		if (error) return fail(400, { error: error.message });
 		return { success: true };
@@ -82,17 +93,17 @@ export const actions: Actions = {
 
 	createOpportunite: async ({ request, locals }) => {
 		const form = await request.formData();
-		const signalId = form.get('signal_id') as string;
-		const now = new Date().toISOString();
+		const parsed = validate(SignalCreateOpportuniteSchema, extractForm(form, ['signal_id', 'titre', 'entreprise_id']));
+		if (!parsed.success) return fail(400, { error: parsed.error });
 
-		// Create opportunite linked to signal
+		const now = new Date().toISOString();
 		const oppId = randomUUID();
 		const { error: oppError } = await locals.supabase.from('opportunites').insert({
 			id: oppId,
-			titre: form.get('titre') as string,
-			entreprise_id: form.get('entreprise_id') as string || null,
+			titre: parsed.data.titre,
+			entreprise_id: parsed.data.entreprise_id || null,
 			etape_pipeline: 'identification',
-			signal_affaires_id: signalId,
+			signal_affaires_id: parsed.data.signal_id,
 			lie_signal_affaires: true,
 			date_creation: now,
 			date_derniere_modification: now,
@@ -100,14 +111,13 @@ export const actions: Actions = {
 
 		if (oppError) return fail(400, { error: oppError.message });
 
-		// Update signal status and link
 		const { error: sigError } = await locals.supabase
 			.from('signaux_affaires')
 			.update({
 				statut_traitement: 'converti',
 				opportunite_associee_id: oppId,
 			})
-			.eq('id', signalId);
+			.eq('id', parsed.data.signal_id);
 
 		if (sigError) return fail(400, { error: sigError.message });
 		return { success: true, redirectTo: '/pipeline' };

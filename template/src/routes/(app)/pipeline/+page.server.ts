@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { randomUUID } from 'crypto';
+import { OpportuniteCreateSchema, OpportuniteUpdateSchema, OpportuniteMoveSchema, OpportuniteArchiveSchema, extractForm, validate } from '$lib/schemas';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const [oppsRes, contactsRes, entreprisesRes] = await Promise.all([
@@ -26,23 +27,31 @@ export const load: PageServerLoad = async ({ locals }) => {
 	};
 };
 
+const OPP_FIELDS = [
+	'titre', 'contact_id', 'entreprise_id', 'montant_estime',
+	'etape_pipeline', 'date_relance_prevue', 'notes_libres', 'responsable', 'signal_affaires_id',
+];
+
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
 		const form = await request.formData();
-		const now = new Date().toISOString();
+		const raw = extractForm(form, OPP_FIELDS);
+		const parsed = validate(OpportuniteCreateSchema, raw);
+		if (!parsed.success) return fail(400, { error: parsed.error });
 
+		const now = new Date().toISOString();
 		const { error } = await locals.supabase.from('opportunites').insert({
 			id: randomUUID(),
-			titre: form.get('titre') as string,
-			contact_id: form.get('contact_id') as string || null,
-			entreprise_id: form.get('entreprise_id') as string || null,
-			montant_estime: form.get('montant_estime') ? Number(form.get('montant_estime')) : null,
-			etape_pipeline: form.get('etape_pipeline') as string || 'identification',
-			date_relance_prevue: form.get('date_relance_prevue') as string || null,
-			notes_libres: form.get('notes_libres') as string || null,
-			responsable: form.get('responsable') as string || null,
-			signal_affaires_id: form.get('signal_affaires_id') as string || null,
-			lie_signal_affaires: !!(form.get('signal_affaires_id')),
+			titre: parsed.data.titre,
+			contact_id: parsed.data.contact_id || null,
+			entreprise_id: parsed.data.entreprise_id || null,
+			montant_estime: parsed.data.montant_estime || null,
+			etape_pipeline: parsed.data.etape_pipeline || 'identification',
+			date_relance_prevue: parsed.data.date_relance_prevue || null,
+			notes_libres: parsed.data.notes_libres || null,
+			responsable: parsed.data.responsable || null,
+			signal_affaires_id: parsed.data.signal_affaires_id || null,
+			lie_signal_affaires: !!(parsed.data.signal_affaires_id),
 			date_creation: now,
 			date_derniere_modification: now,
 		});
@@ -53,22 +62,24 @@ export const actions: Actions = {
 
 	update: async ({ request, locals }) => {
 		const form = await request.formData();
-		const id = form.get('id') as string;
+		const raw = extractForm(form, ['id', ...OPP_FIELDS]);
+		const parsed = validate(OpportuniteUpdateSchema, raw);
+		if (!parsed.success) return fail(400, { error: parsed.error });
 
 		const { error } = await locals.supabase
 			.from('opportunites')
 			.update({
-				titre: form.get('titre') as string,
-				contact_id: form.get('contact_id') as string || null,
-				entreprise_id: form.get('entreprise_id') as string || null,
-				montant_estime: form.get('montant_estime') ? Number(form.get('montant_estime')) : null,
-				etape_pipeline: form.get('etape_pipeline') as string || null,
-				date_relance_prevue: form.get('date_relance_prevue') as string || null,
-				notes_libres: form.get('notes_libres') as string || null,
-				responsable: form.get('responsable') as string || null,
+				titre: parsed.data.titre,
+				contact_id: parsed.data.contact_id || null,
+				entreprise_id: parsed.data.entreprise_id || null,
+				montant_estime: parsed.data.montant_estime || null,
+				etape_pipeline: parsed.data.etape_pipeline || null,
+				date_relance_prevue: parsed.data.date_relance_prevue || null,
+				notes_libres: parsed.data.notes_libres || null,
+				responsable: parsed.data.responsable || null,
 				date_derniere_modification: new Date().toISOString(),
 			})
-			.eq('id', id);
+			.eq('id', parsed.data.id);
 
 		if (error) return fail(400, { error: error.message });
 		return { success: true };
@@ -76,16 +87,16 @@ export const actions: Actions = {
 
 	move: async ({ request, locals }) => {
 		const form = await request.formData();
-		const id = form.get('id') as string;
-		const etape = form.get('etape_pipeline') as string;
+		const parsed = validate(OpportuniteMoveSchema, extractForm(form, ['id', 'etape_pipeline']));
+		if (!parsed.success) return fail(400, { error: parsed.error });
 
 		const { error } = await locals.supabase
 			.from('opportunites')
 			.update({
-				etape_pipeline: etape,
+				etape_pipeline: parsed.data.etape_pipeline,
 				date_derniere_modification: new Date().toISOString(),
 			})
-			.eq('id', id);
+			.eq('id', parsed.data.id);
 
 		if (error) return fail(400, { error: error.message });
 		return { success: true };
@@ -93,18 +104,18 @@ export const actions: Actions = {
 
 	archive: async ({ request, locals }) => {
 		const form = await request.formData();
-		const id = form.get('id') as string;
-		const motif = form.get('motif_perte') as string || null;
+		const parsed = validate(OpportuniteArchiveSchema, extractForm(form, ['id', 'motif_perte']));
+		if (!parsed.success) return fail(400, { error: parsed.error });
 
 		const { error } = await locals.supabase
 			.from('opportunites')
 			.update({
 				etape_pipeline: 'perdu',
-				motif_perte: motif,
+				motif_perte: parsed.data.motif_perte || null,
 				date_cloture_effective: new Date().toISOString(),
 				date_derniere_modification: new Date().toISOString(),
 			})
-			.eq('id', id);
+			.eq('id', parsed.data.id);
 
 		if (error) return fail(400, { error: error.message });
 		return { success: true };
