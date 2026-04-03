@@ -3,7 +3,7 @@
 **Statut :** Phase A — Jour 8 termine, Jour 9 a venir
 **Derniere mise a jour :** 2026-04-03
 **Prochain bug :** #001
-**Session precedente :** Phase A Jour 8 — Recherches sauvegardees (CRUD + UI), alertes cron, responsive mobile, rate limiting, tests Vitest (34) + Playwright, cle API search.ch configuree
+**Session precedente :** Hotfix — Env vars Vercel manquantes (PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY), logo FilmPro SVG integre dans sidebar (recadre, blanc)
 
 ---
 
@@ -137,7 +137,7 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## INFRA EN PLACE
 
-- **Vercel** : https://template-rho-three.vercel.app (prod)
+- **Vercel** : https://template-rho-three.vercel.app (prod), env vars configurees (PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY)
 - **Supabase** : projet `appfactory` (fmflvjubjtpidvxwhqab), region EU
 - **Google OAuth** : projet `appfactory-492107`, client ID `705315536802-...`
 - **Auth** : Google OAuth via Supabase, redirect callback configure
