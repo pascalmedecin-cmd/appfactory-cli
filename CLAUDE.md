@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 3-4 termine, Jour 5 a venir
+**Statut :** Phase A — Jour 5 termine, Jour 6 a venir
 **Derniere mise a jour :** 2026-04-03
 **Prochain bug :** #001
-**Session precedente :** Phase A Jour 3-4 — Layout sidebar + design system FilmPro + pages CRM core (Contacts, Entreprises, Dashboard)
+**Session precedente :** Phase A Jour 5 — Pipeline kanban (drag & drop, CRUD opportunites) + page Signaux d'affaires (DataTable, SlideOut, conversion en opportunite)
 
 ---
 
@@ -81,7 +81,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - Jour 1 : Init SvelteKit + Supabase + Tailwind + Auth Google OAuth + deploy Vercel ✓
 - Jour 2 : Schema BDD — migration tables Sheets -> PostgreSQL + RLS ✓
 - Jour 3-4 : Layout + design system + pages Contacts + Entreprises + Dashboard ✓
-- Jour 5 : Pipeline kanban + opportunites + signaux d'affaires
+- Jour 5 : Pipeline kanban + opportunites + signaux d'affaires ✓
 - Jour 6 : Prospection multi-sources (table prospect_leads, UI, scoring, dedup, batch)
 - Jour 7 : Integration APIs (Zefix/LINDAS, SIMAP, search.ch, SITG)
 - Jour 8 : Alertes automatiques + recherches sauvegardees + responsive + tests
@@ -152,7 +152,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - `docs/USER_GUIDE_DRAFT.md` — Guide utilisateur, alimente au fil du dev
 - `docs/MAINTAINER_GUIDE_DRAFT.md` — Guide mainteneur, alimente au fil du dev
 
-## EN PLACE (Jour 3-4)
+## EN PLACE (Jour 5)
 
 - **Design system** : CSS variables primary/accent, font DM Sans, Material Symbols icons
 - **Layout** : sidebar 220px collapsible (56px) + header 48px, groupe route `(app)/`
@@ -160,35 +160,35 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Page Contacts** : CRUD complet (create/update/archive), DataTable tri/recherche, SlideOut detail, ModalForm 6 champs
 - **Page Entreprises** : CRUD complet (create/update/delete), contacts rattaches dans SlideOut
 - **Dashboard** : 4 stats cards, relances du jour, derniere activite, raccourcis
-- **Pages placeholder** : Pipeline, Prospection, Signaux, Aide
+- **Page Pipeline** : Vue kanban 6 colonnes (Identification→Perdu), drag & drop HTML5 natif, total montant/colonne, CRUD opportunites (create/update/archive), SlideOut detail avec liens contact/entreprise, relances en retard en rouge
+- **Page Signaux** : DataTable avec 3 filtres (type/canton/statut), SlideOut detail, CRUD signal, action "Creer opportunite" (conversion + redirect pipeline), action "Ecarter", 5 statuts (nouveau/en_analyse/interesse/ecarte/converti)
+- **Pages placeholder** : Prospection, Aide
 
 ## OBJECTIF PROCHAINE SESSION
 
-Phase A Jour 5 : Pipeline kanban + opportunites.
+Phase A Jour 6 : Prospection multi-sources.
 
-**Etape 1 — Page Pipeline**
-- Vue kanban des opportunites par etape_pipeline (colonnes draggables)
-- Etapes : Identification, Qualification, Proposition, Negociation, Gagne, Perdu
-- Carte opportunite : titre, entreprise, montant, date relance, badge etape
-- Drag & drop pour changer d'etape (update Supabase)
+**Etape 1 — Table prospect_leads en BDD**
+- Migration SQL : creer table `prospect_leads` + `recherches_sauvegardees` (voir `docs/SPECS_PROSPECTION.md`)
+- Regenerer types TS
 
-**Etape 2 — CRUD Opportunites**
-- ModalForm creation/edition opportunite (titre, contact, entreprise, montant, etape, date relance)
-- Lien vers contact et entreprise dans le SlideOut detail
-- Filtres par etape, responsable, montant
+**Etape 2 — Page Prospection**
+- `/prospection` : DataTable leads avec selection multiple
+- Filtres : source, canton, secteur, score, statut
+- SlideOut detail lead
+- Actions batch : interesse / ecarter / transferer vers CRM (creer contact + entreprise)
+- Scoring automatique (0-13 points)
 
-**Etape 3 — Signaux d'affaires**
-- `/signaux` : liste DataTable des signaux detectes
-- SlideOut detail avec infos projet, maitre d'ouvrage, source
-- Action "Creer opportunite" depuis un signal
-- Filtres par type, canton, statut
+**Etape 3 — Dedup a l'import**
+- Logique dedup sur source+source_id
+- Leads ecartes/transferes jamais reimportes
 
 **Etape 4 — Deploy + verification**
 
 **Prerequis :**
-- Composants existants : DataTable, SlideOut, ModalForm, Badge
-- Types TS : `src/lib/database.types.ts` (tables opportunites, signaux_affaires)
-- Objectif mesurable : pipeline kanban fonctionnel, CRUD opportunites, signaux consultables
+- Specs completes : `docs/SPECS_PROSPECTION.md`
+- Composants existants : DataTable (selectable), SlideOut, ModalForm, Badge
+- Objectif mesurable : page prospection fonctionnelle avec CRUD leads, scoring, actions batch, dedup
 
 ---
 

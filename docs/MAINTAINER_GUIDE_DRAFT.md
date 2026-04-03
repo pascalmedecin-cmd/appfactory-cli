@@ -1,7 +1,7 @@
 # Guide Mainteneur — FilmPro CRM
 
 **Statut :** En cours de redaction (alimente au fil du developpement)
-**Derniere mise a jour :** 2026-04-02
+**Derniere mise a jour :** 2026-04-03
 
 > Ce document capture les decisions techniques, l'architecture et les procedures de maintenance au fur et a mesure du developpement.
 
@@ -56,18 +56,33 @@ APIs externes (Zefix, SIMAP, search.ch, SITG)
 template/
   src/
     lib/
-      database.types.ts      -- Types generes depuis Supabase
-      supabase.ts             -- Client browser
-      server/supabase.ts      -- Client server
+      database.types.ts        -- Types generes depuis Supabase
+      supabase.ts               -- Client browser
+      server/supabase.ts        -- Client server
+      components/
+        DataTable.svelte        -- Tableau generique tri/recherche/pagination/selection
+        SlideOut.svelte          -- Panneau lateral detail
+        ModalForm.svelte         -- Modal formulaire avec accordeon "Plus de details"
+        FormField.svelte         -- Champ formulaire (text/email/tel/date/textarea)
+        Badge.svelte             -- Badge colore (6 variants)
+        EmptyState.svelte        -- Etat vide avec action
+        Header.svelte            -- Barre superieure
+        Sidebar.svelte           -- Sidebar collapsible
     routes/
-      +layout.svelte          -- Layout racine
-      +layout.server.ts       -- Session loader
-      +page.svelte             -- Dashboard
-      login/                   -- Page connexion
-      auth/callback/           -- OAuth callback
+      +layout.svelte            -- Layout racine
+      +layout.server.ts         -- Session loader
+      login/                     -- Page connexion
+      auth/callback/             -- OAuth callback
+      (app)/
+        +layout.svelte          -- Layout sidebar+header
+        +page.svelte            -- Dashboard (stats, relances, activites)
+        contacts/               -- CRUD contacts
+        entreprises/            -- CRUD entreprises
+        pipeline/               -- Kanban opportunites (drag & drop)
+        signaux/                -- Signaux d'affaires (DataTable + conversion)
+        prospection/            -- Placeholder
+        aide/                   -- Placeholder
 ```
-
-*A mettre a jour au fil des ajouts de routes et composants.*
 
 ---
 
@@ -152,3 +167,5 @@ Voir `docs/SPECS_PROSPECTION.md` section 5. Modifier la fonction `calculerScore(
 | 2026-04-02 | Scoring stocke en base | Eviter recalcul cote client, permet tri SQL |
 | 2026-04-02 | Slide-out au lieu de pages detail | Garder le contexte liste visible |
 | 2026-04-02 | 100% sources gratuites | Zefix + LINDAS + SIMAP + SITG + search.ch |
+| 2026-04-03 | Drag & drop HTML5 natif | Pas de lib externe (svelte-dnd, etc.), form action ?/move pour persistence |
+| 2026-04-03 | Conversion signal→opportunite | Cree opp liee + update statut signal en une action serveur atomique |
