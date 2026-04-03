@@ -1,21 +1,63 @@
 @import 'tailwindcss';
 
 @theme {
-	--color-primary: #152A45;
-	--color-primary-light: #1e3a5f;
-	--color-primary-dark: #0e1d30;
+	/* Primary (Bleu FilmPro) */
+	--color-primary: #2F5A9E;
+	--color-primary-light: #F0F4F8;
+	--color-primary-dark: #0A1628;
+
+	/* Accent */
 	--color-accent: #3B6CB7;
-	--color-accent-light: #5a8ad4;
-	--color-accent-dark: #2d5490;
-	--color-surface: #f8f9fb;
-	--color-surface-alt: #eef1f5;
-	--color-border: #d5dbe5;
-	--color-text: #1a2332;
-	--color-text-muted: #64748b;
+	--color-accent-light: #EFF6FF;
+	--color-accent-dark: #1E40AF;
+
+	/* Surfaces */
+	--color-surface: #FFFFFF;
+	--color-surface-alt: #F8F9FA;
+	--color-surface-raised: #FFFFFF;
+	--color-surface-dark: #152A45;
+
+	/* Borders */
+	--color-border: #E5E7EB;
+	--color-border-strong: #D1D5DB;
+
+	/* Text */
+	--color-text: #152A45;
+	--color-text-body: #374151;
+	--color-text-muted: #6B7280;
+	--color-text-inverse: #FFFFFF;
+
+	/* Status */
 	--color-success: #16a34a;
+	--color-success-light: #ECFDF5;
 	--color-warning: #d97706;
+	--color-warning-light: #FFFBEB;
 	--color-danger: #dc2626;
-	--font-sans: 'DM Sans', system-ui, sans-serif;
+	--color-danger-light: #FEF2F2;
+	--color-info: #1E40AF;
+	--color-info-light: #EFF6FF;
+
+	/* Logo */
+	--color-logo: #00003B;
+
+	/* Typography */
+	--font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+	--font-mono: 'DM Mono', 'Consolas', 'Courier New', monospace;
+
+	/* Border Radius */
+	--radius-sm: 4px;
+	--radius-md: 6px;
+	--radius-lg: 8px;
+	--radius-xl: 12px;
+	--radius-full: 9999px;
+
+	/* Shadows */
+	--shadow-sm: 0 1px 2px rgba(21, 42, 69, 0.05);
+	--shadow-md: 0 2px 4px rgba(21, 42, 69, 0.08), 0 1px 2px rgba(21, 42, 69, 0.04);
+	--shadow-lg: 0 4px 12px rgba(21, 42, 69, 0.10), 0 2px 4px rgba(21, 42, 69, 0.04);
+	--shadow-xl: 0 8px 24px rgba(21, 42, 69, 0.12), 0 4px 8px rgba(21, 42, 69, 0.04);
+
+	/* Layout */
 	--sidebar-width: 220px;
 	--sidebar-collapsed: 56px;
 	--header-height: 48px;

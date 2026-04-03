@@ -3,7 +3,7 @@
 **Statut :** Phase A — Jour 8 termine, Jour 9 a venir
 **Derniere mise a jour :** 2026-04-03
 **Prochain bug :** #001
-**Session precedente :** Hotfix — Env vars Vercel manquantes (PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY), logo FilmPro SVG integre dans sidebar (recadre, blanc)
+**Session precedente :** Branding FilmPro — tokens CSS alignes sur charte (BRANDING-APPS.css), sidebar #0A1628, logo inline SVG (paths pleins, zero pixelisation), status colors gardees vives
 
 ---
 
