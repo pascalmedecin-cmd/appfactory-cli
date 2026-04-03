@@ -24,9 +24,9 @@
 	class="fixed top-0 left-0 h-full bg-primary text-white flex flex-col transition-all duration-200 z-30"
 	style="width: {collapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)'}"
 >
-	<div class="h-(--header-height) flex items-center px-4 border-b border-white/10 shrink-0">
+	<div class="h-(--header-height) flex items-center px-3 border-b border-white/10 shrink-0 overflow-hidden">
 		{#if !collapsed}
-			<span class="font-bold text-lg tracking-tight">FilmPro</span>
+			<img src="/FilmPro_logo_white.svg" alt="FilmPro" class="max-h-8 w-full object-contain object-left" />
 		{:else}
 			<span class="font-bold text-lg">F</span>
 		{/if}
