@@ -128,7 +128,7 @@
 					<p>Seuls les comptes autorises par l'administrateur peuvent acceder a l'application.</p>
 
 					<h3 class="aide-h3">Se deconnecter</h3>
-					<p>Cliquez sur votre email en haut a droite de l'ecran, puis <strong>Deconnexion</strong>.</p>
+					<p>Cliquez le bouton <strong>Deconnexion</strong> en bas de la sidebar (icone logout). Sur mobile, ouvrez d'abord le menu hamburger.</p>
 				</div>
 			</section>
 

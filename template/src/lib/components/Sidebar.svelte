@@ -1,14 +1,21 @@
 <script lang="ts">
 	import { config } from '$lib/config';
+	import { createSupabaseBrowserClient } from '$lib/supabase';
 
 	let { collapsed = $bindable(false), currentPath = '' }: { collapsed?: boolean; currentPath?: string } = $props();
 
 	const navItems = config.navigation.primary;
 	const secondaryItems = config.navigation.secondary;
+	const supabase = createSupabaseBrowserClient();
 
 	function isActive(href: string): boolean {
 		if (href === '/') return currentPath === '/';
 		return currentPath.startsWith(href);
+	}
+
+	async function signOut() {
+		await supabase.auth.signOut();
+		window.location.href = '/login';
 	}
 </script>
 
@@ -78,6 +85,17 @@
 			</span>
 			{#if !collapsed}
 				<span>Réduire</span>
+			{/if}
+		</button>
+
+		<button
+			onclick={signOut}
+			class="flex items-center gap-3 px-4 py-2.5 text-sm text-white/40 hover:bg-white/10 hover:text-red-400 transition-colors w-full cursor-pointer"
+			title={collapsed ? 'Déconnexion' : undefined}
+		>
+			<span class="material-symbols-outlined text-[20px] shrink-0">logout</span>
+			{#if !collapsed}
+				<span>Déconnexion</span>
 			{/if}
 		</button>
 	</div>

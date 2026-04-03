@@ -31,12 +31,6 @@
 
 	<div class="flex items-center gap-4">
 		<span class="text-sm text-text-muted hidden sm:inline">{user?.email}</span>
-		<button
-			onclick={signOut}
-			class="text-sm text-text-muted hover:text-danger transition-colors cursor-pointer"
-		>
-			Deconnexion
-		</button>
 	</div>
 </header>
 

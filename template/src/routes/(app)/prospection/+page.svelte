@@ -7,8 +7,14 @@
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import { toasts } from '$lib/stores/toast';
+	import { config } from '$lib/config';
 	import type { PageData } from './$types';
 	import { calculerScore } from '$lib/scoring';
+
+	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
+	const cantonNoms: Record<string, string> = { GE: 'Geneve', VD: 'Vaud', VS: 'Valais', NE: 'Neuchatel', FR: 'Fribourg', JU: 'Jura' };
+	const { labels: scoreLabels } = config.scoring;
+	const sourceEntries = Object.entries(config.prospection.sources);
 
 	let { data }: { data: PageData } = $props();
 
@@ -196,9 +202,9 @@
 	];
 
 	function scoreBadgeVariant(score: number): 'danger' | 'warning' | 'muted' | 'default' {
-		if (score >= 8) return 'danger';
-		if (score >= 5) return 'warning';
-		if (score >= 2) return 'muted';
+		if (score >= scoreLabels.chaud) return 'danger';
+		if (score >= scoreLabels.tiede) return 'warning';
+		if (score >= scoreLabels.froid) return 'muted';
 		return 'default';
 	}
 
@@ -213,11 +219,10 @@
 	}
 
 	function sourceLabel(s: string): string {
-		const map: Record<string, string> = {
-			zefix: 'Zefix', lindas: 'LINDAS', simap: 'SIMAP',
-			sitg: 'SITG', search_ch: 'search.ch', fosc: 'FOSC', manuel: 'Manuel',
-		};
-		return map[s] ?? s;
+		const configSource = (config.prospection.sources as Record<string, { label: string }>)[s];
+		if (configSource) return configSource.label.split(' (')[0];
+		const extras: Record<string, string> = { sitg: 'SITG', fosc: 'FOSC', manuel: 'Manuel' };
+		return extras[s] ?? s;
 	}
 
 	function openDetail(lead: Lead) {
@@ -290,21 +295,18 @@
 	<div class="flex flex-wrap gap-3 p-3 bg-surface rounded-lg border border-border">
 		<select bind:value={filterSource} class="px-3 py-1.5 text-sm border border-border rounded-md bg-white">
 			<option value="">Toutes sources</option>
-			<option value="zefix">Zefix</option>
-			<option value="lindas">LINDAS</option>
-			<option value="simap">SIMAP</option>
+			{#each sourceEntries as [key, src]}
+				<option value={key}>{src.label.split(' (')[0]}</option>
+			{/each}
 			<option value="sitg">SITG</option>
 			<option value="fosc">FOSC</option>
 			<option value="manuel">Manuel</option>
 		</select>
 		<select bind:value={filterCanton} class="px-3 py-1.5 text-sm border border-border rounded-md bg-white">
 			<option value="">Tous cantons</option>
-			<option value="GE">GE</option>
-			<option value="VD">VD</option>
-			<option value="VS">VS</option>
-			<option value="NE">NE</option>
-			<option value="FR">FR</option>
-			<option value="JU">JU</option>
+			{#each cantons as c}
+				<option value={c}>{c}</option>
+			{/each}
 			<option value="Autre">Autre</option>
 		</select>
 		<select bind:value={filterStatut} class="px-3 py-1.5 text-sm border border-border rounded-md bg-white">
@@ -317,9 +319,9 @@
 		</select>
 		<select bind:value={filterScoreMin} class="px-3 py-1.5 text-sm border border-border rounded-md bg-white">
 			<option value="">Tout score</option>
-			<option value="8">Chaud (8+)</option>
-			<option value="5">Tiede+ (5+)</option>
-			<option value="2">Froid+ (2+)</option>
+			<option value={String(scoreLabels.chaud)}>Chaud ({scoreLabels.chaud}+)</option>
+			<option value={String(scoreLabels.tiede)}>Tiede+ ({scoreLabels.tiede}+)</option>
+			<option value={String(scoreLabels.froid)}>Froid+ ({scoreLabels.froid}+)</option>
 		</select>
 		<div class="ml-auto flex items-center gap-2">
 			<button
@@ -724,22 +726,18 @@
 					<label class="block text-sm font-medium text-text mb-1">Source</label>
 					<select bind:value={source} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
 						<option value="manuel">Manuel</option>
-						<option value="zefix">Zefix</option>
-						<option value="simap">SIMAP</option>
-						<option value="sitg">SITG</option>
-						<option value="fosc">FOSC</option>
+						{#each sourceEntries as [key, src]}
+							<option value={key}>{src.label.split(' (')[0]}</option>
+						{/each}
 					</select>
 				</div>
 				<div>
 					<label class="block text-sm font-medium text-text mb-1">Canton</label>
 					<select bind:value={canton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
 						<option value="">—</option>
-						<option value="GE">GE</option>
-						<option value="VD">VD</option>
-						<option value="VS">VS</option>
-						<option value="NE">NE</option>
-						<option value="FR">FR</option>
-						<option value="JU">JU</option>
+						{#each cantons as c}
+							<option value={c}>{c}</option>
+						{/each}
 						<option value="Autre">Autre</option>
 					</select>
 				</div>
@@ -821,12 +819,9 @@
 				<div>
 					<label class="block text-sm font-medium text-text mb-1">Canton</label>
 					<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						<option value="GE">Geneve (GE)</option>
-						<option value="VD">Vaud (VD)</option>
-						<option value="VS">Valais (VS)</option>
-						<option value="NE">Neuchatel (NE)</option>
-						<option value="FR">Fribourg (FR)</option>
-						<option value="JU">Jura (JU)</option>
+						{#each cantons as c}
+							<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
+						{/each}
 					</select>
 				</div>
 				<div>
@@ -871,12 +866,9 @@
 				<div>
 					<label class="block text-sm font-medium text-text mb-1">Canton</label>
 					<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						<option value="GE">Geneve (GE)</option>
-						<option value="VD">Vaud (VD)</option>
-						<option value="VS">Valais (VS)</option>
-						<option value="NE">Neuchatel (NE)</option>
-						<option value="FR">Fribourg (FR)</option>
-						<option value="JU">Jura (JU)</option>
+						{#each cantons as c}
+							<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
+						{/each}
 					</select>
 				</div>
 				<div>
@@ -921,12 +913,9 @@
 				<div>
 					<label class="block text-sm font-medium text-text mb-1">Canton</label>
 					<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						<option value="GE">Geneve (GE)</option>
-						<option value="VD">Vaud (VD)</option>
-						<option value="VS">Valais (VS)</option>
-						<option value="NE">Neuchatel (NE)</option>
-						<option value="FR">Fribourg (FR)</option>
-						<option value="JU">Jura (JU)</option>
+						{#each cantons as c}
+							<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
+						{/each}
 					</select>
 				</div>
 				<div>

@@ -27,7 +27,7 @@
 FilmPro utilise la connexion Google. Sur la page de login, cliquez **Se connecter avec Google** et selectionnez votre compte professionnel. Seuls les comptes autorises par l'administrateur peuvent acceder a l'application.
 
 ### Se deconnecter
-Cliquez sur votre email en haut a droite de l'ecran, puis **Deconnexion**.
+Cliquez le bouton **Deconnexion** en bas de la sidebar (icone logout). Sur mobile, ouvrez d'abord le menu hamburger.
 
 ---
 
@@ -36,7 +36,7 @@ Cliquez sur votre email en haut a droite de l'ecran, puis **Deconnexion**.
 - **Sidebar gauche** : acces rapide aux 6 sections (Dashboard, Contacts, Entreprises, Pipeline, Prospection, Signaux) + Aide
 - **Reduire la sidebar** : cliquer la fleche en bas de la sidebar pour la reduire (icones seules)
 - **Sur mobile** : la sidebar est masquee par defaut. Cliquer l'icone menu (hamburger) en haut a gauche pour l'ouvrir en overlay. Elle se ferme automatiquement apres navigation
-- **Deconnexion** : bouton en haut a droite (email visible sur ecran large)
+- **Deconnexion** : bouton en bas de la sidebar (icone logout)
 
 ---
 
@@ -227,10 +227,21 @@ Les signaux d'affaires sont des informations detectees depuis des sources publiq
 
 ## 9. Parametres
 
-*A documenter lors de l'implementation.*
+La page Parametres n'est pas encore implementee. A terme, elle permettra :
 
 ### 9.1 Gestion des utilisateurs
+- Voir la liste des utilisateurs autorises a acceder a l'application
+- Modifier les roles (administrateur, utilisateur standard)
+
 ### 9.2 Inviter un collaborateur
+- Ajouter une adresse email Google autorisee
+- L'utilisateur invite pourra se connecter via Google OAuth
+
+### 9.3 Configuration du scoring
+- Ajuster les poids du scoring de prospection (cantons prioritaires, seuils, sources chaudes)
+- Modifier les mots-cles secteur cibles
+
+> Ces fonctionnalites seront ajoutees dans une prochaine phase de developpement.
 
 ---
 

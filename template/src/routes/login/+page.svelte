@@ -1,7 +1,9 @@
 <script lang="ts">
 	import { createSupabaseBrowserClient } from '$lib/supabase';
+	import { config } from '$lib/config';
 
 	const supabase = createSupabaseBrowserClient();
+	const bgImage = 'loginBackground' in config.branding ? (config.branding as Record<string, unknown>).loginBackground as string : null;
 
 	async function signInWithGoogle() {
 		const { error } = await supabase.auth.signInWithOAuth({
@@ -14,16 +16,23 @@
 	}
 </script>
 
-<div class="min-h-screen flex items-center justify-center bg-surface-alt">
-	<div class="max-w-sm w-full space-y-8 p-8">
+<div class="login-page" class:has-bg={bgImage}>
+	{#if bgImage}
+		<img src="/{bgImage}" alt="" class="login-bg" />
+		<div class="login-overlay"></div>
+	{/if}
+	<div class="login-card">
 		<div class="text-center">
-			<h1 class="text-3xl font-bold text-text">AppFactory</h1>
-			<p class="mt-2 text-text-muted">Connectez-vous pour continuer</p>
+			<h1 class="text-3xl font-bold" class:text-white={bgImage} class:text-text={!bgImage}>{config.app.name}</h1>
+			<p class="mt-2" class:text-white-70={bgImage} class:text-text-muted={!bgImage}>Connectez-vous pour continuer</p>
 		</div>
 
 		<button
 			onclick={signInWithGoogle}
-			class="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border rounded-lg shadow-sm bg-surface text-text hover:bg-surface-alt transition-colors cursor-pointer"
+			class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg shadow-lg transition-colors cursor-pointer
+				{bgImage
+					? 'border border-white/20 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20'
+					: 'border border-border bg-surface text-text hover:bg-surface-alt'}"
 		>
 			<svg class="w-5 h-5" viewBox="0 0 24 24">
 				<path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
@@ -35,3 +44,49 @@
 		</button>
 	</div>
 </div>
+
+<style>
+	.login-page {
+		position: relative;
+		min-height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: var(--color-surface-alt);
+	}
+
+	.login-page.has-bg {
+		background: var(--color-primary-dark);
+	}
+
+	.login-bg {
+		position: absolute;
+		inset: 0;
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		z-index: 0;
+	}
+
+	.login-overlay {
+		position: absolute;
+		inset: 0;
+		background: rgba(10, 22, 40, 0.45);
+		z-index: 1;
+	}
+
+	.login-card {
+		position: relative;
+		z-index: 2;
+		max-width: 24rem;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
+		gap: 2rem;
+		padding: 2rem;
+	}
+
+	.text-white-70 {
+		color: rgba(255, 255, 255, 0.7);
+	}
+</style>
