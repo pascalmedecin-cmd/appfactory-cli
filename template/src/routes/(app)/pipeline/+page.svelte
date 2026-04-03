@@ -4,20 +4,14 @@
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import { config } from '$lib/config';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	type Opp = (typeof data.opportunites)[number];
 
-	const ETAPES = [
-		{ key: 'identification', label: 'Identification', color: 'text-text-muted', icon: 'search' },
-		{ key: 'qualification', label: 'Qualification', color: 'text-primary', icon: 'fact_check' },
-		{ key: 'proposition', label: 'Proposition', color: 'text-accent', icon: 'description' },
-		{ key: 'negociation', label: 'Negociation', color: 'text-warning', icon: 'handshake' },
-		{ key: 'gagne', label: 'Gagne', color: 'text-success', icon: 'emoji_events' },
-		{ key: 'perdu', label: 'Perdu', color: 'text-danger', icon: 'block' },
-	] as const;
+	const ETAPES = config.pipeline.etapes;
 
 	let slideOutOpen = $state(false);
 	let selectedOpp = $state<Opp | null>(null);

@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 8 termine, Jour 9 a venir
+**Statut :** Phase A — Jour 9 termine, Phase B a venir
 **Derniere mise a jour :** 2026-04-03
 **Prochain bug :** #001
-**Session precedente :** Branding FilmPro — tokens CSS alignes sur charte (BRANDING-APPS.css), sidebar #0A1628, logo inline SVG (paths pleins, zero pixelisation), status colors gardees vives
+**Session precedente :** Jour 9 — Page Aide integree (sommaire + recherche + IntersectionObserver), extraction template (project.yaml + config.ts), scoring/sidebar/pipeline/lindas migres vers config, env vars Vercel prod (SEARCH_CH_API_KEY + CRON_SECRET)
 
 ---
 
@@ -85,7 +85,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - Jour 6 : Prospection multi-sources (table prospect_leads, UI, scoring, dedup, batch) ✓
 - Jour 7 : Integration APIs (LINDAS, SIMAP fonctionnels + Zefix, search.ch prets) ✓
 - Jour 8 : Recherches sauvegardees + alertes cron + responsive + rate limiting + tests ✓
-- Jour 9 : Page Aide (doc utilisateur integree) + extraction template reutilisable
+- Jour 9 : Page Aide (doc utilisateur integree) + extraction template (project.yaml + config.ts) + env vars prod ✓
 
 ### Phase B — Plugin Figma + Outillage (jours 1-5, parallele)
 - Jour 1-2 : Design system Figma (composants de base, tokens)
@@ -145,10 +145,10 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Supabase CLI** : v2.84.2, projet linke (fmflvjubjtpidvxwhqab)
 - **BDD** : 10 tables PostgreSQL (+ prospect_leads, recherches_sauvegardees), FK, index, RLS (authenticated full access), types TS generes
 - **Zefix REST** : Pascal a repondu a zefix@bj.admin.ch (username pascal@filmpro.ch), en attente du mot de passe (plusieurs jours)
-- **search.ch** : cle API configuree en local (.env), **a configurer sur Vercel prod**
+- **search.ch** : cle API configuree en local (.env) + Vercel prod
 - **Securite** : email provider desactive (Google OAuth only), validation Zod sur toutes les form actions (18 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*
 - **Tests** : Vitest (34 tests : scoring + schemas + validation) + Playwright (5 tests e2e : navigation + auth redirect)
-- **Cron** : `/api/cron/alertes` quotidien 7h (vercel.json), securise par CRON_SECRET
+- **Cron** : `/api/cron/alertes` quotidien 7h (vercel.json), securise par CRON_SECRET (configure Vercel prod)
 
 ## DOCUMENTATION
 
@@ -156,7 +156,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - `docs/USER_GUIDE_DRAFT.md` — Guide utilisateur, alimente au fil du dev
 - `docs/MAINTAINER_GUIDE_DRAFT.md` — Guide mainteneur, alimente au fil du dev
 
-## EN PLACE (Jour 8)
+## EN PLACE (Jour 9)
 
 - **Design system** : CSS variables primary/accent, font DM Sans, Material Symbols icons
 - **Layout** : sidebar 220px collapsible (56px) + header 48px, groupe route `(app)/`, responsive mobile (burger menu + overlay)
@@ -176,32 +176,24 @@ Pilotage depuis le terminal via Claude Code skills.
   - `search-ch/` — Enrichissement telephone par lead (cle API configuree en local)
 - **API Cron** : `src/routes/api/cron/alertes/` — execution recherches sauvegardees, comptage nouveaux leads
 - **UI Import** : modal 3 sources (LINDAS, Zefix, SIMAP), bouton "Enrichir telephone" dans SlideOut, notifications succes/erreur
-- **Pages placeholder** : Aide
+- **Page Aide** : documentation utilisateur integree, sommaire cliquable, recherche texte, IntersectionObserver pour section active, 8 sections (connexion, navigation, dashboard, contacts, entreprises, pipeline, prospection, signaux)
+- **Extraction template** : `project.yaml` (source de verite specs client) + `src/lib/config.ts` (miroir TS importe par le code). scoring.ts, Sidebar.svelte, pipeline/+page.svelte et lindas/+server.ts migres pour lire la config
 
 ## OBJECTIF PROCHAINE SESSION
 
-Phase A Jour 9 : Page Aide (doc utilisateur integree) + extraction template reutilisable.
+Phase B Jour 1-2 : Design system Figma (composants de base, tokens).
 
-**Etape 1 — Page Aide**
-- Integrer le contenu de USER_GUIDE_DRAFT.md dans la page `/aide`
-- Navigation par sections (sommaire cliquable)
-- Recherche dans l'aide
+**Alternative si Figma pas prioritaire :** Continuer l'extraction template :
+- Migrer les pages restantes (contacts, entreprises, signaux, dashboard, prospection) pour lire config.ts la ou c'est pertinent (types signaux, etc.)
+- Script de generation config.ts depuis project.yaml (eviter maintenance manuelle des deux fichiers)
+- Finaliser les sections "A documenter" du USER_GUIDE_DRAFT.md (Connexion details, Dashboard, Contacts, Entreprises, Parametres)
 
-**Etape 2 — Extraction template reutilisable**
-- Identifier les parties specifiques FilmPro (scoring secteurs, sources, etc.)
-- Extraire la config client dans un fichier `project.yaml` ou equivalent
-- Rendre le template generique (colonnes pipeline, scoring, sources configurables)
-
-**Etape 3 — Activation credentials** (si recus)
-- Zefix : configurer ZEFIX_USERNAME/PASSWORD dans Vercel env vars, tester import
-- search.ch : configurer SEARCH_CH_API_KEY **sur Vercel prod** (deja en local)
-
-**Etape 4 — Configurer CRON_SECRET sur Vercel**
-- Generer un secret, `vercel env add CRON_SECRET`
+**En attente :**
+- Credentials Zefix (email envoye a zefix@bj.admin.ch)
 
 **Prerequis :**
-- Credentials Zefix (en attente)
-- Objectif mesurable : page Aide fonctionnelle + au moins 1 config extraite dans project.yaml
+- Acces Figma Pro si Phase B
+- Objectif mesurable : design system Figma avec au moins composants Button, Input, Card, Badge OU script yaml→config.ts fonctionnel
 
 ---
 

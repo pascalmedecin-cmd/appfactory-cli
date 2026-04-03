@@ -1,18 +1,10 @@
 <script lang="ts">
+	import { config } from '$lib/config';
+
 	let { collapsed = $bindable(false), currentPath = '' }: { collapsed?: boolean; currentPath?: string } = $props();
 
-	const navItems = [
-		{ href: '/', label: 'Dashboard', icon: 'dashboard' },
-		{ href: '/contacts', label: 'Contacts', icon: 'contacts' },
-		{ href: '/entreprises', label: 'Entreprises', icon: 'business' },
-		{ href: '/pipeline', label: 'Pipeline', icon: 'filter_list' },
-		{ href: '/prospection', label: 'Prospection', icon: 'search' },
-		{ href: '/signaux', label: 'Signaux', icon: 'notifications' },
-	];
-
-	const secondaryItems = [
-		{ href: '/aide', label: 'Aide', icon: 'help_outline' },
-	];
+	const navItems = config.navigation.primary;
+	const secondaryItems = config.navigation.secondary;
 
 	function isActive(href: string): boolean {
 		if (href === '/') return currentPath === '/';

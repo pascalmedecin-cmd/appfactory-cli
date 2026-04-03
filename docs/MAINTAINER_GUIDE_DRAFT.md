@@ -81,7 +81,7 @@ template/
         pipeline/               -- Kanban opportunites (drag & drop)
         signaux/                -- Signaux d'affaires (DataTable + conversion)
         prospection/            -- Leads prospection (CRUD + import multi-sources)
-        aide/                   -- Placeholder
+        aide/                   -- Documentation utilisateur integree (sommaire + recherche)
     routes/
       api/
         prospection/
@@ -150,8 +150,8 @@ npx supabase gen types typescript --project-id fmflvjubjtpidvxwhqab > src/lib/da
 |----------|---------|--------|
 | `ZEFIX_USERNAME` | Zefix REST Basic Auth | En attente (demande envoyee) |
 | `ZEFIX_PASSWORD` | Zefix REST Basic Auth | En attente |
-| `SEARCH_CH_API_KEY` | search.ch annuaire | Configure (.env local) |
-| `CRON_SECRET` | Cron alertes | A configurer sur Vercel |
+| `SEARCH_CH_API_KEY` | search.ch annuaire | Configure (.env local + Vercel prod) |
+| `CRON_SECRET` | Cron alertes | Configure (.env local + Vercel prod) |
 
 Configurer dans Vercel : `vercel env add ZEFIX_USERNAME` (production + preview).
 
@@ -175,7 +175,16 @@ Configurer dans Vercel : `vercel env add ZEFIX_USERNAME` (production + preview).
 *A documenter.*
 
 ### 9.4 Modifier le scoring des leads
-Voir `docs/SPECS_PROSPECTION.md` section 5. Modifier la fonction `calculerScore()` et les seuils de classification.
+Le scoring est configure dans `project.yaml` (source de verite) et `src/lib/config.ts` (miroir TS importe par le code).
+Modifier les deux fichiers en coherence : cantons, secteurs, seuils, labels.
+La fonction `calculerScore()` dans `src/lib/scoring.ts` lit la config — pas besoin de la modifier sauf changement de logique.
+
+### 9.5 Personnaliser pour un nouveau client
+1. Copier le template
+2. Modifier `project.yaml` et `src/lib/config.ts` (branding, scoring, pipeline, sources)
+3. Remplacer les logos dans `static/`
+4. Mettre a jour `src/app.css` (couleurs @theme)
+5. Deployer
 
 ---
 
@@ -203,3 +212,5 @@ Voir `docs/SPECS_PROSPECTION.md` section 5. Modifier la fonction `calculerScore(
 | 2026-04-03 | Responsive sidebar mobile (burger + overlay) | Sidebar masquee < 768px, Header avec bouton menu, modals bottom-sheet sur mobile |
 | 2026-04-03 | Vitest + Playwright | 34 tests unitaires (scoring + schemas + validation), tests e2e navigation/auth redirect |
 | 2026-04-03 | Cron securise par CRON_SECRET env var | Dynamic import $env/dynamic/private, Vercel cron injecte le Bearer token |
+| 2026-04-03 | project.yaml + config.ts pour extraction template | Tout le specifique client (scoring, pipeline, sources, nav) centralise, code lit config.ts |
+| 2026-04-03 | Page Aide integree (pas de CMS) | Contenu statique Svelte, sommaire cliquable, recherche client-side, IntersectionObserver |

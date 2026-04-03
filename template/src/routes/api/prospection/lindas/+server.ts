@@ -1,5 +1,6 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { calculerScore } from '$lib/scoring';
+import { config } from '$lib/config';
 import { randomUUID } from 'crypto';
 
 // Canton code → LINDAS canton ID
@@ -167,21 +168,10 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		return map[region] ?? 'Autre';
 	};
 
-	// Detect sector from description
-	const SECTEURS_KEYWORDS: Record<string, string[]> = {
-		construction: ['construction', 'batiment', 'bau', 'genie civil'],
-		architecture: ['architecte', 'architecture', 'architektur'],
-		hvac: ['chauffage', 'ventilation', 'climatisation', 'hvac', 'heizung'],
-		electricite: ['electricite', 'elektro', 'electricien'],
-		renovation: ['renovation', 'transformation', 'umbau'],
-		menuiserie: ['menuiserie', 'charpente', 'schreinerei', 'zimmerei'],
-		ingenieur: ['ingenieur', 'bureau technique', 'ingenieurbüro'],
-		regie: ['regie', 'facility', 'immobilier', 'verwaltung'],
-	};
-
+	// Detect sector from description (uses config)
 	function detectSecteur(desc: string): string | null {
 		const lower = desc.toLowerCase();
-		for (const [secteur, kws] of Object.entries(SECTEURS_KEYWORDS)) {
+		for (const [secteur, kws] of Object.entries(config.prospection.secteurKeywords)) {
 			if (kws.some((kw) => lower.includes(kw))) return secteur;
 		}
 		return null;

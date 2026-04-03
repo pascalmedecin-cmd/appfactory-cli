@@ -3,7 +3,7 @@
 **Statut :** En cours de redaction (alimente au fil du developpement)
 **Derniere mise a jour :** 2026-04-03
 
-> Ce document est redige au fur et a mesure du developpement. Chaque fonctionnalite implementee ajoute une section ici. La version finale sera integree dans la page `/aide` de l'application.
+> Ce document est la source de verite. Son contenu est integre dans la page `/aide` de l'application (sommaire cliquable + recherche).
 
 ---
 

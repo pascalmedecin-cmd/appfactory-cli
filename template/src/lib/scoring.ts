@@ -1,19 +1,11 @@
 /**
- * Scoring automatique des leads de prospection (0-13 points).
- * Calcule a l'import et recalcule si le lead est enrichi.
+ * Scoring automatique des leads de prospection.
+ * Lit les criteres depuis config.ts (miroir de project.yaml).
  */
 
-const CANTONS_PRIORITAIRES = ['GE', 'VD', 'VS'];
-const CANTONS_SECONDAIRES = ['NE', 'FR', 'JU'];
+import { config } from './config';
 
-const SECTEURS_CIBLES = [
-	'construction', 'architecte', 'architecture', 'hvac', 'chauffage',
-	'ventilation', 'climatisation', 'regie', 'facility', 'batiment',
-	'menuiserie', 'charpente', 'electricite', 'plomberie', 'peinture',
-	'renovation', 'genie civil', 'bureau technique', 'ingenieur',
-];
-
-const SOURCES_CHAUDES = ['simap', 'sitg'];
+const { scoring } = config;
 
 interface LeadScoring {
 	canton?: string | null;
@@ -40,26 +32,26 @@ export function calculerScore(lead: LeadScoring): ScoreDetail {
 	const criteres: string[] = [];
 
 	// Canton
-	if (lead.canton && CANTONS_PRIORITAIRES.includes(lead.canton)) {
-		total += 3;
-		criteres.push(`Canton ${lead.canton} (+3)`);
-	} else if (lead.canton && CANTONS_SECONDAIRES.includes(lead.canton)) {
-		total += 1;
-		criteres.push(`Canton ${lead.canton} (+1)`);
+	if (lead.canton && scoring.cantonsPrioritaires.values.includes(lead.canton as typeof scoring.cantonsPrioritaires.values[number])) {
+		total += scoring.cantonsPrioritaires.points;
+		criteres.push(`Canton ${lead.canton} (+${scoring.cantonsPrioritaires.points})`);
+	} else if (lead.canton && scoring.cantonsSecondaires.values.includes(lead.canton as typeof scoring.cantonsSecondaires.values[number])) {
+		total += scoring.cantonsSecondaires.points;
+		criteres.push(`Canton ${lead.canton} (+${scoring.cantonsSecondaires.points})`);
 	}
 
 	// Secteur
 	const texte = `${lead.description || ''} ${lead.raison_sociale || ''}`.toLowerCase();
-	const secteurMatch = SECTEURS_CIBLES.find((s) => texte.includes(s));
+	const secteurMatch = scoring.secteursCibles.keywords.find((s) => texte.includes(s));
 	if (secteurMatch) {
-		total += 3;
-		criteres.push(`Secteur "${secteurMatch}" (+3)`);
+		total += scoring.secteursCibles.points;
+		criteres.push(`Secteur "${secteurMatch}" (+${scoring.secteursCibles.points})`);
 	}
 
-	// Signal chaud (SIMAP, SITG)
-	if (SOURCES_CHAUDES.includes(lead.source)) {
-		total += 2;
-		criteres.push(`Signal ${lead.source.toUpperCase()} (+2)`);
+	// Signal chaud
+	if (scoring.sourcesChaudes.values.includes(lead.source as typeof scoring.sourcesChaudes.values[number])) {
+		total += scoring.sourcesChaudes.points;
+		criteres.push(`Signal ${lead.source.toUpperCase()} (+${scoring.sourcesChaudes.points})`);
 	}
 
 	// Recence
@@ -68,32 +60,32 @@ export function calculerScore(lead: LeadScoring): ScoreDetail {
 			? lead.date_publication
 			: new Date(lead.date_publication);
 		const jours = differenceEnJours(new Date(), datePub);
-		if (jours <= 30) {
-			total += 2;
-			criteres.push('Recente < 30j (+2)');
-		} else if (jours <= 90) {
-			total += 1;
-			criteres.push('Recente < 90j (+1)');
+		for (const seuil of scoring.recence) {
+			if (jours <= seuil.maxJours) {
+				total += seuil.points;
+				criteres.push(`Recente < ${seuil.maxJours}j (+${seuil.points})`);
+				break;
+			}
 		}
 	}
 
 	// Telephone disponible
 	if (lead.telephone) {
-		total += 1;
-		criteres.push('Tel dispo (+1)');
+		total += scoring.telephoneDisponible.points;
+		criteres.push(`Tel dispo (+${scoring.telephoneDisponible.points})`);
 	}
 
 	// Montant significatif
-	if (lead.montant && lead.montant > 100000) {
-		total += 1;
-		criteres.push('Montant > 100k (+1)');
+	if (lead.montant && lead.montant > scoring.montantMinimum.seuil) {
+		total += scoring.montantMinimum.points;
+		criteres.push(`Montant > ${scoring.montantMinimum.seuil / 1000}k (+${scoring.montantMinimum.points})`);
 	}
 
 	// Label
 	let label: ScoreDetail['label'];
-	if (total >= 8) label = 'chaud';
-	else if (total >= 5) label = 'tiede';
-	else if (total >= 2) label = 'froid';
+	if (total >= scoring.labels.chaud) label = 'chaud';
+	else if (total >= scoring.labels.tiede) label = 'tiede';
+	else if (total >= scoring.labels.froid) label = 'froid';
 	else label = 'non_qualifie';
 
 	return { total, label, criteres };
