@@ -125,21 +125,34 @@ La page Prospection centralise les leads B2B issus de sources publiques suisses 
 - Cela cree automatiquement une fiche entreprise (et un contact si le nom est renseigne)
 - Le lead passe en statut "transfere"
 
-### 7.6 Enrichir un lead (telephone)
-*A venir — integration search.ch*
+### 7.6 Importer des leads depuis des sources publiques
+- Cliquer le bouton "Importer" en haut a droite de la page Prospection
+- Choisir une source dans la modal :
+  - **LINDAS** (registre du commerce) : selectionner un canton et des mots-cles (ex: "construction, architecte"). Les entreprises correspondantes sont importees avec scoring automatique
+  - **Zefix REST** (registre complet) : meme principe, donnees plus riches (capital, FOSC). Necessite credentials (en cours de configuration)
+  - **SIMAP** (marches publics) : selectionner un canton et une periode. Les appels d'offres construction sont importes comme leads chauds
+- Les doublons sont detectes automatiquement (meme source + meme ID)
+- Les leads precedemment ecartes ou transferes ne sont jamais reimportes
 
-### 7.7 Sauvegarder une recherche
+### 7.7 Enrichir un lead (telephone)
+- Ouvrir le detail d'un lead qui n'a pas de telephone
+- Cliquer "Enrichir telephone" (bouton jaune)
+- Le systeme cherche dans l'annuaire suisse (search.ch) et met a jour la fiche si un numero est trouve
+- Le score est recalcule automatiquement (+1 point si telephone trouve)
+- *Necessite la cle API search.ch (en cours de configuration)*
+
+### 7.8 Sauvegarder une recherche
 *A venir*
 
-### 7.8 Alertes automatiques
+### 7.9 Alertes automatiques
 *A venir*
 
-### 7.9 Selection multiple et actions batch
+### 7.10 Selection multiple et actions batch
 - Cocher plusieurs leads avec les cases a cocher a gauche
 - La barre d'actions apparait : "Interesse" ou "Ecarter" en lot
 - "Deselectionner" pour tout annuler
 
-### 7.10 Raccourcis clavier prospection
+### 7.11 Raccourcis clavier prospection
 *A venir*
 
 ---

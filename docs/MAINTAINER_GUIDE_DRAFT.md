@@ -80,8 +80,15 @@ template/
         entreprises/            -- CRUD entreprises
         pipeline/               -- Kanban opportunites (drag & drop)
         signaux/                -- Signaux d'affaires (DataTable + conversion)
-        prospection/            -- Placeholder
+        prospection/            -- Leads prospection (CRUD + import multi-sources)
         aide/                   -- Placeholder
+    routes/
+      api/
+        prospection/
+          lindas/               -- Import SPARQL registre du commerce
+          zefix/                -- Import REST registre du commerce (auth)
+          simap/                -- Import marches publics construction
+          search-ch/            -- Enrichissement telephone
 ```
 
 ---
@@ -128,13 +135,23 @@ npx supabase gen types typescript --project-id fmflvjubjtpidvxwhqab > src/lib/da
 
 ## 7. APIs externes
 
-| API | Usage | Auth | Quota | Doc |
-|-----|-------|------|-------|-----|
-| Zefix REST | Import entreprises | Credentials (en attente) | ? | swagger-ui |
-| LINDAS SPARQL | Fallback Zefix | Aucune | Illimite | lindas.admin.ch |
-| SIMAP | Marches publics | Aucune | ? | simap.ch |
-| SITG | Permis construire GE | Aucune | Illimite | ge.ch/sitg |
-| search.ch | Enrichissement tel | Cle API gratuite | 1000/mois | tel.search.ch/api |
+| API | Usage | Auth | Quota | Statut | Route |
+|-----|-------|------|-------|--------|-------|
+| LINDAS SPARQL | Import entreprises par canton | Aucune | Illimite | Fonctionnel | `/api/prospection/lindas` |
+| SIMAP | Marches publics construction | Aucune | ? | Fonctionnel | `/api/prospection/simap` |
+| Zefix REST | Import entreprises (complet) | Basic Auth (env vars) | ? | Code pret, attend credentials | `/api/prospection/zefix` |
+| search.ch | Enrichissement telephone | Cle API (env var) | 1000/mois | Code pret, attend cle | `/api/prospection/search-ch` |
+| SITG | Permis construire GE | Aucune | Illimite | A integrer | — |
+
+### 7.1 Variables d'environnement API
+
+| Variable | Service | Statut |
+|----------|---------|--------|
+| `ZEFIX_USERNAME` | Zefix REST Basic Auth | En attente (demande envoyee) |
+| `ZEFIX_PASSWORD` | Zefix REST Basic Auth | En attente |
+| `SEARCH_CH_API_KEY` | search.ch annuaire | En attente (demande envoyee) |
+
+Configurer dans Vercel : `vercel env add ZEFIX_USERNAME` (production + preview).
 
 ---
 
@@ -175,3 +192,7 @@ Voir `docs/SPECS_PROSPECTION.md` section 5. Modifier la fonction `calculerScore(
 | 2026-04-03 | DataTable selectedIds en $bindable | Permet aux pages parentes de lire/ecrire la selection pour les actions batch |
 | 2026-04-03 | Scoring calcule cote serveur a l'import | Stocke en base (score_pertinence), recalcule si enrichissement |
 | 2026-04-03 | Transfert lead → CRM cree entreprise + contact | Action atomique : insert entreprise, optionnel contact, update statut lead |
+| 2026-04-03 | LINDAS SPARQL comme source principale (pas Zefix) | Pas d'auth, donnees ouvertes, suffisant pour nom+adresse+but social |
+| 2026-04-03 | API SIMAP directe (pas MCP server) | Endpoint public https://www.simap.ch/api, pas besoin de MCP server pour integration serveur |
+| 2026-04-03 | Parsing XML search.ch avec regex | Reponse Atom feed, extraction tel:phone/street/zip/city par regex (pas de parser XML lourd) |
+| 2026-04-03 | Import batch insert 500 rows max | Limite Supabase par requete, boucle si plus |
