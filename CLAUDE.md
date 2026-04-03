@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 2 termine, Jour 3-4 a venir (specs revisees)
-**Derniere mise a jour :** 2026-04-02
+**Statut :** Phase A — Jour 3-4 termine, Jour 5 a venir
+**Derniere mise a jour :** 2026-04-03
 **Prochain bug :** #001
-**Session precedente :** G36 — Revue UX complete + specs prospection + architecture donnees multi-sources
+**Session precedente :** Phase A Jour 3-4 — Layout sidebar + design system FilmPro + pages CRM core (Contacts, Entreprises, Dashboard)
 
 ---
 
@@ -80,7 +80,7 @@ Pilotage depuis le terminal via Claude Code skills.
 ### Phase A — Migration CRM FilmPro (jours 1-9)
 - Jour 1 : Init SvelteKit + Supabase + Tailwind + Auth Google OAuth + deploy Vercel ✓
 - Jour 2 : Schema BDD — migration tables Sheets -> PostgreSQL + RLS ✓
-- Jour 3-4 : Layout + design system + pages Contacts + Entreprises + Dashboard
+- Jour 3-4 : Layout + design system + pages Contacts + Entreprises + Dashboard ✓
 - Jour 5 : Pipeline kanban + opportunites + signaux d'affaires
 - Jour 6 : Prospection multi-sources (table prospect_leads, UI, scoring, dedup, batch)
 - Jour 7 : Integration APIs (Zefix/LINDAS, SIMAP, search.ch, SITG)
@@ -152,47 +152,43 @@ Pilotage depuis le terminal via Claude Code skills.
 - `docs/USER_GUIDE_DRAFT.md` — Guide utilisateur, alimente au fil du dev
 - `docs/MAINTAINER_GUIDE_DRAFT.md` — Guide mainteneur, alimente au fil du dev
 
+## EN PLACE (Jour 3-4)
+
+- **Design system** : CSS variables primary/accent, font DM Sans, Material Symbols icons
+- **Layout** : sidebar 220px collapsible (56px) + header 48px, groupe route `(app)/`
+- **7 composants** : `src/lib/components/` — DataTable, SlideOut, ModalForm, FormField, Badge, EmptyState, Header, Sidebar
+- **Page Contacts** : CRUD complet (create/update/archive), DataTable tri/recherche, SlideOut detail, ModalForm 6 champs
+- **Page Entreprises** : CRUD complet (create/update/delete), contacts rattaches dans SlideOut
+- **Dashboard** : 4 stats cards, relances du jour, derniere activite, raccourcis
+- **Pages placeholder** : Pipeline, Prospection, Signaux, Aide
+
 ## OBJECTIF PROCHAINE SESSION
 
-Phase A Jour 3-4 : Layout + pages CRM core.
+Phase A Jour 5 : Pipeline kanban + opportunites.
 
-**Etape 1 — Layout + design system**
-- CSS variables FilmPro (primary #152A45, accent #3B6CB7, font DM Sans)
-- Sidebar 220px (collapsible 56px) avec nav : Dashboard, Contacts, Entreprises, Pipeline, Prospection, Signaux
-- Header 48px avec user info + deconnexion
-- Page Aide vide (route `/aide`, placeholder)
+**Etape 1 — Page Pipeline**
+- Vue kanban des opportunites par etape_pipeline (colonnes draggables)
+- Etapes : Identification, Qualification, Proposition, Negociation, Gagne, Perdu
+- Carte opportunite : titre, entreprise, montant, date relance, badge etape
+- Drag & drop pour changer d'etape (update Supabase)
 
-**Etape 2 — Composants reutilisables**
-- DataTable (tri, recherche, selection multiple, pagination)
-- SlideOut panel (detail sans quitter la liste)
-- ModalForm (saisie rapide + accordeon details)
-- FilterBar (multi-select, recherche texte, date range)
-- Badges (score, statut, prescripteur)
-- EmptyState, ActivityTimeline
+**Etape 2 — CRUD Opportunites**
+- ModalForm creation/edition opportunite (titre, contact, entreprise, montant, etape, date relance)
+- Lien vers contact et entreprise dans le SlideOut detail
+- Filtres par etape, responsable, montant
 
-**Etape 3 — Pages contacts**
-- `/contacts` : liste avec DataTable + filtres + recherche
-- Click → SlideOut fiche detail (timeline activites, opportunites liees, stats prescripteur)
-- Bouton "Ajouter" → ModalForm saisie rapide (6 champs) + accordeon
-- CRUD complet avec donnees Supabase
+**Etape 3 — Signaux d'affaires**
+- `/signaux` : liste DataTable des signaux detectes
+- SlideOut detail avec infos projet, maitre d'ouvrage, source
+- Action "Creer opportunite" depuis un signal
+- Filtres par type, canton, statut
 
-**Etape 4 — Pages entreprises**
-- `/entreprises` : meme pattern que contacts
-- Fiche detail avec contacts rattaches + opportunites
-
-**Etape 5 — Dashboard**
-- Stats cards (opportunites, relances, signaux, prescripteurs)
-- Bandeau relances du jour
-- Derniere activite equipe (5 lignes)
-- Raccourcis navigation
-
-**Etape 6 — Deploy + verification**
+**Etape 4 — Deploy + verification**
 
 **Prerequis :**
-- Specs wizard validees (table SPECS dans Google Sheets, app_key "filmpro-crm", step 4)
-- Design system FilmPro : primary #152A45, accent #3B6CB7, font DM Sans, sidebar 220px
-- Types TS : `src/lib/database.types.ts`
-- Objectif mesurable : CRUD contacts fonctionnel, navigation sidebar, donnees reelles Supabase
+- Composants existants : DataTable, SlideOut, ModalForm, Badge
+- Types TS : `src/lib/database.types.ts` (tables opportunites, signaux_affaires)
+- Objectif mesurable : pipeline kanban fonctionnel, CRUD opportunites, signaux consultables
 
 ---
 
