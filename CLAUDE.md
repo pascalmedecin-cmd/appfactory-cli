@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 9 termine, Phase B a venir
+**Statut :** Phase A — Jour 9 termine + polish UX, Phase B a venir
 **Derniere mise a jour :** 2026-04-03
 **Prochain bug :** #001
-**Session precedente :** Jour 9 — Page Aide integree (sommaire + recherche + IntersectionObserver), extraction template (project.yaml + config.ts), scoring/sidebar/pipeline/lindas migres vers config, env vars Vercel prod (SEARCH_CH_API_KEY + CRON_SECRET)
+**Session precedente :** UX polish — toasts notifications (21 form actions), animations SlideOut/ModalForm, coherence design tokens (login + dashboard + prospection), focus visible CSS, nettoyage ActionData inutilise. Decision : pas de Figma Pro ni shadcn/ui migration, ameliorations ciblees de l'existant
 
 ---
 
@@ -160,7 +160,9 @@ Pilotage depuis le terminal via Claude Code skills.
 
 - **Design system** : CSS variables primary/accent, font DM Sans, Material Symbols icons
 - **Layout** : sidebar 220px collapsible (56px) + header 48px, groupe route `(app)/`, responsive mobile (burger menu + overlay)
-- **7 composants** : `src/lib/components/` — DataTable (selectable avec $bindable), SlideOut, ModalForm, FormField, Badge, EmptyState, Header, Sidebar
+- **9 composants** : `src/lib/components/` — DataTable (selectable avec $bindable), SlideOut (anime slide-in), ModalForm (anime scale), FormField, Badge, EmptyState, Header, Sidebar, Toast (notifications succes/erreur/warning/info)
+- **Toast store** : `src/lib/stores/toast.ts` — store Svelte avec methodes success/error/warning/info, auto-dismiss 4-6s
+- **Focus visible** : CSS global (app.css) — outline accent sur boutons/liens en navigation clavier
 - **Validation** : `src/lib/schemas.ts` — 18+ schemas Zod (contacts, entreprises, opportunites, signaux, leads, recherches) + helper `validate()`
 - **Scoring** : `src/lib/scoring.ts` — calcul 0-13 points (canton, secteur, signal, recence, tel, montant)
 - **Page Contacts** : CRUD complet (create/update/archive), DataTable tri/recherche, SlideOut detail, ModalForm 6 champs
@@ -181,19 +183,21 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## OBJECTIF PROCHAINE SESSION
 
-Phase B Jour 1-2 : Design system Figma (composants de base, tokens).
-
-**Alternative si Figma pas prioritaire :** Continuer l'extraction template :
-- Migrer les pages restantes (contacts, entreprises, signaux, dashboard, prospection) pour lire config.ts la ou c'est pertinent (types signaux, etc.)
+Continuer l'extraction template :
 - Script de generation config.ts depuis project.yaml (eviter maintenance manuelle des deux fichiers)
+- Migrer les pages restantes (contacts, entreprises, signaux, dashboard, prospection) pour lire config.ts
 - Finaliser les sections "A documenter" du USER_GUIDE_DRAFT.md (Connexion details, Dashboard, Contacts, Entreprises, Parametres)
 
 **En attente :**
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
 
+**Decisions session :**
+- Figma Pro non necessaire pour le workflow actuel (pas de client qui attend des maquettes, pas de gain tokens)
+- Pas de migration shadcn/ui (risque regression, version Svelte moins mature), ameliorations ciblees a la place
+- Objectif design best-in-class : references visuelles + bonnes pratiques UI directement dans le code
+
 **Prerequis :**
-- Acces Figma Pro si Phase B
-- Objectif mesurable : design system Figma avec au moins composants Button, Input, Card, Badge OU script yaml→config.ts fonctionnel
+- Objectif mesurable : script yaml→config.ts fonctionnel
 
 ---
 
