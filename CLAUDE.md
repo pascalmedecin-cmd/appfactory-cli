@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 7 termine, Jour 8 a venir
+**Statut :** Phase A — Jour 8 termine, Jour 9 a venir
 **Derniere mise a jour :** 2026-04-03
 **Prochain bug :** #001
-**Session precedente :** Phase A Jour 7 — Integration APIs prospection (LINDAS SPARQL fonctionnel, SIMAP fonctionnel, Zefix REST pret, search.ch pret, UI import modal 3 sources + enrichissement telephone)
+**Session precedente :** Phase A Jour 8 — Recherches sauvegardees (CRUD + UI), alertes cron, responsive mobile, rate limiting, tests Vitest (34) + Playwright, cle API search.ch configuree
 
 ---
 
@@ -84,7 +84,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - Jour 5 : Pipeline kanban + opportunites + signaux d'affaires ✓
 - Jour 6 : Prospection multi-sources (table prospect_leads, UI, scoring, dedup, batch) ✓
 - Jour 7 : Integration APIs (LINDAS, SIMAP fonctionnels + Zefix, search.ch prets) ✓
-- Jour 8 : Alertes automatiques + recherches sauvegardees + responsive + tests
+- Jour 8 : Recherches sauvegardees + alertes cron + responsive + rate limiting + tests ✓
 - Jour 9 : Page Aide (doc utilisateur integree) + extraction template reutilisable
 
 ### Phase B — Plugin Figma + Outillage (jours 1-5, parallele)
@@ -145,8 +145,10 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Supabase CLI** : v2.84.2, projet linke (fmflvjubjtpidvxwhqab)
 - **BDD** : 10 tables PostgreSQL (+ prospect_leads, recherches_sauvegardees), FK, index, RLS (authenticated full access), types TS generes
 - **Zefix REST** : Pascal a repondu a zefix@bj.admin.ch (username pascal@filmpro.ch), en attente du mot de passe (plusieurs jours)
-- **search.ch** : cle API demandee, reception sous 2 jours ouvres (env var SEARCH_CH_API_KEY)
-- **Securite** : email provider desactive (Google OAuth only), validation Zod sur toutes les form actions (16 actions, 4+1 pages), dep Zod v4
+- **search.ch** : cle API configuree en local (.env), **a configurer sur Vercel prod**
+- **Securite** : email provider desactive (Google OAuth only), validation Zod sur toutes les form actions (18 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*
+- **Tests** : Vitest (34 tests : scoring + schemas + validation) + Playwright (5 tests e2e : navigation + auth redirect)
+- **Cron** : `/api/cron/alertes` quotidien 7h (vercel.json), securise par CRON_SECRET
 
 ## DOCUMENTATION
 
@@ -154,62 +156,52 @@ Pilotage depuis le terminal via Claude Code skills.
 - `docs/USER_GUIDE_DRAFT.md` — Guide utilisateur, alimente au fil du dev
 - `docs/MAINTAINER_GUIDE_DRAFT.md` — Guide mainteneur, alimente au fil du dev
 
-## EN PLACE (Jour 7)
+## EN PLACE (Jour 8)
 
 - **Design system** : CSS variables primary/accent, font DM Sans, Material Symbols icons
-- **Layout** : sidebar 220px collapsible (56px) + header 48px, groupe route `(app)/`
+- **Layout** : sidebar 220px collapsible (56px) + header 48px, groupe route `(app)/`, responsive mobile (burger menu + overlay)
 - **7 composants** : `src/lib/components/` — DataTable (selectable avec $bindable), SlideOut, ModalForm, FormField, Badge, EmptyState, Header, Sidebar
-- **Validation** : `src/lib/schemas.ts` — 16+ schemas Zod (contacts, entreprises, opportunites, signaux, leads) + helper `validate()`
+- **Validation** : `src/lib/schemas.ts` — 18+ schemas Zod (contacts, entreprises, opportunites, signaux, leads, recherches) + helper `validate()`
 - **Scoring** : `src/lib/scoring.ts` — calcul 0-13 points (canton, secteur, signal, recence, tel, montant)
 - **Page Contacts** : CRUD complet (create/update/archive), DataTable tri/recherche, SlideOut detail, ModalForm 6 champs
 - **Page Entreprises** : CRUD complet (create/update/delete), contacts rattaches dans SlideOut
-- **Dashboard** : 4 stats cards, relances du jour, derniere activite, raccourcis
+- **Dashboard** : 4 stats cards, relances du jour, derniere activite, raccourcis, bandeau alertes prospection (nouveaux leads)
 - **Page Pipeline** : Vue kanban 6 colonnes (Identification→Perdu), drag & drop HTML5 natif, total montant/colonne, CRUD opportunites (create/update/archive), SlideOut detail avec liens contact/entreprise, relances en retard en rouge
 - **Page Signaux** : DataTable avec 3 filtres (type/canton/statut), SlideOut detail, CRUD signal, action "Creer opportunite" (conversion + redirect pipeline), action "Ecarter", 5 statuts (nouveau/en_analyse/interesse/ecarte/converti)
-- **Page Prospection** : DataTable selectable, 4 filtres (source/canton/statut/score), SlideOut detail avec scoring detaille, creation manuelle, actions unitaires + batch (interesse/ecarter), transfert vers CRM (cree entreprise + contact), dedup source+source_id
+- **Page Prospection** : DataTable selectable, 4 filtres (source/canton/statut/score), SlideOut detail avec scoring detaille, creation manuelle, actions unitaires + batch (interesse/ecarter), transfert vers CRM (cree entreprise + contact), dedup source+source_id, recherches sauvegardees (save/load/delete), alertes avec compteur nouveaux leads
 - **API Prospection** : 4 routes API dans `src/routes/api/prospection/`
   - `lindas/` — SPARQL registre du commerce par canton + mots-cles (fonctionnel, teste)
   - `simap/` — Marches publics construction par canton + periode (fonctionnel, teste)
   - `zefix/` — Import bulk registre du commerce complet (pret, attend env vars ZEFIX_USERNAME/PASSWORD)
-  - `search-ch/` — Enrichissement telephone par lead (pret, attend env var SEARCH_CH_API_KEY)
+  - `search-ch/` — Enrichissement telephone par lead (cle API configuree en local)
+- **API Cron** : `src/routes/api/cron/alertes/` — execution recherches sauvegardees, comptage nouveaux leads
 - **UI Import** : modal 3 sources (LINDAS, Zefix, SIMAP), bouton "Enrichir telephone" dans SlideOut, notifications succes/erreur
 - **Pages placeholder** : Aide
 
 ## OBJECTIF PROCHAINE SESSION
 
-Phase A Jour 8 : Alertes automatiques + recherches sauvegardees + responsive + tests.
+Phase A Jour 9 : Page Aide (doc utilisateur integree) + extraction template reutilisable.
 
-**Etape 1 — Recherches sauvegardees**
-- Table `recherches_sauvegardees` deja en place (BDD)
-- UI : bouton "Sauvegarder cette recherche" dans les filtres prospection
-- CRUD : creer, lister, charger, supprimer une recherche sauvegardee
+**Etape 1 — Page Aide**
+- Integrer le contenu de USER_GUIDE_DRAFT.md dans la page `/aide`
+- Navigation par sections (sommaire cliquable)
+- Recherche dans l'aide
 
-**Etape 2 — Alertes automatiques**
-- Cron Vercel (quotidien/hebdomadaire) qui execute les recherches sauvegardees
-- Notification dans le dashboard si nouveaux leads depuis la derniere execution
-- Marquer les leads detectes par alerte
+**Etape 2 — Extraction template reutilisable**
+- Identifier les parties specifiques FilmPro (scoring secteurs, sources, etc.)
+- Extraire la config client dans un fichier `project.yaml` ou equivalent
+- Rendre le template generique (colonnes pipeline, scoring, sources configurables)
 
-**Etape 3 — Responsive**
-- Sidebar collapsible sur mobile (burger menu)
-- DataTable responsive (scroll horizontal ou layout cards sur mobile)
-- Modal et SlideOut adaptes petit ecran
-
-**Etape 4 — Rate limiting**
-- sveltekit-rate-limiter ou compteur IP dans hooks.server.ts
-- Proteger les API routes /api/prospection/*
-
-**Etape 5 — Tests**
-- Vitest : scoring, validation Zod, helpers
-- Playwright : navigation, CRUD contacts, pipeline drag & drop
-
-**Etape 6 — Activation credentials** (si recus)
+**Etape 3 — Activation credentials** (si recus)
 - Zefix : configurer ZEFIX_USERNAME/PASSWORD dans Vercel env vars, tester import
-- search.ch : configurer SEARCH_CH_API_KEY, tester enrichissement telephone
+- search.ch : configurer SEARCH_CH_API_KEY **sur Vercel prod** (deja en local)
+
+**Etape 4 — Configurer CRON_SECRET sur Vercel**
+- Generer un secret, `vercel env add CRON_SECRET`
 
 **Prerequis :**
-- Credentials Zefix (en attente, plusieurs jours)
-- Cle API search.ch (en attente, 2 jours ouvres)
-- Objectif mesurable : recherches sauvegardees + au moins 1 test Vitest + 1 test Playwright
+- Credentials Zefix (en attente)
+- Objectif mesurable : page Aide fonctionnelle + au moins 1 config extraite dans project.yaml
 
 ---
 

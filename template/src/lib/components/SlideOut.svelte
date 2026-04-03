@@ -31,8 +31,8 @@
 
 	<!-- Panel -->
 	<div
-		class="fixed top-0 right-0 h-full bg-white shadow-xl z-50 flex flex-col overflow-hidden"
-		style="width: {width}"
+		class="fixed top-0 right-0 h-full bg-white shadow-xl z-50 flex flex-col overflow-hidden w-full md:w-auto"
+		style="max-width: 100vw; --panel-width: {width}"
 	>
 		<div class="h-(--header-height) flex items-center justify-between px-5 border-b border-border shrink-0">
 			<h2 class="font-semibold text-text">{title}</h2>
@@ -51,3 +51,11 @@
 		</div>
 	</div>
 {/if}
+
+<style>
+	@media (min-width: 768px) {
+		div[style*="--panel-width"] {
+			width: var(--panel-width, 480px);
+		}
+	}
+</style>

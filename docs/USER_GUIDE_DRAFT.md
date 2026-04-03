@@ -32,10 +32,10 @@
 
 ## 2. Navigation
 
-*A documenter lors de l'implementation.*
-
-- Sidebar : acces rapide aux sections principales
-- Raccourcis clavier
+- **Sidebar gauche** : acces rapide aux 6 sections (Dashboard, Contacts, Entreprises, Pipeline, Prospection, Signaux) + Aide
+- **Reduire la sidebar** : cliquer la fleche en bas de la sidebar pour la reduire (icones seules)
+- **Sur mobile** : la sidebar est masquee par defaut. Cliquer l'icone menu (hamburger) en haut a gauche pour l'ouvrir en overlay. Elle se ferme automatiquement apres navigation
+- **Deconnexion** : bouton en haut a droite (email visible sur ecran large)
 
 ---
 
@@ -139,20 +139,34 @@ La page Prospection centralise les leads B2B issus de sources publiques suisses 
 - Cliquer "Enrichir telephone" (bouton jaune)
 - Le systeme cherche dans l'annuaire suisse (search.ch) et met a jour la fiche si un numero est trouve
 - Le score est recalcule automatiquement (+1 point si telephone trouve)
-- *Necessite la cle API search.ch (en cours de configuration)*
 
 ### 7.8 Sauvegarder une recherche
-*A venir*
+- Configurer les filtres souhaites (source, canton, statut, score minimum)
+- Cliquer "Sauvegarder" a droite de la barre de filtres
+- Donner un nom a la recherche (ex: "Construction GE score 5+")
+- Choisir la frequence d'alerte : quotidienne ou hebdomadaire
+- Cocher "Alerte active" pour recevoir les notifications
+- Cliquer "Enregistrer"
 
-### 7.9 Alertes automatiques
-*A venir*
+### 7.9 Charger une recherche sauvegardee
+- Cliquer "Recherches (N)" a droite de la barre de filtres
+- La liste des recherches sauvegardees apparait avec leurs criteres
+- Cliquer sur le nom d'une recherche pour charger ses filtres
+- Un badge orange indique le nombre de nouveaux leads depuis le dernier check
+- Supprimer une recherche avec l'icone poubelle
 
-### 7.10 Selection multiple et actions batch
+### 7.10 Alertes automatiques
+- Les recherches sauvegardees avec "alerte active" sont executees automatiquement (quotidien a 7h ou hebdomadaire)
+- Si de nouveaux leads correspondent aux criteres, un bandeau apparait sur le tableau de bord
+- Cliquer le bandeau pour acceder directement a la page prospection
+- Le compteur de nouveaux leads est visible dans la liste des recherches sauvegardees
+
+### 7.11 Selection multiple et actions batch
 - Cocher plusieurs leads avec les cases a cocher a gauche
 - La barre d'actions apparait : "Interesse" ou "Ecarter" en lot
 - "Deselectionner" pour tout annuler
 
-### 7.11 Raccourcis clavier prospection
+### 7.12 Raccourcis clavier prospection
 *A venir*
 
 ---

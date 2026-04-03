@@ -22,6 +22,12 @@
 	let enriching = $state(false);
 	let importResult = $state<{ message: string; type: 'success' | 'error' } | null>(null);
 	let selectedIds = $state<Set<string>>(new Set());
+	let saveSearchOpen = $state(false);
+	let saveSearchName = $state('');
+	let saveSearchAlerte = $state(true);
+	let saveSearchFrequence = $state('quotidien');
+	let savingSearch = $state(false);
+	let recherchesOpen = $state(false);
 
 	// Import form
 	let importCanton = $state('GE');
@@ -230,6 +236,18 @@
 		montant = ''; date_publication = '';
 	}
 
+	type Recherche = (typeof data.recherches)[number];
+
+	function chargerRecherche(r: Recherche) {
+		if (r.sources?.length === 1) filterSource = r.sources[0];
+		else filterSource = '';
+		if (r.cantons?.length === 1) filterCanton = r.cantons[0];
+		else filterCanton = '';
+		filterScoreMin = r.score_minimum ? String(r.score_minimum) : '';
+		filterStatut = '';
+		recherchesOpen = false;
+	}
+
 	function getScoreDetail(lead: Lead) {
 		return calculerScore({
 			canton: lead.canton,
@@ -302,7 +320,128 @@
 			<option value="5">Tiede+ (5+)</option>
 			<option value="2">Froid+ (2+)</option>
 		</select>
+		<div class="ml-auto flex items-center gap-2">
+			<button
+				onclick={() => saveSearchOpen = !saveSearchOpen}
+				class="flex items-center gap-1 px-3 py-1.5 text-sm text-accent border border-accent rounded-md hover:bg-accent/10 cursor-pointer"
+			>
+				<span class="material-symbols-outlined text-[16px]">bookmark_add</span>
+				Sauvegarder
+			</button>
+			{#if data.recherches.length > 0}
+				<button
+					onclick={() => recherchesOpen = !recherchesOpen}
+					class="flex items-center gap-1 px-3 py-1.5 text-sm text-text border border-border rounded-md hover:bg-surface-alt cursor-pointer"
+				>
+					<span class="material-symbols-outlined text-[16px]">bookmarks</span>
+					Recherches ({data.recherches.length})
+				</button>
+			{/if}
+		</div>
 	</div>
+
+	<!-- Formulaire sauvegarde recherche -->
+	{#if saveSearchOpen}
+		<form
+			method="POST"
+			action="?/saveRecherche"
+			class="p-3 bg-accent/5 rounded-lg border border-accent/20"
+			use:enhance={() => {
+				savingSearch = true;
+				return async ({ update }) => {
+					savingSearch = false;
+					saveSearchOpen = false;
+					saveSearchName = '';
+					await update();
+				};
+			}}
+		>
+			<div class="flex flex-wrap items-end gap-3">
+				<div class="flex-1 min-w-48">
+					<label class="block text-xs font-medium text-text mb-1">Nom de la recherche</label>
+					<input
+						type="text"
+						name="nom"
+						bind:value={saveSearchName}
+						placeholder="Ex: Construction GE score 5+"
+						required
+						class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white"
+					/>
+				</div>
+				<div>
+					<label class="block text-xs font-medium text-text mb-1">Alerte</label>
+					<select name="frequence_alerte" bind:value={saveSearchFrequence} class="px-3 py-1.5 text-sm border border-border rounded-md bg-white">
+						<option value="quotidien">Quotidienne</option>
+						<option value="hebdomadaire">Hebdomadaire</option>
+					</select>
+				</div>
+				<label class="flex items-center gap-2 text-sm text-text cursor-pointer">
+					<input type="checkbox" bind:checked={saveSearchAlerte} />
+					Alerte active
+				</label>
+				<!-- Hidden fields for current filters -->
+				<input type="hidden" name="sources" value={filterSource ? JSON.stringify([filterSource]) : ''} />
+				<input type="hidden" name="cantons" value={filterCanton ? JSON.stringify([filterCanton]) : ''} />
+				<input type="hidden" name="score_minimum" value={filterScoreMin} />
+				<input type="hidden" name="alerte_active" value={String(saveSearchAlerte)} />
+				<button
+					type="submit"
+					disabled={savingSearch || !saveSearchName}
+					class="px-4 py-1.5 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-md disabled:opacity-50 cursor-pointer"
+				>
+					{savingSearch ? 'Enregistrement...' : 'Enregistrer'}
+				</button>
+				<button
+					type="button"
+					onclick={() => saveSearchOpen = false}
+					class="px-3 py-1.5 text-sm text-text-muted hover:text-text cursor-pointer"
+				>
+					Annuler
+				</button>
+			</div>
+		</form>
+	{/if}
+
+	<!-- Liste recherches sauvegardees -->
+	{#if recherchesOpen}
+		<div class="p-3 bg-surface rounded-lg border border-border space-y-2">
+			<div class="flex items-center justify-between mb-1">
+				<h3 class="text-sm font-semibold text-text">Recherches sauvegardees</h3>
+				<button onclick={() => recherchesOpen = false} class="text-sm text-text-muted hover:text-text cursor-pointer">Fermer</button>
+			</div>
+			{#each data.recherches as rech}
+				<div class="flex items-center justify-between p-2 rounded bg-white border border-border/50">
+					<div class="flex items-center gap-3">
+						<button
+							onclick={() => chargerRecherche(rech)}
+							class="text-sm font-medium text-accent hover:underline cursor-pointer"
+						>
+							{rech.nom}
+						</button>
+						<span class="text-xs text-text-muted">
+							{[
+								rech.sources?.length ? rech.sources.join(', ') : null,
+								rech.cantons?.length ? rech.cantons.join(', ') : null,
+								rech.score_minimum ? `score ${rech.score_minimum}+` : null,
+							].filter(Boolean).join(' · ') || 'Tous filtres'}
+						</span>
+						{#if rech.alerte_active}
+							<span class="text-xs px-1.5 py-0.5 rounded bg-accent/10 text-accent">{rech.frequence_alerte}</span>
+						{/if}
+						{#if rech.nb_nouveaux && rech.nb_nouveaux > 0}
+							<span class="text-xs px-1.5 py-0.5 rounded bg-warning/20 text-warning font-medium">{rech.nb_nouveaux} nouveau{rech.nb_nouveaux > 1 ? 'x' : ''}</span>
+						{/if}
+					</div>
+					<form method="POST" action="?/deleteRecherche" use:enhance>
+						<input type="hidden" name="id" value={rech.id} />
+						<button type="submit" class="text-text-muted hover:text-danger cursor-pointer" title="Supprimer">
+							<span class="material-symbols-outlined text-[16px]">delete</span>
+						</button>
+					</form>
+				</div>
+			{/each}
+		</div>
+	{/if}
 
 	<!-- Notification import/enrichissement -->
 	{#if importResult}

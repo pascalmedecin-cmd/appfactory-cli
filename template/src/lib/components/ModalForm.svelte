@@ -42,8 +42,8 @@
 	></button>
 
 	<!-- Modal -->
-	<div class="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-		<div class="bg-white rounded-xl shadow-2xl w-full max-w-lg pointer-events-auto flex flex-col max-h-[85vh]">
+	<div class="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 pointer-events-none">
+		<div class="bg-white rounded-t-xl md:rounded-xl shadow-2xl w-full max-w-lg pointer-events-auto flex flex-col max-h-[90vh] md:max-h-[85vh]">
 			<div class="flex items-center justify-between px-6 py-4 border-b border-border">
 				<h2 class="text-lg font-semibold text-text">{title}</h2>
 				<button onclick={() => open = false} class="text-text-muted hover:text-text cursor-pointer">

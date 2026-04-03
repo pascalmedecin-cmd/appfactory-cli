@@ -197,6 +197,25 @@ export const LeadTransfertSchema = z.object({
 	id: z.string().uuid(),
 });
 
+// -- Recherches sauvegardees --
+
+export const FREQUENCES_ALERTE = ['quotidien', 'hebdomadaire'] as const;
+
+export const RechercheCreateSchema = z.object({
+	nom: z.string().min(1, 'Le nom est requis').max(200),
+	sources: z.array(z.enum(SOURCES_LEAD)).optional(),
+	cantons: z.array(z.enum(CANTONS_LEAD)).optional(),
+	mots_cles: z.array(z.string().max(100)).optional(),
+	secteurs: z.array(z.string().max(100)).optional(),
+	score_minimum: z.coerce.number().int().min(0).max(13).optional(),
+	alerte_active: z.boolean().optional(),
+	frequence_alerte: z.enum(FREQUENCES_ALERTE).optional(),
+});
+
+export const RechercheDeleteSchema = z.object({
+	id: z.string().uuid(),
+});
+
 // -- Generic validation helper --
 
 export function validate<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {

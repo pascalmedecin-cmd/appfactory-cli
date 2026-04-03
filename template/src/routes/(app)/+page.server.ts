@@ -3,7 +3,7 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ locals }) => {
 	const today = new Date().toISOString().split('T')[0];
 
-	const [contactsRes, entreprisesRes, opportunitesRes, relancesRes, activitesRes, signauxRes] = await Promise.all([
+	const [contactsRes, entreprisesRes, opportunitesRes, relancesRes, activitesRes, signauxRes, alertesRes] = await Promise.all([
 		locals.supabase.from('contacts').select('*', { count: 'exact', head: true }).eq('statut_archive', false),
 		locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }),
 		locals.supabase.from('opportunites').select('*', { count: 'exact', head: true }),
@@ -19,6 +19,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 		locals.supabase.from('signaux_affaires')
 			.select('*', { count: 'exact', head: true })
 			.eq('statut_traitement', 'nouveau'),
+		locals.supabase.from('recherches_sauvegardees')
+			.select('nom, nb_nouveaux, frequence_alerte')
+			.eq('alerte_active', true)
+			.gt('nb_nouveaux', 0),
 	]);
 
 	return {
@@ -30,5 +34,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 		},
 		relances: relancesRes.data ?? [],
 		activitesRecentes: activitesRes.data ?? [],
+		alertes: alertesRes.data ?? [],
 	};
 };

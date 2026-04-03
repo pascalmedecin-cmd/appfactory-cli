@@ -101,7 +101,7 @@ template/
 
 ### 4.2 Tables Prospection (en place)
 - prospect_leads — leads unifies multi-sources, scoring, dedup (UNIQUE source+source_id)
-- recherches_sauvegardees — criteres sauvegardes pour alertes (a venir)
+- recherches_sauvegardees — criteres sauvegardes pour alertes (CRUD + UI en place, cron quotidien)
 
 ### 4.3 Regenerer les types TypeScript
 ```bash
@@ -129,7 +129,8 @@ npx supabase gen types typescript --project-id fmflvjubjtpidvxwhqab > src/lib/da
 
 - **Preview :** Push sur branche → Vercel deploy auto
 - **Production :** Push sur `main` → https://template-rho-three.vercel.app
-- **Variables d'env :** PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY (configurees dans Vercel)
+- **Variables d'env :** PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, CRON_SECRET, SEARCH_CH_API_KEY (configurees dans Vercel)
+- **Cron :** `/api/cron/alertes` execute quotidiennement a 7h (vercel.json), securise par CRON_SECRET
 
 ---
 
@@ -149,7 +150,8 @@ npx supabase gen types typescript --project-id fmflvjubjtpidvxwhqab > src/lib/da
 |----------|---------|--------|
 | `ZEFIX_USERNAME` | Zefix REST Basic Auth | En attente (demande envoyee) |
 | `ZEFIX_PASSWORD` | Zefix REST Basic Auth | En attente |
-| `SEARCH_CH_API_KEY` | search.ch annuaire | En attente (demande envoyee) |
+| `SEARCH_CH_API_KEY` | search.ch annuaire | Configure (.env local) |
+| `CRON_SECRET` | Cron alertes | A configurer sur Vercel |
 
 Configurer dans Vercel : `vercel env add ZEFIX_USERNAME` (production + preview).
 
@@ -196,3 +198,8 @@ Voir `docs/SPECS_PROSPECTION.md` section 5. Modifier la fonction `calculerScore(
 | 2026-04-03 | API SIMAP directe (pas MCP server) | Endpoint public https://www.simap.ch/api, pas besoin de MCP server pour integration serveur |
 | 2026-04-03 | Parsing XML search.ch avec regex | Reponse Atom feed, extraction tel:phone/street/zip/city par regex (pas de parser XML lourd) |
 | 2026-04-03 | Import batch insert 500 rows max | Limite Supabase par requete, boucle si plus |
+| 2026-04-03 | Recherches sauvegardees CRUD + alertes cron | Table existante, actions form save/delete, cron Vercel quotidien 7h |
+| 2026-04-03 | Rate limiting in-memory hooks.server.ts | 10 req/min/IP sur /api/prospection/*, nettoyage periodique, pas de dep externe |
+| 2026-04-03 | Responsive sidebar mobile (burger + overlay) | Sidebar masquee < 768px, Header avec bouton menu, modals bottom-sheet sur mobile |
+| 2026-04-03 | Vitest + Playwright | 34 tests unitaires (scoring + schemas + validation), tests e2e navigation/auth redirect |
+| 2026-04-03 | Cron securise par CRON_SECRET env var | Dynamic import $env/dynamic/private, Vercel cron injecte le Bearer token |

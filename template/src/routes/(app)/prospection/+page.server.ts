@@ -1,11 +1,11 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { randomUUID } from 'crypto';
-import { LeadCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema, extractForm, validate } from '$lib/schemas';
+import { LeadCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema, RechercheCreateSchema, RechercheDeleteSchema, extractForm, validate } from '$lib/schemas';
 import { calculerScore } from '$lib/scoring';
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const [leadsRes, entreprisesRes] = await Promise.all([
+	const [leadsRes, entreprisesRes, recherchesRes] = await Promise.all([
 		locals.supabase
 			.from('prospect_leads')
 			.select('*')
@@ -14,11 +14,16 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.from('entreprises')
 			.select('id, raison_sociale')
 			.order('raison_sociale'),
+		locals.supabase
+			.from('recherches_sauvegardees')
+			.select('*')
+			.order('date_creation', { ascending: false }),
 	]);
 
 	return {
 		leads: leadsRes.data ?? [],
 		entreprises: entreprisesRes.data ?? [],
+		recherches: recherchesRes.data ?? [],
 	};
 };
 
@@ -220,5 +225,52 @@ export const actions: Actions = {
 
 		if (upErr) return fail(400, { error: upErr.message });
 		return { success: true, entrepriseId };
+	},
+
+	saveRecherche: async ({ request, locals }) => {
+		const form = await request.formData();
+		const raw: Record<string, unknown> = {
+			nom: form.get('nom') as string,
+			sources: form.get('sources') ? JSON.parse(form.get('sources') as string) : undefined,
+			cantons: form.get('cantons') ? JSON.parse(form.get('cantons') as string) : undefined,
+			mots_cles: form.get('mots_cles') ? JSON.parse(form.get('mots_cles') as string) : undefined,
+			score_minimum: form.get('score_minimum') ? Number(form.get('score_minimum')) : undefined,
+			alerte_active: form.get('alerte_active') === 'true',
+			frequence_alerte: (form.get('frequence_alerte') as string) || 'quotidien',
+		};
+
+		const parsed = validate(RechercheCreateSchema, raw);
+		if (!parsed.success) return fail(400, { error: parsed.error });
+
+		const d = parsed.data;
+		const { error } = await locals.supabase.from('recherches_sauvegardees').insert({
+			id: randomUUID(),
+			nom: d.nom,
+			sources: d.sources || null,
+			cantons: d.cantons || null,
+			mots_cles: d.mots_cles || null,
+			secteurs: d.secteurs || null,
+			score_minimum: d.score_minimum ?? null,
+			alerte_active: d.alerte_active ?? true,
+			frequence_alerte: d.frequence_alerte || 'quotidien',
+			date_creation: new Date().toISOString(),
+		});
+
+		if (error) return fail(400, { error: error.message });
+		return { success: true };
+	},
+
+	deleteRecherche: async ({ request, locals }) => {
+		const form = await request.formData();
+		const parsed = validate(RechercheDeleteSchema, extractForm(form, ['id']));
+		if (!parsed.success) return fail(400, { error: parsed.error });
+
+		const { error } = await locals.supabase
+			.from('recherches_sauvegardees')
+			.delete()
+			.eq('id', parsed.data.id);
+
+		if (error) return fail(400, { error: error.message });
+		return { success: true };
 	},
 };
