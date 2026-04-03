@@ -4,6 +4,7 @@
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
 	import type { PageData } from './$types';
 
@@ -330,9 +331,11 @@
 				</button>
 				{#if selectedOpp.etape_pipeline !== 'perdu' && selectedOpp.etape_pipeline !== 'gagne'}
 					<form method="POST" action="?/archive" use:enhance={() => {
-						return async ({ update }) => {
+						return async ({ result, update }) => {
 							slideOutOpen = false;
 							selectedOpp = null;
+							if (result.type === 'success') toasts.success('Opportunité marquée perdue');
+							else toasts.error('Erreur lors de l\'archivage');
 							await update();
 						};
 					}}>
@@ -362,10 +365,12 @@
 		action={editMode ? '?/update' : '?/create'}
 		use:enhance={() => {
 			saving = true;
-			return async ({ update }) => {
+			return async ({ result, update }) => {
 				saving = false;
 				modalOpen = false;
 				resetForm();
+				if (result.type === 'success') toasts.success(editMode ? 'Opportunité modifiée' : 'Opportunité créée');
+				else toasts.error('Erreur lors de l\'enregistrement');
 				await update();
 			};
 		}}

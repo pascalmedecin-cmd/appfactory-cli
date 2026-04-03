@@ -34,20 +34,20 @@
 	{#if data.alertes.length > 0}
 		<a
 			href="/prospection"
-			class="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 transition-colors"
+			class="flex items-center gap-3 p-4 bg-warning-light border border-warning/30 rounded-lg hover:bg-warning-light/80 transition-colors"
 		>
-			<span class="material-symbols-outlined text-[24px] text-amber-600">notifications_active</span>
+			<span class="material-symbols-outlined text-[24px] text-warning">notifications_active</span>
 			<div class="flex-1">
-				<p class="text-sm font-semibold text-amber-800">
+				<p class="text-sm font-semibold text-text">
 					Nouveaux leads detectes
 				</p>
-				<p class="text-xs text-amber-700">
+				<p class="text-xs text-text-muted">
 					{#each data.alertes as alerte, i}
 						{alerte.nom}: {alerte.nb_nouveaux} nouveau{(alerte.nb_nouveaux ?? 0) > 1 ? 'x' : ''}{i < data.alertes.length - 1 ? ' · ' : ''}
 					{/each}
 				</p>
 			</div>
-			<span class="material-symbols-outlined text-[18px] text-amber-600">arrow_forward</span>
+			<span class="material-symbols-outlined text-[18px] text-warning">arrow_forward</span>
 		</a>
 	{/if}
 

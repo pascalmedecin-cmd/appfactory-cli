@@ -3,6 +3,7 @@
 	import type { LayoutData } from './$types';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import Header from '$lib/components/Header.svelte';
+	import Toast from '$lib/components/Toast.svelte';
 	import { page } from '$app/state';
 
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
@@ -47,6 +48,8 @@
 		{@render children()}
 	</div>
 </main>
+
+<Toast />
 
 <style>
 	@media (max-width: 767px) {

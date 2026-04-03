@@ -14,16 +14,16 @@
 	}
 </script>
 
-<div class="min-h-screen flex items-center justify-center bg-gray-50">
+<div class="min-h-screen flex items-center justify-center bg-surface-alt">
 	<div class="max-w-sm w-full space-y-8 p-8">
 		<div class="text-center">
-			<h1 class="text-3xl font-bold text-gray-900">AppFactory</h1>
-			<p class="mt-2 text-gray-600">Connectez-vous pour continuer</p>
+			<h1 class="text-3xl font-bold text-text">AppFactory</h1>
+			<p class="mt-2 text-text-muted">Connectez-vous pour continuer</p>
 		</div>
 
 		<button
 			onclick={signInWithGoogle}
-			class="w-full flex items-center justify-center gap-3 px-4 py-3 border border-gray-300 rounded-lg shadow-sm bg-white text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+			class="w-full flex items-center justify-center gap-3 px-4 py-3 border border-border rounded-lg shadow-sm bg-surface text-text hover:bg-surface-alt transition-colors cursor-pointer"
 		>
 			<svg class="w-5 h-5" viewBox="0 0 24 24">
 				<path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>

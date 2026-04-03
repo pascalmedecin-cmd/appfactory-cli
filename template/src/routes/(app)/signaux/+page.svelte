@@ -7,6 +7,7 @@
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
 	import type { PageData } from './$types';
 
@@ -311,9 +312,11 @@
 					</button>
 
 					<form method="POST" action="?/updateStatut" use:enhance={() => {
-						return async ({ update }) => {
+						return async ({ result, update }) => {
 							slideOutOpen = false;
 							selectedSignal = null;
+							if (result.type === 'success') toasts.success('Signal écarté');
+							else toasts.error('Erreur lors de la mise à jour');
 							await update();
 						};
 					}}>
@@ -344,10 +347,12 @@
 		action={editMode ? '?/update' : '?/create'}
 		use:enhance={() => {
 			saving = true;
-			return async ({ update }) => {
+			return async ({ result, update }) => {
 				saving = false;
 				modalOpen = false;
 				resetForm();
+				if (result.type === 'success') toasts.success(editMode ? 'Signal modifié' : 'Signal créé');
+				else toasts.error('Erreur lors de l\'enregistrement');
 				await update();
 			};
 		}}
@@ -435,8 +440,10 @@
 					slideOutOpen = false;
 					selectedSignal = null;
 					if (result.type === 'success') {
+						toasts.success('Opportunité créée');
 						await goto('/pipeline');
 					} else {
+						toasts.error('Erreur lors de la conversion');
 						await update();
 					}
 				};

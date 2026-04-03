@@ -5,9 +5,10 @@
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import type { PageData, ActionData } from './$types';
+	import { toasts } from '$lib/stores/toast';
+	import type { PageData } from './$types';
 
-	let { data, form: actionResult }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	type Contact = (typeof data.contacts)[number];
 
@@ -205,9 +206,11 @@
 					Modifier
 				</button>
 				<form method="POST" action="?/delete" use:enhance={() => {
-					return async ({ update }) => {
+					return async ({ result, update }) => {
 						slideOutOpen = false;
 						selectedContact = null;
+						if (result.type === 'success') toasts.success('Contact archivé');
+						else toasts.error('Erreur lors de l\'archivage');
 						await update();
 					};
 				}}>
@@ -236,10 +239,12 @@
 		action={editMode ? '?/update' : '?/create'}
 		use:enhance={() => {
 			saving = true;
-			return async ({ update }) => {
+			return async ({ result, update }) => {
 				saving = false;
 				modalOpen = false;
 				resetForm();
+				if (result.type === 'success') toasts.success(editMode ? 'Contact modifié' : 'Contact créé');
+				else toasts.error('Erreur lors de l\'enregistrement');
 				await update();
 			};
 		}}

@@ -6,10 +6,11 @@
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import type { PageData, ActionData } from './$types';
+	import { toasts } from '$lib/stores/toast';
+	import type { PageData } from './$types';
 	import { calculerScore } from '$lib/scoring';
 
-	let { data, form: actionResult }: { data: PageData; form: ActionData } = $props();
+	let { data }: { data: PageData } = $props();
 
 	type Lead = (typeof data.leads)[number];
 
@@ -348,10 +349,12 @@
 			class="p-3 bg-accent/5 rounded-lg border border-accent/20"
 			use:enhance={() => {
 				savingSearch = true;
-				return async ({ update }) => {
+				return async ({ result, update }) => {
 					savingSearch = false;
 					saveSearchOpen = false;
 					saveSearchName = '';
+					if (result.type === 'success') toasts.success('Recherche sauvegardée');
+					else toasts.error('Erreur lors de la sauvegarde');
 					await update();
 				};
 			}}
@@ -432,7 +435,13 @@
 							<span class="text-xs px-1.5 py-0.5 rounded bg-warning/20 text-warning font-medium">{rech.nb_nouveaux} nouveau{rech.nb_nouveaux > 1 ? 'x' : ''}</span>
 						{/if}
 					</div>
-					<form method="POST" action="?/deleteRecherche" use:enhance>
+					<form method="POST" action="?/deleteRecherche" use:enhance={() => {
+						return async ({ result, update }) => {
+							if (result.type === 'success') toasts.success('Recherche supprimée');
+							else toasts.error('Erreur lors de la suppression');
+							await update();
+						};
+					}}>
 						<input type="hidden" name="id" value={rech.id} />
 						<button type="submit" class="text-text-muted hover:text-danger cursor-pointer" title="Supprimer">
 							<span class="material-symbols-outlined text-[16px]">delete</span>
@@ -445,7 +454,7 @@
 
 	<!-- Notification import/enrichissement -->
 	{#if importResult}
-		<div class="flex items-center justify-between p-3 rounded-lg border {importResult.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}">
+		<div class="flex items-center justify-between p-3 rounded-lg border {importResult.type === 'success' ? 'bg-success-light border-success/30 text-success' : 'bg-danger-light border-danger/30 text-danger'}">
 			<span class="text-sm">{importResult.message}</span>
 			<button onclick={() => importResult = null} class="text-sm opacity-60 hover:opacity-100 cursor-pointer">Fermer</button>
 		</div>
@@ -456,8 +465,11 @@
 		<div class="flex items-center gap-3 p-3 bg-accent/5 rounded-lg border border-accent/20">
 			<span class="text-sm font-medium text-text">{selectedIds.size} selectionne{selectedIds.size > 1 ? 's' : ''}</span>
 			<form method="POST" action="?/batchStatut" use:enhance={() => {
-				return async ({ update }) => {
+				const count = selectedIds.size;
+				return async ({ result, update }) => {
 					selectedIds = new Set();
+					if (result.type === 'success') toasts.success(`${count} lead${count > 1 ? 's' : ''} marqué${count > 1 ? 's' : ''} intéressé${count > 1 ? 's' : ''}`);
+					else toasts.error('Erreur lors de la mise à jour');
 					await update();
 				};
 			}}>
@@ -468,8 +480,11 @@
 				</button>
 			</form>
 			<form method="POST" action="?/batchStatut" use:enhance={() => {
-				return async ({ update }) => {
+				const count = selectedIds.size;
+				return async ({ result, update }) => {
 					selectedIds = new Set();
+					if (result.type === 'success') toasts.success(`${count} lead${count > 1 ? 's' : ''} écarté${count > 1 ? 's' : ''}`);
+					else toasts.error('Erreur lors de la mise à jour');
 					await update();
 				};
 			}}>
@@ -609,7 +624,7 @@
 				<button
 					onclick={() => enrichirTelephone(selectedLead!.id)}
 					disabled={enriching}
-					class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded-lg hover:bg-amber-100 disabled:opacity-50 cursor-pointer"
+					class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-warning bg-warning-light border border-warning/30 rounded-lg hover:bg-warning-light/80 disabled:opacity-50 cursor-pointer"
 				>
 					<span class="material-symbols-outlined text-[16px]">phone_forwarded</span>
 					{enriching ? 'Recherche...' : 'Enrichir telephone'}
@@ -621,9 +636,11 @@
 				<div class="flex flex-wrap gap-3 pt-4 border-t border-border">
 					{#if selectedLead.statut !== 'interesse'}
 						<form method="POST" action="?/updateStatut" use:enhance={() => {
-							return async ({ update }) => {
+							return async ({ result, update }) => {
 								slideOutOpen = false;
 								selectedLead = null;
+								if (result.type === 'success') toasts.success('Lead marqué intéressé');
+								else toasts.error('Erreur lors de la mise à jour');
 								await update();
 							};
 						}}>
@@ -637,9 +654,11 @@
 					{/if}
 					{#if selectedLead.statut !== 'ecarte'}
 						<form method="POST" action="?/updateStatut" use:enhance={() => {
-							return async ({ update }) => {
+							return async ({ result, update }) => {
 								slideOutOpen = false;
 								selectedLead = null;
+								if (result.type === 'success') toasts.success('Lead écarté');
+								else toasts.error('Erreur lors de la mise à jour');
 								await update();
 							};
 						}}>
@@ -652,9 +671,11 @@
 						</form>
 					{/if}
 					<form method="POST" action="?/transferer" use:enhance={() => {
-						return async ({ update }) => {
+						return async ({ result, update }) => {
 							slideOutOpen = false;
 							selectedLead = null;
+							if (result.type === 'success') toasts.success('Lead transféré vers le CRM');
+							else toasts.error('Erreur lors du transfert');
 							await update();
 						};
 					}}>
@@ -686,10 +707,12 @@
 		action="?/create"
 		use:enhance={() => {
 			saving = true;
-			return async ({ update }) => {
+			return async ({ result, update }) => {
 				saving = false;
 				modalOpen = false;
 				resetForm();
+				if (result.type === 'success') toasts.success('Lead créé');
+				else toasts.error('Erreur lors de la création');
 				await update();
 			};
 		}}
