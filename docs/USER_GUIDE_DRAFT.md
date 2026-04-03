@@ -98,18 +98,49 @@ Le pipeline affiche vos opportunites commerciales sous forme de colonnes kanban.
 
 ## 7. Prospection
 
-*A documenter lors de l'implementation.*
+La page Prospection centralise les leads B2B issus de sources publiques suisses (registre du commerce, marches publics, permis de construire).
 
 ### 7.1 Comprendre la page prospection
-### 7.2 Importer des leads (Zefix, SIMAP, etc.)
+- Chaque lead a un **score de pertinence** (0-13 points) calcule automatiquement
+- Les badges de couleur indiquent la qualite : rouge (chaud, 8+), orange (tiede, 5-7), gris (froid, 2-4)
+- Le scoring prend en compte : canton (GE/VD/VS = +3), secteur (construction, archi... = +3), signal chaud (SIMAP/SITG = +2), recence (< 30j = +2), telephone disponible (+1), montant > 100k (+1)
+
+### 7.2 Ajouter un lead manuellement
+- Cliquer "Ajouter un lead" en haut a droite
+- Remplir : raison sociale (obligatoire), source, canton, contact, telephone, adresse, email, secteur, description, montant
+- Le score est calcule automatiquement a la creation
+
 ### 7.3 Filtrer et trier les leads
+- 4 filtres disponibles en haut de la liste : source, canton, statut, score minimum
+- Par defaut : affiche les leads "nouveau" et "interesse"
+- La barre de recherche filtre par texte dans toutes les colonnes
+- Cliquer sur un en-tete de colonne pour trier (score, raison sociale, canton, etc.)
+
 ### 7.4 Qualifier un lead (interesse / ecarte)
+- Ouvrir le detail (clic sur le lead), puis cliquer "Interesse" ou "Ecarter"
+- Un lead ecarte ne sera jamais reimporte depuis la meme source
+
 ### 7.5 Transferer un lead vers le CRM
+- Ouvrir le detail, cliquer "Transferer vers CRM"
+- Cela cree automatiquement une fiche entreprise (et un contact si le nom est renseigne)
+- Le lead passe en statut "transfere"
+
 ### 7.6 Enrichir un lead (telephone)
+*A venir — integration search.ch*
+
 ### 7.7 Sauvegarder une recherche
+*A venir*
+
 ### 7.8 Alertes automatiques
+*A venir*
+
 ### 7.9 Selection multiple et actions batch
+- Cocher plusieurs leads avec les cases a cocher a gauche
+- La barre d'actions apparait : "Interesse" ou "Ecarter" en lot
+- "Deselectionner" pour tout annuler
+
 ### 7.10 Raccourcis clavier prospection
+*A venir*
 
 ---
 

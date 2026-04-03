@@ -92,9 +92,9 @@ template/
 - contacts, entreprises, opportunites, prescripteurs
 - signaux_affaires, activites, imports_zefix, utilisateurs
 
-### 4.2 Tables Prospection (a creer)
-- prospect_leads — voir docs/SPECS_PROSPECTION.md
-- recherches_sauvegardees — voir docs/SPECS_PROSPECTION.md
+### 4.2 Tables Prospection (en place)
+- prospect_leads — leads unifies multi-sources, scoring, dedup (UNIQUE source+source_id)
+- recherches_sauvegardees — criteres sauvegardes pour alertes (a venir)
 
 ### 4.3 Regenerer les types TypeScript
 ```bash
@@ -103,7 +103,8 @@ npx supabase gen types typescript --project-id fmflvjubjtpidvxwhqab > src/lib/da
 ```
 
 ### 4.4 Migrations
-*Documenter chaque migration SQL appliquee.*
+- `20260402_001_schema_filmpro.sql` — 8 tables CRM initiales (contacts, entreprises, opportunites, etc.)
+- `20260403_001_prospect_leads.sql` — Tables prospection (prospect_leads + recherches_sauvegardees + RLS + index)
 
 ---
 
@@ -169,3 +170,8 @@ Voir `docs/SPECS_PROSPECTION.md` section 5. Modifier la fonction `calculerScore(
 | 2026-04-02 | 100% sources gratuites | Zefix + LINDAS + SIMAP + SITG + search.ch |
 | 2026-04-03 | Drag & drop HTML5 natif | Pas de lib externe (svelte-dnd, etc.), form action ?/move pour persistence |
 | 2026-04-03 | Conversion signal→opportunite | Cree opp liee + update statut signal en une action serveur atomique |
+| 2026-04-03 | Validation Zod sur toutes les form actions | Securite : UUID, email, enums, longueur max — suite audit Datadog AI Security |
+| 2026-04-03 | Email provider Supabase desactive | Seul Google OAuth autorise, empeche creation de comptes non autorises |
+| 2026-04-03 | DataTable selectedIds en $bindable | Permet aux pages parentes de lire/ecrire la selection pour les actions batch |
+| 2026-04-03 | Scoring calcule cote serveur a l'import | Stocke en base (score_pertinence), recalcule si enrichissement |
+| 2026-04-03 | Transfert lead → CRM cree entreprise + contact | Action atomique : insert entreprise, optionnel contact, update statut lead |
