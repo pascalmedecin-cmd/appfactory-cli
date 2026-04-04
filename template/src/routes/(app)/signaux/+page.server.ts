@@ -46,7 +46,7 @@ export const actions: Actions = {
 			date_detection: now,
 		});
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 
@@ -73,7 +73,7 @@ export const actions: Actions = {
 			})
 			.eq('id', parsed.data.id);
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 
@@ -87,7 +87,7 @@ export const actions: Actions = {
 			.update({ statut_traitement: parsed.data.statut_traitement })
 			.eq('id', parsed.data.id);
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 
@@ -109,7 +109,7 @@ export const actions: Actions = {
 			date_derniere_modification: now,
 		});
 
-		if (oppError) return fail(400, { error: oppError.message });
+		if (oppError) { console.error('Supabase error:', oppError.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 
 		const { error: sigError } = await locals.supabase
 			.from('signaux_affaires')
@@ -119,7 +119,7 @@ export const actions: Actions = {
 			})
 			.eq('id', parsed.data.signal_id);
 
-		if (sigError) return fail(400, { error: sigError.message });
+		if (sigError) { console.error('Supabase error:', sigError.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true, redirectTo: '/pipeline' };
 	},
 };

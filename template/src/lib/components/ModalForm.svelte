@@ -78,36 +78,41 @@
 				{/if}
 			</div>
 
-			<div class="flex items-center justify-between px-6 py-4 border-t border-border">
-				<div>
-					{#if onDelete}
-						<button
-							type="button"
-							onclick={onDelete}
-							class="text-sm text-danger hover:text-danger/80 cursor-pointer"
-						>
-							Supprimer
-						</button>
+			{#if onSave || onDelete}
+				<div class="flex items-center justify-between px-6 py-4 border-t border-border">
+					<div>
+						{#if onDelete}
+							<button
+								type="button"
+								onclick={onDelete}
+								disabled={saving}
+								class="text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
+							>
+								Supprimer
+							</button>
+						{/if}
+					</div>
+					{#if onSave}
+						<div class="flex items-center gap-3">
+							<button
+								type="button"
+								onclick={() => open = false}
+								class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+							>
+								Annuler
+							</button>
+							<button
+								type="button"
+								onclick={onSave}
+								disabled={saving}
+								class="px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
+							>
+								{saving ? 'Enregistrement…' : 'Enregistrer'}
+							</button>
+						</div>
 					{/if}
 				</div>
-				<div class="flex items-center gap-3">
-					<button
-						type="button"
-						onclick={() => open = false}
-						class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
-					>
-						Annuler
-					</button>
-					<button
-						type="button"
-						onclick={onSave}
-						disabled={saving}
-						class="px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
-					>
-						{saving ? 'Enregistrement…' : 'Enregistrer'}
-					</button>
-				</div>
-			</div>
+			{/if}
 		</div>
 	</div>
 {/if}

@@ -53,7 +53,7 @@ export const actions: Actions = {
 			date_derniere_modification: now,
 		});
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 
@@ -81,7 +81,7 @@ export const actions: Actions = {
 			})
 			.eq('id', parsed.data.id);
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 
@@ -90,12 +90,25 @@ export const actions: Actions = {
 		const parsed = validate(EntrepriseDeleteSchema, extractForm(form, ['id']));
 		if (!parsed.success) return fail(400, { error: parsed.error });
 
+		// Verifier les dependances avant suppression
+		const [contactsRes, oppsRes] = await Promise.all([
+			locals.supabase.from('contacts').select('id', { count: 'exact', head: true }).eq('entreprise_id', parsed.data.id),
+			locals.supabase.from('opportunites').select('id', { count: 'exact', head: true }).eq('entreprise_id', parsed.data.id),
+		]);
+
+		const deps: string[] = [];
+		if ((contactsRes.count ?? 0) > 0) deps.push(`${contactsRes.count} contact(s)`);
+		if ((oppsRes.count ?? 0) > 0) deps.push(`${oppsRes.count} opportunite(s)`);
+		if (deps.length > 0) {
+			return fail(400, { error: `Impossible de supprimer : ${deps.join(' et ')} rattache(s)` });
+		}
+
 		const { error } = await locals.supabase
 			.from('entreprises')
 			.delete()
 			.eq('id', parsed.data.id);
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 };

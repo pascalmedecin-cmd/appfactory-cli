@@ -78,7 +78,7 @@ export const actions: Actions = {
 						date_modification: new Date().toISOString(),
 					})
 					.eq('id', existing.id);
-				if (error) return fail(400, { error: error.message });
+				if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 				return { success: true };
 			}
 		}
@@ -107,7 +107,7 @@ export const actions: Actions = {
 			date_modification: new Date().toISOString(),
 		});
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 
@@ -124,7 +124,7 @@ export const actions: Actions = {
 			})
 			.eq('id', parsed.data.id);
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 
@@ -151,7 +151,7 @@ export const actions: Actions = {
 			})
 			.in('id', parsed.data.ids);
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 
@@ -188,7 +188,7 @@ export const actions: Actions = {
 			date_derniere_modification: now,
 		});
 
-		if (entErr) return fail(400, { error: entErr.message });
+		if (entErr) { console.error('Supabase error:', entErr.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 
 		// Create contact if nom_contact available
 		let contactId: string | null = null;
@@ -209,7 +209,7 @@ export const actions: Actions = {
 				date_ajout: now,
 				date_derniere_modification: now,
 			});
-			if (ctErr) return fail(400, { error: ctErr.message });
+			if (ctErr) { console.error('Supabase error:', ctErr.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		}
 
 		// Update lead status
@@ -223,7 +223,7 @@ export const actions: Actions = {
 			})
 			.eq('id', lead.id);
 
-		if (upErr) return fail(400, { error: upErr.message });
+		if (upErr) { console.error('Supabase error:', upErr.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true, entrepriseId };
 	},
 
@@ -262,7 +262,7 @@ export const actions: Actions = {
 			date_creation: new Date().toISOString(),
 		});
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 
@@ -276,7 +276,7 @@ export const actions: Actions = {
 			.delete()
 			.eq('id', parsed.data.id);
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 };

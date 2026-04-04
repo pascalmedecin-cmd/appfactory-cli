@@ -17,6 +17,7 @@
 	let modalOpen = $state(false);
 	let editMode = $state(false);
 	let saving = $state(false);
+	let archiving = $state(false);
 
 	// Form fields
 	let nom = $state('');
@@ -206,7 +207,9 @@
 					Modifier
 				</button>
 				<form method="POST" action="?/delete" use:enhance={() => {
+					archiving = true;
 					return async ({ result, update }) => {
+						archiving = false;
 						slideOutOpen = false;
 						selectedContact = null;
 						if (result.type === 'success') toasts.success('Contact archivé');
@@ -217,10 +220,11 @@
 					<input type="hidden" name="id" value={selectedContact.id} />
 					<button
 						type="submit"
-						class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer"
+						disabled={archiving}
+						class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
 					>
 						<span class="material-symbols-outlined text-[16px]">archive</span>
-						Archiver
+						{archiving ? 'Archivage…' : 'Archiver'}
 					</button>
 				</form>
 			</div>

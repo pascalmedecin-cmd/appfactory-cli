@@ -18,6 +18,7 @@
 	let modalOpen = $state(false);
 	let editMode = $state(false);
 	let saving = $state(false);
+	let deleting = $state(false);
 
 	// Form fields
 	let raison_sociale = $state('');
@@ -221,21 +222,24 @@
 					Modifier
 				</button>
 				<form method="POST" action="?/delete" use:enhance={() => {
+					deleting = true;
 					return async ({ result, update }) => {
+						deleting = false;
 						slideOutOpen = false;
 						selectedEntreprise = null;
 						if (result.type === 'success') toasts.success('Entreprise supprimée');
-						else toasts.error('Erreur lors de la suppression');
+						else toasts.error(result.type === 'failure' && result.data?.error ? String(result.data.error) : 'Erreur lors de la suppression');
 						await update();
 					};
 				}}>
 					<input type="hidden" name="id" value={selectedEntreprise.id} />
 					<button
 						type="submit"
-						class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer"
+						disabled={deleting}
+						class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
 					>
 						<span class="material-symbols-outlined text-[16px]">delete</span>
-						Supprimer
+						{deleting ? 'Suppression…' : 'Supprimer'}
 					</button>
 				</form>
 			</div>

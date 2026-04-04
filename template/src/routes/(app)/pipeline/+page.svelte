@@ -19,6 +19,7 @@
 	let modalOpen = $state(false);
 	let editMode = $state(false);
 	let saving = $state(false);
+	let archiving = $state(false);
 	let draggedId = $state<string | null>(null);
 	let dragOverEtape = $state<string | null>(null);
 
@@ -331,7 +332,9 @@
 				</button>
 				{#if selectedOpp.etape_pipeline !== 'perdu' && selectedOpp.etape_pipeline !== 'gagne'}
 					<form method="POST" action="?/archive" use:enhance={() => {
+						archiving = true;
 						return async ({ result, update }) => {
+							archiving = false;
 							slideOutOpen = false;
 							selectedOpp = null;
 							if (result.type === 'success') toasts.success('Opportunité marquée perdue');
@@ -342,10 +345,11 @@
 						<input type="hidden" name="id" value={selectedOpp.id} />
 						<button
 							type="submit"
-							class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer"
+							disabled={archiving}
+							class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
 						>
 							<span class="material-symbols-outlined text-[16px]">block</span>
-							Marquer perdu
+							{archiving ? 'En cours…' : 'Marquer perdu'}
 						</button>
 					</form>
 				{/if}

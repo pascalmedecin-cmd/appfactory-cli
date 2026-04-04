@@ -56,7 +56,7 @@ export const actions: Actions = {
 			date_derniere_modification: now,
 		});
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 
@@ -81,7 +81,7 @@ export const actions: Actions = {
 			})
 			.eq('id', parsed.data.id);
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 
@@ -98,7 +98,7 @@ export const actions: Actions = {
 			})
 			.eq('id', parsed.data.id);
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 
@@ -117,7 +117,7 @@ export const actions: Actions = {
 			})
 			.eq('id', parsed.data.id);
 
-		if (error) return fail(400, { error: error.message });
+		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
 		return { success: true };
 	},
 };
