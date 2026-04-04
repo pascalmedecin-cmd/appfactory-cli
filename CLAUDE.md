@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 9 termine + extraction template, Phase B a venir
-**Derniere mise a jour :** 2026-04-03
+**Statut :** Phase A — Jour 9 + audit securite + sprint 1 correctifs, Phase B a venir
+**Derniere mise a jour :** 2026-04-04
 **Prochain bug :** #001
-**Session precedente :** Extraction template — script yaml-to-config.ts fonctionnel (project.yaml → config.ts), migration prospection vers config.ts (scoring, sources, cantons), page login photo fond pleine page + bouton deconnexion sidebar, USER_GUIDE_DRAFT.md finalise
+**Session precedente :** Audit complet CRM (5 agents : securite, qualite code, tests, bugs, exploration) + Sprint 1 securite (5 fixes critiques deployes). Renforcement rules globales securite (quality.md + methodology.md). Analyse PDF Datadog AI Security croisee avec etat du code.
 
 ---
 
@@ -146,7 +146,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - **BDD** : 10 tables PostgreSQL (+ prospect_leads, recherches_sauvegardees), FK, index, RLS (authenticated full access), types TS generes
 - **Zefix REST** : Pascal a repondu a zefix@bj.admin.ch (username pascal@filmpro.ch), en attente du mot de passe (plusieurs jours)
 - **search.ch** : cle API configuree en local (.env) + Vercel prod
-- **Securite** : email provider desactive (Google OAuth only), validation Zod sur toutes les form actions (18 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*
+- **Securite** : email provider desactive (Google OAuth only), whitelist emails ALLOWED_EMAILS env var (pascal@filmpro.ch configure Vercel prod), validation Zod sur toutes les form actions (18 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore
 - **Tests** : Vitest (34 tests : scoring + schemas + validation) + Playwright (5 tests e2e : navigation + auth redirect)
 - **Cron** : `/api/cron/alertes` quotidien 7h (vercel.json), securise par CRON_SECRET (configure Vercel prod)
 
@@ -186,20 +186,43 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## OBJECTIF PROCHAINE SESSION
 
-Phase B — Plugin Figma + Outillage, ou bien finaliser les derniers elements Phase A :
-- Migrer contacts, entreprises, dashboard si des valeurs hardcodees restent (audit rapide montre qu'ils sont deja propres)
-- Commencer Phase B Jour 1-2 : Design system Figma (composants de base, tokens)
+Sprint 2 securite + qualite (audit items restants) :
+- Double soumission : ajouter disabled={submitting} sur toutes les actions destructives
+- ModalForm : conditionner footer a {#if onSave} ou supprimer les boutons integres
+- Headers securite : CSP, X-Frame-Options, X-Content-Type-Options dans hooks.server.ts
+- Erreurs Supabase : messages generiques cote client, console.error cote serveur
+- Login erreur : afficher message visible (deja fait dans sprint 1)
+- Hard delete entreprise : verifier dependances avant suppression
+- Timing attack cron : crypto.timingSafeEqual pour CRON_SECRET
+
+Puis Sprint 3 refactoring (extraire utilitaires API partages, decouper prospection page 976 lignes) et Sprint 4 tests manquants.
+
+Decision Figma en suspens — recherche deep research a lancer sur claude.ai (prompt prepare).
 
 **En attente :**
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
+- Decision Figma (analyse cout/benefice a faire)
 
 **Decisions session :**
 - config.ts est desormais un fichier GENERE — ne plus le modifier a la main
 - Les cles de sources prospection (lindas, search_ch, etc.) sont preservees en snake_case (identifiants DB)
 - cantonNoms mapping dans prospection page (pas dans config — specifique UI)
+- Whitelist emails via env vars ALLOWED_EMAILS/ALLOWED_DOMAINS (pas dans config.ts frontend)
+- Blocage par defaut si aucune whitelist configuree (securite)
+- Rules globales renforcees : Security Definition of Done, agent security-auditor obligatoire, checklist securite fin de session
 
 **Prerequis :**
 - Aucun bloquant technique
+
+## AUDIT CRM FILMPRO (2026-04-04)
+
+Audit complet par 5 agents specialises. Resultats :
+- Securite 14/20, Qualite code 22/37, Tests 8/30, 4 critiques + 5 hauts
+- Sprint 1 (5 critiques) : CORRIGE et deploye (commit 76766ce)
+- Sprint 2 (7 hauts) : a faire prochaine session
+- Sprint 3 (refactoring) : duplications API, gros fichiers, dead code
+- Sprint 4 (tests) : 14/18 schemas non testes, 0 test authentifie, 0 test API
+- Detail complet dans l'historique de conversation du 2026-04-04
 
 ---
 
