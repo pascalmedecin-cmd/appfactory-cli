@@ -1,16 +1,10 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { calculerScore } from '$lib/scoring';
 import { randomUUID } from 'crypto';
+import { translate, cantonToLead, CANTON_MAP, type Translation } from './helpers';
 
 const SIMAP_BASE = 'https://www.simap.ch/api';
 const PROJECT_SEARCH = '/publications/v2/project/project-search';
-
-interface Translation {
-	de?: string;
-	fr?: string;
-	it?: string;
-	en?: string;
-}
 
 interface SimapProject {
 	id: string;
@@ -26,21 +20,6 @@ interface SimapProject {
 		canton?: string | null;
 		postalCode?: string | null;
 	} | null;
-}
-
-const CANTON_MAP: Record<string, string> = {
-	GE: 'GE', VD: 'VD', VS: 'VS', NE: 'NE', FR: 'FR', JU: 'JU',
-};
-
-function translate(t: Translation | string | null | undefined): string {
-	if (!t) return '';
-	if (typeof t === 'string') return t;
-	return t.fr || t.de || t.en || t.it || '';
-}
-
-function cantonToLead(canton: string | null | undefined): string {
-	if (!canton) return 'Autre';
-	return CANTON_MAP[canton] ?? 'Autre';
 }
 
 export const POST = async ({ request, locals }: RequestEvent) => {

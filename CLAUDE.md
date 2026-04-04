@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 9 + audit securite + sprints 1-3, Phase B a venir
+**Statut :** Phase A — Jour 9 + audit securite + sprints 1-4, Phase B a venir
 **Derniere mise a jour :** 2026-04-04
 **Prochain bug :** #001
-**Session precedente :** Sprint 3 refactoring termine. db-helpers.ts (dbFail/newId/now), FIELDS centralises dans schemas.ts, 5 server.ts refactorises, prospection/+page.svelte decoupe 976->530 lignes (ImportModal + LeadSlideOut extraits). Build OK, 34 tests OK.
+**Session precedente :** Sprint 4 tests termine. 34->113 tests (+79). 18/18 schemas Zod couverts, extractForm teste, fonctions API extraites (sparql.ts, helpers.ts) et testees (sanitizeSparql, buildSparqlQuery, translate, cantonToLead). Hook SessionStart configure (.claude/settings.json + context.md). Build OK.
 
 ---
 
@@ -142,7 +142,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Zefix REST** : Pascal a repondu a zefix@bj.admin.ch (username pascal@filmpro.ch), en attente du mot de passe (plusieurs jours)
 - **search.ch** : cle API configuree en local (.env) + Vercel prod
 - **Securite** : email provider desactive (Google OAuth only), whitelist emails ALLOWED_EMAILS env var (pascal@filmpro.ch configure Vercel prod), validation Zod sur toutes les form actions (18 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
-- **Tests** : Vitest (34 tests : scoring + schemas + validation) + Playwright (5 tests e2e : navigation + auth redirect)
+- **Tests** : Vitest (113 tests : scoring + 18/18 schemas + validation + extractForm + API sparql/helpers) + Playwright (5 tests e2e : navigation + auth redirect)
 - **Cron** : `/api/cron/alertes` quotidien 7h (vercel.json), securise par CRON_SECRET (configure Vercel prod)
 
 ## DOCUMENTATION
@@ -182,11 +182,10 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## OBJECTIF PROCHAINE SESSION
 
-Sprint 4 tests manquants :
-- 14/18 schemas Zod non testes (seuls scoring + quelques schemas couverts)
-- 0 test authentifie (actions server protegees)
-- 0 test API (routes /api/prospection/*)
-- Objectif : couverture significative des schemas + au moins 1 test API
+Phase C — Skills et templates HTML :
+- Skill cadrage (dialogue -> project.yaml -> 4 pages HTML)
+- Skill generate (project.yaml + tokens -> SvelteKit scaffold)
+- Skill deploy (push -> Vercel preview/prod, test end-to-end)
 
 **En attente :**
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
@@ -198,6 +197,8 @@ Sprint 4 tests manquants :
 - Whitelist emails via env vars ALLOWED_EMAILS/ALLOWED_DOMAINS (pas dans config.ts frontend)
 - Blocage par defaut si aucune whitelist configuree (securite)
 - Rules globales renforcees : Security Definition of Done, agent security-auditor obligatoire, checklist securite fin de session
+- Fonctions utilitaires API extraites dans fichiers separes (sparql.ts, helpers.ts) pour testabilite — +server.ts importe depuis ces fichiers
+- Hook SessionStart configure pour afficher context.md a l'ouverture du projet
 
 **Prerequis :**
 - Aucun bloquant technique
@@ -209,7 +210,7 @@ Audit complet par 5 agents specialises. Resultats :
 - Sprint 1 (5 critiques) : CORRIGE et deploye (commit 76766ce)
 - Sprint 2 (7 hauts) : CORRIGE et deploye (commit d123a5d)
 - Sprint 3 (refactoring) : CORRIGE (commit e3ba665) — db-helpers, FIELDS centralises, prospection decoupee
-- Sprint 4 (tests) : 14/18 schemas non testes, 0 test authentifie, 0 test API
+- Sprint 4 (tests) : CORRIGE — 18/18 schemas testes, fonctions API testees, 34->113 tests
 - Detail complet dans l'historique de conversation du 2026-04-04
 
 ---
