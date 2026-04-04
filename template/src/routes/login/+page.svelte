@@ -5,14 +5,27 @@
 	const supabase = createSupabaseBrowserClient();
 	const bgImage = 'loginBackground' in config.branding ? (config.branding as Record<string, unknown>).loginBackground as string : null;
 
+	// Detecter erreur d'acces non autorise
+	let loginError = $state('');
+	if (typeof window !== 'undefined') {
+		const params = new URLSearchParams(window.location.search);
+		if (params.get('error') === 'unauthorized') {
+			loginError = 'Votre compte n\'est pas autorise a acceder a cette application. Contactez l\'administrateur.';
+		}
+	}
+
 	async function signInWithGoogle() {
+		loginError = '';
 		const { error } = await supabase.auth.signInWithOAuth({
 			provider: 'google',
 			options: {
 				redirectTo: `${window.location.origin}/auth/callback`
 			}
 		});
-		if (error) console.error('Erreur login:', error.message);
+		if (error) {
+			loginError = 'Erreur de connexion. Veuillez reessayer.';
+			console.error('Erreur login:', error.message);
+		}
 	}
 </script>
 
@@ -26,6 +39,12 @@
 			<h1 class="text-3xl font-bold" class:text-white={bgImage} class:text-text={!bgImage}>{config.app.name}</h1>
 			<p class="mt-2" class:text-white-70={bgImage} class:text-text-muted={!bgImage}>Connectez-vous pour continuer</p>
 		</div>
+
+		{#if loginError}
+			<div class="px-4 py-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-200 text-sm text-center">
+				{loginError}
+			</div>
+		{/if}
 
 		<button
 			onclick={signInWithGoogle}

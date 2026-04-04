@@ -15,10 +15,19 @@ const CANTON_REGIONS: Record<string, string> = {
 
 const LINDAS_ENDPOINT = 'https://lindas.admin.ch/query';
 
+// Sanitize keyword for safe SPARQL string interpolation
+function sanitizeSparql(s: string): string {
+	return s.replace(/["\\{}()]/g, '').slice(0, 50).trim();
+}
+
 function buildSparqlQuery(cantonId: string, keywords: string[], limit: number): string {
-	const keywordFilter = keywords.length > 0
-		? keywords.map((kw) =>
-			`(CONTAINS(LCASE(?description), "${kw.toLowerCase()}") || CONTAINS(LCASE(?name), "${kw.toLowerCase()}"))`
+	const safeKeywords = keywords
+		.map((kw) => sanitizeSparql(kw.toLowerCase()))
+		.filter((kw) => kw.length > 0);
+
+	const keywordFilter = safeKeywords.length > 0
+		? safeKeywords.map((kw) =>
+			`(CONTAINS(LCASE(?description), "${kw}") || CONTAINS(LCASE(?name), "${kw}"))`
 		).join(' || ')
 		: '';
 

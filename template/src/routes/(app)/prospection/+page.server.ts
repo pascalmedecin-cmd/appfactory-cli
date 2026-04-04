@@ -50,7 +50,7 @@ export const actions: Actions = {
 			source: d.source,
 			date_publication: d.date_publication || null,
 			telephone: d.telephone || null,
-			montant: d.montant ? Number(d.montant) : null,
+			montant: d.montant != null && d.montant !== '' ? Number(d.montant) : null,
 		});
 
 		// Dedup check
@@ -72,7 +72,7 @@ export const actions: Actions = {
 					.update({
 						raison_sociale: d.raison_sociale,
 						description: d.description || null,
-						montant: d.montant ? Number(d.montant) : null,
+						montant: d.montant != null && d.montant !== '' ? Number(d.montant) : null,
 						date_publication: d.date_publication || null,
 						score_pertinence: scoreResult.total,
 						date_modification: new Date().toISOString(),
@@ -99,7 +99,7 @@ export const actions: Actions = {
 			email: d.email || null,
 			secteur_detecte: d.secteur_detecte || null,
 			description: d.description || null,
-			montant: d.montant ? Number(d.montant) : null,
+			montant: d.montant != null && d.montant !== '' ? Number(d.montant) : null,
 			date_publication: d.date_publication || null,
 			score_pertinence: scoreResult.total,
 			statut: 'nouveau',
@@ -229,11 +229,17 @@ export const actions: Actions = {
 
 	saveRecherche: async ({ request, locals }) => {
 		const form = await request.formData();
+
+		function safeJsonParse(val: FormDataEntryValue | null): unknown {
+			if (!val || typeof val !== 'string' || val.trim() === '') return undefined;
+			try { return JSON.parse(val); } catch { return undefined; }
+		}
+
 		const raw: Record<string, unknown> = {
 			nom: form.get('nom') as string,
-			sources: form.get('sources') ? JSON.parse(form.get('sources') as string) : undefined,
-			cantons: form.get('cantons') ? JSON.parse(form.get('cantons') as string) : undefined,
-			mots_cles: form.get('mots_cles') ? JSON.parse(form.get('mots_cles') as string) : undefined,
+			sources: safeJsonParse(form.get('sources')),
+			cantons: safeJsonParse(form.get('cantons')),
+			mots_cles: safeJsonParse(form.get('mots_cles')),
 			score_minimum: form.get('score_minimum') ? Number(form.get('score_minimum')) : undefined,
 			alerte_active: form.get('alerte_active') === 'true',
 			frequence_alerte: (form.get('frequence_alerte') as string) || 'quotidien',

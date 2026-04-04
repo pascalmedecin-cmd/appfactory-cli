@@ -1,5 +1,31 @@
 import { createSupabaseServerClient } from '$lib/server/supabase';
 import { json, redirect, type Handle } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
+
+// Domaines email autorises (comma-separated env var, ex: "filmpro.ch,example.com")
+// Si vide ou non defini, seuls les emails listes dans ALLOWED_EMAILS sont autorises
+function isEmailAllowed(email: string | undefined): boolean {
+	if (!email) return false;
+
+	// Emails individuels autorises (env var comma-separated)
+	const allowedEmails = env.ALLOWED_EMAILS?.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean) ?? [];
+	if (allowedEmails.length > 0 && allowedEmails.includes(email.toLowerCase())) return true;
+
+	// Domaines autorises (env var comma-separated)
+	const allowedDomains = env.ALLOWED_DOMAINS?.split(',').map((d) => d.trim().toLowerCase()).filter(Boolean) ?? [];
+	if (allowedDomains.length > 0) {
+		const domain = email.toLowerCase().split('@')[1];
+		if (domain && allowedDomains.includes(domain)) return true;
+	}
+
+	// Si aucune restriction configuree, bloquer par defaut (securite)
+	if (allowedEmails.length === 0 && allowedDomains.length === 0) {
+		console.warn('SECURITE: Aucun ALLOWED_EMAILS ni ALLOWED_DOMAINS configure. Acces refuse par defaut.');
+		return false;
+	}
+
+	return false;
+}
 
 // Rate limiting in-memory pour les API de prospection
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
@@ -59,6 +85,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	if (!session && !isAuthRoute && !isCronRoute) {
 		throw redirect(303, '/login');
+	}
+
+	// Verifier que l'email est autorise (whitelist domaine/email)
+	if (session && !isAuthRoute && !isCronRoute) {
+		const { user } = await event.locals.safeGetSession();
+		if (!isEmailAllowed(user?.email ?? undefined)) {
+			// Deconnecter l'utilisateur non autorise
+			await event.locals.supabase.auth.signOut();
+			throw redirect(303, '/login?error=unauthorized');
+		}
 	}
 
 	if (session && event.url.pathname === '/login') {

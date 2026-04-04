@@ -59,12 +59,17 @@ export function calculerScore(lead: LeadScoring): ScoreDetail {
 		const datePub = lead.date_publication instanceof Date
 			? lead.date_publication
 			: new Date(lead.date_publication);
-		const jours = differenceEnJours(new Date(), datePub);
-		for (const seuil of scoring.recence) {
-			if (jours <= seuil.maxJours) {
-				total += seuil.points;
-				criteres.push(`Recente < ${seuil.maxJours}j (+${seuil.points})`);
-				break;
+		// Ignorer les dates invalides et les dates futures
+		if (!isNaN(datePub.getTime())) {
+			const jours = differenceEnJours(new Date(), datePub);
+			if (jours >= 0) {
+				for (const seuil of scoring.recence) {
+					if (jours <= seuil.maxJours) {
+						total += seuil.points;
+						criteres.push(`Recente < ${seuil.maxJours}j (+${seuil.points})`);
+						break;
+					}
+				}
 			}
 		}
 	}
