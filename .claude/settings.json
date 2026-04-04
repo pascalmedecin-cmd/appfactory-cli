@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sed -n '/## OBJECTIF PROCHAINE SESSION/,/## /{ /## [^O]/!p; }' CLAUDE.md | head -30 | jq -Rs '{hookSpecificOutput: {hookEventName: \"SessionStart\", additionalContext: (\"Affiche immediatement ce planning a l utilisateur:\\n\" + .)}}'",
+            "timeout": 5,
+            "statusMessage": "Chargement planning..."
+          }
+        ]
+      }
+    ]
+  }
+}

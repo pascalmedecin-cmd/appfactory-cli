@@ -3,7 +3,7 @@
 **Statut :** Phase A — Jour 9 + audit securite + sprints 1-4, Phase B a venir
 **Derniere mise a jour :** 2026-04-04
 **Prochain bug :** #001
-**Session precedente :** Sprint 4 tests termine. 34->113 tests (+79). 18/18 schemas Zod couverts, extractForm teste, fonctions API extraites (sparql.ts, helpers.ts) et testees (sanitizeSparql, buildSparqlQuery, translate, cantonToLead). Hook SessionStart configure (.claude/settings.json + context.md). Build OK.
+**Session precedente :** Hook SessionStart reconfigure (.claude/settings.json) — extraction automatique section OBJECTIF depuis CLAUDE.md via sed+jq, injecte en additionalContext. Ancien hook shell script supprime, instruction CLAUDE.md seule insuffisante.
 
 ---
 
