@@ -36,8 +36,12 @@
 	{/if}
 	<div class="login-card">
 		<div class="text-center">
-			<h1 class="text-3xl font-bold" class:text-white={bgImage} class:text-text={!bgImage}>{config.app.name}</h1>
-			<p class="mt-2" class:text-white-70={bgImage} class:text-text-muted={!bgImage}>Connectez-vous pour continuer</p>
+			{#if bgImage && config.branding.logoWhite}
+				<img src="/{config.branding.logoWhite}" alt="{config.app.name}" class="login-logo" />
+			{:else if config.branding.logo}
+				<img src="/{config.branding.logo}" alt="{config.app.name}" class="login-logo" />
+			{/if}
+			<p class="login-subtitle" class:text-white={bgImage} class:text-text={!bgImage}>CRM Tool</p>
 		</div>
 
 		{#if loginError}
@@ -101,8 +105,22 @@
 		width: 100%;
 		display: flex;
 		flex-direction: column;
-		gap: 2rem;
-		padding: 2rem;
+		gap: 2.5rem;
+		padding: 2.5rem;
+	}
+
+	.login-logo {
+		height: 3.5rem;
+		margin: 0 auto 1rem;
+	}
+
+	.login-subtitle {
+		font-size: 1.1rem;
+		font-weight: 700;
+		letter-spacing: 0.15em;
+		text-transform: uppercase;
+		color: white;
+		font-family: 'Inter', system-ui, sans-serif;
 	}
 
 	.text-white-70 {
