@@ -3,7 +3,7 @@
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
 **Derniere mise a jour :** 2026-04-04
 **Prochain bug :** #001
-**Session precedente :** Phase C — 3 skills crees (/cadrage, /generate, /deploy), template parametrise, scripts scaffold + previews.
+**Session precedente :** Fix acces CRM — ajout pascal.medecin@gmail.com a ALLOWED_EMAILS Vercel prod (bloque par whitelist sprint securite).
 
 ---
 
@@ -143,7 +143,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - **BDD** : 10 tables PostgreSQL (+ prospect_leads, recherches_sauvegardees), FK, index, RLS (authenticated full access), types TS generes
 - **Zefix REST** : Pascal a repondu a zefix@bj.admin.ch (username pascal@filmpro.ch), en attente du mot de passe (plusieurs jours)
 - **search.ch** : cle API configuree en local (.env) + Vercel prod
-- **Securite** : email provider desactive (Google OAuth only), whitelist emails ALLOWED_EMAILS env var (pascal@filmpro.ch configure Vercel prod), validation Zod sur toutes les form actions (18 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
+- **Securite** : email provider desactive (Google OAuth only), whitelist emails ALLOWED_EMAILS env var (pascal@filmpro.ch,pascal.medecin@gmail.com configure Vercel prod), validation Zod sur toutes les form actions (18 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
 - **Tests** : Vitest (113 tests : scoring + 18/18 schemas + validation + extractForm + API sparql/helpers) + Playwright (5 tests e2e : navigation + auth redirect)
 - **Cron** : `/api/cron/alertes` quotidien 7h (vercel.json), securise par CRON_SECRET (configure Vercel prod)
 
