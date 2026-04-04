@@ -216,6 +216,34 @@ export const RechercheDeleteSchema = z.object({
 	id: z.string().uuid(),
 });
 
+// -- Field lists (used by server actions for extractForm) --
+
+export const CONTACT_FIELDS = [
+	'nom', 'prenom', 'email_professionnel', 'telephone', 'role_fonction',
+	'entreprise_id', 'canton', 'segment', 'source', 'notes_libres', 'adresse', 'tags',
+] as const;
+
+export const ENTREPRISE_FIELDS = [
+	'raison_sociale', 'secteur_activite', 'canton', 'taille_estimee', 'site_web',
+	'numero_ide', 'adresse_siege', 'segment_cible', 'source', 'notes_libres', 'tags',
+] as const;
+
+export const OPP_FIELDS = [
+	'titre', 'contact_id', 'entreprise_id', 'montant_estime',
+	'etape_pipeline', 'date_relance_prevue', 'notes_libres', 'responsable', 'signal_affaires_id',
+] as const;
+
+export const SIGNAL_FIELDS = [
+	'type_signal', 'description_projet', 'maitre_ouvrage', 'architecte_bureau',
+	'canton', 'commune', 'source_officielle', 'date_publication', 'notes_libres', 'responsable_filmpro',
+] as const;
+
+export const LEAD_FIELDS = [
+	'source', 'source_id', 'source_url', 'raison_sociale', 'nom_contact',
+	'adresse', 'npa', 'localite', 'canton', 'telephone', 'site_web', 'email',
+	'secteur_detecte', 'description', 'montant', 'date_publication',
+] as const;
+
 // -- Generic validation helper --
 
 export function validate<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {

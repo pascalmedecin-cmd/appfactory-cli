@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { randomUUID } from 'crypto';
-import { LeadCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema, RechercheCreateSchema, RechercheDeleteSchema, extractForm, validate } from '$lib/schemas';
+import { LeadCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema, RechercheCreateSchema, RechercheDeleteSchema, LEAD_FIELDS, extractForm, validate } from '$lib/schemas';
 import { calculerScore } from '$lib/scoring';
+import { dbFail, newId, now } from '$lib/server/db-helpers';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const [leadsRes, entreprisesRes, recherchesRes] = await Promise.all([
@@ -27,22 +27,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 	};
 };
 
-const LEAD_FIELDS = [
-	'source', 'source_id', 'source_url', 'raison_sociale', 'nom_contact',
-	'adresse', 'npa', 'localite', 'canton', 'telephone', 'site_web', 'email',
-	'secteur_detecte', 'description', 'montant', 'date_publication',
-];
-
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
 		const form = await request.formData();
-		const raw = extractForm(form, LEAD_FIELDS);
+		const raw = extractForm(form, [...LEAD_FIELDS]);
 		const parsed = validate(LeadCreateSchema, raw);
 		if (!parsed.success) return fail(400, { error: parsed.error });
 
 		const d = parsed.data;
 
-		// Scoring
 		const scoreResult = calculerScore({
 			canton: d.canton || null,
 			description: d.description || null,
@@ -66,7 +59,6 @@ export const actions: Actions = {
 				if (existing.statut === 'ecarte' || existing.statut === 'transfere') {
 					return fail(400, { error: 'Ce lead a deja ete traite (ecarte ou transfere).' });
 				}
-				// Update existing
 				const { error } = await locals.supabase
 					.from('prospect_leads')
 					.update({
@@ -75,16 +67,15 @@ export const actions: Actions = {
 						montant: d.montant != null && d.montant !== '' ? Number(d.montant) : null,
 						date_publication: d.date_publication || null,
 						score_pertinence: scoreResult.total,
-						date_modification: new Date().toISOString(),
+						date_modification: now(),
 					})
 					.eq('id', existing.id);
-				if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-				return { success: true };
+				return dbFail(error) ?? { success: true };
 			}
 		}
 
 		const { error } = await locals.supabase.from('prospect_leads').insert({
-			id: randomUUID(),
+			id: newId(),
 			source: d.source,
 			source_id: d.source_id || null,
 			source_url: d.source_url || null,
@@ -103,12 +94,11 @@ export const actions: Actions = {
 			date_publication: d.date_publication || null,
 			score_pertinence: scoreResult.total,
 			statut: 'nouveau',
-			date_import: new Date().toISOString(),
-			date_modification: new Date().toISOString(),
+			date_import: now(),
+			date_modification: now(),
 		});
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 
 	updateStatut: async ({ request, locals }) => {
@@ -120,12 +110,11 @@ export const actions: Actions = {
 			.from('prospect_leads')
 			.update({
 				statut: parsed.data.statut,
-				date_modification: new Date().toISOString(),
+				date_modification: now(),
 			})
 			.eq('id', parsed.data.id);
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 
 	batchStatut: async ({ request, locals }) => {
@@ -147,12 +136,11 @@ export const actions: Actions = {
 			.from('prospect_leads')
 			.update({
 				statut: parsed.data.statut,
-				date_modification: new Date().toISOString(),
+				date_modification: now(),
 			})
 			.in('id', parsed.data.ids);
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 
 	transferer: async ({ request, locals }) => {
@@ -160,7 +148,6 @@ export const actions: Actions = {
 		const parsed = validate(LeadTransfertSchema, extractForm(form, ['id']));
 		if (!parsed.success) return fail(400, { error: parsed.error });
 
-		// Get lead data
 		const { data: lead, error: leadErr } = await locals.supabase
 			.from('prospect_leads')
 			.select('*')
@@ -169,10 +156,10 @@ export const actions: Actions = {
 
 		if (leadErr || !lead) return fail(400, { error: 'Lead introuvable' });
 
-		const now = new Date().toISOString();
+		const ts = now();
 
 		// Create entreprise
-		const entrepriseId = randomUUID();
+		const entrepriseId = newId();
 		const { error: entErr } = await locals.supabase.from('entreprises').insert({
 			id: entrepriseId,
 			raison_sociale: lead.raison_sociale,
@@ -184,16 +171,17 @@ export const actions: Actions = {
 			source: `prospection (${lead.source})`,
 			notes_libres: lead.description || null,
 			statut_qualification: 'nouveau',
-			date_import_ajout: now,
-			date_derniere_modification: now,
+			date_import_ajout: ts,
+			date_derniere_modification: ts,
 		});
 
-		if (entErr) { console.error('Supabase error:', entErr.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
+		const entFail = dbFail(entErr);
+		if (entFail) return entFail;
 
 		// Create contact if nom_contact available
 		let contactId: string | null = null;
 		if (lead.nom_contact) {
-			contactId = randomUUID();
+			contactId = newId();
 			const { error: ctErr } = await locals.supabase.from('contacts').insert({
 				id: contactId,
 				nom: lead.nom_contact,
@@ -206,10 +194,11 @@ export const actions: Actions = {
 				statut_archive: false,
 				est_prescripteur: false,
 				doublon_detecte: false,
-				date_ajout: now,
-				date_derniere_modification: now,
+				date_ajout: ts,
+				date_derniere_modification: ts,
 			});
-			if (ctErr) { console.error('Supabase error:', ctErr.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
+			const ctFail = dbFail(ctErr);
+			if (ctFail) return ctFail;
 		}
 
 		// Update lead status
@@ -219,11 +208,13 @@ export const actions: Actions = {
 				statut: 'transfere',
 				transfere_vers_entreprise_id: entrepriseId,
 				transfere_vers_contact_id: contactId,
-				date_modification: now,
+				date_modification: ts,
 			})
 			.eq('id', lead.id);
 
-		if (upErr) { console.error('Supabase error:', upErr.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
+		const upFail = dbFail(upErr);
+		if (upFail) return upFail;
+
 		return { success: true, entrepriseId };
 	},
 
@@ -250,7 +241,7 @@ export const actions: Actions = {
 
 		const d = parsed.data;
 		const { error } = await locals.supabase.from('recherches_sauvegardees').insert({
-			id: randomUUID(),
+			id: newId(),
 			nom: d.nom,
 			sources: d.sources || null,
 			cantons: d.cantons || null,
@@ -259,11 +250,10 @@ export const actions: Actions = {
 			score_minimum: d.score_minimum ?? null,
 			alerte_active: d.alerte_active ?? true,
 			frequence_alerte: d.frequence_alerte || 'quotidien',
-			date_creation: new Date().toISOString(),
+			date_creation: now(),
 		});
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 
 	deleteRecherche: async ({ request, locals }) => {
@@ -276,7 +266,6 @@ export const actions: Actions = {
 			.delete()
 			.eq('id', parsed.data.id);
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 };

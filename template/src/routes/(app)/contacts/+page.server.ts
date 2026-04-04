@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { randomUUID } from 'crypto';
-import { ContactCreateSchema, ContactUpdateSchema, ContactDeleteSchema, extractForm, validate } from '$lib/schemas';
+import { ContactCreateSchema, ContactUpdateSchema, ContactDeleteSchema, CONTACT_FIELDS, extractForm, validate } from '$lib/schemas';
+import { dbFail, newId, now } from '$lib/server/db-helpers';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { data: contacts, error } = await locals.supabase
@@ -18,21 +18,16 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return { contacts: contacts ?? [] };
 };
 
-const CONTACT_FIELDS = [
-	'nom', 'prenom', 'email_professionnel', 'telephone', 'role_fonction',
-	'entreprise_id', 'canton', 'segment', 'source', 'notes_libres', 'adresse', 'tags',
-];
-
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
 		const form = await request.formData();
-		const raw = extractForm(form, CONTACT_FIELDS);
+		const raw = extractForm(form, [...CONTACT_FIELDS]);
 		const parsed = validate(ContactCreateSchema, raw);
 		if (!parsed.success) return fail(400, { error: parsed.error });
 
-		const now = new Date().toISOString();
+		const ts = now();
 		const { error } = await locals.supabase.from('contacts').insert({
-			id: randomUUID(),
+			id: newId(),
 			nom: parsed.data.nom,
 			prenom: parsed.data.prenom || null,
 			email_professionnel: parsed.data.email_professionnel || null,
@@ -49,12 +44,11 @@ export const actions: Actions = {
 			statut_archive: false,
 			est_prescripteur: false,
 			doublon_detecte: false,
-			date_ajout: now,
-			date_derniere_modification: now,
+			date_ajout: ts,
+			date_derniere_modification: ts,
 		});
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 
 	update: async ({ request, locals }) => {
@@ -78,12 +72,11 @@ export const actions: Actions = {
 				notes_libres: parsed.data.notes_libres || null,
 				adresse: parsed.data.adresse || null,
 				tags: parsed.data.tags || null,
-				date_derniere_modification: new Date().toISOString(),
+				date_derniere_modification: now(),
 			})
 			.eq('id', parsed.data.id);
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 
 	delete: async ({ request, locals }) => {
@@ -93,10 +86,9 @@ export const actions: Actions = {
 
 		const { error } = await locals.supabase
 			.from('contacts')
-			.update({ statut_archive: true, date_derniere_modification: new Date().toISOString() })
+			.update({ statut_archive: true, date_derniere_modification: now() })
 			.eq('id', parsed.data.id);
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 };

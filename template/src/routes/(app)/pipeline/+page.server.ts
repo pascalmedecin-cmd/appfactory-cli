@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { randomUUID } from 'crypto';
-import { OpportuniteCreateSchema, OpportuniteUpdateSchema, OpportuniteMoveSchema, OpportuniteArchiveSchema, extractForm, validate } from '$lib/schemas';
+import { OpportuniteCreateSchema, OpportuniteUpdateSchema, OpportuniteMoveSchema, OpportuniteArchiveSchema, OPP_FIELDS, extractForm, validate } from '$lib/schemas';
+import { dbFail, newId, now } from '$lib/server/db-helpers';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const [oppsRes, contactsRes, entreprisesRes] = await Promise.all([
@@ -27,21 +27,16 @@ export const load: PageServerLoad = async ({ locals }) => {
 	};
 };
 
-const OPP_FIELDS = [
-	'titre', 'contact_id', 'entreprise_id', 'montant_estime',
-	'etape_pipeline', 'date_relance_prevue', 'notes_libres', 'responsable', 'signal_affaires_id',
-];
-
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
 		const form = await request.formData();
-		const raw = extractForm(form, OPP_FIELDS);
+		const raw = extractForm(form, [...OPP_FIELDS]);
 		const parsed = validate(OpportuniteCreateSchema, raw);
 		if (!parsed.success) return fail(400, { error: parsed.error });
 
-		const now = new Date().toISOString();
+		const ts = now();
 		const { error } = await locals.supabase.from('opportunites').insert({
-			id: randomUUID(),
+			id: newId(),
 			titre: parsed.data.titre,
 			contact_id: parsed.data.contact_id || null,
 			entreprise_id: parsed.data.entreprise_id || null,
@@ -52,12 +47,11 @@ export const actions: Actions = {
 			responsable: parsed.data.responsable || null,
 			signal_affaires_id: parsed.data.signal_affaires_id || null,
 			lie_signal_affaires: !!(parsed.data.signal_affaires_id),
-			date_creation: now,
-			date_derniere_modification: now,
+			date_creation: ts,
+			date_derniere_modification: ts,
 		});
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 
 	update: async ({ request, locals }) => {
@@ -77,12 +71,11 @@ export const actions: Actions = {
 				date_relance_prevue: parsed.data.date_relance_prevue || null,
 				notes_libres: parsed.data.notes_libres || null,
 				responsable: parsed.data.responsable || null,
-				date_derniere_modification: new Date().toISOString(),
+				date_derniere_modification: now(),
 			})
 			.eq('id', parsed.data.id);
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 
 	move: async ({ request, locals }) => {
@@ -94,12 +87,11 @@ export const actions: Actions = {
 			.from('opportunites')
 			.update({
 				etape_pipeline: parsed.data.etape_pipeline,
-				date_derniere_modification: new Date().toISOString(),
+				date_derniere_modification: now(),
 			})
 			.eq('id', parsed.data.id);
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 
 	archive: async ({ request, locals }) => {
@@ -107,17 +99,17 @@ export const actions: Actions = {
 		const parsed = validate(OpportuniteArchiveSchema, extractForm(form, ['id', 'motif_perte']));
 		if (!parsed.success) return fail(400, { error: parsed.error });
 
+		const ts = now();
 		const { error } = await locals.supabase
 			.from('opportunites')
 			.update({
 				etape_pipeline: 'perdu',
 				motif_perte: parsed.data.motif_perte || null,
-				date_cloture_effective: new Date().toISOString(),
-				date_derniere_modification: new Date().toISOString(),
+				date_cloture_effective: ts,
+				date_derniere_modification: ts,
 			})
 			.eq('id', parsed.data.id);
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 };

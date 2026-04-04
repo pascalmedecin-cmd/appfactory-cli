@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { randomUUID } from 'crypto';
-import { SignalCreateSchema, SignalUpdateSchema, SignalUpdateStatutSchema, SignalCreateOpportuniteSchema, extractForm, validate } from '$lib/schemas';
+import { SignalCreateSchema, SignalUpdateSchema, SignalUpdateStatutSchema, SignalCreateOpportuniteSchema, SIGNAL_FIELDS, extractForm, validate } from '$lib/schemas';
+import { dbFail, newId, now } from '$lib/server/db-helpers';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { data: signaux, error } = await locals.supabase
@@ -17,21 +17,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return { signaux: signaux ?? [] };
 };
 
-const SIGNAL_FIELDS = [
-	'type_signal', 'description_projet', 'maitre_ouvrage', 'architecte_bureau',
-	'canton', 'commune', 'source_officielle', 'date_publication', 'notes_libres', 'responsable_filmpro',
-];
-
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
 		const form = await request.formData();
-		const raw = extractForm(form, SIGNAL_FIELDS);
+		const raw = extractForm(form, [...SIGNAL_FIELDS]);
 		const parsed = validate(SignalCreateSchema, raw);
 		if (!parsed.success) return fail(400, { error: parsed.error });
 
-		const now = new Date().toISOString();
 		const { error } = await locals.supabase.from('signaux_affaires').insert({
-			id: randomUUID(),
+			id: newId(),
 			type_signal: parsed.data.type_signal || null,
 			description_projet: parsed.data.description_projet || null,
 			maitre_ouvrage: parsed.data.maitre_ouvrage || null,
@@ -43,11 +37,10 @@ export const actions: Actions = {
 			notes_libres: parsed.data.notes_libres || null,
 			responsable_filmpro: parsed.data.responsable_filmpro || null,
 			statut_traitement: 'nouveau',
-			date_detection: now,
+			date_detection: now(),
 		});
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 
 	update: async ({ request, locals }) => {
@@ -73,8 +66,7 @@ export const actions: Actions = {
 			})
 			.eq('id', parsed.data.id);
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 
 	updateStatut: async ({ request, locals }) => {
@@ -87,8 +79,7 @@ export const actions: Actions = {
 			.update({ statut_traitement: parsed.data.statut_traitement })
 			.eq('id', parsed.data.id);
 
-		if (error) { console.error('Supabase error:', error.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
-		return { success: true };
+		return dbFail(error) ?? { success: true };
 	},
 
 	createOpportunite: async ({ request, locals }) => {
@@ -96,8 +87,8 @@ export const actions: Actions = {
 		const parsed = validate(SignalCreateOpportuniteSchema, extractForm(form, ['signal_id', 'titre', 'entreprise_id']));
 		if (!parsed.success) return fail(400, { error: parsed.error });
 
-		const now = new Date().toISOString();
-		const oppId = randomUUID();
+		const ts = now();
+		const oppId = newId();
 		const { error: oppError } = await locals.supabase.from('opportunites').insert({
 			id: oppId,
 			titre: parsed.data.titre,
@@ -105,11 +96,12 @@ export const actions: Actions = {
 			etape_pipeline: 'identification',
 			signal_affaires_id: parsed.data.signal_id,
 			lie_signal_affaires: true,
-			date_creation: now,
-			date_derniere_modification: now,
+			date_creation: ts,
+			date_derniere_modification: ts,
 		});
 
-		if (oppError) { console.error('Supabase error:', oppError.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
+		const oppFail = dbFail(oppError);
+		if (oppFail) return oppFail;
 
 		const { error: sigError } = await locals.supabase
 			.from('signaux_affaires')
@@ -119,7 +111,9 @@ export const actions: Actions = {
 			})
 			.eq('id', parsed.data.signal_id);
 
-		if (sigError) { console.error('Supabase error:', sigError.message); return fail(400, { error: 'Erreur lors de l\'operation' }); }
+		const sigFail = dbFail(sigError);
+		if (sigFail) return sigFail;
+
 		return { success: true, redirectTo: '/pipeline' };
 	},
 };

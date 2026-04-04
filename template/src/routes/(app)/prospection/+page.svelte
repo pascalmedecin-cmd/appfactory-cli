@@ -1,18 +1,16 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
 	import DataTable from '$lib/components/DataTable.svelte';
-	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import ImportModal from '$lib/components/prospection/ImportModal.svelte';
+	import LeadSlideOut from '$lib/components/prospection/LeadSlideOut.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
 	import type { PageData } from './$types';
-	import { calculerScore } from '$lib/scoring';
 
 	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
-	const cantonNoms: Record<string, string> = { GE: 'Geneve', VD: 'Vaud', VS: 'Valais', NE: 'Neuchatel', FR: 'Fribourg', JU: 'Jura' };
 	const { labels: scoreLabels } = config.scoring;
 	const sourceEntries = Object.entries(config.prospection.sources);
 
@@ -25,8 +23,6 @@
 	let modalOpen = $state(false);
 	let importModalOpen = $state(false);
 	let saving = $state(false);
-	let importing = $state(false);
-	let enriching = $state(false);
 	let importResult = $state<{ message: string; type: 'success' | 'error' } | null>(null);
 	let selectedIds = $state<Set<string>>(new Set());
 	let saveSearchOpen = $state(false);
@@ -36,129 +32,11 @@
 	let savingSearch = $state(false);
 	let recherchesOpen = $state(false);
 
-	// Import form
-	let importCanton = $state('GE');
-	let importKeywords = $state('construction, architecte, batiment');
-	let importLimit = $state('100');
-	let importZefixName = $state('');
-	let importSimapSearch = $state('');
-	let importSimapDays = $state('30');
-
 	// Filters
 	let filterSource = $state('');
 	let filterCanton = $state('');
 	let filterStatut = $state('nouveau,interesse');
 	let filterScoreMin = $state('');
-
-	async function importLindas() {
-		importing = true;
-		importResult = null;
-		try {
-			const keywords = importKeywords.split(',').map((k) => k.trim()).filter(Boolean);
-			const resp = await fetch('/api/prospection/lindas', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					canton: importCanton,
-					keywords,
-					limit: Number(importLimit) || 100,
-				}),
-			});
-			const result = await resp.json();
-			if (resp.ok) {
-				importResult = { message: result.message, type: 'success' };
-				await invalidateAll();
-			} else {
-				importResult = { message: result.error || 'Erreur inconnue', type: 'error' };
-			}
-		} catch (err) {
-			importResult = { message: `Erreur: ${String(err)}`, type: 'error' };
-		} finally {
-			importing = false;
-		}
-	}
-
-	async function importZefix() {
-		importing = true;
-		importResult = null;
-		try {
-			const resp = await fetch('/api/prospection/zefix', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					canton: importCanton,
-					name: importZefixName || undefined,
-					activeOnly: true,
-					limit: Number(importLimit) || 100,
-				}),
-			});
-			const result = await resp.json();
-			if (resp.ok) {
-				importResult = { message: result.message, type: 'success' };
-				await invalidateAll();
-			} else {
-				importResult = { message: result.error || 'Erreur inconnue', type: 'error' };
-			}
-		} catch (err) {
-			importResult = { message: `Erreur: ${String(err)}`, type: 'error' };
-		} finally {
-			importing = false;
-		}
-	}
-
-	async function importSimap() {
-		importing = true;
-		importResult = null;
-		try {
-			const resp = await fetch('/api/prospection/simap', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({
-					canton: importCanton,
-					search: importSimapSearch || undefined,
-					daysBack: Number(importSimapDays) || 30,
-				}),
-			});
-			const result = await resp.json();
-			if (resp.ok) {
-				importResult = { message: result.message, type: 'success' };
-				await invalidateAll();
-			} else {
-				importResult = { message: result.error || 'Erreur inconnue', type: 'error' };
-			}
-		} catch (err) {
-			importResult = { message: `Erreur: ${String(err)}`, type: 'error' };
-		} finally {
-			importing = false;
-		}
-	}
-
-	async function enrichirTelephone(leadId: string) {
-		enriching = true;
-		try {
-			const resp = await fetch('/api/prospection/search-ch', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ lead_id: leadId }),
-			});
-			const result = await resp.json();
-			if (resp.ok) {
-				importResult = { message: result.message, type: result.telephone ? 'success' : 'error' };
-				await invalidateAll();
-				// Refresh selected lead
-				if (selectedLead) {
-					const updated = data.leads.find((l) => l.id === selectedLead!.id);
-					if (updated) selectedLead = updated;
-				}
-			} else {
-				importResult = { message: result.error || 'Erreur enrichissement', type: 'error' };
-			}
-		} catch (err) {
-			importResult = { message: `Erreur: ${String(err)}`, type: 'error' };
-		} finally {
-			enriching = false;
-		}
-	}
 
 	// Form fields
 	let source = $state('manuel');
@@ -253,18 +131,6 @@
 		filterStatut = '';
 		recherchesOpen = false;
 	}
-
-	function getScoreDetail(lead: Lead) {
-		return calculerScore({
-			canton: lead.canton,
-			description: lead.description,
-			raison_sociale: lead.raison_sociale,
-			source: lead.source,
-			date_publication: lead.date_publication,
-			telephone: lead.telephone,
-			montant: lead.montant ? Number(lead.montant) : null,
-		});
-	}
 </script>
 
 <div class="space-y-4">
@@ -355,7 +221,7 @@
 					savingSearch = false;
 					saveSearchOpen = false;
 					saveSearchName = '';
-					if (result.type === 'success') toasts.success('Recherche sauvegardée');
+					if (result.type === 'success') toasts.success('Recherche sauvegardee');
 					else toasts.error('Erreur lors de la sauvegarde');
 					await update();
 				};
@@ -439,7 +305,7 @@
 					</div>
 					<form method="POST" action="?/deleteRecherche" use:enhance={() => {
 						return async ({ result, update }) => {
-							if (result.type === 'success') toasts.success('Recherche supprimée');
+							if (result.type === 'success') toasts.success('Recherche supprimee');
 							else toasts.error('Erreur lors de la suppression');
 							await update();
 						};
@@ -470,8 +336,8 @@
 				const count = selectedIds.size;
 				return async ({ result, update }) => {
 					selectedIds = new Set();
-					if (result.type === 'success') toasts.success(`${count} lead${count > 1 ? 's' : ''} marqué${count > 1 ? 's' : ''} intéressé${count > 1 ? 's' : ''}`);
-					else toasts.error('Erreur lors de la mise à jour');
+					if (result.type === 'success') toasts.success(`${count} lead${count > 1 ? 's' : ''} marque${count > 1 ? 's' : ''} interesse${count > 1 ? 's' : ''}`);
+					else toasts.error('Erreur lors de la mise a jour');
 					await update();
 				};
 			}}>
@@ -485,8 +351,8 @@
 				const count = selectedIds.size;
 				return async ({ result, update }) => {
 					selectedIds = new Set();
-					if (result.type === 'success') toasts.success(`${count} lead${count > 1 ? 's' : ''} écarté${count > 1 ? 's' : ''}`);
-					else toasts.error('Erreur lors de la mise à jour');
+					if (result.type === 'success') toasts.success(`${count} lead${count > 1 ? 's' : ''} ecarte${count > 1 ? 's' : ''}`);
+					else toasts.error('Erreur lors de la mise a jour');
 					await update();
 				};
 			}}>
@@ -529,174 +395,8 @@
 	</DataTable>
 </div>
 
-<!-- SlideOut detail lead -->
-<SlideOut bind:open={slideOutOpen} title={selectedLead?.raison_sociale ?? ''}>
-	{#if selectedLead}
-		{@const scoreDetail = getScoreDetail(selectedLead)}
-		<div class="space-y-5">
-			<div class="flex items-center gap-2">
-				<Badge label={String(selectedLead.score_pertinence ?? 0)} variant={scoreBadgeVariant(selectedLead.score_pertinence ?? 0)} />
-				<Badge label={selectedLead.statut} variant={statutBadgeVariant(selectedLead.statut)} />
-				<Badge label={sourceLabel(selectedLead.source)} variant="default" />
-			</div>
-
-			{#if selectedLead.source_id}
-				<p class="text-xs text-text-muted">ID source : {selectedLead.source_id}</p>
-			{/if}
-
-			<div class="grid grid-cols-2 gap-4 text-sm">
-				<div>
-					<span class="text-text-muted">Adresse</span>
-					<p class="font-medium text-text">
-						{[selectedLead.adresse, selectedLead.npa, selectedLead.localite].filter(Boolean).join(', ') || '—'}
-					</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Canton</span>
-					<p class="font-medium text-text">{selectedLead.canton ?? '—'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Telephone</span>
-					<p class="font-medium text-text">{selectedLead.telephone ?? '—'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Email</span>
-					<p class="font-medium text-text">{selectedLead.email ?? '—'}</p>
-				</div>
-				{#if selectedLead.nom_contact}
-					<div>
-						<span class="text-text-muted">Contact</span>
-						<p class="font-medium text-text">{selectedLead.nom_contact}</p>
-					</div>
-				{/if}
-				{#if selectedLead.site_web}
-					<div>
-						<span class="text-text-muted">Site web</span>
-						<p class="font-medium text-text">{selectedLead.site_web}</p>
-					</div>
-				{/if}
-				{#if selectedLead.secteur_detecte}
-					<div>
-						<span class="text-text-muted">Secteur</span>
-						<p class="font-medium text-text">{selectedLead.secteur_detecte}</p>
-					</div>
-				{/if}
-				{#if selectedLead.montant}
-					<div>
-						<span class="text-text-muted">Montant</span>
-						<p class="font-medium text-text">{Number(selectedLead.montant).toLocaleString('fr-CH')} CHF</p>
-					</div>
-				{/if}
-			</div>
-
-			{#if selectedLead.description}
-				<div class="text-sm">
-					<span class="text-text-muted">Description</span>
-					<p class="text-text whitespace-pre-wrap mt-1">{selectedLead.description}</p>
-				</div>
-			{/if}
-
-			<!-- Score detail -->
-			<div class="text-sm p-3 bg-surface rounded-lg">
-				<span class="font-semibold text-text">Scoring ({scoreDetail.total}/13)</span>
-				<div class="mt-1 space-y-0.5">
-					{#each scoreDetail.criteres as critere}
-						<p class="text-text-muted">{critere}</p>
-					{/each}
-					{#if scoreDetail.criteres.length === 0}
-						<p class="text-text-muted">Aucun critere match</p>
-					{/if}
-				</div>
-			</div>
-
-			{#if selectedLead.source_url}
-				<a
-					href={selectedLead.source_url}
-					target="_blank"
-					rel="noopener"
-					class="inline-flex items-center gap-1 text-sm text-accent hover:underline"
-				>
-					<span class="material-symbols-outlined text-[16px]">open_in_new</span>
-					Voir la source
-				</a>
-			{/if}
-
-			<!-- Enrichissement -->
-			{#if !selectedLead.telephone && selectedLead.statut !== 'transfere'}
-				<button
-					onclick={() => enrichirTelephone(selectedLead!.id)}
-					disabled={enriching}
-					class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-warning bg-warning-light border border-warning/30 rounded-lg hover:bg-warning-light/80 disabled:opacity-50 cursor-pointer"
-				>
-					<span class="material-symbols-outlined text-[16px]">phone_forwarded</span>
-					{enriching ? 'Recherche...' : 'Enrichir telephone'}
-				</button>
-			{/if}
-
-			<!-- Actions -->
-			{#if selectedLead.statut !== 'transfere'}
-				<div class="flex flex-wrap gap-3 pt-4 border-t border-border">
-					{#if selectedLead.statut !== 'interesse'}
-						<form method="POST" action="?/updateStatut" use:enhance={() => {
-							return async ({ result, update }) => {
-								slideOutOpen = false;
-								selectedLead = null;
-								if (result.type === 'success') toasts.success('Lead marqué intéressé');
-								else toasts.error('Erreur lors de la mise à jour');
-								await update();
-							};
-						}}>
-							<input type="hidden" name="id" value={selectedLead.id} />
-							<input type="hidden" name="statut" value="interesse" />
-							<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-accent border border-accent rounded-lg hover:bg-accent/10 cursor-pointer">
-								<span class="material-symbols-outlined text-[16px]">thumb_up</span>
-								Interesse
-							</button>
-						</form>
-					{/if}
-					{#if selectedLead.statut !== 'ecarte'}
-						<form method="POST" action="?/updateStatut" use:enhance={() => {
-							return async ({ result, update }) => {
-								slideOutOpen = false;
-								selectedLead = null;
-								if (result.type === 'success') toasts.success('Lead écarté');
-								else toasts.error('Erreur lors de la mise à jour');
-								await update();
-							};
-						}}>
-							<input type="hidden" name="id" value={selectedLead.id} />
-							<input type="hidden" name="statut" value="ecarte" />
-							<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer">
-								<span class="material-symbols-outlined text-[16px]">block</span>
-								Ecarter
-							</button>
-						</form>
-					{/if}
-					<form method="POST" action="?/transferer" use:enhance={() => {
-						return async ({ result, update }) => {
-							slideOutOpen = false;
-							selectedLead = null;
-							if (result.type === 'success') toasts.success('Lead transféré vers le CRM');
-							else toasts.error('Erreur lors du transfert');
-							await update();
-						};
-					}}>
-						<input type="hidden" name="id" value={selectedLead.id} />
-						<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer">
-							<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-							Transferer vers CRM
-						</button>
-					</form>
-				</div>
-			{:else}
-				<div class="flex items-center gap-2 pt-4 border-t border-border text-sm text-success">
-					<span class="material-symbols-outlined text-[16px]">check_circle</span>
-					Transfere vers le CRM
-				</div>
-			{/if}
-		</div>
-	{/if}
-</SlideOut>
+<!-- Lead detail slide-out -->
+<LeadSlideOut bind:open={slideOutOpen} bind:lead={selectedLead} bind:importResult leads={data.leads} />
 
 <!-- Modal creation manuelle -->
 <ModalForm
@@ -713,8 +413,8 @@
 				saving = false;
 				modalOpen = false;
 				resetForm();
-				if (result.type === 'success') toasts.success('Lead créé');
-				else toasts.error('Erreur lors de la création');
+				if (result.type === 'success') toasts.success('Lead cree');
+				else toasts.error('Erreur lors de la creation');
 				await update();
 			};
 		}}
@@ -800,177 +500,4 @@
 </ModalForm>
 
 <!-- Modal import sources -->
-<ModalForm
-	bind:open={importModalOpen}
-	title="Importer des leads"
-	saving={importing}
->
-	<div class="space-y-5">
-		<!-- LINDAS -->
-		<div class="p-4 bg-surface rounded-lg border border-border">
-			<div class="flex items-center gap-2 mb-3">
-				<span class="material-symbols-outlined text-[20px] text-accent">database</span>
-				<h3 class="font-semibold text-text">LINDAS — Registre du commerce</h3>
-			</div>
-			<p class="text-xs text-text-muted mb-3">
-				Import d'entreprises depuis le registre federal (donnees ouvertes). Filtrage par canton et mots-cles dans le but social.
-			</p>
-			<div class="grid grid-cols-2 gap-3 mb-3">
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Canton</label>
-					<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						{#each cantons as c}
-							<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
-						{/each}
-					</select>
-				</div>
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Limite</label>
-					<select bind:value={importLimit} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						<option value="50">50 resultats</option>
-						<option value="100">100 resultats</option>
-						<option value="200">200 resultats</option>
-						<option value="500">500 resultats</option>
-					</select>
-				</div>
-			</div>
-			<div class="mb-3">
-				<label class="block text-sm font-medium text-text mb-1">Mots-cles (separes par des virgules)</label>
-				<input
-					type="text"
-					bind:value={importKeywords}
-					placeholder="construction, architecte, batiment..."
-					class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white"
-				/>
-			</div>
-			<button
-				onclick={importLindas}
-				disabled={importing}
-				class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
-			>
-				<span class="material-symbols-outlined text-[16px]">cloud_download</span>
-				{importing ? 'Import en cours...' : 'Importer depuis LINDAS'}
-			</button>
-		</div>
-
-		<!-- Zefix REST -->
-		<div class="p-4 bg-surface rounded-lg border border-border">
-			<div class="flex items-center gap-2 mb-3">
-				<span class="material-symbols-outlined text-[20px] text-accent">business</span>
-				<h3 class="font-semibold text-text">Zefix REST — Registre du commerce (complet)</h3>
-			</div>
-			<p class="text-xs text-text-muted mb-3">
-				Donnees completes : but social, capital nominal, publications FOSC. Necessite les credentials (env vars ZEFIX_USERNAME + ZEFIX_PASSWORD).
-			</p>
-			<div class="grid grid-cols-2 gap-3 mb-3">
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Canton</label>
-					<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						{#each cantons as c}
-							<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
-						{/each}
-					</select>
-				</div>
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Limite</label>
-					<select bind:value={importLimit} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						<option value="50">50 resultats</option>
-						<option value="100">100 resultats</option>
-						<option value="200">200 resultats</option>
-						<option value="500">500 resultats</option>
-					</select>
-				</div>
-			</div>
-			<div class="mb-3">
-				<label class="block text-sm font-medium text-text mb-1">Nom d'entreprise (optionnel)</label>
-				<input
-					type="text"
-					bind:value={importZefixName}
-					placeholder="Filtrer par nom..."
-					class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white"
-				/>
-			</div>
-			<button
-				onclick={importZefix}
-				disabled={importing}
-				class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
-			>
-				<span class="material-symbols-outlined text-[16px]">cloud_download</span>
-				{importing ? 'Import en cours...' : 'Importer depuis Zefix'}
-			</button>
-		</div>
-
-		<!-- SIMAP -->
-		<div class="p-4 bg-surface rounded-lg border border-border">
-			<div class="flex items-center gap-2 mb-3">
-				<span class="material-symbols-outlined text-[20px] text-accent">gavel</span>
-				<h3 class="font-semibold text-text">SIMAP — Marches publics construction</h3>
-			</div>
-			<p class="text-xs text-text-muted mb-3">
-				Appels d'offres publics construction. Leads chauds avec budgets et delais.
-			</p>
-			<div class="grid grid-cols-2 gap-3 mb-3">
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Canton</label>
-					<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						{#each cantons as c}
-							<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
-						{/each}
-					</select>
-				</div>
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Periode</label>
-					<select bind:value={importSimapDays} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						<option value="7">7 derniers jours</option>
-						<option value="30">30 derniers jours</option>
-						<option value="90">90 derniers jours</option>
-					</select>
-				</div>
-			</div>
-			<div class="mb-3">
-				<label class="block text-sm font-medium text-text mb-1">Recherche (optionnel, min. 3 car.)</label>
-				<input
-					type="text"
-					bind:value={importSimapSearch}
-					placeholder="renovation, facade..."
-					class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white"
-				/>
-			</div>
-			<button
-				onclick={importSimap}
-				disabled={importing}
-				class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
-			>
-				<span class="material-symbols-outlined text-[16px]">cloud_download</span>
-				{importing ? 'Import en cours...' : 'Importer depuis SIMAP'}
-			</button>
-		</div>
-
-		<!-- search.ch info -->
-		<div class="p-4 bg-surface rounded-lg border border-border opacity-60">
-			<div class="flex items-center gap-2 mb-2">
-				<span class="material-symbols-outlined text-[20px] text-text-muted">phone</span>
-				<h3 class="font-semibold text-text">search.ch — Enrichissement telephone</h3>
-			</div>
-			<p class="text-xs text-text-muted">
-				Cle API en attente. Utilisez le bouton "Enrichir telephone" sur chaque lead une fois la cle configuree.
-			</p>
-		</div>
-
-		{#if importResult}
-			<div class="p-3 rounded-lg text-sm {importResult.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}">
-				{importResult.message}
-			</div>
-		{/if}
-
-		<div class="flex justify-end pt-2">
-			<button
-				type="button"
-				onclick={() => { importModalOpen = false; importResult = null; }}
-				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
-			>
-				Fermer
-			</button>
-		</div>
-	</div>
-</ModalForm>
+<ImportModal bind:open={importModalOpen} bind:importResult />
