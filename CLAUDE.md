@@ -3,7 +3,7 @@
 **Statut :** Phase A — Jour 9 + audit securite + sprints 1-2 correctifs, Phase B a venir
 **Derniere mise a jour :** 2026-04-04
 **Prochain bug :** #001
-**Session precedente :** Sprint 2 securite (7 fixes hauts deployes : headers CSP, timing-safe cron, erreurs generiques Supabase, dependances delete entreprise, ModalForm conditionnel, double soumission). Audit securite 0 High/Critical.
+**Session precedente :** Decision Figma Pro abandonne (deep research claude.ai confirme : ratio cout/benefice defavorable). CLAUDE.md mis a jour : stack, workflow 5 etapes, Phase B annulee, couts -15 EUR/mois. Approche design = code-first + kits Figma Community gratuits comme inspiration.
 
 ---
 
@@ -11,13 +11,13 @@
 
 ```bash
 # Ce repo contient le workflow CLI premium AppFactory v2
-# Stack : SvelteKit + Supabase + Vercel + Figma + Claude Code skills
+# Stack : SvelteKit + Supabase + Vercel + Claude Code skills
 
 # Structure
 # skills/          — Skills Claude Code (cadrage, generate, deploy)
 # template/        — Template SvelteKit reutilisable (scaffold pour chaque app)
 # previews/        — Templates HTML Tailwind pour previsualisation client
-# scripts/         — Scripts utilitaires (extraction tokens Figma, etc.)
+# scripts/         — Scripts utilitaires (yaml-to-config, etc.)
 ```
 
 ---
@@ -33,8 +33,7 @@ Pilotage depuis le terminal via Claude Code skills.
 
 | Couche | Outil | Role |
 |--------|-------|------|
-| Design | Figma Pro + Plugin custom | Maquettes uniques par client, tokens exportables |
-| Tokens | Tokens Studio + script | Design Figma -> config Tailwind auto |
+| Design | Screenshots + kits Figma Community (inspiration) | References visuelles, pas de pipeline Figma |
 | Pilotage | Claude Code + 3 skills | Cadrage, generation, deploiement |
 | Frontend | SvelteKit + Tailwind | Apps web performantes, composants testables |
 | Backend | Supabase (PostgreSQL) | BDD, auth, API, stockage |
@@ -48,11 +47,10 @@ Pilotage depuis le terminal via Claude Code skills.
 ## WORKFLOW 6 ETAPES
 
 1. **Cadrage** — Dialogue naturel terminal, pages HTML de validation client
-2. **Design Figma** — Maquettes generees depuis specs, client commente
-3. **Extraction tokens** — Figma -> tailwind.config automatique
-4. **Generation** — Scaffold SvelteKit complet depuis specs + tokens
-5. **Preview et tests** — URL Vercel preview, tests automatises, client teste
-6. **Mise en production** — Domaine personnalise, base propre, acces client
+2. **Generation** — Scaffold SvelteKit complet depuis specs (project.yaml) + design system code-first
+3. **Preview et tests** — URL Vercel preview, tests automatises, client teste et donne feedback
+4. **Iteration** — Feedback client → modifications code → redeploy (minutes)
+5. **Mise en production** — Domaine personnalise, base propre, acces client
 
 ---
 
@@ -61,10 +59,9 @@ Pilotage depuis le terminal via Claude Code skills.
 ### Fixes mensuels (operateur)
 - Claude Code Max : 100-200 EUR/mois (deja en place)
 - Vercel Pro : 20 EUR/mois
-- Figma Pro : 15 EUR/mois
 - GitHub : 0 EUR
 - Supabase Free : 0 EUR (dev/staging)
-- **Total : 135-235 EUR/mois**
+- **Total : 120-220 EUR/mois**
 
 ### Par app client
 - Supabase Free : 0 EUR (jusqu'a 500 Mo)
@@ -87,10 +84,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - Jour 8 : Recherches sauvegardees + alertes cron + responsive + rate limiting + tests ✓
 - Jour 9 : Page Aide (doc utilisateur integree) + extraction template (project.yaml + config.ts) + env vars prod ✓
 
-### Phase B — Plugin Figma + Outillage (jours 1-5, parallele)
-- Jour 1-2 : Design system Figma (composants de base, tokens)
-- Jour 3-4 : Plugin Figma bidirectionnel (specs -> frames, export tokens)
-- Jour 5 : Script extraction tokens (JSON -> tailwind.config.js)
+### Phase B — ANNULEE (decision 2026-04-04 : pas de Figma Pro)
 
 ### Phase C — Skills et templates HTML (jours 8-12)
 - Jour 8-9 : Skill cadrage (dialogue -> project.yaml -> 4 pages HTML)
@@ -104,8 +98,9 @@ Pilotage depuis le terminal via Claude Code skills.
 - Repo separe `appfactory-cli` (ancien `appfactory` reste consultable)
 - Workflow prioritaire : construire le cycle core avant d'attaquer FilmPro
 - FilmPro = premier projet reel du nouveau workflow (dogfooding)
-- Figma = moyen/long terme, plugin custom 3-5 jours dev
-- Commencer sans plugin Figma (tokens manuels), le plugin est un accelerateur
+- Figma Pro abandonne (deep research 2026-04-04 : ratio cout/benefice defavorable pour solopreneur code-first)
+- Design = approche code-first : composants custom + kits Figma Community gratuits comme inspiration
+- Validation client = prototypes Vercel preview (pas de maquettes Figma)
 - HTML temporaires pour previsualisations client a chaque etape cle
 - Ancien projet AppFactory v1 (Apps Script) = archive consultable, pas de migration
 
@@ -194,11 +189,8 @@ Sprint 3 refactoring :
 
 Puis Sprint 4 tests manquants (14/18 schemas non testes, 0 test authentifie, 0 test API).
 
-Decision Figma en suspens — recherche deep research a lancer sur claude.ai (prompt prepare).
-
 **En attente :**
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
-- Decision Figma (analyse cout/benefice a faire)
 
 **Decisions session :**
 - config.ts est desormais un fichier GENERE — ne plus le modifier a la main
