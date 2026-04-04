@@ -3,7 +3,7 @@
 **Statut :** Phase A — Jour 9 + audit securite + sprints 1-4, Phase B a venir
 **Derniere mise a jour :** 2026-04-04
 **Prochain bug :** #001
-**Session precedente :** Hook SessionStart reconfigure (.claude/settings.json) — extraction automatique section OBJECTIF depuis CLAUDE.md via sed+jq, injecte en additionalContext. Ancien hook shell script supprime, instruction CLAUDE.md seule insuffisante.
+**Session precedente :** Hook SessionStart migre dans settings.json global (~/.claude/settings.json) — s'applique a tous les projets, extrait section OBJECTIF PROCHAINE SESSION depuis CLAUDE.md via sed, injecte en additionalContext. Plus de dependance projet-specifique.
 
 ---
 
