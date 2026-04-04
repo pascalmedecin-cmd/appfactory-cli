@@ -7,6 +7,15 @@
 
 ---
 
+## EN DEBUT DE SESSION
+
+A l'ouverture du projet, afficher immediatement (sans attendre de question) :
+- Objectif prochaine session (section ci-dessous)
+- Elements en attente
+- Planning Phase C restant
+
+---
+
 ## QUICK START
 
 ```bash
