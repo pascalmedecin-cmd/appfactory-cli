@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 9 + audit securite + sprints 1-2 correctifs, Phase B a venir
+**Statut :** Phase A — Jour 9 + audit securite + sprints 1-3, Phase B a venir
 **Derniere mise a jour :** 2026-04-04
 **Prochain bug :** #001
-**Session precedente :** Decision Figma Pro abandonne (deep research claude.ai confirme : ratio cout/benefice defavorable). CLAUDE.md mis a jour : stack, workflow 5 etapes, Phase B annulee, couts -15 EUR/mois. Approche design = code-first + kits Figma Community gratuits comme inspiration.
+**Session precedente :** Sprint 3 refactoring termine. db-helpers.ts (dbFail/newId/now), FIELDS centralises dans schemas.ts, 5 server.ts refactorises, prospection/+page.svelte decoupe 976->530 lignes (ImportModal + LeadSlideOut extraits). Build OK, 34 tests OK.
 
 ---
 
@@ -155,10 +155,11 @@ Pilotage depuis le terminal via Claude Code skills.
 
 - **Design system** : CSS variables primary/accent, font DM Sans, Material Symbols icons
 - **Layout** : sidebar 220px collapsible (56px) + header 48px, groupe route `(app)/`, responsive mobile (burger menu + overlay)
-- **9 composants** : `src/lib/components/` — DataTable (selectable avec $bindable), SlideOut (anime slide-in), ModalForm (anime scale), FormField, Badge, EmptyState, Header, Sidebar, Toast (notifications succes/erreur/warning/info)
+- **11 composants** : `src/lib/components/` — DataTable (selectable avec $bindable), SlideOut (anime slide-in), ModalForm (anime scale), FormField, Badge, EmptyState, Header, Sidebar, Toast + `prospection/ImportModal`, `prospection/LeadSlideOut`
 - **Toast store** : `src/lib/stores/toast.ts` — store Svelte avec methodes success/error/warning/info, auto-dismiss 4-6s
 - **Focus visible** : CSS global (app.css) — outline accent sur boutons/liens en navigation clavier
-- **Validation** : `src/lib/schemas.ts` — 18+ schemas Zod (contacts, entreprises, opportunites, signaux, leads, recherches) + helper `validate()`
+- **Validation** : `src/lib/schemas.ts` — 18+ schemas Zod + 5 FIELDS arrays centralises + helpers `validate()`, `extractForm()`
+- **DB helpers** : `src/lib/server/db-helpers.ts` — `dbFail()`, `newId()`, `now()` (utilises par tous les server.ts)
 - **Scoring** : `src/lib/scoring.ts` — calcul 0-13 points (canton, secteur, signal, recence, tel, montant)
 - **Page Contacts** : CRUD complet (create/update/archive), DataTable tri/recherche, SlideOut detail, ModalForm 6 champs
 - **Page Entreprises** : CRUD complet (create/update/delete), contacts rattaches dans SlideOut
@@ -181,13 +182,11 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## OBJECTIF PROCHAINE SESSION
 
-Sprint 3 refactoring :
-- Extraire utilitaires API partages (pattern erreur Supabase, creation entites)
-- Decouper prospection/+page.svelte (976 lignes) en composants
-- Identifier et supprimer dead code
-- Reduire duplications entre pages server.ts
-
-Puis Sprint 4 tests manquants (14/18 schemas non testes, 0 test authentifie, 0 test API).
+Sprint 4 tests manquants :
+- 14/18 schemas Zod non testes (seuls scoring + quelques schemas couverts)
+- 0 test authentifie (actions server protegees)
+- 0 test API (routes /api/prospection/*)
+- Objectif : couverture significative des schemas + au moins 1 test API
 
 **En attente :**
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
@@ -209,7 +208,7 @@ Audit complet par 5 agents specialises. Resultats :
 - Securite 14/20, Qualite code 22/37, Tests 8/30, 4 critiques + 5 hauts
 - Sprint 1 (5 critiques) : CORRIGE et deploye (commit 76766ce)
 - Sprint 2 (7 hauts) : CORRIGE et deploye (commit d123a5d)
-- Sprint 3 (refactoring) : duplications API, gros fichiers, dead code
+- Sprint 3 (refactoring) : CORRIGE (commit e3ba665) — db-helpers, FIELDS centralises, prospection decoupee
 - Sprint 4 (tests) : 14/18 schemas non testes, 0 test authentifie, 0 test API
 - Detail complet dans l'historique de conversation du 2026-04-04
 
