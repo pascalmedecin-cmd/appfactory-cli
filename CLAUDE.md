@@ -1,9 +1,9 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 9 + audit securite + sprint 1 correctifs, Phase B a venir
+**Statut :** Phase A — Jour 9 + audit securite + sprints 1-2 correctifs, Phase B a venir
 **Derniere mise a jour :** 2026-04-04
 **Prochain bug :** #001
-**Session precedente :** Audit complet CRM (5 agents : securite, qualite code, tests, bugs, exploration) + Sprint 1 securite (5 fixes critiques deployes). Renforcement rules globales securite (quality.md + methodology.md). Analyse PDF Datadog AI Security croisee avec etat du code.
+**Session precedente :** Sprint 2 securite (7 fixes hauts deployes : headers CSP, timing-safe cron, erreurs generiques Supabase, dependances delete entreprise, ModalForm conditionnel, double soumission). Audit securite 0 High/Critical.
 
 ---
 
@@ -146,7 +146,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - **BDD** : 10 tables PostgreSQL (+ prospect_leads, recherches_sauvegardees), FK, index, RLS (authenticated full access), types TS generes
 - **Zefix REST** : Pascal a repondu a zefix@bj.admin.ch (username pascal@filmpro.ch), en attente du mot de passe (plusieurs jours)
 - **search.ch** : cle API configuree en local (.env) + Vercel prod
-- **Securite** : email provider desactive (Google OAuth only), whitelist emails ALLOWED_EMAILS env var (pascal@filmpro.ch configure Vercel prod), validation Zod sur toutes les form actions (18 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore
+- **Securite** : email provider desactive (Google OAuth only), whitelist emails ALLOWED_EMAILS env var (pascal@filmpro.ch configure Vercel prod), validation Zod sur toutes les form actions (18 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
 - **Tests** : Vitest (34 tests : scoring + schemas + validation) + Playwright (5 tests e2e : navigation + auth redirect)
 - **Cron** : `/api/cron/alertes` quotidien 7h (vercel.json), securise par CRON_SECRET (configure Vercel prod)
 
@@ -186,16 +186,13 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## OBJECTIF PROCHAINE SESSION
 
-Sprint 2 securite + qualite (audit items restants) :
-- Double soumission : ajouter disabled={submitting} sur toutes les actions destructives
-- ModalForm : conditionner footer a {#if onSave} ou supprimer les boutons integres
-- Headers securite : CSP, X-Frame-Options, X-Content-Type-Options dans hooks.server.ts
-- Erreurs Supabase : messages generiques cote client, console.error cote serveur
-- Login erreur : afficher message visible (deja fait dans sprint 1)
-- Hard delete entreprise : verifier dependances avant suppression
-- Timing attack cron : crypto.timingSafeEqual pour CRON_SECRET
+Sprint 3 refactoring :
+- Extraire utilitaires API partages (pattern erreur Supabase, creation entites)
+- Decouper prospection/+page.svelte (976 lignes) en composants
+- Identifier et supprimer dead code
+- Reduire duplications entre pages server.ts
 
-Puis Sprint 3 refactoring (extraire utilitaires API partages, decouper prospection page 976 lignes) et Sprint 4 tests manquants.
+Puis Sprint 4 tests manquants (14/18 schemas non testes, 0 test authentifie, 0 test API).
 
 Decision Figma en suspens — recherche deep research a lancer sur claude.ai (prompt prepare).
 
@@ -219,7 +216,7 @@ Decision Figma en suspens — recherche deep research a lancer sur claude.ai (pr
 Audit complet par 5 agents specialises. Resultats :
 - Securite 14/20, Qualite code 22/37, Tests 8/30, 4 critiques + 5 hauts
 - Sprint 1 (5 critiques) : CORRIGE et deploye (commit 76766ce)
-- Sprint 2 (7 hauts) : a faire prochaine session
+- Sprint 2 (7 hauts) : CORRIGE et deploye (commit d123a5d)
 - Sprint 3 (refactoring) : duplications API, gros fichiers, dead code
 - Sprint 4 (tests) : 14/18 schemas non testes, 0 test authentifie, 0 test API
 - Detail complet dans l'historique de conversation du 2026-04-04
