@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { config } from '$lib/config';
+
 	let searchQuery = $state('');
 	let activeSection = $state('');
 
@@ -67,7 +69,7 @@
 	<!-- Header -->
 	<div class="mb-6">
 		<h1 class="text-2xl font-bold text-text">Aide</h1>
-		<p class="mt-1 text-text-muted">Documentation utilisateur FilmPro CRM</p>
+		<p class="mt-1 text-text-muted">Documentation utilisateur {config.app.name}</p>
 	</div>
 
 	<!-- Search -->
@@ -124,7 +126,7 @@
 				<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">login</span> Connexion</h2>
 				<div class="aide-content">
 					<h3 class="aide-h3">Se connecter</h3>
-					<p>FilmPro utilise la connexion Google. Sur la page de login, cliquez <strong>Se connecter avec Google</strong> et selectionnez votre compte professionnel.</p>
+					<p>{config.app.name} utilise la connexion Google. Sur la page de login, cliquez <strong>Se connecter avec Google</strong> et selectionnez votre compte professionnel.</p>
 					<p>Seuls les comptes autorises par l'administrateur peuvent acceder a l'application.</p>
 
 					<h3 class="aide-h3">Se deconnecter</h3>

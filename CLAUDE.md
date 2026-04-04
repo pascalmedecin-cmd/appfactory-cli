@@ -1,18 +1,11 @@
 # AppFactory - CLI — CLAUDE.md
 
-**Statut :** Phase A — Jour 9 + audit securite + sprints 1-4, Phase B a venir
+**Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
 **Derniere mise a jour :** 2026-04-04
 **Prochain bug :** #001
-**Session precedente :** Hook SessionStart migre dans settings.json global (~/.claude/settings.json) — s'applique a tous les projets, extrait section OBJECTIF PROCHAINE SESSION depuis CLAUDE.md via sed, injecte en additionalContext. Plus de dependance projet-specifique.
+**Session precedente :** Phase C — 3 skills crees (/cadrage, /generate, /deploy), template parametrise, scripts scaffold + previews.
 
 ---
-
-## EN DEBUT DE SESSION
-
-A l'ouverture du projet, afficher immediatement (sans attendre de question) :
-- Objectif prochaine session (section ci-dessous)
-- Elements en attente
-- Planning Phase C restant
 
 ---
 
@@ -160,7 +153,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - `docs/USER_GUIDE_DRAFT.md` — Guide utilisateur, alimente au fil du dev
 - `docs/MAINTAINER_GUIDE_DRAFT.md` — Guide mainteneur, alimente au fil du dev
 
-## EN PLACE (Jour 9)
+## EN PLACE (Jour 9 + Phase C skills)
 
 - **Design system** : CSS variables primary/accent, font DM Sans, Material Symbols icons
 - **Layout** : sidebar 220px collapsible (56px) + header 48px, groupe route `(app)/`, responsive mobile (burger menu + overlay)
@@ -188,26 +181,29 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Script yaml-to-config** : `scripts/yaml-to-config.ts` (npx tsx ou npm run generate:config) — lit project.yaml, convertit snake_case→camelCase (preserve cles sources), genere config.ts avec `as const`, preserve loginBackground
 - **Page login** : photo fond pleine page conditionnelle (`config.branding.loginBackground`), overlay sombre, glassmorphism
 - **Bouton deconnexion** : sidebar bas gauche (icone logout, hover rouge), retire du header
+- **Skills Claude Code** : 3 slash commands dans `.claude/commands/` — `/cadrage` (dialogue → project.yaml → previews), `/generate` (scaffold SvelteKit depuis yaml), `/deploy` (tests → git → Vercel)
+- **Script generate-previews** : `scripts/generate-previews.ts` — genere 4 pages HTML Tailwind (pitch, entites, pages, specs) depuis project.yaml, branding client applique
+- **Script scaffold** : `scripts/scaffold.ts` — copie template vers nouveau dossier, injecte project.yaml, genere config.ts, personnalise app.html et package.json
+- **Template parametrise** : app.html placeholder `{{APP_NAME}}`, Sidebar logo dynamique (image ou texte fallback depuis config), aide lit config.app.name
+- **yaml-to-config parametrable** : accepte un chemin en argument (`npx tsx scripts/yaml-to-config.ts [project-dir]`)
 
 ## OBJECTIF PROCHAINE SESSION
 
-Phase C — Skills et templates HTML :
-- Skill cadrage (dialogue -> project.yaml -> 4 pages HTML)
-- Skill generate (project.yaml + tokens -> SvelteKit scaffold)
-- Skill deploy (push -> Vercel preview/prod, test end-to-end)
+Dogfooding Phase C — tester le workflow complet sur un nouveau projet fictif :
+- `/cadrage` → dialogue → project.yaml → previews HTML (verifier le flow interactif)
+- `/generate` → scaffold SvelteKit (verifier la personnalisation post-scaffold)
+- `/deploy` → preview Vercel (verifier le deploy end-to-end)
+- Corriger les frictions decouvertes pendant le dogfooding
 
 **En attente :**
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
 
 **Decisions session :**
-- config.ts est desormais un fichier GENERE — ne plus le modifier a la main
-- Les cles de sources prospection (lindas, search_ch, etc.) sont preservees en snake_case (identifiants DB)
-- cantonNoms mapping dans prospection page (pas dans config — specifique UI)
-- Whitelist emails via env vars ALLOWED_EMAILS/ALLOWED_DOMAINS (pas dans config.ts frontend)
-- Blocage par defaut si aucune whitelist configuree (securite)
-- Rules globales renforcees : Security Definition of Done, agent security-auditor obligatoire, checklist securite fin de session
-- Fonctions utilitaires API extraites dans fichiers separes (sparql.ts, helpers.ts) pour testabilite — +server.ts importe depuis ces fichiers
-- Hook SessionStart configure pour afficher context.md a l'ouverture du projet
+- 3 skills = 3 slash commands Claude Code (.claude/commands/*.md), pas des scripts standalone
+- Template 85% parametrise via config.ts, 3 derniers hardcoded corriges (app.html, Sidebar, aide)
+- yaml-to-config accepte maintenant un chemin optionnel pour generer hors du template source
+- scaffold.ts ne touche jamais le template source (copie puis personnalise)
+- Previews HTML utilisent Tailwind CDN + branding client (standalone, pas de build)
 
 **Prerequis :**
 - Aucun bloquant technique

@@ -1,7 +1,8 @@
 #!/usr/bin/env npx tsx
 /**
- * Genere template/src/lib/config.ts depuis template/project.yaml.
- * Usage : npx tsx scripts/yaml-to-config.ts
+ * Genere config.ts depuis project.yaml.
+ * Usage : npx tsx scripts/yaml-to-config.ts [project-dir]
+ * Par defaut : template/
  */
 
 import { readFileSync, writeFileSync } from 'fs';
@@ -10,7 +11,9 @@ import { fileURLToPath } from 'url';
 import yaml from 'js-yaml';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ROOT = resolve(__dirname, '..', 'template');
+const ROOT = process.argv[2]
+	? resolve(process.argv[2])
+	: resolve(__dirname, '..', 'template');
 const YAML_PATH = resolve(ROOT, 'project.yaml');
 const CONFIG_PATH = resolve(ROOT, 'src', 'lib', 'config.ts');
 

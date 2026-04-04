@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr-CH">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recapitulatif — FilmPro CRM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM%20Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@24,400,0" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2F5A9E',
+            'primary-light': '#F0F4F8',
+            'primary-dark': '#0A1628',
+            accent: '#3B6CB7',
+          },
+          fontFamily: {
+            sans: ['DM Sans', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'opsz' 24; vertical-align: middle; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <header class="bg-primary text-white shadow-lg">
+    <div class="max-w-6xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold">FilmPro CRM</h1>
+        <span class="text-sm text-white/60">Presentation client</span>
+      </div>
+      <nav class="flex gap-1 mt-3 -mb-px">
+          <a href="../pitch/index.html" class="px-4 py-2 text-white/70 hover:text-white transition-colors">Pitch</a>
+          <a href="../entities/index.html" class="px-4 py-2 text-white/70 hover:text-white transition-colors">Entites</a>
+          <a href="../pages/index.html" class="px-4 py-2 text-white/70 hover:text-white transition-colors">Pages</a>
+          <a href="./index.html" class="px-4 py-2 border-b-2 border-white text-white font-semibold transition-colors">Recapitulatif</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="max-w-6xl mx-auto px-6 py-10">
+    
+    <h2 class="text-3xl font-bold text-primary-dark mb-8">Recapitulatif des specifications</h2>
+    <p class="text-gray-500 mb-8">Ce document resume l'ensemble des specs validees pour <strong>FilmPro CRM</strong>. Il sert de reference pour la phase de generation.</p>
+    
+    <div class="bg-white rounded-xl shadow p-8 mb-6">
+      <h3 class="text-xl font-semibold text-primary-dark mb-4">Application</h3>
+      <dl class="grid grid-cols-2 gap-4 text-sm">
+        <div><dt class="text-gray-500">Nom</dt><dd class="font-medium">FilmPro CRM</dd></div>
+        <div><dt class="text-gray-500">Slug</dt><dd class="font-mono">filmpro</dd></div>
+        <div class="col-span-2"><dt class="text-gray-500">Description</dt><dd>CRM de gestion commerciale pour le secteur de la production audiovisuelle et construction</dd></div>
+        <div><dt class="text-gray-500">Locale</dt><dd>fr-CH</dd></div>
+        <div><dt class="text-gray-500">Auth</dt><dd>google OAuth</dd></div>
+      </dl>
+    </div>
+    <div class="bg-white rounded-xl shadow p-8 mb-6">
+      <h3 class="text-xl font-semibold text-primary-dark mb-4">Branding</h3>
+      <div class="flex gap-4 mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-lg shadow-inner" style="background:#2F5A9E"></div>
+          <div class="text-sm"><div class="text-gray-500">Primary</div><div class="font-mono text-xs">#2F5A9E</div></div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-lg shadow-inner" style="background:#3B6CB7"></div>
+          <div class="text-sm"><div class="text-gray-500">Accent</div><div class="font-mono text-xs">#3B6CB7</div></div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-10 h-10 rounded-lg shadow-inner" style="background:#0A1628"></div>
+          <div class="text-sm"><div class="text-gray-500">Dark</div><div class="font-mono text-xs">#0A1628</div></div>
+        </div>
+      </div>
+      <div class="text-sm text-gray-500">Police : <span class="font-medium text-gray-700">DM Sans</span></div>
+    </div>
+    <div class="bg-white rounded-xl shadow p-8 mb-6">
+      <h3 class="text-xl font-semibold text-primary-dark mb-4">Scoring</h3>
+      <div class="text-sm mb-4">Score maximum : <span class="font-bold text-primary">13 points</span></div>
+      
+      <div class="flex gap-3">
+        
+        <div class="px-4 py-2 rounded-full text-sm font-medium bg-red-100 text-red-700">
+          chaud ≥ 8
+        </div>
+        <div class="px-4 py-2 rounded-full text-sm font-medium bg-amber-100 text-amber-700">
+          tiede ≥ 5
+        </div>
+        <div class="px-4 py-2 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+          froid ≥ 2
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow p-8 mb-6">
+      <h3 class="text-xl font-semibold text-primary-dark mb-4">Sources de prospection</h3>
+      <div class="grid md:grid-cols-2 gap-3">
+        
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-green-50">
+          <span class="w-2 h-2 rounded-full bg-green-500"></span>
+          <span class="font-medium text-sm">LINDAS (registre du commerce)</span>
+          <span class="ml-auto text-xs text-gray-400">lindas</span>
+        </div>
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-gray-50">
+          <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+          <span class="font-medium text-sm">Zefix REST (registre complet)</span>
+          <span class="ml-auto text-xs text-gray-400">zefix</span>
+        </div>
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-green-50">
+          <span class="w-2 h-2 rounded-full bg-green-500"></span>
+          <span class="font-medium text-sm">SIMAP (marches publics)</span>
+          <span class="ml-auto text-xs text-gray-400">simap</span>
+        </div>
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-green-50">
+          <span class="w-2 h-2 rounded-full bg-green-500"></span>
+          <span class="font-medium text-sm">search.ch (annuaire)</span>
+          <span class="ml-auto text-xs text-gray-400">search_ch</span>
+        </div>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow p-8 mb-6">
+      <h3 class="text-xl font-semibold text-primary-dark mb-4">Signaux d'affaires</h3>
+      <div class="flex flex-wrap gap-2">
+        <span class="px-3 py-1.5 bg-primary-light text-primary rounded-full text-sm font-medium">Appel d'offres</span><span class="px-3 py-1.5 bg-primary-light text-primary rounded-full text-sm font-medium">Permis de construire</span><span class="px-3 py-1.5 bg-primary-light text-primary rounded-full text-sm font-medium">Creation d'entreprise</span><span class="px-3 py-1.5 bg-primary-light text-primary rounded-full text-sm font-medium">Demenagement</span><span class="px-3 py-1.5 bg-primary-light text-primary rounded-full text-sm font-medium">Expansion</span><span class="px-3 py-1.5 bg-primary-light text-primary rounded-full text-sm font-medium">Fusion / Acquisition</span><span class="px-3 py-1.5 bg-primary-light text-primary rounded-full text-sm font-medium">Autre</span>
+      </div>
+    </div>
+    <div class="bg-white rounded-xl shadow p-8 mb-6">
+      <h3 class="text-xl font-semibold text-primary-dark mb-4">Automatisations</h3>
+      <div class="text-sm">
+        
+        <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg mb-2">
+          <span class="material-symbols-outlined text-2xl">schedule</span>
+          <span class="font-medium">alertes</span>
+          <span class="text-gray-500">/api/cron/alertes</span>
+          <span class="ml-auto font-mono text-xs bg-gray-200 px-2 py-1 rounded">0 7 * * *</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Validation -->
+    <div class="bg-primary-light border-2 border-primary rounded-xl p-8 text-center mt-12">
+      <h3 class="text-xl font-semibold text-primary-dark mb-2">Pret pour la generation</h3>
+      <p class="text-gray-600">Si ces specifications sont validees, l'etape suivante est le skill <code>/generate</code> qui produira le scaffold SvelteKit complet.</p>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t mt-16 py-6 text-center text-sm text-gray-400">
+    FilmPro CRM — Document de cadrage genere par AppFactory
+  </footer>
+</body>
+</html>

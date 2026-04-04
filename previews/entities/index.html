@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="fr-CH">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entites — FilmPro CRM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM%20Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@24,400,0" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2F5A9E',
+            'primary-light': '#F0F4F8',
+            'primary-dark': '#0A1628',
+            accent: '#3B6CB7',
+          },
+          fontFamily: {
+            sans: ['DM Sans', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'opsz' 24; vertical-align: middle; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <header class="bg-primary text-white shadow-lg">
+    <div class="max-w-6xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold">FilmPro CRM</h1>
+        <span class="text-sm text-white/60">Presentation client</span>
+      </div>
+      <nav class="flex gap-1 mt-3 -mb-px">
+          <a href="../pitch/index.html" class="px-4 py-2 text-white/70 hover:text-white transition-colors">Pitch</a>
+          <a href="./index.html" class="px-4 py-2 border-b-2 border-white text-white font-semibold transition-colors">Entites</a>
+          <a href="../pages/index.html" class="px-4 py-2 text-white/70 hover:text-white transition-colors">Pages</a>
+          <a href="../specs/index.html" class="px-4 py-2 text-white/70 hover:text-white transition-colors">Recapitulatif</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="max-w-6xl mx-auto px-6 py-10">
+    
+    <h2 class="text-3xl font-bold text-primary-dark mb-8">Schema des donnees</h2>
+    <div class="bg-amber-50 border border-amber-200 rounded-lg p-6 mb-8">
+      <p class="text-amber-800"><span class="material-symbols-outlined text-2xl">info</span> Les entites seront definies lors du skill <code>generate</code> a partir des pages configurees.</p>
+    </div>
+    <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      
+      <div class="bg-white rounded-xl shadow p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="material-symbols-outlined text-2xl">contacts</span>
+          <h3 class="text-lg font-semibold">Contacts</h3>
+        </div>
+        <p class="text-sm text-gray-500">Table derivee de la page Contacts</p>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="material-symbols-outlined text-2xl">business</span>
+          <h3 class="text-lg font-semibold">Entreprises</h3>
+        </div>
+        <p class="text-sm text-gray-500">Table derivee de la page Entreprises</p>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="material-symbols-outlined text-2xl">filter_list</span>
+          <h3 class="text-lg font-semibold">Pipeline</h3>
+        </div>
+        <p class="text-sm text-gray-500">Table derivee de la page Pipeline</p>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="material-symbols-outlined text-2xl">search</span>
+          <h3 class="text-lg font-semibold">Prospection</h3>
+        </div>
+        <p class="text-sm text-gray-500">Table derivee de la page Prospection</p>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6">
+        <div class="flex items-center gap-3 mb-3">
+          <span class="material-symbols-outlined text-2xl">notifications</span>
+          <h3 class="text-lg font-semibold">Signaux</h3>
+        </div>
+        <p class="text-sm text-gray-500">Table derivee de la page Signaux</p>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t mt-16 py-6 text-center text-sm text-gray-400">
+    FilmPro CRM — Document de cadrage genere par AppFactory
+  </footer>
+</body>
+</html>

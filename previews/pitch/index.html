@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr-CH">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pitch — FilmPro CRM</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM%20Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL@24,400,0" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2F5A9E',
+            'primary-light': '#F0F4F8',
+            'primary-dark': '#0A1628',
+            accent: '#3B6CB7',
+          },
+          fontFamily: {
+            sans: ['DM Sans', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'DM Sans', system-ui, sans-serif; }
+    .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'opsz' 24; vertical-align: middle; }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <header class="bg-primary text-white shadow-lg">
+    <div class="max-w-6xl mx-auto px-6 py-4">
+      <div class="flex items-center justify-between">
+        <h1 class="text-xl font-bold">FilmPro CRM</h1>
+        <span class="text-sm text-white/60">Presentation client</span>
+      </div>
+      <nav class="flex gap-1 mt-3 -mb-px">
+          <a href="./index.html" class="px-4 py-2 border-b-2 border-white text-white font-semibold transition-colors">Pitch</a>
+          <a href="../entities/index.html" class="px-4 py-2 text-white/70 hover:text-white transition-colors">Entites</a>
+          <a href="../pages/index.html" class="px-4 py-2 text-white/70 hover:text-white transition-colors">Pages</a>
+          <a href="../specs/index.html" class="px-4 py-2 text-white/70 hover:text-white transition-colors">Recapitulatif</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="max-w-6xl mx-auto px-6 py-10">
+    
+    <div class="text-center mb-12">
+      <h2 class="text-4xl font-bold text-primary-dark mb-4">FilmPro CRM</h2>
+      <p class="text-xl text-gray-600 max-w-2xl mx-auto">CRM de gestion commerciale pour le secteur de la production audiovisuelle et construction</p>
+    </div>
+
+    <!-- Key numbers -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+      <div class="bg-white rounded-xl shadow p-6 text-center">
+        <div class="text-3xl font-bold text-primary">7</div>
+        <div class="text-sm text-gray-500 mt-1">Pages</div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6 text-center">
+        <div class="text-3xl font-bold text-primary">—</div>
+        <div class="text-sm text-gray-500 mt-1">Entites</div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6 text-center">
+        <div class="text-3xl font-bold text-primary">4</div>
+        <div class="text-sm text-gray-500 mt-1">Modules</div>
+      </div>
+      <div class="bg-white rounded-xl shadow p-6 text-center">
+        <div class="text-3xl font-bold text-primary">fr-CH</div>
+        <div class="text-sm text-gray-500 mt-1">Locale</div>
+      </div>
+    </div>
+
+    
+    <!-- Features -->
+    <div class="bg-white rounded-xl shadow p-8 mb-12">
+      <h3 class="text-2xl font-semibold text-primary-dark mb-6">Modules inclus</h3>
+      <div class="grid md:grid-cols-2 gap-4">
+        
+        <div class="flex items-center gap-3 p-4 bg-primary-light rounded-lg">
+          <span class="material-symbols-outlined text-2xl">check_circle</span>
+          <span class="font-medium">Pipeline commercial</span>
+        </div>
+        <div class="flex items-center gap-3 p-4 bg-primary-light rounded-lg">
+          <span class="material-symbols-outlined text-2xl">check_circle</span>
+          <span class="font-medium">Prospection multi-sources</span>
+        </div>
+        <div class="flex items-center gap-3 p-4 bg-primary-light rounded-lg">
+          <span class="material-symbols-outlined text-2xl">check_circle</span>
+          <span class="font-medium">Signaux d'affaires</span>
+        </div>
+        <div class="flex items-center gap-3 p-4 bg-primary-light rounded-lg">
+          <span class="material-symbols-outlined text-2xl">check_circle</span>
+          <span class="font-medium">Scoring automatique</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stack -->
+    <div class="bg-white rounded-xl shadow p-8">
+      <h3 class="text-2xl font-semibold text-primary-dark mb-6">Stack technique</h3>
+      <div class="grid md:grid-cols-3 gap-6 text-center">
+        <div class="p-4">
+          <span class="material-symbols-outlined text-2xl">code</span>
+          <div class="font-semibold mt-2">SvelteKit + Tailwind</div>
+          <div class="text-sm text-gray-500">Frontend performant</div>
+        </div>
+        <div class="p-4">
+          <span class="material-symbols-outlined text-2xl">database</span>
+          <div class="font-semibold mt-2">Supabase</div>
+          <div class="text-sm text-gray-500">PostgreSQL + Auth + API</div>
+        </div>
+        <div class="p-4">
+          <span class="material-symbols-outlined text-2xl">cloud</span>
+          <div class="font-semibold mt-2">Vercel</div>
+          <div class="text-sm text-gray-500">Deploy + Preview + CDN</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t mt-16 py-6 text-center text-sm text-gray-400">
+    FilmPro CRM — Document de cadrage genere par AppFactory
+  </footer>
+</body>
+</html>
