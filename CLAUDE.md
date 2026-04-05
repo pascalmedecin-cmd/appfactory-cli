@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-05
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Optimisation workspace — /optimize reecrit (vue 360 multi-projets, garde-fous, preuves, archives thematiques), 1ere revue executee (242→190 lignes CLAUDE.md), migration FilmPro Marketing (Context.md→CLAUDE.md + archive/), plugins-reference.md global cree.
+**Session precedente :** Extraction procedure fin de session — methodology.md allegee (~1.5K tokens/session economises), procedure complete deplacee dans slash command `/fin-session` (~/.claude/commands/fin-session.md).
 
 ---
 
