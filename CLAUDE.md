@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-05
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Extraction procedure fin de session — methodology.md allegee (~1.5K tokens/session economises), procedure complete deplacee dans slash command `/fin-session` (~/.claude/commands/fin-session.md).
+**Session precedente :** Creation `/plan-session` (global) — planification + gap analysis skills + skill-scout conditionnel. Procedure vetting extraite dans `~/.claude/procedures/skill-scout.md` pour alleger le contexte. Dogfooding Phase C non demarre (session courte).
 
 ---
 
