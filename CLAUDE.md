@@ -1,11 +1,10 @@
 # AppFactory - CLI — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-04
+**Derniere mise a jour :** 2026-04-05
+**Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Fix acces CRM — ajout pascal.medecin@gmail.com a ALLOWED_EMAILS Vercel prod (bloque par whitelist sprint securite).
-
----
+**Session precedente :** Optimisation workspace — /optimize reecrit (vue 360 multi-projets, garde-fous, preuves, archives thematiques), 1ere revue executee (242→190 lignes CLAUDE.md), migration FilmPro Marketing (Context.md→CLAUDE.md + archive/), plugins-reference.md global cree.
 
 ---
 
@@ -76,17 +75,8 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## PLANNING INITIAL
 
-### Phase A — Migration CRM FilmPro (jours 1-9)
-- Jour 1 : Init SvelteKit + Supabase + Tailwind + Auth Google OAuth + deploy Vercel ✓
-- Jour 2 : Schema BDD — migration tables Sheets -> PostgreSQL + RLS ✓
-- Jour 3-4 : Layout + design system + pages Contacts + Entreprises + Dashboard ✓
-- Jour 5 : Pipeline kanban + opportunites + signaux d'affaires ✓
-- Jour 6 : Prospection multi-sources (table prospect_leads, UI, scoring, dedup, batch) ✓
-- Jour 7 : Integration APIs (LINDAS, SIMAP fonctionnels + Zefix, search.ch prets) ✓
-- Jour 8 : Recherches sauvegardees + alertes cron + responsive + rate limiting + tests ✓
-- Jour 9 : Page Aide (doc utilisateur integree) + extraction template (project.yaml + config.ts) + env vars prod ✓
-
-### Phase B — ANNULEE (decision 2026-04-04 : pas de Figma Pro)
+→ Planning Phase A (jours 1-9, tous ✓) archive dans archive/planning-phase-a.md — consulter si besoin de comprendre l'ordre de construction du CRM
+→ Phase B ANNULEE (decision 2026-04-04 : pas de Figma Pro)
 
 ### Phase C — Skills et templates HTML (jours 8-12)
 - Jour 8-9 : Skill cadrage (dialogue -> project.yaml -> 4 pages HTML)
@@ -115,7 +105,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Pas de page Journal equipe** : section dashboard + timeline sur les fiches
 - **Relances du jour** : bandeau dashboard + badges pipeline (pas une page separee)
 - **Prospection = page a part entiere** avec multi-sources, scoring, alertes, dedup, actions batch
-- **Page Aide** : vide pour l'instant, alimentee en dernier quand tout fonctionne
+- **Page Aide** : documentation utilisateur integree (8 sections, sommaire, recherche)
 - **Documentation au fil de l'eau** : USER_GUIDE_DRAFT.md + MAINTAINER_GUIDE_DRAFT.md mis a jour a chaque session
 
 ### Decisions Prospection (G36)
@@ -153,39 +143,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - `docs/USER_GUIDE_DRAFT.md` — Guide utilisateur, alimente au fil du dev
 - `docs/MAINTAINER_GUIDE_DRAFT.md` — Guide mainteneur, alimente au fil du dev
 
-## EN PLACE (Jour 9 + Phase C skills)
-
-- **Design system** : CSS variables primary/accent, font DM Sans, Material Symbols icons
-- **Layout** : sidebar 220px collapsible (56px) + header 48px, groupe route `(app)/`, responsive mobile (burger menu + overlay)
-- **11 composants** : `src/lib/components/` — DataTable (selectable avec $bindable), SlideOut (anime slide-in), ModalForm (anime scale), FormField, Badge, EmptyState, Header, Sidebar, Toast + `prospection/ImportModal`, `prospection/LeadSlideOut`
-- **Toast store** : `src/lib/stores/toast.ts` — store Svelte avec methodes success/error/warning/info, auto-dismiss 4-6s
-- **Focus visible** : CSS global (app.css) — outline accent sur boutons/liens en navigation clavier
-- **Validation** : `src/lib/schemas.ts` — 18+ schemas Zod + 5 FIELDS arrays centralises + helpers `validate()`, `extractForm()`
-- **DB helpers** : `src/lib/server/db-helpers.ts` — `dbFail()`, `newId()`, `now()` (utilises par tous les server.ts)
-- **Scoring** : `src/lib/scoring.ts` — calcul 0-13 points (canton, secteur, signal, recence, tel, montant)
-- **Page Contacts** : CRUD complet (create/update/archive), DataTable tri/recherche, SlideOut detail, ModalForm 6 champs
-- **Page Entreprises** : CRUD complet (create/update/delete), contacts rattaches dans SlideOut
-- **Dashboard** : 4 stats cards, relances du jour, derniere activite, raccourcis, bandeau alertes prospection (nouveaux leads)
-- **Page Pipeline** : Vue kanban 6 colonnes (Identification→Perdu), drag & drop HTML5 natif, total montant/colonne, CRUD opportunites (create/update/archive), SlideOut detail avec liens contact/entreprise, relances en retard en rouge
-- **Page Signaux** : DataTable avec 3 filtres (type/canton/statut), SlideOut detail, CRUD signal, action "Creer opportunite" (conversion + redirect pipeline), action "Ecarter", 5 statuts (nouveau/en_analyse/interesse/ecarte/converti)
-- **Page Prospection** : DataTable selectable, 4 filtres (source/canton/statut/score), SlideOut detail avec scoring detaille, creation manuelle, actions unitaires + batch (interesse/ecarter), transfert vers CRM (cree entreprise + contact), dedup source+source_id, recherches sauvegardees (save/load/delete), alertes avec compteur nouveaux leads
-- **API Prospection** : 4 routes API dans `src/routes/api/prospection/`
-  - `lindas/` — SPARQL registre du commerce par canton + mots-cles (fonctionnel, teste)
-  - `simap/` — Marches publics construction par canton + periode (fonctionnel, teste)
-  - `zefix/` — Import bulk registre du commerce complet (pret, attend env vars ZEFIX_USERNAME/PASSWORD)
-  - `search-ch/` — Enrichissement telephone par lead (cle API configuree en local)
-- **API Cron** : `src/routes/api/cron/alertes/` — execution recherches sauvegardees, comptage nouveaux leads
-- **UI Import** : modal 3 sources (LINDAS, Zefix, SIMAP), bouton "Enrichir telephone" dans SlideOut, notifications succes/erreur
-- **Page Aide** : documentation utilisateur integree, sommaire cliquable, recherche texte, IntersectionObserver pour section active, 8 sections (connexion, navigation, dashboard, contacts, entreprises, pipeline, prospection, signaux)
-- **Extraction template** : `project.yaml` (source de verite specs client) + `src/lib/config.ts` (GENERE par `scripts/yaml-to-config.ts`). scoring.ts, Sidebar.svelte, pipeline/+page.svelte, lindas/+server.ts et prospection/+page.svelte migres pour lire la config
-- **Script yaml-to-config** : `scripts/yaml-to-config.ts` (npx tsx ou npm run generate:config) — lit project.yaml, convertit snake_case→camelCase (preserve cles sources), genere config.ts avec `as const`, preserve loginBackground
-- **Page login** : photo fond pleine page conditionnelle (`config.branding.loginBackground`), overlay sombre, glassmorphism
-- **Bouton deconnexion** : sidebar bas gauche (icone logout, hover rouge), retire du header
-- **Skills Claude Code** : 3 slash commands dans `.claude/commands/` — `/cadrage` (dialogue → project.yaml → previews), `/generate` (scaffold SvelteKit depuis yaml), `/deploy` (tests → git → Vercel)
-- **Script generate-previews** : `scripts/generate-previews.ts` — genere 4 pages HTML Tailwind (pitch, entites, pages, specs) depuis project.yaml, branding client applique
-- **Script scaffold** : `scripts/scaffold.ts` — copie template vers nouveau dossier, injecte project.yaml, genere config.ts, personnalise app.html et package.json
-- **Template parametrise** : app.html placeholder `{{APP_NAME}}`, Sidebar logo dynamique (image ou texte fallback depuis config), aide lit config.app.name
-- **yaml-to-config parametrable** : accepte un chemin en argument (`npx tsx scripts/yaml-to-config.ts [project-dir]`)
+→ Inventaire composants EN PLACE (11 composants, 6 pages, 4 API, scripts) archive dans archive/inventaire-composants.md — consulter si besoin de lister les composants existants avant d'en creer de nouveaux
 
 ## OBJECTIF PROCHAINE SESSION
 
@@ -208,15 +166,7 @@ Dogfooding Phase C — tester le workflow complet sur un nouveau projet fictif :
 **Prerequis :**
 - Aucun bloquant technique
 
-## AUDIT CRM FILMPRO (2026-04-04)
-
-Audit complet par 5 agents specialises. Resultats :
-- Securite 14/20, Qualite code 22/37, Tests 8/30, 4 critiques + 5 hauts
-- Sprint 1 (5 critiques) : CORRIGE et deploye (commit 76766ce)
-- Sprint 2 (7 hauts) : CORRIGE et deploye (commit d123a5d)
-- Sprint 3 (refactoring) : CORRIGE (commit e3ba665) — db-helpers, FIELDS centralises, prospection decoupee
-- Sprint 4 (tests) : CORRIGE — 18/18 schemas testes, fonctions API testees, 34->113 tests
-- Detail complet dans l'historique de conversation du 2026-04-04
+→ Audit CRM FilmPro 2026-04-04 (4 sprints, tous corriges) archive dans archive/audit-crm-2026-04-04.md — consulter si regression securite/qualite/tests OU comme reference methodologique pour le prochain audit (5 agents, scoring par axe, sprints par severite)
 
 ---
 
