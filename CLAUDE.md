@@ -1,10 +1,10 @@
 # AppFactory - CLI — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-05
+**Derniere mise a jour :** 2026-04-06
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Creation `/plan-session` (global) — planification + gap analysis skills + skill-scout conditionnel. Procedure vetting extraite dans `~/.claude/procedures/skill-scout.md` pour alleger le contexte. Dogfooding Phase C non demarre (session courte).
+**Session precedente :** Dogfooding Phase C complet — cycle cadrage/generate/deploy teste sur projet fictif ChronoTrack. 3 frictions scaffold corrigees (nettoyage conditionnel modules, --output previews). Agent Teams natif active (env var). RuFlo analyse et rejete (stubs, failles secu).
 
 ---
 
@@ -147,21 +147,21 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## OBJECTIF PROCHAINE SESSION
 
-Dogfooding Phase C — tester le workflow complet sur un nouveau projet fictif :
-- `/cadrage` → dialogue → project.yaml → previews HTML (verifier le flow interactif)
-- `/generate` → scaffold SvelteKit (verifier la personnalisation post-scaffold)
-- `/deploy` → preview Vercel (verifier le deploy end-to-end)
-- Corriger les frictions decouvertes pendant le dogfooding
+Premier projet client reel avec le workflow Phase C :
+- Choisir le premier projet (FilmPro ou autre) et lancer `/cadrage`
+- Tester le scaffold auto-nettoyant sur un projet avec modules partiels
+- Deploy preview Vercel reel (pas dry run)
 
 **En attente :**
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
+- Evaluation Agent Teams sur les autres projets Claude (prompt prepare, session separee)
 
-**Decisions session :**
-- 3 skills = 3 slash commands Claude Code (.claude/commands/*.md), pas des scripts standalone
-- Template 85% parametrise via config.ts, 3 derniers hardcoded corriges (app.html, Sidebar, aide)
-- yaml-to-config accepte maintenant un chemin optionnel pour generer hors du template source
-- scaffold.ts ne touche jamais le template source (copie puis personnalise)
-- Previews HTML utilisent Tailwind CDN + branding client (standalone, pas de build)
+**Decisions session 2026-04-06 :**
+- RuFlo rejete : stubs (290/313 tools), failles securite, score 3.5/10
+- Agent Teams natif active (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` dans settings.json)
+- scaffold.ts : nettoyage conditionnel modules absents du YAML (etape 5/7)
+- generate-previews.ts : `--output <dir>` optionnel
+- Agent Teams transparent pour le workflow — gain sur verifications paralleles, pas de changement de skills
 
 **Prerequis :**
 - Aucun bloquant technique
