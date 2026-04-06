@@ -11,7 +11,7 @@
  * 5. Met a jour package.json (nom du projet)
  */
 
-import { cpSync, readFileSync, writeFileSync, existsSync } from 'fs';
+import { cpSync, readFileSync, writeFileSync, existsSync, rmSync } from 'fs';
 import { resolve, dirname, basename } from 'path';
 import { fileURLToPath } from 'url';
 import { execSync } from 'child_process';
@@ -46,7 +46,13 @@ if (existsSync(outputDir)) {
 
 // Parse YAML
 const rawYaml = readFileSync(yamlSource, 'utf-8');
-const config = yaml.load(rawYaml) as { app: { name: string; slug: string } };
+const config = yaml.load(rawYaml) as {
+	app: { name: string; slug: string };
+	pipeline?: unknown;
+	prospection?: unknown;
+	signaux?: unknown;
+	scoring?: unknown;
+};
 if (!config?.app?.name) {
 	console.error('Erreur : project.yaml doit contenir app.name');
 	process.exit(1);
@@ -60,7 +66,7 @@ console.log(`Template : ${TEMPLATE}`);
 console.log(`Sortie   : ${outputDir}\n`);
 
 // --- Step 1 : Copy template ---
-console.log('1/5  Copie du template...');
+console.log('1/7  Copie du template...');
 cpSync(TEMPLATE, outputDir, {
 	recursive: true,
 	filter: (src) => {
@@ -70,27 +76,69 @@ cpSync(TEMPLATE, outputDir, {
 });
 
 // --- Step 2 : Replace project.yaml ---
-console.log('2/5  Injection du project.yaml...');
+console.log('2/7  Injection du project.yaml...');
 cpSync(yamlSource, resolve(outputDir, 'project.yaml'));
 
 // --- Step 3 : Generate config.ts ---
-console.log('3/5  Generation de config.ts...');
+console.log('3/7  Generation de config.ts...');
 const yamlToConfig = resolve(ROOT, 'scripts', 'yaml-to-config.ts');
 execSync(`npx tsx "${yamlToConfig}" "${outputDir}"`, { cwd: ROOT, stdio: 'inherit' });
 
 // --- Step 4 : Replace {{APP_NAME}} in app.html ---
-console.log('4/5  Personnalisation app.html...');
+console.log('4/7  Personnalisation app.html...');
 const appHtmlPath = resolve(outputDir, 'src', 'app.html');
 const appHtml = readFileSync(appHtmlPath, 'utf-8');
 writeFileSync(appHtmlPath, appHtml.replace('{{APP_NAME}}', appName), 'utf-8');
 
-// --- Step 5 : Update package.json ---
-console.log('5/5  Mise a jour package.json...');
+// --- Step 5 : Remove modules absent from YAML ---
+console.log('5/7  Nettoyage des modules absents du YAML...');
+const removals: { condition: boolean; paths: string[]; label: string }[] = [
+	{
+		condition: !config.pipeline,
+		paths: ['src/routes/(app)/pipeline'],
+		label: 'pipeline',
+	},
+	{
+		condition: !config.prospection,
+		paths: [
+			'src/routes/(app)/prospection',
+			'src/routes/api/prospection',
+			'src/lib/components/prospection',
+		],
+		label: 'prospection',
+	},
+	{
+		condition: !config.signaux,
+		paths: ['src/routes/(app)/signaux'],
+		label: 'signaux',
+	},
+	{
+		condition: !config.scoring,
+		paths: ['src/lib/scoring.ts', 'src/lib/scoring.test.ts'],
+		label: 'scoring',
+	},
+];
+
+for (const { condition, paths, label } of removals) {
+	if (condition) {
+		for (const p of paths) {
+			const full = resolve(outputDir, p);
+			if (existsSync(full)) {
+				rmSync(full, { recursive: true });
+				console.log(`       - ${label} : ${p} supprime`);
+			}
+		}
+	}
+}
+
+// --- Step 6 : Update package.json ---
+console.log('6/7  Mise a jour package.json...');
 const pkgPath = resolve(outputDir, 'package.json');
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
 pkg.name = appSlug;
 writeFileSync(pkgPath, JSON.stringify(pkg, null, '\t') + '\n', 'utf-8');
 
+console.log('7/7  Verification finale...');
 console.log(`\nScaffold termine !`);
 console.log(`\nProchaines etapes :`);
 console.log(`  cd ${outputDir}`);

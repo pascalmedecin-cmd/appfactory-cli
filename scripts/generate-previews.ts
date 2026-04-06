@@ -1,8 +1,8 @@
 #!/usr/bin/env npx tsx
 /**
  * Genere 4 pages HTML Tailwind de presentation client depuis project.yaml.
- * Usage : npx tsx scripts/generate-previews.ts [chemin/vers/project.yaml]
- * Par defaut : template/project.yaml
+ * Usage : npx tsx scripts/generate-previews.ts [chemin/vers/project.yaml] [--output dir]
+ * Par defaut : template/project.yaml, sortie dans previews/
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'fs';
@@ -12,12 +12,21 @@ import yaml from 'js-yaml';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
-const PREVIEWS = resolve(ROOT, 'previews');
 
-// Accept optional path argument
-const yamlPath = process.argv[2]
-	? resolve(process.argv[2])
+// Parse args: [yaml-path] [--output dir]
+const args = process.argv.slice(2);
+const outputIdx = args.indexOf('--output');
+let outputDir: string | undefined;
+if (outputIdx !== -1) {
+	outputDir = args[outputIdx + 1];
+	args.splice(outputIdx, 2);
+}
+
+const yamlPath = args[0]
+	? resolve(args[0])
 	: resolve(ROOT, 'template', 'project.yaml');
+
+const PREVIEWS = outputDir ? resolve(outputDir) : resolve(ROOT, 'previews');
 
 interface Entity {
 	name: string;
