@@ -43,10 +43,19 @@
 
   <div class="stepper" id="stepper"></div>
 
+  <div class="page-intro">
+    <h2>Règles et configuration</h2>
+    <p>Définissez l'accès, le scoring et les automatisations de votre application.</p>
+  </div>
+
   <div class="wizard-body">
 
     <div class="section">
-      <h2>Authentification</h2>
+      <div class="section-header">
+        <span class="material-symbols-rounded section-icon">lock</span>
+        <h2>Authentification</h2>
+      </div>
+      <p class="section-desc">Comment les utilisateurs se connectent-ils à l'application ?</p>
       <div class="field-row">
         <div class="field">
           <label for="auth-provider">Provider</label>
@@ -70,7 +79,10 @@
     </div>
 
     <div class="section conditional-section" id="scoring-section">
-      <h2>Scoring</h2>
+      <div class="section-header">
+        <span class="material-symbols-rounded section-icon">star</span>
+        <h2>Scoring</h2>
+      </div>
       <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Règles de scoring automatique sur les entités.</p>
       <div id="scoring-rules"></div>
       <div style="display:flex;gap:8px;margin-top:12px;">
@@ -95,7 +107,10 @@
     </div>
 
     <div class="section">
-      <h2>Automatisations (cron)</h2>
+      <div class="section-header">
+        <span class="material-symbols-rounded section-icon">schedule</span>
+        <h2>Automatisations</h2>
+      </div>
       <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Tâches automatiques planifiées (alertes, nettoyage, imports...)</p>
       <div id="cron-jobs"></div>
       <div style="display:flex;gap:8px;margin-top:12px;">
@@ -111,7 +126,10 @@
     </div>
 
     <div class="section">
-      <h2>Notes supplémentaires</h2>
+      <div class="section-header">
+        <span class="material-symbols-rounded section-icon">note</span>
+        <h2>Notes supplémentaires</h2>
+      </div>
       <div class="field">
         <label for="notes">Remarques, contraintes, demandes particulières</label>
         <textarea id="notes" placeholder="Tout ce qui n'entre pas dans les categories ci-dessus..."></textarea>
@@ -119,8 +137,14 @@
     </div>
 
     <div class="actions">
-      <button class="btn btn-secondary" id="btn-prev">&larr; Retour</button>
-      <button class="btn btn-primary" id="btn-next">Voir le récapitulatif &rarr;</button>
+      <button class="btn btn-secondary" id="btn-prev">
+        <span class="material-symbols-rounded">arrow_back</span>
+        Retour
+      </button>
+      <button class="btn btn-primary" id="btn-next">
+        Voir le récapitulatif
+        <span class="material-symbols-rounded">arrow_forward</span>
+      </button>
     </div>
 
   </div>

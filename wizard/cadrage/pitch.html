@@ -17,17 +17,26 @@
 
   <div class="stepper" id="stepper"></div>
 
+  <div class="page-intro">
+    <h2>Décrivez votre projet</h2>
+    <p>Quelques informations essentielles pour cadrer votre application.</p>
+  </div>
+
   <div class="wizard-body">
 
     <div class="section">
-      <h2>L'application</h2>
+      <div class="section-header">
+        <span class="material-symbols-rounded section-icon">apps</span>
+        <h2>L'application</h2>
+      </div>
+      <p class="section-desc">Le nom et la langue de votre future application.</p>
       <div class="field-row">
         <div class="field">
           <label for="app-name">Nom de l'application</label>
           <input type="text" id="app-name" placeholder="Ex : CRM FilmPro, GestPro...">
         </div>
         <div class="field">
-          <label for="app-locale">Langue / Région</label>
+          <label for="app-locale">Langue et région</label>
           <select id="app-locale">
             <option value="fr-CH">Français (Suisse)</option>
             <option value="fr-FR">Français (France)</option>
@@ -43,15 +52,19 @@
     </div>
 
     <div class="section">
-      <h2>Le problème</h2>
+      <div class="section-header">
+        <span class="material-symbols-rounded section-icon">target</span>
+        <h2>Le problème</h2>
+      </div>
+      <p class="section-desc">Quel besoin cette application doit-elle couvrir ?</p>
       <div class="field">
-        <label for="problem">Quel problème cette app doit résoudre ?</label>
+        <label for="problem">Problème principal à résoudre</label>
         <textarea id="problem" placeholder="Décrivez la douleur principale des utilisateurs..."></textarea>
       </div>
       <div class="field">
         <label for="current-solution">Solution actuelle</label>
         <input type="text" id="current-solution" placeholder="Excel, papier, autre outil...">
-        <div class="hint">Comment le problème est géré aujourd'hui ?</div>
+        <div class="hint">Comment le problème est-il géré aujourd'hui ?</div>
       </div>
       <div class="field">
         <label for="value">Valeur ajoutée principale</label>
@@ -60,7 +73,11 @@
     </div>
 
     <div class="section">
-      <h2>Les utilisateurs</h2>
+      <div class="section-header">
+        <span class="material-symbols-rounded section-icon">group</span>
+        <h2>Les utilisateurs</h2>
+      </div>
+      <p class="section-desc">Qui va utiliser cette application au quotidien ?</p>
       <div class="field-row">
         <div class="field">
           <label for="user-role">Rôle principal</label>
@@ -74,13 +91,16 @@
       <div class="field">
         <label for="user-context">Contexte d'utilisation</label>
         <textarea id="user-context" placeholder="Bureau, terrain, mobile ? Fréquence d'utilisation ?"></textarea>
-        <div class="hint">Optionnel — aide à adapter l'interface</div>
+        <div class="hint">Optionnel — aide à adapter l'interface.</div>
       </div>
     </div>
 
     <div class="actions">
       <div></div>
-      <button class="btn btn-primary" id="btn-next">Suivant &rarr;</button>
+      <button class="btn btn-primary" id="btn-next">
+        Suivant
+        <span class="material-symbols-rounded">arrow_forward</span>
+      </button>
     </div>
 
   </div>

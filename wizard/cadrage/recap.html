@@ -94,6 +94,11 @@
 
   <div class="stepper" id="stepper"></div>
 
+  <div class="page-intro">
+    <h2>Récapitulatif</h2>
+    <p>Vérifiez l'ensemble du cadrage avant de lancer la génération.</p>
+  </div>
+
   <div class="wizard-body">
 
     <div class="final-banner" id="banner">
@@ -102,7 +107,10 @@
     </div>
 
     <div class="section">
-      <h2>Pitch</h2>
+      <div class="section-header">
+        <span class="material-symbols-rounded section-icon">rocket_launch</span>
+        <h2>Pitch</h2>
+      </div>
       <div class="recap-block">
         <div class="recap-row"><span class="label">Problème</span><span id="r-problem">—</span></div>
         <div class="recap-row"><span class="label">Solution actuelle</span><span id="r-current">—</span></div>
@@ -113,22 +121,34 @@
     </div>
 
     <div class="section">
-      <h2>Entités (<span id="r-entity-count">0</span>)</h2>
+      <div class="section-header">
+        <span class="material-symbols-rounded section-icon">table_chart</span>
+        <h2>Entités (<span id="r-entity-count">0</span>)</h2>
+      </div>
       <div id="r-entities"></div>
     </div>
 
     <div class="section">
-      <h2>Pages (<span id="r-page-count">0</span>)</h2>
+      <div class="section-header">
+        <span class="material-symbols-rounded section-icon">menu</span>
+        <h2>Pages (<span id="r-page-count">0</span>)</h2>
+      </div>
       <div id="r-pages"></div>
     </div>
 
     <div class="section" id="r-modules-section" style="display:none;">
-      <h2>Modules actifs</h2>
+      <div class="section-header">
+        <span class="material-symbols-rounded section-icon">extension</span>
+        <h2>Modules actifs</h2>
+      </div>
       <div id="r-modules"></div>
     </div>
 
     <div class="section">
-      <h2>Règles</h2>
+      <div class="section-header">
+        <span class="material-symbols-rounded section-icon">settings</span>
+        <h2>Règles</h2>
+      </div>
       <div class="recap-block">
         <div class="recap-row"><span class="label">Auth</span><span id="r-auth">—</span></div>
         <div class="recap-row"><span class="label">Domaines</span><span id="r-domains">—</span></div>
@@ -145,8 +165,14 @@
     </div>
 
     <div class="actions">
-      <button class="btn btn-secondary" id="btn-prev">&larr; Modifier</button>
-      <button class="btn btn-primary btn-validate" id="btn-validate">Valider et générer</button>
+      <button class="btn btn-secondary" id="btn-prev">
+        <span class="material-symbols-rounded">arrow_back</span>
+        Modifier
+      </button>
+      <button class="btn btn-primary btn-validate" id="btn-validate">
+        <span class="material-symbols-rounded">check_circle</span>
+        Valider et générer
+      </button>
     </div>
 
   </div>

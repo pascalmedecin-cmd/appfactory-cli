@@ -7,6 +7,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="shared.css">
   <style>
+    .entity-card-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
     .entity-card {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -24,11 +35,11 @@
       user-select: none;
     }
     .entity-header h3 {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
     }
     .entity-header .field-count {
       font-size: 12px;
@@ -74,23 +85,7 @@
     #add-entity-btn {
       margin-top: 16px;
     }
-    .waiting-msg {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-muted);
-      font-size: 15px;
-    }
-    .waiting-msg .spinner {
-      display: inline-block;
-      width: 24px;
-      height: 24px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin-bottom: 12px;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    .add-field-row input::placeholder { color: var(--text-light); }
   </style>
 </head>
 <body>
@@ -103,9 +98,14 @@
 
   <div class="stepper" id="stepper"></div>
 
+  <div class="page-intro">
+    <h2>Structure des données</h2>
+    <p>Claude propose un schéma basé sur votre pitch. Ajustez les entités, champs et relations.</p>
+  </div>
+
   <div class="wizard-body">
 
-    <div id="waiting" class="section waiting-msg">
+    <div id="waiting" class="waiting-msg">
       <div class="spinner"></div>
       <p>Claude analyse votre pitch et propose un schéma de données...</p>
     </div>
@@ -113,11 +113,20 @@
     <div id="entities-container" style="display:none;"></div>
 
     <div id="actions-bar" style="display:none;">
-      <button class="btn btn-secondary" id="add-entity-btn">+ Ajouter une entité</button>
+      <button class="btn btn-secondary" id="add-entity-btn">
+        <span class="material-symbols-rounded">add</span>
+        Ajouter une entité
+      </button>
 
       <div class="actions">
-        <button class="btn btn-secondary" id="btn-prev">&larr; Retour</button>
-        <button class="btn btn-primary" id="btn-next">Suivant &rarr;</button>
+        <button class="btn btn-secondary" id="btn-prev">
+          <span class="material-symbols-rounded">arrow_back</span>
+          Retour
+        </button>
+        <button class="btn btn-primary" id="btn-next">
+          Suivant
+          <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
       </div>
     </div>
 
@@ -144,7 +153,11 @@
         card.className = 'entity-card';
         card.innerHTML = `
           <div class="entity-header" onclick="toggleEntity(${ei})">
-            <h3>${entity.label || entity.name} <span class="field-count">${entity.fields.length} champs</span></h3>
+            <h3>
+              <span class="entity-card-icon"><span class="material-symbols-rounded" style="font-size:18px;">table_chart</span></span>
+              ${entity.label || entity.name}
+              <span class="field-count">${entity.fields.length} champs</span>
+            </h3>
             <div>
               <button class="remove-btn" onclick="event.stopPropagation();removeEntity(${ei})" title="Supprimer">&times;</button>
             </div>
@@ -156,7 +169,7 @@
                 <input type="text" value="${entity.name}" onchange="entities[${ei}].name=this.value">
               </div>
               <div class="field">
-                <label>Label affiche</label>
+                <label>Label affiché</label>
                 <input type="text" value="${entity.label}" onchange="entities[${ei}].label=this.value">
               </div>
             </div>
