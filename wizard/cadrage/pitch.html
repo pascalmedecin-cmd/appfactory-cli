@@ -36,12 +36,11 @@
           <input type="text" id="app-name" placeholder="Ex : CRM FilmPro, GestPro...">
         </div>
         <div class="field">
-          <label for="app-locale">Langue et région</label>
+          <label for="app-locale">Langue</label>
           <select id="app-locale">
-            <option value="fr-CH">Français (Suisse)</option>
-            <option value="fr-FR">Français (France)</option>
-            <option value="de-CH">Deutsch (Schweiz)</option>
-            <option value="en-US">English (US)</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="en">English</option>
           </select>
         </div>
       </div>
@@ -77,22 +76,12 @@
         <span class="material-symbols-rounded section-icon">group</span>
         <h2>Les utilisateurs</h2>
       </div>
-      <p class="section-desc">Qui va utiliser cette application au quotidien ?</p>
-      <div class="field-row">
-        <div class="field">
-          <label for="user-role">Rôle principal</label>
-          <input type="text" id="user-role" placeholder="Ex : commercial, gestionnaire, admin...">
-        </div>
-        <div class="field">
-          <label for="user-count">Nombre approximatif</label>
-          <input type="text" id="user-count" placeholder="Ex : 1-5, 10-50...">
-        </div>
-      </div>
-      <div class="field">
-        <label for="user-context">Contexte d'utilisation</label>
-        <textarea id="user-context" placeholder="Bureau, terrain, mobile ? Fréquence d'utilisation ?"></textarea>
-        <div class="hint">Optionnel — aide à adapter l'interface.</div>
-      </div>
+      <p class="section-desc">Décrivez les profils qui utiliseront l'application. Ajoutez autant de profils que nécessaire.</p>
+      <div id="user-profiles"></div>
+      <button class="btn btn-secondary" id="add-profile-btn" style="margin-top:12px;">
+        <span class="material-symbols-rounded">person_add</span>
+        Ajouter un profil
+      </button>
     </div>
 
     <div class="actions">
@@ -106,8 +95,83 @@
   </div>
 
   <script src="shared.js"></script>
+  <style>
+    .profile-card {
+      background: var(--surface-raised);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .profile-card .profile-num {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .profile-card .profile-num span {
+      font-size: 12px;
+      color: var(--text-light);
+    }
+    .profile-card .remove-profile {
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+      font-size: 18px;
+      padding: 2px;
+      transition: color 200ms;
+    }
+    .profile-card .remove-profile:hover { color: var(--danger); }
+  </style>
+  <script src="shared.js"></script>
   <script>
     initPage('pitch');
+
+    const LOCALE_MAP = { fr: 'fr-FR', de: 'de-DE', en: 'en-US' };
+
+    let userProfiles = [{ role: '', count: '', context: '' }];
+
+    function renderProfiles() {
+      const container = document.getElementById('user-profiles');
+      container.innerHTML = userProfiles.map((p, i) => `
+        <div class="profile-card">
+          <div class="profile-num">
+            <span>Profil ${i + 1}</span>
+            ${userProfiles.length > 1 ? `<button class="remove-profile" onclick="removeProfile(${i})" title="Supprimer">&times;</button>` : ''}
+          </div>
+          <div class="field-row" style="margin-bottom:12px;">
+            <div class="field">
+              <label>Rôle principal</label>
+              <input type="text" value="${p.role}" placeholder="Ex : commercial, admin..." onchange="userProfiles[${i}].role=this.value">
+            </div>
+            <div class="field">
+              <label>Nombre approximatif</label>
+              <input type="text" value="${p.count}" placeholder="Ex : 1-5, 10-50..." onchange="userProfiles[${i}].count=this.value">
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>Contexte d'utilisation</label>
+            <textarea placeholder="Bureau, terrain, mobile ? Fréquence ?" onchange="userProfiles[${i}].context=this.value">${p.context}</textarea>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    window.removeProfile = function(i) {
+      userProfiles.splice(i, 1);
+      renderProfiles();
+    };
+
+    document.getElementById('add-profile-btn').addEventListener('click', () => {
+      userProfiles.push({ role: '', count: '', context: '' });
+      renderProfiles();
+    });
+
+    renderProfiles();
 
     getState().then(state => {
       if (state.pitch_data) {
@@ -118,9 +182,7 @@
         if (d.problem) document.getElementById('problem').value = d.problem;
         if (d.current_solution) document.getElementById('current-solution').value = d.current_solution;
         if (d.value) document.getElementById('value').value = d.value;
-        if (d.user_role) document.getElementById('user-role').value = d.user_role;
-        if (d.user_count) document.getElementById('user-count').value = d.user_count;
-        if (d.user_context) document.getElementById('user-context').value = d.user_context;
+        if (d.user_profiles) { userProfiles = d.user_profiles; renderProfiles(); }
       }
     });
 
@@ -131,23 +193,28 @@
       if (data.problem) document.getElementById('problem').value = data.problem;
       if (data.current_solution) document.getElementById('current-solution').value = data.current_solution;
       if (data.value) document.getElementById('value').value = data.value;
-      if (data.user_role) document.getElementById('user-role').value = data.user_role;
-      if (data.user_count) document.getElementById('user-count').value = data.user_count;
-      if (data.user_context) document.getElementById('user-context').value = data.user_context;
+      if (data.user_profiles) { userProfiles = data.user_profiles; renderProfiles(); }
       showToast('Données pré-remplies');
     };
 
     function collectPitch() {
+      // Re-read profiles from DOM (textarea onchange may not fire)
+      document.querySelectorAll('.profile-card').forEach((card, i) => {
+        const inputs = card.querySelectorAll('input');
+        const textarea = card.querySelector('textarea');
+        userProfiles[i].role = inputs[0].value.trim();
+        userProfiles[i].count = inputs[1].value.trim();
+        userProfiles[i].context = textarea.value.trim();
+      });
+      const locale = document.getElementById('app-locale').value;
       return {
         app_name: document.getElementById('app-name').value.trim(),
-        app_locale: document.getElementById('app-locale').value,
+        app_locale: LOCALE_MAP[locale] || locale,
         app_desc: document.getElementById('app-desc').value.trim(),
         problem: document.getElementById('problem').value.trim(),
         current_solution: document.getElementById('current-solution').value.trim(),
         value: document.getElementById('value').value.trim(),
-        user_role: document.getElementById('user-role').value.trim(),
-        user_count: document.getElementById('user-count').value.trim(),
-        user_context: document.getElementById('user-context').value.trim()
+        user_profiles: userProfiles.filter(p => p.role)
       };
     }
 
@@ -155,6 +222,7 @@
       const data = collectPitch();
       if (!data.app_name) { showToast('Le nom est obligatoire'); return; }
       if (!data.problem) { showToast('Décrivez le problème'); return; }
+      if (data.user_profiles.length === 0) { showToast('Ajoutez au moins un profil utilisateur'); return; }
       goNext('pitch', { pitch_data: data, pitch_validated: true });
     });
   </script>

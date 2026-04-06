@@ -115,9 +115,9 @@
         <div class="recap-row"><span class="label">Problème</span><span id="r-problem">—</span></div>
         <div class="recap-row"><span class="label">Solution actuelle</span><span id="r-current">—</span></div>
         <div class="recap-row"><span class="label">Valeur ajoutée</span><span id="r-value">—</span></div>
-        <div class="recap-row"><span class="label">Utilisateurs</span><span id="r-users">—</span></div>
         <div class="recap-row"><span class="label">Langue</span><span id="r-locale">—</span></div>
       </div>
+      <div id="r-profiles" style="margin-top:12px;"></div>
     </div>
 
     <div class="section">
@@ -189,7 +189,17 @@
       document.getElementById('r-problem').textContent = p.problem || '—';
       document.getElementById('r-current').textContent = p.current_solution || '—';
       document.getElementById('r-value').textContent = p.value || '—';
-      document.getElementById('r-users').textContent = `${p.user_role || '?'} (${p.user_count || '?'})`;
+      // User profiles
+      const profiles = p.user_profiles || [];
+      document.getElementById('r-profiles').innerHTML = profiles.length > 0
+        ? profiles.map(pr => `
+          <div class="recap-block">
+            <h3><span class="material-symbols-rounded" style="font-size:14px;margin-right:4px;">person</span> ${pr.role || '—'}</h3>
+            <div class="recap-row"><span class="label">Nombre</span><span>${pr.count || '—'}</span></div>
+            ${pr.context ? `<div class="recap-row"><span class="label">Contexte</span><span>${pr.context}</span></div>` : ''}
+          </div>
+        `).join('')
+        : '';
       document.getElementById('r-locale').textContent = p.app_locale || '—';
 
       // Entities
