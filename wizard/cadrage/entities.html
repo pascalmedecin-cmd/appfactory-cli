@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AppFactory — Cadrage : Entités</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .entity-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+    .entity-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--surface-raised);
+      cursor: pointer;
+      user-select: none;
+    }
+    .entity-header h3 {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .entity-header .field-count {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+    .entity-body {
+      padding: 16px 20px;
+      display: none;
+    }
+    .entity-body.open { display: block; }
+    .add-field-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .add-field-row input, .add-field-row select {
+      font: 400 13px/1.55 var(--font);
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+    }
+    .add-field-row input { flex: 1; }
+    .remove-btn {
+      background: none;
+      border: none;
+      color: var(--danger);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px;
+      opacity: 0.6;
+    }
+    .remove-btn:hover { opacity: 1; }
+    .relation-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 6px 0;
+      font-size: 13px;
+    }
+    .relation-row select { flex: 1; }
+    #add-entity-btn {
+      margin-top: 16px;
+    }
+    .waiting-msg {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+    .waiting-msg .spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="wizard-header">
+    <div class="brand"><img src="logo.png" alt="AppFactory"><span class="brand-name">AppFactory</span></div>
+    <span class="step-label">Cadrage</span>
+    <div class="header-right"></div>
+  </div>
+
+  <div class="stepper" id="stepper"></div>
+
+  <div class="wizard-body">
+
+    <div id="waiting" class="section waiting-msg">
+      <div class="spinner"></div>
+      <p>Claude analyse votre pitch et propose un schéma de données...</p>
+    </div>
+
+    <div id="entities-container" style="display:none;"></div>
+
+    <div id="actions-bar" style="display:none;">
+      <button class="btn btn-secondary" id="add-entity-btn">+ Ajouter une entité</button>
+
+      <div class="actions">
+        <button class="btn btn-secondary" id="btn-prev">&larr; Retour</button>
+        <button class="btn btn-primary" id="btn-next">Suivant &rarr;</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="shared.js"></script>
+  <script>
+    initPage('entities');
+
+    let entities = [];
+
+    const FIELD_TYPES = ['text','email','tel','number','date','select','textarea','boolean'];
+    const RELATION_TYPES = ['many-to-one','one-to-many','many-to-many'];
+
+    function renderEntities() {
+      const container = document.getElementById('entities-container');
+      container.innerHTML = '';
+      container.style.display = 'block';
+      document.getElementById('actions-bar').style.display = 'block';
+      document.getElementById('waiting').style.display = 'none';
+
+      entities.forEach((entity, ei) => {
+        const card = document.createElement('div');
+        card.className = 'entity-card';
+        card.innerHTML = `
+          <div class="entity-header" onclick="toggleEntity(${ei})">
+            <h3>${entity.label || entity.name} <span class="field-count">${entity.fields.length} champs</span></h3>
+            <div>
+              <button class="remove-btn" onclick="event.stopPropagation();removeEntity(${ei})" title="Supprimer">&times;</button>
+            </div>
+          </div>
+          <div class="entity-body ${ei === 0 ? 'open' : ''}" id="entity-body-${ei}">
+            <div class="field-row" style="margin-bottom:12px;">
+              <div class="field">
+                <label>Nom technique</label>
+                <input type="text" value="${entity.name}" onchange="entities[${ei}].name=this.value">
+              </div>
+              <div class="field">
+                <label>Label affiche</label>
+                <input type="text" value="${entity.label}" onchange="entities[${ei}].label=this.value">
+              </div>
+            </div>
+            <table class="data-table">
+              <thead><tr><th>Champ</th><th>Label</th><th>Type</th><th>Requis</th><th></th></tr></thead>
+              <tbody id="fields-${ei}">
+                ${entity.fields.map((f, fi) => fieldRow(ei, fi, f)).join('')}
+              </tbody>
+            </table>
+            <div class="add-field-row">
+              <input type="text" placeholder="Nom du champ" id="new-field-name-${ei}">
+              <input type="text" placeholder="Label" id="new-field-label-${ei}">
+              <select id="new-field-type-${ei}">
+                ${FIELD_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
+              </select>
+              <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="addField(${ei})">+</button>
+            </div>
+            ${entity.relations && entity.relations.length > 0 ? `
+              <h4 style="margin-top:16px;font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Relations</h4>
+              ${entity.relations.map((r, ri) => `
+                <div class="relation-row">
+                  <span>&rarr;</span>
+                  <select onchange="entities[${ei}].relations[${ri}].target=this.value">
+                    ${entities.map(e => `<option value="${e.name}" ${e.name===r.target?'selected':''}>${e.label}</option>`).join('')}
+                  </select>
+                  <select onchange="entities[${ei}].relations[${ri}].type=this.value">
+                    ${RELATION_TYPES.map(t => `<option value="${t}" ${t===r.type?'selected':''}>${t}</option>`).join('')}
+                  </select>
+                  <button class="remove-btn" onclick="entities[${ei}].relations.splice(${ri},1);renderEntities()">&times;</button>
+                </div>
+              `).join('')}
+            ` : ''}
+            <button class="btn btn-secondary" style="margin-top:8px;padding:6px 12px;font-size:12px;" onclick="addRelation(${ei})">+ Relation</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function fieldRow(ei, fi, f) {
+      return `<tr>
+        <td><input type="text" value="${f.key}" onchange="entities[${ei}].fields[${fi}].key=this.value"></td>
+        <td><input type="text" value="${f.label}" onchange="entities[${ei}].fields[${fi}].label=this.value"></td>
+        <td><select onchange="entities[${ei}].fields[${fi}].type=this.value">
+          ${FIELD_TYPES.map(t => `<option value="${t}" ${t===f.type?'selected':''}>${t}</option>`).join('')}
+        </select></td>
+        <td style="text-align:center"><input type="checkbox" ${f.required?'checked':''} onchange="entities[${ei}].fields[${fi}].required=this.checked"></td>
+        <td><button class="remove-btn" onclick="entities[${ei}].fields.splice(${fi},1);renderEntities()">&times;</button></td>
+      </tr>`;
+    }
+
+    window.toggleEntity = function(ei) {
+      const body = document.getElementById(`entity-body-${ei}`);
+      body.classList.toggle('open');
+    };
+
+    window.removeEntity = function(ei) {
+      entities.splice(ei, 1);
+      renderEntities();
+    };
+
+    window.addField = function(ei) {
+      const name = document.getElementById(`new-field-name-${ei}`).value.trim();
+      const label = document.getElementById(`new-field-label-${ei}`).value.trim();
+      const type = document.getElementById(`new-field-type-${ei}`).value;
+      if (!name) return;
+      entities[ei].fields.push({ key: name, label: label || name, type, required: false });
+      renderEntities();
+    };
+
+    window.addRelation = function(ei) {
+      if (!entities[ei].relations) entities[ei].relations = [];
+      const other = entities.find((e, i) => i !== ei);
+      entities[ei].relations.push({ target: other ? other.name : '', type: 'many-to-one', label: '' });
+      renderEntities();
+    };
+
+    // Claude injects proposed entities
+    window.injectEntities = function(data) {
+      entities = data;
+      renderEntities();
+      showToast('Schéma proposé par Claude — modifiez selon vos besoins');
+    };
+
+    // Load existing data
+    getState().then(state => {
+      if (state.entities_data) {
+        entities = state.entities_data;
+        renderEntities();
+      }
+    });
+
+    document.getElementById('add-entity-btn').addEventListener('click', () => {
+      entities.push({ name: 'nouvelle_entite', label: 'Nouvelle entité', fields: [], relations: [] });
+      renderEntities();
+    });
+
+    document.getElementById('btn-prev').addEventListener('click', () => goPrev('entities'));
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+      if (entities.length === 0) { showToast('Ajoutez au moins une entité'); return; }
+      goNext('entities', { entities_data: entities, entities_validated: true });
+    });
+  </script>
+
+</body>
+</html>

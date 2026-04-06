@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AppFactory — Cadrage : Pages</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .page-list { list-style: none; }
+    .page-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 8px;
+      cursor: grab;
+    }
+    .page-item:active { cursor: grabbing; }
+    .page-item .drag-handle {
+      color: var(--text-muted);
+      font-size: 16px;
+      cursor: grab;
+    }
+    .page-item .page-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .page-item .page-info { flex: 1; }
+    .page-item .page-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .page-item .page-features {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .page-item .page-features .tag {
+      margin-right: 4px;
+    }
+    .module-section {
+      margin-top: 24px;
+    }
+    .metrics-area {
+      margin-top: 12px;
+    }
+    .metrics-area .metric-tag {
+      display: inline-block;
+      background: var(--surface-raised);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 12px;
+      margin: 3px 4px 3px 0;
+    }
+    .metrics-area .metric-tag .remove-btn {
+      margin-left: 4px;
+      font-size: 14px;
+    }
+    .add-metric-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .add-metric-row input {
+      flex: 1;
+      font: 400 13px/1.55 var(--font);
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--bg);
+    }
+    .waiting-msg {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+    .waiting-msg .spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <div class="wizard-header">
+    <div class="brand"><img src="logo.png" alt="AppFactory"><span class="brand-name">AppFactory</span></div>
+    <span class="step-label">Cadrage</span>
+    <div class="header-right"></div>
+  </div>
+
+  <div class="stepper" id="stepper"></div>
+
+  <div class="wizard-body">
+
+    <div id="waiting" class="section waiting-msg">
+      <div class="spinner"></div>
+      <p>Claude propose une navigation basée sur vos entités...</p>
+    </div>
+
+    <div id="content" style="display:none;">
+
+      <div class="section">
+        <h2>Pages principales</h2>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Réordonnez par glisser-déposer. La première page est la page d'accueil.</p>
+        <ul class="page-list" id="page-list"></ul>
+      </div>
+
+      <div class="section">
+        <h2>Dashboard — Métriques</h2>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:8px;">Quelles informations afficher sur le dashboard ?</p>
+        <div class="metrics-area" id="metrics-area"></div>
+        <div class="add-metric-row">
+          <input type="text" id="new-metric" placeholder="Ex: Contacts ce mois, Pipeline en cours...">
+          <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="addMetric()">+</button>
+        </div>
+      </div>
+
+      <div class="section module-section">
+        <h2>Modules optionnels</h2>
+        <div id="modules-toggles"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-secondary" id="btn-prev">&larr; Retour</button>
+        <button class="btn btn-primary" id="btn-next">Suivant &rarr;</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="shared.js"></script>
+  <script>
+    initPage('pages');
+
+    let pages = [];
+    let metrics = [];
+    let modules = {
+      pipeline: { enabled: false, label: 'Pipeline / Kanban', desc: 'Vue colonnes pour suivre un processus (ventes, projets...)' },
+      prospection: { enabled: false, label: 'Prospection', desc: 'Recherche et import de leads depuis sources externes' },
+      signaux: { enabled: false, label: 'Signaux', desc: 'Alertes et notifications métier automatiques' },
+      scoring: { enabled: false, label: 'Scoring', desc: 'Score automatique sur les entites (leads, contacts...)' }
+    };
+
+    function renderPages() {
+      const list = document.getElementById('page-list');
+      list.innerHTML = pages.map((p, i) => `
+        <li class="page-item" draggable="true" data-idx="${i}">
+          <span class="drag-handle">&#9776;</span>
+          <div class="page-icon">${(p.label || '?')[0].toUpperCase()}</div>
+          <div class="page-info">
+            <div class="page-name">
+              <input type="text" value="${p.label}" style="border:none;background:none;font:600 14px/1 var(--font);color:var(--text);padding:0;width:200px;" onchange="pages[${i}].label=this.value">
+            </div>
+            <div class="page-features">
+              ${(p.features||[]).map(f => `<span class="tag tag-type">${f}</span>`).join('')}
+            </div>
+          </div>
+          <button class="remove-btn" onclick="pages.splice(${i},1);renderPages()">&times;</button>
+        </li>
+      `).join('');
+      setupDragDrop();
+    }
+
+    function renderMetrics() {
+      const area = document.getElementById('metrics-area');
+      area.innerHTML = metrics.map((m, i) => `
+        <span class="metric-tag">${m}<button class="remove-btn" onclick="metrics.splice(${i},1);renderMetrics()">&times;</button></span>
+      `).join('');
+    }
+
+    function renderModules() {
+      const container = document.getElementById('modules-toggles');
+      container.innerHTML = Object.entries(modules).map(([key, mod]) => `
+        <div class="toggle-row">
+          <div>
+            <div class="toggle-label">${mod.label}</div>
+            <div class="toggle-desc">${mod.desc}</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" ${mod.enabled?'checked':''} onchange="modules['${key}'].enabled=this.checked">
+            <span class="slider"></span>
+          </label>
+        </div>
+      `).join('');
+    }
+
+    window.addMetric = function() {
+      const input = document.getElementById('new-metric');
+      const val = input.value.trim();
+      if (!val) return;
+      metrics.push(val);
+      input.value = '';
+      renderMetrics();
+    };
+
+    function setupDragDrop() {
+      const items = document.querySelectorAll('.page-item');
+      let dragIdx = null;
+      items.forEach(item => {
+        item.addEventListener('dragstart', e => {
+          dragIdx = parseInt(item.dataset.idx);
+          item.style.opacity = '0.5';
+        });
+        item.addEventListener('dragend', () => item.style.opacity = '1');
+        item.addEventListener('dragover', e => e.preventDefault());
+        item.addEventListener('drop', e => {
+          e.preventDefault();
+          const dropIdx = parseInt(item.dataset.idx);
+          if (dragIdx !== null && dragIdx !== dropIdx) {
+            const moved = pages.splice(dragIdx, 1)[0];
+            pages.splice(dropIdx, 0, moved);
+            renderPages();
+          }
+        });
+      });
+    }
+
+    // Claude injects proposed pages
+    window.injectPages = function(data) {
+      if (data.pages) pages = data.pages;
+      if (data.metrics) metrics = data.metrics;
+      if (data.modules) {
+        Object.entries(data.modules).forEach(([k, v]) => {
+          if (modules[k]) modules[k].enabled = v;
+        });
+      }
+      document.getElementById('waiting').style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+      renderPages();
+      renderMetrics();
+      renderModules();
+      showToast('Navigation proposée — ajustez selon vos besoins');
+    };
+
+    // Load existing data
+    getState().then(state => {
+      if (state.pages_data) {
+        pages = state.pages_data.pages || [];
+        metrics = state.pages_data.metrics || [];
+        if (state.pages_data.modules) {
+          Object.entries(state.pages_data.modules).forEach(([k, v]) => {
+            if (modules[k]) modules[k].enabled = v;
+          });
+        }
+        document.getElementById('waiting').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
+        renderPages();
+        renderMetrics();
+        renderModules();
+      }
+    });
+
+    document.getElementById('btn-prev').addEventListener('click', () => goPrev('pages'));
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+      if (pages.length === 0) { showToast('Ajoutez au moins une page'); return; }
+      const data = {
+        pages: pages,
+        metrics: metrics,
+        modules: Object.fromEntries(Object.entries(modules).map(([k, v]) => [k, v.enabled]))
+      };
+      goNext('pages', { pages_data: data, pages_validated: true });
+    });
+  </script>
+
+</body>
+</html>

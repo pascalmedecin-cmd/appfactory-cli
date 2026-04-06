@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AppFactory — Cadrage : Règles</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    .cron-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .cron-row input { flex: 1; }
+    .cron-row select { width: 160px; }
+    .scoring-rule {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .scoring-rule input[type="text"] { flex: 2; }
+    .scoring-rule input[type="number"] { width: 80px; }
+    .conditional-section {
+      display: none;
+    }
+    .conditional-section.visible {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wizard-header">
+    <div class="brand"><img src="logo.png" alt="AppFactory"><span class="brand-name">AppFactory</span></div>
+    <span class="step-label">Cadrage</span>
+    <div class="header-right"></div>
+  </div>
+
+  <div class="stepper" id="stepper"></div>
+
+  <div class="wizard-body">
+
+    <div class="section">
+      <h2>Authentification</h2>
+      <div class="field-row">
+        <div class="field">
+          <label for="auth-provider">Provider</label>
+          <select id="auth-provider">
+            <option value="google">Google OAuth</option>
+            <option value="email">Email / mot de passe</option>
+            <option value="both">Les deux</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="auth-domains">Domaines autorisés</label>
+          <input type="text" id="auth-domains" placeholder="Ex : filmpro.ch, gmail.com (vide = tous)">
+          <div class="hint">Séparez par des virgules. Vide = pas de restriction.</div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="auth-emails">Emails autorisés</label>
+        <input type="text" id="auth-emails" placeholder="Ex : pascal@filmpro.ch, admin@example.com">
+        <div class="hint">Optionnel — whitelist d'emails spécifiques (en plus des domaines)</div>
+      </div>
+    </div>
+
+    <div class="section conditional-section" id="scoring-section">
+      <h2>Scoring</h2>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Règles de scoring automatique sur les entités.</p>
+      <div id="scoring-rules"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <input type="text" id="new-rule-name" placeholder="Nom de la regle" style="flex:2;font:400 13px var(--font);padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);">
+        <input type="number" id="new-rule-points" placeholder="Pts" style="width:80px;font:400 13px var(--font);padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);">
+        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="addScoringRule()">+</button>
+      </div>
+      <div class="field-row" style="margin-top:16px;">
+        <div class="field">
+          <label for="score-max">Score maximum</label>
+          <input type="number" id="score-max" value="10">
+        </div>
+        <div class="field">
+          <label>Seuils (étiquettes)</label>
+          <div class="field-row-3" style="gap:8px;">
+            <input type="text" id="label-hot" placeholder="Chaud >= ?" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);">
+            <input type="text" id="label-warm" placeholder="Tiede >= ?" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);">
+            <input type="text" id="label-cold" placeholder="Froid < ?" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Automatisations (cron)</h2>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Tâches automatiques planifiées (alertes, nettoyage, imports...)</p>
+      <div id="cron-jobs"></div>
+      <div style="display:flex;gap:8px;margin-top:12px;">
+        <input type="text" id="new-cron-path" placeholder="Chemin API (ex: /api/cron/alertes)" style="flex:1;font:400 13px var(--font);padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);">
+        <select id="new-cron-schedule" style="width:200px;font:400 13px var(--font);padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);">
+          <option value="0 7 * * *">Quotidien 7h</option>
+          <option value="0 0 * * 1">Hebdo lundi minuit</option>
+          <option value="0 */6 * * *">Toutes les 6h</option>
+          <option value="*/30 * * * *">Toutes les 30min</option>
+        </select>
+        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="addCron()">+</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Notes supplémentaires</h2>
+      <div class="field">
+        <label for="notes">Remarques, contraintes, demandes particulières</label>
+        <textarea id="notes" placeholder="Tout ce qui n'entre pas dans les categories ci-dessus..."></textarea>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-secondary" id="btn-prev">&larr; Retour</button>
+      <button class="btn btn-primary" id="btn-next">Voir le récapitulatif &rarr;</button>
+    </div>
+
+  </div>
+
+  <script src="shared.js"></script>
+  <script>
+    initPage('rules');
+
+    let scoringRules = [];
+    let cronJobs = [];
+
+    // Show scoring section if module enabled
+    getState().then(state => {
+      if (state.pages_data && state.pages_data.modules && state.pages_data.modules.scoring) {
+        document.getElementById('scoring-section').classList.add('visible');
+      }
+      if (state.rules_data) {
+        const d = state.rules_data;
+        if (d.auth_provider) document.getElementById('auth-provider').value = d.auth_provider;
+        if (d.auth_domains) document.getElementById('auth-domains').value = d.auth_domains;
+        if (d.auth_emails) document.getElementById('auth-emails').value = d.auth_emails;
+        if (d.scoring_rules) { scoringRules = d.scoring_rules; renderScoringRules(); }
+        if (d.score_max) document.getElementById('score-max').value = d.score_max;
+        if (d.label_hot) document.getElementById('label-hot').value = d.label_hot;
+        if (d.label_warm) document.getElementById('label-warm').value = d.label_warm;
+        if (d.label_cold) document.getElementById('label-cold').value = d.label_cold;
+        if (d.cron_jobs) { cronJobs = d.cron_jobs; renderCronJobs(); }
+        if (d.notes) document.getElementById('notes').value = d.notes;
+      }
+    });
+
+    function renderScoringRules() {
+      document.getElementById('scoring-rules').innerHTML = scoringRules.map((r, i) => `
+        <div class="scoring-rule">
+          <input type="text" value="${r.name}" onchange="scoringRules[${i}].name=this.value">
+          <input type="number" value="${r.points}" onchange="scoringRules[${i}].points=parseInt(this.value)">
+          <span style="font-size:12px;color:var(--text-muted);">pts</span>
+          <button class="remove-btn" onclick="scoringRules.splice(${i},1);renderScoringRules()">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    function renderCronJobs() {
+      document.getElementById('cron-jobs').innerHTML = cronJobs.map((c, i) => `
+        <div class="cron-row">
+          <input type="text" value="${c.path}" onchange="cronJobs[${i}].path=this.value">
+          <code style="font-size:12px;color:var(--text-muted);white-space:nowrap;">${c.schedule}</code>
+          <button class="remove-btn" onclick="cronJobs.splice(${i},1);renderCronJobs()">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    window.addScoringRule = function() {
+      const name = document.getElementById('new-rule-name').value.trim();
+      const points = parseInt(document.getElementById('new-rule-points').value) || 1;
+      if (!name) return;
+      scoringRules.push({ name, points });
+      document.getElementById('new-rule-name').value = '';
+      document.getElementById('new-rule-points').value = '';
+      renderScoringRules();
+    };
+
+    window.addCron = function() {
+      const path = document.getElementById('new-cron-path').value.trim();
+      const schedule = document.getElementById('new-cron-schedule').value;
+      if (!path) return;
+      cronJobs.push({ path, schedule });
+      document.getElementById('new-cron-path').value = '';
+      renderCronJobs();
+    };
+
+    // Claude injects proposed rules
+    window.injectRules = function(data) {
+      if (data.auth_provider) document.getElementById('auth-provider').value = data.auth_provider;
+      if (data.auth_domains) document.getElementById('auth-domains').value = data.auth_domains;
+      if (data.auth_emails) document.getElementById('auth-emails').value = data.auth_emails;
+      if (data.scoring_rules) { scoringRules = data.scoring_rules; renderScoringRules(); }
+      if (data.cron_jobs) { cronJobs = data.cron_jobs; renderCronJobs(); }
+      if (data.notes) document.getElementById('notes').value = data.notes;
+      showToast('Règles proposées par Claude');
+    };
+
+    document.getElementById('btn-prev').addEventListener('click', () => goPrev('rules'));
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+      const data = {
+        auth_provider: document.getElementById('auth-provider').value,
+        auth_domains: document.getElementById('auth-domains').value.trim(),
+        auth_emails: document.getElementById('auth-emails').value.trim(),
+        scoring_rules: scoringRules,
+        score_max: parseInt(document.getElementById('score-max').value) || 10,
+        label_hot: document.getElementById('label-hot').value.trim(),
+        label_warm: document.getElementById('label-warm').value.trim(),
+        label_cold: document.getElementById('label-cold').value.trim(),
+        cron_jobs: cronJobs,
+        notes: document.getElementById('notes').value.trim()
+      };
+      goNext('rules', { rules_data: data, rules_validated: true });
+    });
+  </script>
+
+</body>
+</html>

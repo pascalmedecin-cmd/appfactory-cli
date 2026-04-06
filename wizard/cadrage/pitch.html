@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AppFactory — Cadrage : Pitch</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+</head>
+<body>
+
+  <div class="wizard-header">
+    <div class="brand"><img src="logo.png" alt="AppFactory"><span class="brand-name">AppFactory</span></div>
+    <span class="step-label">Cadrage</span>
+    <div class="header-right"></div>
+  </div>
+
+  <div class="stepper" id="stepper"></div>
+
+  <div class="wizard-body">
+
+    <div class="section">
+      <h2>L'application</h2>
+      <div class="field-row">
+        <div class="field">
+          <label for="app-name">Nom de l'application</label>
+          <input type="text" id="app-name" placeholder="Ex : CRM FilmPro, GestPro...">
+        </div>
+        <div class="field">
+          <label for="app-locale">Langue / Région</label>
+          <select id="app-locale">
+            <option value="fr-CH">Français (Suisse)</option>
+            <option value="fr-FR">Français (France)</option>
+            <option value="de-CH">Deutsch (Schweiz)</option>
+            <option value="en-US">English (US)</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="app-desc">Description courte</label>
+        <textarea id="app-desc" placeholder="En 1-2 phrases, que fait cette app ?"></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Le problème</h2>
+      <div class="field">
+        <label for="problem">Quel problème cette app doit résoudre ?</label>
+        <textarea id="problem" placeholder="Décrivez la douleur principale des utilisateurs..."></textarea>
+      </div>
+      <div class="field">
+        <label for="current-solution">Solution actuelle</label>
+        <input type="text" id="current-solution" placeholder="Excel, papier, autre outil...">
+        <div class="hint">Comment le problème est géré aujourd'hui ?</div>
+      </div>
+      <div class="field">
+        <label for="value">Valeur ajoutée principale</label>
+        <textarea id="value" placeholder="Qu'est-ce que l'app apporte de mieux par rapport à la solution actuelle ?"></textarea>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Les utilisateurs</h2>
+      <div class="field-row">
+        <div class="field">
+          <label for="user-role">Rôle principal</label>
+          <input type="text" id="user-role" placeholder="Ex : commercial, gestionnaire, admin...">
+        </div>
+        <div class="field">
+          <label for="user-count">Nombre approximatif</label>
+          <input type="text" id="user-count" placeholder="Ex : 1-5, 10-50...">
+        </div>
+      </div>
+      <div class="field">
+        <label for="user-context">Contexte d'utilisation</label>
+        <textarea id="user-context" placeholder="Bureau, terrain, mobile ? Fréquence d'utilisation ?"></textarea>
+        <div class="hint">Optionnel — aide à adapter l'interface</div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <div></div>
+      <button class="btn btn-primary" id="btn-next">Suivant &rarr;</button>
+    </div>
+
+  </div>
+
+  <script src="shared.js"></script>
+  <script>
+    initPage('pitch');
+
+    getState().then(state => {
+      if (state.pitch_data) {
+        const d = state.pitch_data;
+        if (d.app_name) document.getElementById('app-name').value = d.app_name;
+        if (d.app_locale) document.getElementById('app-locale').value = d.app_locale;
+        if (d.app_desc) document.getElementById('app-desc').value = d.app_desc;
+        if (d.problem) document.getElementById('problem').value = d.problem;
+        if (d.current_solution) document.getElementById('current-solution').value = d.current_solution;
+        if (d.value) document.getElementById('value').value = d.value;
+        if (d.user_role) document.getElementById('user-role').value = d.user_role;
+        if (d.user_count) document.getElementById('user-count').value = d.user_count;
+        if (d.user_context) document.getElementById('user-context').value = d.user_context;
+      }
+    });
+
+    window.injectPitch = function(data) {
+      if (data.app_name) document.getElementById('app-name').value = data.app_name;
+      if (data.app_locale) document.getElementById('app-locale').value = data.app_locale;
+      if (data.app_desc) document.getElementById('app-desc').value = data.app_desc;
+      if (data.problem) document.getElementById('problem').value = data.problem;
+      if (data.current_solution) document.getElementById('current-solution').value = data.current_solution;
+      if (data.value) document.getElementById('value').value = data.value;
+      if (data.user_role) document.getElementById('user-role').value = data.user_role;
+      if (data.user_count) document.getElementById('user-count').value = data.user_count;
+      if (data.user_context) document.getElementById('user-context').value = data.user_context;
+      showToast('Données pré-remplies');
+    };
+
+    function collectPitch() {
+      return {
+        app_name: document.getElementById('app-name').value.trim(),
+        app_locale: document.getElementById('app-locale').value,
+        app_desc: document.getElementById('app-desc').value.trim(),
+        problem: document.getElementById('problem').value.trim(),
+        current_solution: document.getElementById('current-solution').value.trim(),
+        value: document.getElementById('value').value.trim(),
+        user_role: document.getElementById('user-role').value.trim(),
+        user_count: document.getElementById('user-count').value.trim(),
+        user_context: document.getElementById('user-context').value.trim()
+      };
+    }
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+      const data = collectPitch();
+      if (!data.app_name) { showToast('Le nom est obligatoire'); return; }
+      if (!data.problem) { showToast('Décrivez le problème'); return; }
+      goNext('pitch', { pitch_data: data, pitch_validated: true });
+    });
+  </script>
+
+</body>
+</html>

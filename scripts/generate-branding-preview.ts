@@ -62,7 +62,7 @@ function themeCard(key: string, theme: Theme, isDefault: boolean): string {
 	const c = theme.couleurs;
 	const font = theme.typographie.font;
 	const mono = theme.typographie.mono;
-	const defaultBadge = isDefault ? `<span style="background:${c.accent};color:#fff;font-size:11px;padding:2px 8px;border-radius:9999px;margin-left:8px;">Par defaut</span>` : '';
+	const defaultBadge = isDefault ? `<span style="background:${c.accent};color:#fff;font-size:11px;padding:2px 8px;border-radius:9999px;margin-left:8px;">Par défaut</span>` : '';
 
 	return `
     <div style="border:1px solid ${c.text_body}20;border-radius:12px;overflow:hidden;background:${c.background};">
@@ -103,7 +103,7 @@ function themeCard(key: string, theme: Theme, isDefault: boolean): string {
           <div style="width:40px;height:40px;border-radius:8px;background:${c.primary};"></div>
           <div style="flex:1;">
             <div style="font-family:'${font}',sans-serif;font-size:13px;font-weight:600;color:${c.text_primary};">Sidebar + Content</div>
-            <div style="font-family:'${font}',sans-serif;font-size:12px;color:${c.text_body};">Apercu de la mise en page</div>
+            <div style="font-family:'${font}',sans-serif;font-size:12px;color:${c.text_body};">Aperçu de la mise en page</div>
           </div>
           <button style="font-family:'${font}',sans-serif;font-size:12px;font-weight:500;background:${c.accent};color:#fff;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;">Action</button>
         </div>
@@ -175,12 +175,12 @@ function generateHTML(catalogue: Catalogue): string {
 <body>
   <div class="container">
     <h1>Catalogue Branding</h1>
-    <p class="subtitle">5 themes disponibles — choisissez un point de depart, personnalisable ensuite.</p>
+    <p class="subtitle">5 thèmes disponibles — choisissez un point de départ, personnalisable ensuite.</p>
     <div class="grid">
       ${cards}
     </div>
     <p style="text-align:center;color:#999;font-size:12px;margin-top:32px;">
-      AppFactory — Chaque theme est entierement personnalisable (couleurs, typo, logo, page login).
+      AppFactory — Chaque thème est entièrement personnalisable (couleurs, typo, logo, page login).
     </p>
   </div>
 </body>

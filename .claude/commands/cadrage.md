@@ -1,53 +1,69 @@
-# Skill Cadrage — Dialogue structure vers project.yaml + previews HTML
+# Skill Cadrage — Wizard HTML interactif vers project.yaml
 
-Tu es un Product Engineer qui cadre un nouveau projet d'application metier avec un operateur.
-Ton objectif : collecter toutes les specs necessaires via un dialogue structure, generer un `project.yaml` complet, puis produire 4 pages HTML de presentation client.
+Tu es un Product Engineer qui cadre un nouveau projet d'application metier.
+Le cadrage se fait via un wizard HTML dans le navigateur (pas d'allers-retours terminal).
+
+## Prerequis
+
+- Appele depuis `/start` (option 2 ou 3) — le branding est deja defini
+- Le branding de l'entreprise est dans `branding/[slug].yaml`
 
 ## Deroulement
 
-### Phase 1 — Pitch (3-5 questions)
+### Phase 1 — Lancer le wizard
 
-Pose ces questions une par une (attends la reponse avant la suivante) :
+1. Lance le serveur : `python3 wizard/cadrage/server.py` (en background)
+2. Le navigateur s'ouvre sur `http://localhost:3333/` (page Pitch)
+3. Informe l'operateur : "Le wizard de cadrage est ouvert dans le navigateur. Remplis les etapes, je t'attends."
 
-1. **Nom et secteur** : "Quel est le nom de l'application et dans quel secteur d'activite ?"
-2. **Probleme** : "Quel probleme principal cette app doit resoudre ?"
-3. **Utilisateurs** : "Qui sont les utilisateurs cibles ? (role, nombre approximatif)"
-4. **Valeur** : "Quelle est la valeur ajoutee principale par rapport a la solution actuelle (Excel, papier, autre outil) ?"
-5. **Locale** : "Quelle langue et region ? (ex: fr-CH, de-CH, en-US)"
+### Phase 2 — Injection intelligente (pendant que l'utilisateur remplit)
 
-### Phase 2 — Entites et donnees (adapte selon le secteur)
+A chaque etape validee par l'utilisateur, tu recois les donnees via `/api/state`. Tu proposes du contenu pour l'etape suivante :
 
-A partir du pitch, propose un schema d'entites (tables principales, champs cles, relations). Demande validation :
+#### Apres Pitch valide (`pitch_validated: true`)
+- Lis `pitch_data` depuis le state
+- Genere un schema d'entites intelligent base sur le secteur et le probleme decrit
+- Injecte via POST `/api/state` :
+  ```json
+  {"entities_data": [...], "step": "entities"}
+  ```
+  Le wizard navigue automatiquement et affiche les entites pre-remplies.
 
-1. **Proposition** : "Voici les entites que je propose : [liste]. Ca correspond ?"
-2. **Ajustements** : "Des entites a ajouter/supprimer ? Des champs specifiques a votre metier ?"
-3. **Relations** : "Confirmez les liens entre entites : [liste relations]"
+#### Apres Entites validees (`entities_validated: true`)
+- Lis `entities_data` depuis le state
+- Genere les pages logiques (Dashboard + 1 page par entite principale) et les modules pertinents
+- Injecte via POST `/api/state` :
+  ```json
+  {"pages_data": {"pages": [...], "metrics": [...], "modules": {...}}, "step": "pages"}
+  ```
 
-### Phase 3 — Pages et navigation
+#### Apres Pages validees (`pages_validated: true`)
+- Lis `pages_data` et propose des regles metier coherentes (auth, cron si modules actifs)
+- Injecte via POST `/api/state` :
+  ```json
+  {"rules_data": {...}, "step": "rules"}
+  ```
 
-Propose une navigation basee sur les entites validees :
+#### Apres Regles validees (`rules_validated: true`)
+- Le wizard passe au recap automatiquement (step: recap)
+- Pas d'injection — l'utilisateur relit tout
 
-1. **Pages principales** : "Je propose ces pages : [liste]. Ordre de priorite ?"
-2. **Dashboard** : "Quelles metriques sur le dashboard ? (stats, alertes, raccourcis)"
-3. **Fonctions speciales** : "Des besoins specifiques ? (pipeline kanban, prospection, calendrier, import/export...)"
+### Phase 3 — Validation finale et generation
 
-### Phase 4 — Regles metier et configuration
+Quand `cadrage_validated: true` apparait dans le state :
 
-1. **Auth** : "Authentification Google OAuth ? Restriction par domaine email ?"
-2. **Scoring/priorite** : "Y a-t-il un systeme de scoring ou priorite a configurer ?"
-3. **Automatisations** : "Des taches automatiques ? (alertes, cron, emails)"
-4. **Branding** : "Couleurs principales ? (hex si possible) Logo disponible ? Police preferee ?"
-
-### Phase 5 — Generation
-
-Quand toutes les reponses sont collectees :
-
-1. **Genere `project.yaml`** dans le repertoire racine du projet client, en suivant exactement le format de reference (voir ci-dessous).
-2. **Affiche un recapitulatif** structure des specs.
-3. **Demande validation finale** : "Le project.yaml est pret. Je genere les previews HTML ?"
-4. **Execute `npx tsx scripts/generate-previews.ts --output _previews/cadrage`** pour produire les 4 pages HTML dans le dossier `_previews/cadrage/` du projet client.
-5. **Verifie que `_previews/` est dans le `.gitignore`** du projet client — l'ajouter si absent.
-6. **Indique les chemins** des fichiers generes et propose d'ouvrir dans le navigateur.
+1. **Arrete le serveur** (kill le process python)
+2. **Recupere le state complet** (toutes les donnees des 4 etapes)
+3. **Genere `project.yaml`** dans le repertoire du projet client, en fusionnant :
+   - `pitch_data` → `app:` + description
+   - Branding depuis `branding/[slug].yaml` → `branding:`
+   - `entities_data` → `entities:`
+   - `pages_data` → `pages:` + modules optionnels
+   - `rules_data` → `auth:`, `scoring:`, `cron:`
+4. **Execute `npx tsx scripts/generate-previews.ts --output _previews/cadrage`** pour les pages de presentation
+5. **Verifie que `_previews/` est dans le `.gitignore`** du projet — l'ajouter si absent
+6. **Met a jour `registry.yaml`** : ajoute l'app avec statut `cadrage`
+7. **Affiche dans le terminal** : recapitulatif + chemin project.yaml + proposition `/generate`
 
 ## Format project.yaml de reference
 
@@ -129,11 +145,19 @@ cron:  # Si applicable
   jobs: []
 ```
 
+## Polling du state
+
+Pour detecter les validations de l'utilisateur, polle `/api/state` toutes les 2 secondes :
+```bash
+curl -s http://localhost:3333/api/state
+```
+Reagis des qu'un flag `*_validated: true` apparait.
+
 ## Regles
 
-- Pose les questions UNE PAR UNE, jamais en bloc
-- Adapte les questions au secteur (pas de pipeline pour une app de reservation, pas de scoring pour un outil interne simple)
-- Propose des valeurs par defaut intelligentes basees sur le secteur
-- Le project.yaml doit etre COMPLET et autosuffisant — c'est la source de verite pour le skill generate
-- Les previews HTML sont generes par le script, pas a la main
+- Le wizard HTML gere l'UX — Claude gere l'intelligence (propositions, generation)
+- Ne jamais poser de questions dans le terminal pendant que le wizard est ouvert
 - Si l'operateur dit "comme FilmPro" ou "similaire a [projet existant]", lis le project.yaml de reference dans template/project.yaml pour s'en inspirer
+- Le project.yaml doit etre COMPLET et autosuffisant — c'est la source de verite pour `/generate`
+- Les previews HTML sont generes par le script, pas a la main
+- Le branding n'est PAS demande dans le wizard — il est deja defini avant le cadrage
