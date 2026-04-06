@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-06
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Dogfooding Phase C complet — cycle cadrage/generate/deploy teste sur projet fictif ChronoTrack. 3 frictions scaffold corrigees (nettoyage conditionnel modules, --output previews). Agent Teams natif active (env var). RuFlo analyse et rejete (stubs, failles secu).
+**Session precedente :** Point d'entree /start + wizard cadrage HTML. Cree registry.yaml (entreprises/apps), catalogue branding (5 themes + preview HTML), wizard cadrage 5 etapes HTML (serveur Python local, polling state, injection Claude). UX polish client-grade (icones Material Symbols, intros, espacement). Profils utilisateurs multi dans pitch. Cycle de vie _previews/ integre aux 3 skills.
 
 ---
 
@@ -137,6 +137,31 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Tests** : Vitest (113 tests : scoring + 18/18 schemas + validation + extractForm + API sparql/helpers) + Playwright (5 tests e2e : navigation + auth redirect)
 - **Cron** : `/api/cron/alertes` quotidien 7h (vercel.json), securise par CRON_SECRET (configure Vercel prod)
 
+## WORKFLOW APPFACTORY
+
+```
+/start (terminal)
+  ├─ 1. Modifier app existante → travail direct dans le code
+  ├─ 2. Nouvelle app (entreprise existante) → /cadrage wizard HTML
+  └─ 3. Nouvelle entreprise → branding (terminal) → /cadrage wizard HTML
+
+/cadrage (wizard HTML navigateur, port 3334)
+  Pitch → Entites → Pages → Regles → Recap → Valider
+  → project.yaml genere + previews dans _previews/cadrage/
+
+/generate → scaffold SvelteKit depuis project.yaml
+/deploy preview → URL Vercel preview
+/deploy prod → production + suppression _previews/
+```
+
+Fichiers cles :
+- `registry.yaml` — registre entreprises/apps (source de verite)
+- `branding/_catalogue.yaml` — 5 themes avec tokens complets
+- `branding/_default.yaml` — theme par defaut (standard)
+- `branding/[slug].yaml` — branding par entreprise
+- `wizard/cadrage/` — 5 pages HTML + server.py + shared.css/js + logo
+- `scripts/generate-branding-preview.ts` — genere previews/branding.html
+
 ## DOCUMENTATION
 
 - `docs/SPECS_PROSPECTION.md` — Specs completes module prospection (sources, modele, scoring, UI, dedup)
@@ -147,24 +172,36 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## OBJECTIF PROCHAINE SESSION
 
-Premier projet client reel avec le workflow Phase C :
-- Choisir le premier projet (FilmPro ou autre) et lancer `/cadrage`
-- Tester le scaffold auto-nettoyant sur un projet avec modules partiels
-- Deploy preview Vercel reel (pas dry run)
+Tester le workflow complet /start → /cadrage → /generate → /deploy sur un projet reel :
+- Lancer `/start` option 3 (nouvelle entreprise) ou option 2 (nouvelle app FilmPro)
+- Valider le wizard cadrage HTML de bout en bout (5 etapes navigateur)
+- Tester l'injection intelligente Claude (entites, pages, regles pre-remplies apres pitch)
+- /generate depuis le project.yaml produit par le wizard
+- Deploy preview Vercel reel
 
 **En attente :**
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
 - Evaluation Agent Teams sur les autres projets Claude (prompt prepare, session separee)
 
-**Decisions session 2026-04-06 :**
+**Decisions session 2026-04-06 (2e session) :**
+- /start cree : point d'entree unique avec 3 chemins (modifier app / nouvelle app / nouvelle entreprise)
+- registry.yaml : registre central entreprises/apps (FilmPro + CRM pre-rempli)
+- Catalogue branding : 5 themes (_catalogue.yaml), preview HTML generee par script
+- Wizard cadrage HTML : 5 etapes (pitch, entites, pages, regles, recap), serveur Python port 3334
+- Architecture wizard : polling /api/state, injection Claude, auto-navigation entre etapes
+- Cycle de vie _previews/ : cadrage → generate → suppression au deploy prod
+- UX client-grade : icones Material Symbols, intros centrees, animation fadeIn, labels lisibles
+- Langue simplifiee (fr/de/en, region en background)
+- Profils utilisateurs multiples dans le pitch (ajout/suppression dynamique)
+- Accents francais obligatoires dans tout contenu genere (rule globale ajoutee)
+
+**Decisions session precedente (2026-04-06, 1re session) :**
 - RuFlo rejete : stubs (290/313 tools), failles securite, score 3.5/10
 - Agent Teams natif active (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` dans settings.json)
-- scaffold.ts : nettoyage conditionnel modules absents du YAML (etape 5/7)
-- generate-previews.ts : `--output <dir>` optionnel
-- Agent Teams transparent pour le workflow — gain sur verifications paralleles, pas de changement de skills
 
 **Prerequis :**
 - Aucun bloquant technique
+- 4 commits non pushes (ebd78de..5b23b9c) — penser a push en debut de prochaine session
 
 → Audit CRM FilmPro 2026-04-04 (4 sprints, tous corriges) archive dans archive/audit-crm-2026-04-04.md — consulter si regression securite/qualite/tests OU comme reference methodologique pour le prochain audit (5 agents, scoring par axe, sprints par severite)
 
