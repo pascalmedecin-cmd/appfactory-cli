@@ -55,7 +55,8 @@ Le scaffold copie le template generique. Selon le project.yaml, adapte :
 1. Lance `npx svelte-check` dans le dossier de sortie pour verifier le typage
 2. Lance `npx vitest run` pour les tests unitaires
 3. Affiche un rapport : fichiers generes, pages disponibles, modules actifs
-4. Propose : "Le projet est pret. Prochaine etape : `/deploy` pour mettre en preview Vercel"
+4. **Genere les previews post-scaffold** dans `_previews/generate/` (rapport des fichiers generes, pages, modules)
+5. Propose : "Le projet est pret. Prochaine etape : `/deploy` pour mettre en preview Vercel"
 
 ## Regles
 

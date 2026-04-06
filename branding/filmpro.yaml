@@ -1,0 +1,24 @@
+# Charte graphique FilmPro
+# Source officielle : /Users/pascal/Claude/Projets/Marketing/projets/FilmPro/BRANDING-APPS.css
+
+nom: FilmPro
+secteur: Production audiovisuelle
+
+couleurs:
+  primary: "#2F5A9E"
+  primary_dark: "#0A1628"
+  accent: "#3B6CB7"
+  logo: "#00003B"
+  status:
+    success: "#16a34a"
+    warning: "#d97706"
+    danger: "#dc2626"
+
+typographie:
+  font: DM Sans
+  mono: DM Mono
+
+logo:
+  format: SVG Illustrator 1500x1500
+  rendu: inline SVG (pas <img>)
+  note: "Film en paths pleins (pas outline) pour lisibilite a petite taille"

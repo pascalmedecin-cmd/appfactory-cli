@@ -1,0 +1,15 @@
+# AppFactory — Registre entreprises et applications
+# Source de verite pour /start
+
+entreprises:
+  filmpro:
+    nom: FilmPro
+    secteur: Production audiovisuelle
+    branding: branding/filmpro.yaml
+    apps:
+      crm:
+        nom: CRM FilmPro
+        repo: appfactory
+        url: https://template-rho-three.vercel.app
+        statut: production
+        description: Gestion contacts, entreprises, pipeline commercial, prospection

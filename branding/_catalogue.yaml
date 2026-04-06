@@ -1,0 +1,119 @@
+# Catalogue de themes AppFactory
+# Source : StyleTemplates.js (ancien AppFactory v1), selection des 5 meilleurs
+# Utilise par /start option 3 pour proposer un point de depart branding
+
+themes:
+  standard:
+    nom: Standard
+    ambiance: "Warm-neutral, professionnel et lisible. Fond creme, touches bronze."
+    style: "Polyvalent — convient a la majorite des apps metier"
+    couleurs:
+      primary: "#4A6B84"
+      primary_hover: "#3B5A72"
+      accent: "#C08B5C"
+      background: "#FDFBF8"
+      surface: "#F7F3EE"
+      surface_raised: "#F0EBE4"
+      text_primary: "#3A332A"
+      text_body: "#4A4239"
+      status:
+        success: "#4ade80"
+        warning: "#fb923c"
+        danger: "#f87171"
+        info: "#60a5fa"
+    typographie:
+      font: Inter
+      mono: Fira Code
+      font_url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400&display=swap"
+
+  dark-tech:
+    nom: Dark Tech
+    ambiance: "Sombre, precis, moderne. Inspire de Linear, Vercel, Raycast."
+    style: "Tech / dev tools / SaaS technique"
+    couleurs:
+      primary: "#0A0A0B"
+      primary_hover: "#18181B"
+      accent: "#6366F1"
+      background: "#0A0A0B"
+      surface: "#141415"
+      surface_raised: "#1E1E20"
+      text_primary: "#E8E8E8"
+      text_body: "#A1A1AA"
+      status:
+        success: "#22C55E"
+        warning: "#F59E0B"
+        danger: "#EF4444"
+        info: "#3B82F6"
+    typographie:
+      font: Inter
+      mono: JetBrains Mono
+      font_url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+
+  clean-light:
+    nom: Clean Light
+    ambiance: "Lumineux, aere, net. Inspire de Notion, Slack."
+    style: "SaaS grand public / outils collaboratifs"
+    couleurs:
+      primary: "#171717"
+      primary_hover: "#262626"
+      accent: "#2563EB"
+      background: "#FFFFFF"
+      surface: "#F9FAFB"
+      surface_raised: "#FFFFFF"
+      text_primary: "#111827"
+      text_body: "#374151"
+      status:
+        success: "#22C55E"
+        warning: "#F59E0B"
+        danger: "#EF4444"
+        info: "#3B82F6"
+    typographie:
+      font: DM Sans
+      mono: Fira Code
+      font_url: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+
+  gradient-aurora:
+    nom: Aurora
+    ambiance: "Premium, violet-bleu, fintech. Inspire de Stripe, Framer."
+    style: "Fintech / apps premium / startups design-first"
+    couleurs:
+      primary: "#0F172A"
+      primary_hover: "#1E293B"
+      accent: "#7C3AED"
+      background: "#FFFFFF"
+      surface: "#F8FAFC"
+      surface_raised: "#FFFFFF"
+      text_primary: "#0F172A"
+      text_body: "#334155"
+      status:
+        success: "#10B981"
+        warning: "#F59E0B"
+        danger: "#EF4444"
+        info: "#6366F1"
+    typographie:
+      font: Plus Jakarta Sans
+      mono: Fira Code
+      font_url: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Fira+Code:wght@400&display=swap"
+
+  enterprise-trust:
+    nom: Enterprise
+    ambiance: "Sobre, institutionnel, fiable. Bleu marine classique."
+    style: "Corporate / legal / finance / institutions"
+    couleurs:
+      primary: "#1E3A5F"
+      primary_hover: "#163050"
+      accent: "#0369A1"
+      background: "#F8FAFC"
+      surface: "#FFFFFF"
+      surface_raised: "#FFFFFF"
+      text_primary: "#0F172A"
+      text_body: "#334155"
+      status:
+        success: "#059669"
+        warning: "#D97706"
+        danger: "#DC2626"
+        info: "#0369A1"
+    typographie:
+      font: IBM Plex Sans
+      mono: IBM Plex Mono
+      font_url: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap"

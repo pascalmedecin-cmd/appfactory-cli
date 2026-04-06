@@ -39,8 +39,9 @@ L'operateur peut passer un argument : `preview` (defaut) ou `prod`/`production`.
 #### Mode production
 1. Lance `vercel --prod`
 2. Recupere l'URL de production
-3. Affiche : "Production deploye : <url>"
-4. Si un domaine custom est configure dans vercel.json, verifie qu'il pointe bien
+3. **Supprime le dossier `_previews/`** s'il existe — les previews de validation ne sont plus necessaires apres un deploy prod. Affiche : "Previews de validation supprimees."
+4. Affiche : "Production deploye : <url>"
+5. Si un domaine custom est configure dans vercel.json, verifie qu'il pointe bien
 
 ### Phase 5 — Rapport
 

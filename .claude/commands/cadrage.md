@@ -45,8 +45,9 @@ Quand toutes les reponses sont collectees :
 1. **Genere `project.yaml`** dans le repertoire racine du projet client, en suivant exactement le format de reference (voir ci-dessous).
 2. **Affiche un recapitulatif** structure des specs.
 3. **Demande validation finale** : "Le project.yaml est pret. Je genere les previews HTML ?"
-4. **Execute `npx tsx scripts/generate-previews.ts`** pour produire les 4 pages HTML.
-5. **Indique les chemins** des fichiers generes et propose d'ouvrir dans le navigateur.
+4. **Execute `npx tsx scripts/generate-previews.ts --output _previews/cadrage`** pour produire les 4 pages HTML dans le dossier `_previews/cadrage/` du projet client.
+5. **Verifie que `_previews/` est dans le `.gitignore`** du projet client — l'ajouter si absent.
+6. **Indique les chemins** des fichiers generes et propose d'ouvrir dans le navigateur.
 
 ## Format project.yaml de reference
 

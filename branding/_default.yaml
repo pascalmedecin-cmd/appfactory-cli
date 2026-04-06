@@ -1,0 +1,37 @@
+# Branding par defaut AppFactory
+# Source : StyleTemplates.js template "standard" (ancien AppFactory v1)
+# Point de depart pour toute nouvelle entreprise — a personnaliser
+
+nom: Standard AppFactory
+description: Theme warm-neutral, professionnel et lisible
+
+couleurs:
+  primary: "#4A6B84"
+  primary_hover: "#3B5A72"
+  accent: "#C08B5C"
+  background: "#FDFBF8"
+  surface: "#F7F3EE"
+  surface_raised: "#F0EBE4"
+  text_primary: "#3A332A"
+  text_body: "#4A4239"
+  status:
+    success: "#4ade80"
+    warning: "#fb923c"
+    danger: "#f87171"
+    info: "#60a5fa"
+
+typographie:
+  font: Inter
+  mono: Fira Code
+  font_url: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400&display=swap"
+
+logo:
+  format: null
+  rendu: null
+  note: "A definir par le client"
+
+login:
+  background_image: null
+  note: "A definir par le client"
+
+# Autres themes disponibles : voir branding/_catalogue.yaml
