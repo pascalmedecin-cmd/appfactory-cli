@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-07
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Installation skills design dans la bibliotheque globale. 2 skills ajoutes (refactoring-ui, ux-guide) avec references completes. Audit conflits : sections Anti-AI retirees de ux-guide (conflit Inter/#fff/#6366f1), bans de fonts retires de frontend-design. Verification coherence 4 skills design (matrice couverture, 0 conflit residuel, 0 NEVER/forbidden). CATALOGUE.md et plugins-reference.md mis a jour.
+**Session precedente :** Launcher CLI (`~/Claude/Projets/start.sh`) : menu fixe 5 options (AppFactory-CLI, Enseignement, Marketing, Etude-de-Marche, Global). Option Global lance Claude depuis ~/.claude/ pour regles cross-projets. Ancien projet AppFactory renomme « AppFactory - Archive » (consultable, exclu du menu).
 
 ---
 
@@ -205,9 +205,14 @@ Tester le workflow complet /start → /cadrage → /generate → /deploy sur un 
 - Wizard cadrage HTML : 5 etapes (pitch, entites, pages, regles, recap), serveur Python port 3334
 - Architecture wizard : polling /api/state, injection Claude, auto-navigation entre etapes
 
+**Decisions session 2026-04-07 (3e session) :**
+- Launcher CLI (`start.sh`) : menu dynamique → menu fixe 5 options, ordre choisi par Pascal
+- Option 5 « Global » : travail sur regles/skills/commands cross-projets (cd ~/.claude/)
+- AppFactory (v1) renomme « AppFactory - Archive » — consultable mais exclu du menu
+
 **Prerequis :**
 - Aucun bloquant technique
-- 8 commits non pushes (ebd78de..edf18c0) — penser a push en debut de prochaine session
+- 9 commits non pushes — penser a push en debut de prochaine session
 
 → Audit CRM FilmPro 2026-04-04 (4 sprints, tous corriges) archive dans archive/audit-crm-2026-04-04.md — consulter si regression securite/qualite/tests OU comme reference methodologique pour le prochain audit (5 agents, scoring par axe, sprints par severite)
 
