@@ -2,7 +2,7 @@
 	import { createSupabaseBrowserClient } from '$lib/supabase';
 	import type { User } from '@supabase/supabase-js';
 
-	let { user, sidebarCollapsed = false, onMenuToggle }: { user: User | null; sidebarCollapsed?: boolean; onMenuToggle?: () => void } = $props();
+	let { user, sidebarCollapsed = false, onMenuToggle, pageTitle = '' }: { user: User | null; sidebarCollapsed?: boolean; onMenuToggle?: () => void; pageTitle?: string } = $props();
 
 	const supabase = createSupabaseBrowserClient();
 
@@ -26,6 +26,9 @@
 			>
 				<span class="material-symbols-outlined text-[22px] text-text">menu</span>
 			</button>
+		{/if}
+		{#if pageTitle}
+			<span class="text-sm font-medium text-text hidden md:inline">{pageTitle}</span>
 		{/if}
 	</div>
 

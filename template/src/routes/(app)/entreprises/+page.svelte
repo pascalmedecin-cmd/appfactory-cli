@@ -5,6 +5,7 @@
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import type { PageData } from './$types';
 
@@ -108,6 +109,15 @@
 		</button>
 	</div>
 
+	{#if data.entreprises.length === 0}
+		<EmptyState
+			icon="business"
+			title="Aucune entreprise"
+			description="Ajoutez votre première entreprise pour organiser vos contacts et opportunités."
+			actionLabel="Ajouter une entreprise"
+			onAction={openCreate}
+		/>
+	{:else}
 	<DataTable
 		data={data.entreprises}
 		{columns}
@@ -133,6 +143,7 @@
 			</td>
 		{/snippet}
 	</DataTable>
+	{/if}
 </div>
 
 <!-- SlideOut détail entreprise -->
@@ -221,7 +232,8 @@
 					<span class="material-symbols-outlined text-[16px]">edit</span>
 					Modifier
 				</button>
-				<form method="POST" action="?/delete" use:enhance={() => {
+				<form method="POST" action="?/delete" use:enhance={({ cancel }) => {
+					if (!confirm('Supprimer cette entreprise ? Cette action est irréversible.')) { cancel(); return; }
 					deleting = true;
 					return async ({ result, update }) => {
 						deleting = false;

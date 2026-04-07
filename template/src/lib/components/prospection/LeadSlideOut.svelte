@@ -145,7 +145,7 @@
 					<p class="font-medium text-text">{lead.canton ?? '—'}</p>
 				</div>
 				<div>
-					<span class="text-text-muted">Telephone</span>
+					<span class="text-text-muted">Téléphone</span>
 					<p class="font-medium text-text">{lead.telephone ?? '—'}</p>
 				</div>
 				<div>
@@ -193,7 +193,7 @@
 						<p class="text-text-muted">{critere}</p>
 					{/each}
 					{#if scoreDetail.criteres.length === 0}
-						<p class="text-text-muted">Aucun critere match</p>
+						<p class="text-text-muted">Aucun critère atteint</p>
 					{/if}
 				</div>
 			</div>
@@ -218,7 +218,7 @@
 					class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-warning bg-warning-light border border-warning/30 rounded-lg hover:bg-warning-light/80 disabled:opacity-50 cursor-pointer"
 				>
 					<span class="material-symbols-outlined text-[16px]">phone_forwarded</span>
-					{enriching ? 'Recherche...' : 'Enrichir telephone'}
+					{enriching ? 'Recherche…' : 'Enrichir téléphone'}
 				</button>
 			{/if}
 
@@ -226,29 +226,29 @@
 			{#if lead.statut !== 'transfere'}
 				<div class="flex flex-wrap gap-3 pt-4 border-t border-border">
 					{#if lead.statut !== 'interesse'}
-						<form method="POST" action="?/updateStatut" use:enhance={enhanceStatut('interesse', 'Lead marque interesse')}>
+						<form method="POST" action="?/updateStatut" use:enhance={enhanceStatut('interesse', 'Lead marqué intéressé')}>
 							<input type="hidden" name="id" value={lead.id} />
 							<input type="hidden" name="statut" value="interesse" />
 							<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-accent border border-accent rounded-lg hover:bg-accent/10 cursor-pointer">
 								<span class="material-symbols-outlined text-[16px]">thumb_up</span>
-								Interesse
+								Intéressé
 							</button>
 						</form>
 					{/if}
 					{#if lead.statut !== 'ecarte'}
-						<form method="POST" action="?/updateStatut" use:enhance={enhanceStatut('ecarte', 'Lead ecarte')}>
+						<form method="POST" action="?/updateStatut" use:enhance={enhanceStatut('ecarte', 'Lead écarté')}>
 							<input type="hidden" name="id" value={lead.id} />
 							<input type="hidden" name="statut" value="ecarte" />
 							<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer">
 								<span class="material-symbols-outlined text-[16px]">block</span>
-								Ecarter
+								Écarter
 							</button>
 						</form>
 					{/if}
 					<form method="POST" action="?/transferer" use:enhance={() => {
 						return async ({ result, update }) => {
 							closeAndClear();
-							if (result.type === 'success') toasts.success('Lead transfere vers le CRM');
+							if (result.type === 'success') toasts.success('Lead transféré vers le CRM');
 							else toasts.error('Erreur lors du transfert');
 							await update();
 						};
@@ -256,14 +256,14 @@
 						<input type="hidden" name="id" value={lead.id} />
 						<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer">
 							<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-							Transferer vers CRM
+							Transférer vers CRM
 						</button>
 					</form>
 				</div>
 			{:else}
 				<div class="flex items-center gap-2 pt-4 border-t border-border text-sm text-success">
 					<span class="material-symbols-outlined text-[16px]">check_circle</span>
-					Transfere vers le CRM
+					Transféré vers le CRM
 				</div>
 			{/if}
 		</div>

@@ -25,7 +25,9 @@
 >
 	<div class="flex items-center px-3 py-4 shrink-0 overflow-hidden">
 		{#if !collapsed}
-			{#if config.branding.logo}
+			{#if config.branding.logoWhite}
+				<img src="/{config.branding.logoWhite}" alt={config.app.name} class="h-7 w-auto" />
+			{:else if config.branding.logo}
 				<img src="/{config.branding.logo}" alt={config.app.name} class="h-7 w-auto" />
 			{:else}
 				<span class="font-bold text-lg truncate">{config.app.name}</span>
@@ -82,7 +84,7 @@
 
 		<button
 			onclick={signOut}
-			class="flex items-center gap-3 px-4 py-2.5 text-sm text-white/40 hover:bg-white/10 hover:text-red-400 transition-colors w-full cursor-pointer"
+			class="flex items-center gap-3 px-4 py-2.5 text-sm text-white/60 hover:bg-white/10 hover:text-red-400 transition-colors w-full cursor-pointer"
 			title={collapsed ? 'Déconnexion' : undefined}
 		>
 			<span class="material-symbols-outlined text-[20px] shrink-0">logout</span>

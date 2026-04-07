@@ -163,14 +163,14 @@
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="text-2xl font-bold text-text">Pipeline</h1>
-			<p class="text-sm text-text-muted">{data.opportunites.length} opportunite{data.opportunites.length > 1 ? 's' : ''}</p>
+			<p class="text-sm text-text-muted">{data.opportunites.length} opportunité{data.opportunites.length > 1 ? 's' : ''}</p>
 		</div>
 		<button
 			onclick={() => openCreate()}
 			class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 		>
 			<span class="material-symbols-outlined text-[18px]">add</span>
-			Nouvelle opportunite
+			Nouvelle opportunité
 		</button>
 	</div>
 
@@ -249,7 +249,7 @@
 
 					{#if opps.length === 0}
 						<div class="text-center py-6 text-xs text-text-muted">
-							Aucune opportunite
+							Aucune opportunité
 						</div>
 					{/if}
 				</div>
@@ -282,11 +282,11 @@
 					{/if}
 				</div>
 				<div>
-					<span class="text-text-muted">Montant estime</span>
+					<span class="text-text-muted">Montant estimé</span>
 					<p class="font-medium text-text">{formatMontant(selectedOpp.montant_estime) || '--'}</p>
 				</div>
 				<div>
-					<span class="text-text-muted">Relance prevue</span>
+					<span class="text-text-muted">Relance prévue</span>
 					<p class="font-medium {isOverdue(selectedOpp.date_relance_prevue) ? 'text-danger' : 'text-text'}">
 						{selectedOpp.date_relance_prevue ? formatDate(selectedOpp.date_relance_prevue) : '--'}
 					</p>
@@ -296,14 +296,14 @@
 					<p class="font-medium text-text">{selectedOpp.responsable ?? '--'}</p>
 				</div>
 				<div>
-					<span class="text-text-muted">Creee le</span>
+					<span class="text-text-muted">Créée le</span>
 					<p class="font-medium text-text">{formatDate(selectedOpp.date_creation)}</p>
 				</div>
 			</div>
 
 			{#if selectedOpp.signaux_affaires}
 				<div class="text-sm">
-					<span class="text-text-muted">Signal d'affaires lie</span>
+					<span class="text-text-muted">Signal d'affaires lié</span>
 					<p class="font-medium text-text">{selectedOpp.signaux_affaires.type_signal} -- {selectedOpp.signaux_affaires.description_projet ?? ''}</p>
 				</div>
 			{/if}
@@ -331,7 +331,8 @@
 					Modifier
 				</button>
 				{#if selectedOpp.etape_pipeline !== 'perdu' && selectedOpp.etape_pipeline !== 'gagne'}
-					<form method="POST" action="?/archive" use:enhance={() => {
+					<form method="POST" action="?/archive" use:enhance={({ cancel }) => {
+						if (!confirm('Marquer cette opportunité comme perdue ?')) { cancel(); return; }
 						archiving = true;
 						return async ({ result, update }) => {
 							archiving = false;
@@ -361,7 +362,7 @@
 <!-- Modal creation/edition -->
 <ModalForm
 	bind:open={modalOpen}
-	title={editMode ? 'Modifier l\'opportunite' : 'Nouvelle opportunite'}
+	title={editMode ? 'Modifier l\'opportunité' : 'Nouvelle opportunité'}
 	{saving}
 >
 	<form
@@ -414,7 +415,7 @@
 				</div>
 			</div>
 			<div class="grid grid-cols-2 gap-4">
-				<FormField label="Montant estime (CHF)" type="number" bind:value={montant_estime} />
+				<FormField label="Montant estimé (CHF)" type="number" bind:value={montant_estime} />
 				<div class="space-y-1">
 					<label for="etape_pipeline" class="block text-sm font-medium text-text">Etape</label>
 					<select

@@ -5,6 +5,7 @@
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import type { PageData } from './$types';
 
@@ -38,8 +39,8 @@
 		{ key: 'prenom', label: 'Prénom', sortable: true },
 		{ key: 'entreprise', label: 'Entreprise', sortable: true, render: (r: Contact) => r.entreprises?.raison_sociale ?? '—' },
 		{ key: 'role_fonction', label: 'Fonction', sortable: true },
-		{ key: 'email_professionnel', label: 'Email' },
-		{ key: 'telephone', label: 'Téléphone' },
+		{ key: 'email_professionnel', label: 'Email', class: 'w-40' },
+		{ key: 'telephone', label: 'Téléphone', class: 'w-32' },
 		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-20' },
 		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-24' },
 	];
@@ -106,6 +107,15 @@
 		</button>
 	</div>
 
+	{#if data.contacts.length === 0}
+		<EmptyState
+			icon="contacts"
+			title="Aucun contact"
+			description="Ajoutez votre premier contact pour commencer à construire votre réseau."
+			actionLabel="Ajouter un contact"
+			onAction={openCreate}
+		/>
+	{:else}
 	<DataTable
 		data={data.contacts}
 		{columns}
@@ -125,6 +135,7 @@
 			</td>
 		{/snippet}
 	</DataTable>
+	{/if}
 </div>
 
 <!-- SlideOut détail contact -->
@@ -206,7 +217,8 @@
 					<span class="material-symbols-outlined text-[16px]">edit</span>
 					Modifier
 				</button>
-				<form method="POST" action="?/delete" use:enhance={() => {
+				<form method="POST" action="?/delete" use:enhance={({ cancel }) => {
+					if (!confirm('Archiver ce contact ? Cette action est irréversible.')) { cancel(); return; }
 					archiving = true;
 					return async ({ result, update }) => {
 						archiving = false;

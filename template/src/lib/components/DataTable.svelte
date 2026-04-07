@@ -180,7 +180,7 @@
 					disabled={currentPage === 0}
 					onclick={() => currentPage--}
 				>
-					←
+					<span class="material-symbols-outlined text-[16px]">arrow_back</span>
 				</button>
 				<span>{currentPage + 1} / {totalPages}</span>
 				<button
@@ -188,7 +188,7 @@
 					disabled={currentPage >= totalPages - 1}
 					onclick={() => currentPage++}
 				>
-					→
+					<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
 				</button>
 			</div>
 		</div>

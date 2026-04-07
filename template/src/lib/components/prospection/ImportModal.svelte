@@ -219,10 +219,10 @@
 		<div class="p-4 bg-surface rounded-lg border border-border opacity-60">
 			<div class="flex items-center gap-2 mb-2">
 				<span class="material-symbols-outlined text-[20px] text-text-muted">phone</span>
-				<h3 class="font-semibold text-text">search.ch — Enrichissement telephone</h3>
+				<h3 class="font-semibold text-text">search.ch — Enrichissement téléphone</h3>
 			</div>
 			<p class="text-xs text-text-muted">
-				Cle API en attente. Utilisez le bouton "Enrichir telephone" sur chaque lead une fois la cle configuree.
+				Clé API en attente. Utilisez le bouton « Enrichir téléphone » sur chaque lead une fois la clé configurée.
 			</p>
 		</div>
 

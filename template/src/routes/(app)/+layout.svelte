@@ -4,11 +4,19 @@
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import Toast from '$lib/components/Toast.svelte';
+	import { config } from '$lib/config';
 	import { page } from '$app/state';
 
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
 	let sidebarCollapsed = $state(false);
 	let mobileMenuOpen = $state(false);
+
+	const pageTitle = $derived(() => {
+		const path = page.url.pathname;
+		const all = [...config.navigation.primary, ...config.navigation.secondary];
+		const match = all.find(item => item.href === '/' ? path === '/' : path.startsWith(item.href));
+		return match?.label ?? '';
+	});
 
 	// Fermer le menu mobile sur navigation
 	$effect(() => {
@@ -38,7 +46,7 @@
 	<Sidebar collapsed={false} currentPath={page.url.pathname} />
 </div>
 
-<Header user={data.user} {sidebarCollapsed} onMenuToggle={() => mobileMenuOpen = !mobileMenuOpen} />
+<Header user={data.user} {sidebarCollapsed} onMenuToggle={() => mobileMenuOpen = !mobileMenuOpen} pageTitle={pageTitle()} />
 
 <main
 	class="pt-(--header-height) min-h-screen bg-surface transition-all duration-200"

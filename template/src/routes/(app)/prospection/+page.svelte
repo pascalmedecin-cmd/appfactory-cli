@@ -176,17 +176,17 @@
 			<option value="Autre">Autre</option>
 		</select>
 		<select bind:value={filterStatut} class="px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-			<option value="nouveau,interesse">Nouveau + Interesse</option>
+			<option value="nouveau,interesse">Nouveau + Intéressé</option>
 			<option value="nouveau">Nouveau</option>
-			<option value="interesse">Interesse</option>
-			<option value="ecarte">Ecarte</option>
-			<option value="transfere">Transfere</option>
+			<option value="interesse">Intéressé</option>
+			<option value="ecarte">Écarté</option>
+			<option value="transfere">Transféré</option>
 			<option value="">Tous</option>
 		</select>
 		<select bind:value={filterScoreMin} class="px-3 py-1.5 text-sm border border-border rounded-md bg-white">
 			<option value="">Tout score</option>
 			<option value={String(scoreLabels.chaud)}>Chaud ({scoreLabels.chaud}+)</option>
-			<option value={String(scoreLabels.tiede)}>Tiede+ ({scoreLabels.tiede}+)</option>
+			<option value={String(scoreLabels.tiede)}>Tiède+ ({scoreLabels.tiede}+)</option>
 			<option value={String(scoreLabels.froid)}>Froid+ ({scoreLabels.froid}+)</option>
 		</select>
 		<div class="ml-auto flex items-center gap-2">
@@ -221,7 +221,7 @@
 					savingSearch = false;
 					saveSearchOpen = false;
 					saveSearchName = '';
-					if (result.type === 'success') toasts.success('Recherche sauvegardee');
+					if (result.type === 'success') toasts.success('Recherche sauvegardée');
 					else toasts.error('Erreur lors de la sauvegarde');
 					await update();
 				};
@@ -277,7 +277,7 @@
 	{#if recherchesOpen}
 		<div class="p-3 bg-surface rounded-lg border border-border space-y-2">
 			<div class="flex items-center justify-between mb-1">
-				<h3 class="text-sm font-semibold text-text">Recherches sauvegardees</h3>
+				<h3 class="text-sm font-semibold text-text">Recherches sauvegardées</h3>
 				<button onclick={() => recherchesOpen = false} class="text-sm text-text-muted hover:text-text cursor-pointer">Fermer</button>
 			</div>
 			{#each data.recherches as rech}
@@ -305,7 +305,7 @@
 					</div>
 					<form method="POST" action="?/deleteRecherche" use:enhance={() => {
 						return async ({ result, update }) => {
-							if (result.type === 'success') toasts.success('Recherche supprimee');
+							if (result.type === 'success') toasts.success('Recherche supprimée');
 							else toasts.error('Erreur lors de la suppression');
 							await update();
 						};
@@ -331,13 +331,13 @@
 	<!-- Barre actions batch -->
 	{#if selectedIds.size > 0}
 		<div class="flex items-center gap-3 p-3 bg-accent/5 rounded-lg border border-accent/20">
-			<span class="text-sm font-medium text-text">{selectedIds.size} selectionne{selectedIds.size > 1 ? 's' : ''}</span>
+			<span class="text-sm font-medium text-text">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
 			<form method="POST" action="?/batchStatut" use:enhance={() => {
 				const count = selectedIds.size;
 				return async ({ result, update }) => {
 					selectedIds = new Set();
-					if (result.type === 'success') toasts.success(`${count} lead${count > 1 ? 's' : ''} marque${count > 1 ? 's' : ''} interesse${count > 1 ? 's' : ''}`);
-					else toasts.error('Erreur lors de la mise a jour');
+					if (result.type === 'success') toasts.success(`${count} lead${count > 1 ? 's' : ''} marqué${count > 1 ? 's' : ''} intéressé${count > 1 ? 's' : ''}`);
+					else toasts.error('Erreur lors de la mise à jour');
 					await update();
 				};
 			}}>
@@ -351,8 +351,8 @@
 				const count = selectedIds.size;
 				return async ({ result, update }) => {
 					selectedIds = new Set();
-					if (result.type === 'success') toasts.success(`${count} lead${count > 1 ? 's' : ''} ecarte${count > 1 ? 's' : ''}`);
-					else toasts.error('Erreur lors de la mise a jour');
+					if (result.type === 'success') toasts.success(`${count} lead${count > 1 ? 's' : ''} écarté${count > 1 ? 's' : ''}`);
+					else toasts.error('Erreur lors de la mise à jour');
 					await update();
 				};
 			}}>
@@ -366,19 +366,70 @@
 				onclick={() => selectedIds = new Set()}
 				class="ml-auto text-sm text-text-muted hover:text-text cursor-pointer"
 			>
-				Deselectionner
+				Désélectionner
 			</button>
 		</div>
 	{/if}
 
+	{#if data.leads.length === 0}
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+			<div class="bg-white rounded-lg border border-border p-6">
+				<div class="flex items-center gap-3 mb-3">
+					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-accent/10">
+						<span class="material-symbols-outlined text-[22px] text-accent">cloud_download</span>
+					</span>
+					<h3 class="font-semibold text-text">Importez vos premiers leads</h3>
+				</div>
+				<p class="text-sm text-text-muted mb-4">
+					Trouvez des prospects B2B depuis les sources publiques suisses : registre du commerce (LINDAS), marchés publics (SIMAP), annuaire (search.ch).
+				</p>
+				<button
+					onclick={() => importModalOpen = true}
+					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+				>
+					<span class="material-symbols-outlined text-[18px]">cloud_download</span>
+					Lancer un import
+				</button>
+			</div>
+
+			<div class="bg-white rounded-lg border border-border p-6">
+				<div class="flex items-center gap-3 mb-3">
+					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-warning/10">
+						<span class="material-symbols-outlined text-[22px] text-warning">notifications_active</span>
+					</span>
+					<h3 class="font-semibold text-text">Alertes automatiques</h3>
+				</div>
+				<p class="text-sm text-text-muted mb-2">
+					Configurez des filtres (source, canton, score) puis sauvegardez votre recherche pour recevoir des alertes automatiques.
+				</p>
+				<ul class="text-sm text-text-muted space-y-1 mb-4">
+					<li class="flex items-center gap-2">
+						<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
+						Alerte quotidienne ou hebdomadaire
+					</li>
+					<li class="flex items-center gap-2">
+						<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
+						Notification sur le Dashboard
+					</li>
+					<li class="flex items-center gap-2">
+						<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
+						Compteur de nouveaux leads par recherche
+					</li>
+				</ul>
+				<p class="text-xs text-text-muted">
+					Importez d'abord des leads, puis utilisez le bouton <strong class="text-accent">Sauvegarder</strong> dans la barre de filtres.
+				</p>
+			</div>
+		</div>
+	{:else}
 	<DataTable
 		data={filteredLeads}
 		{columns}
 		selectable={true}
 		bind:selectedIds
 		onRowClick={openDetail}
-		searchPlaceholder="Rechercher un lead..."
-		emptyMessage="Aucun lead. Ajoutez-en un manuellement ou importez depuis une source."
+		searchPlaceholder="Rechercher un lead…"
+		emptyMessage="Aucun lead correspondant aux filtres."
 	>
 		{#snippet row(lead, _i)}
 			<td class="px-4 py-2.5 w-16">
@@ -393,6 +444,7 @@
 			</td>
 		{/snippet}
 	</DataTable>
+	{/if}
 </div>
 
 <!-- Lead detail slide-out -->
@@ -413,8 +465,8 @@
 				saving = false;
 				modalOpen = false;
 				resetForm();
-				if (result.type === 'success') toasts.success('Lead cree');
-				else toasts.error('Erreur lors de la creation');
+				if (result.type === 'success') toasts.success('Lead créé');
+				else toasts.error('Erreur lors de la création');
 				await update();
 			};
 		}}
@@ -444,12 +496,12 @@
 			</div>
 			<div class="grid grid-cols-2 gap-4">
 				<FormField label="Contact" bind:value={nom_contact} />
-				<FormField label="Telephone" type="tel" bind:value={telephone} />
+				<FormField label="Téléphone" type="tel" bind:value={telephone} />
 			</div>
 			<div class="grid grid-cols-3 gap-4">
 				<FormField label="Adresse" bind:value={adresse} />
 				<FormField label="NPA" bind:value={npa} />
-				<FormField label="Localite" bind:value={localite} />
+				<FormField label="Localité" bind:value={localite} />
 			</div>
 			<div class="grid grid-cols-2 gap-4">
 				<FormField label="Email" type="email" bind:value={email} />

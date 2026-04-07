@@ -45,13 +45,13 @@ export const config = {
 			},
 			{
 				key: 'negociation',
-				label: 'Negociation',
+				label: 'Négociation',
 				icon: 'handshake',
 				color: 'text-warning',
 			},
 			{
 				key: 'gagne',
-				label: 'Gagne',
+				label: 'Gagné',
 				icon: 'emoji_events',
 				color: 'text-success',
 			},
@@ -151,11 +151,11 @@ export const config = {
 			},
 			{
 				key: 'creation_entreprise',
-				label: 'Creation d\'entreprise',
+				label: 'Création d\'entreprise',
 			},
 			{
 				key: 'demenagement',
-				label: 'Demenagement',
+				label: 'Déménagement',
 			},
 			{
 				key: 'expansion',
@@ -192,7 +192,7 @@ export const config = {
 			{
 				href: '/pipeline',
 				label: 'Pipeline',
-				icon: 'filter_list',
+				icon: 'conversion_path',
 			},
 			{
 				href: '/prospection',

@@ -49,8 +49,8 @@
 	const STATUTS = [
 		{ key: 'nouveau', label: 'Nouveau', variant: 'warning' as const },
 		{ key: 'en_analyse', label: 'En analyse', variant: 'accent' as const },
-		{ key: 'interesse', label: 'Interesse', variant: 'success' as const },
-		{ key: 'ecarte', label: 'Ecarte', variant: 'muted' as const },
+		{ key: 'interesse', label: 'Intéressé', variant: 'success' as const },
+		{ key: 'ecarte', label: 'Écarté', variant: 'muted' as const },
 		{ key: 'converti', label: 'Converti', variant: 'default' as const },
 	];
 
@@ -67,9 +67,9 @@
 	const columns = [
 		{ key: 'type_signal', label: 'Type', sortable: true, class: 'w-32' },
 		{ key: 'description_projet', label: 'Description', sortable: true },
-		{ key: 'maitre_ouvrage', label: 'Maitre d\'ouvrage', sortable: true },
+		{ key: 'maitre_ouvrage', label: 'Maître d\'ouvrage', sortable: true },
 		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-20' },
-		{ key: 'date_detection', label: 'Detection', sortable: true, class: 'w-24' },
+		{ key: 'date_detection', label: 'Détection', sortable: true, class: 'w-24' },
 		{ key: 'statut_traitement', label: 'Statut', sortable: true, class: 'w-28' },
 	];
 
@@ -187,13 +187,55 @@
 	</div>
 
 	{#if data.signaux.length === 0}
-		<EmptyState
-			icon="notifications"
-			title="Aucun signal d'affaires"
-			description="Les signaux detectes depuis les sources publiques apparaitront ici."
-			actionLabel="Ajouter manuellement"
-			onAction={openCreate}
-		/>
+		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+			<div class="bg-white rounded-lg border border-border p-6">
+				<div class="flex items-center gap-3 mb-3">
+					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-accent/10">
+						<span class="material-symbols-outlined text-[22px] text-accent">notifications</span>
+					</span>
+					<h3 class="font-semibold text-text">Signaux d'affaires</h3>
+				</div>
+				<p class="text-sm text-text-muted mb-4">
+					Les signaux sont des opportunités détectées depuis les sources publiques : appels d'offres, permis de construire, créations d'entreprises, déménagements.
+				</p>
+				<button
+					onclick={openCreate}
+					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+				>
+					<span class="material-symbols-outlined text-[18px]">add</span>
+					Ajouter un signal manuellement
+				</button>
+			</div>
+
+			<div class="bg-white rounded-lg border border-border p-6">
+				<div class="flex items-center gap-3 mb-3">
+					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-warning/10">
+						<span class="material-symbols-outlined text-[22px] text-warning">notifications_active</span>
+					</span>
+					<h3 class="font-semibold text-text">Détection automatique</h3>
+				</div>
+				<p class="text-sm text-text-muted mb-2">
+					Le système surveille automatiquement les sources publiques et vous alerte quand de nouveaux signaux apparaissent.
+				</p>
+				<ul class="text-sm text-text-muted space-y-1 mb-4">
+					<li class="flex items-center gap-2">
+						<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
+						Scan quotidien des marchés publics (SIMAP)
+					</li>
+					<li class="flex items-center gap-2">
+						<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
+						Alerte sur le Dashboard si nouveaux signaux
+					</li>
+					<li class="flex items-center gap-2">
+						<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
+						Conversion en opportunité en un clic
+					</li>
+				</ul>
+				<p class="text-xs text-text-muted">
+					Filtrez par type, canton ou statut, puis traitez chaque signal : intéressé, écarté, ou converti en opportunité dans le pipeline.
+				</p>
+			</div>
+		</div>
 	{:else}
 		<DataTable
 			data={filteredSignaux}
@@ -237,7 +279,7 @@
 
 			<div class="grid grid-cols-2 gap-4 text-sm">
 				<div>
-					<span class="text-text-muted">Maitre d'ouvrage</span>
+					<span class="text-text-muted">Maître d'ouvrage</span>
 					<p class="font-medium text-text">{selectedSignal.maitre_ouvrage ?? '--'}</p>
 				</div>
 				<div>
@@ -261,7 +303,7 @@
 					<p class="font-medium text-text">{formatDate(selectedSignal.date_publication)}</p>
 				</div>
 				<div>
-					<span class="text-text-muted">Date detection</span>
+					<span class="text-text-muted">Date détection</span>
 					<p class="font-medium text-text">{formatDate(selectedSignal.date_detection)}</p>
 				</div>
 				<div>
@@ -272,7 +314,7 @@
 
 			{#if selectedSignal.contacts}
 				<div class="text-sm">
-					<span class="text-text-muted">Contact maitre d'ouvrage</span>
+					<span class="text-text-muted">Contact maître d'ouvrage</span>
 					<a href="/contacts" class="block font-medium text-accent hover:underline">
 						{selectedSignal.contacts.prenom ?? ''} {selectedSignal.contacts.nom ?? ''}
 					</a>
@@ -288,7 +330,7 @@
 
 			{#if selectedSignal.opportunite_associee_id}
 				<div class="text-sm p-3 bg-success/10 rounded-lg">
-					<span class="text-success font-medium">Converti en opportunite</span>
+					<span class="text-success font-medium">Converti en opportunité</span>
 					<a href="/pipeline" class="block text-accent hover:underline text-sm mt-1">Voir dans le pipeline</a>
 				</div>
 			{/if}
@@ -308,7 +350,7 @@
 						class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg cursor-pointer"
 					>
 						<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
-						Creer opportunite
+						Créer opportunité
 					</button>
 
 					<form method="POST" action="?/updateStatut" use:enhance={() => {
@@ -316,6 +358,7 @@
 							slideOutOpen = false;
 							selectedSignal = null;
 							if (result.type === 'success') toasts.success('Signal écarté');
+
 							else toasts.error('Erreur lors de la mise à jour');
 							await update();
 						};
@@ -377,7 +420,7 @@
 			</div>
 			<FormField label="Description du projet" type="textarea" bind:value={description_projet} />
 			<div class="grid grid-cols-2 gap-4">
-				<FormField label="Maitre d'ouvrage" bind:value={maitre_ouvrage} />
+				<FormField label="Maître d'ouvrage" bind:value={maitre_ouvrage} />
 				<FormField label="Architecte / Bureau" bind:value={architecte_bureau} />
 			</div>
 			<div class="grid grid-cols-2 gap-4">
@@ -425,7 +468,7 @@
 <!-- Modal conversion signal -> opportunite -->
 <ModalForm
 	bind:open={convertModalOpen}
-	title="Creer une opportunite depuis ce signal"
+	title="Créer une opportunité depuis ce signal"
 	{saving}
 >
 	{#if selectedSignal}
@@ -457,7 +500,7 @@
 					<p class="font-medium text-text">{formatTypeSignal(selectedSignal.type_signal)} -- {selectedSignal.maitre_ouvrage ?? ''}</p>
 				</div>
 
-				<FormField label="Titre de l'opportunite" bind:value={opp_titre} required />
+				<FormField label="Titre de l'opportunité" bind:value={opp_titre} required />
 
 				<input type="hidden" name="titre" value={opp_titre} />
 				<input type="hidden" name="entreprise_id" value={opp_entreprise_id} />
@@ -476,7 +519,7 @@
 					disabled={saving}
 					class="px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
 				>
-					{saving ? 'Creation...' : 'Creer et aller au pipeline'}
+					{saving ? 'Création...' : 'Créer et aller au pipeline'}
 				</button>
 			</div>
 		</form>
