@@ -140,6 +140,10 @@ export const SignalUpdateStatutSchema = z.object({
 	statut_traitement: z.enum(STATUTS_TRAITEMENT),
 });
 
+export const SignalDeleteSchema = z.object({
+	id: requiredUUID,
+});
+
 export const SignalCreateOpportuniteSchema = z.object({
 	signal_id: requiredUUID,
 	titre: z.string().min(1, 'Le titre est requis').max(300),

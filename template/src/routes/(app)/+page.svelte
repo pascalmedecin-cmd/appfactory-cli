@@ -34,6 +34,25 @@
 		<p class="text-sm text-text-muted">Vue d'ensemble de votre activité</p>
 	</div>
 
+	<!-- Alertes signaux neufs -->
+	{#if data.stats.signaux > 0}
+		<a
+			href="/signaux"
+			class="flex items-center gap-3 p-4 bg-primary/5 border border-primary/15 rounded-lg hover:bg-primary/10 transition-colors"
+		>
+			<span class="material-symbols-outlined text-[24px] text-primary">radar</span>
+			<div class="flex-1">
+				<p class="text-sm font-semibold text-text">
+					{data.stats.signaux} signal{data.stats.signaux > 1 ? 'ux' : ''} d'affaires à traiter
+				</p>
+				<p class="text-xs text-text-muted">
+					Appels d'offres, permis, créations d'entreprises — à analyser ou convertir en opportunité
+				</p>
+			</div>
+			<span class="material-symbols-outlined text-[18px] text-primary">arrow_forward</span>
+		</a>
+	{/if}
+
 	<!-- Alertes prospection -->
 	{#if data.alertes.length > 0}
 		<a

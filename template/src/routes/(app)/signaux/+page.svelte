@@ -1,12 +1,10 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import DataTable from '$lib/components/DataTable.svelte';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
 	import type { PageData } from './$types';
@@ -21,6 +19,7 @@
 	let editMode = $state(false);
 	let saving = $state(false);
 	let convertModalOpen = $state(false);
+	let deleteConfirm = $state<string | null>(null);
 
 	// Form fields
 	let type_signal = $state('');
@@ -44,7 +43,17 @@
 	let filterCanton = $state('');
 	let filterStatut = $state('');
 
-	const TYPES_SIGNAL = config.signaux.types.map(t => t.key);
+	const TYPES_MAP = new Map(config.signaux.types.map(t => [t.key, t.label]));
+
+	const TYPE_ICONS: Record<string, string> = {
+		appel_offres: 'gavel',
+		permis_construire: 'construction',
+		creation_entreprise: 'domain_add',
+		demenagement: 'local_shipping',
+		expansion: 'trending_up',
+		fusion_acquisition: 'merge',
+		autre: 'info',
+	};
 
 	const STATUTS = [
 		{ key: 'nouveau', label: 'Nouveau', variant: 'warning' as const },
@@ -64,28 +73,48 @@
 
 	const cantons = $derived([...new Set(data.signaux.map(s => s.canton).filter(Boolean))].sort());
 
-	const columns = [
-		{ key: 'type_signal', label: 'Type', sortable: true, class: 'w-32' },
-		{ key: 'description_projet', label: 'Description', sortable: true },
-		{ key: 'maitre_ouvrage', label: 'Maître d\'ouvrage', sortable: true },
-		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-20' },
-		{ key: 'date_detection', label: 'Détection', sortable: true, class: 'w-24' },
-		{ key: 'statut_traitement', label: 'Statut', sortable: true, class: 'w-28' },
-	];
+	const countByStatut = $derived.by(() => {
+		const counts: Record<string, number> = {};
+		for (const s of data.signaux) {
+			const st = s.statut_traitement ?? 'nouveau';
+			counts[st] = (counts[st] ?? 0) + 1;
+		}
+		return counts;
+	});
+
+	function formatTypeLabel(type: string | null): string {
+		if (!type) return '--';
+		return TYPES_MAP.get(type as typeof config.signaux.types[number]['key']) ?? type.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
+	}
+
+	function typeIcon(type: string | null): string {
+		return TYPE_ICONS[type ?? ''] ?? 'info';
+	}
 
 	function formatDate(d: string | null): string {
 		if (!d) return '--';
 		return new Date(d).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: '2-digit' });
 	}
 
-	function formatTypeSignal(type: string | null): string {
-		if (!type) return '--';
-		return type.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
+	function formatRelative(d: string | null): string {
+		if (!d) return '--';
+		const diff = Date.now() - new Date(d).getTime();
+		const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+		if (days === 0) return "Aujourd'hui";
+		if (days === 1) return 'Hier';
+		if (days < 7) return `Il y a ${days} jours`;
+		if (days < 30) return `Il y a ${Math.floor(days / 7)} sem.`;
+		return formatDate(d);
 	}
 
 	function statutVariant(statut: string | null): 'default' | 'accent' | 'success' | 'warning' | 'danger' | 'muted' {
 		const found = STATUTS.find(s => s.key === statut);
 		return found?.variant ?? 'muted';
+	}
+
+	function statutLabel(statut: string | null): string {
+		const found = STATUTS.find(s => s.key === statut);
+		return found?.label ?? statut ?? 'Nouveau';
 	}
 
 	function openDetail(signal: Signal) {
@@ -132,20 +161,54 @@
 	}
 </script>
 
-<div class="space-y-4">
-	<div class="flex items-center justify-between">
-		<div>
-			<h1 class="text-2xl font-bold text-text">Signaux d'affaires</h1>
-			<p class="text-sm text-text-muted">{filteredSignaux.length} signal{filteredSignaux.length > 1 ? 'ux' : ''}</p>
+<div class="space-y-5">
+	<!-- Header -->
+	<div>
+		<div class="flex items-center justify-between">
+			<div>
+				<h1 class="text-2xl font-bold text-text">Signaux d'affaires</h1>
+				<p class="text-sm text-text-muted">{filteredSignaux.length} signal{filteredSignaux.length > 1 ? 'ux' : ''}</p>
+			</div>
+			<button
+				onclick={openCreate}
+				class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+			>
+				<span class="material-symbols-outlined text-[18px]">add</span>
+				Ajouter
+			</button>
 		</div>
-		<button
-			onclick={openCreate}
-			class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
-		>
-			<span class="material-symbols-outlined text-[18px]">add</span>
-			Ajouter
-		</button>
+
+		<!-- Bandeau explicatif -->
+		<div class="mt-3 flex items-start gap-3 p-4 bg-primary/5 border border-primary/15 rounded-lg">
+			<span class="material-symbols-outlined text-[22px] text-primary mt-0.5">radar</span>
+			<div>
+				<p class="text-sm text-text">
+					Détectez les opportunités business avant vos concurrents : appels d'offres, permis de construire, créations d'entreprises.
+				</p>
+				<p class="text-xs text-text-muted mt-1">
+					Ajoutez des signaux manuellement ou laissez la veille automatique vous alerter sur le dashboard.
+				</p>
+			</div>
+		</div>
 	</div>
+
+	<!-- Stats rapides -->
+	{#if data.signaux.length > 0}
+		<div class="flex gap-3 flex-wrap">
+			{#each STATUTS as s}
+				{@const count = countByStatut[s.key] ?? 0}
+				{#if count > 0}
+					<button
+						onclick={() => filterStatut = filterStatut === s.key ? '' : s.key}
+						class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border transition-colors cursor-pointer {filterStatut === s.key ? 'bg-accent/10 border-accent text-accent font-medium' : 'bg-white border-border text-text-muted hover:border-accent/30'}"
+					>
+						<Badge label={String(count)} variant={s.variant} />
+						{s.label}
+					</button>
+				{/if}
+			{/each}
+		</div>
+	{/if}
 
 	<!-- Filters -->
 	<div class="flex gap-3 flex-wrap">
@@ -154,8 +217,8 @@
 			class="px-3 py-1.5 text-sm border border-border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
 		>
 			<option value="">Tous les types</option>
-			{#each TYPES_SIGNAL as t}
-				<option value={t}>{formatTypeSignal(t)}</option>
+			{#each config.signaux.types as t}
+				<option value={t.key}>{t.label}</option>
 			{/each}
 		</select>
 		<select
@@ -165,15 +228,6 @@
 			<option value="">Tous les cantons</option>
 			{#each cantons as c}
 				<option value={c}>{c}</option>
-			{/each}
-		</select>
-		<select
-			bind:value={filterStatut}
-			class="px-3 py-1.5 text-sm border border-border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
-		>
-			<option value="">Tous les statuts</option>
-			{#each STATUTS as s}
-				<option value={s.key}>{s.label}</option>
 			{/each}
 		</select>
 		{#if filterType || filterCanton || filterStatut}
@@ -186,24 +240,26 @@
 		{/if}
 	</div>
 
+	<!-- Contenu -->
 	{#if data.signaux.length === 0}
+		<!-- État vide -->
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 			<div class="bg-white rounded-lg border border-border p-6">
 				<div class="flex items-center gap-3 mb-3">
 					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-accent/10">
-						<span class="material-symbols-outlined text-[22px] text-accent">notifications</span>
+						<span class="material-symbols-outlined text-[22px] text-accent">edit_note</span>
 					</span>
-					<h3 class="font-semibold text-text">Signaux d'affaires</h3>
+					<h3 class="font-semibold text-text">Ajout manuel</h3>
 				</div>
 				<p class="text-sm text-text-muted mb-4">
-					Les signaux sont des opportunités détectées depuis les sources publiques : appels d'offres, permis de construire, créations d'entreprises, déménagements.
+					Vous avez repéré un appel d'offres, un permis de construire ou une opportunité ? Ajoutez-le comme signal pour le suivre.
 				</p>
 				<button
 					onclick={openCreate}
 					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 				>
 					<span class="material-symbols-outlined text-[18px]">add</span>
-					Ajouter un signal manuellement
+					Ajouter un signal
 				</button>
 			</div>
 
@@ -212,52 +268,82 @@
 					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-warning/10">
 						<span class="material-symbols-outlined text-[22px] text-warning">notifications_active</span>
 					</span>
-					<h3 class="font-semibold text-text">Détection automatique</h3>
+					<h3 class="font-semibold text-text">Veille automatique</h3>
 				</div>
 				<p class="text-sm text-text-muted mb-2">
-					Le système surveille automatiquement les sources publiques et vous alerte quand de nouveaux signaux apparaissent.
+					Le système surveille les sources publiques et vous alerte quand de nouveaux signaux apparaissent.
 				</p>
-				<ul class="text-sm text-text-muted space-y-1 mb-4">
+				<ul class="text-sm text-text-muted space-y-1.5">
 					<li class="flex items-center gap-2">
 						<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
 						Scan quotidien des marchés publics (SIMAP)
 					</li>
 					<li class="flex items-center gap-2">
 						<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
-						Alerte sur le Dashboard si nouveaux signaux
+						Alertes sur le Dashboard
 					</li>
 					<li class="flex items-center gap-2">
 						<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
 						Conversion en opportunité en un clic
 					</li>
 				</ul>
-				<p class="text-xs text-text-muted">
-					Filtrez par type, canton ou statut, puis traitez chaque signal : intéressé, écarté, ou converti en opportunité dans le pipeline.
-				</p>
 			</div>
 		</div>
 	{:else}
-		<DataTable
-			data={filteredSignaux}
-			{columns}
-			onRowClick={openDetail}
-			searchPlaceholder="Rechercher un signal..."
-		>
-			{#snippet row(signal, _i)}
-				<td class="px-4 py-2.5 w-32">
-					<Badge label={formatTypeSignal(signal.type_signal)} variant="default" />
-				</td>
-				<td class="px-4 py-2.5 text-text">
-					<span class="line-clamp-1">{signal.description_projet ?? '--'}</span>
-				</td>
-				<td class="px-4 py-2.5 text-text">{signal.maitre_ouvrage ?? '--'}</td>
-				<td class="px-4 py-2.5 text-text w-20">{signal.canton ?? '--'}</td>
-				<td class="px-4 py-2.5 text-text-muted w-24">{formatDate(signal.date_detection)}</td>
-				<td class="px-4 py-2.5 w-28">
-					<Badge label={signal.statut_traitement ?? 'nouveau'} variant={statutVariant(signal.statut_traitement)} />
-				</td>
-			{/snippet}
-		</DataTable>
+		<!-- Signal cards -->
+		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+			{#each filteredSignaux as signal (signal.id)}
+				<button
+					onclick={() => openDetail(signal)}
+					class="bg-white rounded-lg border border-border p-4 hover:shadow-md hover:border-accent/30 transition-all cursor-pointer text-left w-full"
+				>
+					<div class="flex items-start justify-between gap-3">
+						<div class="flex items-center gap-3">
+							<span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/8">
+								<span class="material-symbols-outlined text-[22px] text-primary">{typeIcon(signal.type_signal)}</span>
+							</span>
+							<div class="min-w-0">
+								<p class="text-sm font-semibold text-text truncate">{formatTypeLabel(signal.type_signal)}</p>
+								<p class="text-xs text-text-muted">{signal.canton ?? '--'} · {formatRelative(signal.date_detection)}</p>
+							</div>
+						</div>
+						<Badge label={statutLabel(signal.statut_traitement)} variant={statutVariant(signal.statut_traitement)} />
+					</div>
+
+					{#if signal.description_projet}
+						<p class="mt-3 text-sm text-text line-clamp-2">{signal.description_projet}</p>
+					{/if}
+
+					<div class="mt-3 flex items-center gap-3 text-xs text-text-muted">
+						{#if signal.maitre_ouvrage}
+							<span class="flex items-center gap-1 truncate">
+								<span class="material-symbols-outlined text-[14px]">person</span>
+								{signal.maitre_ouvrage}
+							</span>
+						{/if}
+						{#if signal.source_officielle}
+							<span class="flex items-center gap-1 truncate">
+								<span class="material-symbols-outlined text-[14px]">source</span>
+								{signal.source_officielle}
+							</span>
+						{/if}
+					</div>
+				</button>
+			{/each}
+		</div>
+
+		{#if filteredSignaux.length === 0}
+			<div class="text-center py-8">
+				<span class="material-symbols-outlined text-[48px] text-text-muted/30">filter_alt_off</span>
+				<p class="mt-2 text-sm text-text-muted">Aucun signal ne correspond aux filtres.</p>
+				<button
+					onclick={() => { filterType = ''; filterCanton = ''; filterStatut = ''; }}
+					class="mt-2 text-sm text-accent hover:underline cursor-pointer"
+				>
+					Effacer les filtres
+				</button>
+			</div>
+		{/if}
 	{/if}
 </div>
 
@@ -265,9 +351,15 @@
 <SlideOut bind:open={slideOutOpen} title="Signal d'affaires">
 	{#if selectedSignal}
 		<div class="space-y-5">
-			<div class="flex items-center gap-2">
-				<Badge label={formatTypeSignal(selectedSignal.type_signal)} variant="default" />
-				<Badge label={selectedSignal.statut_traitement ?? 'nouveau'} variant={statutVariant(selectedSignal.statut_traitement)} />
+			<!-- Type + statut -->
+			<div class="flex items-center gap-3">
+				<span class="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/8">
+					<span class="material-symbols-outlined text-[28px] text-primary">{typeIcon(selectedSignal.type_signal)}</span>
+				</span>
+				<div>
+					<p class="font-semibold text-text">{formatTypeLabel(selectedSignal.type_signal)}</p>
+					<Badge label={statutLabel(selectedSignal.statut_traitement)} variant={statutVariant(selectedSignal.statut_traitement)} />
+				</div>
 			</div>
 
 			{#if selectedSignal.description_projet}
@@ -304,7 +396,7 @@
 				</div>
 				<div>
 					<span class="text-text-muted">Date détection</span>
-					<p class="font-medium text-text">{formatDate(selectedSignal.date_detection)}</p>
+					<p class="font-medium text-text">{formatRelative(selectedSignal.date_detection)}</p>
 				</div>
 				<div>
 					<span class="text-text-muted">Responsable</span>
@@ -358,7 +450,6 @@
 							slideOutOpen = false;
 							selectedSignal = null;
 							if (result.type === 'success') toasts.success('Signal écarté');
-
 							else toasts.error('Erreur lors de la mise à jour');
 							await update();
 						};
@@ -370,16 +461,53 @@
 							class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-danger cursor-pointer"
 						>
 							<span class="material-symbols-outlined text-[16px]">close</span>
-							Ecarter
+							Écarter
 						</button>
 					</form>
+				{/if}
+
+				<!-- Supprimer -->
+				{#if deleteConfirm === selectedSignal.id}
+					<form method="POST" action="?/delete" use:enhance={() => {
+						return async ({ result, update }) => {
+							slideOutOpen = false;
+							selectedSignal = null;
+							deleteConfirm = null;
+							if (result.type === 'success') toasts.success('Signal supprimé');
+							else toasts.error('Erreur lors de la suppression');
+							await update();
+						};
+					}}>
+						<input type="hidden" name="id" value={selectedSignal.id} />
+						<button
+							type="submit"
+							class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-danger hover:bg-danger/80 rounded-lg cursor-pointer"
+						>
+							<span class="material-symbols-outlined text-[16px]">delete_forever</span>
+							Confirmer la suppression
+						</button>
+					</form>
+					<button
+						onclick={() => deleteConfirm = null}
+						class="px-3 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+					>
+						Annuler
+					</button>
+				{:else}
+					<button
+						onclick={() => deleteConfirm = selectedSignal?.id ?? null}
+						class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-danger cursor-pointer"
+					>
+						<span class="material-symbols-outlined text-[16px]">delete</span>
+						Supprimer
+					</button>
 				{/if}
 			</div>
 		</div>
 	{/if}
 </SlideOut>
 
-<!-- Modal creation/edition signal -->
+<!-- Modal creation/edition signal (allégée en création) -->
 <ModalForm
 	bind:open={modalOpen}
 	title={editMode ? 'Modifier le signal' : 'Nouveau signal'}
@@ -406,32 +534,35 @@
 
 		<div class="space-y-4">
 			<div class="space-y-1">
-				<label for="type_signal" class="block text-sm font-medium text-text">Type de signal</label>
+				<label for="type_signal" class="block text-sm font-medium text-text">Type de signal <span class="text-danger">*</span></label>
 				<select
 					id="type_signal"
 					bind:value={type_signal}
 					class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
 				>
 					<option value="">-- Choisir --</option>
-					{#each TYPES_SIGNAL as t}
-						<option value={t}>{formatTypeSignal(t)}</option>
+					{#each config.signaux.types as t}
+						<option value={t.key}>{t.label}</option>
 					{/each}
 				</select>
 			</div>
 			<FormField label="Description du projet" type="textarea" bind:value={description_projet} />
 			<div class="grid grid-cols-2 gap-4">
-				<FormField label="Maître d'ouvrage" bind:value={maitre_ouvrage} />
-				<FormField label="Architecte / Bureau" bind:value={architecte_bureau} />
-			</div>
-			<div class="grid grid-cols-2 gap-4">
 				<FormField label="Canton" bind:value={canton} placeholder="GE, VD, VS..." />
-				<FormField label="Commune" bind:value={commune} />
+				<FormField label="Maître d'ouvrage" bind:value={maitre_ouvrage} />
 			</div>
-			<div class="grid grid-cols-2 gap-4">
-				<FormField label="Source officielle" bind:value={source_officielle} />
-				<FormField label="Date publication" type="date" bind:value={date_publication} />
-			</div>
-			<FormField label="Notes" type="textarea" bind:value={notes_libres} />
+
+			{#if editMode}
+				<div class="grid grid-cols-2 gap-4">
+					<FormField label="Architecte / Bureau" bind:value={architecte_bureau} />
+					<FormField label="Commune" bind:value={commune} />
+				</div>
+				<div class="grid grid-cols-2 gap-4">
+					<FormField label="Source officielle" bind:value={source_officielle} />
+					<FormField label="Date publication" type="date" bind:value={date_publication} />
+				</div>
+				<FormField label="Notes" type="textarea" bind:value={notes_libres} />
+			{/if}
 		</div>
 
 		<!-- Hidden fields -->
@@ -497,7 +628,7 @@
 			<div class="space-y-4">
 				<div class="p-3 bg-surface-alt/50 rounded-lg text-sm">
 					<p class="text-text-muted">Signal source</p>
-					<p class="font-medium text-text">{formatTypeSignal(selectedSignal.type_signal)} -- {selectedSignal.maitre_ouvrage ?? ''}</p>
+					<p class="font-medium text-text">{formatTypeLabel(selectedSignal.type_signal)} — {selectedSignal.maitre_ouvrage ?? ''}</p>
 				</div>
 
 				<FormField label="Titre de l'opportunité" bind:value={opp_titre} required />
