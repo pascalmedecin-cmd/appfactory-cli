@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-07
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Audit UX/UI CRM FilmPro (6 pages + 7 composants). Dual audit refactoring-ui + ux-guide. Corrections : accents FR dans 7 fichiers, empty states Contacts/Entreprises/Prospection/Signaux, onboarding Dashboard (3 etapes + suggestions activite), icone Pipeline conversion_path, confirmations destructives, logo sidebar logoWhite, header page title. Score Refactoring UI : 6 → ~8/10. Deploy prod valide.
+**Session precedente :** Refonte page Signaux + setup Zefix. Vue cards visuelles (icones par type, badges, dates relatives), modal creation allegee (4 champs), bouton supprimer avec confirmation, bandeau explicatif permanent, compteurs statut cliquables, labels config branches, bandeau alertes signaux sur dashboard. Credentials Zefix configures (local + Vercel prod/preview, actif 08.04). Deploy prod valide (commit 6711b6b).
 
 ---
 
@@ -131,7 +131,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Runtime** : Node.js 22.x sur Vercel
 - **Supabase CLI** : v2.84.2, projet linke (fmflvjubjtpidvxwhqab)
 - **BDD** : 10 tables PostgreSQL (+ prospect_leads, recherches_sauvegardees), FK, index, RLS (authenticated full access), types TS generes
-- **Zefix REST** : Pascal a repondu a zefix@bj.admin.ch (username pascal@filmpro.ch), en attente du mot de passe (plusieurs jours)
+- **Zefix REST** : credentials configures (local .env + Vercel prod/preview), compte actif depuis 2026-04-08
 - **search.ch** : cle API configuree en local (.env) + Vercel prod
 - **Securite** : email provider desactive (Google OAuth only), whitelist emails ALLOWED_EMAILS env var (pascal@filmpro.ch,pascal.medecin@gmail.com configure Vercel prod), validation Zod sur toutes les form actions (18 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
 - **Tests** : Vitest (113 tests : scoring + 18/18 schemas + validation + extractForm + API sparql/helpers) + Playwright (5 tests e2e : navigation + auth redirect)
@@ -173,17 +173,27 @@ Fichiers cles :
 
 ## OBJECTIF PROCHAINE SESSION
 
-Tester le workflow complet /start → /cadrage → /generate → /deploy sur un projet reel :
-- Lancer `/start` option 3 (nouvelle entreprise) pour tester le wizard entreprise de bout en bout
-- OU option 2 (nouvelle app FilmPro) pour tester le cadrage contextualise
-- Valider l'injection intelligente Claude (synthese entreprise, entites, pages, regles)
-- /generate depuis le project.yaml produit par le wizard
-- Deploy preview Vercel reel
+Construire la veille automatique Signaux :
+- Creer cron `/api/cron/signaux` : interroge Zefix (creations entreprises recentes) + SIMAP (appels d'offres) → insere dans `signaux_affaires` avec statut `nouveau`
+- Brancher le scoring config.ts (13 points max) sur les signaux importes
+- Tester import Zefix reel (compte actif depuis 08.04)
+- Verifier bandeau alertes dashboard avec signaux neufs reels
 
-**En attente :**
-- Credentials Zefix (email envoye a zefix@bj.admin.ch)
+**Aussi en attente :**
+- Workflow complet /start → /cadrage → /generate → /deploy (reporte)
 - Evaluation Agent Teams sur les autres projets Claude (prompt prepare, session separee)
-- Env vars Vercel : configurer pour preview (actuellement production only) pour pouvoir tester les deploys preview
+- Env vars Vercel preview : a configurer au besoin (ZEFIX deja configure prod+preview)
+
+**Decisions session 2026-04-07 (6e session) :**
+- Refonte page Signaux : vue tableau → vue cards visuelles (icone par type, badge statut, date relative)
+- Modal creation allegee : 10 champs → 4 (type, description, canton, maitre d'ouvrage), champs complets en edition
+- Bouton supprimer avec confirmation (action delete + SignalDeleteSchema)
+- Bandeau explicatif permanent (veille automatique, ajout manuel)
+- Compteurs par statut cliquables (filtrage rapide)
+- Labels config.signaux.types[].label branches (corrige « Appel offres » → « Appel d'offres »)
+- Bandeau alertes signaux neufs sur dashboard (avant bandeau prospection)
+- Credentials Zefix configures : local .env + Vercel prod + Vercel preview, compte actif 08.04
+- Deploy prod valide dans le navigateur (commit 6711b6b)
 
 **Decisions session 2026-04-07 (5e session) :**
 - Audit dual refactoring-ui + ux-guide sur CRM FilmPro (6 pages, 7 composants)
@@ -232,7 +242,6 @@ Tester le workflow complet /start → /cadrage → /generate → /deploy sur un 
 
 **Prerequis :**
 - Aucun bloquant technique
-- 12 commits non pushes — penser a push en debut de prochaine session
 
 → Audit CRM FilmPro 2026-04-04 (4 sprints, tous corriges) archive dans archive/audit-crm-2026-04-04.md — consulter si regression securite/qualite/tests OU comme reference methodologique pour le prochain audit (5 agents, scoring par axe, sprints par severite)
 
