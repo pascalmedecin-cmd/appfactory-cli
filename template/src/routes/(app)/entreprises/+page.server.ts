@@ -1,7 +1,17 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
+import { env } from '$env/dynamic/private';
 import { EntrepriseCreateSchema, EntrepriseUpdateSchema, EntrepriseDeleteSchema, ENTREPRISE_FIELDS, extractForm, validate } from '$lib/schemas';
 import { dbFail, newId, now } from '$lib/server/db-helpers';
+
+interface ZefixSearchResult {
+	name: string;
+	uid: string;
+	legalSeat: string;
+	canton: { cantonAbbreviation: string };
+	purpose?: { fr?: string; de?: string; it?: string };
+	address?: { street?: string; houseNumber?: string; swissZipCode?: string; city?: string };
+}
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { data: entreprises, error } = await locals.supabase
@@ -102,5 +112,59 @@ export const actions: Actions = {
 			.eq('id', parsed.data.id);
 
 		return dbFail(error) ?? { success: true };
+	},
+
+	enrichir: async ({ request, locals }) => {
+		const form = await request.formData();
+		const id = form.get('id') as string;
+		const raison_sociale = form.get('raison_sociale') as string;
+		if (!id || !raison_sociale) return fail(400, { error: 'Données manquantes' });
+
+		const u = env.ZEFIX_USERNAME;
+		const p = env.ZEFIX_PASSWORD;
+		if (!u || !p) return fail(400, { error: 'Credentials Zefix non configurés' });
+
+		try {
+			const resp = await fetch('https://www.zefix.admin.ch/ZefixPublicREST/api/v1/company/search', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					'Authorization': 'Basic ' + Buffer.from(`${u}:${p}`).toString('base64'),
+					'Accept': 'application/json',
+				},
+				body: JSON.stringify({ name: raison_sociale, maxEntries: 5 }),
+			});
+
+			if (!resp.ok) return fail(400, { error: `Zefix HTTP ${resp.status}` });
+			const companies: ZefixSearchResult[] = await resp.json();
+			if (!Array.isArray(companies) || companies.length === 0) {
+				return fail(400, { error: 'Aucun résultat Zefix' });
+			}
+
+			const best = companies[0];
+			const addr = best.address;
+			const adresse = addr
+				? [addr.street, addr.houseNumber, addr.swissZipCode, addr.city].filter(Boolean).join(' ')
+				: null;
+			const purpose = best.purpose?.fr || best.purpose?.de || best.purpose?.it || null;
+
+			const updates: Record<string, string | null> = {
+				numero_ide: best.uid || null,
+				canton: best.canton?.cantonAbbreviation || null,
+				date_derniere_modification: now(),
+			};
+			if (adresse) updates.adresse_siege = adresse;
+			if (purpose) updates.notes_libres = purpose;
+
+			const { error } = await locals.supabase
+				.from('entreprises')
+				.update(updates)
+				.eq('id', id);
+
+			return dbFail(error) ?? { success: true };
+		} catch (err) {
+			console.error('Erreur enrichissement Zefix:', err);
+			return fail(500, { error: 'Erreur lors de la requête Zefix' });
+		}
 	},
 };

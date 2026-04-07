@@ -4,6 +4,7 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
+	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { toasts } from '$lib/stores/toast';
@@ -20,6 +21,8 @@
 	let saving = $state(false);
 	let archiving = $state(false);
 
+	type Entreprise = { id: string; raison_sociale: string; site_web: string | null };
+
 	// Form fields
 	let nom = $state('');
 	let prenom = $state('');
@@ -27,12 +30,48 @@
 	let telephone = $state('');
 	let role_fonction = $state('');
 	let entreprise_id = $state('');
+	let entreprise_nom = $state('');
 	let canton = $state('');
 	let segment = $state('');
 	let source = $state('');
 	let notes_libres = $state('');
 	let adresse = $state('');
 	let tags = $state('');
+
+	let entrepriseSuggestions = $state<Entreprise[]>([]);
+	let showSuggestions = $state(false);
+
+	const entreprises = $derived((data as any).entreprises as Entreprise[] ?? []);
+
+	const filteredSuggestions = $derived.by(() => {
+		if (!entreprise_nom || entreprise_nom.length < 2) return [];
+		const q = entreprise_nom.toLowerCase();
+		return entreprises.filter(e => e.raison_sociale.toLowerCase().includes(q)).slice(0, 8);
+	});
+
+	function selectEntreprise(e: Entreprise) {
+		entreprise_id = e.id;
+		entreprise_nom = e.raison_sociale;
+		showSuggestions = false;
+	}
+
+	function clearEntreprise() {
+		entreprise_id = '';
+		entreprise_nom = '';
+	}
+
+	function logoUrl(siteWeb: string | null): string | null {
+		if (!siteWeb) return null;
+		try {
+			const domain = new URL(siteWeb).hostname;
+			return `https://logo.clearbit.com/${domain}`;
+		} catch { return null; }
+	}
+
+	function entrepriseForContact(contact: Contact): Entreprise | null {
+		if (!contact.entreprise_id) return null;
+		return entreprises.find(e => e.id === contact.entreprise_id) ?? null;
+	}
 
 	const columns = [
 		{ key: 'nom', label: 'Nom', sortable: true },
@@ -65,6 +104,7 @@
 		telephone = selectedContact.telephone ?? '';
 		role_fonction = selectedContact.role_fonction ?? '';
 		entreprise_id = selectedContact.entreprise_id ?? '';
+		entreprise_nom = selectedContact.entreprises?.raison_sociale ?? '';
 		canton = selectedContact.canton ?? '';
 		segment = selectedContact.segment ?? '';
 		source = selectedContact.source ?? '';
@@ -77,8 +117,9 @@
 
 	function resetForm() {
 		nom = ''; prenom = ''; email_professionnel = ''; telephone = '';
-		role_fonction = ''; entreprise_id = ''; canton = ''; segment = '';
+		role_fonction = ''; entreprise_id = ''; entreprise_nom = ''; canton = ''; segment = '';
 		source = ''; notes_libres = ''; adresse = ''; tags = '';
+		showSuggestions = false;
 	}
 
 	function statutBadgeVariant(statut: string | null): 'default' | 'accent' | 'success' | 'warning' | 'danger' | 'muted' {
@@ -149,15 +190,31 @@
 				{/if}
 			</div>
 
+			<!-- Entreprise avec logo -->
+			{#if entrepriseForContact(selectedContact) || selectedContact.entreprises?.raison_sociale}
+				{@const ent = entrepriseForContact(selectedContact)}
+				<div class="flex items-center gap-3 p-3 bg-surface rounded-lg">
+					{#if logoUrl(ent?.site_web ?? null)}
+						<img src={logoUrl(ent?.site_web ?? null)} alt="" class="w-10 h-10 rounded-md object-contain bg-white border border-border" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
+					{:else}
+						<span class="flex items-center justify-center w-10 h-10 rounded-md bg-primary/10 text-primary font-bold text-sm">
+							{(selectedContact.entreprises?.raison_sociale ?? '?')[0].toUpperCase()}
+						</span>
+					{/if}
+					<div>
+						<p class="font-medium text-text">{selectedContact.entreprises?.raison_sociale ?? '—'}</p>
+						<p class="text-xs text-text-muted">{selectedContact.role_fonction ?? 'Fonction non renseignée'}</p>
+					</div>
+				</div>
+			{/if}
+
 			<div class="grid grid-cols-2 gap-4 text-sm">
-				<div>
-					<span class="text-text-muted">Fonction</span>
-					<p class="font-medium text-text">{selectedContact.role_fonction ?? '—'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Entreprise</span>
-					<p class="font-medium text-text">{selectedContact.entreprises?.raison_sociale ?? '—'}</p>
-				</div>
+				{#if !selectedContact.entreprises?.raison_sociale}
+					<div>
+						<span class="text-text-muted">Fonction</span>
+						<p class="font-medium text-text">{selectedContact.role_fonction ?? '—'}</p>
+					</div>
+				{/if}
 				<div>
 					<span class="text-text-muted">Email</span>
 					<p class="font-medium text-text">{selectedContact.email_professionnel ?? '—'}</p>
@@ -278,8 +335,62 @@
 				<FormField label="Email" type="email" bind:value={email_professionnel} />
 				<FormField label="Téléphone" type="tel" bind:value={telephone} />
 			</div>
+
+			<!-- Autocomplete entreprise -->
+			<div class="space-y-1 relative">
+				<label for="entreprise_nom" class="block text-sm font-medium text-text">Entreprise</label>
+				<div class="flex gap-2">
+					<input
+						id="entreprise_nom"
+						type="text"
+						bind:value={entreprise_nom}
+						onfocus={() => showSuggestions = true}
+						oninput={() => { entreprise_id = ''; showSuggestions = true; }}
+						placeholder="Tapez pour chercher ou créer…"
+						autocomplete="off"
+						class="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+					/>
+					{#if entreprise_nom}
+						<button type="button" onclick={clearEntreprise} class="px-2 text-text-muted hover:text-text cursor-pointer">
+							<span class="material-symbols-outlined text-[18px]">close</span>
+						</button>
+					{/if}
+				</div>
+				{#if showSuggestions && filteredSuggestions.length > 0}
+					<div class="absolute z-10 mt-1 w-full bg-white border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+						{#each filteredSuggestions as sug}
+							<button
+								type="button"
+								onclick={() => selectEntreprise(sug)}
+								class="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-surface cursor-pointer {entreprise_id === sug.id ? 'bg-accent/10 font-medium' : ''}"
+							>
+								{#if logoUrl(sug.site_web)}
+									<img src={logoUrl(sug.site_web)} alt="" class="w-5 h-5 rounded object-contain" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
+								{:else}
+									<span class="flex items-center justify-center w-5 h-5 rounded bg-primary/10 text-primary text-[10px] font-bold">{sug.raison_sociale[0]}</span>
+								{/if}
+								{sug.raison_sociale}
+							</button>
+						{/each}
+						{#if entreprise_nom.length >= 2 && !entreprise_id}
+							<div class="px-3 py-2 text-xs text-text-muted border-t border-border">
+								<span class="material-symbols-outlined text-[12px] align-middle">add</span>
+								« {entreprise_nom} » sera créée automatiquement
+							</div>
+						{/if}
+					</div>
+				{/if}
+				{#if entreprise_nom && entreprise_nom.length >= 2 && !filteredSuggestions.length && showSuggestions}
+					<p class="text-xs text-text-muted mt-1">
+						<span class="material-symbols-outlined text-[12px] align-middle">add</span>
+						« {entreprise_nom} » sera créée automatiquement
+					</p>
+				{/if}
+			</div>
+
 			<FormField label="Fonction" bind:value={role_fonction} />
-			<FormField label="Canton" bind:value={canton} placeholder="GE, VD, VS…" />
+			<FormField label="Adresse" bind:value={adresse} placeholder="Rue, NPA, Ville" />
+			<CantonSelect bind:value={canton} />
 		</div>
 
 		<!-- Champs cachés pour form submission -->
@@ -289,6 +400,7 @@
 		<input type="hidden" name="telephone" value={telephone} />
 		<input type="hidden" name="role_fonction" value={role_fonction} />
 		<input type="hidden" name="entreprise_id" value={entreprise_id} />
+		<input type="hidden" name="entreprise_nom" value={entreprise_nom} />
 		<input type="hidden" name="canton" value={canton} />
 		<input type="hidden" name="segment" value={segment} />
 		<input type="hidden" name="source" value={source} />

@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { SignalCreateSchema, SignalUpdateSchema, SignalUpdateStatutSchema, SignalDeleteSchema, SignalCreateOpportuniteSchema, SIGNAL_FIELDS, extractForm, validate } from '$lib/schemas';
+import { SignalCreateSchema, SignalUpdateSchema, SignalUpdateStatutSchema, SignalDeleteSchema, SignalBatchDeleteSchema, SignalCreateOpportuniteSchema, SIGNAL_FIELDS, extractForm, validate } from '$lib/schemas';
 import { dbFail, newId, now } from '$lib/server/db-helpers';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -93,6 +93,23 @@ export const actions: Actions = {
 			.eq('id', parsed.data.id);
 
 		return dbFail(error) ?? { success: true };
+	},
+
+	deleteBatch: async ({ request, locals }) => {
+		const form = await request.formData();
+		const raw = extractForm(form, ['ids']);
+		const parsed = validate(SignalBatchDeleteSchema, raw);
+		if (!parsed.success) return fail(400, { error: parsed.error });
+
+		const ids = parsed.data.ids.split(',').filter(Boolean);
+		if (ids.length === 0) return fail(400, { error: 'Aucun signal sélectionné' });
+
+		const { error } = await locals.supabase
+			.from('signaux_affaires')
+			.delete()
+			.in('id', ids);
+
+		return dbFail(error) ?? { success: true, deleted: ids.length };
 	},
 
 	createOpportunite: async ({ request, locals }) => {

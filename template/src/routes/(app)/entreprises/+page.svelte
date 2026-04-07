@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import DataTable from '$lib/components/DataTable.svelte';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
+	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { toasts } from '$lib/stores/toast';
@@ -20,6 +20,8 @@
 	let editMode = $state(false);
 	let saving = $state(false);
 	let deleting = $state(false);
+	let enriching = $state(false);
+	let searchQuery = $state('');
 
 	// Form fields
 	let raison_sociale = $state('');
@@ -34,20 +36,34 @@
 	let notes_libres = $state('');
 	let tags = $state('');
 
-	const columns = [
-		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true },
-		{ key: 'secteur_activite', label: 'Secteur', sortable: true },
-		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-20' },
-		{ key: 'taille_estimee', label: 'Taille', sortable: true, class: 'w-24' },
-		{ key: 'site_web', label: 'Site web' },
-		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-24' },
-	];
+	const filteredEntreprises = $derived.by(() => {
+		if (!searchQuery) return data.entreprises;
+		const q = searchQuery.toLowerCase();
+		return data.entreprises.filter((e: Entreprise) =>
+			e.raison_sociale.toLowerCase().includes(q) ||
+			(e.secteur_activite ?? '').toLowerCase().includes(q) ||
+			(e.canton ?? '').toLowerCase().includes(q)
+		);
+	});
 
 	const linkedContacts = $derived(
 		selectedEntreprise
 			? data.contacts.filter((c: Contact) => c.entreprise_id === selectedEntreprise!.id)
 			: []
 	);
+
+	function logoUrl(siteWeb: string | null): string | null {
+		if (!siteWeb) return null;
+		try {
+			const domain = new URL(siteWeb).hostname;
+			return `https://logo.clearbit.com/${domain}`;
+		} catch { return null; }
+	}
+
+	function mapsUrl(adresse: string | null): string | null {
+		if (!adresse) return null;
+		return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adresse)}`;
+	}
 
 	function openDetail(entreprise: Entreprise) {
 		selectedEntreprise = entreprise;
@@ -94,7 +110,7 @@
 	}
 </script>
 
-<div class="space-y-4">
+<div class="space-y-5">
 	<div class="flex items-center justify-between">
 		<div>
 			<h1 class="text-2xl font-bold text-text">Entreprises</h1>
@@ -113,44 +129,98 @@
 		<EmptyState
 			icon="business"
 			title="Aucune entreprise"
-			description="Ajoutez votre première entreprise pour organiser vos contacts et opportunités."
+			description="Les entreprises apparaissent ici automatiquement quand vous les rattachez à un contact, ou ajoutez-en une manuellement."
 			actionLabel="Ajouter une entreprise"
 			onAction={openCreate}
 		/>
 	{:else}
-	<DataTable
-		data={data.entreprises}
-		{columns}
-		onRowClick={openDetail}
-		searchPlaceholder="Rechercher une entreprise…"
-	>
-		{#snippet row(entreprise, _i)}
-			<td class="px-4 py-2.5 font-medium text-text">{entreprise.raison_sociale}</td>
-			<td class="px-4 py-2.5 text-text">{entreprise.secteur_activite ?? '—'}</td>
-			<td class="px-4 py-2.5 text-text w-20">{entreprise.canton ?? '—'}</td>
-			<td class="px-4 py-2.5 text-text w-24">{entreprise.taille_estimee ?? '—'}</td>
-			<td class="px-4 py-2.5 text-text">
-				{#if entreprise.site_web}
-					<a href={entreprise.site_web} target="_blank" class="text-accent hover:underline" onclick={(e) => e.stopPropagation()}>
-						{entreprise.site_web.replace(/^https?:\/\//, '')}
-					</a>
-				{:else}
-					—
-				{/if}
-			</td>
-			<td class="px-4 py-2.5 w-24">
-				<Badge label={entreprise.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(entreprise.statut_qualification)} />
-			</td>
-		{/snippet}
-	</DataTable>
+		<!-- Recherche -->
+		<div class="relative">
+			<span class="material-symbols-outlined text-[18px] text-text-muted absolute left-3 top-1/2 -translate-y-1/2">search</span>
+			<input
+				type="text"
+				bind:value={searchQuery}
+				placeholder="Rechercher une entreprise…"
+				class="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+			/>
+		</div>
+
+		<!-- Cards grid -->
+		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+			{#each filteredEntreprises as entreprise (entreprise.id)}
+				{@const logo = logoUrl(entreprise.site_web)}
+				{@const contactCount = data.contacts.filter((c: Contact) => c.entreprise_id === entreprise.id).length}
+				<button
+					onclick={() => openDetail(entreprise)}
+					class="bg-white rounded-lg border border-border p-4 hover:shadow-md hover:border-accent/30 transition-all cursor-pointer text-left w-full"
+				>
+					<div class="flex items-start gap-3">
+						{#if logo}
+							<img src={logo} alt="" class="w-12 h-12 rounded-lg object-contain bg-white border border-border flex-shrink-0" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
+						{:else}
+							<span class="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary font-bold text-lg flex-shrink-0">
+								{entreprise.raison_sociale[0].toUpperCase()}
+							</span>
+						{/if}
+						<div class="min-w-0 flex-1">
+							<p class="text-sm font-semibold text-text truncate">{entreprise.raison_sociale}</p>
+							{#if entreprise.secteur_activite}
+								<p class="text-xs text-text-muted truncate">{entreprise.secteur_activite}</p>
+							{/if}
+						</div>
+						<Badge label={entreprise.statut_qualification ?? 'nouveau'} variant={statutBadgeVariant(entreprise.statut_qualification)} />
+					</div>
+
+					<div class="mt-3 space-y-1.5 text-xs text-text-muted">
+						{#if entreprise.canton}
+							<span class="flex items-center gap-1">
+								<span class="material-symbols-outlined text-[14px]">location_on</span>
+								{entreprise.canton}{#if entreprise.adresse_siege} — {entreprise.adresse_siege}{/if}
+							</span>
+						{/if}
+						{#if entreprise.site_web}
+							<span class="flex items-center gap-1 truncate">
+								<span class="material-symbols-outlined text-[14px]">language</span>
+								{entreprise.site_web.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+							</span>
+						{/if}
+						<span class="flex items-center gap-1">
+							<span class="material-symbols-outlined text-[14px]">people</span>
+							{contactCount} contact{contactCount > 1 ? 's' : ''}
+						</span>
+					</div>
+				</button>
+			{/each}
+		</div>
+
+		{#if filteredEntreprises.length === 0}
+			<div class="text-center py-8">
+				<span class="material-symbols-outlined text-[48px] text-text-muted/30">filter_alt_off</span>
+				<p class="mt-2 text-sm text-text-muted">Aucune entreprise ne correspond à la recherche.</p>
+			</div>
+		{/if}
 	{/if}
 </div>
 
 <!-- SlideOut détail entreprise -->
 <SlideOut bind:open={slideOutOpen} title={selectedEntreprise?.raison_sociale ?? ''}>
 	{#if selectedEntreprise}
+		{@const logo = logoUrl(selectedEntreprise.site_web)}
 		<div class="space-y-5">
-			<Badge label={selectedEntreprise.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(selectedEntreprise.statut_qualification)} />
+			<!-- En-tête avec logo -->
+			<div class="flex items-center gap-4">
+				{#if logo}
+					<img src={logo} alt="" class="w-16 h-16 rounded-lg object-contain bg-white border border-border" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
+				{:else}
+					<span class="flex items-center justify-center w-16 h-16 rounded-lg bg-primary/10 text-primary font-bold text-2xl">
+						{selectedEntreprise.raison_sociale[0].toUpperCase()}
+					</span>
+				{/if}
+				<div>
+					<p class="font-semibold text-lg text-text">{selectedEntreprise.raison_sociale}</p>
+					<Badge label={selectedEntreprise.statut_qualification ?? 'nouveau'} variant={statutBadgeVariant(selectedEntreprise.statut_qualification)} />
+				</div>
+			</div>
 
 			<div class="grid grid-cols-2 gap-4 text-sm">
 				<div>
@@ -166,18 +236,24 @@
 					<p class="font-medium text-text">{selectedEntreprise.taille_estimee ?? '—'}</p>
 				</div>
 				<div>
-					<span class="text-text-muted">Segment</span>
-					<p class="font-medium text-text">{selectedEntreprise.segment_cible ?? '—'}</p>
-				</div>
-				<div>
 					<span class="text-text-muted">IDE</span>
 					<p class="font-medium text-text">{selectedEntreprise.numero_ide ?? '—'}</p>
 				</div>
-				<div>
-					<span class="text-text-muted">Source</span>
-					<p class="font-medium text-text">{selectedEntreprise.source ?? '—'}</p>
-				</div>
 			</div>
+
+			{#if selectedEntreprise.adresse_siege}
+				{@const maps = mapsUrl(selectedEntreprise.adresse_siege)}
+				<div class="text-sm">
+					<span class="text-text-muted">Adresse</span>
+					<p class="font-medium text-text">{selectedEntreprise.adresse_siege}</p>
+					{#if maps}
+						<a href={maps} target="_blank" class="inline-flex items-center gap-1 text-xs text-accent hover:underline mt-1">
+							<span class="material-symbols-outlined text-[14px]">map</span>
+							Voir sur Google Maps
+						</a>
+					{/if}
+				</div>
+			{/if}
 
 			{#if selectedEntreprise.site_web}
 				<div class="text-sm">
@@ -186,16 +262,9 @@
 				</div>
 			{/if}
 
-			{#if selectedEntreprise.adresse_siege}
-				<div class="text-sm">
-					<span class="text-text-muted">Adresse</span>
-					<p class="font-medium text-text">{selectedEntreprise.adresse_siege}</p>
-				</div>
-			{/if}
-
 			{#if selectedEntreprise.notes_libres}
 				<div class="text-sm">
-					<span class="text-text-muted">Notes</span>
+					<span class="text-text-muted">Description / Notes</span>
 					<p class="text-text whitespace-pre-wrap">{selectedEntreprise.notes_libres}</p>
 				</div>
 			{/if}
@@ -224,7 +293,7 @@
 				{/if}
 			</div>
 
-			<div class="flex gap-3 pt-4 border-t border-border">
+			<div class="flex flex-wrap gap-3 pt-4 border-t border-border">
 				<button
 					onclick={openEdit}
 					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
@@ -232,6 +301,35 @@
 					<span class="material-symbols-outlined text-[16px]">edit</span>
 					Modifier
 				</button>
+
+				<!-- Enrichir via Zefix -->
+				<form method="POST" action="?/enrichir" use:enhance={() => {
+					enriching = true;
+					return async ({ result, update }) => {
+						enriching = false;
+						if (result.type === 'success') {
+							toasts.success('Entreprise enrichie via Zefix');
+							slideOutOpen = false;
+							selectedEntreprise = null;
+						} else {
+							const msg = result.type === 'failure' && result.data?.error ? String(result.data.error) : 'Erreur Zefix';
+							toasts.error(msg);
+						}
+						await update();
+					};
+				}}>
+					<input type="hidden" name="id" value={selectedEntreprise.id} />
+					<input type="hidden" name="raison_sociale" value={selectedEntreprise.raison_sociale} />
+					<button
+						type="submit"
+						disabled={enriching}
+						class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg cursor-pointer disabled:opacity-50"
+					>
+						<span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+						{enriching ? 'Enrichissement…' : 'Enrichir via Zefix'}
+					</button>
+				</form>
+
 				<form method="POST" action="?/delete" use:enhance={({ cancel }) => {
 					if (!confirm('Supprimer cette entreprise ? Cette action est irréversible.')) { cancel(); return; }
 					deleting = true;
@@ -288,12 +386,13 @@
 			<FormField label="Raison sociale" bind:value={raison_sociale} required />
 			<div class="grid grid-cols-2 gap-4">
 				<FormField label="Secteur d'activité" bind:value={secteur_activite} />
-				<FormField label="Canton" bind:value={canton} placeholder="GE, VD, VS…" />
+				<CantonSelect bind:value={canton} />
 			</div>
 			<div class="grid grid-cols-2 gap-4">
 				<FormField label="Taille estimée" bind:value={taille_estimee} placeholder="PME, ETI, GE…" />
 				<FormField label="Site web" type="url" bind:value={site_web} />
 			</div>
+			<FormField label="Adresse siège" bind:value={adresse_siege} placeholder="Rue, NPA, Ville" />
 		</div>
 
 		<input type="hidden" name="raison_sociale" value={raison_sociale} />

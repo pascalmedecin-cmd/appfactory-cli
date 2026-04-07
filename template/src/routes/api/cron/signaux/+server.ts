@@ -2,6 +2,7 @@ import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { calculerScore } from '$lib/scoring';
+import { config } from '$lib/config';
 import { timingSafeEqual } from 'crypto';
 import { randomUUID } from 'crypto';
 import { translate, cantonToLead, CANTON_MAP } from '../../prospection/simap/helpers';
@@ -226,6 +227,11 @@ async function importSimap(
 				procOffice ? `Pouvoir adjudicateur : ${procOffice}` : '',
 				`Type : ${project.projectSubType} | Procédure : ${project.processType}`,
 			].filter(Boolean).join('\n');
+
+			// Filtrer par pertinence secteur : ne garder que les projets liés aux mots-clés cibles
+			const texteLower = `${title} ${procOffice} ${description}`.toLowerCase();
+			const isRelevant = config.scoring.secteursCibles.keywords.some((kw) => texteLower.includes(kw));
+			if (!isRelevant) { skipped++; continue; }
 
 			const score = calculerScore({
 				canton: cantonCode,

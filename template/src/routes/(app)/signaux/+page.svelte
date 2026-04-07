@@ -4,9 +4,11 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
+	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
+	import { calculerScore } from '$lib/scoring';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -20,6 +22,31 @@
 	let saving = $state(false);
 	let convertModalOpen = $state(false);
 	let deleteConfirm = $state<string | null>(null);
+	let selectMode = $state(false);
+	let selectedIds = $state<Set<string>>(new Set());
+	let batchDeleting = $state(false);
+	let batchDeleteConfirm = $state(false);
+
+	function toggleSelect(id: string) {
+		const next = new Set(selectedIds);
+		if (next.has(id)) next.delete(id);
+		else next.add(id);
+		selectedIds = next;
+	}
+
+	function toggleSelectAll() {
+		if (selectedIds.size === filteredSignaux.length) {
+			selectedIds = new Set();
+		} else {
+			selectedIds = new Set(filteredSignaux.map(s => s.id));
+		}
+	}
+
+	function exitSelectMode() {
+		selectMode = false;
+		selectedIds = new Set();
+		batchDeleteConfirm = false;
+	}
 
 	// Form fields
 	let type_signal = $state('');
@@ -117,6 +144,25 @@
 		return found?.label ?? statut ?? 'Nouveau';
 	}
 
+	const SCORE_STYLES: Record<string, { icon: string; color: string; bg: string; label: string }> = {
+		chaud: { icon: 'local_fire_department', color: 'text-danger', bg: 'bg-danger/10', label: 'Chaud' },
+		tiede: { icon: 'thermostat', color: 'text-warning', bg: 'bg-warning/10', label: 'Tiède' },
+		froid: { icon: 'ac_unit', color: 'text-accent', bg: 'bg-accent/10', label: 'Froid' },
+		non_qualifie: { icon: 'remove', color: 'text-text-muted', bg: 'bg-surface', label: 'Non qualifié' },
+	};
+
+	function scoreLabel(score: number | null): string {
+		if (score == null) return 'non_qualifie';
+		if (score >= config.scoring.labels.chaud) return 'chaud';
+		if (score >= config.scoring.labels.tiede) return 'tiede';
+		if (score >= config.scoring.labels.froid) return 'froid';
+		return 'non_qualifie';
+	}
+
+	function scoreStyle(score: number | null) {
+		return SCORE_STYLES[scoreLabel(score)] ?? SCORE_STYLES.non_qualifie;
+	}
+
 	function openDetail(signal: Signal) {
 		selectedSignal = signal;
 		slideOutOpen = true;
@@ -169,13 +215,33 @@
 				<h1 class="text-2xl font-bold text-text">Signaux d'affaires</h1>
 				<p class="text-sm text-text-muted">{filteredSignaux.length} signal{filteredSignaux.length > 1 ? 'ux' : ''}</p>
 			</div>
-			<button
-				onclick={openCreate}
-				class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
-			>
-				<span class="material-symbols-outlined text-[18px]">add</span>
-				Ajouter
-			</button>
+			<div class="flex items-center gap-2">
+				{#if data.signaux.length > 0}
+					{#if selectMode}
+						<button
+							onclick={exitSelectMode}
+							class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+						>
+							Annuler
+						</button>
+					{:else}
+						<button
+							onclick={() => selectMode = true}
+							class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-text border border-border rounded-lg cursor-pointer"
+						>
+							<span class="material-symbols-outlined text-[18px]">checklist</span>
+							Sélectionner
+						</button>
+					{/if}
+				{/if}
+				<button
+					onclick={openCreate}
+					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+				>
+					<span class="material-symbols-outlined text-[18px]">add</span>
+					Ajouter
+				</button>
+			</div>
 		</div>
 
 		<!-- Bandeau explicatif -->
@@ -290,29 +356,88 @@
 			</div>
 		</div>
 	{:else}
+		<!-- Barre actions batch -->
+		{#if selectMode}
+			<div class="flex items-center gap-3 p-3 bg-surface rounded-lg border border-border">
+				<button
+					onclick={toggleSelectAll}
+					class="flex items-center gap-2 text-sm text-accent hover:underline cursor-pointer"
+				>
+					<span class="material-symbols-outlined text-[18px]">{selectedIds.size === filteredSignaux.length ? 'deselect' : 'select_all'}</span>
+					{selectedIds.size === filteredSignaux.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+				</button>
+				<span class="text-sm text-text-muted">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
+				<div class="flex-1"></div>
+				{#if batchDeleteConfirm}
+					<form method="POST" action="?/deleteBatch" use:enhance={() => {
+						batchDeleting = true;
+						return async ({ result, update }) => {
+							batchDeleting = false;
+							batchDeleteConfirm = false;
+							if (result.type === 'success') {
+								toasts.success(`${selectedIds.size} signal/signaux supprimé(s)`);
+								exitSelectMode();
+							} else {
+								toasts.error('Erreur lors de la suppression');
+							}
+							await update();
+						};
+					}}>
+						<input type="hidden" name="ids" value={[...selectedIds].join(',')} />
+						<button
+							type="submit"
+							disabled={batchDeleting}
+							class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-danger hover:bg-danger/80 rounded-lg cursor-pointer disabled:opacity-50"
+						>
+							<span class="material-symbols-outlined text-[16px]">delete_forever</span>
+							{batchDeleting ? 'Suppression…' : `Confirmer (${selectedIds.size})`}
+						</button>
+					</form>
+					<button onclick={() => batchDeleteConfirm = false} class="text-sm text-text-muted hover:text-text cursor-pointer">Annuler</button>
+				{:else}
+					<button
+						onclick={() => batchDeleteConfirm = true}
+						disabled={selectedIds.size === 0}
+						class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						<span class="material-symbols-outlined text-[16px]">delete</span>
+						Supprimer ({selectedIds.size})
+					</button>
+				{/if}
+			</div>
+		{/if}
+
 		<!-- Signal cards -->
 		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 			{#each filteredSignaux as signal (signal.id)}
 				<button
-					onclick={() => openDetail(signal)}
-					class="bg-white rounded-lg border border-border p-4 hover:shadow-md hover:border-accent/30 transition-all cursor-pointer text-left w-full"
+					onclick={() => selectMode ? toggleSelect(signal.id) : openDetail(signal)}
+					class="bg-white rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer text-left w-full {selectMode && selectedIds.has(signal.id) ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/30'}"
 				>
 					<div class="flex items-start justify-between gap-3">
 						<div class="flex items-center gap-3">
-							<span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/8">
-								<span class="material-symbols-outlined text-[22px] text-primary">{typeIcon(signal.type_signal)}</span>
-							</span>
+							{#if selectMode}
+								<span class="flex items-center justify-center w-10 h-10 rounded-lg {selectedIds.has(signal.id) ? 'bg-accent text-white' : 'bg-surface border border-border'}">
+									<span class="material-symbols-outlined text-[22px]">{selectedIds.has(signal.id) ? 'check' : 'check_box_outline_blank'}</span>
+								</span>
+							{:else}
+								<span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/8">
+									<span class="material-symbols-outlined text-[22px] text-primary">{typeIcon(signal.type_signal)}</span>
+								</span>
+							{/if}
 							<div class="min-w-0">
 								<p class="text-sm font-semibold text-text truncate">{formatTypeLabel(signal.type_signal)}</p>
 								<p class="text-xs text-text-muted">{signal.canton ?? '--'} · {formatRelative(signal.date_detection)}</p>
 							</div>
 						</div>
-						<Badge label={statutLabel(signal.statut_traitement)} variant={statutVariant(signal.statut_traitement)} />
+						<div class="flex items-center gap-2">
+							<span class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium {scoreStyle(signal.score_pertinence).bg} {scoreStyle(signal.score_pertinence).color}" title="Score {signal.score_pertinence ?? 0}/{config.scoring.maxPoints}">
+								<span class="material-symbols-outlined text-[14px]">{scoreStyle(signal.score_pertinence).icon}</span>
+								{signal.score_pertinence ?? 0}
+							</span>
+							<Badge label={statutLabel(signal.statut_traitement)} variant={statutVariant(signal.statut_traitement)} />
+						</div>
 					</div>
-
-					{#if signal.description_projet}
-						<p class="mt-3 text-sm text-text line-clamp-2">{signal.description_projet}</p>
-					{/if}
 
 					<div class="mt-3 flex items-center gap-3 text-xs text-text-muted">
 						{#if signal.maitre_ouvrage}
@@ -322,7 +447,7 @@
 							</span>
 						{/if}
 						{#if signal.source_officielle}
-							<span class="flex items-center gap-1 truncate">
+							<span class="flex items-center gap-1 uppercase truncate">
 								<span class="material-symbols-outlined text-[14px]">source</span>
 								{signal.source_officielle}
 							</span>
@@ -350,16 +475,23 @@
 <!-- SlideOut detail signal -->
 <SlideOut bind:open={slideOutOpen} title="Signal d'affaires">
 	{#if selectedSignal}
+		{@const sStyle = scoreStyle(selectedSignal.score_pertinence)}
 		<div class="space-y-5">
-			<!-- Type + statut -->
-			<div class="flex items-center gap-3">
-				<span class="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/8">
-					<span class="material-symbols-outlined text-[28px] text-primary">{typeIcon(selectedSignal.type_signal)}</span>
-				</span>
-				<div>
-					<p class="font-semibold text-text">{formatTypeLabel(selectedSignal.type_signal)}</p>
-					<Badge label={statutLabel(selectedSignal.statut_traitement)} variant={statutVariant(selectedSignal.statut_traitement)} />
+			<!-- En-tête : type + statut + score -->
+			<div class="flex items-start justify-between gap-3">
+				<div class="flex items-center gap-3">
+					<span class="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/8">
+						<span class="material-symbols-outlined text-[28px] text-primary">{typeIcon(selectedSignal.type_signal)}</span>
+					</span>
+					<div>
+						<p class="font-semibold text-text">{formatTypeLabel(selectedSignal.type_signal)}</p>
+						<Badge label={statutLabel(selectedSignal.statut_traitement)} variant={statutVariant(selectedSignal.statut_traitement)} />
+					</div>
 				</div>
+				<span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold {sStyle.bg} {sStyle.color}">
+					<span class="material-symbols-outlined text-[18px]">{sStyle.icon}</span>
+					{selectedSignal.score_pertinence ?? 0}/{config.scoring.maxPoints} — {sStyle.label}
+				</span>
 			</div>
 
 			{#if selectedSignal.description_projet}
@@ -369,54 +501,76 @@
 				</div>
 			{/if}
 
-			<div class="grid grid-cols-2 gap-4 text-sm">
-				<div>
-					<span class="text-text-muted">Maître d'ouvrage</span>
-					<p class="font-medium text-text">{selectedSignal.maitre_ouvrage ?? '--'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Architecte / Bureau</span>
-					<p class="font-medium text-text">{selectedSignal.architecte_bureau ?? '--'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Canton</span>
-					<p class="font-medium text-text">{selectedSignal.canton ?? '--'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Commune</span>
-					<p class="font-medium text-text">{selectedSignal.commune ?? '--'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Source</span>
-					<p class="font-medium text-text">{selectedSignal.source_officielle ?? '--'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Date publication</span>
-					<p class="font-medium text-text">{formatDate(selectedSignal.date_publication)}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Date détection</span>
-					<p class="font-medium text-text">{formatRelative(selectedSignal.date_detection)}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Responsable</span>
-					<p class="font-medium text-text">{selectedSignal.responsable_filmpro ?? '--'}</p>
+			<!-- Section : Acteurs -->
+			<div class="space-y-3">
+				<h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Acteurs</h4>
+				<div class="grid grid-cols-2 gap-4 text-sm">
+					<div>
+						<span class="text-text-muted">Maître d'ouvrage</span>
+						<p class="font-medium text-text">{selectedSignal.maitre_ouvrage ?? '--'}</p>
+					</div>
+					<div>
+						<span class="text-text-muted">Architecte / Bureau</span>
+						<p class="font-medium text-text">{selectedSignal.architecte_bureau ?? '--'}</p>
+					</div>
+					{#if selectedSignal.contacts}
+						<div>
+							<span class="text-text-muted">Contact lié</span>
+							<a href="/contacts" class="block font-medium text-accent hover:underline">
+								{selectedSignal.contacts.prenom ?? ''} {selectedSignal.contacts.nom ?? ''}
+							</a>
+						</div>
+					{/if}
+					<div>
+						<span class="text-text-muted">Responsable</span>
+						<p class="font-medium text-text">{selectedSignal.responsable_filmpro ?? '--'}</p>
+					</div>
 				</div>
 			</div>
 
-			{#if selectedSignal.contacts}
-				<div class="text-sm">
-					<span class="text-text-muted">Contact maître d'ouvrage</span>
-					<a href="/contacts" class="block font-medium text-accent hover:underline">
-						{selectedSignal.contacts.prenom ?? ''} {selectedSignal.contacts.nom ?? ''}
-					</a>
+			<!-- Section : Localisation -->
+			<div class="space-y-3">
+				<h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Localisation</h4>
+				<div class="grid grid-cols-2 gap-4 text-sm">
+					<div>
+						<span class="text-text-muted">Canton</span>
+						<p class="font-medium text-text">{selectedSignal.canton ?? '--'}</p>
+					</div>
+					<div>
+						<span class="text-text-muted">Commune</span>
+						<p class="font-medium text-text">{selectedSignal.commune ?? '--'}</p>
+					</div>
 				</div>
-			{/if}
+			</div>
 
+			<!-- Section : Source & Dates -->
+			<div class="space-y-3">
+				<h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Source & dates</h4>
+				<div class="grid grid-cols-2 gap-4 text-sm">
+					<div>
+						<span class="text-text-muted">Source</span>
+						<p class="font-medium text-text uppercase">{selectedSignal.source_officielle ?? '--'}</p>
+					</div>
+					<div>
+						<span class="text-text-muted">Date publication</span>
+						<p class="font-medium text-text">{formatDate(selectedSignal.date_publication)}</p>
+					</div>
+					<div>
+						<span class="text-text-muted">Détecté</span>
+						<p class="font-medium text-text">{formatRelative(selectedSignal.date_detection)}</p>
+					</div>
+				</div>
+			</div>
+
+			<!-- Section : Scoring -->
 			{#if selectedSignal.notes_libres}
-				<div class="text-sm">
-					<span class="text-text-muted">Notes</span>
-					<p class="text-text whitespace-pre-wrap">{selectedSignal.notes_libres}</p>
+				<div class="space-y-3">
+					<h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Scoring</h4>
+					<div class="flex flex-wrap gap-2">
+						{#each selectedSignal.notes_libres.split(', ') as critere}
+							<span class="px-2 py-1 text-xs rounded-md bg-surface-alt/60 text-text">{critere}</span>
+						{/each}
+					</div>
 				</div>
 			{/if}
 
@@ -548,7 +702,7 @@
 			</div>
 			<FormField label="Description du projet" type="textarea" bind:value={description_projet} />
 			<div class="grid grid-cols-2 gap-4">
-				<FormField label="Canton" bind:value={canton} placeholder="GE, VD, VS..." />
+				<CantonSelect bind:value={canton} />
 				<FormField label="Maître d'ouvrage" bind:value={maitre_ouvrage} />
 			</div>
 
