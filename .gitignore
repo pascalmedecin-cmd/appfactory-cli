@@ -11,3 +11,8 @@ build/
 .regen_secret
 supabase/.temp/
 **/supabase/.temp/
+
+# Skills empruntes (symlinks vers ~/.claude/skills-library/)
+# Generes par /plan-session, nettoyes par /fin-session
+.claude/skills-borrowed.txt
+.claude/session-activations.json

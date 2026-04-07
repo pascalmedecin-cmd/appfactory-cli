@@ -57,43 +57,26 @@ body {
 .wizard-header .brand {
   display: flex;
   align-items: center;
-  gap: 14px;
-}
-
-.wizard-header .logo-frame {
-  display: flex;
-  align-items: center;
   gap: 8px;
-  background: #fff;
-  border-radius: 8px;
-  padding: 5px 12px;
-  height: 38px;
-}
-
-.wizard-header .logo-frame img {
-  height: 24px;
-  width: auto;
-  display: block;
-}
-
-.wizard-header .logo-frame .logo-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-
-.wizard-header .logo-sep {
-  width: 1px;
-  height: 24px;
-  background: rgba(255,255,255,0.25);
-  flex-shrink: 0;
 }
 
 .wizard-header .brand-name {
-  font-size: 17px;
-  font-weight: 600;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.wizard-header .brand-sep {
+  color: rgba(255,255,255,0.35);
+  font-size: 18px;
+  font-weight: 300;
+}
+
+.wizard-header .brand-enterprise {
+  font-size: 18px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.85);
   letter-spacing: -0.01em;
 }
 

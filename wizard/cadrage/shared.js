@@ -101,23 +101,16 @@ function goPrev(currentStep) {
   }
 }
 
-/** Show enterprise logo in header if set in state */
+/** Show enterprise name in header if set in state */
 function loadEnterpriseLogo() {
   if (!_serverMode) return;
   getState().then(state => {
     if (state.enterprise_name) {
-      const el = document.getElementById('enterprise-logo');
-      const img = document.getElementById('enterprise-logo-img');
-      const name = document.getElementById('enterprise-logo-name');
-      if (el && name) {
+      const sep = document.getElementById('brand-sep');
+      const name = document.getElementById('brand-enterprise');
+      if (sep && name) {
         name.textContent = state.enterprise_name;
-        if (state.enterprise_logo) {
-          img.src = state.enterprise_logo;
-          img.alt = state.enterprise_name;
-        } else {
-          img.style.display = 'none';
-        }
-        el.style.display = 'flex';
+        sep.style.display = 'inline';
       }
     }
   });
