@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-07
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Launcher CLI (`~/Claude/Projets/start.sh`) : menu fixe 5 options (AppFactory-CLI, Enseignement, Marketing, Etude-de-Marche, Global). Option Global lance Claude depuis ~/.claude/ pour regles cross-projets. Ancien projet AppFactory renomme « AppFactory - Archive » (consultable, exclu du menu).
+**Session precedente :** Audit UX (ux-guide) + Refactoring UI sur les 2 wizards (cadrage 5 pages + entreprise). 37 corrections appliquees : WCAG contraste, required indicators, polling timeout 30s, stepper cliquable, radio auth, drag feedback, confirmation recap, responsive, auto-save retour, Enter submit. Score Refactoring UI : 6.5 → ~8/10. Valide par Pascal dans le navigateur.
 
 ---
 
@@ -184,6 +184,17 @@ Tester le workflow complet /start → /cadrage → /generate → /deploy sur un 
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
 - Evaluation Agent Teams sur les autres projets Claude (prompt prepare, session separee)
 
+**Decisions session 2026-04-07 (4e session) :**
+- Audit dual ux-guide + refactoring-ui sur les 2 wizards (6 pages HTML total)
+- 37 corrections appliquees (commit 513d3c8) : WCAG contraste --text-light, required *, polling timeout 30s, stepper cliquable, radio auth provider, drag feedback, confirmation recap double-clic, responsive entreprise, auto-save retour, Enter submit, logo file picker, boutons + labellises, empty state fallback, CTA labels standardises
+- Score Refactoring UI : 6.5 → ~8/10
+- Aucune regression constatee — valide par Pascal dans le navigateur
+
+**Decisions session 2026-04-07 (3e session) :**
+- Launcher CLI (`start.sh`) : menu dynamique → menu fixe 5 options, ordre choisi par Pascal
+- Option 5 « Global » : travail sur regles/skills/commands cross-projets (cd ~/.claude/)
+- AppFactory (v1) renomme « AppFactory - Archive » — consultable mais exclu du menu
+
 **Decisions session 2026-04-07 (2e session) :**
 - 2 skills design installes en bibliotheque : refactoring-ui (audit visuel, scoring 0-10) + ux-guide (audit UX, review P0/P1/P2)
 - Audit conflits complet : sections Anti-AI Defaults retirees de ux-guide, bans de fonts retires de frontend-design
@@ -205,14 +216,9 @@ Tester le workflow complet /start → /cadrage → /generate → /deploy sur un 
 - Wizard cadrage HTML : 5 etapes (pitch, entites, pages, regles, recap), serveur Python port 3334
 - Architecture wizard : polling /api/state, injection Claude, auto-navigation entre etapes
 
-**Decisions session 2026-04-07 (3e session) :**
-- Launcher CLI (`start.sh`) : menu dynamique → menu fixe 5 options, ordre choisi par Pascal
-- Option 5 « Global » : travail sur regles/skills/commands cross-projets (cd ~/.claude/)
-- AppFactory (v1) renomme « AppFactory - Archive » — consultable mais exclu du menu
-
 **Prerequis :**
 - Aucun bloquant technique
-- 9 commits non pushes — penser a push en debut de prochaine session
+- 12 commits non pushes — penser a push en debut de prochaine session
 
 → Audit CRM FilmPro 2026-04-04 (4 sprints, tous corriges) archive dans archive/audit-crm-2026-04-04.md — consulter si regression securite/qualite/tests OU comme reference methodologique pour le prochain audit (5 agents, scoring par axe, sprints par severite)
 
