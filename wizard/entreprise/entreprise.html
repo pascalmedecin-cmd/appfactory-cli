@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AppFactory — Nouvelle entreprise</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <style>
+    /* ---- Stepper entreprise (3 étapes) ---- */
+    .ent-stepper {
+      display: flex;
+      justify-content: center;
+      gap: 0;
+      padding: 16px 48px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border-light);
+      box-shadow: var(--shadow-sm);
+    }
+    .ent-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-light);
+      position: relative;
+      transition: color 300ms;
+    }
+    .ent-step::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0; right: 0;
+      height: 3px;
+      background: transparent;
+      border-radius: 3px 3px 0 0;
+      transition: background 300ms;
+    }
+    .ent-step.active { color: var(--primary); font-weight: 600; }
+    .ent-step.active::after { background: var(--accent); }
+    .ent-step.done { color: var(--success); }
+    .ent-step .num {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700;
+      background: var(--surface-raised);
+      border: 2px solid var(--border-light);
+      transition: all 300ms;
+    }
+    .ent-step.active .num {
+      background: var(--primary); color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(74, 107, 132, 0.15);
+    }
+    .ent-step.done .num { background: var(--success); color: #fff; border-color: var(--success); }
+
+    /* ---- Synthèse ---- */
+    .synthese-box {
+      background: var(--surface-raised);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text);
+      min-height: 60px;
+      white-space: pre-line;
+    }
+    .synthese-box.waiting {
+      color: var(--text-muted);
+      text-align: center;
+      padding: 40px 24px;
+    }
+    .synthese-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    /* ---- Branding cards ---- */
+    .branding-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .branding-card {
+      background: var(--surface);
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius);
+      padding: 20px;
+      cursor: pointer;
+      transition: border-color 200ms, box-shadow 200ms;
+      text-align: center;
+    }
+    .branding-card:hover {
+      border-color: var(--primary-light);
+      box-shadow: var(--shadow-md);
+    }
+    .branding-card.selected {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(74, 107, 132, 0.15);
+    }
+    .branding-card .card-icon {
+      font-size: 32px;
+      color: var(--accent);
+      margin-bottom: 12px;
+    }
+    .branding-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .branding-card p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* ---- Panels ---- */
+    .panel { display: none; }
+    .panel.visible { display: block; }
+  </style>
+</head>
+<body>
+
+  <div class="wizard-header">
+    <div class="brand">
+      <div class="logo-frame">
+        <img src="logo.png" alt="AppFactory">
+        <span class="logo-label">AppFactory</span>
+      </div>
+    </div>
+    <span class="step-label">Nouvelle entreprise</span>
+    <div class="header-right"></div>
+  </div>
+
+  <div class="ent-stepper" id="ent-stepper"></div>
+
+  <!-- ==================== PANEL 1 : Informations ==================== -->
+  <div class="panel visible" id="panel-infos">
+    <div class="page-intro">
+      <h2>Présentez votre entreprise</h2>
+      <p>Quelques informations pour comprendre votre activité et générer un cadrage adapté.</p>
+    </div>
+
+    <div class="wizard-body">
+      <div class="section">
+        <div class="section-header">
+          <span class="material-symbols-rounded section-icon">apartment</span>
+          <h2>Identité</h2>
+        </div>
+        <p class="section-desc">Le nom et le secteur de votre entreprise.</p>
+        <div class="field-row">
+          <div class="field">
+            <label for="ent-name">Nom de l'entreprise</label>
+            <input type="text" id="ent-name" placeholder="Ex : FilmPro, Medilab, InnoTech...">
+          </div>
+          <div class="field">
+            <label for="ent-sector">Secteur d'activité</label>
+            <input type="text" id="ent-sector" placeholder="Ex : Production audiovisuelle, Santé...">
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="material-symbols-rounded section-icon">description</span>
+          <h2>Contexte</h2>
+        </div>
+        <p class="section-desc">En quelques phrases, décrivez ce que fait l'entreprise et pour qui.</p>
+        <div class="field">
+          <label for="ent-context">Description de l'activité</label>
+          <textarea id="ent-context" placeholder="Que fait l'entreprise ? Quels sont ses clients ? Quelle est sa taille ?"></textarea>
+        </div>
+        <div class="field">
+          <label for="ent-needs">Besoin principal</label>
+          <textarea id="ent-needs" placeholder="Pourquoi cette entreprise a-t-elle besoin d'une application ? Quel problème veut-elle résoudre ?"></textarea>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="section-header">
+          <span class="material-symbols-rounded section-icon">image</span>
+          <h2>Logo</h2>
+        </div>
+        <p class="section-desc">Optionnel — le logo sera affiché dans le wizard de cadrage et dans l'application.</p>
+        <div class="field">
+          <label for="ent-logo">Chemin vers le fichier logo (SVG ou PNG)</label>
+          <input type="text" id="ent-logo" placeholder="Ex : /Users/pascal/.../logo.svg (ou laisser vide)">
+          <div class="hint">Vous pourrez le définir plus tard si le logo n'est pas encore prêt.</div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <div></div>
+        <button class="btn btn-primary" id="btn-submit-infos">
+          Générer la synthèse
+          <span class="material-symbols-rounded">auto_awesome</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PANEL 2 : Synthèse ==================== -->
+  <div class="panel" id="panel-synthese">
+    <div class="page-intro">
+      <h2>Synthèse de l'entreprise</h2>
+      <p>Vérifiez et ajustez la synthèse générée avant de choisir le branding.</p>
+    </div>
+
+    <div class="wizard-body">
+      <div class="section">
+        <div class="section-header">
+          <span class="material-symbols-rounded section-icon">summarize</span>
+          <h2>Synthèse générée</h2>
+        </div>
+        <p class="section-desc">Claude a analysé vos réponses et produit cette synthèse. Vous pouvez la modifier.</p>
+        <div class="synthese-box waiting" id="synthese-display">
+          <div class="spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:8px;"></div>
+          <p>Claude analyse vos réponses...</p>
+        </div>
+        <div id="synthese-edit-container" style="display:none;">
+          <div class="field" style="margin-top:16px;">
+            <textarea id="synthese-edit" style="min-height:120px;"></textarea>
+          </div>
+        </div>
+        <div class="synthese-actions" id="synthese-actions" style="display:none;">
+          <button class="btn btn-primary" id="btn-validate-synthese">
+            <span class="material-symbols-rounded">check</span>
+            Valider la synthèse
+          </button>
+          <button class="btn btn-secondary" id="btn-edit-synthese">
+            <span class="material-symbols-rounded">edit</span>
+            Modifier
+          </button>
+          <button class="btn btn-secondary" id="btn-back-infos">
+            <span class="material-symbols-rounded">arrow_back</span>
+            Retour
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PANEL 3 : Branding ==================== -->
+  <div class="panel" id="panel-branding">
+    <div class="page-intro">
+      <h2>Choisissez le branding</h2>
+      <p>Définissez l'identité visuelle de l'application.</p>
+    </div>
+
+    <div class="wizard-body">
+      <div class="section">
+        <div class="section-header">
+          <span class="material-symbols-rounded section-icon">palette</span>
+          <h2>Style visuel</h2>
+        </div>
+        <p class="section-desc">Choisissez un point de départ pour l'identité visuelle de vos applications.</p>
+
+        <div class="branding-grid">
+          <div class="branding-card" data-branding="standard">
+            <span class="material-symbols-rounded card-icon">tune</span>
+            <h3>Standard</h3>
+            <p>Thème par défaut AppFactory. Professionnel, polyvalent, lisible.</p>
+          </div>
+          <div class="branding-card" data-branding="preselect">
+            <span class="material-symbols-rounded card-icon">style</span>
+            <h3>Pré-sélection</h3>
+            <p>Choisissez parmi 5 thèmes adaptés à différents secteurs.</p>
+          </div>
+          <div class="branding-card" data-branding="tailored">
+            <span class="material-symbols-rounded card-icon">auto_fix_high</span>
+            <h3>Sur mesure</h3>
+            <p>Décrivez l'ambiance souhaitée et Claude génère une palette adaptée.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-panel: theme catalogue (for preselect) -->
+      <div class="section" id="theme-catalogue" style="display:none;">
+        <div class="section-header">
+          <span class="material-symbols-rounded section-icon">view_carousel</span>
+          <h2>Catalogue de thèmes</h2>
+        </div>
+        <p class="section-desc">Sélectionnez le thème qui correspond le mieux à votre secteur.</p>
+        <div id="theme-list"></div>
+      </div>
+
+      <!-- Sub-panel: tailored description -->
+      <div class="section" id="tailored-panel" style="display:none;">
+        <div class="section-header">
+          <span class="material-symbols-rounded section-icon">brush</span>
+          <h2>Décrivez votre ambiance</h2>
+        </div>
+        <p class="section-desc">Décrivez en quelques mots le style souhaité. Claude générera une palette.</p>
+        <div class="field">
+          <label for="ambiance-desc">Ambiance visuelle</label>
+          <textarea id="ambiance-desc" placeholder="Ex : Moderne et épuré, tons bleus, professionnel mais chaleureux..."></textarea>
+        </div>
+        <button class="btn btn-primary" id="btn-generate-palette" style="margin-top:12px;">
+          <span class="material-symbols-rounded">auto_awesome</span>
+          Générer la palette
+        </button>
+        <div id="palette-result" style="display:none;margin-top:16px;"></div>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-secondary" id="btn-back-synthese">
+          <span class="material-symbols-rounded">arrow_back</span>
+          Retour
+        </button>
+        <button class="btn btn-primary" id="btn-validate-branding" disabled>
+          Lancer le cadrage app
+          <span class="material-symbols-rounded">arrow_forward</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    /* ---- State ---- */
+    const ENT_STEPS = ['infos', 'synthese', 'branding'];
+    const ENT_LABELS = { infos: 'Informations', synthese: 'Synthèse', branding: 'Branding' };
+    let currentPanel = 'infos';
+    let selectedBranding = null;
+    let selectedTheme = null;
+    let _serverMode = location.protocol === 'http:';
+
+    /* ---- Server comms ---- */
+    function postState(data) {
+      if (!_serverMode) return Promise.resolve();
+      return fetch('/api/state', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      }).catch(() => {});
+    }
+
+    function getState() {
+      if (!_serverMode) return Promise.resolve({});
+      return fetch('/api/state').then(r => r.json()).catch(() => ({}));
+    }
+
+    /* ---- Stepper ---- */
+    function renderEntStepper(current) {
+      const container = document.getElementById('ent-stepper');
+      const idx = ENT_STEPS.indexOf(current);
+      container.innerHTML = ENT_STEPS.map((step, i) => {
+        const cls = i < idx ? 'done' : (i === idx ? 'active' : '');
+        const check = i < idx ? '&#10003;' : (i + 1);
+        const connector = i < ENT_STEPS.length - 1 ? '<div class="step-connector"></div>' : '';
+        return `<div class="ent-step ${cls}"><span class="num">${check}</span>${ENT_LABELS[step]}</div>${connector}`;
+      }).join('');
+    }
+
+    /* ---- Panel navigation ---- */
+    function showPanel(name) {
+      currentPanel = name;
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('visible'));
+      document.getElementById('panel-' + name).classList.add('visible');
+      renderEntStepper(name);
+    }
+
+    /* ---- Toast ---- */
+    function showToast(msg, duration = 3000) {
+      const toast = document.getElementById('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    /* ---- Init ---- */
+    renderEntStepper('infos');
+
+    /* ---- Panel 1 → Submit infos ---- */
+    document.getElementById('btn-submit-infos').addEventListener('click', () => {
+      const name = document.getElementById('ent-name').value.trim();
+      const sector = document.getElementById('ent-sector').value.trim();
+      const context = document.getElementById('ent-context').value.trim();
+      const needs = document.getElementById('ent-needs').value.trim();
+      const logo = document.getElementById('ent-logo').value.trim();
+
+      if (!name) { showToast('Le nom est obligatoire'); return; }
+      if (!sector) { showToast('Le secteur est obligatoire'); return; }
+      if (!context) { showToast('Décrivez l\'activité'); return; }
+
+      postState({
+        step: 'synthese',
+        enterprise_data: { name, sector, context, needs, logo },
+        enterprise_infos_validated: true
+      });
+
+      showPanel('synthese');
+      // Reset synthèse display to waiting state
+      const display = document.getElementById('synthese-display');
+      display.className = 'synthese-box waiting';
+      display.innerHTML = '<div class="spinner" style="display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:8px;"></div><p>Claude analyse vos réponses...</p>';
+      document.getElementById('synthese-actions').style.display = 'none';
+      document.getElementById('synthese-edit-container').style.display = 'none';
+
+      // Poll for Claude's synthèse injection
+      pollForSynthese();
+    });
+
+    /* ---- Poll for synthèse from Claude ---- */
+    let _synthPoll = null;
+    function pollForSynthese() {
+      if (_synthPoll) clearInterval(_synthPoll);
+      _synthPoll = setInterval(() => {
+        getState().then(state => {
+          if (state.enterprise_synthese) {
+            clearInterval(_synthPoll);
+            _synthPoll = null;
+            showSynthese(state.enterprise_synthese);
+          }
+        });
+      }, 1000);
+    }
+
+    function showSynthese(text) {
+      const display = document.getElementById('synthese-display');
+      display.className = 'synthese-box';
+      display.textContent = text;
+      document.getElementById('synthese-actions').style.display = 'flex';
+    }
+
+    /* ---- Synthèse injection (called by Claude) ---- */
+    window.injectSynthese = function(text) {
+      showSynthese(text);
+      showToast('Synthèse générée');
+    };
+
+    /* ---- Panel 2 buttons ---- */
+    document.getElementById('btn-validate-synthese').addEventListener('click', () => {
+      const editContainer = document.getElementById('synthese-edit-container');
+      let synthese;
+      if (editContainer.style.display !== 'none') {
+        synthese = document.getElementById('synthese-edit').value.trim();
+      } else {
+        synthese = document.getElementById('synthese-display').textContent.trim();
+      }
+      postState({
+        step: 'branding',
+        enterprise_synthese_final: synthese,
+        enterprise_synthese_validated: true
+      });
+      showPanel('branding');
+    });
+
+    document.getElementById('btn-edit-synthese').addEventListener('click', () => {
+      const display = document.getElementById('synthese-display');
+      const editContainer = document.getElementById('synthese-edit-container');
+      const editArea = document.getElementById('synthese-edit');
+      editArea.value = display.textContent;
+      display.style.display = 'none';
+      editContainer.style.display = 'block';
+      editArea.focus();
+      // Change button to "Appliquer"
+      const btn = document.getElementById('btn-edit-synthese');
+      btn.innerHTML = '<span class="material-symbols-rounded">check</span> Appliquer';
+      btn.onclick = () => {
+        display.textContent = editArea.value;
+        display.style.display = 'block';
+        editContainer.style.display = 'none';
+        btn.innerHTML = '<span class="material-symbols-rounded">edit</span> Modifier';
+        btn.onclick = null; // reset to original handler via re-render
+      };
+    });
+
+    document.getElementById('btn-back-infos').addEventListener('click', () => {
+      showPanel('infos');
+    });
+
+    /* ---- Panel 3 : Branding ---- */
+    document.querySelectorAll('.branding-card').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.branding-card').forEach(c => c.classList.remove('selected'));
+        card.classList.add('selected');
+        selectedBranding = card.dataset.branding;
+
+        document.getElementById('theme-catalogue').style.display =
+          selectedBranding === 'preselect' ? 'block' : 'none';
+        document.getElementById('tailored-panel').style.display =
+          selectedBranding === 'tailored' ? 'block' : 'none';
+
+        // Enable validate button for 'standard', others need sub-selection
+        const validateBtn = document.getElementById('btn-validate-branding');
+        if (selectedBranding === 'standard') {
+          validateBtn.disabled = false;
+          selectedTheme = 'standard';
+        } else {
+          validateBtn.disabled = true;
+          selectedTheme = null;
+        }
+
+        if (selectedBranding === 'preselect') {
+          loadThemeCatalogue();
+        }
+      });
+    });
+
+    /* ---- Theme catalogue ---- */
+    function loadThemeCatalogue() {
+      // Load from state (Claude injects catalogue data)
+      getState().then(state => {
+        if (state.theme_catalogue) {
+          renderThemes(state.theme_catalogue);
+        } else {
+          // Request Claude to inject catalogue
+          postState({ requesting_catalogue: true });
+          pollForCatalogue();
+        }
+      });
+    }
+
+    let _catPoll = null;
+    function pollForCatalogue() {
+      if (_catPoll) clearInterval(_catPoll);
+      const list = document.getElementById('theme-list');
+      list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Chargement des thèmes...</div>';
+      _catPoll = setInterval(() => {
+        getState().then(state => {
+          if (state.theme_catalogue) {
+            clearInterval(_catPoll);
+            _catPoll = null;
+            renderThemes(state.theme_catalogue);
+          }
+        });
+      }, 1000);
+    }
+
+    function renderThemes(themes) {
+      const list = document.getElementById('theme-list');
+      list.innerHTML = themes.map(t => `
+        <div class="branding-card" data-theme="${t.key}" style="text-align:left;margin-bottom:10px;display:flex;align-items:center;gap:16px;padding:16px 20px;">
+          <div style="display:flex;gap:4px;flex-shrink:0;">
+            ${(t.colors || []).slice(0, 4).map(c => `<div style="width:24px;height:24px;border-radius:6px;background:${c};border:1px solid rgba(0,0,0,0.08);"></div>`).join('')}
+          </div>
+          <div style="flex:1;">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:2px;">${t.name}</h3>
+            <p style="font-size:12px;color:var(--text-muted);margin:0;">${t.description}</p>
+          </div>
+        </div>
+      `).join('');
+
+      list.querySelectorAll('[data-theme]').forEach(card => {
+        card.addEventListener('click', () => {
+          list.querySelectorAll('[data-theme]').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          selectedTheme = card.dataset.theme;
+          document.getElementById('btn-validate-branding').disabled = false;
+        });
+      });
+    }
+
+    /* ---- Theme catalogue injection (called by Claude) ---- */
+    window.injectCatalogue = function(themes) {
+      renderThemes(themes);
+      showToast('Catalogue chargé');
+    };
+
+    /* ---- Tailored palette ---- */
+    document.getElementById('btn-generate-palette').addEventListener('click', () => {
+      const desc = document.getElementById('ambiance-desc').value.trim();
+      if (!desc) { showToast('Décrivez l\'ambiance souhaitée'); return; }
+      postState({ tailored_ambiance: desc, requesting_palette: true });
+
+      const result = document.getElementById('palette-result');
+      result.style.display = 'block';
+      result.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);"><div class="spinner" style="display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:8px;"></div><p>Génération en cours...</p></div>';
+
+      pollForPalette();
+    });
+
+    let _palPoll = null;
+    function pollForPalette() {
+      if (_palPoll) clearInterval(_palPoll);
+      _palPoll = setInterval(() => {
+        getState().then(state => {
+          if (state.tailored_palette) {
+            clearInterval(_palPoll);
+            _palPoll = null;
+            showPalette(state.tailored_palette);
+          }
+        });
+      }, 1000);
+    }
+
+    function showPalette(palette) {
+      const result = document.getElementById('palette-result');
+      const colors = palette.colors || [];
+      result.innerHTML = `
+        <div style="display:flex;gap:6px;margin-bottom:12px;">
+          ${colors.map(c => `<div style="width:40px;height:40px;border-radius:8px;background:${c};border:1px solid rgba(0,0,0,0.08);" title="${c}"></div>`).join('')}
+        </div>
+        <p style="font-size:13px;color:var(--text-muted);">${palette.description || ''}</p>
+      `;
+      selectedTheme = 'tailored';
+      document.getElementById('btn-validate-branding').disabled = false;
+    }
+
+    /* ---- Palette injection (called by Claude) ---- */
+    window.injectPalette = function(palette) {
+      showPalette(palette);
+      showToast('Palette générée');
+    };
+
+    /* ---- Back to synthèse ---- */
+    document.getElementById('btn-back-synthese').addEventListener('click', () => {
+      showPanel('synthese');
+    });
+
+    /* ---- Validate branding → signal done ---- */
+    document.getElementById('btn-validate-branding').addEventListener('click', () => {
+      postState({
+        step: 'done',
+        branding_choice: selectedBranding,
+        branding_theme: selectedTheme,
+        enterprise_validated: true
+      });
+      showToast('Entreprise créée — lancement du cadrage app...');
+      // The page will be closed by Claude when it detects enterprise_validated
+    });
+
+    /* ---- Poll for step changes from Claude ---- */
+    if (_serverMode) {
+      setInterval(() => {
+        getState().then(state => {
+          // Auto-navigate if Claude changed the step
+          if (state.step === 'synthese' && currentPanel === 'infos' && state.enterprise_synthese) {
+            showPanel('synthese');
+            showSynthese(state.enterprise_synthese);
+          }
+        });
+      }, 1500);
+    }
+  </script>
+
+</body>
+</html>

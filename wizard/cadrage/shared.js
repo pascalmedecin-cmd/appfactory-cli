@@ -101,8 +101,31 @@ function goPrev(currentStep) {
   }
 }
 
-/** Init page: render stepper + start polling */
+/** Show enterprise logo in header if set in state */
+function loadEnterpriseLogo() {
+  if (!_serverMode) return;
+  getState().then(state => {
+    if (state.enterprise_name) {
+      const el = document.getElementById('enterprise-logo');
+      const img = document.getElementById('enterprise-logo-img');
+      const name = document.getElementById('enterprise-logo-name');
+      if (el && name) {
+        name.textContent = state.enterprise_name;
+        if (state.enterprise_logo) {
+          img.src = state.enterprise_logo;
+          img.alt = state.enterprise_name;
+        } else {
+          img.style.display = 'none';
+        }
+        el.style.display = 'flex';
+      }
+    }
+  });
+}
+
+/** Init page: render stepper + load enterprise logo + start polling */
 function initPage(step) {
   renderStepper(step);
+  loadEnterpriseLogo();
   startPolling();
 }

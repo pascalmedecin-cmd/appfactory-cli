@@ -12,8 +12,10 @@ Le cadrage se fait via un wizard HTML dans le navigateur (pas d'allers-retours t
 
 ### Phase 1 — Lancer le wizard
 
-1. Lance le serveur : `python3 wizard/cadrage/server.py` (en background)
-2. Le navigateur s'ouvre sur `http://localhost:3333/` (page Pitch)
+1. Si le serveur n'est pas deja lance par `/start`, lance-le :
+   - Option 2 (entreprise existante) : `python3 wizard/cadrage/server.py --enterprise '{"name":"...","slug":"...","logo":"...","branding":"..."}'`
+   - Sinon : `python3 wizard/cadrage/server.py`
+2. Le navigateur s'ouvre sur `http://localhost:3334/` (page Pitch)
 3. Informe l'operateur : "Le wizard de cadrage est ouvert dans le navigateur. Remplis les etapes, je t'attends."
 
 ### Phase 2 — Injection intelligente (pendant que l'utilisateur remplit)
@@ -149,7 +151,7 @@ cron:  # Si applicable
 
 Pour detecter les validations de l'utilisateur, polle `/api/state` toutes les 2 secondes :
 ```bash
-curl -s http://localhost:3333/api/state
+curl -s http://localhost:3334/api/state
 ```
 Reagis des qu'un flag `*_validated: true` apparait.
 
