@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-07
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Wizard entreprise (option 3) + header dual-logo simplifie. Cree wizard/entreprise/ (3 etapes : infos → synthese IA → branding). Header unifie texte blanc 24px sans cadre (AppFactory | Entreprise). Serveur unifie (--mode entreprise, --enterprise JSON). Export charte graphique vers projet Enseignement (shared.css, tokens AppFactory, header noir, font Inter, hauteur champs normalisee). Skills /start et /cadrage mis a jour.
+**Session precedente :** Installation skills design dans la bibliotheque globale. 2 skills ajoutes (refactoring-ui, ux-guide) avec references completes. Audit conflits : sections Anti-AI retirees de ux-guide (conflit Inter/#fff/#6366f1), bans de fonts retires de frontend-design. Verification coherence 4 skills design (matrice couverture, 0 conflit residuel, 0 NEVER/forbidden). CATALOGUE.md et plugins-reference.md mis a jour.
 
 ---
 
@@ -184,7 +184,13 @@ Tester le workflow complet /start → /cadrage → /generate → /deploy sur un 
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
 - Evaluation Agent Teams sur les autres projets Claude (prompt prepare, session separee)
 
-**Decisions session 2026-04-07 :**
+**Decisions session 2026-04-07 (2e session) :**
+- 2 skills design installes en bibliotheque : refactoring-ui (audit visuel, scoring 0-10) + ux-guide (audit UX, review P0/P1/P2)
+- Audit conflits complet : sections Anti-AI Defaults retirees de ux-guide, bans de fonts retires de frontend-design
+- Coherence verifiee entre 4 skills design (refactoring-ui, ux-guide, frontend-design, theme-factory) : 0 conflit, 0 NEVER/forbidden
+- Principe : aucun skill ne prescrit de font ou couleur specifique — branding projet (branding/*.yaml) est le seul arbitre
+
+**Decisions session 2026-04-07 (1re session) :**
 - Wizard entreprise cree (wizard/entreprise/) : 3 etapes navigateur (infos → synthese IA → branding)
 - Header simplifie : texte blanc 24px sans cadre, AppFactory | Entreprise
 - Serveur unifie : --mode entreprise, --enterprise JSON pour contexte
@@ -201,7 +207,7 @@ Tester le workflow complet /start → /cadrage → /generate → /deploy sur un 
 
 **Prerequis :**
 - Aucun bloquant technique
-- 7 commits non pushes (ebd78de..9a5ccab) — penser a push en debut de prochaine session
+- 8 commits non pushes (ebd78de..edf18c0) — penser a push en debut de prochaine session
 
 → Audit CRM FilmPro 2026-04-04 (4 sprints, tous corriges) archive dans archive/audit-crm-2026-04-04.md — consulter si regression securite/qualite/tests OU comme reference methodologique pour le prochain audit (5 agents, scoring par axe, sprints par severite)
 
