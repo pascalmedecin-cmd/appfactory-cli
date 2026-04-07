@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       activites: {
@@ -552,6 +577,8 @@ export type Database = {
           notes_libres: string | null
           opportunite_associee_id: string | null
           responsable_filmpro: string | null
+          score_pertinence: number | null
+          source_id: string | null
           source_officielle: string | null
           statut_traitement: string | null
           type_signal: string | null
@@ -569,6 +596,8 @@ export type Database = {
           notes_libres?: string | null
           opportunite_associee_id?: string | null
           responsable_filmpro?: string | null
+          score_pertinence?: number | null
+          source_id?: string | null
           source_officielle?: string | null
           statut_traitement?: string | null
           type_signal?: string | null
@@ -586,6 +615,8 @@ export type Database = {
           notes_libres?: string | null
           opportunite_associee_id?: string | null
           responsable_filmpro?: string | null
+          score_pertinence?: number | null
+          source_id?: string | null
           source_officielle?: string | null
           statut_traitement?: string | null
           type_signal?: string | null
@@ -774,6 +805,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
