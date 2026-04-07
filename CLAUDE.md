@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-07
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Refonte page Signaux + setup Zefix. Vue cards visuelles (icones par type, badges, dates relatives), modal creation allegee (4 champs), bouton supprimer avec confirmation, bandeau explicatif permanent, compteurs statut cliquables, labels config branches, bandeau alertes signaux sur dashboard. Credentials Zefix configures (local + Vercel prod/preview, actif 08.04). Deploy prod valide (commit 6711b6b).
+**Session precedente :** Veille automatique Signaux. Cron `/api/cron/signaux` quotidien 6h : interroge Zefix (creations entreprises) + SIMAP (appels d'offres) par canton, insere dans `signaux_affaires` avec scoring automatique et dedup. Migration BDD (source_id + score_pertinence). Service role client Supabase pour crons (bypass RLS). Test reel : 59 signaux SIMAP importes, dedup OK. Zefix 401 attendu (actif 08.04). Fix securite : erreurs internes masquees en reponse cron, cron alertes migre vers service role client. Deploy prod valide (commits 4e0f51c + 248e37c).
 
 ---
 
@@ -135,7 +135,8 @@ Pilotage depuis le terminal via Claude Code skills.
 - **search.ch** : cle API configuree en local (.env) + Vercel prod
 - **Securite** : email provider desactive (Google OAuth only), whitelist emails ALLOWED_EMAILS env var (pascal@filmpro.ch,pascal.medecin@gmail.com configure Vercel prod), validation Zod sur toutes les form actions (18 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
 - **Tests** : Vitest (113 tests : scoring + 18/18 schemas + validation + extractForm + API sparql/helpers) + Playwright (5 tests e2e : navigation + auth redirect)
-- **Cron** : `/api/cron/alertes` quotidien 7h (vercel.json), securise par CRON_SECRET (configure Vercel prod)
+- **Cron** : `/api/cron/signaux` quotidien 6h (veille Zefix+SIMAP) + `/api/cron/alertes` quotidien 7h, securises par CRON_SECRET (configure Vercel prod), service role client (bypass RLS)
+- **SUPABASE_SERVICE_ROLE_KEY** : configuree local .env + Vercel prod (preview non configure — projet sans repo Git lie)
 
 ## WORKFLOW APPFACTORY
 
@@ -173,16 +174,27 @@ Fichiers cles :
 
 ## OBJECTIF PROCHAINE SESSION
 
-Construire la veille automatique Signaux :
-- Creer cron `/api/cron/signaux` : interroge Zefix (creations entreprises recentes) + SIMAP (appels d'offres) → insere dans `signaux_affaires` avec statut `nouveau`
-- Brancher le scoring config.ts (13 points max) sur les signaux importes
-- Tester import Zefix reel (compte actif depuis 08.04)
-- Verifier bandeau alertes dashboard avec signaux neufs reels
+Feedback utilisateur sur les signaux importes + tester Zefix reel :
+- Pascal a des commentaires sur les signaux importes (a soumettre en debut de session)
+- Tester import Zefix reel (compte actif depuis 08.04) — relancer le cron et verifier les creations d'entreprises
+- Verifier bandeau alertes dashboard dans le navigateur avec signaux neufs reels (59 SIMAP deja en base)
 
 **Aussi en attente :**
 - Workflow complet /start → /cadrage → /generate → /deploy (reporte)
 - Evaluation Agent Teams sur les autres projets Claude (prompt prepare, session separee)
-- Env vars Vercel preview : a configurer au besoin (ZEFIX deja configure prod+preview)
+- Env vars Vercel preview SUPABASE_SERVICE_ROLE_KEY : a configurer si besoin (bloque par absence de repo Git lie sur Vercel)
+
+**Decisions session 2026-04-07 (7e session) :**
+- Cron `/api/cron/signaux` : veille quotidienne 6h, Zefix (creations entreprises) + SIMAP (appels d'offres), 6 cantons romands
+- Migration BDD : colonnes source_id (dedup) + score_pertinence (scoring auto) sur signaux_affaires
+- Service role client Supabase (createSupabaseServiceClient) pour crons sans session utilisateur
+- Scoring automatique calculerScore() branche sur les signaux importes
+- Dedup sur source_officielle + source_id (unique index partiel)
+- Test reel : 59 signaux SIMAP importes, score moyen 7/13, dedup validee (2e run = 0)
+- Zefix 401 attendu (compte actif 08.04)
+- Audit securite : erreurs internes masquees en reponse, cron alertes migre vers service role
+- SUPABASE_SERVICE_ROLE_KEY : local + Vercel prod (preview bloque par absence repo Git)
+- Deploy prod valide (commits 4e0f51c + 248e37c)
 
 **Decisions session 2026-04-07 (6e session) :**
 - Refonte page Signaux : vue tableau → vue cards visuelles (icone par type, badge statut, date relative)
