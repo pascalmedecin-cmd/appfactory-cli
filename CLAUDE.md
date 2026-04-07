@@ -1,10 +1,10 @@
 # AppFactory - CLI — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-06
+**Derniere mise a jour :** 2026-04-07
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Point d'entree /start + wizard cadrage HTML. Cree registry.yaml (entreprises/apps), catalogue branding (5 themes + preview HTML), wizard cadrage 5 etapes HTML (serveur Python local, polling state, injection Claude). UX polish client-grade (icones Material Symbols, intros, espacement). Profils utilisateurs multi dans pitch. Cycle de vie _previews/ integre aux 3 skills.
+**Session precedente :** Wizard entreprise (option 3) + header dual-logo simplifie. Cree wizard/entreprise/ (3 etapes : infos → synthese IA → branding). Header unifie texte blanc 24px sans cadre (AppFactory | Entreprise). Serveur unifie (--mode entreprise, --enterprise JSON). Export charte graphique vers projet Enseignement (shared.css, tokens AppFactory, header noir, font Inter, hauteur champs normalisee). Skills /start et /cadrage mis a jour.
 
 ---
 
@@ -143,7 +143,7 @@ Pilotage depuis le terminal via Claude Code skills.
 /start (terminal)
   ├─ 1. Modifier app existante → travail direct dans le code
   ├─ 2. Nouvelle app (entreprise existante) → /cadrage wizard HTML
-  └─ 3. Nouvelle entreprise → branding (terminal) → /cadrage wizard HTML
+  └─ 3. Nouvelle entreprise → wizard entreprise (navigateur) → /cadrage wizard HTML
 
 /cadrage (wizard HTML navigateur, port 3334)
   Pitch → Entites → Pages → Regles → Recap → Valider
@@ -160,6 +160,7 @@ Fichiers cles :
 - `branding/_default.yaml` — theme par defaut (standard)
 - `branding/[slug].yaml` — branding par entreprise
 - `wizard/cadrage/` — 5 pages HTML + server.py + shared.css/js + logo
+- `wizard/entreprise/` — wizard pre-cadrage entreprise (option 3), symlinks vers cadrage/shared.*
 - `scripts/generate-branding-preview.ts` — genere previews/branding.html
 
 ## DOCUMENTATION
@@ -173,9 +174,9 @@ Fichiers cles :
 ## OBJECTIF PROCHAINE SESSION
 
 Tester le workflow complet /start → /cadrage → /generate → /deploy sur un projet reel :
-- Lancer `/start` option 3 (nouvelle entreprise) ou option 2 (nouvelle app FilmPro)
-- Valider le wizard cadrage HTML de bout en bout (5 etapes navigateur)
-- Tester l'injection intelligente Claude (entites, pages, regles pre-remplies apres pitch)
+- Lancer `/start` option 3 (nouvelle entreprise) pour tester le wizard entreprise de bout en bout
+- OU option 2 (nouvelle app FilmPro) pour tester le cadrage contextualise
+- Valider l'injection intelligente Claude (synthese entreprise, entites, pages, regles)
 - /generate depuis le project.yaml produit par le wizard
 - Deploy preview Vercel reel
 
@@ -183,25 +184,24 @@ Tester le workflow complet /start → /cadrage → /generate → /deploy sur un 
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
 - Evaluation Agent Teams sur les autres projets Claude (prompt prepare, session separee)
 
+**Decisions session 2026-04-07 :**
+- Wizard entreprise cree (wizard/entreprise/) : 3 etapes navigateur (infos → synthese IA → branding)
+- Header simplifie : texte blanc 24px sans cadre, AppFactory | Entreprise
+- Serveur unifie : --mode entreprise, --enterprise JSON pour contexte
+- Charte graphique exportee vers projet Enseignement (shared.css, tokens AppFactory, header noir)
+- clone-website skill recupere depuis JCodesMore/ai-website-cloner-template, stocke dans skills-library (inactif)
+- plugins-reference.md restructure : architecture 3 niveaux (globaux / bibliotheque / plugins)
+
 **Decisions session 2026-04-06 (2e session) :**
 - /start cree : point d'entree unique avec 3 chemins (modifier app / nouvelle app / nouvelle entreprise)
 - registry.yaml : registre central entreprises/apps (FilmPro + CRM pre-rempli)
 - Catalogue branding : 5 themes (_catalogue.yaml), preview HTML generee par script
 - Wizard cadrage HTML : 5 etapes (pitch, entites, pages, regles, recap), serveur Python port 3334
 - Architecture wizard : polling /api/state, injection Claude, auto-navigation entre etapes
-- Cycle de vie _previews/ : cadrage → generate → suppression au deploy prod
-- UX client-grade : icones Material Symbols, intros centrees, animation fadeIn, labels lisibles
-- Langue simplifiee (fr/de/en, region en background)
-- Profils utilisateurs multiples dans le pitch (ajout/suppression dynamique)
-- Accents francais obligatoires dans tout contenu genere (rule globale ajoutee)
-
-**Decisions session precedente (2026-04-06, 1re session) :**
-- RuFlo rejete : stubs (290/313 tools), failles securite, score 3.5/10
-- Agent Teams natif active (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` dans settings.json)
 
 **Prerequis :**
 - Aucun bloquant technique
-- 4 commits non pushes (ebd78de..5b23b9c) — penser a push en debut de prochaine session
+- 7 commits non pushes (ebd78de..9a5ccab) — penser a push en debut de prochaine session
 
 → Audit CRM FilmPro 2026-04-04 (4 sprints, tous corriges) archive dans archive/audit-crm-2026-04-04.md — consulter si regression securite/qualite/tests OU comme reference methodologique pour le prochain audit (5 agents, scoring par axe, sprints par severite)
 
