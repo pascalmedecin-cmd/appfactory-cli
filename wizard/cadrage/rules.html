@@ -60,25 +60,43 @@
         <h2>Authentification</h2>
       </div>
       <p class="section-desc">Comment les utilisateurs se connectent-ils à l'application ?</p>
-      <div class="field-row">
-        <div class="field">
-          <label for="auth-provider">Provider</label>
-          <select id="auth-provider">
-            <option value="google">Google OAuth</option>
-            <option value="email">Email / mot de passe</option>
-            <option value="both">Les deux</option>
-          </select>
+      <div class="field">
+        <label>Méthode d'authentification <span class="required">*</span></label>
+        <div class="radio-group" id="auth-provider-group">
+          <label class="radio-option selected" data-value="google">
+            <input type="radio" name="auth-provider" value="google" checked>
+            <div>
+              <div class="radio-label">Google OAuth</div>
+              <div class="radio-desc">Connexion via compte Google — simple et sécurisé</div>
+            </div>
+          </label>
+          <label class="radio-option" data-value="email">
+            <input type="radio" name="auth-provider" value="email">
+            <div>
+              <div class="radio-label">Email / mot de passe</div>
+              <div class="radio-desc">Création de compte classique avec mot de passe</div>
+            </div>
+          </label>
+          <label class="radio-option" data-value="both">
+            <input type="radio" name="auth-provider" value="both">
+            <div>
+              <div class="radio-label">Les deux</div>
+              <div class="radio-desc">Google OAuth + email/mot de passe au choix de l'utilisateur</div>
+            </div>
+          </label>
         </div>
+      </div>
+      <div class="field-row" style="margin-top:20px;">
         <div class="field">
           <label for="auth-domains">Domaines autorisés</label>
           <input type="text" id="auth-domains" placeholder="Ex : filmpro.ch, gmail.com (vide = tous)">
-          <div class="hint">Séparez par des virgules. Vide = pas de restriction.</div>
+          <div class="hint">Séparez par des virgules. Vide = pas de restriction de domaine.</div>
         </div>
-      </div>
-      <div class="field">
-        <label for="auth-emails">Emails autorisés</label>
-        <input type="text" id="auth-emails" placeholder="Ex : pascal@filmpro.ch, admin@example.com">
-        <div class="hint">Optionnel — whitelist d'emails spécifiques (en plus des domaines)</div>
+        <div class="field">
+          <label for="auth-emails">Emails autorisés</label>
+          <input type="text" id="auth-emails" placeholder="Ex : pascal@filmpro.ch, admin@example.com">
+          <div class="hint">Optionnel — whitelist d'emails spécifiques (en plus des domaines).</div>
+        </div>
       </div>
     </div>
 
@@ -87,24 +105,33 @@
         <span class="material-symbols-rounded section-icon">star</span>
         <h2>Scoring</h2>
       </div>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Règles de scoring automatique sur les entités.</p>
+      <p class="section-desc">Attribuez des points pour chaque critère. Le score total aide à prioriser les éléments.</p>
       <div id="scoring-rules"></div>
       <div style="display:flex;gap:8px;margin-top:12px;">
         <input type="text" id="new-rule-name" placeholder="Nom de la regle" style="flex:2;font:400 13px var(--font);padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);">
         <input type="number" id="new-rule-points" placeholder="Pts" style="width:80px;font:400 13px var(--font);padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);">
-        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="addScoringRule()">+</button>
+        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="addScoringRule()"><span class="material-symbols-rounded" style="font-size:14px;">add</span> Ajouter</button>
       </div>
-      <div class="field-row" style="margin-top:16px;">
-        <div class="field">
-          <label for="score-max">Score maximum</label>
-          <input type="number" id="score-max" value="10">
-        </div>
-        <div class="field">
-          <label>Seuils (étiquettes)</label>
-          <div class="field-row-3" style="gap:8px;">
-            <input type="text" id="label-hot" placeholder="Chaud >= ?" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);">
-            <input type="text" id="label-warm" placeholder="Tiede >= ?" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);">
-            <input type="text" id="label-cold" placeholder="Froid < ?" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);">
+      <div class="field" style="margin-top:16px;">
+        <label for="score-max">Score maximum</label>
+        <input type="number" id="score-max" value="10" style="max-width:120px;">
+        <div class="hint">Le total de points qu'un élément peut atteindre.</div>
+      </div>
+      <div class="field">
+        <label>Seuils d'étiquettes</label>
+        <div class="hint" style="margin-bottom:8px;">Définissez les seuils pour classer automatiquement les éléments (ex : >= 7 = Chaud).</div>
+        <div class="field-row-3">
+          <div class="field">
+            <label for="label-hot" style="font-size:12px;color:var(--text-muted);">Chaud >=</label>
+            <input type="text" id="label-hot" placeholder="Ex : 7">
+          </div>
+          <div class="field">
+            <label for="label-warm" style="font-size:12px;color:var(--text-muted);">Tiède >=</label>
+            <input type="text" id="label-warm" placeholder="Ex : 4">
+          </div>
+          <div class="field">
+            <label for="label-cold" style="font-size:12px;color:var(--text-muted);">Froid <</label>
+            <input type="text" id="label-cold" placeholder="Ex : 4">
           </div>
         </div>
       </div>
@@ -115,7 +142,7 @@
         <span class="material-symbols-rounded section-icon">schedule</span>
         <h2>Automatisations</h2>
       </div>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px;">Tâches automatiques planifiées (alertes, nettoyage, imports...)</p>
+      <p class="section-desc">Tâches automatiques planifiées (alertes, nettoyage, imports...).</p>
       <div id="cron-jobs"></div>
       <div style="display:flex;gap:8px;margin-top:12px;">
         <input type="text" id="new-cron-path" placeholder="Chemin API (ex: /api/cron/alertes)" style="flex:1;font:400 13px var(--font);padding:6px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);">
@@ -125,7 +152,7 @@
           <option value="0 */6 * * *">Toutes les 6h</option>
           <option value="*/30 * * * *">Toutes les 30min</option>
         </select>
-        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="addCron()">+</button>
+        <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="addCron()"><span class="material-symbols-rounded" style="font-size:14px;">add</span> Ajouter</button>
       </div>
     </div>
 
@@ -160,6 +187,29 @@
     let scoringRules = [];
     let cronJobs = [];
 
+    // Radio group interaction
+    document.querySelectorAll('.radio-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        opt.closest('.radio-group').querySelectorAll('.radio-option').forEach(o => o.classList.remove('selected'));
+        opt.classList.add('selected');
+        opt.querySelector('input[type="radio"]').checked = true;
+      });
+    });
+
+    function getAuthProvider() {
+      const checked = document.querySelector('input[name="auth-provider"]:checked');
+      return checked ? checked.value : 'google';
+    }
+
+    function setAuthProvider(value) {
+      const radio = document.querySelector(`input[name="auth-provider"][value="${value}"]`);
+      if (radio) {
+        radio.checked = true;
+        document.querySelectorAll('.radio-option').forEach(o => o.classList.remove('selected'));
+        radio.closest('.radio-option').classList.add('selected');
+      }
+    }
+
     // Show scoring section if module enabled
     getState().then(state => {
       if (state.pages_data && state.pages_data.modules && state.pages_data.modules.scoring) {
@@ -167,7 +217,7 @@
       }
       if (state.rules_data) {
         const d = state.rules_data;
-        if (d.auth_provider) document.getElementById('auth-provider').value = d.auth_provider;
+        if (d.auth_provider) setAuthProvider(d.auth_provider);
         if (d.auth_domains) document.getElementById('auth-domains').value = d.auth_domains;
         if (d.auth_emails) document.getElementById('auth-emails').value = d.auth_emails;
         if (d.scoring_rules) { scoringRules = d.scoring_rules; renderScoringRules(); }
@@ -222,7 +272,7 @@
 
     // Claude injects proposed rules
     window.injectRules = function(data) {
-      if (data.auth_provider) document.getElementById('auth-provider').value = data.auth_provider;
+      if (data.auth_provider) setAuthProvider(data.auth_provider);
       if (data.auth_domains) document.getElementById('auth-domains').value = data.auth_domains;
       if (data.auth_emails) document.getElementById('auth-emails').value = data.auth_emails;
       if (data.scoring_rules) { scoringRules = data.scoring_rules; renderScoringRules(); }
@@ -231,11 +281,9 @@
       showToast('Règles proposées par Claude');
     };
 
-    document.getElementById('btn-prev').addEventListener('click', () => goPrev('rules'));
-
-    document.getElementById('btn-next').addEventListener('click', () => {
-      const data = {
-        auth_provider: document.getElementById('auth-provider').value,
+    function collectRules() {
+      return {
+        auth_provider: getAuthProvider(),
         auth_domains: document.getElementById('auth-domains').value.trim(),
         auth_emails: document.getElementById('auth-emails').value.trim(),
         scoring_rules: scoringRules,
@@ -246,8 +294,17 @@
         cron_jobs: cronJobs,
         notes: document.getElementById('notes').value.trim()
       };
-      goNext('rules', { rules_data: data, rules_validated: true });
+    }
+
+    document.getElementById('btn-prev').addEventListener('click', () => {
+      goPrev('rules', { rules_data: collectRules() });
     });
+
+    document.getElementById('btn-next').addEventListener('click', () => {
+      goNext('rules', { rules_data: collectRules(), rules_validated: true });
+    });
+
+    setupEnterSubmit('btn-next');
   </script>
 
 </body>

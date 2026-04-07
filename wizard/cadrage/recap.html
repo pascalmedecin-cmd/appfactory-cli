@@ -74,13 +74,19 @@
       margin-bottom: 16px;
     }
     .btn-validate {
-      background: var(--success);
+      background: var(--accent);
       color: #fff;
       font-size: 16px;
       padding: 14px 40px;
+      box-shadow: 0 1px 3px rgba(192, 139, 92, 0.3);
     }
     .btn-validate:hover {
-      background: #15803d;
+      background: var(--accent-light);
+      box-shadow: 0 2px 6px rgba(192, 139, 92, 0.35);
+    }
+    .btn-validate.confirmed {
+      background: var(--success);
+      cursor: default;
     }
   </style>
 </head>
@@ -111,9 +117,12 @@
     </div>
 
     <div class="section">
-      <div class="section-header">
-        <span class="material-symbols-rounded section-icon">rocket_launch</span>
-        <h2>Pitch</h2>
+      <div class="section-header" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="material-symbols-rounded section-icon">rocket_launch</span>
+          <h2>Pitch</h2>
+        </div>
+        <button class="btn btn-secondary" style="padding:4px 12px;font-size:12px;" onclick="postState({step:'pitch'}).then(()=>location.href='/pitch.html')"><span class="material-symbols-rounded" style="font-size:14px;">edit</span> Modifier</button>
       </div>
       <div class="recap-block">
         <div class="recap-row"><span class="label">Problème</span><span id="r-problem">—</span></div>
@@ -125,17 +134,23 @@
     </div>
 
     <div class="section">
-      <div class="section-header">
-        <span class="material-symbols-rounded section-icon">table_chart</span>
-        <h2>Entités (<span id="r-entity-count">0</span>)</h2>
+      <div class="section-header" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="material-symbols-rounded section-icon">table_chart</span>
+          <h2>Entités (<span id="r-entity-count">0</span>)</h2>
+        </div>
+        <button class="btn btn-secondary" style="padding:4px 12px;font-size:12px;" onclick="postState({step:'entities'}).then(()=>location.href='/entities.html')"><span class="material-symbols-rounded" style="font-size:14px;">edit</span> Modifier</button>
       </div>
       <div id="r-entities"></div>
     </div>
 
     <div class="section">
-      <div class="section-header">
-        <span class="material-symbols-rounded section-icon">menu</span>
-        <h2>Pages (<span id="r-page-count">0</span>)</h2>
+      <div class="section-header" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="material-symbols-rounded section-icon">menu</span>
+          <h2>Pages (<span id="r-page-count">0</span>)</h2>
+        </div>
+        <button class="btn btn-secondary" style="padding:4px 12px;font-size:12px;" onclick="postState({step:'pages'}).then(()=>location.href='/pages.html')"><span class="material-symbols-rounded" style="font-size:14px;">edit</span> Modifier</button>
       </div>
       <div id="r-pages"></div>
     </div>
@@ -149,9 +164,12 @@
     </div>
 
     <div class="section">
-      <div class="section-header">
-        <span class="material-symbols-rounded section-icon">settings</span>
-        <h2>Règles</h2>
+      <div class="section-header" style="justify-content:space-between;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span class="material-symbols-rounded section-icon">settings</span>
+          <h2>Règles</h2>
+        </div>
+        <button class="btn btn-secondary" style="padding:4px 12px;font-size:12px;" onclick="postState({step:'rules'}).then(()=>location.href='/rules.html')"><span class="material-symbols-rounded" style="font-size:14px;">edit</span> Modifier</button>
       </div>
       <div class="recap-block">
         <div class="recap-row"><span class="label">Auth</span><span id="r-auth">—</span></div>
@@ -171,7 +189,7 @@
     <div class="actions">
       <button class="btn btn-secondary" id="btn-prev">
         <span class="material-symbols-rounded">arrow_back</span>
-        Modifier
+        Retour
       </button>
       <button class="btn btn-primary btn-validate" id="btn-validate">
         <span class="material-symbols-rounded">check_circle</span>
@@ -269,14 +287,32 @@
 
     document.getElementById('btn-prev').addEventListener('click', () => goPrev('recap'));
 
+    let _confirmPending = false;
     document.getElementById('btn-validate').addEventListener('click', () => {
+      const btn = document.getElementById('btn-validate');
+      if (!_confirmPending) {
+        _confirmPending = true;
+        btn.innerHTML = '<span class="material-symbols-rounded">check_circle</span> Confirmer la validation';
+        btn.classList.add('confirmed');
+        showToast('Cliquez à nouveau pour confirmer');
+        setTimeout(() => {
+          if (_confirmPending) {
+            _confirmPending = false;
+            btn.innerHTML = '<span class="material-symbols-rounded">check_circle</span> Valider et générer';
+            btn.classList.remove('confirmed');
+          }
+        }, 5000);
+        return;
+      }
       postState({ cadrage_validated: true, step: 'done' }).then(() => {
-        document.getElementById('btn-validate').textContent = 'Validation envoyée — retour au terminal...';
-        document.getElementById('btn-validate').disabled = true;
-        document.getElementById('btn-validate').style.background = 'var(--text-muted)';
+        btn.textContent = 'Validation envoyée — retour au terminal...';
+        btn.disabled = true;
+        btn.style.background = 'var(--text-muted)';
         showToast('Cadrage validé ! Claude génère le project.yaml...');
       });
     });
+
+    setupEnterSubmit('btn-validate');
   </script>
 
 </body>

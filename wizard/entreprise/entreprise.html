@@ -15,7 +15,6 @@
       padding: 16px 48px;
       background: var(--surface);
       border-bottom: 1px solid var(--border-light);
-      box-shadow: var(--shadow-sm);
     }
     .ent-step {
       display: flex;
@@ -40,7 +39,8 @@
     }
     .ent-step.active { color: var(--primary); font-weight: 600; }
     .ent-step.active::after { background: var(--accent); }
-    .ent-step.done { color: var(--success); }
+    .ent-step.done { color: var(--success); cursor: pointer; }
+    .ent-step.done:hover { color: #15803d; }
     .ent-step .num {
       width: 26px; height: 26px;
       border-radius: 50%;
@@ -84,14 +84,14 @@
     .branding-grid {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
-      gap: 16px;
+      gap: 20px;
       margin-top: 16px;
     }
     .branding-card {
       background: var(--surface);
       border: 2px solid var(--border-light);
       border-radius: var(--radius);
-      padding: 20px;
+      padding: 16px;
       cursor: pointer;
       transition: border-color 200ms, box-shadow 200ms;
       text-align: center;
@@ -124,6 +124,29 @@
     /* ---- Panels ---- */
     .panel { display: none; }
     .panel.visible { display: block; }
+
+    /* ---- Logo upload ---- */
+    .logo-upload {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .logo-upload .logo-preview {
+      width: 48px;
+      height: 48px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      object-fit: contain;
+      display: none;
+    }
+    .logo-upload .logo-preview.visible { display: block; }
+
+    /* ---- Responsive entreprise ---- */
+    @media (max-width: 640px) {
+      .ent-stepper { padding: 12px 16px; overflow-x: auto; }
+      .branding-grid { grid-template-columns: 1fr; }
+      .branding-card .card-icon { font-size: 24px; }
+    }
   </style>
 </head>
 <body>
@@ -154,11 +177,11 @@
         <p class="section-desc">Le nom et le secteur de votre entreprise.</p>
         <div class="field-row">
           <div class="field">
-            <label for="ent-name">Nom de l'entreprise</label>
+            <label for="ent-name">Nom de l'entreprise <span class="required">*</span></label>
             <input type="text" id="ent-name" placeholder="Ex : FilmPro, Medilab, InnoTech...">
           </div>
           <div class="field">
-            <label for="ent-sector">Secteur d'activité</label>
+            <label for="ent-sector">Secteur d'activité <span class="required">*</span></label>
             <input type="text" id="ent-sector" placeholder="Ex : Production audiovisuelle, Santé...">
           </div>
         </div>
@@ -171,7 +194,7 @@
         </div>
         <p class="section-desc">En quelques phrases, décrivez ce que fait l'entreprise et pour qui.</p>
         <div class="field">
-          <label for="ent-context">Description de l'activité</label>
+          <label for="ent-context">Description de l'activité <span class="required">*</span></label>
           <textarea id="ent-context" placeholder="Que fait l'entreprise ? Quels sont ses clients ? Quelle est sa taille ?"></textarea>
         </div>
         <div class="field">
@@ -187,9 +210,12 @@
         </div>
         <p class="section-desc">Optionnel — le logo sera affiché dans le wizard de cadrage et dans l'application.</p>
         <div class="field">
-          <label for="ent-logo">Chemin vers le fichier logo (SVG ou PNG)</label>
-          <input type="text" id="ent-logo" placeholder="Ex : /Users/pascal/.../logo.svg (ou laisser vide)">
-          <div class="hint">Vous pourrez le définir plus tard si le logo n'est pas encore prêt.</div>
+          <label for="ent-logo">Fichier logo (SVG ou PNG)</label>
+          <div class="logo-upload">
+            <img id="logo-preview" class="logo-preview" alt="Aperçu logo">
+            <input type="file" id="ent-logo" accept=".svg,.png,.jpg,.jpeg,image/svg+xml,image/png,image/jpeg">
+          </div>
+          <div class="hint">Optionnel — vous pourrez le définir plus tard si le logo n'est pas encore prêt.</div>
         </div>
       </div>
 
@@ -228,8 +254,8 @@
         </div>
         <div class="synthese-actions" id="synthese-actions" style="display:none;">
           <button class="btn btn-primary" id="btn-validate-synthese">
-            <span class="material-symbols-rounded">check</span>
-            Valider la synthèse
+            Suivant
+            <span class="material-symbols-rounded">arrow_forward</span>
           </button>
           <button class="btn btn-secondary" id="btn-edit-synthese">
             <span class="material-symbols-rounded">edit</span>
@@ -373,6 +399,30 @@
       setTimeout(() => toast.classList.remove('show'), duration);
     }
 
+    /* ---- Logo preview ---- */
+    document.getElementById('ent-logo').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      const preview = document.getElementById('logo-preview');
+      if (file) {
+        const url = URL.createObjectURL(file);
+        preview.src = url;
+        preview.classList.add('visible');
+      } else {
+        preview.classList.remove('visible');
+      }
+    });
+
+    /* ---- Stepper click navigation (done steps) ---- */
+    document.getElementById('ent-stepper').addEventListener('click', (e) => {
+      const stepEl = e.target.closest('.ent-step.done');
+      if (!stepEl) return;
+      const steps = Array.from(document.querySelectorAll('.ent-step'));
+      const idx = steps.indexOf(stepEl);
+      if (idx >= 0 && idx < ENT_STEPS.length) {
+        showPanel(ENT_STEPS[idx]);
+      }
+    });
+
     /* ---- Init ---- */
     renderEntStepper('infos');
 
@@ -382,7 +432,8 @@
       const sector = document.getElementById('ent-sector').value.trim();
       const context = document.getElementById('ent-context').value.trim();
       const needs = document.getElementById('ent-needs').value.trim();
-      const logo = document.getElementById('ent-logo').value.trim();
+      const logoFile = document.getElementById('ent-logo').files[0];
+      const logoName = logoFile ? logoFile.name : '';
 
       if (!name) { showToast('Le nom est obligatoire'); return; }
       if (!sector) { showToast('Le secteur est obligatoire'); return; }
@@ -390,7 +441,7 @@
 
       postState({
         step: 'synthese',
-        enterprise_data: { name, sector, context, needs, logo },
+        enterprise_data: { name, sector, context, needs, logo: logoName },
         enterprise_infos_validated: true
       });
 
@@ -406,11 +457,21 @@
       pollForSynthese();
     });
 
-    /* ---- Poll for synthèse from Claude ---- */
+    /* ---- Poll for synthèse from Claude (timeout 30s) ---- */
     let _synthPoll = null;
+    let _synthStart = 0;
     function pollForSynthese() {
       if (_synthPoll) clearInterval(_synthPoll);
+      _synthStart = Date.now();
       _synthPoll = setInterval(() => {
+        if (Date.now() - _synthStart > 30000) {
+          clearInterval(_synthPoll);
+          _synthPoll = null;
+          const display = document.getElementById('synthese-display');
+          display.className = 'synthese-box';
+          display.innerHTML = '<div class="timeout-fallback"><p>La génération prend plus de temps que prévu.</p><button class="btn btn-secondary" onclick="pollForSynthese()"><span class="material-symbols-rounded">refresh</span> Réessayer</button></div>';
+          return;
+        }
         getState().then(state => {
           if (state.enterprise_synthese) {
             clearInterval(_synthPoll);
@@ -451,24 +512,27 @@
       showPanel('branding');
     });
 
+    let _isEditingSynthese = false;
     document.getElementById('btn-edit-synthese').addEventListener('click', () => {
       const display = document.getElementById('synthese-display');
       const editContainer = document.getElementById('synthese-edit-container');
       const editArea = document.getElementById('synthese-edit');
-      editArea.value = display.textContent;
-      display.style.display = 'none';
-      editContainer.style.display = 'block';
-      editArea.focus();
-      // Change button to "Appliquer"
       const btn = document.getElementById('btn-edit-synthese');
-      btn.innerHTML = '<span class="material-symbols-rounded">check</span> Appliquer';
-      btn.onclick = () => {
+
+      if (!_isEditingSynthese) {
+        editArea.value = display.textContent;
+        display.style.display = 'none';
+        editContainer.style.display = 'block';
+        editArea.focus();
+        btn.innerHTML = '<span class="material-symbols-rounded">check</span> Appliquer';
+        _isEditingSynthese = true;
+      } else {
         display.textContent = editArea.value;
         display.style.display = 'block';
         editContainer.style.display = 'none';
         btn.innerHTML = '<span class="material-symbols-rounded">edit</span> Modifier';
-        btn.onclick = null; // reset to original handler via re-render
-      };
+        _isEditingSynthese = false;
+      }
     });
 
     document.getElementById('btn-back-infos').addEventListener('click', () => {
@@ -518,11 +582,19 @@
     }
 
     let _catPoll = null;
+    let _catStart = 0;
     function pollForCatalogue() {
       if (_catPoll) clearInterval(_catPoll);
+      _catStart = Date.now();
       const list = document.getElementById('theme-list');
       list.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Chargement des thèmes...</div>';
       _catPoll = setInterval(() => {
+        if (Date.now() - _catStart > 30000) {
+          clearInterval(_catPoll);
+          _catPoll = null;
+          list.innerHTML = '<div class="timeout-fallback"><p>Le catalogue met du temps à charger.</p><button class="btn btn-secondary" onclick="pollForCatalogue()"><span class="material-symbols-rounded">refresh</span> Réessayer</button></div>';
+          return;
+        }
         getState().then(state => {
           if (state.theme_catalogue) {
             clearInterval(_catPoll);
@@ -577,9 +649,18 @@
     });
 
     let _palPoll = null;
+    let _palStart = 0;
     function pollForPalette() {
       if (_palPoll) clearInterval(_palPoll);
+      _palStart = Date.now();
       _palPoll = setInterval(() => {
+        if (Date.now() - _palStart > 30000) {
+          clearInterval(_palPoll);
+          _palPoll = null;
+          const result = document.getElementById('palette-result');
+          result.innerHTML = '<div class="timeout-fallback"><p>La génération prend plus de temps que prévu.</p><button class="btn btn-secondary" onclick="document.getElementById(\'btn-generate-palette\').click()"><span class="material-symbols-rounded">refresh</span> Réessayer</button></div>';
+          return;
+        }
         getState().then(state => {
           if (state.tailored_palette) {
             clearInterval(_palPoll);

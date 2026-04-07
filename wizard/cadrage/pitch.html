@@ -36,8 +36,8 @@
       <p class="section-desc">Le nom et la langue de votre future application.</p>
       <div class="field-row">
         <div class="field">
-          <label for="app-name">Nom de l'application</label>
-          <input type="text" id="app-name" placeholder="Ex : CRM FilmPro, GestPro...">
+          <label for="app-name">Nom de l'application <span class="required">*</span></label>
+          <input type="text" id="app-name" placeholder="Ex : CRM FilmPro, GestPro..." autofocus>
         </div>
         <div class="field">
           <label for="app-locale">Langue</label>
@@ -61,7 +61,7 @@
       </div>
       <p class="section-desc">Quel besoin cette application doit-elle couvrir ?</p>
       <div class="field">
-        <label for="problem">Problème principal à résoudre</label>
+        <label for="problem">Problème principal à résoudre <span class="required">*</span></label>
         <textarea id="problem" placeholder="Décrivez la douleur principale des utilisateurs..."></textarea>
       </div>
       <div class="field">
@@ -88,8 +88,7 @@
       </button>
     </div>
 
-    <div class="actions">
-      <div></div>
+    <div class="actions" style="justify-content:flex-end;">
       <button class="btn btn-primary" id="btn-next">
         Suivant
         <span class="material-symbols-rounded">arrow_forward</span>
@@ -228,6 +227,8 @@
       if (data.user_profiles.length === 0) { showToast('Ajoutez au moins un profil utilisateur'); return; }
       goNext('pitch', { pitch_data: data, pitch_validated: true });
     });
+
+    setupEnterSubmit('btn-next');
   </script>
 
 </body>

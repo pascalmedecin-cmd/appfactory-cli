@@ -60,7 +60,7 @@
       font: 400 13px/1.55 var(--font);
       padding: 6px 10px;
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--radius-sm);
       background: var(--bg);
     }
     .add-field-row input { flex: 1; }
@@ -189,7 +189,7 @@
               <select id="new-field-type-${ei}">
                 ${FIELD_TYPES.map(t => `<option value="${t}">${t}</option>`).join('')}
               </select>
-              <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="addField(${ei})">+</button>
+              <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="addField(${ei})"><span class="material-symbols-rounded" style="font-size:14px;">add</span> Ajouter</button>
             </div>
             ${entity.relations && entity.relations.length > 0 ? `
               <h4 style="margin-top:16px;font-size:13px;font-weight:600;color:var(--text-muted);text-transform:uppercase;">Relations</h4>
@@ -206,7 +206,7 @@
                 </div>
               `).join('')}
             ` : ''}
-            <button class="btn btn-secondary" style="margin-top:8px;padding:6px 12px;font-size:12px;" onclick="addRelation(${ei})">+ Relation</button>
+            <button class="btn btn-secondary" style="margin-top:8px;padding:6px 12px;font-size:12px;" onclick="addRelation(${ei})"><span class="material-symbols-rounded" style="font-size:14px;">link</span> Ajouter une relation</button>
           </div>
         `;
         container.appendChild(card);
@@ -253,16 +253,25 @@
 
     // Claude injects proposed entities
     window.injectEntities = function(data) {
+      if (_entitiesTimeout) { clearTimeout(_entitiesTimeout); _entitiesTimeout = null; }
       entities = data;
       renderEntities();
       showToast('Schéma proposé par Claude — modifiez selon vos besoins');
     };
 
-    // Load existing data
+    // Load existing data or start timeout
+    let _entitiesTimeout = null;
     getState().then(state => {
       if (state.entities_data) {
         entities = state.entities_data;
         renderEntities();
+      } else {
+        _entitiesTimeout = setTimeout(() => {
+          const waiting = document.getElementById('waiting');
+          if (waiting && waiting.style.display !== 'none') {
+            waiting.innerHTML = '<div class="timeout-fallback"><p>Claude prend plus de temps que prévu.</p><button class="btn btn-secondary" onclick="entities=[{name:\'entite_1\',label:\'Entité 1\',fields:[],relations:[]}];renderEntities();"><span class="material-symbols-rounded">add</span> Créer manuellement</button></div>';
+          }
+        }, 15000);
       }
     });
 
@@ -271,12 +280,16 @@
       renderEntities();
     });
 
-    document.getElementById('btn-prev').addEventListener('click', () => goPrev('entities'));
+    document.getElementById('btn-prev').addEventListener('click', () => {
+      goPrev('entities', entities.length > 0 ? { entities_data: entities } : undefined);
+    });
 
     document.getElementById('btn-next').addEventListener('click', () => {
       if (entities.length === 0) { showToast('Ajoutez au moins une entité'); return; }
       goNext('entities', { entities_data: entities, entities_validated: true });
     });
+
+    setupEnterSubmit('btn-next');
   </script>
 
 </body>

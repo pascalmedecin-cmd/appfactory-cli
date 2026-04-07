@@ -90,12 +90,14 @@ function goNext(currentStep, data) {
   }
 }
 
-/** Navigate to previous step */
-function goPrev(currentStep) {
+/** Navigate to previous step (auto-saves current form data) */
+function goPrev(currentStep, currentData) {
   const idx = STEPS.indexOf(currentStep);
   if (idx > 0) {
     const prev = STEPS[idx - 1];
-    postState({ step: prev }).then(() => {
+    const payload = { step: prev };
+    if (currentData) Object.assign(payload, currentData);
+    postState(payload).then(() => {
       window.location.href = STEP_PAGES[prev];
     });
   }
@@ -116,9 +118,38 @@ function loadEnterpriseLogo() {
   });
 }
 
-/** Init page: render stepper + load enterprise logo + start polling */
+/** Make done steps clickable for back-navigation */
+function setupStepperNavigation() {
+  const container = document.getElementById('stepper');
+  if (!container) return;
+  container.addEventListener('click', (e) => {
+    const stepEl = e.target.closest('.step-item.done');
+    if (!stepEl) return;
+    const idx = Array.from(container.querySelectorAll('.step-item')).indexOf(stepEl);
+    if (idx >= 0 && idx < STEPS.length) {
+      const target = STEPS[idx];
+      postState({ step: target }).then(() => {
+        window.location.href = STEP_PAGES[target];
+      });
+    }
+  });
+}
+
+/** Submit form on Enter key (if not in a textarea) */
+function setupEnterSubmit(btnId) {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      const btn = document.getElementById(btnId);
+      if (btn && !btn.disabled) btn.click();
+    }
+  });
+}
+
+/** Init page: render stepper + load enterprise logo + start polling + stepper nav */
 function initPage(step) {
   renderStepper(step);
   loadEnterpriseLogo();
   startPolling();
+  setupStepperNavigation();
 }

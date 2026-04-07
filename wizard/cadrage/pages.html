@@ -132,7 +132,7 @@
         <div class="metrics-area" id="metrics-area"></div>
         <div class="add-metric-row">
           <input type="text" id="new-metric" placeholder="Ex : Contacts ce mois, Pipeline en cours...">
-          <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="addMetric()">+</button>
+          <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="addMetric()"><span class="material-symbols-rounded" style="font-size:14px;">add</span> Ajouter</button>
         </div>
       </div>
 
@@ -180,7 +180,7 @@
           <div class="page-icon">${(p.label || '?')[0].toUpperCase()}</div>
           <div class="page-info">
             <div class="page-name">
-              <input type="text" value="${p.label}" style="border:none;background:none;font:600 14px/1 var(--font);color:var(--text);padding:0;width:200px;" onchange="pages[${i}].label=this.value">
+              <input type="text" value="${p.label}" style="border:none;background:none;font:600 14px/1 var(--font);color:var(--text);padding:0;width:100%;min-width:120px;" onchange="pages[${i}].label=this.value">
             </div>
             <div class="page-features">
               ${(p.features||[]).map(f => `<span class="tag tag-type">${f}</span>`).join('')}
@@ -230,12 +230,22 @@
       items.forEach(item => {
         item.addEventListener('dragstart', e => {
           dragIdx = parseInt(item.dataset.idx);
-          item.style.opacity = '0.5';
+          item.classList.add('dragging');
         });
-        item.addEventListener('dragend', () => item.style.opacity = '1');
-        item.addEventListener('dragover', e => e.preventDefault());
+        item.addEventListener('dragend', () => {
+          item.classList.remove('dragging');
+          document.querySelectorAll('.drag-over').forEach(el => el.classList.remove('drag-over'));
+        });
+        item.addEventListener('dragover', e => {
+          e.preventDefault();
+          item.classList.add('drag-over');
+        });
+        item.addEventListener('dragleave', () => {
+          item.classList.remove('drag-over');
+        });
         item.addEventListener('drop', e => {
           e.preventDefault();
+          item.classList.remove('drag-over');
           const dropIdx = parseInt(item.dataset.idx);
           if (dragIdx !== null && dragIdx !== dropIdx) {
             const moved = pages.splice(dragIdx, 1)[0];
@@ -248,6 +258,7 @@
 
     // Claude injects proposed pages
     window.injectPages = function(data) {
+      if (_pagesTimeout) { clearTimeout(_pagesTimeout); _pagesTimeout = null; }
       if (data.pages) pages = data.pages;
       if (data.metrics) metrics = data.metrics;
       if (data.modules) {
@@ -263,7 +274,8 @@
       showToast('Navigation proposée — ajustez selon vos besoins');
     };
 
-    // Load existing data
+    // Load existing data or start timeout
+    let _pagesTimeout = null;
     getState().then(state => {
       if (state.pages_data) {
         pages = state.pages_data.pages || [];
@@ -278,10 +290,24 @@
         renderPages();
         renderMetrics();
         renderModules();
+      } else {
+        _pagesTimeout = setTimeout(() => {
+          const waiting = document.getElementById('waiting');
+          if (waiting && waiting.style.display !== 'none') {
+            waiting.innerHTML = '<div class="timeout-fallback"><p>Claude prend plus de temps que prévu.</p><button class="btn btn-secondary" onclick="window.injectPages({pages:[{label:\'Dashboard\',features:[\'vue d\\\'ensemble\']}],metrics:[],modules:{}})"><span class="material-symbols-rounded">add</span> Créer manuellement</button></div>';
+          }
+        }, 15000);
       }
     });
 
-    document.getElementById('btn-prev').addEventListener('click', () => goPrev('pages'));
+    document.getElementById('btn-prev').addEventListener('click', () => {
+      const data = {
+        pages: pages,
+        metrics: metrics,
+        modules: Object.fromEntries(Object.entries(modules).map(([k, v]) => [k, v.enabled]))
+      };
+      goPrev('pages', { pages_data: data });
+    });
 
     document.getElementById('btn-next').addEventListener('click', () => {
       if (pages.length === 0) { showToast('Ajoutez au moins une page'); return; }
@@ -292,6 +318,8 @@
       };
       goNext('pages', { pages_data: data, pages_validated: true });
     });
+
+    setupEnterSubmit('btn-next');
   </script>
 
 </body>
