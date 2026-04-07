@@ -301,6 +301,6 @@ export async function GET(event: RequestEvent) {
 		message: `${totalImported} signal/signaux importé(s)`,
 		zefix: { imported: zefix.imported, skipped: zefix.skipped },
 		simap: { imported: simap.imported, skipped: simap.skipped },
-		errors: totalErrors,
+		errors: totalErrors.length,
 	});
 }

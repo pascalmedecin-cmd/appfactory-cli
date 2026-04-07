@@ -1,6 +1,6 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
-import { createSupabaseServerClient } from '$lib/server/supabase';
+import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { timingSafeEqual } from 'crypto';
 
 function verifyCronSecret(authHeader: string | null): boolean {
@@ -25,7 +25,7 @@ export async function GET(event: RequestEvent) {
 		return json({ error: 'Non autorise' }, { status: 401 });
 	}
 
-	const supabase = createSupabaseServerClient(event.cookies);
+	const supabase = createSupabaseServiceClient();
 	const now = new Date().toISOString();
 
 	// Charger les recherches avec alerte active
