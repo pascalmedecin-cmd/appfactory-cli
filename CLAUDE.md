@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-07
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Audit UX (ux-guide) + Refactoring UI sur les 2 wizards (cadrage 5 pages + entreprise). 37 corrections appliquees : WCAG contraste, required indicators, polling timeout 30s, stepper cliquable, radio auth, drag feedback, confirmation recap, responsive, auto-save retour, Enter submit. Score Refactoring UI : 6.5 → ~8/10. Valide par Pascal dans le navigateur.
+**Session precedente :** Audit UX/UI CRM FilmPro (6 pages + 7 composants). Dual audit refactoring-ui + ux-guide. Corrections : accents FR dans 7 fichiers, empty states Contacts/Entreprises/Prospection/Signaux, onboarding Dashboard (3 etapes + suggestions activite), icone Pipeline conversion_path, confirmations destructives, logo sidebar logoWhite, header page title. Score Refactoring UI : 6 → ~8/10. Deploy prod valide.
 
 ---
 
@@ -183,6 +183,20 @@ Tester le workflow complet /start → /cadrage → /generate → /deploy sur un 
 **En attente :**
 - Credentials Zefix (email envoye a zefix@bj.admin.ch)
 - Evaluation Agent Teams sur les autres projets Claude (prompt prepare, session separee)
+- Env vars Vercel : configurer pour preview (actuellement production only) pour pouvoir tester les deploys preview
+
+**Decisions session 2026-04-07 (5e session) :**
+- Audit dual refactoring-ui + ux-guide sur CRM FilmPro (6 pages, 7 composants)
+- Corrections P0 : accents FR dans 7 fichiers (config, pipeline, signaux, prospection, LeadSlideOut, ImportModal, dashboard)
+- Corrections P0 : empty states avec CTA sur Contacts et Entreprises (composant EmptyState existant)
+- Corrections P1 : dashboard onboarding « Pour demarrer » (3 etapes) + suggestions activite quand vide
+- Corrections P1 : icone Pipeline filter_list → conversion_path (sidebar + stats cards)
+- Corrections P1 : confirmation avant archivage contact, suppression entreprise, marquer perdu
+- Corrections P1 : prospection/signaux vides = 2 blocs explicatifs (fonctionnalite + alertes automatiques)
+- Corrections P2 : pagination DataTable icones Material, sidebar deconnexion contraste white/40 → white/60
+- Corrections P2 : header affiche nom page courante, logo sidebar utilise logoWhite sur fond dark
+- Score Refactoring UI : 6 → ~8/10
+- Deploy prod valide dans le navigateur (commit 8819892)
 
 **Decisions session 2026-04-07 (4e session) :**
 - Audit dual ux-guide + refactoring-ui sur les 2 wizards (6 pages HTML total)
