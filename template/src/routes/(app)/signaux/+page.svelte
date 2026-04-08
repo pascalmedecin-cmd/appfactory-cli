@@ -213,7 +213,7 @@
 		<div class="flex items-center justify-between">
 			<div>
 				<h1 class="text-2xl font-bold text-text">Signaux d'affaires</h1>
-				<p class="text-sm text-text-muted">{filteredSignaux.length} signal{filteredSignaux.length > 1 ? 'ux' : ''}</p>
+				<p class="text-sm text-text-muted">{filteredSignaux.length} {filteredSignaux.length > 1 ? 'signaux' : 'signal'}</p>
 			</div>
 			<div class="flex items-center gap-2">
 				{#if data.signaux.length > 0}

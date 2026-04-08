@@ -219,7 +219,7 @@ async function importSimap(
 			const title = translate(project.title);
 			const procOffice = translate(project.procOfficeName);
 			const addr = project.orderAddress;
-			const cantonCode = cantonToLead(addr?.canton);
+			const cantonCode = cantonToLead(addr?.canton) !== 'Autre' ? cantonToLead(addr?.canton) : canton;
 			const city = addr?.city ? translate(addr.city as Translation) : '';
 
 			const description = [

@@ -43,10 +43,19 @@
 
 	const entreprises = $derived((data as any).entreprises as Entreprise[] ?? []);
 
+	function normalizeName(name: string): string {
+		return name.toLowerCase().trim()
+			.replace(/\s+(sa|sàrl|sarl|gmbh|ag|s\.a\.|s\.à\.r\.l\.)$/i, '')
+			.replace(/[^a-zà-ü0-9]/g, '');
+	}
+
 	const filteredSuggestions = $derived.by(() => {
 		if (!entreprise_nom || entreprise_nom.length < 2) return [];
-		const q = entreprise_nom.toLowerCase();
-		return entreprises.filter(e => e.raison_sociale.toLowerCase().includes(q)).slice(0, 8);
+		const qNorm = normalizeName(entreprise_nom);
+		return entreprises.filter(e => {
+			const nameNorm = normalizeName(e.raison_sociale);
+			return nameNorm.includes(qNorm) || qNorm.includes(nameNorm);
+		}).slice(0, 8);
 	});
 
 	function selectEntreprise(e: Entreprise) {
