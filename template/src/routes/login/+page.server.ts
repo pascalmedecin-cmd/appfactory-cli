@@ -1,19 +1,7 @@
 import { fail } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { isEmailAllowed, parseEnvList } from '$lib/server/auth';
 import type { Actions } from './$types';
-
-function isAllowedDomain(email: string): boolean {
-	const allowedDomains = env.ALLOWED_DOMAINS?.split(',').map((d) => d.trim().toLowerCase()).filter(Boolean) ?? [];
-	const allowedEmails = env.ALLOWED_EMAILS?.split(',').map((e) => e.trim().toLowerCase()).filter(Boolean) ?? [];
-
-	const emailLower = email.toLowerCase();
-	if (allowedEmails.includes(emailLower)) return true;
-
-	const domain = emailLower.split('@')[1];
-	if (domain && allowedDomains.includes(domain)) return true;
-
-	return false;
-}
 
 export const actions: Actions = {
 	magiclink: async ({ request }) => {
@@ -24,7 +12,7 @@ export const actions: Actions = {
 			return fail(400, { error: 'Adresse email requise.' });
 		}
 
-		if (!isAllowedDomain(email)) {
+		if (!isEmailAllowed(email, parseEnvList(env.ALLOWED_DOMAINS), parseEnvList(env.ALLOWED_EMAILS))) {
 			return fail(403, { error: 'Seules les adresses @filmpro.ch sont acceptées.' });
 		}
 

@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-08
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Migration auth + PWA + responsive. Projet Vercel renomme template→filmpro-crm (URL filmpro-crm.vercel.app). Auth Google OAuth remplacee par magic link @filmpro.ch : validation domaine serveur (form action), envoi OTP client (PKCE), rate limit 429 gere. ALLOWED_DOMAINS=filmpro.ch + ALLOWED_EMAILS=pascal+antoine@filmpro.ch configures Vercel prod. Email provider Supabase reactive, Google OAuth desactive. PWA : manifest.webmanifest, icones 192/512/apple-touch-icon, meta theme-color/apple-mobile-web-app-capable. 13 grilles formulaires rendues responsives (grid-cols-1 md:grid-cols-2). Page aide mise a jour (magic link). 113 tests, deploy prod valide.
+**Session precedente :** Icones PWA Logo FP + test securite auth. Icones PWA remplacees par Logo FP complet (192/512/apple-touch-icon). Logique isEmailAllowed extraite dans $lib/server/auth.ts (etait dupliquee hooks + login). 16 tests auth (7 refus : hors domaine, sous-domaine, domaine similaire, vide, undefined, aucune config, email non liste). RISQUE OUVERT ferme. Session Supabase : duree = 0 (jamais), deja configure. 129 tests, 0 regression.
 
 ---
 
@@ -133,8 +133,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Zefix REST** : credentials configures (local .env + Vercel prod/preview), compte actif depuis 2026-04-08
 - **search.ch** : cle API configuree en local (.env) + Vercel prod
 - **Securite** : magic link @filmpro.ch (validation domaine serveur, Google OAuth desactive, email provider active), ALLOWED_DOMAINS + ALLOWED_EMAILS env vars, validation Zod sur toutes les form actions (19 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
-- **RISQUE OUVERT** : pas de test automatise de refus pour email non @filmpro.ch sur la form action magiclink
-- **Tests** : Vitest (113 tests : scoring + 19/19 schemas + validation + extractForm + API sparql/helpers) + Playwright (5 tests e2e : navigation + auth redirect)
+- **Tests** : Vitest (129 tests : scoring + 19/19 schemas + validation + extractForm + API sparql/helpers + 16 auth email) + Playwright (5 tests e2e : navigation + auth redirect)
 - **Cron** : `/api/cron/signaux` quotidien 6h (veille Zefix+SIMAP) + `/api/cron/alertes` quotidien 7h, securises par CRON_SECRET (configure Vercel prod), service role client (bypass RLS)
 - **SUPABASE_SERVICE_ROLE_KEY** : configuree local .env + Vercel prod (preview non configure — projet sans repo Git lie)
 
@@ -174,16 +173,22 @@ Fichiers cles :
 
 ## OBJECTIF PROCHAINE SESSION
 
-Tester magic link (rate limit expire) + responsive mobile sur telephone :
-- Valider connexion magic link pascal@filmpro.ch (attendre expiration rate limit Supabase)
-- Tester PWA : ajouter a l'ecran d'accueil, verifier icone et theme-color
+Tester magic link + responsive mobile sur telephone :
+- Valider connexion magic link pascal@filmpro.ch (rate limit Supabase expire)
+- Tester PWA : ajouter a l'ecran d'accueil, verifier nouvelle icone Logo FP et theme-color
 - Tester responsive : formulaires, sidebar, navigation sur mobile reel
-- Ajouter test automatise de refus email non @filmpro.ch (RISQUE OUVERT)
+- Deploy prod avec nouvelles icones + auth refactor
 
 **Aussi en attente :**
 - Workflow complet /start → /cadrage → /generate → /deploy (reporte)
 - Env vars Vercel preview SUPABASE_SERVICE_ROLE_KEY : a configurer si besoin (bloque par absence de repo Git lie sur Vercel)
-- Icone PWA simplifiee (3 carres seuls, sans texte) pour meilleure lisibilite mobile
+
+**Decisions session 2026-04-08 (11e session) :**
+- Icones PWA remplacees par Logo FP complet (au lieu de 3 carres seuls)
+- Logique isEmailAllowed extraite dans $lib/server/auth.ts (dedup hooks + login)
+- 16 tests auth ajoutes dont 7 tests de refus (RISQUE OUVERT ferme)
+- Session Supabase : duree infinie (time-box=0, inactivity=0), deja configure par defaut
+- Decision : session permanente acceptable pour CRM prive 2 utilisateurs (pas de relogin force)
 
 **Decisions session 2026-04-08 (10e session) :**
 - Projet Vercel renomme template → filmpro-crm (URL filmpro-crm.vercel.app, domaine custom abandonne)
