@@ -304,7 +304,7 @@ export async function GET(event: RequestEvent) {
 	}
 
 	return json({
-		message: `${totalImported} signal/signaux importé(s)`,
+		message: `${totalImported} ${totalImported > 1 ? 'signaux importés' : 'signal importé'}`,
 		zefix: { imported: zefix.imported, skipped: zefix.skipped },
 		simap: { imported: simap.imported, skipped: simap.skipped },
 		errors: totalErrors.length,

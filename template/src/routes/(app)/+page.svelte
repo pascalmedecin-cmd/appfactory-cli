@@ -43,7 +43,7 @@
 			<span class="material-symbols-outlined text-[24px] text-primary">radar</span>
 			<div class="flex-1">
 				<p class="text-sm font-semibold text-text">
-					{data.stats.signaux} signal{data.stats.signaux > 1 ? 'ux' : ''} d'affaires à traiter
+					{data.stats.signaux} {data.stats.signaux > 1 ? 'signaux' : 'signal'} d'affaires à traiter
 				</p>
 				<p class="text-xs text-text-muted">
 					Appels d'offres, permis, créations d'entreprises — à analyser ou convertir en opportunité

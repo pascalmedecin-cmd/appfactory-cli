@@ -375,7 +375,7 @@
 							batchDeleting = false;
 							batchDeleteConfirm = false;
 							if (result.type === 'success') {
-								toasts.success(`${selectedIds.size} signal/signaux supprimé(s)`);
+								toasts.success(`${selectedIds.size} ${selectedIds.size > 1 ? 'signaux supprimés' : 'signal supprimé'}`);
 								exitSelectMode();
 							} else {
 								toasts.error('Erreur lors de la suppression');
