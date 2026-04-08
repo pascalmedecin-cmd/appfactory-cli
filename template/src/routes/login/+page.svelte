@@ -1,30 +1,45 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { createSupabaseBrowserClient } from '$lib/supabase';
 	import { config } from '$lib/config';
+	import type { ActionData } from './$types';
+
+	let { form }: { form: ActionData } = $props();
 
 	const supabase = createSupabaseBrowserClient();
 	const bgImage = 'loginBackground' in config.branding ? (config.branding as Record<string, unknown>).loginBackground as string : null;
 
-	// Detecter erreur d'acces non autorise
+	let email = $state('');
 	let loginError = $state('');
+	let magicLinkSent = $state(false);
+	let loading = $state(false);
+
+	// Detecter erreur d'acces non autorise via query param
 	if (typeof window !== 'undefined') {
 		const params = new URLSearchParams(window.location.search);
 		if (params.get('error') === 'unauthorized') {
-			loginError = 'Votre compte n\'est pas autorise a acceder a cette application. Contactez l\'administrateur.';
+			loginError = 'Accès réservé aux comptes @filmpro.ch. Contactez l\'administrateur.';
 		}
 	}
 
-	async function signInWithGoogle() {
-		loginError = '';
-		const { error } = await supabase.auth.signInWithOAuth({
-			provider: 'google',
+	// Quand le serveur valide le domaine, envoyer le magic link cote client (PKCE)
+	async function sendMagicLink(validatedEmail: string) {
+		const { error } = await supabase.auth.signInWithOtp({
+			email: validatedEmail,
 			options: {
-				redirectTo: `${window.location.origin}/auth/callback`
+				emailRedirectTo: `${window.location.origin}/auth/callback`
 			}
 		});
+		loading = false;
 		if (error) {
-			loginError = 'Erreur de connexion. Veuillez reessayer.';
-			console.error('Erreur login:', error.message);
+			if (error.status === 429) {
+				loginError = 'Trop de tentatives. Réessayez plus tard.';
+			} else {
+				loginError = 'Erreur lors de l\'envoi du lien. Réessayez.';
+			}
+			console.error('Erreur magic link:', error.message);
+		} else {
+			magicLinkSent = true;
 		}
 	}
 </script>
@@ -41,30 +56,54 @@
 			{:else if config.branding.logo}
 				<img src="/{config.branding.logo}" alt="{config.app.name}" class="login-logo" />
 			{/if}
-			<p class="login-subtitle" class:text-white={bgImage} class:text-text={!bgImage}>CRM Tool</p>
+			<p class="login-subtitle" class:text-white={bgImage} class:text-text={!bgImage}>Espace professionnel</p>
 		</div>
 
-		{#if loginError}
+		{#if loginError || form?.error}
 			<div class="px-4 py-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-200 text-sm text-center">
-				{loginError}
+				{loginError || form?.error}
 			</div>
 		{/if}
 
-		<button
-			onclick={signInWithGoogle}
-			class="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg shadow-lg transition-colors cursor-pointer
-				{bgImage
-					? 'border border-white/20 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20'
-					: 'border border-border bg-surface text-text hover:bg-surface-alt'}"
-		>
-			<svg class="w-5 h-5" viewBox="0 0 24 24">
-				<path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-				<path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-				<path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-				<path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-			</svg>
-			Se connecter avec Google
-		</button>
+		{#if magicLinkSent}
+			<div class="text-center flex flex-col gap-4">
+				<div class="px-4 py-4 rounded-lg {bgImage ? 'bg-white/10 border border-white/20 text-white' : 'bg-emerald-50 border border-emerald-200 text-emerald-800'}">
+					<p class="font-medium mb-1">Lien de connexion envoyé</p>
+					<p class="text-sm opacity-80">Consultez votre boîte mail <strong>{email}</strong> et cliquez sur le lien reçu.</p>
+				</div>
+				<a href="/login" class="text-sm underline opacity-70 hover:opacity-100 {bgImage ? 'text-white' : 'text-text'}">Réessayer avec une autre adresse</a>
+			</div>
+		{:else}
+			<form method="POST" action="?/magiclink" use:enhance={() => { loading = true; loginError = ''; return async ({ result, update }) => { if (result.type === 'success' && result.data?.validated) { await sendMagicLink(result.data.email); } else { loading = false; await update(); } }; }} class="flex flex-col gap-4">
+				<div>
+					<label for="email" class="block text-sm font-medium mb-1.5 {bgImage ? 'text-white/80' : 'text-text-light'}">Adresse email professionnelle</label>
+					<input
+						id="email"
+						name="email"
+						type="email"
+						placeholder="prenom@filmpro.ch"
+						bind:value={email}
+						required
+						class="w-full px-4 py-3 rounded-lg text-sm {bgImage
+							? 'bg-white/10 border border-white/20 text-white placeholder-white/40 backdrop-blur-sm'
+							: 'bg-white border border-border text-text placeholder-text-light/50'}"
+					/>
+				</div>
+				<button
+					type="submit"
+					disabled={loading || !email}
+					class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg shadow-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
+						{bgImage
+							? 'border border-white/20 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20'
+							: 'border border-primary bg-primary text-white hover:bg-primary-dark'}"
+				>
+					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+					</svg>
+					{loading ? 'Envoi en cours...' : 'Recevoir le lien de connexion'}
+				</button>
+			</form>
+		{/if}
 	</div>
 </div>
 
@@ -123,7 +162,4 @@
 		font-family: 'Inter', system-ui, sans-serif;
 	}
 
-	.text-white-70 {
-		color: rgba(255, 255, 255, 0.7);
-	}
 </style>

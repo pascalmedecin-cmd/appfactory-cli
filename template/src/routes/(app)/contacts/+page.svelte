@@ -217,7 +217,7 @@
 				</div>
 			{/if}
 
-			<div class="grid grid-cols-2 gap-4 text-sm">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
 				{#if !selectedContact.entreprises?.raison_sociale}
 					<div>
 						<span class="text-text-muted">Fonction</span>
@@ -336,11 +336,11 @@
 		{/if}
 
 		<div class="space-y-4">
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<FormField label="Nom" bind:value={nom} required />
 				<FormField label="Prénom" bind:value={prenom} />
 			</div>
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<FormField label="Email" type="email" bind:value={email_professionnel} />
 				<FormField label="Téléphone" type="tel" bind:value={telephone} />
 			</div>

@@ -473,7 +473,7 @@
 	>
 		<div class="space-y-4">
 			<FormField label="Raison sociale" bind:value={raison_sociale} required />
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<div>
 					<label class="block text-sm font-medium text-text mb-1">Source</label>
 					<select bind:value={source} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
@@ -494,7 +494,7 @@
 					</select>
 				</div>
 			</div>
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<FormField label="Contact" bind:value={nom_contact} />
 				<FormField label="Téléphone" type="tel" bind:value={telephone} />
 			</div>
@@ -503,13 +503,13 @@
 				<FormField label="NPA" bind:value={npa} />
 				<FormField label="Localité" bind:value={localite} />
 			</div>
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<FormField label="Email" type="email" bind:value={email} />
 				<FormField label="Site web" bind:value={site_web} />
 			</div>
 			<FormField label="Secteur" bind:value={secteur_detecte} placeholder="construction, architecte..." />
 			<FormField label="Description / But social" bind:value={description} />
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<FormField label="Montant (CHF)" type="number" bind:value={montant} />
 				<FormField label="Date publication" type="date" bind:value={date_publication} />
 			</div>

@@ -84,7 +84,7 @@
 			<p class="text-xs text-text-muted mb-3">
 				Import d'entreprises depuis le registre federal (donnees ouvertes). Filtrage par canton et mots-cles dans le but social.
 			</p>
-			<div class="grid grid-cols-2 gap-3 mb-3">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
 				<div>
 					<label class="block text-sm font-medium text-text mb-1">Canton</label>
 					<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
@@ -131,7 +131,7 @@
 			<p class="text-xs text-text-muted mb-3">
 				Donnees completes : but social, capital nominal, publications FOSC. Necessite les credentials (env vars ZEFIX_USERNAME + ZEFIX_PASSWORD).
 			</p>
-			<div class="grid grid-cols-2 gap-3 mb-3">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
 				<div>
 					<label class="block text-sm font-medium text-text mb-1">Canton</label>
 					<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
@@ -178,7 +178,7 @@
 			<p class="text-xs text-text-muted mb-3">
 				Appels d'offres publics construction. Leads chauds avec budgets et delais.
 			</p>
-			<div class="grid grid-cols-2 gap-3 mb-3">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
 				<div>
 					<label class="block text-sm font-medium text-text mb-1">Canton</label>
 					<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">

@@ -126,8 +126,8 @@
 				<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">login</span> Connexion</h2>
 				<div class="aide-content">
 					<h3 class="aide-h3">Se connecter</h3>
-					<p>{config.app.name} utilise la connexion Google. Sur la page de login, cliquez <strong>Se connecter avec Google</strong> et selectionnez votre compte professionnel.</p>
-					<p>Seuls les comptes autorises par l'administrateur peuvent acceder a l'application.</p>
+					<p>Sur la page de login, entrez votre adresse <strong>@filmpro.ch</strong> et cliquez <strong>Recevoir le lien de connexion</strong>. Un email contenant un lien sécurisé vous sera envoyé.</p>
+					<p>Seules les adresses @filmpro.ch sont autorisées.</p>
 
 					<h3 class="aide-h3">Se deconnecter</h3>
 					<p>Cliquez le bouton <strong>Deconnexion</strong> en bas de la sidebar (icone logout). Sur mobile, ouvrez d'abord le menu hamburger.</p>

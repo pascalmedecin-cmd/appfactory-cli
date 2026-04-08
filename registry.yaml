@@ -10,6 +10,6 @@ entreprises:
       crm:
         nom: CRM FilmPro
         repo: appfactory
-        url: https://template-rho-three.vercel.app
+        url: https://filmpro-crm.vercel.app
         statut: production
         description: Gestion contacts, entreprises, pipeline commercial, prospection

@@ -128,7 +128,7 @@ npx supabase gen types typescript --project-id fmflvjubjtpidvxwhqab > src/lib/da
 ## 6. Deploiement
 
 - **Preview :** Push sur branche → Vercel deploy auto
-- **Production :** Push sur `main` → https://template-rho-three.vercel.app
+- **Production :** Push sur `main` → https://filmpro-crm.vercel.app
 - **Variables d'env :** PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, CRON_SECRET, SEARCH_CH_API_KEY (configurees dans Vercel)
 - **Cron :** `/api/cron/alertes` execute quotidiennement a 7h (vercel.json), securise par CRON_SECRET
 

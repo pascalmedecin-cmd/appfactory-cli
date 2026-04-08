@@ -222,7 +222,7 @@
 				</div>
 			</div>
 
-			<div class="grid grid-cols-2 gap-4 text-sm">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
 				<div>
 					<span class="text-text-muted">Secteur</span>
 					<p class="font-medium text-text">{selectedEntreprise.secteur_activite ?? '—'}</p>
@@ -384,11 +384,11 @@
 
 		<div class="space-y-4">
 			<FormField label="Raison sociale" bind:value={raison_sociale} required />
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<FormField label="Secteur d'activité" bind:value={secteur_activite} />
 				<CantonSelect bind:value={canton} />
 			</div>
-			<div class="grid grid-cols-2 gap-4">
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<FormField label="Taille estimée" bind:value={taille_estimee} placeholder="PME, ETI, GE…" />
 				<FormField label="Site web" type="url" bind:value={site_web} />
 			</div>
