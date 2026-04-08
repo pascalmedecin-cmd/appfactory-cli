@@ -1,10 +1,10 @@
 # AppFactory - CLI — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-07
+**Derniere mise a jour :** 2026-04-08
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** UX CRM 7 chantiers. Signaux : cards allegees (sans description preview), badge scoring colore (chaud/tiede/froid) sur cards + detail, slide-out restructure en sections (Acteurs/Localisation/Source/Scoring), selection multiple + suppression batch, filtrage SIMAP par mots-cles secteursCibles. Contacts : autocomplete entreprise avec creation a la volee et dedup fuzzy (normalisation nom sans SA/Sarl/GmbH), adresse exposee dans formulaire + slide-out, logo Clearbit. Entreprises : refonte DataTable → cards visuelles (logo, adresse Maps, compteur contacts, recherche), enrichissement Zefix (action serveur), creation manuelle + auto-creation depuis contacts. Cantons : composant CantonSelect.svelte reutilisable (dropdown 26 cantons, romands en premier) sur toutes les modals. Deploy prod valide (commit 344c6a9).
+**Session precedente :** Test navigateur complet + 6 bugs fixes + design premium. Tests : Signaux (cards, scoring, selection batch, suppression 60 signaux), Contacts (formulaire, autocomplete, CantonSelect 26 cantons), Entreprises (cards, enrichissement Zefix IDE CHE105952463), Dashboard (bandeau alertes, stats), cron SIMAP (58 signaux reimportes avec cantons corrects GE/VD/VS/NE/FR/JU). Bugs : typo signalux→signaux (3 endroits), {{APP_NAME}}→FilmPro CRM, canton SIMAP fallback boucle, autocomplete fuzzy client-side, pluriels toasts/API. Design premium inspire Untitled UI + SnowUI + CRM Kit : tokens ombres multi-niveaux, sidebar items arrondis 240px, stats cards icones cercles colores, badges dot+border, DataTable/Modal/SlideOut radius xl/2xl, header backdrop-blur. 113 tests, deploy prod valide (commit 603fc78).
 
 ---
 
@@ -174,18 +174,27 @@ Fichiers cles :
 
 ## OBJECTIF PROCHAINE SESSION
 
-Test utilisateur complet dans le navigateur :
-- Tester les 7 changements UX en prod (signaux, contacts, entreprises, cantons)
-- Tester enrichissement Zefix (bouton sur fiche entreprise) — compte actif depuis 08.04
-- Tester autocomplete entreprise sur page Contacts (creation, dedup fuzzy)
-- Tester selection multiple + suppression batch sur Signaux
-- Relancer cron Signaux pour valider le filtrage SIMAP (mots-cles secteur)
-- Verifier bandeau alertes dashboard avec signaux neufs reels
+Migration domaine custom :
+- Configurer le nom de domaine personnalise sur Vercel pour le CRM FilmPro
+- DNS, certificat SSL, redirection www
 
 **Aussi en attente :**
 - Workflow complet /start → /cadrage → /generate → /deploy (reporte)
 - Evaluation Agent Teams sur les autres projets Claude (prompt prepare, session separee)
 - Env vars Vercel preview SUPABASE_SERVICE_ROLE_KEY : a configurer si besoin (bloque par absence de repo Git lie sur Vercel)
+
+**Decisions session 2026-04-08 (9e session) :**
+- Test navigateur complet des 7 changements UX session 8 : tous valides en prod
+- 6 bugs corriges : typo signalux (3 endroits), {{APP_NAME}} dans app.html, canton SIMAP fallback boucle, autocomplete fuzzy normalisation client-side, pluriels toasts/API
+- Suppression batch 60 signaux corrompus (canton Autre) + reimport cron 58 signaux propres (GE/VD/VS/NE/FR/JU)
+- Enrichissement Zefix valide (IDE CHE105952463 recupere pour entreprise Film)
+- Scoring differencie apres fix canton : 10/13 (GE/VD) vs 8/13 (FR) vs 7/13 (autres)
+- Colonnes Contacts redistribuees (telephone nowrap, largeurs %)
+- Design premium inspire Untitled UI + SnowUI + CRM Kit (analyse 3 kits Figma Community)
+- Tokens app.css : ombres multi-niveaux (Untitled UI), radius 8-12px, couleurs statut raffinées, sidebar 240px
+- Composants : Badge dot+border, Sidebar items arrondis, DataTable radius xl, SlideOut/Modal shadow-2xl + border, Header backdrop-blur
+- Stats cards Dashboard : icone dans cercle colore, valeur 3xl, hover fleche
+- Deploy prod valide (commit 603fc78)
 
 **Decisions session 2026-04-07 (8e session) :**
 - 7 chantiers UX : signaux (lisibilite, scoring, filtrage SIMAP, selection batch), contacts (autocomplete entreprise, dedup fuzzy, adresse, logo), entreprises (cards, Zefix, Maps), cantons (dropdown)
