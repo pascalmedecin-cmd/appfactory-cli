@@ -33,12 +33,12 @@
 
 	<!-- Panel -->
 	<div
-		class="fixed top-0 right-0 h-full bg-white shadow-xl z-50 flex flex-col overflow-hidden w-full md:w-auto"
+		class="fixed top-0 right-0 h-full bg-white shadow-2xl z-50 flex flex-col overflow-hidden w-full md:w-auto border-l border-border/50"
 		style="max-width: 100vw; --panel-width: {width}"
 		transition:fly={{ x: 300, duration: 250 }}
 	>
-		<div class="h-(--header-height) flex items-center justify-between px-5 border-b border-border shrink-0">
-			<h2 class="font-semibold text-text">{title}</h2>
+		<div class="h-(--header-height) flex items-center justify-between px-6 border-b border-border shrink-0">
+			<h2 class="text-lg font-semibold text-text">{title}</h2>
 			<button
 				onclick={() => open = false}
 				class="text-text-muted hover:text-text cursor-pointer"
@@ -47,7 +47,7 @@
 			</button>
 		</div>
 
-		<div class="flex-1 overflow-y-auto p-5">
+		<div class="flex-1 overflow-y-auto p-6">
 			{#if children}
 				{@render children()}
 			{/if}

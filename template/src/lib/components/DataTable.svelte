@@ -93,7 +93,7 @@
 	});
 </script>
 
-<div class="bg-white rounded-lg border border-border shadow-sm">
+<div class="bg-white rounded-xl border border-border shadow-sm">
 	{#if searchable}
 		<div class="px-4 py-3 border-b border-border">
 			<input
@@ -108,7 +108,7 @@
 	<div class="overflow-x-auto">
 		<table class="w-full text-sm">
 			<thead>
-				<tr class="border-b border-border bg-surface-alt/50">
+				<tr class="border-b border-border bg-surface-alt/60">
 					{#if selectable}
 						<th class="w-10 px-4 py-2.5">
 							<input type="checkbox" checked={selectedIds.size === paged.length && paged.length > 0} onchange={toggleSelectAll} />
@@ -147,7 +147,7 @@
 				{:else}
 					{#each paged as row, i}
 						<tr
-							class="border-b border-border/50 hover:bg-surface transition-colors {onRowClick ? 'cursor-pointer' : ''}"
+							class="border-b border-border/40 hover:bg-surface-alt/50 transition-colors duration-150 {onRowClick ? 'cursor-pointer' : ''}"
 							onclick={() => onRowClick?.(row)}
 						>
 							{#if selectable}

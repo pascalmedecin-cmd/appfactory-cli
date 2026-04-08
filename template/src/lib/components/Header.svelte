@@ -13,7 +13,7 @@
 </script>
 
 <header
-	class="fixed top-0 right-0 h-(--header-height) bg-white border-b border-border flex items-center justify-between px-4 md:px-6 z-20 transition-all duration-200"
+	class="fixed top-0 right-0 h-(--header-height) bg-white/80 backdrop-blur-sm border-b border-border/80 flex items-center justify-between px-4 md:px-6 z-20 transition-all duration-200"
 	style="left: {sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)'}"
 >
 	<div class="flex items-center gap-2">

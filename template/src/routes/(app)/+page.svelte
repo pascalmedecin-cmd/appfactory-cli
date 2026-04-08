@@ -9,10 +9,10 @@
 	);
 
 	const statCards = $derived([
-		{ label: 'Contacts', value: data.stats.contacts, icon: 'contacts', href: '/contacts', color: 'text-accent' },
-		{ label: 'Entreprises', value: data.stats.entreprises, icon: 'business', href: '/entreprises', color: 'text-primary' },
-		{ label: 'Opportunités', value: data.stats.opportunites, icon: 'conversion_path', href: '/pipeline', color: 'text-success' },
-		{ label: 'Signaux neufs', value: data.stats.signaux, icon: 'notifications', href: '/signaux', color: 'text-warning' },
+		{ label: 'Contacts', value: data.stats.contacts, icon: 'contacts', href: '/contacts', iconColor: 'text-accent', iconBg: 'bg-accent/10' },
+		{ label: 'Entreprises', value: data.stats.entreprises, icon: 'business', href: '/entreprises', iconColor: 'text-primary', iconBg: 'bg-primary/10' },
+		{ label: 'Opportunités', value: data.stats.opportunites, icon: 'conversion_path', href: '/pipeline', iconColor: 'text-success', iconBg: 'bg-success-light' },
+		{ label: 'Signaux neufs', value: data.stats.signaux, icon: 'notifications', href: '/signaux', iconColor: 'text-warning', iconBg: 'bg-warning-light' },
 	]);
 
 	function formatDate(dateStr: string | null): string {
@@ -28,24 +28,26 @@
 	}
 </script>
 
-<div class="space-y-6">
+<div class="space-y-8">
 	<div>
-		<h1 class="text-2xl font-bold text-text">Dashboard</h1>
-		<p class="text-sm text-text-muted">Vue d'ensemble de votre activité</p>
+		<h1 class="text-2xl font-bold text-text tracking-tight">Dashboard</h1>
+		<p class="text-sm text-text-muted mt-1">Vue d'ensemble de votre activité</p>
 	</div>
 
 	<!-- Alertes signaux neufs -->
 	{#if data.stats.signaux > 0}
 		<a
 			href="/signaux"
-			class="flex items-center gap-3 p-4 bg-primary/5 border border-primary/15 rounded-lg hover:bg-primary/10 transition-colors"
+			class="flex items-center gap-4 p-4 bg-primary/5 border border-primary/12 rounded-xl hover:bg-primary/8 hover:shadow-sm transition-all"
 		>
-			<span class="material-symbols-outlined text-[24px] text-primary">radar</span>
+			<span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
+				<span class="material-symbols-outlined text-[22px] text-primary">radar</span>
+			</span>
 			<div class="flex-1">
 				<p class="text-sm font-semibold text-text">
 					{data.stats.signaux} {data.stats.signaux > 1 ? 'signaux' : 'signal'} d'affaires à traiter
 				</p>
-				<p class="text-xs text-text-muted">
+				<p class="text-xs text-text-muted mt-0.5">
 					Appels d'offres, permis, créations d'entreprises — à analyser ou convertir en opportunité
 				</p>
 			</div>
@@ -79,20 +81,23 @@
 		{#each statCards as card}
 			<a
 				href={card.href}
-				class="bg-white rounded-lg border border-border p-4 hover:shadow-md transition-shadow"
+				class="bg-white rounded-xl border border-border p-5 hover:shadow-md hover:border-border-strong transition-all duration-200 group"
 			>
-				<div class="flex items-center justify-between">
-					<span class="material-symbols-outlined text-[28px] {card.color}">{card.icon}</span>
-					<span class="text-2xl font-bold text-text">{card.value}</span>
+				<div class="flex items-center justify-between mb-3">
+					<span class="flex items-center justify-center w-10 h-10 rounded-lg {card.iconBg}">
+						<span class="material-symbols-outlined text-[22px] {card.iconColor}">{card.icon}</span>
+					</span>
+					<span class="material-symbols-outlined text-[16px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
 				</div>
-				<p class="mt-2 text-sm text-text-muted">{card.label}</p>
+				<p class="text-3xl font-bold text-text tracking-tight">{card.value}</p>
+				<p class="text-sm text-text-muted mt-0.5">{card.label}</p>
 			</a>
 		{/each}
 	</div>
 
 	<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 		<!-- Relances du jour -->
-		<div class="bg-white rounded-lg border border-border">
+		<div class="bg-white rounded-xl border border-border">
 			<div class="px-5 py-4 border-b border-border flex items-center justify-between">
 				<h2 class="font-semibold text-text">Relances du jour</h2>
 				{#if data.relances.length > 0}
@@ -121,7 +126,7 @@
 		</div>
 
 		<!-- Dernière activité -->
-		<div class="bg-white rounded-lg border border-border">
+		<div class="bg-white rounded-xl border border-border">
 			<div class="px-5 py-4 border-b border-border">
 				<h2 class="font-semibold text-text">Dernière activité</h2>
 			</div>
@@ -177,7 +182,7 @@
 
 	<!-- Onboarding ou raccourcis -->
 	{#if isEmpty}
-		<div class="bg-white rounded-lg border border-border p-6">
+		<div class="bg-white rounded-xl border border-border p-6">
 			<h2 class="font-semibold text-text mb-4">Pour démarrer</h2>
 			<div class="space-y-3">
 				<a href="/entreprises" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-alt transition-colors group">
@@ -208,19 +213,19 @@
 		</div>
 	{:else}
 		<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-			<a href="/contacts" class="flex items-center gap-2 px-4 py-3 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm transition-shadow">
+			<a href="/contacts" class="flex items-center gap-2.5 px-4 py-3.5 bg-white rounded-xl border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
 				<span class="material-symbols-outlined text-[18px] text-accent">person_add</span>
 				Nouveau contact
 			</a>
-			<a href="/entreprises" class="flex items-center gap-2 px-4 py-3 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm transition-shadow">
+			<a href="/entreprises" class="flex items-center gap-2.5 px-4 py-3.5 bg-white rounded-xl border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
 				<span class="material-symbols-outlined text-[18px] text-accent">domain_add</span>
 				Nouvelle entreprise
 			</a>
-			<a href="/pipeline" class="flex items-center gap-2 px-4 py-3 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm transition-shadow">
+			<a href="/pipeline" class="flex items-center gap-2.5 px-4 py-3.5 bg-white rounded-xl border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
 				<span class="material-symbols-outlined text-[18px] text-accent">add_circle</span>
 				Nouvelle opportunité
 			</a>
-			<a href="/signaux" class="flex items-center gap-2 px-4 py-3 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm transition-shadow">
+			<a href="/signaux" class="flex items-center gap-2.5 px-4 py-3.5 bg-white rounded-xl border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
 				<span class="material-symbols-outlined text-[18px] text-accent">notifications</span>
 				Voir les signaux
 			</a>
