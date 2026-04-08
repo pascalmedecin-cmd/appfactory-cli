@@ -83,14 +83,14 @@
 	}
 
 	const columns = [
-		{ key: 'nom', label: 'Nom', sortable: true },
-		{ key: 'prenom', label: 'Prénom', sortable: true },
-		{ key: 'entreprise', label: 'Entreprise', sortable: true, render: (r: Contact) => r.entreprises?.raison_sociale ?? '—' },
-		{ key: 'role_fonction', label: 'Fonction', sortable: true },
-		{ key: 'email_professionnel', label: 'Email', class: 'w-40' },
-		{ key: 'telephone', label: 'Téléphone', class: 'w-32' },
-		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-20' },
-		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-24' },
+		{ key: 'nom', label: 'Nom', sortable: true, class: 'w-[12%]' },
+		{ key: 'prenom', label: 'Prénom', sortable: true, class: 'w-[10%]' },
+		{ key: 'entreprise', label: 'Entreprise', sortable: true, class: 'w-[15%]', render: (r: Contact) => r.entreprises?.raison_sociale ?? '—' },
+		{ key: 'role_fonction', label: 'Fonction', sortable: true, class: 'w-[12%]' },
+		{ key: 'email_professionnel', label: 'Email', class: 'w-[20%]' },
+		{ key: 'telephone', label: 'Téléphone', class: 'w-[15%] whitespace-nowrap' },
+		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[6%]' },
+		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-[10%]' },
 	];
 
 	function openDetail(contact: Contact) {
