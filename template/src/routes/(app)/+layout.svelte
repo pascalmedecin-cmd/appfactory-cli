@@ -37,12 +37,12 @@
 {/if}
 
 <!-- Sidebar desktop -->
-<div class="hidden md:block">
+<div class="sidebar-desktop">
 	<Sidebar bind:collapsed={sidebarCollapsed} currentPath={page.url.pathname} />
 </div>
 
 <!-- Sidebar mobile (slide-in) -->
-<div class="md:hidden fixed top-0 left-0 z-50 transition-transform duration-200 {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}">
+<div class="sidebar-mobile {mobileMenuOpen ? 'open' : ''}">
 	<Sidebar collapsed={false} currentPath={page.url.pathname} />
 </div>
 
@@ -60,9 +60,35 @@
 <Toast />
 
 <style>
+	.sidebar-desktop {
+		display: block;
+	}
+
+	.sidebar-mobile {
+		display: none;
+	}
+
 	@media (max-width: 767px) {
 		main {
 			padding-left: 0 !important;
+		}
+
+		.sidebar-desktop {
+			display: none !important;
+		}
+
+		.sidebar-mobile {
+			display: block;
+			position: fixed;
+			top: 0;
+			left: 0;
+			z-index: 50;
+			transform: translateX(-100%);
+			transition: transform 0.2s ease;
+		}
+
+		.sidebar-mobile.open {
+			transform: translateX(0);
 		}
 	}
 </style>
