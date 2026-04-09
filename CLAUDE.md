@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-09
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Workflow end-to-end (14e session). Test complet /start → /cadrage → /generate → /deploy. 4 frictions corrigees : app.html title en dur → {{APP_NAME}}, cron signaux non supprime par scaffold, cadrage.md pages → navigation, vercel.json crons orphelins. Scaffold valide : 0 erreurs typage, 92 tests, build propre.
+**Session precedente :** Test auth mobile (15e session). Magic link + TOTP valide sur desktop (flow complet OK). Magic link mobile Safari : boucle vers login, diagnostic deploy (affichage erreur callback), test bloque par rate limit email 1h. Deploys auto GitHub→Vercel echouent sur commits sans changement dans template/ (deploy manuel OK).
 
 ---
 
@@ -276,7 +276,9 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] Tester flow complet magic link + TOTP setup sur filmpro-crm.vercel.app (attendre rate limit email expire, 1 seul essai : magic link → QR code → Google Authenticator → code 6 chiffres → connecte)
+- [ ] [BLOQUANT] Debug magic link mobile Safari : erreur callback deployee (commit 7eb9018), tester sur mobile (rate limit expire ~18h15). Lire le message d'erreur rouge sur /login puis corriger la cause racine
+- [ ] Fixer deploys auto GitHub→Vercel : commits sans changement dans template/ echouent (root directory config Vercel a verifier)
+- [ ] Auth desktop : flow complet valide ✓ (magic link + TOTP setup + Google Authenticator). Marquer 1a done apres fix mobile
 - [ ] Tester PWA : ajout ecran d'accueil, icone Logo FP, theme-color (mobile reel)
 - [ ] Tester responsive : formulaires, sidebar, navigation sur mobile reel
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet
