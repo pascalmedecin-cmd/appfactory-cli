@@ -74,7 +74,7 @@
 				<a href="/login" class="text-sm underline opacity-70 hover:opacity-100 {bgImage ? 'text-white' : 'text-text'}">Réessayer avec une autre adresse</a>
 			</div>
 		{:else}
-			<form method="POST" action="?/magiclink" use:enhance={() => { loading = true; loginError = ''; return async ({ result, update }) => { if (result.type === 'success' && result.data?.validated) { await sendMagicLink(result.data.email); } else { loading = false; await update(); } }; }} class="flex flex-col gap-4">
+			<form method="POST" action="?/magiclink" use:enhance={() => { loading = true; loginError = ''; return async ({ result, update }) => { if (result.type === 'success' && result.data?.validated) { await sendMagicLink(result.data.email as string); } else { loading = false; await update(); } }; }} class="flex flex-col gap-4">
 				<div>
 					<label for="email" class="block text-sm font-medium mb-1.5 {bgImage ? 'text-white/80' : 'text-text-light'}">Adresse email professionnelle</label>
 					<input

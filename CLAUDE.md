@@ -1,4 +1,4 @@
-# AppFactory - CLI — CLAUDE.md
+# AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
 **Derniere mise a jour :** 2026-04-08
@@ -140,10 +140,10 @@ Pilotage depuis le terminal via Claude Code skills.
 ## WORKFLOW APPFACTORY
 
 ```
-/start (terminal)
-  ├─ 1. Modifier app existante → travail direct dans le code
-  ├─ 2. Nouvelle app (entreprise existante) → /cadrage wizard HTML
-  └─ 3. Nouvelle entreprise → wizard entreprise (navigateur) → /cadrage wizard HTML
+/start (terminal) — menu standard + options projet
+  ├─ [3] Modifier app existante → travail direct dans le code
+  ├─ [4] Nouvelle app (entreprise existante) → /cadrage wizard HTML
+  └─ [5] Nouvelle entreprise → wizard entreprise (navigateur) → /cadrage wizard HTML
 
 /cadrage (wizard HTML navigateur, port 3334)
   Pitch → Entites → Pages → Regles → Recap → Valider
@@ -170,18 +170,6 @@ Fichiers cles :
 - `docs/MAINTAINER_GUIDE_DRAFT.md` — Guide mainteneur, alimente au fil du dev
 
 → Inventaire composants EN PLACE (11 composants, 6 pages, 4 API, scripts) archive dans archive/inventaire-composants.md — consulter si besoin de lister les composants existants avant d'en creer de nouveaux
-
-## OBJECTIF PROCHAINE SESSION
-
-Tester magic link + responsive mobile sur telephone :
-- Valider connexion magic link pascal@filmpro.ch (rate limit Supabase expire)
-- Tester PWA : ajouter a l'ecran d'accueil, verifier nouvelle icone Logo FP et theme-color
-- Tester responsive : formulaires, sidebar, navigation sur mobile reel
-- Deploy prod avec nouvelles icones + auth refactor
-
-**Aussi en attente :**
-- Workflow complet /start → /cadrage → /generate → /deploy (reporte)
-- Env vars Vercel preview SUPABASE_SERVICE_ROLE_KEY : a configurer si besoin (bloque par absence de repo Git lie sur Vercel)
 
 **Decisions session 2026-04-08 (11e session) :**
 - Icones PWA remplacees par Logo FP complet (au lieu de 3 carres seuls)
@@ -215,84 +203,36 @@ Tester magic link + responsive mobile sur telephone :
 - Stats cards Dashboard : icone dans cercle colore, valeur 3xl, hover fleche
 - Deploy prod valide (commit 603fc78)
 
-**Decisions session 2026-04-07 (8e session) :**
-- 7 chantiers UX : signaux (lisibilite, scoring, filtrage SIMAP, selection batch), contacts (autocomplete entreprise, dedup fuzzy, adresse, logo), entreprises (cards, Zefix, Maps), cantons (dropdown)
-- Composant CantonSelect.svelte reutilisable (26 cantons, romands en premier, optgroup)
-- Autocomplete entreprise : normalisation fuzzy (strip SA/Sarl/GmbH, lowercase, alphanum) pour dedup a la creation
-- Page Entreprises derivee des contacts (auto-creation) + creation manuelle possible
-- Logo Clearbit via `logo.clearbit.com/{domain}` (fallback initiales si pas de site_web)
-- Enrichissement Zefix : action serveur `/enrichir` (IDE, adresse, canton, description)
-- Filtrage SIMAP a l'import : ne garde que les projets matchant les 19 mots-cles `secteursCibles`
-- Suppression batch signaux : action `deleteBatch` avec validation Zod (ids comma-separated)
-- Deploy prod valide (commit 344c6a9)
+### Condensé thématique (sessions 1-8)
 
-**Decisions session 2026-04-07 (7e session) :**
-- Cron `/api/cron/signaux` : veille quotidienne 6h, Zefix (creations entreprises) + SIMAP (appels d'offres), 6 cantons romands
-- Migration BDD : colonnes source_id (dedup) + score_pertinence (scoring auto) sur signaux_affaires
-- Service role client Supabase (createSupabaseServiceClient) pour crons sans session utilisateur
-- Scoring automatique calculerScore() branche sur les signaux importes
-- Dedup sur source_officielle + source_id (unique index partiel)
-- Test reel : 59 signaux SIMAP importes, score moyen 7/13, dedup validee (2e run = 0)
-- Zefix 401 attendu (compte actif 08.04)
-- Audit securite : erreurs internes masquees en reponse, cron alertes migre vers service role
-- SUPABASE_SERVICE_ROLE_KEY : local + Vercel prod (preview bloque par absence repo Git)
-- Deploy prod valide (commits 4e0f51c + 248e37c)
+→ Détail chronologique : `archive/decisions-sessions-1-8.md`
 
-**Decisions session 2026-04-07 (6e session) :**
-- Refonte page Signaux : vue tableau → vue cards visuelles (icone par type, badge statut, date relative)
-- Modal creation allegee : 10 champs → 4 (type, description, canton, maitre d'ouvrage), champs complets en edition
-- Bouton supprimer avec confirmation (action delete + SignalDeleteSchema)
-- Bandeau explicatif permanent (veille automatique, ajout manuel)
-- Compteurs par statut cliquables (filtrage rapide)
-- Labels config.signaux.types[].label branches (corrige « Appel offres » → « Appel d'offres »)
-- Bandeau alertes signaux neufs sur dashboard (avant bandeau prospection)
-- Credentials Zefix configures : local .env + Vercel prod + Vercel preview, compte actif 08.04
-- Deploy prod valide dans le navigateur (commit 6711b6b)
+**UX / Design :**
+- 6 ecrans principaux (Dashboard, Contacts, Entreprises, Pipeline, Prospection, Signaux) + Parametres secondaire
+- Slide-out panels (liste reste visible), saisie rapide 6 champs + accordeon details
+- Design premium Untitled UI + SnowUI : ombres multi-niveaux, radius 8-12px, sidebar 240px, badges dot+border
+- Score Refactoring UI : 6 → ~8/10 (CRM) et 6.5 → ~8/10 (wizards) apres 2 audits dual
+- Empty states avec CTA, dashboard onboarding 3 etapes, confirmations destructives, pagination Material
+- CantonSelect reutilisable (26 cantons, romands en premier)
 
-**Decisions session 2026-04-07 (5e session) :**
-- Audit dual refactoring-ui + ux-guide sur CRM FilmPro (6 pages, 7 composants)
-- Corrections P0 : accents FR dans 7 fichiers (config, pipeline, signaux, prospection, LeadSlideOut, ImportModal, dashboard)
-- Corrections P0 : empty states avec CTA sur Contacts et Entreprises (composant EmptyState existant)
-- Corrections P1 : dashboard onboarding « Pour demarrer » (3 etapes) + suggestions activite quand vide
-- Corrections P1 : icone Pipeline filter_list → conversion_path (sidebar + stats cards)
-- Corrections P1 : confirmation avant archivage contact, suppression entreprise, marquer perdu
-- Corrections P1 : prospection/signaux vides = 2 blocs explicatifs (fonctionnalite + alertes automatiques)
-- Corrections P2 : pagination DataTable icones Material, sidebar deconnexion contraste white/40 → white/60
-- Corrections P2 : header affiche nom page courante, logo sidebar utilise logoWhite sur fond dark
-- Score Refactoring UI : 6 → ~8/10
-- Deploy prod valide dans le navigateur (commit 8819892)
+**Signaux / Prospection :**
+- Vue cards visuelles (icone type, badge statut, date relative), compteurs cliquables
+- Modal creation allegee 4 champs, edition complete en slide-out
+- Crons quotidiens : `/api/cron/signaux` (6h, Zefix+SIMAP) + `/api/cron/alertes` (7h)
+- Dedup source_officielle+source_id (unique index partiel), scoring 0-13 auto
+- Filtrage SIMAP sur 19 mots-cles secteursCibles, suppression batch Zod
+- Autocomplete entreprise fuzzy (strip SA/Sarl/GmbH), logo Clearbit, enrichissement Zefix `/enrichir`
 
-**Decisions session 2026-04-07 (4e session) :**
-- Audit dual ux-guide + refactoring-ui sur les 2 wizards (6 pages HTML total)
-- 37 corrections appliquees (commit 513d3c8) : WCAG contraste --text-light, required *, polling timeout 30s, stepper cliquable, radio auth provider, drag feedback, confirmation recap double-clic, responsive entreprise, auto-save retour, Enter submit, logo file picker, boutons + labellises, empty state fallback, CTA labels standardises
-- Score Refactoring UI : 6.5 → ~8/10
-- Aucune regression constatee — valide par Pascal dans le navigateur
+**Wizards :**
+- Wizard cadrage : 5 etapes HTML (pitch, entites, pages, regles, recap), serveur Python port 3334
+- Wizard entreprise : 3 etapes (infos → synthese IA → branding), serveur unifie --mode entreprise
+- Architecture : polling /api/state, injection Claude via curl, auto-navigation
+- 37 corrections WCAG appliquees (contraste, required, stepper cliquable, responsive)
 
-**Decisions session 2026-04-07 (3e session) :**
-- Launcher CLI (`start.sh`) : menu dynamique → menu fixe 5 options, ordre choisi par Pascal
-- Option 5 « Global » : travail sur regles/skills/commands cross-projets (cd ~/.claude/)
-- AppFactory (v1) renomme « AppFactory - Archive » — consultable mais exclu du menu
-
-**Decisions session 2026-04-07 (2e session) :**
-- 2 skills design installes en bibliotheque : refactoring-ui (audit visuel, scoring 0-10) + ux-guide (audit UX, review P0/P1/P2)
-- Audit conflits complet : sections Anti-AI Defaults retirees de ux-guide, bans de fonts retires de frontend-design
-- Coherence verifiee entre 4 skills design (refactoring-ui, ux-guide, frontend-design, theme-factory) : 0 conflit, 0 NEVER/forbidden
-- Principe : aucun skill ne prescrit de font ou couleur specifique — branding projet (branding/*.yaml) est le seul arbitre
-
-**Decisions session 2026-04-07 (1re session) :**
-- Wizard entreprise cree (wizard/entreprise/) : 3 etapes navigateur (infos → synthese IA → branding)
-- Header simplifie : texte blanc 24px sans cadre, AppFactory | Entreprise
-- Serveur unifie : --mode entreprise, --enterprise JSON pour contexte
-- Charte graphique exportee vers projet Enseignement (shared.css, tokens AppFactory, header noir)
-- clone-website skill recupere depuis JCodesMore/ai-website-cloner-template, stocke dans skills-library (inactif)
-- plugins-reference.md restructure : architecture 3 niveaux (globaux / bibliotheque / plugins)
-
-**Decisions session 2026-04-06 (2e session) :**
-- /start cree : point d'entree unique avec 3 chemins (modifier app / nouvelle app / nouvelle entreprise)
-- registry.yaml : registre central entreprises/apps (FilmPro + CRM pre-rempli)
-- Catalogue branding : 5 themes (_catalogue.yaml), preview HTML generee par script
-- Wizard cadrage HTML : 5 etapes (pitch, entites, pages, regles, recap), serveur Python port 3334
-- Architecture wizard : polling /api/state, injection Claude, auto-navigation entre etapes
+**Infra / Skills :**
+- registry.yaml registre central, catalogue branding 5 themes, preview HTML generee
+- Branding : aucun skill ne prescrit font/couleur — branding/*.yaml est l'arbitre unique
+- 4 skills design coherents (refactoring-ui, ux-guide, frontend-design, theme-factory) : 0 conflit
 
 **Prerequis :**
 - Aucun bloquant technique
@@ -319,3 +259,12 @@ Tester magic link + responsive mobile sur telephone :
 - Mettre a jour USER_GUIDE_DRAFT.md apres chaque feature implementee
 - Mettre a jour MAINTAINER_GUIDE_DRAFT.md apres chaque decision technique
 - Checklist fin de session : docs/USER_GUIDE_DRAFT.md et docs/MAINTAINER_GUIDE_DRAFT.md a jour ?
+
+## Prochaine session
+
+- [ ] Tester magic link + responsive mobile sur téléphone (connexion pascal@filmpro.ch, PWA icone Logo FP, responsive formulaires/sidebar/navigation)
+- [ ] Deploy prod avec nouvelles icones + auth refactor
+- [ ] Workflow complet /start → /cadrage → /generate → /deploy (reporté)
+- [ ] Env vars Vercel preview SUPABASE_SERVICE_ROLE_KEY (bloqué par absence de repo Git lié sur Vercel)
+- [ ] F10 (audit global 2026-04-09) : context.md (760 o) à la racine — vérifier si utile, sinon intégrer dans CLAUDE.md ou supprimer
+- [ ] Figma API à configurer : Personal Access Token + plugin MCP figma scope projet
