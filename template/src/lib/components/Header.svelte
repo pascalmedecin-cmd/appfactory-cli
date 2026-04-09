@@ -21,7 +21,7 @@
 		{#if onMenuToggle}
 			<button
 				onclick={onMenuToggle}
-				class="burger-mobile flex items-center justify-center w-8 h-8 rounded hover:bg-surface cursor-pointer"
+				class="md:hidden flex items-center justify-center w-8 h-8 rounded hover:bg-surface cursor-pointer"
 				aria-label="Menu"
 			>
 				<span class="material-symbols-outlined text-[22px] text-text">menu</span>
@@ -38,17 +38,9 @@
 </header>
 
 <style>
-	.burger-mobile {
-		display: none;
-	}
-
 	@media (max-width: 767px) {
 		header {
 			left: 0 !important;
-		}
-
-		.burger-mobile {
-			display: flex;
 		}
 	}
 </style>
