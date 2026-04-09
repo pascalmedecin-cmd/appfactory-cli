@@ -28,7 +28,7 @@
 <!-- Mobile overlay -->
 {#if mobileMenuOpen}
 	<button
-		class="fixed inset-0 bg-black/40 z-40 md:hidden cursor-default"
+		class="mobile-overlay"
 		onclick={() => mobileMenuOpen = false}
 		onkeydown={(e) => e.key === 'Escape' && (mobileMenuOpen = false)}
 		tabindex="-1"
@@ -36,14 +36,9 @@
 	></button>
 {/if}
 
-<!-- Sidebar desktop -->
-<div class="hidden md:block">
+<!-- Sidebar unique : desktop = static, mobile = slide-in -->
+<div class="sidebar-wrapper" class:open={mobileMenuOpen}>
 	<Sidebar bind:collapsed={sidebarCollapsed} currentPath={page.url.pathname} />
-</div>
-
-<!-- Sidebar mobile (slide-in) -->
-<div class="md:hidden fixed top-0 left-0 z-50 transition-transform duration-200 {mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}">
-	<Sidebar collapsed={false} currentPath={page.url.pathname} />
 </div>
 
 <Header user={data.user} {sidebarCollapsed} onMenuToggle={() => mobileMenuOpen = !mobileMenuOpen} pageTitle={pageTitle()} />
@@ -60,9 +55,44 @@
 <Toast />
 
 <style>
+	/* Desktop : sidebar visible en place */
+	.sidebar-wrapper {
+		display: contents;
+	}
+
+	.mobile-overlay {
+		display: none;
+	}
+
+	/* Mobile : sidebar masquée, slide-in au toggle */
 	@media (max-width: 767px) {
 		main {
 			padding-left: 0 !important;
+		}
+
+		.sidebar-wrapper {
+			display: block;
+			position: fixed;
+			top: 0;
+			left: 0;
+			z-index: 50;
+			transform: translateX(-100%);
+			transition: transform 0.2s ease;
+		}
+
+		.sidebar-wrapper.open {
+			transform: translateX(0);
+		}
+
+		.mobile-overlay {
+			display: block;
+			position: fixed;
+			inset: 0;
+			background: rgba(0, 0, 0, 0.4);
+			z-index: 40;
+			cursor: default;
+			border: none;
+			padding: 0;
 		}
 	}
 </style>
