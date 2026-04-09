@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-09
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Auth MFA TOTP (12e session). Fix callback magic link (token_hash + verifyOtp). Ajout double authentification : magic link + code TOTP 6 chiffres (Google Authenticator). Pages /auth/mfa/setup (QR code enrollment) et /auth/mfa (challenge). Enforcement AAL dans hooks.server.ts. Audit securite : 2 findings corriges (bypass facteur non verifie, allowlist routes auth). Deploy prod valide (commit 123b6ec). Rate limit Supabase email bloque sur free plan (non modifiable). Decision : TOTP gratuit natif Supabase > SMS OTP Twilio (cout + SIM swap). 129 tests, 0 regression.
+**Session precedente :** Infra Vercel (13e session). GitHub lie au projet Vercel (deploys auto sur push). 6 env vars ajoutees en Preview (ALLOWED_DOMAINS, SUPABASE_SERVICE_ROLE_KEY, CRON_SECRET, SEARCH_CH_API_KEY, PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL). context.md supprime (obsolete, 100% duplique dans CLAUDE.md). CLI Vercel mise a jour v50.42.0. Bug CLI `vercel env add preview` contourne via API Vercel.
 
 ---
 
@@ -124,14 +124,14 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## INFRA EN PLACE
 
-- **Vercel** : https://filmpro-crm.vercel.app (prod), env vars configurees (PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY)
+- **Vercel** : https://filmpro-crm.vercel.app (prod), GitHub lie (repo appfactory-cli, deploys auto), env vars configurees prod+preview (9 variables)
 - **Supabase** : projet `appfactory` (fmflvjubjtpidvxwhqab), region EU
 - **Auth** : Magic link (email OTP) + MFA TOTP via Supabase, domaine @filmpro.ch valide cote serveur (form action), PKCE cote client, callback /auth/callback, pages /auth/mfa (challenge) et /auth/mfa/setup (enrollment QR code), enforcement AAL dans hooks.server.ts
 - **Runtime** : Node.js 22.x sur Vercel
 - **Supabase CLI** : v2.84.2, projet linke (fmflvjubjtpidvxwhqab)
 - **BDD** : 10 tables PostgreSQL (+ prospect_leads, recherches_sauvegardees), FK, index, RLS (authenticated full access), types TS generes
 - **Zefix REST** : credentials configures (local .env + Vercel prod/preview), compte actif depuis 2026-04-08
-- **search.ch** : cle API configuree en local (.env) + Vercel prod
+- **search.ch** : cle API configuree en local (.env) + Vercel prod+preview
 - **Securite** : magic link @filmpro.ch + MFA TOTP (validation domaine serveur, Google OAuth desactive, email provider active), ALLOWED_DOMAINS + ALLOWED_EMAILS env vars, enforcement AAL (aal2 obligatoire si TOTP enrolle, allowlist explicite routes auth), validation Zod sur toutes les form actions (19 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
 - **Tests** : Vitest (129 tests : scoring + 19/19 schemas + validation + extractForm + API sparql/helpers + 16 auth email) + Playwright (5 tests e2e : navigation + auth redirect)
 - **Cron** : `/api/cron/signaux` quotidien 6h (veille Zefix+SIMAP) + `/api/cron/alertes` quotidien 7h, securises par CRON_SECRET (configure Vercel prod), service role client (bypass RLS)
@@ -280,6 +280,4 @@ Fichiers cles :
 - [ ] Tester PWA : ajout ecran d'accueil, icone Logo FP, theme-color (mobile reel)
 - [ ] Tester responsive : formulaires, sidebar, navigation sur mobile reel
 - [ ] Workflow complet /start → /cadrage → /generate → /deploy (reporte)
-- [ ] Env vars Vercel preview SUPABASE_SERVICE_ROLE_KEY (bloque par absence de repo Git lie sur Vercel)
-- [ ] F10 (audit global 2026-04-09) : context.md (760 o) a la racine — verifier si utile, sinon integrer dans CLAUDE.md ou supprimer
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet

@@ -1,29 +1,28 @@
-# Menu — AppFactory CLI
+# Menu — AppFactory
 
-## Actions pre-menu
+## Actions pré-menu
 
-Lire `registry.yaml` a la racine (source de verite des entreprises et apps).
+Lire `registry.yaml` à la racine (source de vérité des entreprises et apps).
 
-## Menu
+## Options projet
 
-```
-APPFACTORY — QUE VEUX-TU FAIRE ?
-=================================
-
-  [1] Modifier une app existante
-  [2] Creer une nouvelle app (entreprise existante)
-  [3] Nouveau projet entreprise from scratch
-
-Ton choix ?
-```
-
-Si le registre est vide (aucune entreprise) → proposer uniquement l'option 3.
-Si une entreprise n'a qu'une app → la preselectionner dans l'option 1.
+- **[3] Modifier une app** — Travailler sur une app existante
+- **[4] Créer une app** — Nouvelle app pour une entreprise existante
+- **[5] Nouveau projet entreprise** — From scratch
 
 ## Routage
 
-- **Option 1** : lister entreprises + apps depuis registry.yaml, demander laquelle modifier, puis demander la tache
-- **Option 2** : lister entreprises, confirmer laquelle, lancer le wizard cadrage avec contexte entreprise (`python3 wizard/cadrage/server.py --enterprise '...'`), puis `/cadrage`
-- **Option 3** : lancer le wizard entreprise (`python3 wizard/cadrage/server.py --mode entreprise`), suivre le flow complet (infos → synthese → branding → cadrage premiere app)
+### [3] Modifier une app
 
-Details complets du routage dans `/start` (commande projet) et CLAUDE.md.
+Lister entreprises + apps depuis registry.yaml, demander laquelle modifier, puis demander la tâche.
+Si une entreprise n'a qu'une app → la présélectionner.
+
+### [4] Créer une app
+
+Lister entreprises, confirmer laquelle, lancer le wizard cadrage avec contexte entreprise (`python3 wizard/cadrage/server.py --enterprise '...'`), puis `/cadrage`.
+
+### [5] Nouveau projet entreprise
+
+Lancer le wizard entreprise (`python3 wizard/cadrage/server.py --mode entreprise`), suivre le flow complet (infos → synthèse → branding → cadrage première app).
+
+Si le registre est vide (aucune entreprise) → proposer uniquement l'option 5.
