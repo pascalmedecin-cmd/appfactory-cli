@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-09
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Test auth mobile (15e session). Magic link + TOTP valide sur desktop (flow complet OK). Magic link mobile Safari : boucle vers login, diagnostic deploy (affichage erreur callback), test bloque par rate limit email 1h. Deploys auto GitHub→Vercel echouent sur commits sans changement dans template/ (deploy manuel OK).
+**Session precedente :** Infra + responsive mobile (16e session). Auth magic link mobile Safari OK (pas de bug PKCE, rate limit expire). Vercel Root Directory fixe (. → template) + skip deploys sans changement active. PWA testee OK sur iPhone. Responsive sidebar : cause racine identifiee (Tailwind v4 ne compile pas md:block), refactore en CSS scoped, deploye, a tester sur mobile.
 
 ---
 
@@ -171,6 +171,15 @@ Fichiers cles :
 
 → Inventaire composants EN PLACE (11 composants, 6 pages, 4 API, scripts) archive dans archive/inventaire-composants.md — consulter si besoin de lister les composants existants avant d'en creer de nouveaux
 
+**Decisions session 2026-04-09 (16e session) :**
+- Auth magic link mobile Safari OK : pas de bug PKCE, le rate limit email etait la seule cause du echec
+- Vercel Root Directory change de `.` a `template` (Settings > Build and Deployment)
+- Skip deployments active : commits hors template/ ne declenchent plus de build
+- PWA validee sur iPhone : icone, nom, plein ecran, theme-color OK
+- Responsive sidebar : Tailwind v4 ne compile pas `md:block` (optimise car div=block par defaut). Refactore avec CSS scoped `@media (max-width: 767px)` — single sidebar, translate-x, plus de classes Tailwind responsive pour le layout structurel
+- Decision : ne plus utiliser les classes Tailwind responsive (md:hidden, md:block) pour le layout structurel (sidebar, header, nav) — CSS scoped obligatoire
+- Node.js Vercel mis a jour automatiquement de 22.x a 24.x
+
 **Decisions session 2026-04-09 (12e session) :**
 - Auth MFA TOTP ajoute : magic link + code 6 chiffres (Google Authenticator/Authy)
 - Fix callback magic link : token_hash + verifyOtp (etait code-only, magic link ne fonctionnait pas)
@@ -276,9 +285,8 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] [BLOQUANT] Debug magic link mobile Safari : erreur callback deployee (commit 7eb9018), tester sur mobile (rate limit expire ~18h15). Lire le message d'erreur rouge sur /login puis corriger la cause racine
-- [ ] Fixer deploys auto GitHub→Vercel : commits sans changement dans template/ echouent (root directory config Vercel a verifier)
-- [ ] Auth desktop : flow complet valide ✓ (magic link + TOTP setup + Google Authenticator). Marquer 1a done apres fix mobile
-- [ ] Tester PWA : ajout ecran d'accueil, icone Logo FP, theme-color (mobile reel)
-- [ ] Tester responsive : formulaires, sidebar, navigation sur mobile reel
+- [ ] [BLOQUANT] Tester responsive sidebar mobile (commit 5f7bab7 deploye, pas encore teste sur iPhone). Si KO → debugger localement (vite preview + Playwright viewport 390x844) avant re-deploy
+- [ ] Tester responsive complet : formulaires, tableaux, slide-outs, pipeline Kanban sur mobile reel (script de test points F-O)
+- [ ] Corriger `<title>{{APP_NAME}}</title>` dans app.html — placeholder non remplace par SvelteKit
+- [ ] Verifier Node.js : Vercel en 24.x mais svelte.config.js specifie nodejs22.x — aligner
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet
