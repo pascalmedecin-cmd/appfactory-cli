@@ -1,10 +1,10 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-08
+**Derniere mise a jour :** 2026-04-09
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Icones PWA Logo FP + test securite auth. Icones PWA remplacees par Logo FP complet (192/512/apple-touch-icon). Logique isEmailAllowed extraite dans $lib/server/auth.ts (etait dupliquee hooks + login). 16 tests auth (7 refus : hors domaine, sous-domaine, domaine similaire, vide, undefined, aucune config, email non liste). RISQUE OUVERT ferme. Session Supabase : duree = 0 (jamais), deja configure. 129 tests, 0 regression.
+**Session precedente :** Auth MFA TOTP (12e session). Fix callback magic link (token_hash + verifyOtp). Ajout double authentification : magic link + code TOTP 6 chiffres (Google Authenticator). Pages /auth/mfa/setup (QR code enrollment) et /auth/mfa (challenge). Enforcement AAL dans hooks.server.ts. Audit securite : 2 findings corriges (bypass facteur non verifie, allowlist routes auth). Deploy prod valide (commit 123b6ec). Rate limit Supabase email bloque sur free plan (non modifiable). Decision : TOTP gratuit natif Supabase > SMS OTP Twilio (cout + SIM swap). 129 tests, 0 regression.
 
 ---
 
@@ -126,13 +126,13 @@ Pilotage depuis le terminal via Claude Code skills.
 
 - **Vercel** : https://filmpro-crm.vercel.app (prod), env vars configurees (PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY)
 - **Supabase** : projet `appfactory` (fmflvjubjtpidvxwhqab), region EU
-- **Auth** : Magic link (email OTP) via Supabase, domaine @filmpro.ch valide cote serveur (form action), PKCE cote client, callback /auth/callback
+- **Auth** : Magic link (email OTP) + MFA TOTP via Supabase, domaine @filmpro.ch valide cote serveur (form action), PKCE cote client, callback /auth/callback, pages /auth/mfa (challenge) et /auth/mfa/setup (enrollment QR code), enforcement AAL dans hooks.server.ts
 - **Runtime** : Node.js 22.x sur Vercel
 - **Supabase CLI** : v2.84.2, projet linke (fmflvjubjtpidvxwhqab)
 - **BDD** : 10 tables PostgreSQL (+ prospect_leads, recherches_sauvegardees), FK, index, RLS (authenticated full access), types TS generes
 - **Zefix REST** : credentials configures (local .env + Vercel prod/preview), compte actif depuis 2026-04-08
 - **search.ch** : cle API configuree en local (.env) + Vercel prod
-- **Securite** : magic link @filmpro.ch (validation domaine serveur, Google OAuth desactive, email provider active), ALLOWED_DOMAINS + ALLOWED_EMAILS env vars, validation Zod sur toutes les form actions (19 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
+- **Securite** : magic link @filmpro.ch + MFA TOTP (validation domaine serveur, Google OAuth desactive, email provider active), ALLOWED_DOMAINS + ALLOWED_EMAILS env vars, enforcement AAL (aal2 obligatoire si TOTP enrolle, allowlist explicite routes auth), validation Zod sur toutes les form actions (19 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
 - **Tests** : Vitest (129 tests : scoring + 19/19 schemas + validation + extractForm + API sparql/helpers + 16 auth email) + Playwright (5 tests e2e : navigation + auth redirect)
 - **Cron** : `/api/cron/signaux` quotidien 6h (veille Zefix+SIMAP) + `/api/cron/alertes` quotidien 7h, securises par CRON_SECRET (configure Vercel prod), service role client (bypass RLS)
 - **SUPABASE_SERVICE_ROLE_KEY** : configuree local .env + Vercel prod (preview non configure — projet sans repo Git lie)
@@ -170,6 +170,20 @@ Fichiers cles :
 - `docs/MAINTAINER_GUIDE_DRAFT.md` — Guide mainteneur, alimente au fil du dev
 
 → Inventaire composants EN PLACE (11 composants, 6 pages, 4 API, scripts) archive dans archive/inventaire-composants.md — consulter si besoin de lister les composants existants avant d'en creer de nouveaux
+
+**Decisions session 2026-04-09 (12e session) :**
+- Auth MFA TOTP ajoute : magic link + code 6 chiffres (Google Authenticator/Authy)
+- Fix callback magic link : token_hash + verifyOtp (etait code-only, magic link ne fonctionnait pas)
+- Pages /auth/mfa/setup (QR code enrollment) et /auth/mfa (challenge TOTP)
+- Enforcement AAL dans hooks.server.ts : redirect setup si pas de facteur, redirect challenge si aal1
+- Allowlist explicite routes auth (defense in depth) : /login, /auth/callback, /auth/mfa, /auth/mfa/setup
+- Filtre facteurs verified uniquement (fix bypass via facteur unverified)
+- Audit securite : 1 HIGH + 1 MEDIUM corriges, 1 LOW documente ({@html qrCode} = Supabase SDK safe)
+- Decision : TOTP > SMS OTP (gratuit natif Supabase, pas de SIM swap, pas de Twilio)
+- Decision : MFA obligatoire pour tous les utilisateurs (setup force au premier login)
+- Rate limit email Supabase free plan non modifiable (champ bloque dans dashboard)
+- Deploy prod valide (commit 123b6ec, https://filmpro-crm.vercel.app)
+- A TESTER : flow complet magic link + TOTP setup (attendre expiration rate limit email)
 
 **Decisions session 2026-04-08 (11e session) :**
 - Icones PWA remplacees par Logo FP complet (au lieu de 3 carres seuls)
@@ -262,9 +276,10 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] Tester magic link + responsive mobile sur téléphone (connexion pascal@filmpro.ch, PWA icone Logo FP, responsive formulaires/sidebar/navigation)
-- [ ] Deploy prod avec nouvelles icones + auth refactor
-- [ ] Workflow complet /start → /cadrage → /generate → /deploy (reporté)
-- [ ] Env vars Vercel preview SUPABASE_SERVICE_ROLE_KEY (bloqué par absence de repo Git lié sur Vercel)
-- [ ] F10 (audit global 2026-04-09) : context.md (760 o) à la racine — vérifier si utile, sinon intégrer dans CLAUDE.md ou supprimer
-- [ ] Figma API à configurer : Personal Access Token + plugin MCP figma scope projet
+- [ ] Tester flow complet magic link + TOTP setup sur filmpro-crm.vercel.app (attendre rate limit email expire, 1 seul essai : magic link → QR code → Google Authenticator → code 6 chiffres → connecte)
+- [ ] Tester PWA : ajout ecran d'accueil, icone Logo FP, theme-color (mobile reel)
+- [ ] Tester responsive : formulaires, sidebar, navigation sur mobile reel
+- [ ] Workflow complet /start → /cadrage → /generate → /deploy (reporte)
+- [ ] Env vars Vercel preview SUPABASE_SERVICE_ROLE_KEY (bloque par absence de repo Git lie sur Vercel)
+- [ ] F10 (audit global 2026-04-09) : context.md (760 o) a la racine — verifier si utile, sinon integrer dans CLAUDE.md ou supprimer
+- [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet
