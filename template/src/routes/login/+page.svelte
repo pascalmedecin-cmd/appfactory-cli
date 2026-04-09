@@ -19,6 +19,8 @@
 		const params = new URLSearchParams(window.location.search);
 		if (params.get('error') === 'unauthorized') {
 			loginError = 'Accès réservé aux comptes @filmpro.ch. Contactez l\'administrateur.';
+		} else if (params.get('error') === 'callback') {
+			loginError = `Erreur de connexion : ${params.get('detail') || 'inconnue'}`;
 		}
 	}
 

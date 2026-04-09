@@ -10,13 +10,13 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		const { error } = await locals.supabase.auth.verifyOtp({ token_hash, type });
 		if (error) {
 			console.error('Auth callback error (OTP):', error.message);
-			throw redirect(303, '/login');
+			throw redirect(303, `/login?error=callback&detail=${encodeURIComponent(error.message)}`);
 		}
 	} else if (code) {
 		const { error } = await locals.supabase.auth.exchangeCodeForSession(code);
 		if (error) {
 			console.error('Auth callback error:', error.message);
-			throw redirect(303, '/login');
+			throw redirect(303, `/login?error=callback&detail=${encodeURIComponent(error.message)}`);
 		}
 	}
 
