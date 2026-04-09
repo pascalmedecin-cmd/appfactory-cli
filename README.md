@@ -1,4 +1,4 @@
-# AppFactory - CLI
+# AppFactory
 
 Workflow CLI premium pour generer des applications metier de qualite production depuis le terminal.
 

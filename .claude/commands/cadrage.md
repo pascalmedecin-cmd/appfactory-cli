@@ -104,7 +104,7 @@ entities:
         type: [many-to-one|one-to-many|many-to-many]
         label: [Label relation]
 
-pages:
+navigation:
   primary:
     - href: /
       label: Dashboard

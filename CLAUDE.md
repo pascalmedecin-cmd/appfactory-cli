@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-09
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Infra Vercel (13e session). GitHub lie au projet Vercel (deploys auto sur push). 6 env vars ajoutees en Preview (ALLOWED_DOMAINS, SUPABASE_SERVICE_ROLE_KEY, CRON_SECRET, SEARCH_CH_API_KEY, PUBLIC_SUPABASE_ANON_KEY, PUBLIC_SUPABASE_URL). context.md supprime (obsolete, 100% duplique dans CLAUDE.md). CLI Vercel mise a jour v50.42.0. Bug CLI `vercel env add preview` contourne via API Vercel.
+**Session precedente :** Workflow end-to-end (14e session). Test complet /start → /cadrage → /generate → /deploy. 4 frictions corrigees : app.html title en dur → {{APP_NAME}}, cron signaux non supprime par scaffold, cadrage.md pages → navigation, vercel.json crons orphelins. Scaffold valide : 0 erreurs typage, 92 tests, build propre.
 
 ---
 
@@ -279,5 +279,4 @@ Fichiers cles :
 - [ ] Tester flow complet magic link + TOTP setup sur filmpro-crm.vercel.app (attendre rate limit email expire, 1 seul essai : magic link → QR code → Google Authenticator → code 6 chiffres → connecte)
 - [ ] Tester PWA : ajout ecran d'accueil, icone Logo FP, theme-color (mobile reel)
 - [ ] Tester responsive : formulaires, sidebar, navigation sur mobile reel
-- [ ] Workflow complet /start → /cadrage → /generate → /deploy (reporte)
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet

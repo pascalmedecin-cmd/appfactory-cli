@@ -109,7 +109,7 @@ const removals: { condition: boolean; paths: string[]; label: string }[] = [
 	},
 	{
 		condition: !config.signaux,
-		paths: ['src/routes/(app)/signaux'],
+		paths: ['src/routes/(app)/signaux', 'src/routes/api/cron/signaux'],
 		label: 'signaux',
 	},
 	{
@@ -137,6 +137,24 @@ const pkgPath = resolve(outputDir, 'package.json');
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
 pkg.name = appSlug;
 writeFileSync(pkgPath, JSON.stringify(pkg, null, '\t') + '\n', 'utf-8');
+
+// --- Step 6b : Clean vercel.json crons for removed modules ---
+const vercelJsonPath = resolve(outputDir, 'vercel.json');
+if (existsSync(vercelJsonPath)) {
+	const vercelJson = JSON.parse(readFileSync(vercelJsonPath, 'utf-8'));
+	if (vercelJson.crons && Array.isArray(vercelJson.crons)) {
+		const before = vercelJson.crons.length;
+		vercelJson.crons = vercelJson.crons.filter((cron: { path: string }) => {
+			const cronRoute = resolve(outputDir, 'src', 'routes', cron.path.replace(/^\//, ''));
+			return existsSync(cronRoute);
+		});
+		const removed = before - vercelJson.crons.length;
+		if (removed > 0) {
+			writeFileSync(vercelJsonPath, JSON.stringify(vercelJson, null, '\t') + '\n', 'utf-8');
+			console.log(`       - vercel.json : ${removed} cron(s) orphelin(s) supprime(s)`);
+		}
+	}
+}
 
 console.log('7/7  Verification finale...');
 console.log(`\nScaffold termine !`);
