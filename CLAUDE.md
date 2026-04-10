@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-10
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Fix PKCE mobile definitive + SMTP Resend (18e session). Login mobile Safari fonctionne : template email Supabase modifie (token_hash au lieu de ConfirmationURL). SMTP custom Resend configure (domaine filmpro.ch verifie, free plan permanent 3000 emails/mois). Tentatives echouees documentees : flowType implicit ecrase par @supabase/ssr, createClient implicit redirige en fragment. Bug visuel decouvert : texte « Aide » visible derriere card signaux sur mobile.
+**Session precedente :** Responsive mobile + auth OTP (19e session). Auth migree magic link + MFA TOTP → OTP code email 6 chiffres (PWA compatible). Session 7 jours via cookie serveur. Fix sidebar mobile (z-index, effect reactif). Header mobile avec titre + sous-titre sticky. Cards signaux allegees (commune/source/date). Headers Prospection/Signaux responsive (flex-wrap). 8 commits.
 
 ---
 
@@ -126,14 +126,14 @@ Pilotage depuis le terminal via Claude Code skills.
 
 - **Vercel** : https://filmpro-crm.vercel.app (prod), GitHub lie (repo appfactory-cli, deploys auto), env vars configurees prod+preview (9 variables)
 - **Supabase** : projet `appfactory` (fmflvjubjtpidvxwhqab), region EU
-- **Auth** : Magic link (email OTP) + MFA TOTP via Supabase, domaine @filmpro.ch valide cote serveur (form action), callback /auth/callback (token_hash via template email custom, pas PKCE), pages /auth/mfa (challenge) et /auth/mfa/setup (enrollment QR code), enforcement AAL dans hooks.server.ts
+- **Auth** : OTP code email 6 chiffres via Supabase (signInWithOtp sans emailRedirectTo), domaine @filmpro.ch valide cote serveur (form action), login 2 ecrans (email → code), session max 7 jours via cookie httpOnly login_at (hooks.server.ts), callback /auth/callback conserve pour compatibilite
 - **SMTP** : Resend (free plan permanent, 3000 emails/mois), domaine filmpro.ch verifie, sender noreply@filmpro.ch, DNS Infomaniak (DKIM + MX + SPF sur sous-domaine send)
 - **Runtime** : Node.js 22.x sur Vercel
 - **Supabase CLI** : v2.84.2, projet linke (fmflvjubjtpidvxwhqab)
 - **BDD** : 10 tables PostgreSQL (+ prospect_leads, recherches_sauvegardees), FK, index, RLS (authenticated full access), types TS generes
 - **Zefix REST** : credentials configures (local .env + Vercel prod/preview), compte actif depuis 2026-04-08
 - **search.ch** : cle API configuree en local (.env) + Vercel prod+preview
-- **Securite** : magic link @filmpro.ch + MFA TOTP (validation domaine serveur, Google OAuth desactive, email provider active), ALLOWED_DOMAINS + ALLOWED_EMAILS env vars, enforcement AAL (aal2 obligatoire si TOTP enrolle, allowlist explicite routes auth), validation Zod sur toutes les form actions (19 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
+- **Securite** : OTP code email @filmpro.ch (validation domaine serveur, Google OAuth desactive, email provider active), ALLOWED_DOMAINS + ALLOWED_EMAILS env vars, session 7 jours max (cookie login_at), validation Zod sur toutes les form actions (19 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
 - **Tests** : Vitest (129 tests : scoring + 19/19 schemas + validation + extractForm + API sparql/helpers + 16 auth email) + Playwright (5 tests e2e : navigation + auth redirect)
 - **Cron** : `/api/cron/signaux` quotidien 6h (veille Zefix+SIMAP) + `/api/cron/alertes` quotidien 7h, securises par CRON_SECRET (configure Vercel prod), service role client (bypass RLS)
 - **SUPABASE_SERVICE_ROLE_KEY** : configuree local .env + Vercel prod (preview non configure — projet sans repo Git lie)
@@ -286,7 +286,8 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] Fix bug visuel mobile : texte « ? Aide » visible derriere la card signaux sur le dashboard (z-index ou overflow)
-- [ ] Tester responsive sidebar mobile sur iPhone (commit 5f7bab7, Playwright OK en 390x844)
-- [ ] Tester responsive complet : formulaires, tableaux, slide-outs, pipeline Kanban sur mobile reel
+- [ ] Retester sur iPhone apres deploy : header titre sticky, cards signaux allegees, responsive complet
+- [ ] Point G dashboard : verifier si contenu deborde sur mobile (signale durant test mais non detaille)
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet
+- [ ] Mettre a jour USER_GUIDE_DRAFT.md : auth OTP code (plus de magic link ni MFA), session 7 jours
+- [ ] Mettre a jour MAINTAINER_GUIDE_DRAFT.md : migration auth OTP, cookie login_at, suppression MFA
