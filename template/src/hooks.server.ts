@@ -74,6 +74,17 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
+	// Expiration session 7 jours (cookie cote serveur)
+	const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+	if (session && !isAuthRoute && !isCronRoute) {
+		const loginAt = event.cookies.get('login_at');
+		if (loginAt && Date.now() - Number(loginAt) > SESSION_MAX_AGE_MS) {
+			event.cookies.delete('login_at', { path: '/' });
+			await event.locals.supabase.auth.signOut();
+			throw redirect(303, '/login?error=expired');
+		}
+	}
+
 	if (session && event.url.pathname === '/login') {
 		throw redirect(303, '/');
 	}

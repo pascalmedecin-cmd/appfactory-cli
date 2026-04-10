@@ -31,7 +31,7 @@ export const actions: Actions = {
 		return { codeSent: true, email };
 	},
 
-	verifycode: async ({ request, cookies }) => {
+	verifycode: async ({ request, cookies, url }) => {
 		const formData = await request.formData();
 		const email = formData.get('email')?.toString().trim().toLowerCase();
 		const code = formData.get('code')?.toString().trim();
@@ -58,6 +58,15 @@ export const actions: Actions = {
 				: 'Code incorrect. Vérifiez et réessayez.';
 			return fail(400, { error: msg, codeSent: true, email });
 		}
+
+		// Cookie de date de connexion (expiration session 7 jours dans hooks.server.ts)
+		cookies.set('login_at', String(Date.now()), {
+			path: '/',
+			httpOnly: true,
+			secure: url.protocol === 'https:',
+			sameSite: 'lax',
+			maxAge: 7 * 24 * 60 * 60
+		});
 
 		return { verified: true };
 	}
