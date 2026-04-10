@@ -208,8 +208,8 @@
 	<!-- Bandeau workflow 4 étapes -->
 	<div class="flex items-center gap-5 sm:gap-8 py-3">
 		<div class="flex flex-col items-center gap-1.5">
-			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-accent-light">
-				<span class="material-symbols-outlined text-[26px] text-accent">cloud_download</span>
+			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-primary-light">
+				<span class="material-symbols-outlined text-[26px] text-primary">cloud_download</span>
 			</span>
 			<span class="text-sm font-semibold text-text">Importer</span>
 			<span class="text-xs text-text-muted">{data.leads.length} prospect{data.leads.length > 1 ? 's' : ''}</span>
@@ -218,8 +218,8 @@
 			<span class="material-symbols-outlined text-[22px] text-border-strong">arrow_forward</span>
 		</div>
 		<div class="flex flex-col items-center gap-1.5">
-			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-info-light">
-				<span class="material-symbols-outlined text-[26px] text-info">auto_fix_high</span>
+			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-accent-light">
+				<span class="material-symbols-outlined text-[26px] text-accent">auto_fix_high</span>
 			</span>
 			<span class="text-sm font-semibold text-text">Enrichir</span>
 			<span class="text-xs text-text-muted">{enrichedCount} enrichi{enrichedCount > 1 ? 's' : ''}</span>
