@@ -7,6 +7,9 @@ import type { Database } from '$lib/database.types';
 
 export function createSupabaseServerClient(cookies: Cookies) {
 	return createServerClient<Database>(env.PUBLIC_SUPABASE_URL!, env.PUBLIC_SUPABASE_ANON_KEY!, {
+		auth: {
+			flowType: 'implicit'
+		},
 		cookies: {
 			getAll: () => cookies.getAll(),
 			setAll: (cookiesToSet) => {
