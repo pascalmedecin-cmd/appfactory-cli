@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-10
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Documentation interactive (21e session). Page /aide refondee en 3 onglets : Prise en main (startup guide), Guide complet (fonctions detaillees), Referentiel technique (admin). Design premium : tabs, steps numeros, cards, encadres tip/warning, code blocks, sommaire sticky. Auth OTP a jour (plus de magic link/MFA/Google). 0 erreurs, 129/129 tests.
+**Session precedente :** Performance mobile (22e session). Audit Lighthouse mobile 68 → 85/100, LCP 10,6 s → 3,3 s. login-bg.png (1,6 Mo) → WebP (138 Ko, -91%), Material Symbols axes reduits (wght/FILL/GRAD fixes), fetchpriority + dimensions sur logo LCP, preconnect crossorigin. 129/129 tests, 0 regression.
 
 ---
 
