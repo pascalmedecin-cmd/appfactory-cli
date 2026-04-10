@@ -54,9 +54,9 @@
 	<div class="login-card">
 		<div class="text-center">
 			{#if bgImage && config.branding.logoWhite}
-				<img src="/{config.branding.logoWhite}" alt="{config.app.name}" class="login-logo" />
+				<img src="/{config.branding.logoWhite}" alt="{config.app.name}" class="login-logo" fetchpriority="high" width="246" height="46" />
 			{:else if config.branding.logo}
-				<img src="/{config.branding.logo}" alt="{config.app.name}" class="login-logo" />
+				<img src="/{config.branding.logo}" alt="{config.app.name}" class="login-logo" fetchpriority="high" width="246" height="46" />
 			{/if}
 			<p class="login-subtitle" class:text-white={bgImage} class:text-text={!bgImage}>Espace professionnel</p>
 		</div>

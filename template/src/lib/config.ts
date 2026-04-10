@@ -20,7 +20,7 @@ export const config = {
 		logo: 'FilmPro_logo.svg',
 		logoWhite: 'FilmPro_logo_white.svg',
 		font: 'DM Sans',
-		loginBackground: 'login-bg.png',
+		loginBackground: 'login-bg.webp',
 	},
 
 	pipeline: {
