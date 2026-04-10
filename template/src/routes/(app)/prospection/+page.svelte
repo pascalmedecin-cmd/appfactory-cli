@@ -134,7 +134,7 @@
 </script>
 
 <div class="space-y-4">
-	<div class="flex items-center justify-between">
+	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div>
 			<h1 class="text-2xl font-bold text-text">Prospection</h1>
 			<p class="text-sm text-text-muted">{filteredLeads.length} lead{filteredLeads.length > 1 ? 's' : ''}</p>
@@ -142,17 +142,18 @@
 		<div class="flex items-center gap-2">
 			<button
 				onclick={() => importModalOpen = true}
-				class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-accent border border-accent hover:bg-accent/10 rounded-lg cursor-pointer"
+				class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-accent border border-accent hover:bg-accent/10 rounded-lg cursor-pointer"
 			>
 				<span class="material-symbols-outlined text-[18px]">cloud_download</span>
 				Importer
 			</button>
 			<button
 				onclick={openCreate}
-				class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+				class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 			>
 				<span class="material-symbols-outlined text-[18px]">add</span>
-				Ajouter un lead
+				<span class="hidden sm:inline">Ajouter un lead</span>
+				<span class="sm:hidden">Ajouter</span>
 			</button>
 		</div>
 	</div>

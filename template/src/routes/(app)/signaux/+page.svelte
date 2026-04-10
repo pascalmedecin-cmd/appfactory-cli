@@ -210,7 +210,7 @@
 <div class="space-y-5">
 	<!-- Header -->
 	<div>
-		<div class="flex items-center justify-between">
+		<div class="flex flex-wrap items-center justify-between gap-3">
 			<div>
 				<h1 class="text-2xl font-bold text-text">Signaux d'affaires</h1>
 				<p class="text-sm text-text-muted">{filteredSignaux.length} {filteredSignaux.length > 1 ? 'signaux' : 'signal'}</p>
@@ -220,14 +220,14 @@
 					{#if selectMode}
 						<button
 							onclick={exitSelectMode}
-							class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+							class="flex items-center gap-2 px-3 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
 						>
 							Annuler
 						</button>
 					{:else}
 						<button
 							onclick={() => selectMode = true}
-							class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-text border border-border rounded-lg cursor-pointer"
+							class="flex items-center gap-2 px-3 py-2 text-sm text-text-muted hover:text-text border border-border rounded-lg cursor-pointer"
 						>
 							<span class="material-symbols-outlined text-[18px]">checklist</span>
 							Sélectionner
@@ -236,7 +236,7 @@
 				{/if}
 				<button
 					onclick={openCreate}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+					class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 				>
 					<span class="material-symbols-outlined text-[18px]">add</span>
 					Ajouter
@@ -414,19 +414,19 @@
 					onclick={() => selectMode ? toggleSelect(signal.id) : openDetail(signal)}
 					class="bg-white rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer text-left w-full {selectMode && selectedIds.has(signal.id) ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/30'}"
 				>
-					<div class="flex items-start justify-between gap-3">
-						<div class="flex items-center gap-3">
+					<div class="flex flex-wrap items-start justify-between gap-2">
+						<div class="flex items-center gap-3 min-w-0">
 							{#if selectMode}
-								<span class="flex items-center justify-center w-10 h-10 rounded-lg {selectedIds.has(signal.id) ? 'bg-accent text-white' : 'bg-surface border border-border'}">
+								<span class="flex items-center justify-center w-10 h-10 rounded-lg shrink-0 {selectedIds.has(signal.id) ? 'bg-accent text-white' : 'bg-surface border border-border'}">
 									<span class="material-symbols-outlined text-[22px]">{selectedIds.has(signal.id) ? 'check' : 'check_box_outline_blank'}</span>
 								</span>
 							{:else}
-								<span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/8">
+								<span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/8 shrink-0">
 									<span class="material-symbols-outlined text-[22px] text-primary">{typeIcon(signal.type_signal)}</span>
 								</span>
 							{/if}
 							<div class="min-w-0">
-								<p class="text-sm font-semibold text-text truncate">{formatTypeLabel(signal.type_signal)}</p>
+								<p class="text-sm font-semibold text-text">{formatTypeLabel(signal.type_signal)}</p>
 								<p class="text-xs text-text-muted">{signal.canton ?? '--'} · {formatRelative(signal.date_detection)}</p>
 							</div>
 						</div>

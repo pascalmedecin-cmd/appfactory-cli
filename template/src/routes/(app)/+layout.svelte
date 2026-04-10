@@ -18,10 +18,12 @@
 		return match?.label ?? '';
 	});
 
-	// Fermer le menu mobile sur navigation
+	// Fermer le menu mobile sur navigation (délai pour voir le highlight)
 	$effect(() => {
 		page.url.pathname;
-		mobileMenuOpen = false;
+		if (mobileMenuOpen) {
+			setTimeout(() => { mobileMenuOpen = false; }, 150);
+		}
 	});
 </script>
 
