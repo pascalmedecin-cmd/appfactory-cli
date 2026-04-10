@@ -293,9 +293,9 @@
 			</select>
 			<select bind:value={filterScoreMin} class="px-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
 				<option value="">Toute température</option>
-				<option value={String(scoreLabels.chaud)}>🔴 Chaud</option>
-				<option value={String(scoreLabels.tiede)}>🟠 Tiède et +</option>
-				<option value={String(scoreLabels.froid)}>🔵 Froid et +</option>
+				<option value={String(scoreLabels.chaud)}>Chaud uniquement</option>
+				<option value={String(scoreLabels.tiede)}>Tiède et +</option>
+				<option value={String(scoreLabels.froid)}>Froid et +</option>
 			</select>
 			<select bind:value={filterCanton} class="px-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
 				<option value="">Tous les cantons</option>
