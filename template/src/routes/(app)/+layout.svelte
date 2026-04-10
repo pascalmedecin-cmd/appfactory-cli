@@ -19,9 +19,11 @@
 	});
 
 	// Fermer le menu mobile sur navigation (délai pour voir le highlight)
+	let prevPath = $state(page.url.pathname);
 	$effect(() => {
-		page.url.pathname;
-		if (mobileMenuOpen) {
+		const currentPath = page.url.pathname;
+		if (currentPath !== prevPath) {
+			prevPath = currentPath;
 			setTimeout(() => { mobileMenuOpen = false; }, 150);
 		}
 	});
