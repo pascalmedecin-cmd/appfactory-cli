@@ -4,7 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 
 	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
-	const cantonNoms: Record<string, string> = { GE: 'Geneve', VD: 'Vaud', VS: 'Valais', NE: 'Neuchatel', FR: 'Fribourg', JU: 'Jura' };
+	const cantonNoms: Record<string, string> = { GE: 'Genève', VD: 'Vaud', VS: 'Valais', NE: 'Neuchâtel', FR: 'Fribourg', JU: 'Jura' };
 
 	let { open = $bindable(false), importResult = $bindable<{ message: string; type: 'success' | 'error' } | null>(null) }: {
 		open: boolean;
@@ -12,12 +12,20 @@
 	} = $props();
 
 	let importing = $state(false);
+	let activeTab = $state<'lindas' | 'zefix' | 'simap' | 'search_ch'>('lindas');
 	let importCanton = $state('GE');
 	let importKeywords = $state('construction, architecte, batiment');
 	let importLimit = $state('100');
 	let importZefixName = $state('');
 	let importSimapSearch = $state('');
 	let importSimapDays = $state('30');
+
+	const tabs = [
+		{ key: 'lindas' as const, label: 'Registre du commerce', icon: 'database', desc: 'LINDAS' },
+		{ key: 'zefix' as const, label: 'Registre complet', icon: 'business', desc: 'Zefix' },
+		{ key: 'simap' as const, label: 'Marchés publics', icon: 'gavel', desc: 'SIMAP' },
+		{ key: 'search_ch' as const, label: 'Annuaire', icon: 'phone', desc: 'search.ch' },
+	];
 
 	async function importFromSource(url: string, body: Record<string, unknown>) {
 		importing = true;
@@ -71,163 +79,185 @@
 
 <ModalForm
 	bind:open
-	title="Importer des leads"
+	title="Importer des prospects"
 	saving={importing}
 >
-	<div class="space-y-5">
-		<!-- LINDAS -->
-		<div class="p-4 bg-surface rounded-lg border border-border">
-			<div class="flex items-center gap-2 mb-3">
-				<span class="material-symbols-outlined text-[20px] text-accent">database</span>
-				<h3 class="font-semibold text-text">LINDAS — Registre du commerce</h3>
-			</div>
-			<p class="text-xs text-text-muted mb-3">
-				Import d'entreprises depuis le registre federal (donnees ouvertes). Filtrage par canton et mots-cles dans le but social.
-			</p>
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Canton</label>
-					<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						{#each cantons as c}
-							<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
-						{/each}
-					</select>
-				</div>
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Limite</label>
-					<select bind:value={importLimit} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						<option value="50">50 resultats</option>
-						<option value="100">100 resultats</option>
-						<option value="200">200 resultats</option>
-						<option value="500">500 resultats</option>
-					</select>
-				</div>
-			</div>
-			<div class="mb-3">
-				<label class="block text-sm font-medium text-text mb-1">Mots-cles (separes par des virgules)</label>
-				<input
-					type="text"
-					bind:value={importKeywords}
-					placeholder="construction, architecte, batiment..."
-					class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white"
-				/>
-			</div>
-			<button
-				onclick={importLindas}
-				disabled={importing}
-				class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
-			>
-				<span class="material-symbols-outlined text-[16px]">cloud_download</span>
-				{importing ? 'Import en cours...' : 'Importer depuis LINDAS'}
-			</button>
+	<div class="space-y-4">
+		<!-- Tabs -->
+		<div class="flex border-b border-border">
+			{#each tabs as tab}
+				<button
+					onclick={() => activeTab = tab.key}
+					class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer {activeTab === tab.key ? 'border-accent text-accent' : 'border-transparent text-text-muted hover:text-text hover:border-border'}"
+				>
+					<span class="material-symbols-outlined text-[18px]">{tab.icon}</span>
+					<span class="hidden sm:inline">{tab.label}</span>
+					<span class="sm:hidden">{tab.desc}</span>
+				</button>
+			{/each}
 		</div>
+
+		<!-- LINDAS -->
+		{#if activeTab === 'lindas'}
+			<div class="space-y-4">
+				<div class="p-3 rounded-lg bg-accent/5 border border-accent/10">
+					<p class="text-xs text-text-body">
+						<strong>Registre du commerce fédéral</strong> — Données ouvertes. Recherche d'entreprises par canton et mots-clés dans le but social.
+					</p>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+					<div>
+						<label class="block text-sm font-medium text-text mb-1">Canton</label>
+						<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
+							{#each cantons as c}
+								<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
+							{/each}
+						</select>
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-text mb-1">Nombre max de résultats</label>
+						<select bind:value={importLimit} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
+							<option value="50">50</option>
+							<option value="100">100</option>
+							<option value="200">200</option>
+							<option value="500">500</option>
+						</select>
+					</div>
+				</div>
+				<div>
+					<label class="block text-sm font-medium text-text mb-1">Mots-clés <span class="font-normal text-text-muted">(séparés par des virgules)</span></label>
+					<input
+						type="text"
+						bind:value={importKeywords}
+						placeholder="construction, architecte, bâtiment..."
+						class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
+					/>
+				</div>
+				<button
+					onclick={importLindas}
+					disabled={importing}
+					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
+				>
+					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
+					{importing ? 'Import en cours…' : 'Lancer l\'import'}
+				</button>
+			</div>
+		{/if}
 
 		<!-- Zefix REST -->
-		<div class="p-4 bg-surface rounded-lg border border-border">
-			<div class="flex items-center gap-2 mb-3">
-				<span class="material-symbols-outlined text-[20px] text-accent">business</span>
-				<h3 class="font-semibold text-text">Zefix REST — Registre du commerce (complet)</h3>
-			</div>
-			<p class="text-xs text-text-muted mb-3">
-				Donnees completes : but social, capital nominal, publications FOSC. Necessite les credentials (env vars ZEFIX_USERNAME + ZEFIX_PASSWORD).
-			</p>
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Canton</label>
-					<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						{#each cantons as c}
-							<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
-						{/each}
-					</select>
+		{#if activeTab === 'zefix'}
+			<div class="space-y-4">
+				<div class="p-3 rounded-lg bg-accent/5 border border-accent/10">
+					<p class="text-xs text-text-body">
+						<strong>Zefix — Registre complet</strong> — Données enrichies : but social, capital nominal, publications FOSC. Nécessite les credentials API.
+					</p>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+					<div>
+						<label class="block text-sm font-medium text-text mb-1">Canton</label>
+						<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
+							{#each cantons as c}
+								<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
+							{/each}
+						</select>
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-text mb-1">Nombre max de résultats</label>
+						<select bind:value={importLimit} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
+							<option value="50">50</option>
+							<option value="100">100</option>
+							<option value="200">200</option>
+							<option value="500">500</option>
+						</select>
+					</div>
 				</div>
 				<div>
-					<label class="block text-sm font-medium text-text mb-1">Limite</label>
-					<select bind:value={importLimit} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						<option value="50">50 resultats</option>
-						<option value="100">100 resultats</option>
-						<option value="200">200 resultats</option>
-						<option value="500">500 resultats</option>
-					</select>
+					<label class="block text-sm font-medium text-text mb-1">Filtrer par nom <span class="font-normal text-text-muted">(optionnel)</span></label>
+					<input
+						type="text"
+						bind:value={importZefixName}
+						placeholder="Nom d'entreprise…"
+						class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
+					/>
 				</div>
+				<button
+					onclick={importZefix}
+					disabled={importing}
+					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
+				>
+					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
+					{importing ? 'Import en cours…' : 'Lancer l\'import'}
+				</button>
 			</div>
-			<div class="mb-3">
-				<label class="block text-sm font-medium text-text mb-1">Nom d'entreprise (optionnel)</label>
-				<input
-					type="text"
-					bind:value={importZefixName}
-					placeholder="Filtrer par nom..."
-					class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white"
-				/>
-			</div>
-			<button
-				onclick={importZefix}
-				disabled={importing}
-				class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
-			>
-				<span class="material-symbols-outlined text-[16px]">cloud_download</span>
-				{importing ? 'Import en cours...' : 'Importer depuis Zefix'}
-			</button>
-		</div>
+		{/if}
 
 		<!-- SIMAP -->
-		<div class="p-4 bg-surface rounded-lg border border-border">
-			<div class="flex items-center gap-2 mb-3">
-				<span class="material-symbols-outlined text-[20px] text-accent">gavel</span>
-				<h3 class="font-semibold text-text">SIMAP — Marches publics construction</h3>
-			</div>
-			<p class="text-xs text-text-muted mb-3">
-				Appels d'offres publics construction. Leads chauds avec budgets et delais.
-			</p>
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Canton</label>
-					<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						{#each cantons as c}
-							<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
-						{/each}
-					</select>
+		{#if activeTab === 'simap'}
+			<div class="space-y-4">
+				<div class="p-3 rounded-lg bg-accent/5 border border-accent/10">
+					<p class="text-xs text-text-body">
+						<strong>SIMAP — Marchés publics construction</strong> — Appels d'offres publics avec budgets et délais. Prospects qualifiés avec montants.
+					</p>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+					<div>
+						<label class="block text-sm font-medium text-text mb-1">Canton</label>
+						<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
+							{#each cantons as c}
+								<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
+							{/each}
+						</select>
+					</div>
+					<div>
+						<label class="block text-sm font-medium text-text mb-1">Période</label>
+						<select bind:value={importSimapDays} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
+							<option value="7">7 derniers jours</option>
+							<option value="30">30 derniers jours</option>
+							<option value="90">3 derniers mois</option>
+						</select>
+					</div>
 				</div>
 				<div>
-					<label class="block text-sm font-medium text-text mb-1">Periode</label>
-					<select bind:value={importSimapDays} class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white">
-						<option value="7">7 derniers jours</option>
-						<option value="30">30 derniers jours</option>
-						<option value="90">90 derniers jours</option>
-					</select>
+					<label class="block text-sm font-medium text-text mb-1">Mots-clés <span class="font-normal text-text-muted">(optionnel, min. 3 caractères)</span></label>
+					<input
+						type="text"
+						bind:value={importSimapSearch}
+						placeholder="rénovation, façade…"
+						class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
+					/>
 				</div>
+				<button
+					onclick={importSimap}
+					disabled={importing}
+					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
+				>
+					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
+					{importing ? 'Import en cours…' : 'Lancer l\'import'}
+				</button>
 			</div>
-			<div class="mb-3">
-				<label class="block text-sm font-medium text-text mb-1">Recherche (optionnel, min. 3 car.)</label>
-				<input
-					type="text"
-					bind:value={importSimapSearch}
-					placeholder="renovation, facade..."
-					class="w-full px-3 py-1.5 text-sm border border-border rounded-md bg-white"
-				/>
-			</div>
-			<button
-				onclick={importSimap}
-				disabled={importing}
-				class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
-			>
-				<span class="material-symbols-outlined text-[16px]">cloud_download</span>
-				{importing ? 'Import en cours...' : 'Importer depuis SIMAP'}
-			</button>
-		</div>
+		{/if}
 
-		<!-- search.ch info -->
-		<div class="p-4 bg-surface rounded-lg border border-border opacity-60">
-			<div class="flex items-center gap-2 mb-2">
-				<span class="material-symbols-outlined text-[20px] text-text-muted">phone</span>
-				<h3 class="font-semibold text-text">search.ch — Enrichissement téléphone</h3>
+		<!-- search.ch -->
+		{#if activeTab === 'search_ch'}
+			<div class="space-y-4">
+				<div class="p-3 rounded-lg bg-accent/5 border border-accent/10">
+					<p class="text-xs text-text-body">
+						<strong>search.ch — Annuaire suisse</strong> — Enrichissement automatique des numéros de téléphone pour vos prospects existants.
+					</p>
+				</div>
+				<div class="p-4 rounded-lg bg-surface-alt text-center">
+					<span class="material-symbols-outlined text-[28px] text-accent mb-2">phone_forwarded</span>
+					<p class="text-sm text-text-body mb-1">L'enrichissement se fait prospect par prospect.</p>
+					<p class="text-xs text-text-muted">
+						Ouvrez la fiche d'un prospect sans téléphone, puis cliquez sur <strong class="text-text">« Enrichir le téléphone »</strong>.
+					</p>
+				</div>
 			</div>
-			<p class="text-xs text-text-muted">
-				Clé API en attente. Utilisez le bouton « Enrichir téléphone » sur chaque lead une fois la clé configurée.
-			</p>
-		</div>
+		{/if}
 
 		{#if importResult}
-			<div class="p-3 rounded-lg text-sm {importResult.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}">
+			<div class="flex items-center gap-2 p-3 rounded-lg text-sm {importResult.type === 'success' ? 'bg-success-light text-success' : 'bg-danger-light text-danger'}">
+				<span class="material-symbols-outlined text-[16px]">{importResult.type === 'success' ? 'check_circle' : 'error'}</span>
 				{importResult.message}
 			</div>
 		{/if}
@@ -236,7 +266,7 @@
 			<button
 				type="button"
 				onclick={() => { open = false; importResult = null; }}
-				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer transition-colors"
 			>
 				Fermer
 			</button>

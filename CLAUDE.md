@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-10
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Nettoyage docs (24e session). Suppression USER_GUIDE_DRAFT.md et MAINTAINER_GUIDE_DRAFT.md (contenu migre dans /aide interactive), 5 references nettoyees dans CLAUDE.md.
+**Session precedente :** Audit UX/UI prospection (25e session). Première passe : 14 findings corrigés (labels, filtres, workflow, slide-out, import modal tabs). Deuxième passe planifiée (workflow 4 étapes, saisie simplifiée, alertes). Mémoire UX créée pour application cross-pages.
 
 ---
 
@@ -281,4 +281,6 @@ Fichiers cles :
 
 ## Prochaine session
 
+- [ ] Refonte UX prospection passe 2 : bandeau ludique sans fond, modal import élargie, saisie manuelle simplifiée (3 champs), workflow 4 étapes explicite, alertes à spécifier (voir mémoire `project_ux_refonte_prospection.md`)
+- [ ] Appliquer les principes UX validés sur prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard)
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
