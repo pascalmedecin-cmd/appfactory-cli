@@ -81,14 +81,15 @@
 	bind:open
 	title="Importer des prospects"
 	saving={importing}
+	maxWidth="max-w-2xl"
 >
 	<div class="space-y-4">
-		<!-- Tabs -->
-		<div class="flex border-b border-border">
+		<!-- Tabs sources -->
+		<div class="flex gap-1 border-b border-border">
 			{#each tabs as tab}
 				<button
 					onclick={() => activeTab = tab.key}
-					class="flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors cursor-pointer {activeTab === tab.key ? 'border-accent text-accent' : 'border-transparent text-text-muted hover:text-text hover:border-border'}"
+					class="flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer {activeTab === tab.key ? 'border-accent text-accent' : 'border-transparent text-text-muted hover:text-text hover:border-border'}"
 				>
 					<span class="material-symbols-outlined text-[18px]">{tab.icon}</span>
 					<span class="hidden sm:inline">{tab.label}</span>
@@ -100,12 +101,12 @@
 		<!-- LINDAS -->
 		{#if activeTab === 'lindas'}
 			<div class="space-y-4">
-				<div class="p-3 rounded-lg bg-accent/5 border border-accent/10">
-					<p class="text-xs text-text-body">
+				<div class="p-4 rounded-lg bg-accent/5 border border-accent/10">
+					<p class="text-sm text-text-body">
 						<strong>Registre du commerce fédéral</strong> — Données ouvertes. Recherche d'entreprises par canton et mots-clés dans le but social.
 					</p>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
 						<label class="block text-sm font-medium text-text mb-1">Canton</label>
 						<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
@@ -147,12 +148,12 @@
 		<!-- Zefix REST -->
 		{#if activeTab === 'zefix'}
 			<div class="space-y-4">
-				<div class="p-3 rounded-lg bg-accent/5 border border-accent/10">
-					<p class="text-xs text-text-body">
+				<div class="p-4 rounded-lg bg-accent/5 border border-accent/10">
+					<p class="text-sm text-text-body">
 						<strong>Zefix — Registre complet</strong> — Données enrichies : but social, capital nominal, publications FOSC. Nécessite les credentials API.
 					</p>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
 						<label class="block text-sm font-medium text-text mb-1">Canton</label>
 						<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
@@ -194,12 +195,12 @@
 		<!-- SIMAP -->
 		{#if activeTab === 'simap'}
 			<div class="space-y-4">
-				<div class="p-3 rounded-lg bg-accent/5 border border-accent/10">
-					<p class="text-xs text-text-body">
+				<div class="p-4 rounded-lg bg-accent/5 border border-accent/10">
+					<p class="text-sm text-text-body">
 						<strong>SIMAP — Marchés publics construction</strong> — Appels d'offres publics avec budgets et délais. Prospects qualifiés avec montants.
 					</p>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
 						<label class="block text-sm font-medium text-text mb-1">Canton</label>
 						<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
@@ -240,8 +241,8 @@
 		<!-- search.ch -->
 		{#if activeTab === 'search_ch'}
 			<div class="space-y-4">
-				<div class="p-3 rounded-lg bg-accent/5 border border-accent/10">
-					<p class="text-xs text-text-body">
+				<div class="p-4 rounded-lg bg-accent/5 border border-accent/10">
+					<p class="text-sm text-text-body">
 						<strong>search.ch — Annuaire suisse</strong> — Enrichissement automatique des numéros de téléphone pour vos prospects existants.
 					</p>
 				</div>

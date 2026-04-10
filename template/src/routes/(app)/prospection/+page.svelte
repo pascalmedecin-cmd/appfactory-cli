@@ -45,22 +45,10 @@
 	let filterStatut = $state('nouveau,interesse');
 	let filterScoreMin = $state('');
 
-	// Form fields
-	let source = $state('manuel');
-	let source_id = $state('');
+	// Form fields (saisie manuelle simplifiée)
 	let raison_sociale = $state('');
-	let nom_contact = $state('');
-	let adresse = $state('');
-	let npa = $state('');
-	let localite = $state('');
 	let canton = $state('');
-	let telephone = $state('');
-	let site_web = $state('');
-	let email = $state('');
 	let secteur_detecte = $state('');
-	let description = $state('');
-	let montant = $state('');
-	let date_publication = $state('');
 
 	const filteredLeads = $derived.by(() => {
 		let result = data.leads;
@@ -76,6 +64,11 @@
 		}
 		return result;
 	});
+
+	// Compteurs workflow
+	const enrichedCount = $derived(data.leads.filter((l) => l.telephone || l.description || l.adresse).length);
+	const qualifiedCount = $derived(data.leads.filter((l) => l.statut === 'interesse').length);
+	const convertedCount = $derived(data.leads.filter((l) => l.statut === 'transfere').length);
 
 	const activeFilterCount = $derived(
 		(filterStatut !== 'nouveau,interesse' ? 1 : 0) +
@@ -166,10 +159,9 @@
 	}
 
 	function resetForm() {
-		source = 'manuel'; source_id = ''; raison_sociale = ''; nom_contact = '';
-		adresse = ''; npa = ''; localite = ''; canton = ''; telephone = '';
-		site_web = ''; email = ''; secteur_detecte = ''; description = '';
-		montant = ''; date_publication = '';
+		raison_sociale = '';
+		canton = '';
+		secteur_detecte = '';
 	}
 
 	type Recherche = (typeof data.recherches)[number];
@@ -213,38 +205,52 @@
 </script>
 
 <div class="space-y-5">
-	<!-- Bandeau workflow -->
-	<div class="rounded-xl border border-border p-4">
-		<div class="flex items-center justify-between gap-4">
-			<div class="flex items-center gap-6 sm:gap-10">
-				<div class="flex items-center gap-2.5">
-					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10">
-						<span class="material-symbols-outlined text-[18px] text-accent">cloud_download</span>
-					</span>
-					<span class="text-sm font-semibold text-text">Importer</span>
-				</div>
-				<span class="material-symbols-outlined text-[16px] text-border-strong">arrow_forward</span>
-				<div class="flex items-center gap-2.5">
-					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-warning/10">
-						<span class="material-symbols-outlined text-[18px] text-warning">filter_list</span>
-					</span>
-					<span class="text-sm font-semibold text-text">Qualifier</span>
-				</div>
-				<span class="material-symbols-outlined text-[16px] text-border-strong">arrow_forward</span>
-				<div class="flex items-center gap-2.5">
-					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-success/10">
-						<span class="material-symbols-outlined text-[18px] text-success">domain_add</span>
-					</span>
-					<span class="text-sm font-semibold text-text">Convertir</span>
-				</div>
-			</div>
-			<div class="flex items-center gap-2">
-				<span class="text-xs text-text-muted hidden sm:inline">{data.leads.length} prospect{data.leads.length > 1 ? 's' : ''} au total</span>
-			</div>
+	<!-- Bandeau workflow 4 étapes -->
+	<div class="flex items-center gap-5 sm:gap-8 py-3">
+		<div class="flex flex-col items-center gap-1.5">
+			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-sky-50">
+				<span class="material-symbols-outlined text-[26px] text-sky-400">cloud_download</span>
+			</span>
+			<span class="text-sm font-semibold text-text">Importer</span>
+			<span class="text-xs text-text-muted">{data.leads.length} prospect{data.leads.length > 1 ? 's' : ''}</span>
+		</div>
+		<div class="flex items-center mt-[-22px]">
+			<div class="w-6 sm:w-10 h-px bg-border"></div>
+			<span class="material-symbols-outlined text-[14px] text-border-strong -ml-1">chevron_right</span>
+		</div>
+		<div class="flex flex-col items-center gap-1.5">
+			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-violet-50">
+				<span class="material-symbols-outlined text-[26px] text-violet-400">auto_fix_high</span>
+			</span>
+			<span class="text-sm font-semibold text-text">Enrichir</span>
+			<span class="text-xs text-text-muted">{enrichedCount} enrichi{enrichedCount > 1 ? 's' : ''}</span>
+		</div>
+		<div class="flex items-center mt-[-22px]">
+			<div class="w-6 sm:w-10 h-px bg-border"></div>
+			<span class="material-symbols-outlined text-[14px] text-border-strong -ml-1">chevron_right</span>
+		</div>
+		<div class="flex flex-col items-center gap-1.5">
+			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-amber-50">
+				<span class="material-symbols-outlined text-[26px] text-amber-400">filter_list</span>
+			</span>
+			<span class="text-sm font-semibold text-text">Qualifier</span>
+			<span class="text-xs text-text-muted">{qualifiedCount} qualifié{qualifiedCount > 1 ? 's' : ''}</span>
+		</div>
+		<div class="flex items-center mt-[-22px]">
+			<div class="w-6 sm:w-10 h-px bg-border"></div>
+			<span class="material-symbols-outlined text-[14px] text-border-strong -ml-1">chevron_right</span>
+		</div>
+		<div class="flex flex-col items-center gap-1.5">
+			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50">
+				<span class="material-symbols-outlined text-[26px] text-emerald-400">domain_add</span>
+			</span>
+			<span class="text-sm font-semibold text-text">Convertir</span>
+			<span class="text-xs text-text-muted">{convertedCount} converti{convertedCount > 1 ? 's' : ''}</span>
 		</div>
 	</div>
 
-	<!-- Actions principales -->
+	<!-- Actions principales (visibles uniquement quand il y a des prospects) -->
+	{#if data.leads.length > 0}
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex items-center gap-3">
 			{#if data.recherches.length > 0}
@@ -275,6 +281,7 @@
 			</button>
 		</div>
 	</div>
+	{/if}
 
 	<!-- Filtres -->
 	<div class="rounded-xl border border-border bg-white shadow-xs">
@@ -543,20 +550,29 @@
 	{#if data.leads.length === 0}
 		<div class="flex flex-col items-center justify-center py-16 px-6">
 			<div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 mb-5">
-				<span class="material-symbols-outlined text-[32px] text-accent">cloud_download</span>
+				<span class="material-symbols-outlined text-[32px] text-accent">search</span>
 			</div>
-			<h3 class="text-lg font-semibold text-text mb-2">Importez vos premiers prospects</h3>
-			<p class="text-sm text-text-muted text-center max-w-md mb-6">
-				Trouvez des entreprises depuis les sources publiques suisses : registre du commerce, marchés publics, annuaire. Qualifiez-les, puis convertissez les meilleurs en entreprises dans votre CRM.
+			<h3 class="text-lg font-semibold text-text mb-2">Trouvez vos premiers prospects</h3>
+			<p class="text-sm text-text-muted text-center max-w-lg mb-6">
+				Importez des entreprises depuis les sources publiques suisses : registre du commerce, marchés publics, annuaire. Qualifiez-les, puis convertissez les meilleurs en entreprises dans votre CRM.
 			</p>
-			<button
-				onclick={() => importModalOpen = true}
-				class="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer shadow-sm transition-colors"
-			>
-				<span class="material-symbols-outlined text-[18px]">cloud_download</span>
-				Lancer un import
-			</button>
-			<p class="text-xs text-text-muted mt-4">
+			<div class="flex flex-col items-center gap-3">
+				<button
+					onclick={() => importModalOpen = true}
+					class="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer shadow-sm transition-colors"
+				>
+					<span class="material-symbols-outlined text-[18px]">cloud_download</span>
+					Lancer un import
+				</button>
+				<button
+					onclick={openCreate}
+					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-text-muted hover:text-text cursor-pointer transition-colors"
+				>
+					<span class="material-symbols-outlined text-[18px]">edit_note</span>
+					Saisie manuelle
+				</button>
+			</div>
+			<p class="text-xs text-text-muted mt-5">
 				Vous pourrez ensuite créer des alertes pour être notifié automatiquement des nouveaux prospects.
 			</p>
 		</div>
@@ -615,15 +631,6 @@
 			<FormField label="Raison sociale" bind:value={raison_sociale} required />
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<div>
-					<label class="block text-sm font-medium text-text mb-1">Source</label>
-					<select bind:value={source} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
-						<option value="manuel">Saisie manuelle</option>
-						{#each sourceEntries as [key]}
-							<option value={key}>{sourceLabel(key)}</option>
-						{/each}
-					</select>
-				</div>
-				<div>
 					<label class="block text-sm font-medium text-text mb-1">Canton</label>
 					<select bind:value={canton} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
 						<option value="">—</option>
@@ -633,44 +640,16 @@
 						<option value="Autre">Autre</option>
 					</select>
 				</div>
+				<FormField label="Secteur" bind:value={secteur_detecte} placeholder="construction, architecte…" />
 			</div>
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<FormField label="Contact" bind:value={nom_contact} />
-				<FormField label="Téléphone" type="tel" bind:value={telephone} />
-			</div>
-			<div class="grid grid-cols-3 gap-4">
-				<FormField label="Adresse" bind:value={adresse} />
-				<FormField label="NPA" bind:value={npa} />
-				<FormField label="Localité" bind:value={localite} />
-			</div>
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<FormField label="Email" type="email" bind:value={email} />
-				<FormField label="Site web" bind:value={site_web} />
-			</div>
-			<FormField label="Secteur" bind:value={secteur_detecte} placeholder="construction, architecte..." />
-			<FormField label="Description / But social" bind:value={description} />
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<FormField label="Montant (CHF)" type="number" bind:value={montant} />
-				<FormField label="Date publication" type="date" bind:value={date_publication} />
-			</div>
+			<p class="text-xs text-text-muted">Les autres informations (téléphone, adresse, but social…) seront complétées automatiquement par enrichissement.</p>
 		</div>
 
 		<!-- Hidden fields for form submission -->
-		<input type="hidden" name="source" value={source} />
-		<input type="hidden" name="source_id" value={source_id} />
+		<input type="hidden" name="source" value="manuel" />
 		<input type="hidden" name="raison_sociale" value={raison_sociale} />
-		<input type="hidden" name="nom_contact" value={nom_contact} />
-		<input type="hidden" name="adresse" value={adresse} />
-		<input type="hidden" name="npa" value={npa} />
-		<input type="hidden" name="localite" value={localite} />
 		<input type="hidden" name="canton" value={canton} />
-		<input type="hidden" name="telephone" value={telephone} />
-		<input type="hidden" name="site_web" value={site_web} />
-		<input type="hidden" name="email" value={email} />
 		<input type="hidden" name="secteur_detecte" value={secteur_detecte} />
-		<input type="hidden" name="description" value={description} />
-		<input type="hidden" name="montant" value={montant} />
-		<input type="hidden" name="date_publication" value={date_publication} />
 
 		<div class="flex justify-end gap-3 pt-4">
 			<button
