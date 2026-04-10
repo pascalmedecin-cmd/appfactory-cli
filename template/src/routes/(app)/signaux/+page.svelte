@@ -442,25 +442,27 @@
 						</div>
 					</div>
 
-					<div class="mt-3 flex items-center gap-3 text-xs text-text-muted">
+					<div class="mt-3 flex items-center justify-between text-xs text-text-muted">
 						{#if signal.commune}
-							<span class="flex items-center gap-1">
-								<span class="material-symbols-outlined text-[14px]">location_on</span>
+							<span class="flex items-center gap-1 min-w-0 truncate">
+								<span class="material-symbols-outlined text-[14px] shrink-0">location_on</span>
 								{signal.commune}
 							</span>
 						{/if}
-						{#if signal.source_officielle}
-							<span class="flex items-center gap-1 uppercase">
-								<span class="material-symbols-outlined text-[14px]">source</span>
-								{signal.source_officielle}
-							</span>
-						{/if}
-						{#if signal.date_publication}
-							<span class="flex items-center gap-1">
-								<span class="material-symbols-outlined text-[14px]">calendar_today</span>
-								{new Date(signal.date_publication).toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })}
-							</span>
-						{/if}
+						<span class="flex items-center gap-3 shrink-0">
+							{#if signal.source_officielle}
+								<span class="flex items-center gap-1 uppercase">
+									<span class="material-symbols-outlined text-[14px]">source</span>
+									{signal.source_officielle}
+								</span>
+							{/if}
+							{#if signal.date_publication}
+								<span class="flex items-center gap-1">
+									<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+									{new Date(signal.date_publication).toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })}
+								</span>
+							{/if}
+						</span>
 					</div>
 				</button>
 			{/each}
