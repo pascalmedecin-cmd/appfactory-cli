@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-10
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Headers unifies (20e session). Titre + compteur dans bandeau sticky sur mobile ET desktop. Suppression h1 dupliques sur 7 pages. Mobile : titre 18px, compteur 15px aligne a droite. Desktop : titre 14px, compteur 13px. 1 commit.
+**Session precedente :** Documentation interactive (21e session). Page /aide refondee en 3 onglets : Prise en main (startup guide), Guide complet (fonctions detaillees), Referentiel technique (admin). Design premium : tabs, steps numeros, cards, encadres tip/warning, code blocks, sommaire sticky. Auth OTP a jour (plus de magic link/MFA/Google). 0 erreurs, 129/129 tests.
 
 ---
 
@@ -286,8 +286,6 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] Tester sur iPhone : headers unifies (titre + compteur sticky), responsive complet
-- [ ] Point G dashboard : verifier si contenu deborde sur mobile (signale durant test mais non detaille)
-- [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet
-- [ ] Mettre a jour USER_GUIDE_DRAFT.md : auth OTP code (plus de magic link ni MFA), session 7 jours
-- [ ] Mettre a jour MAINTAINER_GUIDE_DRAFT.md : migration auth OTP, cookie login_at, suppression MFA
+- [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
+- [ ] Tester page /aide sur mobile : tabs, navigation, layout 3 onglets
+- [ ] Supprimer USER_GUIDE_DRAFT.md et MAINTAINER_GUIDE_DRAFT.md (contenu migre dans /aide interactive)
