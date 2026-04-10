@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-10
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Performance mobile (22e session). Audit Lighthouse mobile 68 → 85/100, LCP 10,6 s → 3,3 s. login-bg.png (1,6 Mo) → WebP (138 Ko, -91%), Material Symbols axes reduits (wght/FILL/GRAD fixes), fetchpriority + dimensions sur logo LCP, preconnect crossorigin. 129/129 tests, 0 regression.
+**Session precedente :** UX headers + aide (23e session). Header desktop : titre 0.875rem → 1.375rem, compteur baseline a cote du titre, email aligne. Page /aide : onglets renommes (Fonctions detaillees, Documentation technique), nav mobile select ajoutee. 129/129 tests, 0 regression.
 
 ---
 
@@ -287,5 +287,4 @@ Fichiers cles :
 ## Prochaine session
 
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
-- [ ] Tester page /aide sur mobile : tabs, navigation, layout 3 onglets
 - [ ] Supprimer USER_GUIDE_DRAFT.md et MAINTAINER_GUIDE_DRAFT.md (contenu migre dans /aide interactive)
