@@ -163,11 +163,7 @@
 </form>
 
 <div class="space-y-4">
-	<div class="flex items-center justify-between">
-		<div class="page-header-block">
-			<h1 class="text-2xl font-bold text-text">Pipeline</h1>
-			<p class="text-sm text-text-muted">{data.opportunites.length} opportunité{data.opportunites.length > 1 ? 's' : ''}</p>
-		</div>
+	<div class="flex items-center justify-end">
 		<button
 			onclick={() => openCreate()}
 			class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"

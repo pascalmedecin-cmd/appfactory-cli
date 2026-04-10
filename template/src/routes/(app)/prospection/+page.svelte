@@ -137,11 +137,7 @@
 </script>
 
 <div class="space-y-4">
-	<div class="flex flex-wrap items-center justify-between gap-3">
-		<div class="page-header-block">
-			<h1 class="text-2xl font-bold text-text">Prospection</h1>
-			<p class="text-sm text-text-muted">{filteredLeads.length} lead{filteredLeads.length > 1 ? 's' : ''}</p>
-		</div>
+	<div class="flex flex-wrap items-center justify-end gap-3">
 		<div class="flex items-center gap-2">
 			<button
 				onclick={() => importModalOpen = true}

@@ -29,18 +29,17 @@
 			</button>
 		{/if}
 		{#if pageTitle}
-			<div class="flex items-baseline gap-2">
-				<span class="header-title text-base font-semibold text-text">{pageTitle}</span>
-				{#if $pageSubtitle}
-					<span class="header-subtitle text-sm text-text-muted">{$pageSubtitle}</span>
-				{/if}
-			</div>
+			<span class="header-title font-semibold text-text">{pageTitle}</span>
 		{/if}
 	</div>
 
 	<div class="flex items-center gap-4">
+		{#if $pageSubtitle}
+			<span class="header-subtitle text-text-muted">{$pageSubtitle}</span>
+		{/if}
 		<span class="text-sm text-text-muted hidden sm:inline">{user?.email}</span>
 	</div>
+
 </header>
 
 <style>
@@ -49,11 +48,11 @@
 	}
 
 	.header-title {
-		display: none;
+		font-size: 0.875rem;
 	}
 
 	.header-subtitle {
-		display: none;
+		font-size: 0.8125rem;
 	}
 
 	@media (max-width: 767px) {
@@ -66,11 +65,11 @@
 		}
 
 		.header-title {
-			display: inline;
+			font-size: 1.125rem;
 		}
 
 		.header-subtitle {
-			display: inline;
+			font-size: 0.9375rem;
 		}
 	}
 </style>

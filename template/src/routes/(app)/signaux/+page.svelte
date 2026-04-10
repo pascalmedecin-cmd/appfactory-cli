@@ -213,11 +213,7 @@
 <div class="space-y-5">
 	<!-- Header -->
 	<div>
-		<div class="flex flex-wrap items-center justify-between gap-3">
-			<div class="page-header-block">
-				<h1 class="text-2xl font-bold text-text">Signaux d'affaires</h1>
-				<p class="text-sm text-text-muted">{filteredSignaux.length} {filteredSignaux.length > 1 ? 'signaux' : 'signal'}</p>
-			</div>
+		<div class="flex flex-wrap items-center justify-end gap-3">
 			<div class="flex items-center gap-2">
 				{#if data.signaux.length > 0}
 					{#if selectMode}

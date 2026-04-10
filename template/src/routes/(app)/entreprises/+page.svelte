@@ -114,11 +114,7 @@
 </script>
 
 <div class="space-y-5">
-	<div class="flex items-center justify-between">
-		<div class="page-header-block">
-			<h1 class="text-2xl font-bold text-text">Entreprises</h1>
-			<p class="text-sm text-text-muted">{data.entreprises.length} entreprise{data.entreprises.length > 1 ? 's' : ''}</p>
-		</div>
+	<div class="flex items-center justify-end">
 		<button
 			onclick={openCreate}
 			class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
