@@ -10,8 +10,8 @@
 
 	const tabs: { id: Tab; label: string; icon: string; desc: string }[] = [
 		{ id: 'demarrage', label: 'Prise en main', icon: 'rocket_launch', desc: 'Premiers pas avec l\'application' },
-		{ id: 'guide', label: 'Guide complet', icon: 'menu_book', desc: 'Toutes les fonctions en détail' },
-		{ id: 'technique', label: 'Référentiel technique', icon: 'engineering', desc: 'Architecture et administration' },
+		{ id: 'guide', label: 'Fonctions détaillées', icon: 'menu_book', desc: 'Toutes les fonctions en détail' },
+		{ id: 'technique', label: 'Documentation technique', icon: 'engineering', desc: 'Pour administrateurs et développeurs' },
 	];
 
 	let activeTab = $state<Tab>(($page.url.searchParams.get('tab') as Tab) || 'demarrage');
@@ -148,6 +148,25 @@
 		{#if searchQuery && filteredSections.length === 0}
 			<p class="mt-3 text-sm text-text-muted">Aucun résultat pour « {searchQuery} »</p>
 		{/if}
+	</div>
+
+	<!-- Mobile TOC (select) -->
+	<div class="aide-toc-mobile">
+		<label for="aide-toc-select" class="text-[11px] font-semibold text-text-muted uppercase tracking-wider">Sommaire</label>
+		<div class="relative">
+			<select
+				id="aide-toc-select"
+				onchange={(e) => scrollTo((e.target as HTMLSelectElement).value)}
+				class="w-full pl-3 pr-8 py-2.5 border border-border rounded-xl bg-surface text-text text-sm appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+			>
+				{#each currentSections as section}
+					{#if !searchQuery || filteredSections.includes(section.id)}
+						<option value={section.id} selected={activeSection === section.id}>{section.label}</option>
+					{/if}
+				{/each}
+			</select>
+			<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-text-muted pointer-events-none">expand_more</span>
+		</div>
 	</div>
 
 	<div class="flex gap-8">
@@ -989,9 +1008,20 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 		flex-shrink: 0;
 	}
 
+	.aide-toc-mobile {
+		display: none;
+		flex-direction: column;
+		gap: 0.5rem;
+		margin-bottom: 1.5rem;
+	}
+
 	@media (max-width: 1023px) {
 		.aide-toc {
 			display: none;
+		}
+
+		.aide-toc-mobile {
+			display: flex;
 		}
 	}
 

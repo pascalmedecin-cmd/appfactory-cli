@@ -17,7 +17,7 @@
 	class="fixed top-0 right-0 h-(--header-height) bg-white/80 backdrop-blur-sm border-b border-border/80 flex items-center justify-between px-4 md:px-6 z-20 transition-all duration-200"
 	style="left: {sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)'}"
 >
-	<div class="flex items-center gap-3">
+	<div class="header-left">
 		<!-- Burger menu mobile -->
 		{#if onMenuToggle}
 			<button
@@ -31,28 +31,47 @@
 		{#if pageTitle}
 			<span class="header-title font-semibold text-text">{pageTitle}</span>
 		{/if}
-	</div>
-
-	<div class="flex items-center gap-4">
 		{#if $pageSubtitle}
 			<span class="header-subtitle text-text-muted">{$pageSubtitle}</span>
 		{/if}
-		<span class="text-sm text-text-muted hidden sm:inline">{user?.email}</span>
+	</div>
+
+	<div class="header-right">
+		<span class="header-email text-text-muted hidden sm:inline">{user?.email}</span>
 	</div>
 
 </header>
 
 <style>
+	.header-left {
+		display: flex;
+		align-items: baseline;
+		gap: 0.625rem;
+	}
+
+	.header-right {
+		display: flex;
+		align-items: baseline;
+	}
+
 	.burger-btn {
 		display: none;
 	}
 
 	.header-title {
-		font-size: 0.875rem;
+		font-size: 1.375rem;
+		line-height: 1;
+		letter-spacing: -0.01em;
 	}
 
 	.header-subtitle {
 		font-size: 0.8125rem;
+		line-height: 1;
+	}
+
+	.header-email {
+		font-size: 0.8125rem;
+		line-height: 1;
 	}
 
 	@media (max-width: 767px) {
