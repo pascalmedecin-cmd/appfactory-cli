@@ -1,17 +1,14 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { createSupabaseBrowserClient } from '$lib/supabase';
 	import { config } from '$lib/config';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
 
-	const supabase = createSupabaseBrowserClient();
 	const bgImage = 'loginBackground' in config.branding ? (config.branding as Record<string, unknown>).loginBackground as string : null;
 
 	let email = $state('');
 	let loginError = $state('');
-	let magicLinkSent = $state(false);
 	let loading = $state(false);
 
 	// Detecter erreur d'acces non autorise via query param
@@ -21,27 +18,6 @@
 			loginError = 'Accès réservé aux comptes @filmpro.ch. Contactez l\'administrateur.';
 		} else if (params.get('error') === 'callback') {
 			loginError = `Erreur de connexion : ${params.get('detail') || 'inconnue'}`;
-		}
-	}
-
-	// Quand le serveur valide le domaine, envoyer le magic link cote client (PKCE)
-	async function sendMagicLink(validatedEmail: string) {
-		const { error } = await supabase.auth.signInWithOtp({
-			email: validatedEmail,
-			options: {
-				emailRedirectTo: `${window.location.origin}/auth/callback`
-			}
-		});
-		loading = false;
-		if (error) {
-			if (error.status === 429) {
-				loginError = 'Trop de tentatives. Réessayez plus tard.';
-			} else {
-				loginError = 'Erreur lors de l\'envoi du lien. Réessayez.';
-			}
-			console.error('Erreur magic link:', error.message);
-		} else {
-			magicLinkSent = true;
 		}
 	}
 </script>
@@ -67,16 +43,16 @@
 			</div>
 		{/if}
 
-		{#if magicLinkSent}
+		{#if form?.sent}
 			<div class="text-center flex flex-col gap-4">
 				<div class="px-4 py-4 rounded-lg {bgImage ? 'bg-white/10 border border-white/20 text-white' : 'bg-emerald-50 border border-emerald-200 text-emerald-800'}">
 					<p class="font-medium mb-1">Lien de connexion envoyé</p>
-					<p class="text-sm opacity-80">Consultez votre boîte mail <strong>{email}</strong> et cliquez sur le lien reçu.</p>
+					<p class="text-sm opacity-80">Consultez votre boîte mail <strong>{form.email}</strong> et cliquez sur le lien reçu.</p>
 				</div>
 				<a href="/login" class="text-sm underline opacity-70 hover:opacity-100 {bgImage ? 'text-white' : 'text-text'}">Réessayer avec une autre adresse</a>
 			</div>
 		{:else}
-			<form method="POST" action="?/magiclink" use:enhance={() => { loading = true; loginError = ''; return async ({ result, update }) => { if (result.type === 'success' && result.data?.validated) { await sendMagicLink(result.data.email as string); } else { loading = false; await update(); } }; }} class="flex flex-col gap-4">
+			<form method="POST" action="?/magiclink" use:enhance={() => { loading = true; loginError = ''; return async ({ update }) => { loading = false; await update(); }; }} class="flex flex-col gap-4">
 				<div>
 					<label for="email" class="block text-sm font-medium mb-1.5 {bgImage ? 'text-white/80' : 'text-text-light'}">Adresse email professionnelle</label>
 					<input
