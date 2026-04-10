@@ -12,17 +12,15 @@
 	} = $props();
 
 	let importing = $state(false);
-	let activeTab = $state<'lindas' | 'zefix' | 'simap' | 'search_ch'>('lindas');
+	let activeTab = $state<'zefix' | 'simap' | 'search_ch'>('zefix');
 	let importCanton = $state('GE');
-	let importKeywords = $state('construction, architecte, batiment');
 	let importLimit = $state('100');
 	let importZefixName = $state('');
 	let importSimapSearch = $state('');
 	let importSimapDays = $state('30');
 
 	const tabs = [
-		{ key: 'lindas' as const, label: 'Registre du commerce', icon: 'database', desc: 'LINDAS' },
-		{ key: 'zefix' as const, label: 'Registre complet', icon: 'business', desc: 'Zefix' },
+		{ key: 'zefix' as const, label: 'Registre du commerce', icon: 'business', desc: 'RC' },
 		{ key: 'simap' as const, label: 'Marchés publics', icon: 'gavel', desc: 'SIMAP' },
 		{ key: 'search_ch' as const, label: 'Annuaire', icon: 'phone', desc: 'search.ch' },
 	];
@@ -48,15 +46,6 @@
 		} finally {
 			importing = false;
 		}
-	}
-
-	function importLindas() {
-		const keywords = importKeywords.split(',').map((k) => k.trim()).filter(Boolean);
-		return importFromSource('/api/prospection/lindas', {
-			canton: importCanton,
-			keywords,
-			limit: Number(importLimit) || 100,
-		});
 	}
 
 	function importZefix() {
@@ -98,59 +87,12 @@
 			{/each}
 		</div>
 
-		<!-- LINDAS -->
-		{#if activeTab === 'lindas'}
-			<div class="space-y-4">
-				<div class="p-4 rounded-lg bg-accent/5 border border-accent/10">
-					<p class="text-sm text-text-body">
-						<strong>Registre du commerce fédéral</strong> — Données ouvertes. Recherche d'entreprises par canton et mots-clés dans le but social.
-					</p>
-				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label class="block text-sm font-medium text-text mb-1">Canton</label>
-						<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
-							{#each cantons as c}
-								<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
-							{/each}
-						</select>
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-text mb-1">Nombre max de résultats</label>
-						<select bind:value={importLimit} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
-							<option value="50">50</option>
-							<option value="100">100</option>
-							<option value="200">200</option>
-							<option value="500">500</option>
-						</select>
-					</div>
-				</div>
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Mots-clés <span class="font-normal text-text-muted">(séparés par des virgules)</span></label>
-					<input
-						type="text"
-						bind:value={importKeywords}
-						placeholder="construction, architecte, bâtiment..."
-						class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
-					/>
-				</div>
-				<button
-					onclick={importLindas}
-					disabled={importing}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
-				>
-					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
-					{importing ? 'Import en cours…' : 'Lancer l\'import'}
-				</button>
-			</div>
-		{/if}
-
-		<!-- Zefix REST -->
+		<!-- Registre du commerce -->
 		{#if activeTab === 'zefix'}
 			<div class="space-y-4">
 				<div class="p-4 rounded-lg bg-accent/5 border border-accent/10">
 					<p class="text-sm text-text-body">
-						<strong>Zefix — Registre complet</strong> — Données enrichies : but social, capital nominal, publications FOSC. Nécessite les credentials API.
+						<strong>Registre du commerce</strong> — Entreprises suisses avec but social, capital nominal et publications FOSC.
 					</p>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">

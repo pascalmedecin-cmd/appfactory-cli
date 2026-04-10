@@ -15,7 +15,7 @@ export const CANTON_MAP: Record<string, string> = {
 	GE: 'GE', VD: 'VD', VS: 'VS', NE: 'NE', FR: 'FR', JU: 'JU',
 };
 
-export function cantonToLead(canton: string | null | undefined): string {
-	if (!canton) return 'Autre';
-	return CANTON_MAP[canton] ?? 'Autre';
+export function cantonToLead(canton: string | null | undefined): string | null {
+	if (!canton) return null;
+	return CANTON_MAP[canton] ?? null;
 }

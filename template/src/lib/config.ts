@@ -108,14 +108,9 @@ export const config = {
 
 	prospection: {
 		sources: {
-			lindas: {
-				label: 'LINDAS (registre du commerce)',
-				enabled: true,
-				cantons: ['GE', 'VD', 'VS', 'NE', 'FR', 'JU'],
-			},
 			zefix: {
-				label: 'Zefix REST (registre complet)',
-				enabled: false,
+				label: 'Registre du commerce',
+				enabled: true,
 			},
 			simap: {
 				label: 'SIMAP (marches publics)',

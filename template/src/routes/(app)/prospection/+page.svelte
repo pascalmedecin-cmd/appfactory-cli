@@ -123,8 +123,8 @@
 
 	function sourceLabel(s: string): string {
 		const labels: Record<string, string> = {
+			zefix: 'Registre du commerce',
 			lindas: 'Registre du commerce',
-			zefix: 'Registre complet',
 			simap: 'Marchés publics',
 			search_ch: 'Annuaire',
 			sitg: 'Géodonnées',
@@ -208,41 +208,38 @@
 	<!-- Bandeau workflow 4 étapes -->
 	<div class="flex items-center gap-5 sm:gap-8 py-3">
 		<div class="flex flex-col items-center gap-1.5">
-			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-sky-50">
-				<span class="material-symbols-outlined text-[26px] text-sky-400">cloud_download</span>
+			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-accent-light">
+				<span class="material-symbols-outlined text-[26px] text-accent">cloud_download</span>
 			</span>
 			<span class="text-sm font-semibold text-text">Importer</span>
 			<span class="text-xs text-text-muted">{data.leads.length} prospect{data.leads.length > 1 ? 's' : ''}</span>
 		</div>
 		<div class="flex items-center mt-[-22px]">
-			<div class="w-6 sm:w-10 h-px bg-border"></div>
-			<span class="material-symbols-outlined text-[14px] text-border-strong -ml-1">chevron_right</span>
+			<span class="material-symbols-outlined text-[22px] text-border-strong">arrow_forward</span>
 		</div>
 		<div class="flex flex-col items-center gap-1.5">
-			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-violet-50">
-				<span class="material-symbols-outlined text-[26px] text-violet-400">auto_fix_high</span>
+			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-info-light">
+				<span class="material-symbols-outlined text-[26px] text-info">auto_fix_high</span>
 			</span>
 			<span class="text-sm font-semibold text-text">Enrichir</span>
 			<span class="text-xs text-text-muted">{enrichedCount} enrichi{enrichedCount > 1 ? 's' : ''}</span>
 		</div>
 		<div class="flex items-center mt-[-22px]">
-			<div class="w-6 sm:w-10 h-px bg-border"></div>
-			<span class="material-symbols-outlined text-[14px] text-border-strong -ml-1">chevron_right</span>
+			<span class="material-symbols-outlined text-[22px] text-border-strong">arrow_forward</span>
 		</div>
 		<div class="flex flex-col items-center gap-1.5">
-			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-amber-50">
-				<span class="material-symbols-outlined text-[26px] text-amber-400">filter_list</span>
+			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-warning-light">
+				<span class="material-symbols-outlined text-[26px] text-warning">filter_list</span>
 			</span>
 			<span class="text-sm font-semibold text-text">Qualifier</span>
 			<span class="text-xs text-text-muted">{qualifiedCount} qualifié{qualifiedCount > 1 ? 's' : ''}</span>
 		</div>
 		<div class="flex items-center mt-[-22px]">
-			<div class="w-6 sm:w-10 h-px bg-border"></div>
-			<span class="material-symbols-outlined text-[14px] text-border-strong -ml-1">chevron_right</span>
+			<span class="material-symbols-outlined text-[22px] text-border-strong">arrow_forward</span>
 		</div>
 		<div class="flex flex-col items-center gap-1.5">
-			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-emerald-50">
-				<span class="material-symbols-outlined text-[26px] text-emerald-400">domain_add</span>
+			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-success-light">
+				<span class="material-symbols-outlined text-[26px] text-success">domain_add</span>
 			</span>
 			<span class="text-sm font-semibold text-text">Convertir</span>
 			<span class="text-xs text-text-muted">{convertedCount} converti{convertedCount > 1 ? 's' : ''}</span>
@@ -296,16 +293,15 @@
 			</select>
 			<select bind:value={filterScoreMin} class="px-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
 				<option value="">Toute température</option>
-				<option value={String(scoreLabels.chaud)}>Chaud ({scoreLabels.chaud}+ pts)</option>
-				<option value={String(scoreLabels.tiede)}>Tiède et + ({scoreLabels.tiede}+ pts)</option>
-				<option value={String(scoreLabels.froid)}>Froid et + ({scoreLabels.froid}+ pts)</option>
+				<option value={String(scoreLabels.chaud)}>🔴 Chaud</option>
+				<option value={String(scoreLabels.tiede)}>🟠 Tiède et +</option>
+				<option value={String(scoreLabels.froid)}>🔵 Froid et +</option>
 			</select>
 			<select bind:value={filterCanton} class="px-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
 				<option value="">Tous les cantons</option>
 				{#each cantons as c}
 					<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
 				{/each}
-				<option value="Autre">Autre</option>
 			</select>
 			<select bind:value={filterSource} class="px-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
 				<option value="">Toutes les sources</option>
@@ -554,7 +550,7 @@
 			</div>
 			<h3 class="text-lg font-semibold text-text mb-2">Trouvez vos premiers prospects</h3>
 			<p class="text-sm text-text-muted text-center max-w-lg mb-6">
-				Importez des entreprises depuis les sources publiques suisses : registre du commerce, marchés publics, annuaire. Qualifiez-les, puis convertissez les meilleurs en entreprises dans votre CRM.
+				Importez des entreprises depuis les sources publiques suisses (registre du commerce, marchés publics, annuaires). Qualifiez-les, puis convertissez les plus pertinentes en entreprises dans votre CRM. Vous pouvez également procéder à une importation manuelle si nécessaire.
 			</p>
 			<div class="flex flex-col items-center gap-3">
 				<button
@@ -572,9 +568,6 @@
 					Saisie manuelle
 				</button>
 			</div>
-			<p class="text-xs text-text-muted mt-5">
-				Vous pourrez ensuite créer des alertes pour être notifié automatiquement des nouveaux prospects.
-			</p>
 		</div>
 	{:else}
 	<DataTable
@@ -588,7 +581,7 @@
 	>
 		{#snippet row(lead, _i)}
 			<td class="px-4 py-2.5 w-28">
-				<Badge label="{scoreLabel(lead.score_pertinence ?? 0)} ({lead.score_pertinence ?? 0})" variant={scoreBadgeVariant(lead.score_pertinence ?? 0)} dot={true} />
+				<Badge label={scoreLabel(lead.score_pertinence ?? 0)} variant={scoreBadgeVariant(lead.score_pertinence ?? 0)} dot={true} />
 			</td>
 			<td class="px-4 py-2.5 font-medium text-text">{lead.raison_sociale}</td>
 			<td class="px-4 py-2.5 text-text w-24">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '—'}</td>
@@ -631,13 +624,12 @@
 			<FormField label="Raison sociale" bind:value={raison_sociale} required />
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 				<div>
-					<label class="block text-sm font-medium text-text mb-1">Canton</label>
-					<select bind:value={canton} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
-						<option value="">—</option>
+					<label class="block text-sm font-medium text-text mb-1">Canton <span class="text-danger">*</span></label>
+					<select bind:value={canton} required class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
+						<option value="">Sélectionner…</option>
 						{#each cantons as c}
 							<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
 						{/each}
-						<option value="Autre">Autre</option>
 					</select>
 				</div>
 				<FormField label="Secteur" bind:value={secteur_detecte} placeholder="construction, architecte…" />

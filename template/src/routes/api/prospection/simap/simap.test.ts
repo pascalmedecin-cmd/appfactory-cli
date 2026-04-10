@@ -44,19 +44,19 @@ describe('cantonToLead', () => {
 		expect(cantonToLead('VD')).toBe('VD');
 	});
 
-	it('mappe un canton inconnu vers Autre', () => {
-		expect(cantonToLead('ZH')).toBe('Autre');
+	it('retourne null pour un canton inconnu', () => {
+		expect(cantonToLead('ZH')).toBeNull();
 	});
 
-	it('retourne Autre pour null', () => {
-		expect(cantonToLead(null)).toBe('Autre');
+	it('retourne null pour null', () => {
+		expect(cantonToLead(null)).toBeNull();
 	});
 
-	it('retourne Autre pour undefined', () => {
-		expect(cantonToLead(undefined)).toBe('Autre');
+	it('retourne null pour undefined', () => {
+		expect(cantonToLead(undefined)).toBeNull();
 	});
 
-	it('retourne Autre pour chaine vide', () => {
-		expect(cantonToLead('')).toBe('Autre');
+	it('retourne null pour chaine vide', () => {
+		expect(cantonToLead('')).toBeNull();
 	});
 });

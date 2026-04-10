@@ -542,7 +542,7 @@
 						</div>
 
 						<h3 class="aide-h3">Ajouter un lead manuellement</h3>
-						<p>Cliquez <strong>Ajouter un lead</strong>. Remplissez : raison sociale (obligatoire), source, canton, contact, téléphone, adresse, email, secteur, description, montant. Le score est calculé automatiquement.</p>
+						<p>Cliquez <strong>Saisie manuelle</strong>. Remplissez : raison sociale (obligatoire), canton (obligatoire) et secteur. Les autres informations seront complétées automatiquement par enrichissement. Le score est calculé automatiquement.</p>
 
 						<h3 class="aide-h3">Filtrer et trier</h3>
 						<p>4 filtres disponibles en haut : source, canton, statut, score minimum. La barre de recherche filtre par texte dans toutes les colonnes. Cliquez un en-tête de colonne pour trier.</p>
@@ -556,18 +556,18 @@
 						<h3 class="aide-h3">Importer depuis des sources publiques</h3>
 						<p>Cliquez <strong>Importer</strong> en haut à droite. Choisissez une source :</p>
 						<ul class="aide-list">
-							<li><strong>LINDAS</strong> (registre du commerce) — Sélectionnez un canton et des mots-clés</li>
-							<li><strong>Zefix REST</strong> (registre complet) — Données plus riches (capital, FOSC)</li>
-							<li><strong>SIMAP</strong> (marchés publics) — Appels d'offres construction par canton et période</li>
+							<li><strong>Registre du commerce</strong> — Entreprises suisses avec but social, capital nominal et publications FOSC (source technique : API Zefix)</li>
+							<li><strong>Marchés publics</strong> — Appels d'offres construction par canton et période (source technique : SIMAP)</li>
+							<li><strong>Annuaire</strong> — Enrichissement des numéros de téléphone (source technique : search.ch)</li>
 						</ul>
-						<p>Les doublons sont détectés automatiquement. Les leads écartés ou transférés ne sont jamais réimportés.</p>
+						<p>Les doublons sont détectés automatiquement. Les leads écartés ou transférés ne sont jamais réimportés. Les leads sans canton reconnu sont exclus à l'import.</p>
 
 						<h3 class="aide-h3">Enrichir (téléphone)</h3>
 						<p>Sur un lead sans téléphone, cliquez <strong>Enrichir téléphone</strong>. Le système cherche dans l'annuaire suisse et met à jour la fiche. Le score est recalculé (+1 pt si téléphone trouvé).</p>
 
 						<h3 class="aide-h3">Recherches sauvegardées</h3>
-						<p>Configurez vos filtres, puis cliquez <strong>Sauvegarder</strong>. Donnez un nom, choisissez la fréquence d'alerte (quotidienne ou hebdomadaire), et activez les notifications.</p>
-						<p>Pour recharger une recherche : cliquez <strong>Recherches (N)</strong> et sélectionnez-la. Un badge orange indique les nouveaux leads.</p>
+						<p>Configurez vos filtres, puis cliquez <strong>Créer une alerte</strong>. Donnez un nom, choisissez la fréquence (quotidienne ou hebdomadaire), et activez les notifications.</p>
+						<p>Pour recharger une recherche : cliquez <strong>Mes recherches</strong> et sélectionnez-la. Un badge orange indique les nouveaux leads.</p>
 
 						<h3 class="aide-h3">Sélection multiple</h3>
 						<p>Cochez plusieurs leads, puis utilisez la barre d'actions : <strong>Intéressé</strong> ou <strong>Écarter</strong> en lot.</p>
@@ -622,7 +622,7 @@ SvelteKit sur Vercel (Fluid Compute)
   |  supabase-js
 Supabase (PostgreSQL + Auth + API REST)
   |  cron quotidien
-APIs externes (Zefix, SIMAP, search.ch, LINDAS)</pre>
+APIs externes (Zefix, SIMAP, search.ch)</pre>
 						</div>
 
 						<h3 class="aide-h3">Principes</h3>
@@ -756,8 +756,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 							<table class="aide-table">
 								<thead><tr><th>API</th><th>Usage</th><th>Auth</th><th>Route</th></tr></thead>
 								<tbody>
-									<tr><td>LINDAS SPARQL</td><td>Import entreprises par canton</td><td>Aucune</td><td><code>/api/prospection/lindas</code></td></tr>
-									<tr><td>Zefix REST</td><td>Import entreprises (complet)</td><td>Basic Auth</td><td><code>/api/prospection/zefix</code></td></tr>
+									<tr><td>Zefix REST</td><td>Registre du commerce (entreprises)</td><td>Basic Auth</td><td><code>/api/prospection/zefix</code></td></tr>
 									<tr><td>SIMAP</td><td>Marchés publics construction</td><td>Aucune</td><td><code>/api/prospection/simap</code></td></tr>
 									<tr><td>search.ch</td><td>Enrichissement téléphone</td><td>Clé API</td><td><code>/api/prospection/search-ch</code></td></tr>
 								</tbody>
@@ -856,7 +855,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 								{ icon: 'check_circle', text: 'Headers sécurité : CSP, X-Frame-Options DENY, nosniff, Referrer-Policy' },
 								{ icon: 'check_circle', text: 'CRON_SECRET timing-safe (crypto.timingSafeEqual)' },
 								{ icon: 'check_circle', text: 'Erreurs Supabase génériques côté client' },
-								{ icon: 'check_circle', text: 'Sanitisation SPARQL (LINDAS) et protection JSON.parse' },
+								{ icon: 'check_circle', text: 'Protection JSON.parse et validation des entrées API' },
 								{ icon: 'check_circle', text: 'Boutons destructifs désactivés après clic (anti double soumission)' },
 							] as item}
 								<div class="flex items-start gap-2.5">

@@ -81,7 +81,7 @@
 	function sourceLabel(s: string): string {
 		const labels: Record<string, string> = {
 			lindas: 'Registre du commerce',
-			zefix: 'Registre complet',
+			zefix: 'Registre du commerce',
 			simap: 'Marchés publics',
 			search_ch: 'Annuaire',
 			sitg: 'Géodonnées',

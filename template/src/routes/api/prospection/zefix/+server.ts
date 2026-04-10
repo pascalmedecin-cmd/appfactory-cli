@@ -30,8 +30,8 @@ const CANTON_MAP: Record<string, string> = {
 	GE: 'GE', VD: 'VD', VS: 'VS', NE: 'NE', FR: 'FR', JU: 'JU',
 };
 
-function cantonToLead(abbr: string): string {
-	return CANTON_MAP[abbr] ?? 'Autre';
+function cantonToLead(abbr: string): string | null {
+	return CANTON_MAP[abbr] ?? null;
 }
 
 // Detect sector from purpose text
@@ -150,6 +150,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 		const purpose = company.purpose?.fr || company.purpose?.de || company.purpose?.it || '';
 		const cantonCode = cantonToLead(company.canton?.cantonAbbreviation ?? '');
+		if (!cantonCode) { skipped++; continue; }
 		const secteur = detectSecteur(`${purpose} ${company.name}`);
 		const addr = company.address;
 

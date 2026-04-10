@@ -111,6 +111,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		const procOffice = translate(project.procOfficeName);
 		const addr = project.orderAddress;
 		const cantonCode = cantonToLead(addr?.canton);
+		if (!cantonCode) { skipped++; continue; }
 		const city = addr?.city ? translate(addr.city as Translation) : '';
 
 		const description = [

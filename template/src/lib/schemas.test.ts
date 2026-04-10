@@ -57,12 +57,12 @@ describe('ContactCreateSchema', () => {
 
 describe('LeadCreateSchema', () => {
 	it('accepte un lead minimal', () => {
-		const r = validate(LeadCreateSchema, { source: 'manuel', raison_sociale: 'Test SA' });
+		const r = validate(LeadCreateSchema, { source: 'manuel', raison_sociale: 'Test SA', canton: 'GE' });
 		expect(r.success).toBe(true);
 	});
 
 	it('rejette une source invalide', () => {
-		const r = validate(LeadCreateSchema, { source: 'google', raison_sociale: 'Test SA' });
+		const r = validate(LeadCreateSchema, { source: 'google', raison_sociale: 'Test SA', canton: 'GE' });
 		expect(r.success).toBe(false);
 	});
 
@@ -72,12 +72,12 @@ describe('LeadCreateSchema', () => {
 	});
 
 	it('accepte un canton lead valide', () => {
-		const r = validate(LeadCreateSchema, { source: 'lindas', raison_sociale: 'Arc SA', canton: 'Autre' });
+		const r = validate(LeadCreateSchema, { source: 'zefix', raison_sociale: 'Arc SA', canton: 'GE' });
 		expect(r.success).toBe(true);
 	});
 
 	it('coerce montant en nombre', () => {
-		const r = validate(LeadCreateSchema, { source: 'manuel', raison_sociale: 'Test', montant: '50000' });
+		const r = validate(LeadCreateSchema, { source: 'manuel', raison_sociale: 'Test', canton: 'VD', montant: '50000' });
 		expect(r.success).toBe(true);
 		if (r.success) expect(r.data.montant).toBe(50000);
 	});
@@ -120,7 +120,7 @@ describe('RechercheCreateSchema', () => {
 	it('accepte des filtres complets', () => {
 		const r = validate(RechercheCreateSchema, {
 			nom: 'Construction GE',
-			sources: ['lindas', 'simap'],
+			sources: ['zefix', 'simap'],
 			cantons: ['GE', 'VD'],
 			score_minimum: 5,
 			alerte_active: true,
@@ -460,12 +460,12 @@ describe('LeadUpdateSchema', () => {
 	const validUUID = '550e8400-e29b-41d4-a716-446655440000';
 
 	it('accepte un update valide', () => {
-		const r = validate(LeadUpdateSchema, { id: validUUID, source: 'manuel', raison_sociale: 'Test SA' });
+		const r = validate(LeadUpdateSchema, { id: validUUID, source: 'manuel', raison_sociale: 'Test SA', canton: 'GE' });
 		expect(r.success).toBe(true);
 	});
 
 	it('rejette sans id', () => {
-		const r = validate(LeadUpdateSchema, { source: 'manuel', raison_sociale: 'Test SA' });
+		const r = validate(LeadUpdateSchema, { source: 'manuel', raison_sociale: 'Test SA', canton: 'GE' });
 		expect(r.success).toBe(false);
 	});
 

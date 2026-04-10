@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-10
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Refonte UX prospection passe 2 (26e session). Bandeau 4 étapes (Importer → Enrichir → Qualifier → Convertir) aligné gauche avec compteurs. Modal import élargie (max-w-2xl). Saisie manuelle simplifiée (15 → 3 champs). Empty state revu (titre + 2 CTA). Boutons top-right conditionnels. Décisions alertes tranchées. Retours visuels en attente : couleurs icônes trop flashy → pastel chic + texte empty state à finaliser.
+**Session precedente :** Refonte UX prospection passe 3 (27e session). Couleurs bandeau alignées charte FilmPro (tokens CSS). Filtre température : dots colorés sans points numériques. Source LINDAS supprimée (doublon Zefix), label unifié « Registre du commerce ». Canton « Autre » supprimé partout, canton obligatoire en saisie manuelle, leads sans canton exclus à l'import. Flèches bandeau : arrow_forward Material Symbols 22px. Empty state texte finalisé. Documentation aide mise à jour (correspondance sources techniques). 129/129 tests, build OK.
 
 ---
 
@@ -281,6 +281,6 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] Refonte UX prospection passe 2 — finitions visuelles : couleurs icônes bandeau (pastel chic, pas flashy), texte empty state (version longue avec « Alternativement… »), validation visuelle finale (voir mémoire `project_ux_refonte_prospection.md`)
 - [ ] Appliquer les principes UX validés sur prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard)
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
+- [ ] Dette technique : supprimer `/api/prospection/lindas/` + `sparql.ts` (code mort). Prérequis : migrer les leads existants en BDD de `source='lindas'` vers `source='zefix'` (UPDATE prospect_leads SET source='zefix' WHERE source='lindas')

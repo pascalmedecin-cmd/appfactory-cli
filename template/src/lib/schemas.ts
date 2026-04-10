@@ -157,7 +157,7 @@ export const SignalCreateOpportuniteSchema = z.object({
 // -- Prospect Leads --
 
 export const SOURCES_LEAD = [
-	'zefix', 'lindas', 'simap', 'sitg', 'search_ch', 'fosc', 'manuel',
+	'zefix', 'simap', 'sitg', 'search_ch', 'fosc', 'manuel',
 ] as const;
 
 export const STATUTS_LEAD = [
@@ -165,7 +165,7 @@ export const STATUTS_LEAD = [
 ] as const;
 
 export const CANTONS_LEAD = [
-	'GE', 'VD', 'VS', 'NE', 'FR', 'JU', 'Autre',
+	'GE', 'VD', 'VS', 'NE', 'FR', 'JU',
 ] as const;
 
 export const LeadCreateSchema = z.object({
@@ -177,7 +177,7 @@ export const LeadCreateSchema = z.object({
 	adresse: optionalString,
 	npa: z.string().max(10).optional().or(z.literal('')),
 	localite: optionalString,
-	canton: z.enum(CANTONS_LEAD).optional().or(z.literal('')),
+	canton: z.enum(CANTONS_LEAD),
 	telephone: z.string().max(30).optional().or(z.literal('')),
 	site_web: z.string().max(500).optional().or(z.literal('')),
 	email: z.string().email('Email invalide').optional().or(z.literal('')),
