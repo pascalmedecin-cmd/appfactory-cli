@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-10
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Refonte UX prospection passe 3 (27e session). Couleurs bandeau alignées charte FilmPro (tokens CSS). Filtre température : dots colorés sans points numériques. Source LINDAS supprimée (doublon Zefix), label unifié « Registre du commerce ». Canton « Autre » supprimé partout, canton obligatoire en saisie manuelle, leads sans canton exclus à l'import. Flèches bandeau : arrow_forward Material Symbols 22px. Empty state texte finalisé. Documentation aide mise à jour (correspondance sources techniques). 129/129 tests, build OK.
+**Session precedente :** Refonte UX prospection passe 3 (27e session). Bandeau : couleurs charte FilmPro (primary, accent, warning, success), flèches arrow_forward 22px. Source LINDAS supprimée (doublon Zefix), label unifié « Registre du commerce ». Canton « Autre » supprimé partout, canton obligatoire en saisie manuelle, leads sans canton exclus à l'import. Filtre température : labels texte (custom dropdown avec icônes en backlog). Empty state texte finalisé. Doc aide mise à jour. Deploy prod OK. 129/129 tests.
 
 ---
 
@@ -281,6 +281,7 @@ Fichiers cles :
 
 ## Prochaine session
 
+- [ ] Filtre température : remplacer le `<select>` natif par un custom dropdown avec icônes Material Symbols (dots colorés premium, pas emoji ni texte seul)
 - [ ] Appliquer les principes UX validés sur prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard)
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
 - [ ] Dette technique : supprimer `/api/prospection/lindas/` + `sparql.ts` (code mort). Prérequis : migrer les leads existants en BDD de `source='lindas'` vers `source='zefix'` (UPDATE prospect_leads SET source='zefix' WHERE source='lindas')
