@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-10
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Responsive mobile + auth OTP (19e session). Auth migree magic link + MFA TOTP → OTP code email 6 chiffres (PWA compatible). Session 7 jours via cookie serveur. Fix sidebar mobile (z-index, effect reactif). Header mobile avec titre + sous-titre sticky. Cards signaux allegees (commune/source/date). Headers Prospection/Signaux responsive (flex-wrap). 8 commits.
+**Session precedente :** Headers unifies (20e session). Titre + compteur dans bandeau sticky sur mobile ET desktop. Suppression h1 dupliques sur 7 pages. Mobile : titre 18px, compteur 15px aligne a droite. Desktop : titre 14px, compteur 13px. 1 commit.
 
 ---
 
@@ -286,7 +286,7 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] Retester sur iPhone apres deploy : header titre sticky, cards signaux allegees, responsive complet
+- [ ] Tester sur iPhone : headers unifies (titre + compteur sticky), responsive complet
 - [ ] Point G dashboard : verifier si contenu deborde sur mobile (signale durant test mais non detaille)
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet
 - [ ] Mettre a jour USER_GUIDE_DRAFT.md : auth OTP code (plus de magic link ni MFA), session 7 jours
