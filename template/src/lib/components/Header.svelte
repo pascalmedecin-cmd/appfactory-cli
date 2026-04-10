@@ -28,7 +28,7 @@
 			</button>
 		{/if}
 		{#if pageTitle}
-			<span class="text-sm font-medium text-text hidden md:inline">{pageTitle}</span>
+			<span class="text-sm font-medium text-text">{pageTitle}</span>
 		{/if}
 	</div>
 
