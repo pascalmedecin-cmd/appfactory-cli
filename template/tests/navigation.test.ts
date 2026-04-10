@@ -6,9 +6,9 @@ test.describe('Navigation', () => {
 		await expect(page).toHaveURL(/\/login/);
 	});
 
-	test('la page login contient le formulaire magic link', async ({ page }) => {
+	test('la page login contient le formulaire OTP email', async ({ page }) => {
 		await page.goto('/login');
-		await expect(page.locator('text=Recevoir le lien de connexion')).toBeVisible();
+		await expect(page.locator('text=Recevoir le code')).toBeVisible();
 	});
 
 	test('redirige /contacts vers /login si non authentifie', async ({ page }) => {
@@ -32,7 +32,7 @@ test.describe('Responsive mobile', () => {
 
 	test('page login s\'affiche correctement sur mobile', async ({ page }) => {
 		await page.goto('/login');
-		await expect(page.locator('text=Recevoir le lien de connexion')).toBeVisible();
+		await expect(page.locator('text=Recevoir le code')).toBeVisible();
 		const button = page.locator('button[type="submit"]');
 		await expect(button).toBeVisible();
 		const box = await button.boundingBox();

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import { config } from '$lib/config';
 	import type { ActionData } from './$types';
 
@@ -8,8 +9,11 @@
 	const bgImage = 'loginBackground' in config.branding ? (config.branding as Record<string, unknown>).loginBackground as string : null;
 
 	let email = $state('');
+	let code = $state('');
 	let loginError = $state('');
 	let loading = $state(false);
+	let codeSent = $state(false);
+	let sentEmail = $state('');
 
 	// Detecter erreur d'acces non autorise via query param
 	if (typeof window !== 'undefined') {
@@ -19,6 +23,24 @@
 		} else if (params.get('error') === 'callback') {
 			loginError = `Erreur de connexion : ${params.get('detail') || 'inconnue'}`;
 		}
+	}
+
+	// Réagir aux retours serveur
+	$effect(() => {
+		if (form?.codeSent && !form?.verified) {
+			codeSent = true;
+			sentEmail = form.email ?? '';
+		}
+		if (form?.verified) {
+			goto('/');
+		}
+	});
+
+	function resetToEmail() {
+		codeSent = false;
+		sentEmail = '';
+		code = '';
+		loginError = '';
 	}
 </script>
 
@@ -37,22 +59,63 @@
 			<p class="login-subtitle" class:text-white={bgImage} class:text-text={!bgImage}>Espace professionnel</p>
 		</div>
 
-		{#if loginError || form?.error}
+		{#if (loginError || form?.error) && !form?.verified}
 			<div class="px-4 py-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-200 text-sm text-center">
 				{loginError || form?.error}
 			</div>
 		{/if}
 
-		{#if form?.sent}
-			<div class="text-center flex flex-col gap-4">
-				<div class="px-4 py-4 rounded-lg {bgImage ? 'bg-white/10 border border-white/20 text-white' : 'bg-emerald-50 border border-emerald-200 text-emerald-800'}">
-					<p class="font-medium mb-1">Lien de connexion envoyé</p>
-					<p class="text-sm opacity-80">Consultez votre boîte mail <strong>{form.email}</strong> et cliquez sur le lien reçu.</p>
+		{#if codeSent}
+			<!-- Étape 2 : saisir le code -->
+			<form method="POST" action="?/verifycode" use:enhance={() => { loading = true; loginError = ''; return async ({ update }) => { loading = false; await update(); }; }} class="flex flex-col gap-4">
+				<input type="hidden" name="email" value={sentEmail} />
+
+				<div class="text-center {bgImage ? 'text-white/80' : 'text-text-light'}">
+					<p class="text-sm">Code envoyé à <strong class="{bgImage ? 'text-white' : 'text-text'}">{sentEmail}</strong></p>
 				</div>
-				<a href="/login" class="text-sm underline opacity-70 hover:opacity-100 {bgImage ? 'text-white' : 'text-text'}">Réessayer avec une autre adresse</a>
-			</div>
+
+				<div>
+					<label for="code" class="block text-sm font-medium mb-1.5 {bgImage ? 'text-white/80' : 'text-text-light'}">Code à 6 chiffres</label>
+					<input
+						id="code"
+						name="code"
+						type="text"
+						inputmode="numeric"
+						autocomplete="one-time-code"
+						pattern="[0-9]{6}"
+						maxlength="6"
+						placeholder="000000"
+						bind:value={code}
+						required
+						class="w-full px-4 py-3 rounded-lg text-sm text-center tracking-[0.3em] text-lg font-mono {bgImage
+							? 'bg-white/10 border border-white/20 text-white placeholder-white/40 backdrop-blur-sm'
+							: 'bg-white border border-border text-text placeholder-text-light/50'}"
+					/>
+				</div>
+
+				<button
+					type="submit"
+					disabled={loading || code.length !== 6}
+					class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg shadow-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
+						{bgImage
+							? 'border border-white/20 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20'
+							: 'border border-primary bg-primary text-white hover:bg-primary-dark'}"
+				>
+					<span class="material-symbols-outlined text-[20px]">lock_open</span>
+					{loading ? 'Vérification...' : 'Se connecter'}
+				</button>
+
+				<button
+					type="button"
+					onclick={resetToEmail}
+					class="text-sm underline opacity-70 hover:opacity-100 cursor-pointer {bgImage ? 'text-white' : 'text-text'}"
+				>
+					Changer d'adresse email
+				</button>
+			</form>
 		{:else}
-			<form method="POST" action="?/magiclink" use:enhance={() => { loading = true; loginError = ''; return async ({ update }) => { loading = false; await update(); }; }} class="flex flex-col gap-4">
+			<!-- Étape 1 : entrer l'email -->
+			<form method="POST" action="?/sendcode" use:enhance={() => { loading = true; loginError = ''; return async ({ update }) => { loading = false; await update(); }; }} class="flex flex-col gap-4">
 				<div>
 					<label for="email" class="block text-sm font-medium mb-1.5 {bgImage ? 'text-white/80' : 'text-text-light'}">Adresse email professionnelle</label>
 					<input
@@ -78,7 +141,7 @@
 					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
 					</svg>
-					{loading ? 'Envoi en cours...' : 'Recevoir le lien de connexion'}
+					{loading ? 'Envoi en cours...' : 'Recevoir le code'}
 				</button>
 			</form>
 		{/if}
@@ -139,5 +202,4 @@
 		color: white;
 		font-family: 'Inter', system-ui, sans-serif;
 	}
-
 </style>

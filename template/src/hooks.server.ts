@@ -57,7 +57,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Proteger toutes les routes sauf /login et /auth
 	const { session, user } = await event.locals.safeGetSession();
 	// Allowlist explicite — ne jamais utiliser de prefix match sur /auth/*
-	const AUTH_EXEMPT_ROUTES = ['/login', '/auth/callback', '/auth/mfa', '/auth/mfa/setup'];
+	const AUTH_EXEMPT_ROUTES = ['/login', '/auth/callback'];
 	const isAuthRoute = AUTH_EXEMPT_ROUTES.includes(event.url.pathname);
 	const isCronRoute = event.url.pathname.startsWith('/api/cron/');
 
@@ -76,26 +76,6 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	if (session && event.url.pathname === '/login') {
 		throw redirect(303, '/');
-	}
-
-	// MFA enforcement : verifier le niveau AAL pour les routes protegees
-	if (session && !isAuthRoute && !isCronRoute) {
-		const { data: aal } = await event.locals.supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-		if (aal) {
-			const { currentLevel, nextLevel } = aal;
-			// Facteur TOTP enrolle mais session non verifiee → challenge
-			if (nextLevel === 'aal2' && currentLevel !== 'aal2') {
-				throw redirect(303, '/auth/mfa');
-			}
-			// Aucun facteur verifie → forcer le setup
-			if (nextLevel === 'aal1' && currentLevel === 'aal1') {
-				const { data: factors } = await event.locals.supabase.auth.mfa.listFactors();
-				const verifiedTotp = factors?.totp?.filter(f => f.status === 'verified') ?? [];
-				if (!verifiedTotp.length) {
-					throw redirect(303, '/auth/mfa/setup');
-				}
-			}
-		}
 	}
 
 	const response = await resolve(event, {

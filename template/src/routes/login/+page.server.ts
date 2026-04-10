@@ -5,7 +5,7 @@ import { createSupabaseServerClient } from '$lib/server/supabase';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
-	magiclink: async ({ request, cookies, url }) => {
+	sendcode: async ({ request, cookies }) => {
 		const formData = await request.formData();
 		const email = formData.get('email')?.toString().trim().toLowerCase();
 
@@ -18,21 +18,47 @@ export const actions: Actions = {
 		}
 
 		const supabase = createSupabaseServerClient(cookies);
-		const { error } = await supabase.auth.signInWithOtp({
-			email,
-			options: {
-				emailRedirectTo: `${url.origin}/auth/callback`
-			}
-		});
+		const { error } = await supabase.auth.signInWithOtp({ email });
 
 		if (error) {
 			if (error.status === 429) {
 				return fail(429, { error: 'Trop de tentatives. Réessayez plus tard.' });
 			}
-			console.error('Erreur magic link:', error.message);
-			return fail(500, { error: 'Erreur lors de l\'envoi du lien. Réessayez.' });
+			console.error('Erreur envoi code OTP:', error.message);
+			return fail(500, { error: 'Erreur lors de l\'envoi du code. Réessayez.' });
 		}
 
-		return { sent: true, email };
+		return { codeSent: true, email };
+	},
+
+	verifycode: async ({ request, cookies }) => {
+		const formData = await request.formData();
+		const email = formData.get('email')?.toString().trim().toLowerCase();
+		const code = formData.get('code')?.toString().trim();
+
+		if (!email || !code) {
+			return fail(400, { error: 'Email et code requis.', codeSent: true, email: email ?? '' });
+		}
+
+		if (!/^\d{6}$/.test(code)) {
+			return fail(400, { error: 'Le code doit contenir 6 chiffres.', codeSent: true, email });
+		}
+
+		const supabase = createSupabaseServerClient(cookies);
+		const { error } = await supabase.auth.verifyOtp({
+			email,
+			token: code,
+			type: 'email'
+		});
+
+		if (error) {
+			console.error('Erreur vérification OTP:', error.message);
+			const msg = error.message.includes('expired')
+				? 'Code expiré. Demandez un nouveau code.'
+				: 'Code incorrect. Vérifiez et réessayez.';
+			return fail(400, { error: msg, codeSent: true, email });
+		}
+
+		return { verified: true };
 	}
 };
