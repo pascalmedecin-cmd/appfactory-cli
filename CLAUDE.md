@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-10
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** UX headers + aide (23e session). Header desktop : titre 0.875rem → 1.375rem, compteur baseline a cote du titre, email aligne. Page /aide : onglets renommes (Fonctions detaillees, Documentation technique), nav mobile select ajoutee. 129/129 tests, 0 regression.
+**Session precedente :** Nettoyage docs (24e session). Suppression USER_GUIDE_DRAFT.md et MAINTAINER_GUIDE_DRAFT.md (contenu migre dans /aide interactive), 5 references nettoyees dans CLAUDE.md.
 
 ---
 
@@ -106,7 +106,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Relances du jour** : bandeau dashboard + badges pipeline (pas une page separee)
 - **Prospection = page a part entiere** avec multi-sources, scoring, alertes, dedup, actions batch
 - **Page Aide** : documentation utilisateur integree (8 sections, sommaire, recherche)
-- **Documentation au fil de l'eau** : USER_GUIDE_DRAFT.md + MAINTAINER_GUIDE_DRAFT.md mis a jour a chaque session
+- **Documentation** : integree dans la page /aide interactive
 
 ### Decisions Prospection (G36)
 
@@ -167,8 +167,6 @@ Fichiers cles :
 ## DOCUMENTATION
 
 - `docs/SPECS_PROSPECTION.md` — Specs completes module prospection (sources, modele, scoring, UI, dedup)
-- `docs/USER_GUIDE_DRAFT.md` — Guide utilisateur, alimente au fil du dev
-- `docs/MAINTAINER_GUIDE_DRAFT.md` — Guide mainteneur, alimente au fil du dev
 
 → Inventaire composants EN PLACE (11 composants, 6 pages, 4 API, scripts) archive dans archive/inventaire-composants.md — consulter si besoin de lister les composants existants avant d'en creer de nouveaux
 
@@ -280,11 +278,7 @@ Fichiers cles :
 - Tests automatises avant mise en preview
 - project.yaml comme source de verite des specs
 - Extraire le generique (template) du specifique (app client) en continu
-- Mettre a jour USER_GUIDE_DRAFT.md apres chaque feature implementee
-- Mettre a jour MAINTAINER_GUIDE_DRAFT.md apres chaque decision technique
-- Checklist fin de session : docs/USER_GUIDE_DRAFT.md et docs/MAINTAINER_GUIDE_DRAFT.md a jour ?
 
 ## Prochaine session
 
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
-- [ ] Supprimer USER_GUIDE_DRAFT.md et MAINTAINER_GUIDE_DRAFT.md (contenu migre dans /aide interactive)
