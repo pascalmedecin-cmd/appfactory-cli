@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-10
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Fix auth mobile + infra Vercel (17e session). Bug PKCE mobile corrige (signInWithOtp server-side, token_hash au lieu de code_verifier). Vercel Analytics active, Node.js 24.x, title app.html corrige, test Playwright responsive mobile ajoute, skill filmpro-pdf-lite active. Vercel Pro teste → downgrade Hobby (suffisant pour 1 builder). A TESTER : login mobile avec nouveau magic link (rate limit Supabase expire).
+**Session precedente :** Fix PKCE mobile definitive + SMTP Resend (18e session). Login mobile Safari fonctionne : template email Supabase modifie (token_hash au lieu de ConfirmationURL). SMTP custom Resend configure (domaine filmpro.ch verifie, free plan permanent 3000 emails/mois). Tentatives echouees documentees : flowType implicit ecrase par @supabase/ssr, createClient implicit redirige en fragment. Bug visuel decouvert : texte « Aide » visible derriere card signaux sur mobile.
 
 ---
 
@@ -126,7 +126,8 @@ Pilotage depuis le terminal via Claude Code skills.
 
 - **Vercel** : https://filmpro-crm.vercel.app (prod), GitHub lie (repo appfactory-cli, deploys auto), env vars configurees prod+preview (9 variables)
 - **Supabase** : projet `appfactory` (fmflvjubjtpidvxwhqab), region EU
-- **Auth** : Magic link (email OTP) + MFA TOTP via Supabase, domaine @filmpro.ch valide cote serveur (form action), PKCE cote client, callback /auth/callback, pages /auth/mfa (challenge) et /auth/mfa/setup (enrollment QR code), enforcement AAL dans hooks.server.ts
+- **Auth** : Magic link (email OTP) + MFA TOTP via Supabase, domaine @filmpro.ch valide cote serveur (form action), callback /auth/callback (token_hash via template email custom, pas PKCE), pages /auth/mfa (challenge) et /auth/mfa/setup (enrollment QR code), enforcement AAL dans hooks.server.ts
+- **SMTP** : Resend (free plan permanent, 3000 emails/mois), domaine filmpro.ch verifie, sender noreply@filmpro.ch, DNS Infomaniak (DKIM + MX + SPF sur sous-domaine send)
 - **Runtime** : Node.js 22.x sur Vercel
 - **Supabase CLI** : v2.84.2, projet linke (fmflvjubjtpidvxwhqab)
 - **BDD** : 10 tables PostgreSQL (+ prospect_leads, recherches_sauvegardees), FK, index, RLS (authenticated full access), types TS generes
@@ -285,7 +286,7 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] [BLOQUANT] Tester login mobile avec nouveau magic link (fix PKCE deploye commit 988b86e, rate limit Supabase a expirer avant test)
+- [ ] Fix bug visuel mobile : texte « ? Aide » visible derriere la card signaux sur le dashboard (z-index ou overflow)
 - [ ] Tester responsive sidebar mobile sur iPhone (commit 5f7bab7, Playwright OK en 390x844)
 - [ ] Tester responsive complet : formulaires, tableaux, slide-outs, pipeline Kanban sur mobile reel
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet
