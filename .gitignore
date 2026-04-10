@@ -17,3 +17,4 @@ supabase/.temp/
 .claude/skills-borrowed.txt
 .claude/session-activations.json
 .vercel
+template/test-results/

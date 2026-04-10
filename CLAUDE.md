@@ -1,10 +1,10 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-09
+**Derniere mise a jour :** 2026-04-10
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Infra + responsive mobile (16e session). Auth magic link mobile Safari OK (pas de bug PKCE, rate limit expire). Vercel Root Directory fixe (. → template) + skip deploys sans changement active. PWA testee OK sur iPhone. Responsive sidebar : cause racine identifiee (Tailwind v4 ne compile pas md:block), refactore en CSS scoped, deploye, a tester sur mobile.
+**Session precedente :** Fix auth mobile + infra Vercel (17e session). Bug PKCE mobile corrige (signInWithOtp server-side, token_hash au lieu de code_verifier). Vercel Analytics active, Node.js 24.x, title app.html corrige, test Playwright responsive mobile ajoute, skill filmpro-pdf-lite active. Vercel Pro teste → downgrade Hobby (suffisant pour 1 builder). A TESTER : login mobile avec nouveau magic link (rate limit Supabase expire).
 
 ---
 
@@ -285,8 +285,7 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] [BLOQUANT] Tester responsive sidebar mobile (commit 5f7bab7 deploye, pas encore teste sur iPhone). Si KO → debugger localement (vite preview + Playwright viewport 390x844) avant re-deploy
-- [ ] Tester responsive complet : formulaires, tableaux, slide-outs, pipeline Kanban sur mobile reel (script de test points F-O)
-- [ ] Corriger `<title>{{APP_NAME}}</title>` dans app.html — placeholder non remplace par SvelteKit
-- [ ] Verifier Node.js : Vercel en 24.x mais svelte.config.js specifie nodejs22.x — aligner
+- [ ] [BLOQUANT] Tester login mobile avec nouveau magic link (fix PKCE deploye commit 988b86e, rate limit Supabase a expirer avant test)
+- [ ] Tester responsive sidebar mobile sur iPhone (commit 5f7bab7, Playwright OK en 390x844)
+- [ ] Tester responsive complet : formulaires, tableaux, slide-outs, pipeline Kanban sur mobile reel
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet
