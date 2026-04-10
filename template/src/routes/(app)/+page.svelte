@@ -1,6 +1,9 @@
 <script lang="ts">
 	import Badge from '$lib/components/Badge.svelte';
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import type { PageData } from './$types';
+
+	$pageSubtitle = 'Vue d\'ensemble';
 
 	let { data }: { data: PageData } = $props();
 
@@ -29,7 +32,7 @@
 </script>
 
 <div class="space-y-8">
-	<div>
+	<div class="page-header-block">
 		<h1 class="text-2xl font-bold text-text tracking-tight">Dashboard</h1>
 		<p class="text-sm text-text-muted mt-1">Vue d'ensemble de votre activité</p>
 	</div>
@@ -232,3 +235,11 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	@media (max-width: 767px) {
+		.page-header-block {
+			display: none;
+		}
+	}
+</style>

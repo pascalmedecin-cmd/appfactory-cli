@@ -4,6 +4,9 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+
+	$effect(() => { $pageSubtitle = `${filteredSignaux.length} ${filteredSignaux.length > 1 ? 'signaux' : 'signal'}`; });
 	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import { toasts } from '$lib/stores/toast';
@@ -211,7 +214,7 @@
 	<!-- Header -->
 	<div>
 		<div class="flex flex-wrap items-center justify-between gap-3">
-			<div>
+			<div class="page-header-block">
 				<h1 class="text-2xl font-bold text-text">Signaux d'affaires</h1>
 				<p class="text-sm text-text-muted">{filteredSignaux.length} {filteredSignaux.length > 1 ? 'signaux' : 'signal'}</p>
 			</div>
@@ -440,16 +443,22 @@
 					</div>
 
 					<div class="mt-3 flex items-center gap-3 text-xs text-text-muted">
-						{#if signal.maitre_ouvrage}
-							<span class="flex items-center gap-1 truncate">
-								<span class="material-symbols-outlined text-[14px]">person</span>
-								{signal.maitre_ouvrage}
+						{#if signal.commune}
+							<span class="flex items-center gap-1">
+								<span class="material-symbols-outlined text-[14px]">location_on</span>
+								{signal.commune}
 							</span>
 						{/if}
 						{#if signal.source_officielle}
-							<span class="flex items-center gap-1 uppercase truncate">
+							<span class="flex items-center gap-1 uppercase">
 								<span class="material-symbols-outlined text-[14px]">source</span>
 								{signal.source_officielle}
+							</span>
+						{/if}
+						{#if signal.date_publication}
+							<span class="flex items-center gap-1">
+								<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+								{new Date(signal.date_publication).toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })}
 							</span>
 						{/if}
 					</div>

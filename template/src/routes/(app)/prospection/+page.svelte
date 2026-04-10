@@ -3,6 +3,9 @@
 	import DataTable from '$lib/components/DataTable.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+
+	$effect(() => { $pageSubtitle = `${filteredLeads.length} lead${filteredLeads.length > 1 ? 's' : ''}`; });
 	import Badge from '$lib/components/Badge.svelte';
 	import ImportModal from '$lib/components/prospection/ImportModal.svelte';
 	import LeadSlideOut from '$lib/components/prospection/LeadSlideOut.svelte';
@@ -135,7 +138,7 @@
 
 <div class="space-y-4">
 	<div class="flex flex-wrap items-center justify-between gap-3">
-		<div>
+		<div class="page-header-block">
 			<h1 class="text-2xl font-bold text-text">Prospection</h1>
 			<p class="text-sm text-text-muted">{filteredLeads.length} lead{filteredLeads.length > 1 ? 's' : ''}</p>
 		</div>

@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { config } from '$lib/config';
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+
+	$pageSubtitle = '';
 
 	let searchQuery = $state('');
 	let activeSection = $state('');
@@ -67,7 +70,7 @@
 
 <div class="max-w-5xl mx-auto">
 	<!-- Header -->
-	<div class="mb-6">
+	<div class="mb-6 page-header-block">
 		<h1 class="text-2xl font-bold text-text">Aide</h1>
 		<p class="mt-1 text-text-muted">Documentation utilisateur {config.app.name}</p>
 	</div>

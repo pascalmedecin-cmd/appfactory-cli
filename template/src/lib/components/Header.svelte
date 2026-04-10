@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createSupabaseBrowserClient } from '$lib/supabase';
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import type { User } from '@supabase/supabase-js';
 
 	let { user, sidebarCollapsed = false, onMenuToggle, pageTitle = '' }: { user: User | null; sidebarCollapsed?: boolean; onMenuToggle?: () => void; pageTitle?: string } = $props();
@@ -16,7 +17,7 @@
 	class="fixed top-0 right-0 h-(--header-height) bg-white/80 backdrop-blur-sm border-b border-border/80 flex items-center justify-between px-4 md:px-6 z-20 transition-all duration-200"
 	style="left: {sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)'}"
 >
-	<div class="flex items-center gap-2">
+	<div class="flex items-center gap-3">
 		<!-- Burger menu mobile -->
 		{#if onMenuToggle}
 			<button
@@ -28,7 +29,12 @@
 			</button>
 		{/if}
 		{#if pageTitle}
-			<span class="text-sm font-medium text-text">{pageTitle}</span>
+			<div class="flex items-baseline gap-2">
+				<span class="header-title text-base font-semibold text-text">{pageTitle}</span>
+				{#if $pageSubtitle}
+					<span class="header-subtitle text-sm text-text-muted">{$pageSubtitle}</span>
+				{/if}
+			</div>
 		{/if}
 	</div>
 
@@ -42,6 +48,14 @@
 		display: none;
 	}
 
+	.header-title {
+		display: none;
+	}
+
+	.header-subtitle {
+		display: none;
+	}
+
 	@media (max-width: 767px) {
 		header {
 			left: 0 !important;
@@ -49,6 +63,14 @@
 
 		.burger-btn {
 			display: flex;
+		}
+
+		.header-title {
+			display: inline;
+		}
+
+		.header-subtitle {
+			display: inline;
 		}
 	}
 </style>

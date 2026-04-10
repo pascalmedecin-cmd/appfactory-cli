@@ -3,6 +3,9 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+
+	$effect(() => { $pageSubtitle = `${data.entreprises.length} entreprise${data.entreprises.length > 1 ? 's' : ''}`; });
 	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -112,7 +115,7 @@
 
 <div class="space-y-5">
 	<div class="flex items-center justify-between">
-		<div>
+		<div class="page-header-block">
 			<h1 class="text-2xl font-bold text-text">Entreprises</h1>
 			<p class="text-sm text-text-muted">{data.entreprises.length} entreprise{data.entreprises.length > 1 ? 's' : ''}</p>
 		</div>

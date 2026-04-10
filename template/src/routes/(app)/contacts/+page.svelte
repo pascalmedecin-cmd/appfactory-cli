@@ -3,6 +3,9 @@
 	import DataTable from '$lib/components/DataTable.svelte';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+
+	$effect(() => { $pageSubtitle = `${data.contacts.length} contact${data.contacts.length > 1 ? 's' : ''}`; });
 	import FormField from '$lib/components/FormField.svelte';
 	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
@@ -144,7 +147,7 @@
 
 <div class="space-y-4">
 	<div class="flex items-center justify-between">
-		<div>
+		<div class="page-header-block">
 			<h1 class="text-2xl font-bold text-text">Contacts</h1>
 			<p class="text-sm text-text-muted">{data.contacts.length} contact{data.contacts.length > 1 ? 's' : ''}</p>
 		</div>

@@ -3,6 +3,9 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+
+	$effect(() => { $pageSubtitle = `${data.opportunites.length} opportunité${data.opportunites.length > 1 ? 's' : ''}`; });
 	import Badge from '$lib/components/Badge.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
@@ -161,7 +164,7 @@
 
 <div class="space-y-4">
 	<div class="flex items-center justify-between">
-		<div>
+		<div class="page-header-block">
 			<h1 class="text-2xl font-bold text-text">Pipeline</h1>
 			<p class="text-sm text-text-muted">{data.opportunites.length} opportunité{data.opportunites.length > 1 ? 's' : ''}</p>
 		</div>
