@@ -7,9 +7,6 @@ import type { Database } from '$lib/database.types';
 
 export function createSupabaseServerClient(cookies: Cookies) {
 	return createServerClient<Database>(env.PUBLIC_SUPABASE_URL!, env.PUBLIC_SUPABASE_ANON_KEY!, {
-		auth: {
-			flowType: 'implicit'
-		},
 		cookies: {
 			getAll: () => cookies.getAll(),
 			setAll: (cookiesToSet) => {
@@ -17,6 +14,24 @@ export function createSupabaseServerClient(cookies: Cookies) {
 					cookies.set(name, value, { ...options, path: '/' });
 				});
 			}
+		}
+	});
+}
+
+/**
+ * Client Supabase avec flowType implicit — pour signInWithOtp uniquement.
+ * createServerClient force flowType:'pkce' (hardcodé dans @supabase/ssr),
+ * ce qui génère des liens ?code= incompatibles avec mobile Safari
+ * (le cookie code_verifier se perd entre Mail.app et le navigateur).
+ * Ce client génère des liens ?token_hash= qui fonctionnent sans cookie.
+ */
+export function createSupabaseOtpClient() {
+	return createClient<Database>(env.PUBLIC_SUPABASE_URL!, env.PUBLIC_SUPABASE_ANON_KEY!, {
+		auth: {
+			flowType: 'implicit',
+			autoRefreshToken: false,
+			persistSession: false,
+			detectSessionInUrl: false
 		}
 	});
 }

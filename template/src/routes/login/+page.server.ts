@@ -1,11 +1,11 @@
 import { fail } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { isEmailAllowed, parseEnvList } from '$lib/server/auth';
-import { createSupabaseServerClient } from '$lib/server/supabase';
+import { createSupabaseOtpClient } from '$lib/server/supabase';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
-	magiclink: async ({ request, cookies, url }) => {
+	magiclink: async ({ request, url }) => {
 		const formData = await request.formData();
 		const email = formData.get('email')?.toString().trim().toLowerCase();
 
@@ -17,9 +17,9 @@ export const actions: Actions = {
 			return fail(403, { error: 'Seules les adresses @filmpro.ch sont acceptées.' });
 		}
 
-		// Envoi server-side : le lien utilise token_hash (pas PKCE)
-		// Compatible mobile Safari (pas de code_verifier à conserver entre apps)
-		const supabase = createSupabaseServerClient(cookies);
+		// Client avec flowType:'implicit' → Supabase génère un lien ?token_hash=
+		// (pas ?code= PKCE qui échoue sur mobile Safari)
+		const supabase = createSupabaseOtpClient();
 		const { error } = await supabase.auth.signInWithOtp({
 			email,
 			options: {
