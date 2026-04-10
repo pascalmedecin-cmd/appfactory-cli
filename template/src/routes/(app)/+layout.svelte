@@ -75,6 +75,8 @@
 			position: fixed;
 			top: 0;
 			left: 0;
+			width: var(--sidebar-width);
+			height: 100%;
 			z-index: 50;
 			transform: translateX(-100%);
 			transition: transform 0.2s ease;
@@ -82,6 +84,13 @@
 
 		.sidebar-wrapper.open {
 			transform: translateX(0);
+		}
+
+		/* Le wrapper gère le fixed+transform, l'aside devient statique */
+		.sidebar-wrapper :global(aside) {
+			position: static !important;
+			z-index: auto !important;
+			width: 100% !important;
 		}
 
 		.mobile-overlay {
