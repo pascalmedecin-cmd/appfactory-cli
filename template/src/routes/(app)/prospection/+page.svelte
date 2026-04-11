@@ -245,53 +245,42 @@
 
 <div class="space-y-5">
 	<!-- Stepper workflow 4 étapes -->
-	<div class="flex items-start gap-8 px-5 py-4 rounded-xl border border-border bg-surface-alt">
-		<!-- Étape 1 — Importer -->
-		<div class="flex flex-col items-center gap-2">
-			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-xs" style="background: #EDF1F5; border: 1.5px solid #8B9DB6">
-				<span class="material-symbols-outlined text-[20px]" style="color: #5A7190">cloud_download</span>
+	<div class="px-6 py-6 rounded-xl border border-border bg-surface-alt">
+		<!-- Ligne dots + segments -->
+		<div class="flex items-center gap-0 mb-4" style="max-width: 520px">
+			<!-- Dot 1 -->
+			<div class="w-3.5 h-3.5 rounded-full shrink-0" style="background: #5A7190; box-shadow: 0 0 0 4px #8B9DB630"></div>
+			<!-- Segment -->
+			<div class="flex-1 h-[2px] mx-1" style="background: #D1D5DB"></div>
+			<!-- Dot 2 -->
+			<div class="w-3.5 h-3.5 rounded-full shrink-0" style="background: #7B6A9A; box-shadow: 0 0 0 4px #9B8BB530"></div>
+			<!-- Segment -->
+			<div class="flex-1 h-[2px] mx-1" style="background: #D1D5DB"></div>
+			<!-- Dot 3 -->
+			<div class="w-3.5 h-3.5 rounded-full shrink-0" style="background: #917548; box-shadow: 0 0 0 4px #B5976E30"></div>
+			<!-- Segment -->
+			<div class="flex-1 h-[2px] mx-1" style="background: #D1D5DB"></div>
+			<!-- Dot 4 -->
+			<div class="w-3.5 h-3.5 rounded-full shrink-0" style="background: #538B6B; box-shadow: 0 0 0 4px #7BAA8E30"></div>
+		</div>
+		<!-- Labels + compteurs -->
+		<div class="flex items-start gap-0" style="max-width: 520px">
+			<div class="flex-1 flex flex-col items-start">
+				<span class="text-sm font-semibold text-text">Importer</span>
+				<span class="text-xs font-medium mt-0.5" style="color: #5A7190">{data.leads.length} prospect{data.leads.length > 1 ? 's' : ''}</span>
 			</div>
-			<span class="text-[13px] font-semibold text-text">Importer</span>
-			<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background: #EDF1F5; color: #5A7190">{data.leads.length}</span>
-		</div>
-
-		<div class="flex items-center pt-3">
-			<span class="material-symbols-outlined text-[16px] text-text-muted/40">chevron_right</span>
-		</div>
-
-		<!-- Étape 2 — Enrichir -->
-		<div class="flex flex-col items-center gap-2">
-			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-xs" style="background: #F0ECF5; border: 1.5px solid #9B8BB5">
-				<span class="material-symbols-outlined text-[20px]" style="color: #7B6A9A">auto_fix_high</span>
+			<div class="flex-1 flex flex-col items-start">
+				<span class="text-sm font-semibold text-text">Enrichir</span>
+				<span class="text-xs font-medium mt-0.5" style="color: #7B6A9A">{enrichedCount} enrichi{enrichedCount > 1 ? 's' : ''}</span>
 			</div>
-			<span class="text-[13px] font-semibold text-text">Enrichir</span>
-			<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background: #F0ECF5; color: #7B6A9A">{enrichedCount}</span>
-		</div>
-
-		<div class="flex items-center pt-3">
-			<span class="material-symbols-outlined text-[16px] text-text-muted/40">chevron_right</span>
-		</div>
-
-		<!-- Étape 3 — Qualifier -->
-		<div class="flex flex-col items-center gap-2">
-			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-xs" style="background: #F5F0E8; border: 1.5px solid #B5976E">
-				<span class="material-symbols-outlined text-[20px]" style="color: #917548">filter_list</span>
+			<div class="flex-1 flex flex-col items-start">
+				<span class="text-sm font-semibold text-text">Qualifier</span>
+				<span class="text-xs font-medium mt-0.5" style="color: #917548">{qualifiedCount} qualifié{qualifiedCount > 1 ? 's' : ''}</span>
 			</div>
-			<span class="text-[13px] font-semibold text-text">Qualifier</span>
-			<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background: #F5F0E8; color: #917548">{qualifiedCount}</span>
-		</div>
-
-		<div class="flex items-center pt-3">
-			<span class="material-symbols-outlined text-[16px] text-text-muted/40">chevron_right</span>
-		</div>
-
-		<!-- Étape 4 — Convertir -->
-		<div class="flex flex-col items-center gap-2">
-			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-xs" style="background: #EBF3EF; border: 1.5px solid #7BAA8E">
-				<span class="material-symbols-outlined text-[20px]" style="color: #538B6B">domain_add</span>
+			<div class="flex-1 flex flex-col items-start">
+				<span class="text-sm font-semibold text-text">Convertir</span>
+				<span class="text-xs font-medium mt-0.5" style="color: #538B6B">{convertedCount} converti{convertedCount > 1 ? 's' : ''}</span>
 			</div>
-			<span class="text-[13px] font-semibold text-text">Convertir</span>
-			<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background: #EBF3EF; color: #538B6B">{convertedCount}</span>
 		</div>
 	</div>
 
