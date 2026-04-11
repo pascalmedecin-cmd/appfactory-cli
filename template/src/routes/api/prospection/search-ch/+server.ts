@@ -49,6 +49,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	try {
 		const resp = await fetch(`${SEARCH_CH_ENDPOINT}?${params}`);
+		if (resp.status === 403 || resp.status === 429) {
+			return json({ error: 'Quota search.ch épuisé ou clé API invalide. Le quota mensuel est de 1 000 requêtes. Réessayez le mois prochain.' }, { status: 429 });
+		}
 		if (!resp.ok) {
 			const text = await resp.text();
 			return json({ error: `search.ch error ${resp.status}: ${text.slice(0, 200)}` }, { status: 502 });

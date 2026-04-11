@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { fade, scale } from 'svelte/transition';
 	import { invalidateAll } from '$app/navigation';
+	import { estimateSearchChCost, SEARCH_CH_SAFE_BATCH_SIZE } from '$lib/api-limits';
 
 	let {
 		open = $bindable(false),
@@ -16,9 +17,13 @@
 	let useSearchCh = $state(true);
 	let useZefix = $state(true);
 
+	const searchChEstimate = $derived(estimateSearchChCost(leadIds.length));
+	const batchTooLarge = $derived(useSearchCh && leadIds.length > SEARCH_CH_SAFE_BATCH_SIZE);
+
 	// Etats du process
 	type Phase = 'config' | 'running' | 'done';
 	let phase = $state<Phase>('config');
+	let quotaWarning = $state<string | null>(null);
 	let total = $state(0);
 	let current = $state(0);
 	let enrichedCount = $state(0);
@@ -42,6 +47,7 @@
 		useSearchCh = true;
 		useZefix = true;
 		abortController = null;
+		quotaWarning = null;
 	}
 
 	function close() {
@@ -147,6 +153,9 @@
 				notFoundCount = data.not_found as number;
 				errorCount = data.errors as number;
 				break;
+			case 'quota_exceeded':
+				quotaWarning = data.message as string;
+				break;
 			case 'cancelled':
 				break;
 		}
@@ -243,6 +252,18 @@
 						</label>
 					</div>
 
+					{#if useSearchCh && searchChEstimate.warning}
+						<div class="flex items-start gap-2.5 p-3 rounded-lg {searchChEstimate.percentOfMonthly >= 95 ? 'bg-danger-light border border-danger/20' : 'bg-warning-light border border-warning/20'}">
+							<span class="material-symbols-outlined text-[18px] mt-0.5 {searchChEstimate.percentOfMonthly >= 95 ? 'text-danger' : 'text-warning'}">warning</span>
+							<div>
+								<p class="text-sm font-medium {searchChEstimate.percentOfMonthly >= 95 ? 'text-danger' : 'text-warning'}">{searchChEstimate.warning}</p>
+								{#if batchTooLarge}
+									<p class="text-xs text-text-muted mt-1">Recommandation : enrichir par lots de {SEARCH_CH_SAFE_BATCH_SIZE} maximum.</p>
+								{/if}
+							</div>
+						</div>
+					{/if}
+
 					<div class="flex justify-end gap-3 pt-3 border-t border-border">
 						<button
 							type="button"
@@ -329,10 +350,17 @@
 				{#if phase === 'done'}
 					<div class="space-y-4">
 						<!-- Resume -->
+						{#if quotaWarning}
+							<div class="flex items-start gap-2.5 p-3 rounded-lg bg-danger-light border border-danger/20">
+								<span class="material-symbols-outlined text-[18px] mt-0.5 text-danger">error</span>
+								<p class="text-sm text-danger font-medium">{quotaWarning}</p>
+							</div>
+						{/if}
+
 						<div class="p-4 rounded-xl" style="background: linear-gradient(135deg, #F0ECF5, #EDF1F5)">
 							<div class="flex items-center gap-2 mb-3">
-								<span class="material-symbols-outlined text-[24px] text-success">task_alt</span>
-								<h3 class="text-base font-semibold text-text">Enrichissement termine</h3>
+								<span class="material-symbols-outlined text-[24px] {quotaWarning ? 'text-warning' : 'text-success'}">{quotaWarning ? 'warning' : 'task_alt'}</span>
+								<h3 class="text-base font-semibold text-text">{quotaWarning ? 'Enrichissement interrompu' : 'Enrichissement terminé'}</h3>
 							</div>
 							<div class="grid grid-cols-2 gap-3">
 								<div class="flex items-center gap-2">

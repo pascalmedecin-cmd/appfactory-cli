@@ -754,13 +754,17 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 					<div class="aide-content">
 						<div class="overflow-x-auto">
 							<table class="aide-table">
-								<thead><tr><th>API</th><th>Usage</th><th>Auth</th><th>Route</th></tr></thead>
+								<thead><tr><th>API</th><th>Usage</th><th>Auth</th><th>Quota</th><th>Route</th></tr></thead>
 								<tbody>
-									<tr><td>Zefix REST</td><td>Registre du commerce (entreprises)</td><td>Basic Auth</td><td><code>/api/prospection/zefix</code></td></tr>
-									<tr><td>SIMAP</td><td>Marchés publics construction</td><td>Aucune</td><td><code>/api/prospection/simap</code></td></tr>
-									<tr><td>search.ch</td><td>Enrichissement téléphone</td><td>Clé API</td><td><code>/api/prospection/search-ch</code></td></tr>
+									<tr><td>Zefix REST</td><td>Registre du commerce (entreprises)</td><td>Basic Auth</td><td>Pas de quota publié, max 500/requête</td><td><code>/api/prospection/zefix</code></td></tr>
+									<tr><td>SIMAP</td><td>Marchés publics construction</td><td>Aucune</td><td>Pas de quota publié, accès gratuit</td><td><code>/api/prospection/simap</code></td></tr>
+									<tr><td>search.ch</td><td>Enrichissement téléphone</td><td>Clé API</td><td><strong>1 000 requêtes/mois</strong>, max 200/requête</td><td><code>/api/prospection/search-ch</code></td></tr>
 								</tbody>
 							</table>
+							<p class="text-xs text-text-muted mt-2">
+								<span class="material-symbols-outlined text-[14px] align-text-bottom">info</span>
+								search.ch est la seule API avec un quota mensuel strict. L'enrichissement batch affiche un avertissement si le nombre de prospects risque d'épuiser le quota. En cas de dépassement, l'enrichissement s'interrompt automatiquement avec un message explicatif.
+							</p>
 						</div>
 
 						<h3 class="aide-h3">Variables d'environnement API</h3>

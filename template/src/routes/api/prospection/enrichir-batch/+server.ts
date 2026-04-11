@@ -39,6 +39,9 @@ async function fetchSearchCh(
 	if (wo) params.set('wo', wo);
 
 	const resp = await fetch(`${SEARCH_CH_ENDPOINT}?${params}`);
+	if (resp.status === 403 || resp.status === 429) {
+		throw new Error('Quota search.ch épuisé ou clé API invalide. Réessayez le mois prochain ou contactez search.ch pour augmenter votre quota.');
+	}
 	if (!resp.ok) return { fields: {}, found: false };
 
 	const xml = await resp.text();
@@ -161,9 +164,28 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 					const allFields: Record<string, unknown> = {};
 
 					if (sources.includes('search_ch') && searchChKey) {
-						const { fields, found } = await fetchSearchCh(lead, searchChKey);
-						if (found) Object.assign(allFields, fields);
-						if (i < leads.length - 1) await sleep(DELAY_SEARCH_CH);
+						try {
+							const { fields, found } = await fetchSearchCh(lead, searchChKey);
+							if (found) Object.assign(allFields, fields);
+							if (i < leads.length - 1) await sleep(DELAY_SEARCH_CH);
+						} catch (err) {
+							const msg = String(err);
+							if (msg.includes('Quota search.ch')) {
+								// Quota épuisé — arrêter le batch proprement
+								controller.enqueue(encoder.encode(sseEvent('quota_exceeded', {
+									source: 'search_ch',
+									message: 'Quota mensuel search.ch atteint (1 000 requêtes/mois). Les requêtes restantes sont annulées.',
+									processed: i,
+									total,
+								})));
+								result.status = 'error';
+								result.message = 'Quota search.ch épuisé';
+								errors++;
+								controller.enqueue(encoder.encode(sseEvent('progress', { current: i + 1, total, result })));
+								break;
+							}
+							throw err;
+						}
 					}
 
 					if (sources.includes('zefix') && zefixAuth) {

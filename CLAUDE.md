@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-11
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Enrichissement batch prospection (33e session, 2026-04-11). Recherche Gemini analysée (14 sources B2B suisses, 3 scénarios budgétaires). Phase 1 implémentée : endpoint SSE `/api/prospection/enrichir-batch` (search.ch + Zefix), modale progression 3 phases, bouton « Enrichir les filtrés » + bouton batch sélection multiple. 23 tests helpers, 159/159 total. Phase 2 (évaluation ROI nouvelles sources) à cadrer.
+**Session precedente :** Colonnes prospection + limites API + nettoyage leads test (34e session, 2026-04-11). 3 leads de test supprimés. Colonnes liste prospection rééquilibrées (raison_sociale bornée, secteur fixe). Module `api-limits.ts` centralisé (quotas search.ch 1000/mois documenté, Zefix/SIMAP sans quota publié). Garde-fous UX : avertissement quota batch, arrêt auto si 403/429, ImportModal guidé vers import ciblé (défaut 50, conseils contextuels). Page Aide enrichie. 159/159 tests.
 
 ---
 
@@ -256,8 +256,8 @@ Fichiers cles :
 ## Prochaine session
 
 - [ ] Enrichissement phase 2 : évaluer ROI des nouvelles sources (SerpAPI, Batimag, Kaspr, CECB, Minergie, permis de construire), cadrer les étapes d'enrichissement et la qualification (waterfall, scoring enrichi)
-- [ ] Supprimer les 3 leads de test (Migros Genève, Banque Cantonale de Genève, Hôtel Beau-Rivage Genève) créés pour valider le batch
 - [ ] Appliquer les principes UX validés sur prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard)
-- [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
 - [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT → CSV) + import avec validation Zod ligne par ligne et preview erreurs
 - [ ] Dashboard/reporting : requêtes SQL agrégées (pipeline par mois, taux conversion par source, activité 30/90j) + graphiques légers
+- [ ] Figma API à configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
+- [ ] Corriger erreur type préexistante sur `api/cron/alertes/+server.ts` ligne 106 (3 erreurs ParserError sur select Supabase)
