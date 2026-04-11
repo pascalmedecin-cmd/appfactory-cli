@@ -244,42 +244,34 @@
 </script>
 
 <div class="space-y-5">
-	<!-- Stepper workflow 4 étapes -->
-	<div class="px-6 py-6 rounded-xl border border-border bg-surface-alt">
-		<!-- Ligne dots + segments -->
-		<div class="flex items-center gap-0 mb-4" style="max-width: 520px">
-			<!-- Dot 1 -->
-			<div class="w-3.5 h-3.5 rounded-full shrink-0" style="background: #5A7190; box-shadow: 0 0 0 4px #8B9DB630"></div>
-			<!-- Segment -->
-			<div class="flex-1 h-[2px] mx-1" style="background: #D1D5DB"></div>
-			<!-- Dot 2 -->
-			<div class="w-3.5 h-3.5 rounded-full shrink-0" style="background: #7B6A9A; box-shadow: 0 0 0 4px #9B8BB530"></div>
-			<!-- Segment -->
-			<div class="flex-1 h-[2px] mx-1" style="background: #D1D5DB"></div>
-			<!-- Dot 3 -->
-			<div class="w-3.5 h-3.5 rounded-full shrink-0" style="background: #917548; box-shadow: 0 0 0 4px #B5976E30"></div>
-			<!-- Segment -->
-			<div class="flex-1 h-[2px] mx-1" style="background: #D1D5DB"></div>
-			<!-- Dot 4 -->
-			<div class="w-3.5 h-3.5 rounded-full shrink-0" style="background: #538B6B; box-shadow: 0 0 0 4px #7BAA8E30"></div>
+	<!-- Workflow 4 étapes -->
+	<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs" style="background: #EDF1F5; border: 1px solid #8B9DB625">
+			<span class="material-symbols-outlined text-[24px] mt-0.5" style="color: #5A7190">cloud_download</span>
+			<div>
+				<span class="text-[15px] font-semibold text-text">Importer</span>
+				<p class="text-xs font-medium mt-0.5" style="color: #5A7190">{data.leads.length} prospect{data.leads.length > 1 ? 's' : ''}</p>
+			</div>
 		</div>
-		<!-- Labels + compteurs -->
-		<div class="flex items-start gap-0" style="max-width: 520px">
-			<div class="flex-1 flex flex-col items-start">
-				<span class="text-sm font-semibold text-text">Importer</span>
-				<span class="text-xs font-medium mt-0.5" style="color: #5A7190">{data.leads.length} prospect{data.leads.length > 1 ? 's' : ''}</span>
+		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs" style="background: #F0ECF5; border: 1px solid #9B8BB525">
+			<span class="material-symbols-outlined text-[24px] mt-0.5" style="color: #7B6A9A">auto_fix_high</span>
+			<div>
+				<span class="text-[15px] font-semibold text-text">Enrichir</span>
+				<p class="text-xs font-medium mt-0.5" style="color: #7B6A9A">{enrichedCount} enrichi{enrichedCount > 1 ? 's' : ''}</p>
 			</div>
-			<div class="flex-1 flex flex-col items-start">
-				<span class="text-sm font-semibold text-text">Enrichir</span>
-				<span class="text-xs font-medium mt-0.5" style="color: #7B6A9A">{enrichedCount} enrichi{enrichedCount > 1 ? 's' : ''}</span>
+		</div>
+		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs" style="background: #F5F0E8; border: 1px solid #B5976E25">
+			<span class="material-symbols-outlined text-[24px] mt-0.5" style="color: #917548">filter_list</span>
+			<div>
+				<span class="text-[15px] font-semibold text-text">Qualifier</span>
+				<p class="text-xs font-medium mt-0.5" style="color: #917548">{qualifiedCount} qualifié{qualifiedCount > 1 ? 's' : ''}</p>
 			</div>
-			<div class="flex-1 flex flex-col items-start">
-				<span class="text-sm font-semibold text-text">Qualifier</span>
-				<span class="text-xs font-medium mt-0.5" style="color: #917548">{qualifiedCount} qualifié{qualifiedCount > 1 ? 's' : ''}</span>
-			</div>
-			<div class="flex-1 flex flex-col items-start">
-				<span class="text-sm font-semibold text-text">Convertir</span>
-				<span class="text-xs font-medium mt-0.5" style="color: #538B6B">{convertedCount} converti{convertedCount > 1 ? 's' : ''}</span>
+		</div>
+		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs" style="background: #EBF3EF; border: 1px solid #7BAA8E25">
+			<span class="material-symbols-outlined text-[24px] mt-0.5" style="color: #538B6B">domain_add</span>
+			<div>
+				<span class="text-[15px] font-semibold text-text">Convertir</span>
+				<p class="text-xs font-medium mt-0.5" style="color: #538B6B">{convertedCount} converti{convertedCount > 1 ? 's' : ''}</p>
 			</div>
 		</div>
 	</div>
