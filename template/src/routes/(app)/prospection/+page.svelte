@@ -9,7 +9,6 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import ImportModal from '$lib/components/prospection/ImportModal.svelte';
 	import LeadSlideOut from '$lib/components/prospection/LeadSlideOut.svelte';
-	import TemperatureSelect from '$lib/components/prospection/TemperatureSelect.svelte';
 	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
@@ -40,6 +39,8 @@
 	let alerteCantons = $state<string[]>([]);
 	let alerteTemperatures = $state<string[]>([]);
 	let alerteFrequence = $state('quotidien');
+	let alerteMotsCles = $state<string[]>([]);
+	let alerteMotCleInput = $state('');
 	let savingAlerte = $state(false);
 	let recherchesOpen = $state(false);
 
@@ -62,13 +63,27 @@
 		alerteSources = [];
 		alerteCantons = [];
 		alerteTemperatures = [];
+		alerteMotsCles = [];
+		alerteMotCleInput = '';
 		alerteFrequence = 'quotidien';
+	}
+
+	function addMotCle() {
+		const mot = alerteMotCleInput.trim();
+		if (mot && !alerteMotsCles.includes(mot)) {
+			alerteMotsCles = [...alerteMotsCles, mot];
+		}
+		alerteMotCleInput = '';
+	}
+
+	function removeMotCle(mot: string) {
+		alerteMotsCles = alerteMotsCles.filter(m => m !== mot);
 	}
 
 	// Filters
 	let filterSource = $state('');
 	let filterCanton = $state('');
-	let filterStatut = $state('nouveau,interesse');
+	let filterStatut = $state('');
 	let filterScoreMin = $state('');
 
 	// Form fields (saisie manuelle simplifiée)
@@ -97,7 +112,7 @@
 	const convertedCount = $derived(data.leads.filter((l) => l.statut === 'transfere').length);
 
 	const activeFilterCount = $derived(
-		(filterStatut !== 'nouveau,interesse' ? 1 : 0) +
+		(filterStatut ? 1 : 0) +
 		(filterScoreMin ? 1 : 0) +
 		(filterCanton ? 1 : 0) +
 		(filterSource ? 1 : 0)
@@ -204,7 +219,7 @@
 	function resetFilters() {
 		filterSource = '';
 		filterCanton = '';
-		filterStatut = 'nouveau,interesse';
+		filterStatut = '';
 		filterScoreMin = '';
 	}
 
@@ -308,34 +323,46 @@
 	<!-- Filtres -->
 	<div class="rounded-xl border border-border bg-white shadow-xs">
 		<div class="flex flex-wrap items-center gap-3 p-3">
-			<select bind:value={filterStatut} class="px-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt font-medium cursor-pointer transition-colors hover:border-accent/40">
-				<option value="nouveau,interesse">A traiter</option>
-				<option value="nouveau">Nouveaux uniquement</option>
-				<option value="interesse">Intéressés uniquement</option>
-				<option value="ecarte">Écartés</option>
-				<option value="transfere">Déjà convertis</option>
-				<option value="">Tout afficher</option>
-			</select>
-			<TemperatureSelect bind:value={filterScoreMin} options={[
-				{ value: '', label: 'Toute température', dotColor: '' },
-				{ value: String(scoreLabels.chaud), label: 'Chaud uniquement', dotColor: 'bg-danger' },
-				{ value: String(scoreLabels.tiede), label: 'Tiède et +', dotColor: 'bg-warning' },
-				{ value: String(scoreLabels.froid), label: 'Froid et +', dotColor: 'bg-text-muted' },
-			]} />
-			<select bind:value={filterCanton} class="px-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
-				<option value="">Tous les cantons</option>
-				{#each cantons as c}
-					<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
-				{/each}
-			</select>
-			<select bind:value={filterSource} class="px-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
-				<option value="">Toutes les sources</option>
-				{#each sourceEntries as [key]}
-					<option value={key}>{sourceLabel(key)}</option>
-				{/each}
-				<option value="sitg">{sourceLabel('sitg')}</option>
-				<option value="fosc">{sourceLabel('fosc')}</option>
-			</select>
+			<div class="relative flex items-center">
+				<span class="material-symbols-outlined text-[16px] text-text-muted absolute left-2.5 pointer-events-none">checklist</span>
+				<select bind:value={filterStatut} class="pl-8 pr-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt font-medium cursor-pointer transition-colors hover:border-accent/40">
+					<option value="">Statut</option>
+					<option value="nouveau,interesse">À traiter</option>
+					<option value="nouveau">Nouveaux</option>
+					<option value="interesse">Intéressés</option>
+					<option value="ecarte">Écartés</option>
+					<option value="transfere">Convertis</option>
+				</select>
+			</div>
+			<div class="relative flex items-center">
+				<span class="material-symbols-outlined text-[16px] text-text-muted absolute left-2.5 pointer-events-none">thermostat</span>
+				<select bind:value={filterScoreMin} class="pl-8 pr-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
+					<option value="">Température</option>
+					<option value={String(scoreLabels.chaud)}>Chaud</option>
+					<option value={String(scoreLabels.tiede)}>Tiède et +</option>
+					<option value={String(scoreLabels.froid)}>Froid et +</option>
+				</select>
+			</div>
+			<div class="relative flex items-center">
+				<span class="material-symbols-outlined text-[16px] text-text-muted absolute left-2.5 pointer-events-none">location_on</span>
+				<select bind:value={filterCanton} class="pl-8 pr-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
+					<option value="">Canton</option>
+					{#each cantons as c}
+						<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
+					{/each}
+				</select>
+			</div>
+			<div class="relative flex items-center">
+				<span class="material-symbols-outlined text-[16px] text-text-muted absolute left-2.5 pointer-events-none">database</span>
+				<select bind:value={filterSource} class="pl-8 pr-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
+					<option value="">Source</option>
+					{#each sourceEntries as [key]}
+						<option value={key}>{sourceLabel(key)}</option>
+					{/each}
+					<option value="sitg">{sourceLabel('sitg')}</option>
+					<option value="fosc">{sourceLabel('fosc')}</option>
+				</select>
+			</div>
 
 			<div class="ml-auto flex items-center gap-2">
 				{#if activeFilterCount > 0}
@@ -361,10 +388,10 @@
 		{#if activeFilterCount > 0 || filteredLeads.length !== data.leads.length}
 			<div class="flex flex-wrap items-center gap-2 px-3 pb-3 pt-0">
 				<span class="text-xs font-medium text-text-muted">{filteredLeads.length} sur {data.leads.length} prospects</span>
-				{#if filterStatut !== 'nouveau,interesse'}
+				{#if filterStatut}
 					<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-accent/8 text-accent font-medium">
 						{filterStatutLabel(filterStatut)}
-						<button onclick={() => filterStatut = 'nouveau,interesse'} class="hover:text-accent-dark cursor-pointer"><span class="material-symbols-outlined text-[12px]">close</span></button>
+						<button onclick={() => filterStatut = ''} class="hover:text-accent-dark cursor-pointer"><span class="material-symbols-outlined text-[12px]">close</span></button>
 					</span>
 				{/if}
 				{#if filterScoreMin}
@@ -414,6 +441,7 @@
 								rech.sources?.length ? rech.sources.map((s: string) => sourceLabel(s)).join(', ') : null,
 								rech.cantons?.length ? rech.cantons.map((c: string) => cantonNoms[c] ?? c).join(', ') : null,
 								rech.temperatures?.length ? rech.temperatures.map((t: string) => t === 'chaud' ? 'Chaud' : t === 'tiede' ? 'Tiède' : 'Froid').join(', ') : null,
+								rech.mots_cles?.length ? rech.mots_cles.join(', ') : null,
 								rech.score_minimum ? `Score ${rech.score_minimum}+` : null,
 							].filter(Boolean).join(' · ') || 'Tous les critères'}
 						</span>
@@ -683,6 +711,32 @@
 			</div>
 
 			<div>
+				<label class="block text-xs font-medium text-text mb-1">
+					<span class="inline-flex items-center gap-1">
+						<span class="material-symbols-outlined text-[16px] text-text-muted">sell</span>
+						Mots-clés
+					</span>
+				</label>
+				<div class="flex flex-wrap gap-1.5 mb-2">
+					{#each alerteMotsCles as mot}
+						<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-accent/10 text-accent font-medium">
+							{mot}
+							<button type="button" onclick={() => removeMotCle(mot)} class="hover:text-accent-dark cursor-pointer">
+								<span class="material-symbols-outlined text-[12px]">close</span>
+							</button>
+						</span>
+					{/each}
+				</div>
+				<input
+					type="text"
+					bind:value={alerteMotCleInput}
+					placeholder="Taper un mot-clé puis Entrée"
+					class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
+					onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMotCle(); } }}
+				/>
+			</div>
+
+			<div>
 				<label class="block text-xs font-medium text-text mb-1">Fréquence</label>
 				<select name="frequence_alerte" bind:value={alerteFrequence} class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white">
 					<option value="quotidien">Quotidienne</option>
@@ -695,6 +749,7 @@
 		<input type="hidden" name="sources" value={alerteSources.length > 0 ? JSON.stringify(alerteSources) : ''} />
 		<input type="hidden" name="cantons" value={alerteCantons.length > 0 ? JSON.stringify(alerteCantons) : ''} />
 		<input type="hidden" name="temperatures" value={alerteTemperatures.length > 0 ? JSON.stringify(alerteTemperatures) : ''} />
+		<input type="hidden" name="mots_cles" value={alerteMotsCles.length > 0 ? JSON.stringify(alerteMotsCles) : ''} />
 		<input type="hidden" name="alerte_active" value="true" />
 
 		<div class="flex justify-end gap-3 pt-4">
