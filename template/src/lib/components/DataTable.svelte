@@ -57,6 +57,12 @@
 	let currentPage = $state(serverMode ? currentServerPage : 0);
 	let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
+	// Sync server props when they change (navigation/reload)
+	$effect(() => { if (serverMode) search = serverSearch; });
+	$effect(() => { if (serverMode) sortKey = serverSortKey; });
+	$effect(() => { if (serverMode) sortAsc = serverSortAsc; });
+	$effect(() => { if (serverMode) currentPage = currentServerPage; });
+
 	const filtered = $derived.by(() => {
 		if (serverMode) return data;
 		let result = data;

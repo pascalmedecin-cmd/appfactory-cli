@@ -75,11 +75,13 @@
 		goto(buildUrl({ page: 0 }), { invalidateAll: true, keepFocus: true });
 	}
 
-	// Réagir aux changements de filtres
+	// Réagir aux changements de filtres (skip le premier run au mount)
 	let filterDebounce: ReturnType<typeof setTimeout> | null = null;
+	let filterMounted = false;
 	$effect(() => {
 		// Tracker les valeurs
 		filterSources; filterCantons; filterStatuts; filterTemperatures;
+		if (!filterMounted) { filterMounted = true; return; }
 		if (filterDebounce) clearTimeout(filterDebounce);
 		filterDebounce = setTimeout(() => applyFilters(), 200);
 	});

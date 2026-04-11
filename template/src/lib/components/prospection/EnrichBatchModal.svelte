@@ -280,8 +280,7 @@
 							type="button"
 							onclick={start}
 							disabled={!useSearchCh && !useZefix}
-							class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
-							class="!bg-prosp-enrich"
+							class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors !bg-prosp-enrich"
 						>
 							<span class="material-symbols-outlined text-[16px]">play_arrow</span>
 							Lancer l'enrichissement
@@ -296,12 +295,11 @@
 						<div>
 							<div class="flex items-center justify-between mb-2">
 								<span class="text-sm font-medium text-text">{current} / {total}</span>
-								<span class="text-sm font-medium" class="text-prosp-enrich">{progress}%</span>
+								<span class="text-sm font-medium text-prosp-enrich">{progress}%</span>
 							</div>
 							<div class="w-full h-2 bg-surface-alt rounded-full overflow-hidden">
 								<div
-									class="h-full rounded-full transition-all duration-300"
-									class="bg-prosp-enrich" style="width: {progress}%"
+									class="h-full rounded-full transition-all duration-300 bg-prosp-enrich" style="width: {progress}%"
 								></div>
 							</div>
 						</div>
@@ -411,8 +409,7 @@
 							<button
 								type="button"
 								onclick={handleDone}
-								class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg cursor-pointer shadow-sm transition-colors"
-								class="!bg-prosp-enrich"
+								class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg cursor-pointer shadow-sm transition-colors !bg-prosp-enrich"
 							>
 								Fermer
 							</button>

@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-11
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Findings P1 structurels + fix type alertes (38e session, 2026-04-11). 6 taches : fix 3 ParserError Supabase select dynamique (alertes cron), ConfirmModal remplace 3 window.confirm() (contacts/entreprises/pipeline), focus trap clavier (trapFocus action sur ModalForm/SlideOut/ConfirmModal/EnrichBatchModal), decoupe page prospection 579->278 lignes (AlerteModal+BatchActionsBar+RecherchesPanel extraits), pagination serveur URL params (page/sort/filtres/search via Supabase count+range, DataTable serverMode), 13 tokens CSS prospection dans app.css + 0 hex hardcode restant. 160/160 tests, 0 regression.
+**Session precedente :** Test pagination serveur prospection (39e session, 2026-04-11). 3 bugs corriges : 4 attributs class dupliques EnrichBatchModal (crash 500), $effect filtres tirait au mount et resetait page=0 (URL effacee), DataTable props serveur non synchronisees apres navigation (state_referenced_locally). Tests navigateur valides : pages 1-4, tri, filtres, recherche debounce, combinaisons, back/forward. Bugs UX logges : pagination hors viewport, label "Enrichir les filtres" trompeur multi-pages. 160/160 tests, 0 regression.
 
 ---
 
@@ -258,7 +258,8 @@ Fichiers cles :
 ## Prochaine session
 
 - [ ] Propager le template UX prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard) - audit terminé, utils partagées prêtes
-- [ ] Tester la pagination serveur prospection en conditions réelles (dev server + navigateur) - vérifier filtres URL, tri, changement de page, recherche debounce
+- [ ] Fix pagination hors viewport - contrôles invisibles sans scroller, P1 UX (sticky footer ou max-height table avec scroll interne)
+- [ ] Fix label "Enrichir les filtrés" - ne traite que la page courante (25 leads), trompeur si multi-pages
 - [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
 - [ ] Dashboard/reporting : requêtes SQL agrégées (pipeline par mois, taux conversion par source, activité 30/90j) + graphiques légers
 - [ ] Figma API à configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
