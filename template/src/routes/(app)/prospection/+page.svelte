@@ -80,29 +80,49 @@
 		alerteMotsCles = alerteMotsCles.filter(m => m !== mot);
 	}
 
-	// Filters
-	let filterSource = $state('');
-	let filterCanton = $state('');
-	let filterStatut = $state('');
-	let filterScoreMin = $state('');
+	// Filters (multi-select)
+	let filterSources = $state<string[]>([]);
+	let filterCantons = $state<string[]>([]);
+	let filterStatuts = $state<string[]>([]);
+	let filterTemperatures = $state<string[]>([]);
+
+	const filterSourceOptions = [
+		{ value: 'zefix', label: 'Zefix (registre du commerce)' },
+		{ value: 'simap', label: 'SIMAP (marchés publics)' },
+		{ value: 'search_ch', label: 'search.ch (annuaire)' },
+		{ value: 'sitg', label: 'SITG (géodonnées Genève)' },
+		{ value: 'fosc', label: 'FOSC (feuille officielle)' },
+	];
+	const filterCantonOptions = cantons.map(c => ({ value: c, label: `${cantonNoms[c] ?? c} (${c})` }));
+	const filterStatutOptions = [
+		{ value: 'nouveau', label: 'Nouveau' },
+		{ value: 'interesse', label: 'Intéressé' },
+		{ value: 'ecarte', label: 'Écarté' },
+		{ value: 'transfere', label: 'Converti' },
+	];
+	const filterTemperatureOptions = [
+		{ value: 'chaud', label: 'Chaud', dotColor: 'bg-danger' },
+		{ value: 'tiede', label: 'Tiède', dotColor: 'bg-warning' },
+		{ value: 'froid', label: 'Froid', dotColor: 'bg-text-muted' },
+	];
 
 	// Form fields (saisie manuelle simplifiée)
 	let raison_sociale = $state('');
 	let canton = $state('');
 	let secteur_detecte = $state('');
 
+	function scoreToCategory(score: number): string {
+		if (score >= scoreLabels.chaud) return 'chaud';
+		if (score >= scoreLabels.tiede) return 'tiede';
+		return 'froid';
+	}
+
 	const filteredLeads = $derived.by(() => {
 		let result = data.leads;
-		if (filterSource) result = result.filter((l) => l.source === filterSource);
-		if (filterCanton) result = result.filter((l) => l.canton === filterCanton);
-		if (filterStatut) {
-			const statuts = filterStatut.split(',');
-			result = result.filter((l) => statuts.includes(l.statut));
-		}
-		if (filterScoreMin) {
-			const min = Number(filterScoreMin);
-			result = result.filter((l) => (l.score_pertinence ?? 0) >= min);
-		}
+		if (filterSources.length > 0) result = result.filter((l) => filterSources.includes(l.source));
+		if (filterCantons.length > 0) result = result.filter((l) => l.canton && filterCantons.includes(l.canton));
+		if (filterStatuts.length > 0) result = result.filter((l) => filterStatuts.includes(l.statut));
+		if (filterTemperatures.length > 0) result = result.filter((l) => filterTemperatures.includes(scoreToCategory(l.score_pertinence ?? 0)));
 		return result;
 	});
 
@@ -112,10 +132,10 @@
 	const convertedCount = $derived(data.leads.filter((l) => l.statut === 'transfere').length);
 
 	const activeFilterCount = $derived(
-		(filterStatut ? 1 : 0) +
-		(filterScoreMin ? 1 : 0) +
-		(filterCanton ? 1 : 0) +
-		(filterSource ? 1 : 0)
+		(filterStatuts.length > 0 ? 1 : 0) +
+		(filterTemperatures.length > 0 ? 1 : 0) +
+		(filterCantons.length > 0 ? 1 : 0) +
+		(filterSources.length > 0 ? 1 : 0)
 	);
 
 	const columns = [
@@ -207,41 +227,20 @@
 	type Recherche = (typeof data.recherches)[number];
 
 	function chargerRecherche(r: Recherche) {
-		if (r.sources?.length === 1) filterSource = r.sources[0];
-		else filterSource = '';
-		if (r.cantons?.length === 1) filterCanton = r.cantons[0];
-		else filterCanton = '';
-		filterScoreMin = r.score_minimum ? String(r.score_minimum) : '';
-		filterStatut = '';
+		filterSources = r.sources ?? [];
+		filterCantons = r.cantons ?? [];
+		filterTemperatures = r.temperatures ?? [];
+		filterStatuts = [];
 		recherchesOpen = false;
 	}
 
 	function resetFilters() {
-		filterSource = '';
-		filterCanton = '';
-		filterStatut = '';
-		filterScoreMin = '';
+		filterSources = [];
+		filterCantons = [];
+		filterStatuts = [];
+		filterTemperatures = [];
 	}
 
-	function filterStatutLabel(val: string): string {
-		const labels: Record<string, string> = {
-			'nouveau,interesse': 'À traiter',
-			'nouveau': 'Nouveaux',
-			'interesse': 'Intéressés',
-			'ecarte': 'Écartés',
-			'transfere': 'Convertis',
-			'': 'Tous',
-		};
-		return labels[val] ?? val;
-	}
-
-	function filterScoreLabel(val: string): string {
-		if (!val) return '';
-		if (val === String(scoreLabels.chaud)) return 'Chaud';
-		if (val === String(scoreLabels.tiede)) return 'Tiède+';
-		if (val === String(scoreLabels.froid)) return 'Froid+';
-		return `Score ${val}+`;
-	}
 </script>
 
 <div class="space-y-5">
@@ -322,50 +321,41 @@
 
 	<!-- Filtres -->
 	<div class="rounded-xl border border-border bg-white shadow-xs">
-		<div class="flex flex-wrap items-center gap-3 p-3">
-			<div class="relative flex items-center">
-				<span class="material-symbols-outlined text-[16px] text-text-muted absolute left-2.5 pointer-events-none">checklist</span>
-				<select bind:value={filterStatut} class="pl-8 pr-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt font-medium cursor-pointer transition-colors hover:border-accent/40">
-					<option value="">Statut</option>
-					<option value="nouveau,interesse">À traiter</option>
-					<option value="nouveau">Nouveaux</option>
-					<option value="interesse">Intéressés</option>
-					<option value="ecarte">Écartés</option>
-					<option value="transfere">Convertis</option>
-				</select>
-			</div>
-			<div class="relative flex items-center">
-				<span class="material-symbols-outlined text-[16px] text-text-muted absolute left-2.5 pointer-events-none">thermostat</span>
-				<select bind:value={filterScoreMin} class="pl-8 pr-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
-					<option value="">Température</option>
-					<option value={String(scoreLabels.chaud)}>Chaud</option>
-					<option value={String(scoreLabels.tiede)}>Tiède et +</option>
-					<option value={String(scoreLabels.froid)}>Froid et +</option>
-				</select>
-			</div>
-			<div class="relative flex items-center">
-				<span class="material-symbols-outlined text-[16px] text-text-muted absolute left-2.5 pointer-events-none">location_on</span>
-				<select bind:value={filterCanton} class="pl-8 pr-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
-					<option value="">Canton</option>
-					{#each cantons as c}
-						<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
-					{/each}
-				</select>
-			</div>
-			<div class="relative flex items-center">
-				<span class="material-symbols-outlined text-[16px] text-text-muted absolute left-2.5 pointer-events-none">database</span>
-				<select bind:value={filterSource} class="pl-8 pr-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
-					<option value="">Source</option>
-					{#each sourceEntries as [key]}
-						<option value={key}>{sourceLabel(key)}</option>
-					{/each}
-					<option value="sitg">{sourceLabel('sitg')}</option>
-					<option value="fosc">{sourceLabel('fosc')}</option>
-				</select>
-			</div>
+		<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 p-3">
+			<MultiSelectDropdown
+				bind:selected={filterStatuts}
+				options={filterStatutOptions}
+				icon="checklist"
+				label="Statut"
+				tooltip="Filtrer par statut de traitement"
+			/>
+			<MultiSelectDropdown
+				bind:selected={filterTemperatures}
+				options={filterTemperatureOptions}
+				icon="thermostat"
+				label="Température"
+				tooltip="Niveau d'intérêt estimé du prospect"
+			/>
+			<MultiSelectDropdown
+				bind:selected={filterCantons}
+				options={filterCantonOptions}
+				icon="location_on"
+				label="Canton"
+				tooltip="Zones géographiques"
+			/>
+			<MultiSelectDropdown
+				bind:selected={filterSources}
+				options={filterSourceOptions}
+				icon="database"
+				label="Source"
+				tooltip="Registres et bases de données"
+			/>
+		</div>
 
-			<div class="ml-auto flex items-center gap-2">
+		<div class="flex flex-wrap items-center gap-2 px-3 pb-3 pt-0">
+			<div class="flex items-center gap-2 ml-auto">
 				{#if activeFilterCount > 0}
+					<span class="text-xs text-text-muted">{filteredLeads.length} sur {data.leads.length}</span>
 					<button
 						onclick={resetFilters}
 						class="flex items-center gap-1 px-2 py-1 text-xs text-text-muted hover:text-danger cursor-pointer transition-colors"
@@ -383,37 +373,6 @@
 				</button>
 			</div>
 		</div>
-
-		<!-- Chips filtres actifs + compteur -->
-		{#if activeFilterCount > 0 || filteredLeads.length !== data.leads.length}
-			<div class="flex flex-wrap items-center gap-2 px-3 pb-3 pt-0">
-				<span class="text-xs font-medium text-text-muted">{filteredLeads.length} sur {data.leads.length} prospects</span>
-				{#if filterStatut}
-					<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-accent/8 text-accent font-medium">
-						{filterStatutLabel(filterStatut)}
-						<button onclick={() => filterStatut = ''} class="hover:text-accent-dark cursor-pointer"><span class="material-symbols-outlined text-[12px]">close</span></button>
-					</span>
-				{/if}
-				{#if filterScoreMin}
-					<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-warning/10 text-warning font-medium">
-						{filterScoreLabel(filterScoreMin)}
-						<button onclick={() => filterScoreMin = ''} class="hover:text-warning cursor-pointer"><span class="material-symbols-outlined text-[12px]">close</span></button>
-					</span>
-				{/if}
-				{#if filterCanton}
-					<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-info/10 text-info font-medium">
-						{cantonNoms[filterCanton] ?? filterCanton}
-						<button onclick={() => filterCanton = ''} class="hover:text-info cursor-pointer"><span class="material-symbols-outlined text-[12px]">close</span></button>
-					</span>
-				{/if}
-				{#if filterSource}
-					<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-primary/8 text-primary font-medium">
-						{sourceLabel(filterSource)}
-						<button onclick={() => filterSource = ''} class="hover:text-primary-dark cursor-pointer"><span class="material-symbols-outlined text-[12px]">close</span></button>
-					</span>
-				{/if}
-			</div>
-		{/if}
 	</div>
 
 
