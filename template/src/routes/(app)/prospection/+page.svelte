@@ -610,7 +610,7 @@
 <ModalForm
 	bind:open={alerteModalOpen}
 	title="Créer une alerte"
-	maxWidth="max-w-md"
+	maxWidth="max-w-lg"
 >
 	<form
 		method="POST"
@@ -630,11 +630,11 @@
 			};
 		}}
 	>
-		<div class="space-y-4">
-			<p class="text-xs text-text-muted">Recevez une notification lorsque de nouveaux prospects correspondent à vos critères.</p>
+		<div class="space-y-5">
+			<p class="text-sm text-text-muted">Recevez une notification lorsque de nouveaux prospects correspondent à vos critères.</p>
 
 			<div>
-				<label class="block text-xs font-medium text-text mb-1">Nom de l'alerte</label>
+				<label class="block text-sm font-medium text-text mb-1.5">Nom de l'alerte</label>
 				<input
 					type="text"
 					name="nom"
@@ -645,7 +645,7 @@
 				/>
 			</div>
 
-			<div class="space-y-3">
+			<div class="space-y-4">
 				<MultiSelectDropdown
 					bind:selected={alerteSources}
 					options={alerteSourceOptions}
@@ -670,13 +670,14 @@
 			</div>
 
 			<div>
-				<label class="block text-xs font-medium text-text mb-1">
-					<span class="inline-flex items-center gap-1">
+				<label class="block text-sm font-medium text-text mb-1.5">
+					<span class="inline-flex items-center gap-1.5">
 						<span class="material-symbols-outlined text-[16px] text-text-muted">sell</span>
 						Mots-clés
 					</span>
 				</label>
-				<div class="flex flex-wrap gap-1.5 mb-2">
+				<p class="text-xs text-text-muted mb-2">Recherche insensible aux accents : « fenetre » trouvera aussi « fenêtre »</p>
+				<div class="flex flex-wrap gap-2 mb-2.5">
 					{#each alerteMotsCles as mot}
 						<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-accent/10 text-accent font-medium">
 							{mot}
@@ -696,7 +697,7 @@
 			</div>
 
 			<div>
-				<label class="block text-xs font-medium text-text mb-1">Fréquence</label>
+				<label class="block text-sm font-medium text-text mb-1.5">Fréquence</label>
 				<select name="frequence_alerte" bind:value={alerteFrequence} class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white">
 					<option value="quotidien">Quotidienne</option>
 					<option value="hebdomadaire">Hebdomadaire</option>
@@ -711,7 +712,7 @@
 		<input type="hidden" name="mots_cles" value={alerteMotsCles.length > 0 ? JSON.stringify(alerteMotsCles) : ''} />
 		<input type="hidden" name="alerte_active" value="true" />
 
-		<div class="flex justify-end gap-3 pt-4">
+		<div class="flex justify-end gap-3 pt-5 border-t border-border mt-2">
 			<button
 				type="button"
 				onclick={() => alerteModalOpen = false}
@@ -724,7 +725,7 @@
 				disabled={savingAlerte || !alerteNom}
 				class="px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
 			>
-				{savingAlerte ? 'Création...' : 'Créer l\'alerte'}
+				{savingAlerte ? 'Création…' : 'Créer l\'alerte'}
 			</button>
 		</div>
 	</form>

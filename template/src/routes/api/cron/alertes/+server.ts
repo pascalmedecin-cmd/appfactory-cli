@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
+import { matchMotsCles } from '$lib/text-utils';
 import { timingSafeEqual } from 'crypto';
 
 function verifyCronSecret(authHeader: string | null): boolean {
@@ -54,10 +55,16 @@ export async function GET(event: RequestEvent) {
 			if (rech.frequence_alerte === 'hebdomadaire' && heuresDepuis < 140) continue;
 		}
 
-		// Construire la requete de comptage des nouveaux leads
+		const hasMotsCles = rech.mots_cles && rech.mots_cles.length > 0;
+
+		// Si mots-clés présents, on récupère les données pour filtrer en JS
+		// Sinon, count seul suffit (plus performant)
+		const selectFields = hasMotsCles
+			? 'raison_sociale, description, secteur_detecte'
+			: '*';
 		let query = supabase
 			.from('prospect_leads')
-			.select('*', { count: 'exact', head: true })
+			.select(selectFields, { count: 'exact', head: !hasMotsCles })
 			.eq('statut', 'nouveau');
 
 		// Filtrer par date depuis le dernier check
@@ -82,18 +89,27 @@ export async function GET(event: RequestEvent) {
 			if (rech.temperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.5,score_pertinence.lte.7)');
 			if (rech.temperatures.includes('froid')) ranges.push('score_pertinence.lte.4');
 			if (ranges.length === 1) {
-				// Single range: apply directly
 				if (rech.temperatures.includes('chaud')) query = query.gte('score_pertinence', 8);
 				else if (rech.temperatures.includes('tiede')) query = query.gte('score_pertinence', 5).lte('score_pertinence', 7);
 				else if (rech.temperatures.includes('froid')) query = query.lte('score_pertinence', 4);
 			} else {
-				// Multiple ranges: use OR filter
 				query = query.or(ranges.join(','));
 			}
 		}
 
-		const { count } = await query;
-		const nbNouveaux = count ?? 0;
+		let nbNouveaux: number;
+
+		if (hasMotsCles) {
+			// Filtrage mots-clés côté JS (accent-insensible, case-insensible, substring)
+			const { data: leads } = await query;
+			nbNouveaux = (leads ?? []).filter(lead =>
+				matchMotsCles(rech.mots_cles!, [lead.raison_sociale, lead.description, lead.secteur_detecte])
+			).length;
+		} else {
+			const { count } = await query;
+			nbNouveaux = count ?? 0;
+		}
+
 		totalNouveaux += nbNouveaux;
 
 		// Mettre a jour la recherche
