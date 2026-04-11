@@ -72,8 +72,8 @@
 		}}
 	>
 		<div class="space-y-5">
-			<div class="flex items-start gap-3 p-3.5 rounded-lg bg-accent/5 border border-accent/10">
-				<span class="material-symbols-outlined text-[20px] text-accent mt-0.5">info</span>
+			<div class="flex items-start gap-3 p-3.5 rounded-xl" style="background: var(--color-prosp-qualify-bg); border: 1px solid color-mix(in srgb, var(--color-prosp-qualify-border), transparent 70%)">
+				<span class="material-symbols-outlined text-[20px] mt-0.5" style="color: var(--color-prosp-qualify)">notifications_active</span>
 				<p class="text-sm text-text-body">Recevez une notification lorsque de nouveaux prospects correspondent à vos critères.</p>
 			</div>
 
@@ -89,8 +89,11 @@
 				/>
 			</div>
 
-			<div class="p-4 rounded-lg bg-surface-alt space-y-4">
-				<p class="text-xs font-semibold text-text-muted uppercase tracking-wide">Critères de filtrage</p>
+			<div class="p-4 rounded-xl space-y-4" style="background: var(--color-prosp-import-bg); border: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 80%)">
+				<div class="flex items-center gap-2">
+					<span class="material-symbols-outlined text-[16px]" style="color: var(--color-prosp-import)">tune</span>
+					<p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--color-prosp-import)">Critères de filtrage</p>
+				</div>
 				<MultiSelectDropdown
 					bind:selected={sources}
 					options={sourceOptions}
@@ -114,10 +117,10 @@
 				/>
 			</div>
 
-			<div class="p-4 rounded-lg bg-surface-alt">
+			<div class="p-4 rounded-xl" style="background: var(--color-prosp-enrich-bg); border: 1px solid color-mix(in srgb, var(--color-prosp-enrich-border), transparent 80%)">
 				<label class="block text-sm font-medium text-text mb-1">
 					<span class="inline-flex items-center gap-1.5">
-						<span class="material-symbols-outlined text-[16px] text-accent">sell</span>
+						<span class="material-symbols-outlined text-[16px]" style="color: var(--color-prosp-enrich)">sell</span>
 						Mots-clés
 					</span>
 				</label>
@@ -125,9 +128,9 @@
 				{#if motsCles.length > 0}
 					<div class="flex flex-wrap gap-2 mb-3">
 						{#each motsCles as mot}
-							<span class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs rounded-full bg-accent/10 text-accent font-medium border border-accent/15">
+							<span class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs rounded-full font-medium" style="background: color-mix(in srgb, var(--color-prosp-enrich), transparent 88%); color: var(--color-prosp-enrich); border: 1px solid color-mix(in srgb, var(--color-prosp-enrich-border), transparent 60%)">
 								{mot}
-								<button type="button" onclick={() => removeMotCle(mot)} class="flex items-center justify-center w-4 h-4 rounded-full hover:bg-accent/20 text-accent/60 hover:text-accent cursor-pointer transition-colors" aria-label="Supprimer {mot}">
+								<button type="button" onclick={() => removeMotCle(mot)} class="flex items-center justify-center w-4 h-4 rounded-full cursor-pointer transition-colors" style="color: color-mix(in srgb, var(--color-prosp-enrich), transparent 40%)" aria-label="Supprimer {mot}">
 									<span class="text-[10px] leading-none font-bold">&times;</span>
 								</button>
 							</span>

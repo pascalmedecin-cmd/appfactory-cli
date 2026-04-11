@@ -27,6 +27,14 @@
 
 	const zefixMaxResults = API_LIMITS.zefix.maxResultsPerQuery;
 
+	const tabColorMap: Record<string, { cssVar: string; bgCssVar: string; borderCssVar: string }> = {
+		zefix:    { cssVar: '--color-prosp-import',  bgCssVar: '--color-prosp-import-bg',  borderCssVar: '--color-prosp-import-border' },
+		simap:    { cssVar: '--color-prosp-qualify',  bgCssVar: '--color-prosp-qualify-bg',  borderCssVar: '--color-prosp-qualify-border' },
+		fosc:     { cssVar: '--color-prosp-enrich',   bgCssVar: '--color-prosp-enrich-bg',   borderCssVar: '--color-prosp-enrich-border' },
+		regbl:    { cssVar: '--color-prosp-convert',  bgCssVar: '--color-prosp-convert-bg',  borderCssVar: '--color-prosp-convert-border' },
+		minergie: { cssVar: '--color-prosp-convert',  bgCssVar: '--color-prosp-convert-bg',  borderCssVar: '--color-prosp-convert-border' },
+	};
+
 	const tabs = [
 		{ key: 'zefix' as const, label: 'Registre du commerce', icon: 'business', desc: 'RC' },
 		{ key: 'simap' as const, label: 'Marchés publics', icon: 'gavel', desc: 'SIMAP' },
@@ -34,6 +42,8 @@
 		{ key: 'regbl' as const, label: 'Registre des bâtiments', icon: 'apartment', desc: 'RegBL' },
 		{ key: 'minergie' as const, label: 'Minergie', icon: 'eco', desc: 'Minergie' },
 	];
+
+	let activeColors = $derived(tabColorMap[activeTab]);
 
 	async function importFromSource(url: string, body: Record<string, unknown>) {
 		importing = true;
@@ -114,9 +124,11 @@
 		<!-- Tabs sources -->
 		<div class="flex flex-wrap gap-1.5">
 			{#each tabs as tab}
+				{@const tc = tabColorMap[tab.key]}
 				<button
 					onclick={() => activeTab = tab.key}
-					class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer {activeTab === tab.key ? 'bg-accent/10 text-accent border border-accent/20' : 'text-text-muted hover:text-text hover:bg-surface-alt border border-transparent'}"
+					class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer {activeTab === tab.key ? 'border' : 'text-text-muted hover:text-text hover:bg-surface-alt border border-transparent'}"
+					style={activeTab === tab.key ? `color: var(${tc.cssVar}); background: var(${tc.bgCssVar}); border-color: color-mix(in srgb, var(${tc.borderCssVar}), transparent 60%)` : ''}
 				>
 					<span class="material-symbols-outlined text-[16px]">{tab.icon}</span>
 					<span class="hidden sm:inline">{tab.label}</span>
@@ -128,14 +140,16 @@
 		<!-- Registre du commerce -->
 		{#if activeTab === 'zefix'}
 			<div class="space-y-4">
-				<div class="p-4 rounded-lg bg-accent/5 border border-accent/10">
-					<p class="text-sm text-text-body">
-						<strong>Registre du commerce</strong> - Entreprises suisses avec but social, capital nominal et publications FOSC.
-					</p>
-					<p class="text-xs text-text-muted mt-1.5">
-						<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
-						Un import ciblé (nom + canton) donne de meilleurs résultats qu'un import large sans filtre. Mieux vaut 50 prospects qualifiés que 500 à trier.
-					</p>
+				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
+					<span class="material-symbols-outlined text-[22px] mt-0.5 shrink-0" style="color: var({activeColors.cssVar})">business</span>
+					<div>
+						<p class="text-sm font-semibold text-text">Registre du commerce</p>
+						<p class="text-xs text-text-body mt-0.5">Entreprises suisses avec but social, capital nominal et publications FOSC.</p>
+						<p class="text-xs text-text-muted mt-1.5">
+							<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
+							Un import ciblé (nom + canton) donne de meilleurs résultats qu'un import large sans filtre. Mieux vaut 50 prospects qualifiés que 500 à trier.
+						</p>
+					</div>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
@@ -167,7 +181,8 @@
 				<button
 					onclick={importZefix}
 					disabled={importing}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
+					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
+					style="background-color: var({activeColors.cssVar})"
 				>
 					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
 					{importing ? 'Import en cours…' : 'Lancer l\'import'}
@@ -178,14 +193,16 @@
 		<!-- SIMAP -->
 		{#if activeTab === 'simap'}
 			<div class="space-y-4">
-				<div class="p-4 rounded-lg bg-accent/5 border border-accent/10">
-					<p class="text-sm text-text-body">
-						<strong>SIMAP - Marchés publics construction</strong> - Appels d'offres publics avec budgets et délais. Les résultats sont déjà filtrés par secteur construction.
-					</p>
-					<p class="text-xs text-text-muted mt-1.5">
-						<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
-						Combiner canton + mots-clés précis (ex : « façade », « vitrage ») pour ne remonter que les appels d'offres pertinents.
-					</p>
+				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
+					<span class="material-symbols-outlined text-[22px] mt-0.5 shrink-0" style="color: var({activeColors.cssVar})">gavel</span>
+					<div>
+						<p class="text-sm font-semibold text-text">SIMAP - Marchés publics construction</p>
+						<p class="text-xs text-text-body mt-0.5">Appels d'offres publics avec budgets et délais. Résultats déjà filtrés par secteur construction.</p>
+						<p class="text-xs text-text-muted mt-1.5">
+							<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
+							Combiner canton + mots-clés précis (ex : « façade », « vitrage ») pour ne remonter que les appels d'offres pertinents.
+						</p>
+					</div>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
@@ -217,7 +234,8 @@
 				<button
 					onclick={importSimap}
 					disabled={importing}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
+					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
+					style="background-color: var({activeColors.cssVar})"
 				>
 					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
 					{importing ? 'Import en cours…' : 'Lancer l\'import'}
@@ -228,14 +246,16 @@
 		<!-- FOSC -->
 		{#if activeTab === 'fosc'}
 			<div class="space-y-4">
-				<div class="p-4 rounded-lg bg-accent/5 border border-accent/10">
-					<p class="text-sm text-text-body">
-						<strong>FOSC - Feuille officielle suisse du commerce</strong> - Nouvelles inscriptions au registre du commerce, filtrées par secteur construction/bâtiment.
-					</p>
-					<p class="text-xs text-text-muted mt-1.5">
-						<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
-						Signal chaud : une nouvelle entreprise du bâtiment a besoin de tout au démarrage. Les publications sont mises à jour quotidiennement.
-					</p>
+				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
+					<span class="material-symbols-outlined text-[22px] mt-0.5 shrink-0" style="color: var({activeColors.cssVar})">newspaper</span>
+					<div>
+						<p class="text-sm font-semibold text-text">FOSC - Feuille officielle suisse du commerce</p>
+						<p class="text-xs text-text-body mt-0.5">Nouvelles inscriptions au registre du commerce, filtrées par secteur construction/bâtiment.</p>
+						<p class="text-xs text-text-muted mt-1.5">
+							<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
+							Signal chaud : une nouvelle entreprise du bâtiment a besoin de tout au démarrage. Publications mises à jour quotidiennement.
+						</p>
+					</div>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
@@ -244,7 +264,8 @@
 							{#each cantons as c}
 								<button
 									onclick={() => importFoscCantons = toggleCanton(importFoscCantons, c)}
-									class="px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors {importFoscCantons.includes(c) ? 'bg-accent text-white' : 'bg-surface-alt text-text-muted hover:text-text'}"
+									class="px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors {importFoscCantons.includes(c) ? 'text-white' : 'bg-surface-alt text-text-muted hover:text-text'}"
+									style={importFoscCantons.includes(c) ? `background-color: var(${activeColors.cssVar})` : ''}
 								>
 									{cantonNoms[c] ?? c}
 								</button>
@@ -263,7 +284,8 @@
 				<button
 					onclick={importFosc}
 					disabled={importing || importFoscCantons.length === 0}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
+					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
+					style="background-color: var({activeColors.cssVar})"
 				>
 					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
 					{importing ? 'Import en cours…' : 'Lancer l\'import'}
@@ -274,14 +296,16 @@
 		<!-- RegBL -->
 		{#if activeTab === 'regbl'}
 			<div class="space-y-4">
-				<div class="p-4 rounded-lg bg-accent/5 border border-accent/10">
-					<p class="text-sm text-text-body">
-						<strong>RegBL - Registre fédéral des bâtiments</strong> - Bâtiments en phase de construction (autorisés ou en chantier) en Suisse romande.
-					</p>
-					<p class="text-xs text-text-muted mt-1.5">
-						<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
-						Signal chaud : un bâtiment au statut « autorisé » ou « en construction » = chantier actif. Croisez ensuite avec Zefix pour identifier le maître d'ouvrage.
-					</p>
+				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
+					<span class="material-symbols-outlined text-[22px] mt-0.5 shrink-0" style="color: var({activeColors.cssVar})">apartment</span>
+					<div>
+						<p class="text-sm font-semibold text-text">RegBL - Registre fédéral des bâtiments</p>
+						<p class="text-xs text-text-body mt-0.5">Bâtiments en phase de construction (autorisés ou en chantier) en Suisse romande.</p>
+						<p class="text-xs text-text-muted mt-1.5">
+							<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
+							Signal chaud : un bâtiment au statut « autorisé » ou « en construction » = chantier actif. Croisez ensuite avec Zefix pour identifier le maître d'ouvrage.
+						</p>
+					</div>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
@@ -290,7 +314,8 @@
 							{#each cantons as c}
 								<button
 									onclick={() => importRegblCantons = toggleCanton(importRegblCantons, c)}
-									class="px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors {importRegblCantons.includes(c) ? 'bg-accent text-white' : 'bg-surface-alt text-text-muted hover:text-text'}"
+									class="px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors {importRegblCantons.includes(c) ? 'text-white' : 'bg-surface-alt text-text-muted hover:text-text'}"
+									style={importRegblCantons.includes(c) ? `background-color: var(${activeColors.cssVar})` : ''}
 								>
 									{cantonNoms[c] ?? c}
 								</button>
@@ -309,7 +334,8 @@
 				<button
 					onclick={importRegbl}
 					disabled={importing || importRegblCantons.length === 0}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
+					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
+					style="background-color: var({activeColors.cssVar})"
 				>
 					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
 					{importing ? 'Import en cours…' : 'Lancer l\'import'}
@@ -320,14 +346,16 @@
 		<!-- Minergie -->
 		{#if activeTab === 'minergie'}
 			<div class="space-y-4">
-				<div class="p-4 rounded-lg bg-accent/5 border border-accent/10">
-					<p class="text-sm text-text-body">
-						<strong>Minergie - Bâtiments certifiés</strong> - Projets haut de gamme avec label énergétique (Minergie, P, A, ECO). Architectes sensibles à la performance.
-					</p>
-					<p class="text-xs text-text-muted mt-1.5">
-						<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
-						Les labels Minergie-P et Minergie-A indiquent des projets premium, cibles idéales pour les films de protection solaire et thermique.
-					</p>
+				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
+					<span class="material-symbols-outlined text-[22px] mt-0.5 shrink-0" style="color: var({activeColors.cssVar})">eco</span>
+					<div>
+						<p class="text-sm font-semibold text-text">Minergie - Bâtiments certifiés</p>
+						<p class="text-xs text-text-body mt-0.5">Projets haut de gamme avec label énergétique (Minergie, P, A, ECO). Architectes sensibles à la performance.</p>
+						<p class="text-xs text-text-muted mt-1.5">
+							<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
+							Les labels Minergie-P et Minergie-A indiquent des projets premium, cibles idéales pour les films de protection solaire et thermique.
+						</p>
+					</div>
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
@@ -336,7 +364,8 @@
 							{#each cantons as c}
 								<button
 									onclick={() => importMinergieCantons = toggleCanton(importMinergieCantons, c)}
-									class="px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors {importMinergieCantons.includes(c) ? 'bg-accent text-white' : 'bg-surface-alt text-text-muted hover:text-text'}"
+									class="px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors {importMinergieCantons.includes(c) ? 'text-white' : 'bg-surface-alt text-text-muted hover:text-text'}"
+									style={importMinergieCantons.includes(c) ? `background-color: var(${activeColors.cssVar})` : ''}
 								>
 									{cantonNoms[c] ?? c}
 								</button>
@@ -361,7 +390,8 @@
 				<button
 					onclick={importMinergie}
 					disabled={importing || importMinergieCantons.length === 0}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
+					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
+					style="background-color: var({activeColors.cssVar})"
 				>
 					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
 					{importing ? 'Import en cours…' : 'Lancer l\'import'}

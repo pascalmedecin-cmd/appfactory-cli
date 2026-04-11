@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-11
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Fix 2 bugs UX prospection (40e session, 2026-04-11). Pagination hors viewport corrigee : layout flex contraint au viewport, table scroll interne, thead sticky. Label "Enrichir les filtres" renomme "Enrichir cette page (N)" avec tooltip scope. Verifie visuellement navigateur (page 1 scroll, page 2 navigation, compteur dynamique). 160/160 tests, 0 regression.
+**Session precedente :** UX prospection 3 ameliorations (41e session, 2026-04-11). Colonne Secteur remplacee par Localite (plus pertinent, Secteur reste dans slide-out). Modales Import et Alerte enrichies visuellement : couleurs par source (palette workflow ardoise/violet/ambre/sauge), bandeaux info colores, icones thematiques, pills cantons colores. Verifie navigateur (table 7 colonnes, 3 onglets import, modale alerte). 160/160 tests, 0 regression.
 
 ---
 
@@ -257,7 +257,8 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] Propager le template UX prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard) - audit terminé, utils partagées prêtes
+- [ ] Ameliorer scoring temperature leads : reduire poids canton (+3 -> +2), ajouter +1 entreprise identifiee (enrichissement Zefix), passer a 3 niveaux (supprimer Faible), ajuster seuils - fichiers config.ts + scoring.ts + tests
+- [ ] Propager le template UX prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard) - audit termine, utils partagees pretes
 - [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
-- [ ] Dashboard/reporting : requêtes SQL agrégées (pipeline par mois, taux conversion par source, activité 30/90j) + graphiques légers
-- [ ] Figma API à configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
+- [ ] Dashboard/reporting : requetes SQL agregees (pipeline par mois, taux conversion par source, activite 30/90j) + graphiques legers
+- [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)

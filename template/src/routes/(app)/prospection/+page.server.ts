@@ -5,7 +5,7 @@ import { calculerScore } from '$lib/scoring';
 import { dbFail, newId, now } from '$lib/server/db-helpers';
 
 const PAGE_SIZE = 25;
-const VALID_SORT_KEYS = ['score_pertinence', 'raison_sociale', 'canton', 'secteur_detecte', 'source', 'statut', 'date_import'];
+const VALID_SORT_KEYS = ['score_pertinence', 'raison_sociale', 'canton', 'localite', 'source', 'statut', 'date_import'];
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const page = Math.max(0, parseInt(url.searchParams.get('page') ?? '0', 10) || 0);
@@ -35,7 +35,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		if (ranges.length > 0) query = query.or(ranges.join(','));
 	}
 	if (search) {
-		query = query.or(`raison_sociale.ilike.%${search}%,secteur_detecte.ilike.%${search}%,canton.ilike.%${search}%`);
+		query = query.or(`raison_sociale.ilike.%${search}%,localite.ilike.%${search}%,canton.ilike.%${search}%`);
 	}
 
 	// Tri + pagination
