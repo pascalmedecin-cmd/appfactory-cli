@@ -114,6 +114,12 @@ export function sseEvent(event: string, data: unknown): string {
 /**
  * Valide les parametres d'entree du batch.
  */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isValidUuid(value: unknown): value is string {
+	return typeof value === 'string' && UUID_RE.test(value);
+}
+
 export function validateBatchInput(
 	leadIds: unknown,
 	sources: unknown
@@ -123,6 +129,9 @@ export function validateBatchInput(
 	}
 	if (leadIds.length > 200) {
 		return { valid: false, error: 'Maximum 200 leads par batch' };
+	}
+	if (!leadIds.every(isValidUuid)) {
+		return { valid: false, error: 'Tous les IDs doivent être des UUIDs valides' };
 	}
 
 	const validSources = ['search_ch', 'zefix'];

@@ -239,7 +239,7 @@
 							<span class="material-symbols-outlined text-[20px] text-text-muted">phone_forwarded</span>
 							<div>
 								<span class="text-sm font-medium text-text">search.ch</span>
-								<p class="text-xs text-text-muted">Telephone, adresse, NPA, localite</p>
+								<p class="text-xs text-text-muted">Téléphone, adresse, NPA, localité</p>
 							</div>
 						</label>
 						<label class="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-accent/30 cursor-pointer transition-colors">
@@ -314,7 +314,7 @@
 							</div>
 							<div class="p-2 rounded-lg bg-warning-light">
 								<span class="text-lg font-bold text-warning">{notFoundCount}</span>
-								<p class="text-[10px] text-warning font-medium">Non trouves</p>
+								<p class="text-[10px] text-warning font-medium">Non trouvés</p>
 							</div>
 							<div class="p-2 rounded-lg bg-danger-light">
 								<span class="text-lg font-bold text-danger">{errorCount}</span>
@@ -369,11 +369,11 @@
 								</div>
 								<div class="flex items-center gap-2">
 									<span class="material-symbols-outlined text-[16px] text-text-muted">verified</span>
-									<span class="text-sm text-text">{alreadyCompleteCount} deja complet{alreadyCompleteCount > 1 ? 's' : ''}</span>
+									<span class="text-sm text-text">{alreadyCompleteCount} déjà complet{alreadyCompleteCount > 1 ? 's' : ''}</span>
 								</div>
 								<div class="flex items-center gap-2">
 									<span class="material-symbols-outlined text-[16px] text-warning">search_off</span>
-									<span class="text-sm text-text">{notFoundCount} non trouve{notFoundCount > 1 ? 's' : ''}</span>
+									<span class="text-sm text-text">{notFoundCount} non trouvé{notFoundCount > 1 ? 's' : ''}</span>
 								</div>
 								{#if errorCount > 0}
 									<div class="flex items-center gap-2">
@@ -389,7 +389,7 @@
 							<details class="group">
 								<summary class="flex items-center gap-1.5 text-sm text-text-muted cursor-pointer hover:text-text">
 									<span class="material-symbols-outlined text-[16px] group-open:rotate-90 transition-transform">chevron_right</span>
-									Detail par prospect
+									Détail par prospect
 								</summary>
 								<div class="mt-2 max-h-48 overflow-y-auto space-y-1 p-2 rounded-lg bg-surface-alt/50 border border-border/50">
 									{#each logs as log}

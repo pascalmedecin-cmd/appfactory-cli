@@ -6,6 +6,7 @@ import { env } from '$env/dynamic/private';
 // Rate limiting in-memory pour les API de prospection
 const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
 const RATE_LIMIT_MAX = 10; // 10 requetes par minute par IP
+const RATE_LIMIT_MAP_CAP = 10_000; // Plafond anti-DoS memoire
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
 function checkRateLimit(ip: string): boolean {
@@ -13,6 +14,8 @@ function checkRateLimit(ip: string): boolean {
 	const entry = rateLimitMap.get(ip);
 
 	if (!entry || now > entry.resetAt) {
+		// Fail-closed si la map est pleine et IP inconnue
+		if (!entry && rateLimitMap.size >= RATE_LIMIT_MAP_CAP) return false;
 		rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
 		return true;
 	}

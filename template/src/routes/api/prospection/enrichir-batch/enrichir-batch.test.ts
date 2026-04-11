@@ -153,11 +153,14 @@ describe('sseEvent', () => {
 // --- validateBatchInput ---
 
 describe('validateBatchInput', () => {
+	const UUID_A = '00000000-0000-0000-0000-000000000001';
+	const UUID_B = '00000000-0000-0000-0000-000000000002';
+
 	it('valide un input correct', () => {
-		const result = validateBatchInput(['id1', 'id2'], ['search_ch']);
+		const result = validateBatchInput([UUID_A, UUID_B], ['search_ch']);
 		expect(result.valid).toBe(true);
 		if (result.valid) {
-			expect(result.leadIds).toEqual(['id1', 'id2']);
+			expect(result.leadIds).toEqual([UUID_A, UUID_B]);
 			expect(result.sources).toEqual(['search_ch']);
 		}
 	});
@@ -168,7 +171,9 @@ describe('validateBatchInput', () => {
 	});
 
 	it('refuse plus de 200 leads', () => {
-		const ids = Array.from({ length: 201 }, (_, i) => `id${i}`);
+		const ids = Array.from({ length: 201 }, (_, i) =>
+			`00000000-0000-0000-0000-${String(i).padStart(12, '0')}`
+		);
 		const result = validateBatchInput(ids, ['search_ch']);
 		expect(result.valid).toBe(false);
 		if (!result.valid) expect(result.error).toContain('200');
@@ -179,8 +184,14 @@ describe('validateBatchInput', () => {
 		expect(result.valid).toBe(false);
 	});
 
+	it('refuse des IDs non-UUID', () => {
+		const result = validateBatchInput(['not-a-uuid', UUID_A], ['search_ch']);
+		expect(result.valid).toBe(false);
+		if (!result.valid) expect(result.error).toContain('UUID');
+	});
+
 	it('utilise les sources par defaut si non fournies', () => {
-		const result = validateBatchInput(['id1'], undefined);
+		const result = validateBatchInput([UUID_A], undefined);
 		expect(result.valid).toBe(true);
 		if (result.valid) {
 			expect(result.sources).toEqual(['search_ch', 'zefix']);
@@ -188,7 +199,7 @@ describe('validateBatchInput', () => {
 	});
 
 	it('filtre les sources invalides', () => {
-		const result = validateBatchInput(['id1'], ['search_ch', 'invalid', 'zefix']);
+		const result = validateBatchInput([UUID_A], ['search_ch', 'invalid', 'zefix']);
 		expect(result.valid).toBe(true);
 		if (result.valid) {
 			expect(result.sources).toEqual(['search_ch', 'zefix']);
@@ -196,7 +207,7 @@ describe('validateBatchInput', () => {
 	});
 
 	it('refuse si toutes les sources sont invalides', () => {
-		const result = validateBatchInput(['id1'], ['invalid1', 'invalid2']);
+		const result = validateBatchInput([UUID_A], ['invalid1', 'invalid2']);
 		expect(result.valid).toBe(false);
 	});
 });
