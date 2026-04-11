@@ -2,7 +2,6 @@
 	import { enhance } from '$app/forms';
 	import DataTable from '$lib/components/DataTable.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
-	import FormField from '$lib/components/FormField.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 
 	$effect(() => { $pageSubtitle = `${filteredLeads.length} prospect${filteredLeads.length > 1 ? 's' : ''}`; });
@@ -29,9 +28,7 @@
 
 	let slideOutOpen = $state(false);
 	let selectedLead = $state<Lead | null>(null);
-	let modalOpen = $state(false);
 	let importModalOpen = $state(false);
-	let saving = $state(false);
 	let importResult = $state<{ message: string; type: 'success' | 'error' } | null>(null);
 	let selectedIds = $state<Set<string>>(new Set());
 	let enrichBatchOpen = $state(false);
@@ -53,6 +50,8 @@
 		{ value: 'search_ch', label: 'search.ch (annuaire)' },
 		{ value: 'sitg', label: 'SITG (géodonnées Genève)' },
 		{ value: 'fosc', label: 'FOSC (feuille officielle)' },
+		{ value: 'regbl', label: 'RegBL (registre des bâtiments)' },
+		{ value: 'minergie', label: 'Minergie (bâtiments certifiés)' },
 	];
 	const alerteCantonOptions = cantons.map(c => ({ value: c, label: `${cantonNoms[c] ?? c} (${c})` }));
 	const alerteTemperatureOptions = [
@@ -95,6 +94,8 @@
 		{ value: 'search_ch', label: 'search.ch (annuaire)' },
 		{ value: 'sitg', label: 'SITG (géodonnées Genève)' },
 		{ value: 'fosc', label: 'FOSC (feuille officielle)' },
+		{ value: 'regbl', label: 'RegBL (registre des bâtiments)' },
+		{ value: 'minergie', label: 'Minergie (bâtiments certifiés)' },
 	];
 	const filterCantonOptions = cantons.map(c => ({ value: c, label: `${cantonNoms[c] ?? c} (${c})` }));
 	const filterStatutOptions = [
@@ -108,11 +109,6 @@
 		{ value: 'tiede', label: 'Tiède', dotColor: 'bg-warning' },
 		{ value: 'froid', label: 'Froid', dotColor: 'bg-text-muted' },
 	];
-
-	// Form fields (saisie manuelle simplifiée)
-	let raison_sociale = $state('');
-	let canton = $state('');
-	let secteur_detecte = $state('');
 
 	function scoreToCategory(score: number): string {
 		if (score >= scoreLabels.chaud) return 'chaud';
@@ -192,7 +188,8 @@
 			search_ch: 'Annuaire',
 			sitg: 'Géodonnées',
 			fosc: 'Feuille officielle',
-			manuel: 'Saisie manuelle',
+			regbl: 'Registre des bâtiments',
+			minergie: 'Minergie',
 		};
 		return labels[s] ?? s;
 	}
@@ -214,17 +211,6 @@
 	function openDetail(lead: Lead) {
 		selectedLead = lead;
 		slideOutOpen = true;
-	}
-
-	function openCreate() {
-		resetForm();
-		modalOpen = true;
-	}
-
-	function resetForm() {
-		raison_sociale = '';
-		canton = '';
-		secteur_detecte = '';
 	}
 
 	type Recherche = (typeof data.recherches)[number];
@@ -295,13 +281,6 @@
 			{/if}
 		</div>
 		<div class="flex items-center gap-2">
-			<button
-				onclick={openCreate}
-				class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-text-muted border border-border hover:bg-surface-alt hover:text-text rounded-lg cursor-pointer transition-colors"
-			>
-				<span class="material-symbols-outlined text-[18px]">edit_note</span>
-				<span class="hidden sm:inline">Saisie manuelle</span>
-			</button>
 			<button
 				onclick={() => { enrichBatchIds = filteredLeads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
 				class="flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-lg cursor-pointer transition-colors"
@@ -507,7 +486,7 @@
 			</div>
 			<h3 class="text-lg font-semibold text-text mb-2">Trouvez vos premiers prospects</h3>
 			<p class="text-sm text-text-muted text-center max-w-lg mb-6">
-				Importez des entreprises depuis les sources publiques suisses (registre du commerce, marchés publics, annuaires). Qualifiez-les, puis convertissez les plus pertinentes en entreprises dans votre CRM. Vous pouvez également procéder à une importation manuelle si nécessaire.
+				Importez des entreprises depuis les sources publiques suisses (registre du commerce, marchés publics, feuille officielle, registre des bâtiments, Minergie). Qualifiez-les, puis convertissez les plus pertinentes en entreprises dans votre CRM.
 			</p>
 			<div class="flex flex-col items-center gap-3">
 				<button
@@ -516,13 +495,6 @@
 				>
 					<span class="material-symbols-outlined text-[18px]">cloud_download</span>
 					Lancer un import
-				</button>
-				<button
-					onclick={openCreate}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-text-muted hover:text-text cursor-pointer transition-colors"
-				>
-					<span class="material-symbols-outlined text-[18px]">edit_note</span>
-					Saisie manuelle
 				</button>
 			</div>
 		</div>
@@ -555,69 +527,6 @@
 
 <!-- Lead detail slide-out -->
 <LeadSlideOut bind:open={slideOutOpen} bind:lead={selectedLead} bind:importResult leads={data.leads} />
-
-<!-- Modal creation manuelle -->
-<ModalForm
-	bind:open={modalOpen}
-	title="Saisie manuelle d'un prospect"
-	{saving}
->
-	<form
-		method="POST"
-		action="?/create"
-		use:enhance={() => {
-			saving = true;
-			return async ({ result, update }) => {
-				saving = false;
-				modalOpen = false;
-				resetForm();
-				if (result.type === 'success') toasts.success('Prospect créé');
-				else toasts.error('Erreur lors de la création');
-				await update();
-			};
-		}}
-	>
-		<div class="space-y-4">
-			<FormField label="Raison sociale" bind:value={raison_sociale} required />
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Canton <span class="text-danger">*</span></label>
-					<select bind:value={canton} required class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
-						<option value="">Sélectionner…</option>
-						{#each cantons as c}
-							<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
-						{/each}
-					</select>
-				</div>
-				<FormField label="Secteur" bind:value={secteur_detecte} placeholder="construction, architecte…" />
-			</div>
-			<p class="text-xs text-text-muted">Les autres informations (téléphone, adresse, but social…) seront complétées automatiquement par enrichissement.</p>
-		</div>
-
-		<!-- Hidden fields for form submission -->
-		<input type="hidden" name="source" value="manuel" />
-		<input type="hidden" name="raison_sociale" value={raison_sociale} />
-		<input type="hidden" name="canton" value={canton} />
-		<input type="hidden" name="secteur_detecte" value={secteur_detecte} />
-
-		<div class="flex justify-end gap-3 pt-4">
-			<button
-				type="button"
-				onclick={() => modalOpen = false}
-				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
-			>
-				Annuler
-			</button>
-			<button
-				type="submit"
-				disabled={saving}
-				class="px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
-			>
-				{saving ? 'Enregistrement...' : 'Créer le prospect'}
-			</button>
-		</div>
-	</form>
-</ModalForm>
 
 <!-- Modal création alerte -->
 <ModalForm

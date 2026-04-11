@@ -113,12 +113,24 @@ export const config = {
 				enabled: true,
 			},
 			simap: {
-				label: 'SIMAP (marches publics)',
+				label: 'SIMAP (marchés publics)',
 				enabled: true,
 				cantons: ['GE', 'VD', 'VS', 'NE', 'FR', 'JU'],
 			},
 			search_ch: {
 				label: 'search.ch (annuaire)',
+				enabled: true,
+			},
+			fosc: {
+				label: 'FOSC (feuille officielle)',
+				enabled: true,
+			},
+			regbl: {
+				label: 'RegBL (registre des bâtiments)',
+				enabled: true,
+			},
+			minergie: {
+				label: 'Minergie (bâtiments certifiés)',
 				enabled: true,
 			},
 		},

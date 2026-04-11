@@ -4,7 +4,7 @@ import { calculerScore } from './scoring';
 describe('calculerScore', () => {
 	it('retourne 0 pour un lead sans critere', () => {
 		const result = calculerScore({
-			source: 'manuel',
+			source: 'zefix',
 		});
 		expect(result.total).toBe(0);
 		expect(result.label).toBe('non_qualifie');
@@ -14,7 +14,7 @@ describe('calculerScore', () => {
 	it('donne +3 pour un canton prioritaire (GE)', () => {
 		const result = calculerScore({
 			canton: 'GE',
-			source: 'manuel',
+			source: 'zefix',
 		});
 		expect(result.total).toBe(3);
 		expect(result.criteres).toContainEqual(expect.stringContaining('Canton GE'));
@@ -23,7 +23,7 @@ describe('calculerScore', () => {
 	it('donne +1 pour un canton secondaire (NE)', () => {
 		const result = calculerScore({
 			canton: 'NE',
-			source: 'manuel',
+			source: 'zefix',
 		});
 		expect(result.total).toBe(1);
 		expect(result.criteres).toContainEqual(expect.stringContaining('Canton NE'));
@@ -31,7 +31,7 @@ describe('calculerScore', () => {
 
 	it('donne +3 pour un secteur cible dans la description', () => {
 		const result = calculerScore({
-			source: 'manuel',
+			source: 'zefix',
 			description: 'Bureau de construction et renovation',
 		});
 		expect(result.total).toBe(3);
@@ -40,7 +40,7 @@ describe('calculerScore', () => {
 
 	it('donne +3 pour un secteur cible dans la raison sociale', () => {
 		const result = calculerScore({
-			source: 'manuel',
+			source: 'zefix',
 			raison_sociale: 'Architecte SA',
 		});
 		expect(result.total).toBe(3);
@@ -58,7 +58,7 @@ describe('calculerScore', () => {
 		const recent = new Date();
 		recent.setDate(recent.getDate() - 10);
 		const result = calculerScore({
-			source: 'manuel',
+			source: 'zefix',
 			date_publication: recent.toISOString(),
 		});
 		expect(result.total).toBe(2);
@@ -69,7 +69,7 @@ describe('calculerScore', () => {
 		const older = new Date();
 		older.setDate(older.getDate() - 60);
 		const result = calculerScore({
-			source: 'manuel',
+			source: 'zefix',
 			date_publication: older.toISOString(),
 		});
 		expect(result.total).toBe(1);
@@ -78,7 +78,7 @@ describe('calculerScore', () => {
 
 	it('donne +1 si telephone present', () => {
 		const result = calculerScore({
-			source: 'manuel',
+			source: 'zefix',
 			telephone: '+41 22 123 45 67',
 		});
 		expect(result.total).toBe(1);
@@ -86,7 +86,7 @@ describe('calculerScore', () => {
 
 	it('donne +1 si montant > 100k', () => {
 		const result = calculerScore({
-			source: 'manuel',
+			source: 'zefix',
 			montant: 250000,
 		});
 		expect(result.total).toBe(1);
@@ -94,7 +94,7 @@ describe('calculerScore', () => {
 
 	it('ne donne rien si montant <= 100k', () => {
 		const result = calculerScore({
-			source: 'manuel',
+			source: 'zefix',
 			montant: 50000,
 		});
 		expect(result.total).toBe(0);

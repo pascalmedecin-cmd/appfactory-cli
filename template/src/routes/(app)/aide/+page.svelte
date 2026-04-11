@@ -541,8 +541,8 @@
 							<span class="aide-badge aide-badge--cold">Froid (2-4 pts)</span>
 						</div>
 
-						<h3 class="aide-h3">Ajouter un lead manuellement</h3>
-						<p>Cliquez <strong>Saisie manuelle</strong>. Remplissez : raison sociale (obligatoire), canton (obligatoire) et secteur. Les autres informations seront complétées automatiquement par enrichissement. Le score est calculé automatiquement.</p>
+						<h3 class="aide-h3">Sources disponibles</h3>
+						<p>7 sources alimentent la prospection : registre du commerce (Zefix), marchés publics (SIMAP), annuaire (search.ch), géodonnées Genève (SITG), feuille officielle (FOSC), registre des bâtiments (RegBL) et bâtiments certifiés (Minergie). Utilisez <strong>Importer des prospects</strong> pour lancer un import depuis une source.</p>
 
 						<h3 class="aide-h3">Filtrer et trier</h3>
 						<p>4 filtres disponibles en haut : source, canton, statut, score minimum. La barre de recherche filtre par texte dans toutes les colonnes. Cliquez un en-tête de colonne pour trier.</p>

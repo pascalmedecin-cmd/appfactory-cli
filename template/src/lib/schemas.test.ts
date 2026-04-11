@@ -57,7 +57,7 @@ describe('ContactCreateSchema', () => {
 
 describe('LeadCreateSchema', () => {
 	it('accepte un lead minimal', () => {
-		const r = validate(LeadCreateSchema, { source: 'manuel', raison_sociale: 'Test SA', canton: 'GE' });
+		const r = validate(LeadCreateSchema, { source: 'zefix', raison_sociale: 'Test SA', canton: 'GE' });
 		expect(r.success).toBe(true);
 	});
 
@@ -67,7 +67,7 @@ describe('LeadCreateSchema', () => {
 	});
 
 	it('rejette sans raison sociale', () => {
-		const r = validate(LeadCreateSchema, { source: 'manuel', raison_sociale: '' });
+		const r = validate(LeadCreateSchema, { source: 'zefix', raison_sociale: '' });
 		expect(r.success).toBe(false);
 	});
 
@@ -77,7 +77,7 @@ describe('LeadCreateSchema', () => {
 	});
 
 	it('coerce montant en nombre', () => {
-		const r = validate(LeadCreateSchema, { source: 'manuel', raison_sociale: 'Test', canton: 'VD', montant: '50000' });
+		const r = validate(LeadCreateSchema, { source: 'zefix', raison_sociale: 'Test', canton: 'VD', montant: '50000' });
 		expect(r.success).toBe(true);
 		if (r.success) expect(r.data.montant).toBe(50000);
 	});
@@ -460,17 +460,17 @@ describe('LeadUpdateSchema', () => {
 	const validUUID = '550e8400-e29b-41d4-a716-446655440000';
 
 	it('accepte un update valide', () => {
-		const r = validate(LeadUpdateSchema, { id: validUUID, source: 'manuel', raison_sociale: 'Test SA', canton: 'GE' });
+		const r = validate(LeadUpdateSchema, { id: validUUID, source: 'zefix', raison_sociale: 'Test SA', canton: 'GE' });
 		expect(r.success).toBe(true);
 	});
 
 	it('rejette sans id', () => {
-		const r = validate(LeadUpdateSchema, { source: 'manuel', raison_sociale: 'Test SA', canton: 'GE' });
+		const r = validate(LeadUpdateSchema, { source: 'zefix', raison_sociale: 'Test SA', canton: 'GE' });
 		expect(r.success).toBe(false);
 	});
 
 	it('rejette un id non-UUID', () => {
-		const r = validate(LeadUpdateSchema, { id: 'abc', source: 'manuel', raison_sociale: 'Test SA' });
+		const r = validate(LeadUpdateSchema, { id: 'abc', source: 'zefix', raison_sociale: 'Test SA' });
 		expect(r.success).toBe(false);
 	});
 });

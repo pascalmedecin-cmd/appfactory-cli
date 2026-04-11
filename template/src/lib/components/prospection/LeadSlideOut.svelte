@@ -85,7 +85,8 @@
 			search_ch: 'Annuaire',
 			sitg: 'Géodonnées',
 			fosc: 'Feuille officielle',
-			manuel: 'Saisie manuelle',
+			regbl: 'Registre des bâtiments',
+			minergie: 'Minergie',
 		};
 		return labels[s] ?? s;
 	}
