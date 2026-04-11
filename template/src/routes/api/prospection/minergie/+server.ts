@@ -12,22 +12,21 @@ const CANTON_MAP: Record<string, string> = {
 	GE: 'GE', VD: 'VD', VS: 'VS', NE: 'NE', FR: 'FR', JU: 'JU',
 };
 
-// Label Minergie → valeur scoring
-const PREMIUM_LABELS = ['MINERGIE-P', 'MINERGIE-A', 'MINERGIE-P-ECO', 'MINERGIE-A-ECO'];
+// Standard Minergie → valeur scoring (noms réels de l'API geo.admin.ch)
+const PREMIUM_STANDARDS = ['Minergie_P', 'Minergie_A', 'Minergie_P_Eco', 'Minergie_A_Eco'];
 
 interface MinergieFeature {
 	id: number;
 	attributes: {
-		cert_number?: string; // Numéro de certification
-		label?: string; // MINERGIE, MINERGIE-P, MINERGIE-A, etc.
-		category?: string; // Résidentiel, Tertiaire, etc.
-		municipality?: string; // Commune
+		certificate?: string; // Numéro de certification (ex: "GE-412")
+		standard?: string; // Minergie, Minergie_P, Minergie_A, Minergie_P_Eco, etc.
 		canton?: string; // Abréviation canton
-		address?: string;
-		zip?: string; // NPA
-		city?: string;
-		year?: number; // Année certification
-		status?: string; // provisoire, définitif
+		ebf?: number | null; // Surface de référence énergétique
+		buildinginfo_fr?: string | null;
+		buildinginfo_de?: string | null;
+		http_fr?: string; // Deep link vers fiche bâtiment
+		http_de?: string;
+		label?: number; // ID numérique interne (pas le type de certification)
 	};
 }
 
@@ -78,15 +77,19 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		return json({ imported: 0, skipped: 0, message: 'Aucun bâtiment Minergie trouvé pour ces cantons.' });
 	}
 
-	// Filter premium labels if requested
+	// Filter premium standards if requested
 	if (premiumOnly) {
 		allFeatures = allFeatures.filter((f) =>
-			PREMIUM_LABELS.includes(f.attributes.label ?? '')
+			PREMIUM_STANDARDS.includes(f.attributes.standard ?? '')
 		);
 	}
 
-	// Sort by year descending (most recent first)
-	allFeatures.sort((a, b) => (b.attributes.year ?? 0) - (a.attributes.year ?? 0));
+	// Sort by certificate number descending (higher = more recent)
+	allFeatures.sort((a, b) => {
+		const certA = a.attributes.certificate ?? '';
+		const certB = b.attributes.certificate ?? '';
+		return certB.localeCompare(certA);
+	});
 
 	// Limit results
 	if (allFeatures.length > limit) {
@@ -95,8 +98,8 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	// Dedup against existing leads
 	const certNumbers = allFeatures
-		.map((f) => f.attributes.cert_number)
-		.filter(Boolean) as string[];
+		.map((f) => f.attributes.certificate ?? String(f.id))
+		.filter(Boolean);
 	const existingIds = new Set<string>();
 	if (certNumbers.length > 0) {
 		const { data: existing } = await locals.supabase
@@ -126,44 +129,46 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	for (const feature of allFeatures) {
 		const a = feature.attributes;
-		const certNum = a.cert_number ?? String(feature.id);
+		const certNum = a.certificate ?? String(feature.id);
 		if (existingIds.has(certNum) || dismissedIds.has(certNum)) { skipped++; continue; }
 
-		const label = a.label ?? 'MINERGIE';
-		const isPremium = PREMIUM_LABELS.includes(label);
+		const standard = a.standard ?? 'Minergie';
+		const isPremium = PREMIUM_STANDARDS.includes(standard);
 		const canton = a.canton ?? '';
 		if (!CANTON_MAP[canton]) { skipped++; continue; }
 
+		const buildingInfo = a.buildinginfo_fr ?? a.buildinginfo_de ?? '';
 		const description = [
-			`Bâtiment certifié ${label}`,
-			a.category ? `Catégorie : ${a.category}` : '',
-			a.year ? `Année : ${a.year}` : '',
-			a.status ? `Statut : ${a.status}` : '',
+			`Bâtiment certifié ${standard}`,
+			buildingInfo ? buildingInfo : '',
+			a.ebf ? `Surface : ${a.ebf} m²` : '',
 		].filter(Boolean).join(' - ');
 
 		const scoreResult = calculerScore({
 			canton,
 			description,
-			raison_sociale: `${label} ${a.municipality ?? a.city ?? ''}`,
+			raison_sociale: `${standard} ${certNum}`,
 			source: 'minergie',
-			date_publication: a.year ? `${a.year}-01-01` : null,
+			date_publication: null,
 			telephone: null,
 			montant: null,
 		});
 
-		// Bonus scoring for premium Minergie labels
+		// Bonus scoring for premium Minergie standards
 		const bonusScore = isPremium ? 2 : 0;
+
+		const sourceUrl = a.http_fr ?? `https://www.minergie.ch/fr/batiments/details/?gid=${certNum}`;
 
 		inserts.push({
 			id: randomUUID(),
 			source: 'minergie' as const,
 			source_id: certNum,
-			source_url: `https://www.minergie.ch/fr/batiments/liste-des-batiments/`,
-			raison_sociale: `${label} ${a.municipality ?? a.city ?? ''}${a.address ? ` - ${a.address}` : ''}`,
+			source_url: sourceUrl,
+			raison_sociale: `${standard} ${certNum}`,
 			nom_contact: null,
-			adresse: a.address ?? null,
-			npa: a.zip ?? null,
-			localite: a.city ?? a.municipality ?? null,
+			adresse: null,
+			npa: null,
+			localite: null,
 			canton,
 			telephone: null,
 			site_web: null,
@@ -171,7 +176,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			secteur_detecte: 'construction',
 			description,
 			montant: null,
-			date_publication: a.year ? `${a.year}-01-01` : null,
+			date_publication: null,
 			score_pertinence: scoreResult.total + bonusScore,
 			statut: 'nouveau',
 			date_import: now,

@@ -22,8 +22,9 @@ const STATUTS_CHANTIER = [1004, 1005];
 interface RegblFeature {
 	id: number;
 	attributes: {
-		egid: number;
-		gdename?: string; // Commune
+		egid: number | string;
+		gdename?: string | null; // Commune
+		gdekt?: string; // Canton (GE, VD, etc.)
 		gdenr?: number; // N° commune OFS
 		gkat?: number; // Catégorie bâtiment
 		gstat?: number; // Statut (1004=autorisé, 1005=en construction)
@@ -32,9 +33,9 @@ interface RegblFeature {
 		gbauj?: number; // Année de construction
 		gbaum?: number; // Mois de construction
 		gabbj?: number; // Année de démolition
-		strname?: string;
+		strname?: string | string[]; // Peut être un array
 		deinr?: string; // Numéro de rue
-		plz4?: number; // NPA
+		plz4?: number | null; // NPA
 		plzz?: number; // Complément NPA
 		label?: string;
 	};
@@ -134,7 +135,8 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 		const commune = a.gdename ?? '';
 		const npa = a.plz4 ? String(a.plz4) : null;
-		const adresse = [a.strname, a.deinr].filter(Boolean).join(' ') || null;
+		const strname = Array.isArray(a.strname) ? a.strname[0] : a.strname;
+		const adresse = [strname, a.deinr].filter(Boolean).join(' ') || null;
 		const statut = a.gstat === 1004 ? 'Autorisé' : 'En construction';
 		const description = [
 			`Bâtiment ${statut.toLowerCase()}`,
@@ -143,9 +145,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			commune ? `Commune : ${commune}` : '',
 		].filter(Boolean).join(' - ');
 
-		// Determine canton from NPA or commune
-		// Since we search by canton, we know it
-		const cantonCode = validCantons.find(() => true) ?? 'GE';
+		const cantonCode = a.gdekt && CANTON_MAP[a.gdekt] ? a.gdekt : validCantons[0];
 
 		const scoreResult = calculerScore({
 			canton: cantonCode,

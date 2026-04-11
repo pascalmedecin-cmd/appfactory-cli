@@ -6,9 +6,6 @@ import { randomUUID } from 'crypto';
 const ZEFIX_BASE = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
 
 // NOGA secteur F = Construction (codes 41-43)
-// 41 = Construction de bâtiments
-// 42 = Génie civil
-// 43 = Travaux de construction spécialisés
 const CONSTRUCTION_KEYWORDS = [
 	'construction', 'batiment', 'bâtiment', 'bau', 'génie civil', 'genie civil',
 	'architecte', 'architecture', 'architektur',
@@ -46,29 +43,46 @@ function detectSecteur(desc: string): string | null {
 	return null;
 }
 
-interface SogcPublication {
-	id: number;
-	shabId: number;
-	registryOfCommerceId?: string;
-	shabDate: string;
-	registrationDate?: string;
-	message: { fr?: string; de?: string; it?: string };
-	company?: {
-		name: string;
-		uid: string;
-		ehpiId?: number;
-		legalSeat?: string;
-		canton?: { cantonAbbreviation?: string };
-		address?: {
-			street?: string;
-			houseNumber?: string;
-			swissZipCode?: string;
-			city?: string;
-		};
-		purpose?: { fr?: string; de?: string; it?: string };
-		capitalNominal?: number;
+/** Strip HTML FT tags from SOGC message text */
+function stripFtTags(html: string): string {
+	return html.replace(/<\/?FT[^>]*>/g, '').replace(/&apos;/g, "'").replace(/&amp;/g, '&');
+}
+
+/** Extract NPA + city from message text (pattern: "1205 Genève") */
+function extractNpaCity(message: string): { npa: string | null; city: string | null } {
+	const match = message.match(/(\d{4})\s+([A-ZÀ-Ü][a-zà-ü][\w\s-]*?)(?:[.,]|$)/);
+	return match ? { npa: match[1], city: match[2].trim() } : { npa: null, city: null };
+}
+
+/** Extract street address from message text (before NPA) */
+function extractAddress(message: string): string | null {
+	const match = message.match(/,\s+((?:rue|avenue|chemin|route|place|boulevard|quai|passage|impasse|ch\.|rte|av\.|bd|pl\.)[^,]+\d{4})/i);
+	if (match) {
+		return match[1].replace(/\s*\d{4}\s*$/, '').trim() || null;
+	}
+	return null;
+}
+
+interface SogcEntry {
+	sogcPublication: {
+		sogcDate: string;
+		sogcId: number;
+		registryOfCommerceId: number;
+		registryOfCommerceCanton: string;
+		message: string; // HTML with FT tags
+		mutationTypes: Array<{ id: number; key: string }>;
 	};
-	sogcPubType?: string; // HR01 = inscription, HR02 = mutation, HR03 = radiation
+	companyShort: {
+		name: string;
+		ehraid: number;
+		uid: string;
+		chid?: string;
+		legalSeat?: string;
+		legalForm?: {
+			name?: { fr?: string; de?: string };
+		};
+		status?: string;
+	};
 }
 
 export const POST = async ({ request, locals }: RequestEvent) => {
@@ -95,7 +109,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	// Fetch SOGC publications for each day in range
 	const now = new Date();
-	const publications: SogcPublication[] = [];
+	const entries: SogcEntry[] = [];
 
 	for (let d = 0; d < daysBack; d++) {
 		const date = new Date(now);
@@ -103,14 +117,14 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		const dateStr = date.toISOString().split('T')[0];
 
 		try {
-			const resp = await fetch(`${ZEFIX_BASE}/sogc/ksv/${dateStr}`, {
+			const resp = await fetch(`${ZEFIX_BASE}/sogc/bydate/${dateStr}`, {
 				headers: {
 					'Authorization': authHeader,
 					'Accept': 'application/json',
 				},
 			});
 
-			if (resp.status === 404) continue; // Pas de publications ce jour
+			if (resp.status === 404) continue;
 			if (!resp.ok) {
 				console.error(`FOSC ${dateStr}: HTTP ${resp.status}`);
 				continue;
@@ -118,34 +132,34 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 			const data = await resp.json();
 			if (Array.isArray(data)) {
-				publications.push(...data);
+				entries.push(...data);
 			}
 		} catch (err) {
 			console.error(`FOSC ${dateStr}: ${String(err)}`);
 		}
 	}
 
-	if (publications.length === 0) {
+	if (entries.length === 0) {
 		return json({ imported: 0, skipped: 0, message: 'Aucune publication FOSC trouvée pour cette période.' });
 	}
 
-	// Filter: only inscriptions (HR01) in target cantons with construction keywords
-	const relevant = publications.filter((pub) => {
-		// Only new registrations
-		if (pub.sogcPubType && !pub.sogcPubType.startsWith('HR01')) return false;
+	// Filter: only new registrations in target cantons with construction keywords
+	const relevant = entries.filter((entry) => {
+		const pub = entry.sogcPublication;
+		const company = entry.companyShort;
+		if (!pub || !company) return false;
 
-		const company = pub.company;
-		if (!company) return false;
+		// Only new registrations (mutationType key = 'status.neu')
+		const isNew = pub.mutationTypes?.some((m) => m.key === 'status.neu');
+		if (!isNew) return false;
 
 		// Canton filter
-		const cantonAbbr = company.canton?.cantonAbbreviation;
-		if (!cantonAbbr || !validCantons.includes(cantonAbbr)) return false;
+		const canton = pub.registryOfCommerceCanton;
+		if (!canton || !validCantons.includes(canton)) return false;
 
-		// Construction sector filter
-		const purpose = company.purpose?.fr || company.purpose?.de || company.purpose?.it || '';
-		const name = company.name || '';
-		const message = pub.message?.fr || pub.message?.de || '';
-		const fullText = `${purpose} ${name} ${message}`.toLowerCase();
+		// Construction sector filter on message text + company name
+		const plainMessage = stripFtTags(pub.message ?? '');
+		const fullText = `${plainMessage} ${company.name}`.toLowerCase();
 
 		return CONSTRUCTION_KEYWORDS.some((kw) => fullText.includes(kw));
 	});
@@ -153,13 +167,13 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	if (relevant.length === 0) {
 		return json({
 			imported: 0,
-			skipped: publications.length,
-			message: `${publications.length} publications FOSC analysées, aucune pertinente pour le secteur construction.`,
+			skipped: entries.length,
+			message: `${entries.length} publications FOSC analysées, aucune pertinente pour le secteur construction.`,
 		});
 	}
 
 	// Dedup against existing leads
-	const uids = relevant.map((p) => p.company?.uid).filter(Boolean) as string[];
+	const uids = relevant.map((e) => e.companyShort?.uid).filter(Boolean) as string[];
 	const existingIds = new Set<string>();
 	if (uids.length > 0) {
 		const { data: existing } = await locals.supabase
@@ -188,55 +202,57 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	let skipped = 0;
 	const inserts = [];
 
-	for (const pub of relevant) {
-		const company = pub.company!;
+	for (const entry of relevant) {
+		const pub = entry.sogcPublication;
+		const company = entry.companyShort;
 		if (!company.uid || existingIds.has(company.uid) || dismissedIds.has(company.uid)) {
 			skipped++;
 			continue;
 		}
 
-		const purpose = company.purpose?.fr || company.purpose?.de || company.purpose?.it || '';
-		const cantonCode = company.canton?.cantonAbbreviation ?? '';
+		const cantonCode = pub.registryOfCommerceCanton;
 		if (!CANTON_MAP[cantonCode]) { skipped++; continue; }
 
-		const secteur = detectSecteur(`${purpose} ${company.name}`);
-		const addr = company.address;
+		const plainMessage = stripFtTags(pub.message ?? '');
+		const secteur = detectSecteur(`${plainMessage} ${company.name}`);
+		const { npa, city } = extractNpaCity(plainMessage);
+		const adresse = extractAddress(plainMessage);
 
 		const scoreResult = calculerScore({
 			canton: cantonCode,
-			description: purpose,
+			description: plainMessage,
 			raison_sociale: company.name,
 			source: 'fosc',
-			date_publication: pub.shabDate ?? null,
+			date_publication: pub.sogcDate ?? null,
 			telephone: null,
-			montant: company.capitalNominal ?? null,
+			montant: null,
 		});
 
 		inserts.push({
 			id: randomUUID(),
 			source: 'fosc' as const,
 			source_id: company.uid,
-			source_url: `https://www.shab.ch/#!/search/publications/detail/${pub.shabId}`,
+			source_url: `https://www.shab.ch/#!/search/publications/detail/${pub.sogcId}`,
 			raison_sociale: company.name,
 			nom_contact: null,
-			adresse: addr ? [addr.street, addr.houseNumber].filter(Boolean).join(' ') || null : null,
-			npa: addr?.swissZipCode ?? null,
-			localite: addr?.city ?? company.legalSeat ?? null,
+			adresse,
+			npa,
+			localite: city ?? company.legalSeat ?? null,
 			canton: cantonCode,
 			telephone: null,
 			site_web: null,
 			email: null,
 			secteur_detecte: secteur,
-			description: purpose.slice(0, 5000) || null,
-			montant: company.capitalNominal ?? null,
-			date_publication: pub.shabDate ?? null,
+			description: plainMessage.slice(0, 5000) || null,
+			montant: null,
+			date_publication: pub.sogcDate ?? null,
 			score_pertinence: scoreResult.total,
 			statut: 'nouveau',
 			date_import: nowStr,
 			date_modification: nowStr,
 		});
 
-		existingIds.add(company.uid); // Prevent duplicates within same batch
+		existingIds.add(company.uid);
 	}
 
 	// Batch insert
@@ -259,7 +275,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	return json({
 		imported,
 		skipped,
-		total_publications: publications.length,
+		total_publications: entries.length,
 		total_pertinent: relevant.length,
 		message: `${imported} lead${imported > 1 ? 's' : ''} importé${imported > 1 ? 's' : ''} depuis la FOSC, ${skipped} ignoré${skipped > 1 ? 's' : ''}.`,
 	});
