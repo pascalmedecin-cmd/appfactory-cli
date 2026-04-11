@@ -1,10 +1,10 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-12
+**Derniere mise a jour :** 2026-04-11
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** UX prospection premium + matching mots-clés (30e session, 2026-04-12). Modales visuelles (header accent bg-primary, icône, overflow-hidden bord à bord). Onglet search.ch retiré d'ImportModal (enrichissement ≠ import). Matching mots-clés accent-insensible dans cron alertes (normalizeText NFD, matchMotsCles sur raison_sociale + description + secteur_detecte). Workflow 4 cards palette sourde (bleu ardoise, violet sourd, ambre bronze, sauge) inscrite dans branding/filmpro.yaml. ModalForm : props icon + headerVariant rétrocompatibles. 136/136 tests, 0 régression.
+**Session precedente :** Enrichissement batch prospection (33e session, 2026-04-11). Recherche Gemini analysée (14 sources B2B suisses, 3 scénarios budgétaires). Phase 1 implémentée : endpoint SSE `/api/prospection/enrichir-batch` (search.ch + Zefix), modale progression 3 phases, bouton « Enrichir les filtrés » + bouton batch sélection multiple. 23 tests helpers, 159/159 total. Phase 2 (évaluation ROI nouvelles sources) à cadrer.
 
 ---
 
@@ -255,6 +255,9 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] Enrichissement batch prospection : transformer l'étape « Enrichir » en vraie étape workflow avec action batch (enrichir tous les téléphones manquants en un clic). Points à cadrer : rate limiting search.ch, feedback progression, gestion erreurs partielles, compteur mis à jour en temps réel
+- [ ] Enrichissement phase 2 : évaluer ROI des nouvelles sources (SerpAPI, Batimag, Kaspr, CECB, Minergie, permis de construire), cadrer les étapes d'enrichissement et la qualification (waterfall, scoring enrichi)
+- [ ] Supprimer les 3 leads de test (Migros Genève, Banque Cantonale de Genève, Hôtel Beau-Rivage Genève) créés pour valider le batch
 - [ ] Appliquer les principes UX validés sur prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard)
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
+- [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT → CSV) + import avec validation Zod ligne par ligne et preview erreurs
+- [ ] Dashboard/reporting : requêtes SQL agrégées (pipeline par mois, taux conversion par source, activité 30/90j) + graphiques légers

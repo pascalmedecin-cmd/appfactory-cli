@@ -9,6 +9,7 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import ImportModal from '$lib/components/prospection/ImportModal.svelte';
 	import LeadSlideOut from '$lib/components/prospection/LeadSlideOut.svelte';
+	import EnrichBatchModal from '$lib/components/prospection/EnrichBatchModal.svelte';
 	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
@@ -33,6 +34,8 @@
 	let saving = $state(false);
 	let importResult = $state<{ message: string; type: 'success' | 'error' } | null>(null);
 	let selectedIds = $state<Set<string>>(new Set());
+	let enrichBatchOpen = $state(false);
+	let enrichBatchIds = $state<string[]>([]);
 	let alerteModalOpen = $state(false);
 	let alerteNom = $state('');
 	let alerteSources = $state<string[]>([]);
@@ -300,6 +303,15 @@
 				<span class="hidden sm:inline">Saisie manuelle</span>
 			</button>
 			<button
+				onclick={() => { enrichBatchIds = filteredLeads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
+				class="flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-lg cursor-pointer transition-colors"
+				style="color: #7B6A9A; border-color: #7B6A9A30"
+				disabled={filteredLeads.filter(l => l.statut !== 'transfere').length === 0}
+			>
+				<span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
+				<span class="hidden sm:inline">Enrichir les filtrés</span>
+			</button>
+			<button
 				onclick={() => importModalOpen = true}
 				class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg cursor-pointer shadow-md transition-colors"
 			>
@@ -469,6 +481,16 @@
 					Écarter
 				</button>
 			</form>
+			<button
+				onclick={() => { enrichBatchIds = [...selectedIds]; enrichBatchOpen = true; }}
+				class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border rounded-lg cursor-pointer transition-colors"
+				style="color: #7B6A9A; border-color: #7B6A9A; background: transparent"
+				onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.background = '#7B6A9A10'; }}
+				onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
+			>
+				<span class="material-symbols-outlined text-[16px]">auto_fix_high</span>
+				Enrichir
+			</button>
 			<button
 				onclick={() => selectedIds = new Set()}
 				class="ml-auto text-sm text-text-muted hover:text-text cursor-pointer"
@@ -737,3 +759,18 @@
 
 <!-- Modal import sources -->
 <ImportModal bind:open={importModalOpen} bind:importResult />
+
+<!-- Modal enrichissement batch -->
+<EnrichBatchModal
+	bind:open={enrichBatchOpen}
+	leadIds={enrichBatchIds}
+	onDone={(summary) => {
+		selectedIds = new Set();
+		if (summary.enriched > 0) {
+			importResult = {
+				message: `${summary.enriched} prospect${summary.enriched > 1 ? 's' : ''} enrichi${summary.enriched > 1 ? 's' : ''}${summary.errors > 0 ? ` (${summary.errors} erreur${summary.errors > 1 ? 's' : ''})` : ''}`,
+				type: summary.errors > 0 ? 'error' : 'success'
+			};
+		}
+	}}
+/>
