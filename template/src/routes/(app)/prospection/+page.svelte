@@ -245,40 +245,49 @@
 
 <div class="space-y-5">
 	<!-- Stepper workflow 4 étapes -->
-	<div class="relative flex items-start justify-between px-6 py-5 rounded-xl border border-border bg-white">
-		<!-- Ligne connectrice -->
-		<div class="absolute top-[42px] left-[calc(12.5%+20px)] right-[calc(12.5%+20px)] h-[2px] rounded-full" style="background: linear-gradient(to right, #8B9DB6, #9B8BB5, #B5976E, #7BAA8E)"></div>
-
+	<div class="flex items-start gap-8 px-5 py-4 rounded-xl border border-border bg-surface-alt">
 		<!-- Étape 1 — Importer -->
-		<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
-			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-sm" style="background: #EDF1F5; border: 2px solid #8B9DB6">
+		<div class="flex flex-col items-center gap-2">
+			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-xs" style="background: #EDF1F5; border: 1.5px solid #8B9DB6">
 				<span class="material-symbols-outlined text-[20px]" style="color: #5A7190">cloud_download</span>
 			</div>
 			<span class="text-[13px] font-semibold text-text">Importer</span>
 			<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background: #EDF1F5; color: #5A7190">{data.leads.length}</span>
 		</div>
 
+		<div class="flex items-center pt-3">
+			<span class="material-symbols-outlined text-[16px] text-text-muted/40">chevron_right</span>
+		</div>
+
 		<!-- Étape 2 — Enrichir -->
-		<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
-			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-sm" style="background: #F0ECF5; border: 2px solid #9B8BB5">
+		<div class="flex flex-col items-center gap-2">
+			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-xs" style="background: #F0ECF5; border: 1.5px solid #9B8BB5">
 				<span class="material-symbols-outlined text-[20px]" style="color: #7B6A9A">auto_fix_high</span>
 			</div>
 			<span class="text-[13px] font-semibold text-text">Enrichir</span>
 			<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background: #F0ECF5; color: #7B6A9A">{enrichedCount}</span>
 		</div>
 
+		<div class="flex items-center pt-3">
+			<span class="material-symbols-outlined text-[16px] text-text-muted/40">chevron_right</span>
+		</div>
+
 		<!-- Étape 3 — Qualifier -->
-		<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
-			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-sm" style="background: #F5F0E8; border: 2px solid #B5976E">
+		<div class="flex flex-col items-center gap-2">
+			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-xs" style="background: #F5F0E8; border: 1.5px solid #B5976E">
 				<span class="material-symbols-outlined text-[20px]" style="color: #917548">filter_list</span>
 			</div>
 			<span class="text-[13px] font-semibold text-text">Qualifier</span>
 			<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background: #F5F0E8; color: #917548">{qualifiedCount}</span>
 		</div>
 
+		<div class="flex items-center pt-3">
+			<span class="material-symbols-outlined text-[16px] text-text-muted/40">chevron_right</span>
+		</div>
+
 		<!-- Étape 4 — Convertir -->
-		<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
-			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-sm" style="background: #EBF3EF; border: 2px solid #7BAA8E">
+		<div class="flex flex-col items-center gap-2">
+			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-xs" style="background: #EBF3EF; border: 1.5px solid #7BAA8E">
 				<span class="material-symbols-outlined text-[20px]" style="color: #538B6B">domain_add</span>
 			</div>
 			<span class="text-[13px] font-semibold text-text">Convertir</span>
@@ -311,7 +320,7 @@
 			</button>
 			<button
 				onclick={() => importModalOpen = true}
-				class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer shadow-sm transition-colors"
+				class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg cursor-pointer shadow-md transition-colors"
 			>
 				<span class="material-symbols-outlined text-[18px]">cloud_download</span>
 				Importer des prospects
@@ -445,7 +454,7 @@
 
 	<!-- Barre actions batch -->
 	{#if selectedIds.size > 0}
-		<div class="flex items-center gap-3 p-3 bg-gradient-to-r from-accent/5 to-accent/10 rounded-xl border border-accent/20 shadow-xs">
+		<div class="flex items-center gap-3 p-3 rounded-xl border shadow-xs" style="background: linear-gradient(to right, #EDF1F5, #F0ECF5); border-color: #8B9DB640">
 			<span class="text-sm font-semibold text-text">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
 			<form method="POST" action="?/batchStatut" use:enhance={() => {
 				const count = selectedIds.size;
@@ -490,8 +499,8 @@
 
 	{#if data.leads.length === 0}
 		<div class="flex flex-col items-center justify-center py-16 px-6">
-			<div class="flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-accent/20 to-accent/5 mb-5">
-				<span class="material-symbols-outlined text-[32px] text-accent">search</span>
+			<div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-5" style="background: linear-gradient(135deg, #EDF1F5, #F0ECF5)">
+				<span class="material-symbols-outlined text-[32px]" style="color: #5A7190">search</span>
 			</div>
 			<h3 class="text-lg font-semibold text-text mb-2">Trouvez vos premiers prospects</h3>
 			<p class="text-sm text-text-muted text-center max-w-lg mb-6">
@@ -500,7 +509,7 @@
 			<div class="flex flex-col items-center gap-3">
 				<button
 					onclick={() => importModalOpen = true}
-					class="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer shadow-sm transition-colors"
+					class="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg cursor-pointer shadow-md transition-colors"
 				>
 					<span class="material-symbols-outlined text-[18px]">cloud_download</span>
 					Lancer un import

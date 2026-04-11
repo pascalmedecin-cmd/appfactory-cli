@@ -18,6 +18,33 @@ typographie:
   font: DM Sans
   mono: DM Mono
 
+palette_workflow:
+  note: "Palette préférentielle pour steppers, workflows, funnels et progressions multi-étapes. Couleurs sourdes et chaudes, modernes sur fond clair. Chaque étape a une teinte distincte mais cohérente."
+  etape_1:
+    nom: Bleu ardoise
+    usage: Import, entrée de données, collecte
+    couleur: "#5A7190"
+    bordure: "#8B9DB6"
+    fond: "#EDF1F5"
+  etape_2:
+    nom: Violet sourd
+    usage: Enrichissement, traitement, valeur ajoutée
+    couleur: "#7B6A9A"
+    bordure: "#9B8BB5"
+    fond: "#F0ECF5"
+  etape_3:
+    nom: Ambre bronze
+    usage: Qualification, tri, sélection
+    couleur: "#917548"
+    bordure: "#B5976E"
+    fond: "#F5F0E8"
+  etape_4:
+    nom: Sauge
+    usage: Conversion, aboutissement, succès
+    couleur: "#538B6B"
+    bordure: "#7BAA8E"
+    fond: "#EBF3EF"
+
 logo:
   format: SVG Illustrator 1500x1500
   rendu: inline SVG (pas <img>)
