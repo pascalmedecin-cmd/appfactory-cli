@@ -52,10 +52,10 @@
 	<!-- Modal -->
 	<div class="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 pointer-events-none">
 		<div
-			class="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full {maxWidth} pointer-events-auto flex flex-col max-h-[90vh] md:max-h-[85vh] border border-border/30"
+			class="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full {maxWidth} pointer-events-auto flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden {headerVariant === 'accent' ? '' : 'border border-border/30'}"
 			transition:scale={{ start: 0.95, duration: 200 }}
 		>
-			<div class="flex items-center justify-between px-6 py-4 {headerVariant === 'accent' ? 'bg-accent text-white rounded-t-2xl' : 'border-b border-border'}">
+			<div class="flex items-center justify-between px-6 py-4 {headerVariant === 'accent' ? 'bg-accent text-white' : 'border-b border-border'}">
 				<div class="flex items-center gap-2.5">
 					{#if icon}
 						<span class="material-symbols-outlined text-[22px] {headerVariant === 'accent' ? 'text-white/80' : 'text-accent'}">{icon}</span>
