@@ -24,7 +24,7 @@ interface SimapProject {
 
 export const POST = async ({ request, locals }: RequestEvent) => {
 	const { session } = await locals.safeGetSession();
-	if (!session) return json({ error: 'Non authentifie' }, { status: 401 });
+	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
 
 	const body = await request.json();
 	const canton: string = body.canton;
@@ -66,7 +66,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		const data = await resp.json();
 		projects = data.projects ?? [];
 	} catch (err) {
-		return json({ error: `Erreur reseau SIMAP: ${String(err)}` }, { status: 502 });
+		return json({ error: `Erreur réseau SIMAP: ${String(err)}` }, { status: 502 });
 	}
 
 	if (projects.length === 0) {

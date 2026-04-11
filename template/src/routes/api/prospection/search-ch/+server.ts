@@ -6,11 +6,11 @@ const SEARCH_CH_ENDPOINT = 'https://search.ch/tel/api/';
 
 export const POST = async ({ request, locals }: RequestEvent) => {
 	const { session } = await locals.safeGetSession();
-	if (!session) return json({ error: 'Non authentifie' }, { status: 401 });
+	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
 
 	const apiKey = env.SEARCH_CH_API_KEY;
 	if (!apiKey) {
-		return json({ error: 'Cle API search.ch non configuree (SEARCH_CH_API_KEY)' }, { status: 503 });
+		return json({ error: 'Clé API search.ch non configurée (SEARCH_CH_API_KEY)' }, { status: 503 });
 	}
 
 	const body = await request.json();
@@ -18,6 +18,11 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	if (!leadId) {
 		return json({ error: 'lead_id requis' }, { status: 400 });
+	}
+
+	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+	if (!UUID_RE.test(leadId)) {
+		return json({ error: 'lead_id invalide' }, { status: 400 });
 	}
 
 	// Get the lead
@@ -54,7 +59,8 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		}
 		if (!resp.ok) {
 			const text = await resp.text();
-			return json({ error: `search.ch error ${resp.status}: ${text.slice(0, 200)}` }, { status: 502 });
+			console.error(`search.ch API error ${resp.status}: ${text.slice(0, 500)}`);
+			return json({ error: `Erreur API search.ch (${resp.status}). Réessayez plus tard.` }, { status: 502 });
 		}
 
 		const text = await resp.text();
@@ -110,7 +116,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			.eq('id', leadId);
 
 		if (upErr) {
-			return json({ error: `Erreur mise a jour: ${upErr.message}` }, { status: 500 });
+			return json({ error: `Erreur mise à jour: ${upErr.message}` }, { status: 500 });
 		}
 
 		return json({
@@ -118,10 +124,10 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			telephone,
 			enriched: Object.keys(updates).length - 1, // minus date_modification
 			message: telephone
-				? `Telephone trouve: ${telephone}`
-				: 'Aucun telephone trouve pour cette entreprise.',
+				? `Téléphone trouvé: ${telephone}`
+				: 'Aucun téléphone trouvé pour cette entreprise.',
 		});
 	} catch (err) {
-		return json({ error: `Erreur reseau search.ch: ${String(err)}` }, { status: 502 });
+		return json({ error: `Erreur réseau search.ch: ${String(err)}` }, { status: 502 });
 	}
 };

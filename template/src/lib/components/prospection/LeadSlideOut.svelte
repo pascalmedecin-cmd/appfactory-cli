@@ -4,10 +4,11 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import { toasts } from '$lib/stores/toast';
-	import { config } from '$lib/config';
 	import { calculerScore } from '$lib/scoring';
-
-	const { labels: scoreLabels } = config.scoring;
+	import {
+		cantonNoms, scoreLabel, scoreBadgeVariant,
+		statutLabel, statutBadgeVariant, sourceLabel,
+	} from '$lib/prospection-utils';
 
 	type Lead = {
 		id: string;
@@ -39,57 +40,6 @@
 	} = $props();
 
 	let enriching = $state(false);
-
-	const cantonNoms: Record<string, string> = {
-		GE: 'Genève', VD: 'Vaud', VS: 'Valais', NE: 'Neuchâtel', FR: 'Fribourg', JU: 'Jura'
-	};
-
-	function scoreLabel(score: number): string {
-		if (score >= scoreLabels.chaud) return 'Chaud';
-		if (score >= scoreLabels.tiede) return 'Tiède';
-		if (score >= scoreLabels.froid) return 'Froid';
-		return 'Faible';
-	}
-
-	function scoreBadgeVariant(score: number): 'danger' | 'warning' | 'muted' | 'default' {
-		if (score >= scoreLabels.chaud) return 'danger';
-		if (score >= scoreLabels.tiede) return 'warning';
-		if (score >= scoreLabels.froid) return 'muted';
-		return 'default';
-	}
-
-	function statutLabel(statut: string): string {
-		const labels: Record<string, string> = {
-			nouveau: 'Nouveau',
-			interesse: 'Intéressé',
-			ecarte: 'Écarté',
-			transfere: 'Converti',
-		};
-		return labels[statut] ?? statut;
-	}
-
-	function statutBadgeVariant(statut: string): 'default' | 'accent' | 'success' | 'warning' | 'danger' | 'muted' {
-		switch (statut) {
-			case 'nouveau': return 'warning';
-			case 'interesse': return 'accent';
-			case 'ecarte': return 'muted';
-			case 'transfere': return 'success';
-			default: return 'default';
-		}
-	}
-
-	function sourceLabel(s: string): string {
-		const labels: Record<string, string> = {
-			zefix: 'Registre du commerce',
-			simap: 'Marchés publics',
-			search_ch: 'Annuaire',
-			sitg: 'Géodonnées',
-			fosc: 'Feuille officielle',
-			regbl: 'Registre des bâtiments',
-			minergie: 'Minergie',
-		};
-		return labels[s] ?? s;
-	}
 
 	function getScoreDetail(l: Lead) {
 		return calculerScore({

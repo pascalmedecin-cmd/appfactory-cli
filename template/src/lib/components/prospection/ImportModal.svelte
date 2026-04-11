@@ -3,9 +3,9 @@
 	import { config } from '$lib/config';
 	import { invalidateAll } from '$app/navigation';
 	import { API_LIMITS } from '$lib/api-limits';
+	import { cantonNoms } from '$lib/prospection-utils';
 
 	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
-	const cantonNoms: Record<string, string> = { GE: 'Genève', VD: 'Vaud', VS: 'Valais', NE: 'Neuchâtel', FR: 'Fribourg', JU: 'Jura' };
 
 	let { open = $bindable(false), importResult = $bindable<{ message: string; type: 'success' | 'error' } | null>(null) }: {
 		open: boolean;

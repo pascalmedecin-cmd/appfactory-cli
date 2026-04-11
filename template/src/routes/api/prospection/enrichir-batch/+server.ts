@@ -75,7 +75,7 @@ async function fetchZefix(
 export const POST = async ({ request, locals }: RequestEvent) => {
 	const { session } = await locals.safeGetSession();
 	if (!session) {
-		return new Response(JSON.stringify({ error: 'Non authentifie' }), {
+		return new Response(JSON.stringify({ error: 'Non authentifié' }), {
 			status: 401,
 			headers: { 'Content-Type': 'application/json' },
 		});
@@ -102,7 +102,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		: null;
 
 	if (sources.includes('search_ch') && !searchChKey) {
-		return new Response(JSON.stringify({ error: 'SEARCH_CH_API_KEY non configuree' }), {
+		return new Response(JSON.stringify({ error: 'SEARCH_CH_API_KEY non configurée' }), {
 			status: 503,
 			headers: { 'Content-Type': 'application/json' },
 		});
@@ -222,7 +222,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 						if (upErr) {
 							result.status = 'error';
-							result.message = `Erreur mise a jour: ${upErr.message}`;
+							result.message = `Erreur mise à jour: ${upErr.message}`;
 							errors++;
 						} else {
 							result.status = 'enriched';

@@ -56,7 +56,7 @@ function detectSecteur(desc: string): string | null {
 
 export const POST = async ({ request, locals }: RequestEvent) => {
 	const { session } = await locals.safeGetSession();
-	if (!session) return json({ error: 'Non authentifie' }, { status: 401 });
+	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
 
 	const username = env.ZEFIX_USERNAME;
 	const password = env.ZEFIX_PASSWORD;
@@ -101,12 +101,13 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		}
 		if (!resp.ok) {
 			const text = await resp.text();
-			return json({ error: `Zefix error ${resp.status}: ${text.slice(0, 200)}` }, { status: 502 });
+			console.error(`Zefix API error ${resp.status}: ${text.slice(0, 500)}`);
+			return json({ error: `Erreur API Zefix (${resp.status}). Réessayez plus tard.` }, { status: 502 });
 		}
 
 		companies = await resp.json();
 	} catch (err) {
-		return json({ error: `Erreur reseau Zefix: ${String(err)}` }, { status: 502 });
+		return json({ error: `Erreur réseau Zefix: ${String(err)}` }, { status: 502 });
 	}
 
 	if (!Array.isArray(companies) || companies.length === 0) {
