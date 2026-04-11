@@ -1,10 +1,10 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-10
+**Derniere mise a jour :** 2026-04-11
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Refonte UX prospection passe 3 (27e session). Bandeau : couleurs charte FilmPro (primary, accent, warning, success), flèches arrow_forward 22px. Source LINDAS supprimée (doublon Zefix), label unifié « Registre du commerce ». Canton « Autre » supprimé partout, canton obligatoire en saisie manuelle, leads sans canton exclus à l'import. Filtre température : labels texte (custom dropdown avec icônes en backlog). Empty state texte finalisé. Doc aide mise à jour. Deploy prod OK. 129/129 tests.
+**Session precedente :** Custom dropdown température + dette LINDAS (28e session). TemperatureSelect.svelte créé (dots colorés premium danger/warning/muted, chevron animé, click outside, Escape). Code mort LINDAS supprimé (3 fichiers API + références dans 3 composants). 0 leads lindas en BDD (déjà migrés). 120/120 tests (9 tests LINDAS retirés, 0 régression).
 
 ---
 
@@ -93,6 +93,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - Figma Pro abandonne (deep research 2026-04-04 : ratio cout/benefice defavorable pour solopreneur code-first)
 - Design = approche code-first : composants custom + kits Figma Community gratuits comme inspiration
 - Validation client = prototypes Vercel preview (pas de maquettes Figma)
+- CSS scoped obligatoire pour le layout structurel (sidebar, header, nav) — Tailwind responsive (md:hidden, md:block) ne fonctionne pas avec Tailwind v4 pour ce cas
 - HTML temporaires pour previsualisations client a chaque etape cle
 - Ancien projet AppFactory v1 (Apps Script) = archive consultable, pas de migration
 
@@ -170,60 +171,33 @@ Fichiers cles :
 
 → Inventaire composants EN PLACE (11 composants, 6 pages, 4 API, scripts) archive dans archive/inventaire-composants.md — consulter si besoin de lister les composants existants avant d'en creer de nouveaux
 
-**Decisions session 2026-04-09 (16e session) :**
-- Auth magic link mobile Safari OK : pas de bug PKCE, le rate limit email etait la seule cause du echec
-- Vercel Root Directory change de `.` a `template` (Settings > Build and Deployment)
-- Skip deployments active : commits hors template/ ne declenchent plus de build
-- PWA validee sur iPhone : icone, nom, plein ecran, theme-color OK
-- Responsive sidebar : Tailwind v4 ne compile pas `md:block` (optimise car div=block par defaut). Refactore avec CSS scoped `@media (max-width: 767px)` — single sidebar, translate-x, plus de classes Tailwind responsive pour le layout structurel
-- Decision : ne plus utiliser les classes Tailwind responsive (md:hidden, md:block) pour le layout structurel (sidebar, header, nav) — CSS scoped obligatoire
-- Node.js Vercel mis a jour automatiquement de 22.x a 24.x
+### Condensé thématique (sessions 9-16)
 
-**Decisions session 2026-04-09 (12e session) :**
-- Auth MFA TOTP ajoute : magic link + code 6 chiffres (Google Authenticator/Authy)
-- Fix callback magic link : token_hash + verifyOtp (etait code-only, magic link ne fonctionnait pas)
-- Pages /auth/mfa/setup (QR code enrollment) et /auth/mfa (challenge TOTP)
-- Enforcement AAL dans hooks.server.ts : redirect setup si pas de facteur, redirect challenge si aal1
-- Allowlist explicite routes auth (defense in depth) : /login, /auth/callback, /auth/mfa, /auth/mfa/setup
-- Filtre facteurs verified uniquement (fix bypass via facteur unverified)
-- Audit securite : 1 HIGH + 1 MEDIUM corriges, 1 LOW documente ({@html qrCode} = Supabase SDK safe)
-- Decision : TOTP > SMS OTP (gratuit natif Supabase, pas de SIM swap, pas de Twilio)
-- Decision : MFA obligatoire pour tous les utilisateurs (setup force au premier login)
-- Rate limit email Supabase free plan non modifiable (champ bloque dans dashboard)
-- Deploy prod valide (commit 123b6ec, https://filmpro-crm.vercel.app)
-- A TESTER : flow complet magic link + TOTP setup (attendre expiration rate limit email)
+→ Détail chronologique : `archive/decisions-sessions-9-16.md`
 
-**Decisions session 2026-04-08 (11e session) :**
-- Icones PWA remplacees par Logo FP complet (au lieu de 3 carres seuls)
-- Logique isEmailAllowed extraite dans $lib/server/auth.ts (dedup hooks + login)
-- 16 tests auth ajoutes dont 7 tests de refus (RISQUE OUVERT ferme)
-- Session Supabase : duree infinie (time-box=0, inactivity=0), deja configure par defaut
-- Decision : session permanente acceptable pour CRM prive 2 utilisateurs (pas de relogin force)
+**Auth / Sécurité :**
+- Migration Google OAuth → magic link Supabase (email OTP + PKCE), validation domaine @filmpro.ch serveur
+- MFA TOTP ajouté (Google Authenticator), obligatoire pour tous, allowlist routes auth (defense in depth)
+- Magic link Safari mobile OK (rate limit était la seule cause d'échec, pas PKCE)
+- 16 tests auth dont 7 refus, session permanente (CRM privé 2 utilisateurs)
+- Audit sécurité : 1 HIGH + 1 MEDIUM corrigés
 
-**Decisions session 2026-04-08 (10e session) :**
-- Projet Vercel renomme template → filmpro-crm (URL filmpro-crm.vercel.app, domaine custom abandonne)
-- Decision : pas de domaine custom pour CRM prive, URL Vercel suffit (invisible, gratuit)
-- Auth migree Google OAuth → magic link Supabase (email OTP + PKCE)
-- Validation domaine @filmpro.ch cote serveur (form action, impossible a contourner)
-- ALLOWED_DOMAINS=filmpro.ch + ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch
-- Email provider Supabase reactive, Google OAuth desactive dans Supabase
-- PWA manifest + icones (192/512/apple-touch-icon) + meta tags mobile
-- 13 grilles formulaires rendues responsives (4 fichiers : contacts, entreprises, prospection, ImportModal)
-- Page aide mise a jour (magic link au lieu de Google)
-- Deploy prod valide (filmpro-crm.vercel.app)
+**Infra / Deploy :**
+- Vercel Root Directory → `template`, skip deployments hors template/
+- Projet renommé filmpro-crm (pas de domaine custom, URL Vercel suffit)
+- Node.js 22.x → 24.x (auto Vercel)
 
-**Decisions session 2026-04-08 (9e session) :**
-- Test navigateur complet des 7 changements UX session 8 : tous valides en prod
-- 6 bugs corriges : typo signalux (3 endroits), {{APP_NAME}} dans app.html, canton SIMAP fallback boucle, autocomplete fuzzy normalisation client-side, pluriels toasts/API
-- Suppression batch 60 signaux corrompus (canton Autre) + reimport cron 58 signaux propres (GE/VD/VS/NE/FR/JU)
-- Enrichissement Zefix valide (IDE CHE105952463 recupere pour entreprise Film)
-- Scoring differencie apres fix canton : 10/13 (GE/VD) vs 8/13 (FR) vs 7/13 (autres)
-- Colonnes Contacts redistribuees (telephone nowrap, largeurs %)
-- Design premium inspire Untitled UI + SnowUI + CRM Kit (analyse 3 kits Figma Community)
-- Tokens app.css : ombres multi-niveaux (Untitled UI), radius 8-12px, couleurs statut raffinées, sidebar 240px
-- Composants : Badge dot+border, Sidebar items arrondis, DataTable radius xl, SlideOut/Modal shadow-2xl + border, Header backdrop-blur
-- Stats cards Dashboard : icone dans cercle colore, valeur 3xl, hover fleche
-- Deploy prod valide (commit 603fc78)
+**PWA :**
+- Manifest + icônes Logo FP (192/512/apple-touch), plein écran, theme-color, validé iPhone
+
+**UX / Design :**
+- Design premium Untitled UI + SnowUI + CRM Kit : tokens ombres multi-niveaux, radius 8-12px, badges dot+border
+- 13 grilles responsives, colonnes Contacts redistribuées
+- CSS scoped pour layout structurel (cf. DECISIONS STRUCTURELLES)
+
+**Prospection :**
+- 60 signaux corrompus nettoyés, 58 réimportés propres, scoring différencié par canton
+- Enrichissement Zefix validé, 6 bugs corrigés (typo, canton, autocomplete, pluriels)
 
 ### Condensé thématique (sessions 1-8)
 
@@ -281,7 +255,5 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] Filtre température : remplacer le `<select>` natif par un custom dropdown avec icônes Material Symbols (dots colorés premium, pas emoji ni texte seul)
 - [ ] Appliquer les principes UX validés sur prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard)
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
-- [ ] Dette technique : supprimer `/api/prospection/lindas/` + `sparql.ts` (code mort). Prérequis : migrer les leads existants en BDD de `source='lindas'` vers `source='zefix'` (UPDATE prospect_leads SET source='zefix' WHERE source='lindas')

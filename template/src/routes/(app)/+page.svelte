@@ -135,7 +135,7 @@
 						<a href="/prospection" class="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface-alt transition-colors group">
 							<span class="material-symbols-outlined text-[18px] text-accent">cloud_download</span>
 							<div>
-								<p class="text-sm font-medium text-text group-hover:text-accent">Importer des leads depuis LINDAS ou SIMAP</p>
+								<p class="text-sm font-medium text-text group-hover:text-accent">Importer des leads depuis Zefix ou SIMAP</p>
 								<p class="text-xs text-text-muted">Trouvez des prospects dans le registre du commerce ou les marchés publics</p>
 							</div>
 						</a>

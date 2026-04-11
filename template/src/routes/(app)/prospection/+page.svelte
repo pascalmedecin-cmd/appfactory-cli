@@ -9,6 +9,7 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import ImportModal from '$lib/components/prospection/ImportModal.svelte';
 	import LeadSlideOut from '$lib/components/prospection/LeadSlideOut.svelte';
+	import TemperatureSelect from '$lib/components/prospection/TemperatureSelect.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
 	import type { PageData } from './$types';
@@ -124,7 +125,6 @@
 	function sourceLabel(s: string): string {
 		const labels: Record<string, string> = {
 			zefix: 'Registre du commerce',
-			lindas: 'Registre du commerce',
 			simap: 'Marchés publics',
 			search_ch: 'Annuaire',
 			sitg: 'Géodonnées',
@@ -291,12 +291,12 @@
 				<option value="transfere">Déjà convertis</option>
 				<option value="">Tout afficher</option>
 			</select>
-			<select bind:value={filterScoreMin} class="px-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
-				<option value="">Toute température</option>
-				<option value={String(scoreLabels.chaud)}>Chaud uniquement</option>
-				<option value={String(scoreLabels.tiede)}>Tiède et +</option>
-				<option value={String(scoreLabels.froid)}>Froid et +</option>
-			</select>
+			<TemperatureSelect bind:value={filterScoreMin} options={[
+				{ value: '', label: 'Toute température', dotColor: '' },
+				{ value: String(scoreLabels.chaud), label: 'Chaud uniquement', dotColor: 'bg-danger' },
+				{ value: String(scoreLabels.tiede), label: 'Tiède et +', dotColor: 'bg-warning' },
+				{ value: String(scoreLabels.froid), label: 'Froid et +', dotColor: 'bg-text-muted' },
+			]} />
 			<select bind:value={filterCanton} class="px-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40">
 				<option value="">Tous les cantons</option>
 				{#each cantons as c}
