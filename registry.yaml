@@ -4,7 +4,7 @@
 entreprises:
   filmpro:
     nom: FilmPro
-    secteur: Production audiovisuelle
+    secteur: Films et vernis de protection pour vitrages
     branding: branding/filmpro.yaml
     apps:
       crm:
