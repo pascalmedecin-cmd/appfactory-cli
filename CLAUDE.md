@@ -1,10 +1,10 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-11
+**Derniere mise a jour :** 2026-04-12
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Custom dropdown température + dette LINDAS (28e session). TemperatureSelect.svelte créé (dots colorés premium danger/warning/muted, chevron animé, click outside, Escape). Code mort LINDAS supprimé (3 fichiers API + références dans 3 composants). 0 leads lindas en BDD (déjà migrés). 120/120 tests (9 tests LINDAS retirés, 0 régression).
+**Session precedente :** Refonte modale alerte + filtres multi-select (29e session). Modale « Créer une alerte » indépendante avec 3 filtres MultiSelectDropdown (Sources, Cantons, Température en 3 catégories) + champ mots-clés (tag input). 4 filtres page convertis en MultiSelectDropdown (checkboxes, icônes, même largeur, pas de sélection par défaut). Migration BDD temperatures TEXT[]. « Saisie manuelle » retirée des sources. TemperatureSelect remplacé par select natif+icône (page) et MultiSelectDropdown (alerte). 120/120 tests, 0 régression.
 
 ---
 
@@ -256,4 +256,5 @@ Fichiers cles :
 ## Prochaine session
 
 - [ ] Appliquer les principes UX validés sur prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard)
+- [ ] Tester visuellement en prod la modale alerte + filtres multi-select (validation utilisateur)
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
