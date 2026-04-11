@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-11
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Test pagination serveur prospection (39e session, 2026-04-11). 3 bugs corriges : 4 attributs class dupliques EnrichBatchModal (crash 500), $effect filtres tirait au mount et resetait page=0 (URL effacee), DataTable props serveur non synchronisees apres navigation (state_referenced_locally). Tests navigateur valides : pages 1-4, tri, filtres, recherche debounce, combinaisons, back/forward. Bugs UX logges : pagination hors viewport, label "Enrichir les filtres" trompeur multi-pages. 160/160 tests, 0 regression.
+**Session precedente :** Fix 2 bugs UX prospection (40e session, 2026-04-11). Pagination hors viewport corrigee : layout flex contraint au viewport, table scroll interne, thead sticky. Label "Enrichir les filtres" renomme "Enrichir cette page (N)" avec tooltip scope. Verifie visuellement navigateur (page 1 scroll, page 2 navigation, compteur dynamique). 160/160 tests, 0 regression.
 
 ---
 
@@ -258,8 +258,6 @@ Fichiers cles :
 ## Prochaine session
 
 - [ ] Propager le template UX prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard) - audit terminé, utils partagées prêtes
-- [ ] Fix pagination hors viewport - contrôles invisibles sans scroller, P1 UX (sticky footer ou max-height table avec scroll interne)
-- [ ] Fix label "Enrichir les filtrés" - ne traite que la page courante (25 leads), trompeur si multi-pages
 - [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
 - [ ] Dashboard/reporting : requêtes SQL agrégées (pipeline par mois, taux conversion par source, activité 30/90j) + graphiques légers
 - [ ] Figma API à configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
