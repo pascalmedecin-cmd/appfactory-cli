@@ -7,6 +7,8 @@
 		title = '',
 		saving = false,
 		maxWidth = 'max-w-lg',
+		icon = '',
+		headerVariant = 'default',
 		onSave,
 		onDelete,
 		children,
@@ -16,6 +18,8 @@
 		title?: string;
 		saving?: boolean;
 		maxWidth?: string;
+		icon?: string;
+		headerVariant?: 'default' | 'accent';
 		onSave?: () => void;
 		onDelete?: () => void;
 		children?: Snippet;
@@ -51,9 +55,14 @@
 			class="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full {maxWidth} pointer-events-auto flex flex-col max-h-[90vh] md:max-h-[85vh] border border-border/30"
 			transition:scale={{ start: 0.95, duration: 200 }}
 		>
-			<div class="flex items-center justify-between px-6 py-4 border-b border-border">
-				<h2 class="text-lg font-semibold text-text">{title}</h2>
-				<button onclick={() => open = false} class="text-text-muted hover:text-text cursor-pointer">
+			<div class="flex items-center justify-between px-6 py-4 {headerVariant === 'accent' ? 'bg-accent text-white' : 'border-b border-border'}">
+				<div class="flex items-center gap-2.5">
+					{#if icon}
+						<span class="material-symbols-outlined text-[22px] {headerVariant === 'accent' ? 'text-white/80' : 'text-accent'}">{icon}</span>
+					{/if}
+					<h2 class="text-lg font-semibold {headerVariant === 'accent' ? 'text-white' : 'text-text'}">{title}</h2>
+				</div>
+				<button onclick={() => open = false} class="{headerVariant === 'accent' ? 'text-white/70 hover:text-white' : 'text-text-muted hover:text-text'} cursor-pointer">
 					<span class="material-symbols-outlined text-[20px]">close</span>
 				</button>
 			</div>

@@ -610,6 +610,8 @@
 <ModalForm
 	bind:open={alerteModalOpen}
 	title="Créer une alerte"
+	icon="notifications_active"
+	headerVariant="accent"
 	maxWidth="max-w-lg"
 >
 	<form
@@ -631,7 +633,10 @@
 		}}
 	>
 		<div class="space-y-5">
-			<p class="text-sm text-text-muted">Recevez une notification lorsque de nouveaux prospects correspondent à vos critères.</p>
+			<div class="flex items-start gap-3 p-3.5 rounded-lg bg-accent/5 border border-accent/10">
+				<span class="material-symbols-outlined text-[20px] text-accent mt-0.5">info</span>
+				<p class="text-sm text-text-body">Recevez une notification lorsque de nouveaux prospects correspondent à vos critères.</p>
+			</div>
 
 			<div>
 				<label class="block text-sm font-medium text-text mb-1.5">Nom de l'alerte</label>
@@ -641,11 +646,12 @@
 					bind:value={alerteNom}
 					placeholder="Ex : Construction Genève chauds"
 					required
-					class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
+					class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
 				/>
 			</div>
 
-			<div class="space-y-4">
+			<div class="p-4 rounded-lg bg-surface-alt space-y-4">
+				<p class="text-xs font-semibold text-text-muted uppercase tracking-wide">Critères de filtrage</p>
 				<MultiSelectDropdown
 					bind:selected={alerteSources}
 					options={alerteSourceOptions}
@@ -669,36 +675,43 @@
 				/>
 			</div>
 
-			<div>
-				<label class="block text-sm font-medium text-text mb-1.5">
+			<div class="p-4 rounded-lg bg-surface-alt">
+				<label class="block text-sm font-medium text-text mb-1">
 					<span class="inline-flex items-center gap-1.5">
-						<span class="material-symbols-outlined text-[16px] text-text-muted">sell</span>
+						<span class="material-symbols-outlined text-[16px] text-accent">sell</span>
 						Mots-clés
 					</span>
 				</label>
-				<p class="text-xs text-text-muted mb-2">Recherche insensible aux accents : « fenetre » trouvera aussi « fenêtre »</p>
-				<div class="flex flex-wrap gap-2 mb-2.5">
-					{#each alerteMotsCles as mot}
-						<span class="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-accent/10 text-accent font-medium">
-							{mot}
-							<button type="button" onclick={() => removeMotCle(mot)} class="hover:text-accent-dark cursor-pointer">
-								<span class="material-symbols-outlined text-[12px]">close</span>
-							</button>
-						</span>
-					{/each}
-				</div>
+				<p class="text-xs text-text-muted mb-3">Insensible aux accents : « fenetre » trouvera aussi « fenêtre »</p>
+				{#if alerteMotsCles.length > 0}
+					<div class="flex flex-wrap gap-2 mb-3">
+						{#each alerteMotsCles as mot}
+							<span class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs rounded-full bg-accent/10 text-accent font-medium border border-accent/15">
+								{mot}
+								<button type="button" onclick={() => removeMotCle(mot)} class="flex items-center justify-center w-4 h-4 rounded-full hover:bg-accent/20 text-accent/60 hover:text-accent cursor-pointer transition-colors" aria-label="Supprimer {mot}">
+									<span class="text-[10px] leading-none font-bold">&times;</span>
+								</button>
+							</span>
+						{/each}
+					</div>
+				{/if}
 				<input
 					type="text"
 					bind:value={alerteMotCleInput}
 					placeholder="Taper un mot-clé puis Entrée"
-					class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
+					class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
 					onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMotCle(); } }}
 				/>
 			</div>
 
 			<div>
-				<label class="block text-sm font-medium text-text mb-1.5">Fréquence</label>
-				<select name="frequence_alerte" bind:value={alerteFrequence} class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white">
+				<label class="block text-sm font-medium text-text mb-1.5">
+					<span class="inline-flex items-center gap-1.5">
+						<span class="material-symbols-outlined text-[16px] text-text-muted">schedule</span>
+						Fréquence
+					</span>
+				</label>
+				<select name="frequence_alerte" bind:value={alerteFrequence} class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white">
 					<option value="quotidien">Quotidienne</option>
 					<option value="hebdomadaire">Hebdomadaire</option>
 				</select>

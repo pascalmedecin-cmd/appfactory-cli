@@ -12,7 +12,7 @@
 	} = $props();
 
 	let importing = $state(false);
-	let activeTab = $state<'zefix' | 'simap' | 'search_ch'>('zefix');
+	let activeTab = $state<'zefix' | 'simap'>('zefix');
 	let importCanton = $state('GE');
 	let importLimit = $state('100');
 	let importZefixName = $state('');
@@ -22,7 +22,6 @@
 	const tabs = [
 		{ key: 'zefix' as const, label: 'Registre du commerce', icon: 'business', desc: 'RC' },
 		{ key: 'simap' as const, label: 'Marchés publics', icon: 'gavel', desc: 'SIMAP' },
-		{ key: 'search_ch' as const, label: 'Annuaire', icon: 'phone', desc: 'search.ch' },
 	];
 
 	async function importFromSource(url: string, body: Record<string, unknown>) {
@@ -69,16 +68,18 @@
 <ModalForm
 	bind:open
 	title="Importer des prospects"
+	icon="cloud_download"
+	headerVariant="accent"
 	saving={importing}
 	maxWidth="max-w-2xl"
 >
 	<div class="space-y-4">
 		<!-- Tabs sources -->
-		<div class="flex gap-1 border-b border-border">
+		<div class="flex gap-2">
 			{#each tabs as tab}
 				<button
 					onclick={() => activeTab = tab.key}
-					class="flex items-center gap-2 px-5 py-3 text-sm font-medium border-b-2 transition-colors cursor-pointer {activeTab === tab.key ? 'border-accent text-accent' : 'border-transparent text-text-muted hover:text-text hover:border-border'}"
+					class="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-lg transition-colors cursor-pointer {activeTab === tab.key ? 'bg-accent/10 text-accent border border-accent/20' : 'text-text-muted hover:text-text hover:bg-surface-alt border border-transparent'}"
 				>
 					<span class="material-symbols-outlined text-[18px]">{tab.icon}</span>
 					<span class="hidden sm:inline">{tab.label}</span>
@@ -180,32 +181,14 @@
 			</div>
 		{/if}
 
-		<!-- search.ch -->
-		{#if activeTab === 'search_ch'}
-			<div class="space-y-4">
-				<div class="p-4 rounded-lg bg-accent/5 border border-accent/10">
-					<p class="text-sm text-text-body">
-						<strong>search.ch — Annuaire suisse</strong> — Enrichissement automatique des numéros de téléphone pour vos prospects existants.
-					</p>
-				</div>
-				<div class="p-4 rounded-lg bg-surface-alt text-center">
-					<span class="material-symbols-outlined text-[28px] text-accent mb-2">phone_forwarded</span>
-					<p class="text-sm text-text-body mb-1">L'enrichissement se fait prospect par prospect.</p>
-					<p class="text-xs text-text-muted">
-						Ouvrez la fiche d'un prospect sans téléphone, puis cliquez sur <strong class="text-text">« Enrichir le téléphone »</strong>.
-					</p>
-				</div>
-			</div>
-		{/if}
-
 		{#if importResult}
-			<div class="flex items-center gap-2 p-3 rounded-lg text-sm {importResult.type === 'success' ? 'bg-success-light text-success' : 'bg-danger-light text-danger'}">
-				<span class="material-symbols-outlined text-[16px]">{importResult.type === 'success' ? 'check_circle' : 'error'}</span>
-				{importResult.message}
+			<div class="flex items-center gap-2.5 p-4 rounded-lg text-sm {importResult.type === 'success' ? 'bg-success-light text-success' : 'bg-danger-light text-danger'}">
+				<span class="material-symbols-outlined text-[20px]">{importResult.type === 'success' ? 'check_circle' : 'error'}</span>
+				<span class="font-medium">{importResult.message}</span>
 			</div>
 		{/if}
 
-		<div class="flex justify-end pt-2">
+		<div class="flex justify-end pt-3 border-t border-border">
 			<button
 				type="button"
 				onclick={() => { open = false; importResult = null; }}
