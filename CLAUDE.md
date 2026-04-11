@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-12
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Refonte modale alerte + filtres multi-select (29e session). Modale « Créer une alerte » indépendante avec 3 filtres MultiSelectDropdown (Sources, Cantons, Température en 3 catégories) + champ mots-clés (tag input). 4 filtres page convertis en MultiSelectDropdown (checkboxes, icônes, même largeur, pas de sélection par défaut). Migration BDD temperatures TEXT[]. « Saisie manuelle » retirée des sources. TemperatureSelect remplacé par select natif+icône (page) et MultiSelectDropdown (alerte). 120/120 tests, 0 régression.
+**Session precedente :** UX prospection premium + matching mots-clés (30e session, 2026-04-12). Modales visuelles (header accent bg-primary, icône, overflow-hidden bord à bord). Onglet search.ch retiré d'ImportModal (enrichissement ≠ import). Matching mots-clés accent-insensible dans cron alertes (normalizeText NFD, matchMotsCles sur raison_sociale + description + secteur_detecte). Workflow 4 cards palette sourde (bleu ardoise, violet sourd, ambre bronze, sauge) inscrite dans branding/filmpro.yaml. ModalForm : props icon + headerVariant rétrocompatibles. 136/136 tests, 0 régression.
 
 ---
 
@@ -255,6 +255,6 @@ Fichiers cles :
 
 ## Prochaine session
 
+- [ ] Enrichissement batch prospection : transformer l'étape « Enrichir » en vraie étape workflow avec action batch (enrichir tous les téléphones manquants en un clic). Points à cadrer : rate limiting search.ch, feedback progression, gestion erreurs partielles, compteur mis à jour en temps réel
 - [ ] Appliquer les principes UX validés sur prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard)
-- [ ] Tester visuellement en prod la modale alerte + filtres multi-select (validation utilisateur)
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
