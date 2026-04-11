@@ -37,6 +37,20 @@
 	--color-info: #2E90FA;
 	--color-info-light: #EFF8FF;
 
+	/* Prospection workflow — palette 4 étapes */
+	--color-prosp-import: #5A7190;
+	--color-prosp-import-bg: #EDF1F5;
+	--color-prosp-import-border: #8B9DB6;
+	--color-prosp-enrich: #7B6A9A;
+	--color-prosp-enrich-bg: #F0ECF5;
+	--color-prosp-enrich-border: #9B8BB5;
+	--color-prosp-qualify: #917548;
+	--color-prosp-qualify-bg: #F5F0E8;
+	--color-prosp-qualify-border: #B5976E;
+	--color-prosp-convert: #538B6B;
+	--color-prosp-convert-bg: #EBF3EF;
+	--color-prosp-convert-border: #7BAA8E;
+
 	/* Logo */
 	--color-logo: #00003B;
 

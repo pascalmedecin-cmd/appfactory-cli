@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
+	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 
@@ -23,6 +24,8 @@
 	let editMode = $state(false);
 	let saving = $state(false);
 	let deleting = $state(false);
+	let confirmDeleteOpen = $state(false);
+	let deleteFormEl: HTMLFormElement | null = $state(null);
 	let enriching = $state(false);
 	let searchQuery = $state('');
 
@@ -329,8 +332,7 @@
 					</button>
 				</form>
 
-				<form method="POST" action="?/delete" use:enhance={({ cancel }) => {
-					if (!confirm('Supprimer cette entreprise ? Cette action est irréversible.')) { cancel(); return; }
+				<form bind:this={deleteFormEl} method="POST" action="?/delete" use:enhance={() => {
 					deleting = true;
 					return async ({ result, update }) => {
 						deleting = false;
@@ -343,7 +345,8 @@
 				}}>
 					<input type="hidden" name="id" value={selectedEntreprise.id} />
 					<button
-						type="submit"
+						type="button"
+						onclick={() => confirmDeleteOpen = true}
 						disabled={deleting}
 						class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
 					>
@@ -424,3 +427,13 @@
 		</div>
 	</form>
 </ModalForm>
+
+<ConfirmModal
+	bind:open={confirmDeleteOpen}
+	title="Supprimer cette entreprise ?"
+	message="Cette action est irréversible. L'entreprise et toutes ses données seront définitivement supprimées."
+	confirmLabel="Supprimer"
+	variant="danger"
+	loading={deleting}
+	onConfirm={() => { confirmDeleteOpen = false; deleteFormEl?.requestSubmit(); }}
+/>

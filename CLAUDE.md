@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-11
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Test API réelles FOSC/RegBL/Minergie (36e session, 2026-04-12). 3 endpoints corrigés après confrontation aux réponses API réelles. FOSC : chemin `/sogc/ksv/` remplacé par `/sogc/bydate/`, structure réponse refaite (sogcPublication+companyShort nested), filtrage par mutationTypes, extraction adresse/NPA depuis message HTML. RegBL : strname est un array (pas string), canton extrait de gdekt (pas premier canton de la liste). Minergie : champs renommés (certificate/standard au lieu de cert_number/label), standards premium avec underscores. 30 leads FOSC construction/jour, 199 chantiers RegBL GE, 201 Minergie GE. 159/159 tests. Tâche Batimag retirée du backlog.
+**Session precedente :** Findings P1 structurels + fix type alertes (38e session, 2026-04-11). 6 taches : fix 3 ParserError Supabase select dynamique (alertes cron), ConfirmModal remplace 3 window.confirm() (contacts/entreprises/pipeline), focus trap clavier (trapFocus action sur ModalForm/SlideOut/ConfirmModal/EnrichBatchModal), decoupe page prospection 579->278 lignes (AlerteModal+BatchActionsBar+RecherchesPanel extraits), pagination serveur URL params (page/sort/filtres/search via Supabase count+range, DataTable serverMode), 13 tokens CSS prospection dans app.css + 0 hex hardcode restant. 160/160 tests, 0 regression.
 
 ---
 
@@ -135,7 +135,9 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Zefix REST** : credentials configures (local .env + Vercel prod/preview), compte actif depuis 2026-04-08
 - **search.ch** : cle API configuree en local (.env) + Vercel prod+preview
 - **Securite** : OTP code email @filmpro.ch (validation domaine serveur, Google OAuth desactive, email provider active), ALLOWED_DOMAINS + ALLOWED_EMAILS env vars, session 7 jours max (cookie login_at), validation Zod sur toutes les form actions (19 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
-- **Tests** : Vitest (129 tests : scoring + 19/19 schemas + validation + extractForm + API sparql/helpers + 16 auth email) + Playwright (5 tests e2e : navigation + auth redirect)
+- **Tests** : Vitest (160 tests : scoring + 19/19 schemas + validation + extractForm + API sparql/helpers + 16 auth email + prospection-utils) + Playwright (5 tests e2e : navigation + auth redirect)
+- **Accessibilité** : focus trap clavier (trapFocus action) sur toutes les modales et slide-outs, role="dialog" aria-modal="true", confirmations destructives via ConfirmModal (plus de window.confirm)
+- **Pagination serveur** : page prospection paginée côté serveur (URL params page/sort/dir/source/canton/statut/temp/q, Supabase count+range, 25/page)
 - **Cron** : `/api/cron/signaux` quotidien 6h (veille Zefix+SIMAP) + `/api/cron/alertes` quotidien 7h, securises par CRON_SECRET (configure Vercel prod), service role client (bypass RLS)
 - **SUPABASE_SERVICE_ROLE_KEY** : configuree local .env + Vercel prod (preview non configure — projet sans repo Git lie)
 
@@ -255,8 +257,8 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] Appliquer les principes UX validés sur prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard)
+- [ ] Propager le template UX prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard) - audit terminé, utils partagées prêtes
+- [ ] Tester la pagination serveur prospection en conditions réelles (dev server + navigateur) - vérifier filtres URL, tri, changement de page, recherche debounce
 - [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
 - [ ] Dashboard/reporting : requêtes SQL agrégées (pipeline par mois, taux conversion par source, activité 30/90j) + graphiques légers
 - [ ] Figma API à configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
-- [ ] Corriger erreur type préexistante sur `api/cron/alertes/+server.ts` ligne 106 (3 erreurs ParserError sur select Supabase)

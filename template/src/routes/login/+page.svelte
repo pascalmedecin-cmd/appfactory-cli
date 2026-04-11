@@ -62,7 +62,7 @@
 		</div>
 
 		{#if (loginError || form?.error) && !form?.verified}
-			<div class="px-4 py-3 rounded-lg bg-red-500/15 border border-red-500/30 text-red-200 text-sm text-center">
+			<div class="px-4 py-3 rounded-lg bg-danger/15 border border-danger/30 text-danger-light text-sm text-center">
 				{loginError || form?.error}
 			</div>
 		{/if}

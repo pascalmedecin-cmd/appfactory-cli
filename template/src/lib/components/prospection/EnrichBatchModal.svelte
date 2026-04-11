@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fade, scale } from 'svelte/transition';
+	import { trapFocus } from '$lib/actions/trapFocus';
 	import { invalidateAll } from '$app/navigation';
 	import { estimateSearchChCost, SEARCH_CH_SAFE_BATCH_SIZE } from '$lib/api-limits';
 
@@ -207,12 +208,15 @@
 	<div class="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 pointer-events-none">
 		<div
 			class="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full max-w-lg pointer-events-auto flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden"
+			role="dialog"
+			aria-modal="true"
+			use:trapFocus
 			transition:scale={{ start: 0.95, duration: 200 }}
 		>
 			<!-- Header -->
-			<div class="flex items-center justify-between px-6 py-4" style="background: linear-gradient(to right, #F0ECF5, #EDF1F5); border-bottom: 1px solid #8B9DB620">
+			<div class="flex items-center justify-between px-6 py-4" style="background: linear-gradient(to right, var(--color-prosp-enrich-bg), var(--color-prosp-import-bg)); border-bottom: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 88%)">
 				<div class="flex items-center gap-2.5">
-					<span class="material-symbols-outlined text-[22px]" style="color: #7B6A9A">auto_fix_high</span>
+					<span class="material-symbols-outlined text-[22px] text-prosp-enrich">auto_fix_high</span>
 					<h2 class="text-lg font-semibold text-text">Enrichissement batch</h2>
 				</div>
 				{#if phase !== 'running'}
@@ -225,8 +229,8 @@
 			<div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
 				<!-- Phase config -->
 				{#if phase === 'config'}
-					<div class="flex items-start gap-3 p-3.5 rounded-lg" style="background: #F0ECF520; border: 1px solid #9B8BB515">
-						<span class="material-symbols-outlined text-[20px] mt-0.5" style="color: #7B6A9A">info</span>
+					<div class="flex items-start gap-3 p-3.5 rounded-lg bg-prosp-enrich-bg/10 border border-prosp-enrich-border/10">
+						<span class="material-symbols-outlined text-[20px] mt-0.5 text-prosp-enrich">info</span>
 						<p class="text-sm text-text-body">
 							{leadIds.length} prospect{leadIds.length > 1 ? 's' : ''} sélectionné{leadIds.length > 1 ? 's' : ''}. Choisissez les sources d'enrichissement.
 						</p>
@@ -277,7 +281,7 @@
 							onclick={start}
 							disabled={!useSearchCh && !useZefix}
 							class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
-							style="background: #7B6A9A"
+							class="!bg-prosp-enrich"
 						>
 							<span class="material-symbols-outlined text-[16px]">play_arrow</span>
 							Lancer l'enrichissement
@@ -292,12 +296,12 @@
 						<div>
 							<div class="flex items-center justify-between mb-2">
 								<span class="text-sm font-medium text-text">{current} / {total}</span>
-								<span class="text-sm font-medium" style="color: #7B6A9A">{progress}%</span>
+								<span class="text-sm font-medium" class="text-prosp-enrich">{progress}%</span>
 							</div>
 							<div class="w-full h-2 bg-surface-alt rounded-full overflow-hidden">
 								<div
 									class="h-full rounded-full transition-all duration-300"
-									style="width: {progress}%; background: #7B6A9A"
+									class="bg-prosp-enrich" style="width: {progress}%"
 								></div>
 							</div>
 						</div>
@@ -357,7 +361,7 @@
 							</div>
 						{/if}
 
-						<div class="p-4 rounded-xl" style="background: linear-gradient(135deg, #F0ECF5, #EDF1F5)">
+						<div class="p-4 rounded-xl" style="background: linear-gradient(135deg, var(--color-prosp-enrich-bg), var(--color-prosp-import-bg))">
 							<div class="flex items-center gap-2 mb-3">
 								<span class="material-symbols-outlined text-[24px] {quotaWarning ? 'text-warning' : 'text-success'}">{quotaWarning ? 'warning' : 'task_alt'}</span>
 								<h3 class="text-base font-semibold text-text">{quotaWarning ? 'Enrichissement interrompu' : 'Enrichissement terminé'}</h3>
@@ -408,7 +412,7 @@
 								type="button"
 								onclick={handleDone}
 								class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg cursor-pointer shadow-sm transition-colors"
-								style="background: #7B6A9A"
+								class="!bg-prosp-enrich"
 							>
 								Fermer
 							</button>

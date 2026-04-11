@@ -57,55 +57,62 @@ export async function GET(event: RequestEvent) {
 
 		const hasMotsCles = rech.mots_cles && rech.mots_cles.length > 0;
 
-		// Si mots-clés présents, on récupère les données pour filtrer en JS
-		// Sinon, count seul suffit (plus performant)
-		const selectFields = hasMotsCles
-			? 'raison_sociale, description, secteur_detecte'
-			: '*';
-		let query = supabase
-			.from('prospect_leads')
-			.select(selectFields, { count: 'exact', head: !hasMotsCles })
-			.eq('statut', 'nouveau');
-
-		// Filtrer par date depuis le dernier check
-		if (rech.dernier_check) {
-			query = query.gte('date_import', rech.dernier_check);
-		}
-
-		// Filtrer par criteres de la recherche
-		if (rech.sources && rech.sources.length > 0) {
-			query = query.in('source', rech.sources);
-		}
-		if (rech.cantons && rech.cantons.length > 0) {
-			query = query.in('canton', rech.cantons);
-		}
-		if (rech.score_minimum) {
-			query = query.gte('score_pertinence', rech.score_minimum);
-		}
-		// Filtrer par catégories de température (chaud ≥8, tiède 5-7, froid 0-4)
-		if (rech.temperatures && rech.temperatures.length > 0 && rech.temperatures.length < 3) {
-			const ranges: string[] = [];
-			if (rech.temperatures.includes('chaud')) ranges.push('score_pertinence.gte.8');
-			if (rech.temperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.5,score_pertinence.lte.7)');
-			if (rech.temperatures.includes('froid')) ranges.push('score_pertinence.lte.4');
-			if (ranges.length === 1) {
-				if (rech.temperatures.includes('chaud')) query = query.gte('score_pertinence', 8);
-				else if (rech.temperatures.includes('tiede')) query = query.gte('score_pertinence', 5).lte('score_pertinence', 7);
-				else if (rech.temperatures.includes('froid')) query = query.lte('score_pertinence', 4);
-			} else {
-				query = query.or(ranges.join(','));
-			}
-		}
-
 		let nbNouveaux: number;
 
 		if (hasMotsCles) {
-			// Filtrage mots-clés côté JS (accent-insensible, case-insensible, substring)
+			// Mots-clés présents : récupérer les champs texte pour filtrage JS
+			let query = supabase
+				.from('prospect_leads')
+				.select('raison_sociale,description,secteur_detecte')
+				.eq('statut', 'nouveau');
+
+			if (rech.dernier_check) query = query.gte('date_import', rech.dernier_check);
+			if (rech.sources && rech.sources.length > 0) query = query.in('source', rech.sources);
+			if (rech.cantons && rech.cantons.length > 0) query = query.in('canton', rech.cantons);
+			if (rech.score_minimum) query = query.gte('score_pertinence', rech.score_minimum);
+			if (rech.temperatures && rech.temperatures.length > 0 && rech.temperatures.length < 3) {
+				const ranges: string[] = [];
+				if (rech.temperatures.includes('chaud')) ranges.push('score_pertinence.gte.8');
+				if (rech.temperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.5,score_pertinence.lte.7)');
+				if (rech.temperatures.includes('froid')) ranges.push('score_pertinence.lte.4');
+				if (ranges.length === 1) {
+					if (rech.temperatures.includes('chaud')) query = query.gte('score_pertinence', 8);
+					else if (rech.temperatures.includes('tiede')) query = query.gte('score_pertinence', 5).lte('score_pertinence', 7);
+					else if (rech.temperatures.includes('froid')) query = query.lte('score_pertinence', 4);
+				} else {
+					query = query.or(ranges.join(','));
+				}
+			}
+
 			const { data: leads } = await query;
 			nbNouveaux = (leads ?? []).filter(lead =>
 				matchMotsCles(rech.mots_cles!, [lead.raison_sociale, lead.description, lead.secteur_detecte])
 			).length;
 		} else {
+			// Pas de mots-clés : count seul (plus performant)
+			let query = supabase
+				.from('prospect_leads')
+				.select('*', { count: 'exact', head: true })
+				.eq('statut', 'nouveau');
+
+			if (rech.dernier_check) query = query.gte('date_import', rech.dernier_check);
+			if (rech.sources && rech.sources.length > 0) query = query.in('source', rech.sources);
+			if (rech.cantons && rech.cantons.length > 0) query = query.in('canton', rech.cantons);
+			if (rech.score_minimum) query = query.gte('score_pertinence', rech.score_minimum);
+			if (rech.temperatures && rech.temperatures.length > 0 && rech.temperatures.length < 3) {
+				const ranges: string[] = [];
+				if (rech.temperatures.includes('chaud')) ranges.push('score_pertinence.gte.8');
+				if (rech.temperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.5,score_pertinence.lte.7)');
+				if (rech.temperatures.includes('froid')) ranges.push('score_pertinence.lte.4');
+				if (ranges.length === 1) {
+					if (rech.temperatures.includes('chaud')) query = query.gte('score_pertinence', 8);
+					else if (rech.temperatures.includes('tiede')) query = query.gte('score_pertinence', 5).lte('score_pertinence', 7);
+					else if (rech.temperatures.includes('froid')) query = query.lte('score_pertinence', 4);
+				} else {
+					query = query.or(ranges.join(','));
+				}
+			}
+
 			const { count } = await query;
 			nbNouveaux = count ?? 0;
 		}

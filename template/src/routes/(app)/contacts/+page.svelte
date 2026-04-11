@@ -3,6 +3,7 @@
 	import DataTable from '$lib/components/DataTable.svelte';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
+	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 
 	$effect(() => { $pageSubtitle = `${data.contacts.length} contact${data.contacts.length > 1 ? 's' : ''}`; });
@@ -23,6 +24,8 @@
 	let editMode = $state(false);
 	let saving = $state(false);
 	let archiving = $state(false);
+	let confirmArchiveOpen = $state(false);
+	let archiveFormEl: HTMLFormElement | null = $state(null);
 
 	type Entreprise = { id: string; raison_sociale: string; site_web: string | null };
 
@@ -282,8 +285,7 @@
 					<span class="material-symbols-outlined text-[16px]">edit</span>
 					Modifier
 				</button>
-				<form method="POST" action="?/delete" use:enhance={({ cancel }) => {
-					if (!confirm('Archiver ce contact ? Cette action est irréversible.')) { cancel(); return; }
+				<form bind:this={archiveFormEl} method="POST" action="?/delete" use:enhance={() => {
 					archiving = true;
 					return async ({ result, update }) => {
 						archiving = false;
@@ -296,7 +298,8 @@
 				}}>
 					<input type="hidden" name="id" value={selectedContact.id} />
 					<button
-						type="submit"
+						type="button"
+						onclick={() => confirmArchiveOpen = true}
 						disabled={archiving}
 						class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
 					>
@@ -308,6 +311,16 @@
 		</div>
 	{/if}
 </SlideOut>
+
+<ConfirmModal
+	bind:open={confirmArchiveOpen}
+	title="Archiver ce contact ?"
+	message="Cette action est irréversible. Le contact sera définitivement archivé."
+	confirmLabel="Archiver"
+	variant="danger"
+	loading={archiving}
+	onConfirm={() => { confirmArchiveOpen = false; archiveFormEl?.requestSubmit(); }}
+/>
 
 <!-- Modal création/édition -->
 <ModalForm

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { fly, fade } from 'svelte/transition';
+	import { trapFocus } from '$lib/actions/trapFocus';
 
 	let {
 		open = $bindable(false),
@@ -35,6 +36,9 @@
 	<div
 		class="fixed top-0 right-0 h-full bg-white shadow-2xl z-50 flex flex-col overflow-hidden w-full md:w-auto border-l border-border/50"
 		style="max-width: 100vw; --panel-width: {width}"
+		role="dialog"
+		aria-modal="true"
+		use:trapFocus
 		transition:fly={{ x: 300, duration: 250 }}
 	>
 		<div class="h-(--header-height) flex items-center justify-between px-6 border-b border-border shrink-0">

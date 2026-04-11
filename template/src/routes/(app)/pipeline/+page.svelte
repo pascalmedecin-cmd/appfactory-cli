@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
+	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 
@@ -23,6 +24,8 @@
 	let editMode = $state(false);
 	let saving = $state(false);
 	let archiving = $state(false);
+	let confirmArchiveOpen = $state(false);
+	let archiveFormEl: HTMLFormElement | null = $state(null);
 	let draggedId = $state<string | null>(null);
 	let dragOverEtape = $state<string | null>(null);
 
@@ -330,8 +333,7 @@
 					Modifier
 				</button>
 				{#if selectedOpp.etape_pipeline !== 'perdu' && selectedOpp.etape_pipeline !== 'gagne'}
-					<form method="POST" action="?/archive" use:enhance={({ cancel }) => {
-						if (!confirm('Marquer cette opportunité comme perdue ?')) { cancel(); return; }
+					<form bind:this={archiveFormEl} method="POST" action="?/archive" use:enhance={() => {
 						archiving = true;
 						return async ({ result, update }) => {
 							archiving = false;
@@ -344,7 +346,8 @@
 					}}>
 						<input type="hidden" name="id" value={selectedOpp.id} />
 						<button
-							type="submit"
+							type="button"
+							onclick={() => confirmArchiveOpen = true}
 							disabled={archiving}
 							class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
 						>
@@ -463,3 +466,13 @@
 		</div>
 	</form>
 </ModalForm>
+
+<ConfirmModal
+	bind:open={confirmArchiveOpen}
+	title="Marquer cette opportunité comme perdue ?"
+	message="L'opportunité passera en statut perdu. Vous pourrez toujours la consulter dans le pipeline."
+	confirmLabel="Marquer perdu"
+	variant="warning"
+	loading={archiving}
+	onConfirm={() => { confirmArchiveOpen = false; archiveFormEl?.requestSubmit(); }}
+/>

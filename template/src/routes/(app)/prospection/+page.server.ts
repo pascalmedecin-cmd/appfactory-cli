@@ -4,12 +4,47 @@ import { LeadCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTr
 import { calculerScore } from '$lib/scoring';
 import { dbFail, newId, now } from '$lib/server/db-helpers';
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const [leadsRes, entreprisesRes, recherchesRes] = await Promise.all([
-		locals.supabase
-			.from('prospect_leads')
-			.select('*')
-			.order('score_pertinence', { ascending: false }),
+const PAGE_SIZE = 25;
+const VALID_SORT_KEYS = ['score_pertinence', 'raison_sociale', 'canton', 'secteur_detecte', 'source', 'statut', 'date_import'];
+
+export const load: PageServerLoad = async ({ locals, url }) => {
+	const page = Math.max(0, parseInt(url.searchParams.get('page') ?? '0', 10) || 0);
+	const sortKey = VALID_SORT_KEYS.includes(url.searchParams.get('sort') ?? '') ? url.searchParams.get('sort')! : 'score_pertinence';
+	const sortAsc = url.searchParams.get('dir') === 'asc';
+
+	// Filtres depuis URL params
+	const filterSources = url.searchParams.getAll('source');
+	const filterCantons = url.searchParams.getAll('canton');
+	const filterStatuts = url.searchParams.getAll('statut');
+	const filterTemperatures = url.searchParams.getAll('temp');
+	const search = url.searchParams.get('q') ?? '';
+
+	let query = locals.supabase
+		.from('prospect_leads')
+		.select('*', { count: 'exact' });
+
+	// Appliquer les filtres serveur
+	if (filterSources.length > 0) query = query.in('source', filterSources);
+	if (filterCantons.length > 0) query = query.in('canton', filterCantons);
+	if (filterStatuts.length > 0) query = query.in('statut', filterStatuts);
+	if (filterTemperatures.length > 0) {
+		const ranges: string[] = [];
+		if (filterTemperatures.includes('chaud')) ranges.push('score_pertinence.gte.8');
+		if (filterTemperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.5,score_pertinence.lte.7)');
+		if (filterTemperatures.includes('froid')) ranges.push('score_pertinence.lte.4');
+		if (ranges.length > 0) query = query.or(ranges.join(','));
+	}
+	if (search) {
+		query = query.or(`raison_sociale.ilike.%${search}%,secteur_detecte.ilike.%${search}%,canton.ilike.%${search}%`);
+	}
+
+	// Tri + pagination
+	query = query
+		.order(sortKey, { ascending: sortAsc })
+		.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+	const [leadsRes, entreprisesRes, recherchesRes, enrichedRes, qualifiedRes, convertedRes] = await Promise.all([
+		query,
 		locals.supabase
 			.from('entreprises')
 			.select('id, raison_sociale')
@@ -18,10 +53,32 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.from('recherches_sauvegardees')
 			.select('*')
 			.order('date_creation', { ascending: false }),
+		locals.supabase
+			.from('prospect_leads')
+			.select('*', { count: 'exact', head: true })
+			.or('telephone.neq.,description.neq.,adresse.neq.'),
+		locals.supabase
+			.from('prospect_leads')
+			.select('*', { count: 'exact', head: true })
+			.eq('statut', 'interesse'),
+		locals.supabase
+			.from('prospect_leads')
+			.select('*', { count: 'exact', head: true })
+			.eq('statut', 'transfere'),
 	]);
 
 	return {
 		leads: leadsRes.data ?? [],
+		totalLeads: leadsRes.count ?? 0,
+		enrichedCount: enrichedRes.count ?? 0,
+		qualifiedCount: qualifiedRes.count ?? 0,
+		convertedCount: convertedRes.count ?? 0,
+		page,
+		pageSize: PAGE_SIZE,
+		sort: sortKey,
+		sortAsc,
+		filters: { sources: filterSources, cantons: filterCantons, statuts: filterStatuts, temperatures: filterTemperatures },
+		search,
 		entreprises: entreprisesRes.data ?? [],
 		recherches: recherchesRes.data ?? [],
 	};

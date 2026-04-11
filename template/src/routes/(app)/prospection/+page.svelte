@@ -1,29 +1,28 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import DataTable from '$lib/components/DataTable.svelte';
-	import ModalForm from '$lib/components/ModalForm.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
-
-	$effect(() => { $pageSubtitle = `${filteredLeads.length} prospect${filteredLeads.length > 1 ? 's' : ''}`; });
 	import Badge from '$lib/components/Badge.svelte';
 	import ImportModal from '$lib/components/prospection/ImportModal.svelte';
 	import LeadSlideOut from '$lib/components/prospection/LeadSlideOut.svelte';
 	import EnrichBatchModal from '$lib/components/prospection/EnrichBatchModal.svelte';
+	import AlerteModal from '$lib/components/prospection/AlerteModal.svelte';
+	import BatchActionsBar from '$lib/components/prospection/BatchActionsBar.svelte';
+	import RecherchesPanel from '$lib/components/prospection/RecherchesPanel.svelte';
 	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
-	import { toasts } from '$lib/stores/toast';
-	import { config } from '$lib/config';
 	import {
-		cantonNoms, scoreLabel, scoreBadgeVariant, scoreToCategory,
+		cantonNoms, scoreLabel, scoreBadgeVariant,
 		statutLabel, statutBadgeVariant, sourceLabel, relativeDate,
 		sourceOptions, cantonOptions, temperatureOptions, statutOptions,
 	} from '$lib/prospection-utils';
 	import type { PageData } from './$types';
 
-	const sourceEntries = Object.entries(config.prospection.sources);
-
 	let { data }: { data: PageData } = $props();
 
 	type Lead = (typeof data.leads)[number];
+
+	$effect(() => { $pageSubtitle = `${data.totalLeads} prospect${data.totalLeads > 1 ? 's' : ''}`; });
 
 	let slideOutOpen = $state(false);
 	let selectedLead = $state<Lead | null>(null);
@@ -33,57 +32,13 @@
 	let enrichBatchOpen = $state(false);
 	let enrichBatchIds = $state<string[]>([]);
 	let alerteModalOpen = $state(false);
-	let alerteNom = $state('');
-	let alerteSources = $state<string[]>([]);
-	let alerteCantons = $state<string[]>([]);
-	let alerteTemperatures = $state<string[]>([]);
-	let alerteFrequence = $state('quotidien');
-	let alerteMotsCles = $state<string[]>([]);
-	let alerteMotCleInput = $state('');
-	let savingAlerte = $state(false);
 	let recherchesOpen = $state(false);
 
-	function resetAlerte() {
-		alerteNom = '';
-		alerteSources = [];
-		alerteCantons = [];
-		alerteTemperatures = [];
-		alerteMotsCles = [];
-		alerteMotCleInput = '';
-		alerteFrequence = 'quotidien';
-	}
-
-	function addMotCle() {
-		const mot = alerteMotCleInput.trim();
-		if (mot && !alerteMotsCles.includes(mot)) {
-			alerteMotsCles = [...alerteMotsCles, mot];
-		}
-		alerteMotCleInput = '';
-	}
-
-	function removeMotCle(mot: string) {
-		alerteMotsCles = alerteMotsCles.filter(m => m !== mot);
-	}
-
-	// Filters (multi-select)
-	let filterSources = $state<string[]>([]);
-	let filterCantons = $state<string[]>([]);
-	let filterStatuts = $state<string[]>([]);
-	let filterTemperatures = $state<string[]>([]);
-
-	const filteredLeads = $derived.by(() => {
-		let result = data.leads;
-		if (filterSources.length > 0) result = result.filter((l) => filterSources.includes(l.source));
-		if (filterCantons.length > 0) result = result.filter((l) => l.canton && filterCantons.includes(l.canton));
-		if (filterStatuts.length > 0) result = result.filter((l) => filterStatuts.includes(l.statut));
-		if (filterTemperatures.length > 0) result = result.filter((l) => filterTemperatures.includes(scoreToCategory(l.score_pertinence ?? 0)));
-		return result;
-	});
-
-	// Compteurs workflow
-	const enrichedCount = $derived(data.leads.filter((l) => l.telephone || l.description || l.adresse).length);
-	const qualifiedCount = $derived(data.leads.filter((l) => l.statut === 'interesse').length);
-	const convertedCount = $derived(data.leads.filter((l) => l.statut === 'transfere').length);
+	// Filtres synchronisés avec les URL params du serveur
+	let filterSources = $state<string[]>(data.filters.sources);
+	let filterCantons = $state<string[]>(data.filters.cantons);
+	let filterStatuts = $state<string[]>(data.filters.statuts);
+	let filterTemperatures = $state<string[]>(data.filters.temperatures);
 
 	const activeFilterCount = $derived(
 		(filterStatuts.length > 0 ? 1 : 0) +
@@ -91,6 +46,43 @@
 		(filterCantons.length > 0 ? 1 : 0) +
 		(filterSources.length > 0 ? 1 : 0)
 	);
+
+	function buildUrl(overrides: Record<string, string | string[] | number | undefined> = {}) {
+		const params = new URLSearchParams();
+		const sources = overrides.source !== undefined ? overrides.source as string[] : filterSources;
+		const cantons = overrides.canton !== undefined ? overrides.canton as string[] : filterCantons;
+		const statuts = overrides.statut !== undefined ? overrides.statut as string[] : filterStatuts;
+		const temps = overrides.temp !== undefined ? overrides.temp as string[] : filterTemperatures;
+		const pg = overrides.page !== undefined ? overrides.page as number : data.page;
+		const sort = (overrides.sort as string) ?? data.sort;
+		const dir = overrides.dir !== undefined ? overrides.dir as string : (data.sortAsc ? 'asc' : 'desc');
+		const q = overrides.q !== undefined ? overrides.q as string : data.search;
+
+		if (pg > 0) params.set('page', String(pg));
+		if (sort !== 'score_pertinence') params.set('sort', sort);
+		if (dir === 'asc') params.set('dir', 'asc');
+		if (q) params.set('q', q);
+		sources.forEach(s => params.append('source', s));
+		cantons.forEach(c => params.append('canton', c));
+		statuts.forEach(s => params.append('statut', s));
+		temps.forEach(t => params.append('temp', t));
+
+		const qs = params.toString();
+		return qs ? `?${qs}` : $page.url.pathname;
+	}
+
+	function applyFilters() {
+		goto(buildUrl({ page: 0 }), { invalidateAll: true, keepFocus: true });
+	}
+
+	// Réagir aux changements de filtres
+	let filterDebounce: ReturnType<typeof setTimeout> | null = null;
+	$effect(() => {
+		// Tracker les valeurs
+		filterSources; filterCantons; filterStatuts; filterTemperatures;
+		if (filterDebounce) clearTimeout(filterDebounce);
+		filterDebounce = setTimeout(() => applyFilters(), 200);
+	});
 
 	const columns = [
 		{ key: 'score_pertinence', label: 'Température', sortable: true, class: 'w-28' },
@@ -123,44 +115,43 @@
 		filterStatuts = [];
 		filterTemperatures = [];
 	}
-
 </script>
 
 <div class="space-y-5">
 	<!-- Workflow 4 étapes -->
 	<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs" style="background: #EDF1F5; border: 1px solid #8B9DB625">
-			<span class="material-symbols-outlined text-[24px] mt-0.5" style="color: #5A7190">cloud_download</span>
+		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs bg-prosp-import-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 85%)">
+			<span class="material-symbols-outlined text-[24px] mt-0.5 text-prosp-import">cloud_download</span>
 			<div>
 				<span class="text-[15px] font-semibold text-text">Importer</span>
-				<p class="text-xs font-medium mt-0.5" style="color: #5A7190">{data.leads.length} prospect{data.leads.length > 1 ? 's' : ''}</p>
+				<p class="text-xs font-medium mt-0.5 text-prosp-import">{data.totalLeads} prospect{data.totalLeads > 1 ? 's' : ''}</p>
 			</div>
 		</div>
-		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs" style="background: #F0ECF5; border: 1px solid #9B8BB525">
-			<span class="material-symbols-outlined text-[24px] mt-0.5" style="color: #7B6A9A">auto_fix_high</span>
+		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs bg-prosp-enrich-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-enrich-border), transparent 85%)">
+			<span class="material-symbols-outlined text-[24px] mt-0.5 text-prosp-enrich">auto_fix_high</span>
 			<div>
 				<span class="text-[15px] font-semibold text-text">Enrichir</span>
-				<p class="text-xs font-medium mt-0.5" style="color: #7B6A9A">{enrichedCount} enrichi{enrichedCount > 1 ? 's' : ''}</p>
+				<p class="text-xs font-medium mt-0.5 text-prosp-enrich">{data.enrichedCount} enrichi{data.enrichedCount > 1 ? 's' : ''}</p>
 			</div>
 		</div>
-		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs" style="background: #F5F0E8; border: 1px solid #B5976E25">
-			<span class="material-symbols-outlined text-[24px] mt-0.5" style="color: #917548">filter_list</span>
+		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs bg-prosp-qualify-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-qualify-border), transparent 85%)">
+			<span class="material-symbols-outlined text-[24px] mt-0.5 text-prosp-qualify">filter_list</span>
 			<div>
 				<span class="text-[15px] font-semibold text-text">Qualifier</span>
-				<p class="text-xs font-medium mt-0.5" style="color: #917548">{qualifiedCount} qualifié{qualifiedCount > 1 ? 's' : ''}</p>
+				<p class="text-xs font-medium mt-0.5 text-prosp-qualify">{data.qualifiedCount} qualifié{data.qualifiedCount > 1 ? 's' : ''}</p>
 			</div>
 		</div>
-		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs" style="background: #EBF3EF; border: 1px solid #7BAA8E25">
-			<span class="material-symbols-outlined text-[24px] mt-0.5" style="color: #538B6B">domain_add</span>
+		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs bg-prosp-convert-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-convert-border), transparent 85%)">
+			<span class="material-symbols-outlined text-[24px] mt-0.5 text-prosp-convert">domain_add</span>
 			<div>
 				<span class="text-[15px] font-semibold text-text">Convertir</span>
-				<p class="text-xs font-medium mt-0.5" style="color: #538B6B">{convertedCount} converti{convertedCount > 1 ? 's' : ''}</p>
+				<p class="text-xs font-medium mt-0.5 text-prosp-convert">{data.convertedCount} converti{data.convertedCount > 1 ? 's' : ''}</p>
 			</div>
 		</div>
 	</div>
 
-	<!-- Actions principales (visibles uniquement quand il y a des prospects) -->
-	{#if data.leads.length > 0}
+	<!-- Actions principales -->
+	{#if data.totalLeads > 0}
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="flex items-center gap-3">
 			{#if data.recherches.length > 0}
@@ -176,10 +167,9 @@
 		</div>
 		<div class="flex items-center gap-2">
 			<button
-				onclick={() => { enrichBatchIds = filteredLeads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
-				class="flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-lg cursor-pointer transition-colors"
-				style="color: #7B6A9A; border-color: #7B6A9A30"
-				disabled={filteredLeads.filter(l => l.statut !== 'transfere').length === 0}
+				onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
+				class="flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich/20"
+				disabled={data.leads.filter(l => l.statut !== 'transfere').length === 0}
 			>
 				<span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
 				<span class="hidden sm:inline">Enrichir les filtrés</span>
@@ -198,50 +188,22 @@
 	<!-- Filtres -->
 	<div class="rounded-xl border border-border bg-white shadow-xs">
 		<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 p-3">
-			<MultiSelectDropdown
-				bind:selected={filterStatuts}
-				options={statutOptions}
-				icon="checklist"
-				label="Statut"
-				tooltip="Filtrer par statut de traitement"
-			/>
-			<MultiSelectDropdown
-				bind:selected={filterTemperatures}
-				options={temperatureOptions}
-				icon="thermostat"
-				label="Température"
-				tooltip="Niveau d'intérêt estimé du prospect"
-			/>
-			<MultiSelectDropdown
-				bind:selected={filterCantons}
-				options={cantonOptions}
-				icon="location_on"
-				label="Canton"
-				tooltip="Zones géographiques"
-			/>
-			<MultiSelectDropdown
-				bind:selected={filterSources}
-				options={sourceOptions}
-				icon="database"
-				label="Source"
-				tooltip="Registres et bases de données"
-			/>
+			<MultiSelectDropdown bind:selected={filterStatuts} options={statutOptions} icon="checklist" label="Statut" tooltip="Filtrer par statut de traitement" />
+			<MultiSelectDropdown bind:selected={filterTemperatures} options={temperatureOptions} icon="thermostat" label="Température" tooltip="Niveau d'intérêt estimé du prospect" />
+			<MultiSelectDropdown bind:selected={filterCantons} options={cantonOptions} icon="location_on" label="Canton" tooltip="Zones géographiques" />
+			<MultiSelectDropdown bind:selected={filterSources} options={sourceOptions} icon="database" label="Source" tooltip="Registres et bases de données" />
 		</div>
-
 		<div class="flex flex-wrap items-center gap-2 px-3 pb-3 pt-0">
 			<div class="flex items-center gap-2 ml-auto">
 				{#if activeFilterCount > 0}
-					<span class="text-xs text-text-muted">{filteredLeads.length} sur {data.leads.length}</span>
-					<button
-						onclick={resetFilters}
-						class="flex items-center gap-1 px-2 py-1 text-xs text-text-muted hover:text-danger cursor-pointer transition-colors"
-					>
+					<span class="text-xs text-text-muted">{data.totalLeads} résultat{data.totalLeads > 1 ? 's' : ''}</span>
+					<button onclick={resetFilters} class="flex items-center gap-1 px-2 py-1 text-xs text-text-muted hover:text-danger cursor-pointer transition-colors">
 						<span class="material-symbols-outlined text-[14px]">close</span>
 						Réinitialiser
 					</button>
 				{/if}
 				<button
-					onclick={() => { resetAlerte(); alerteModalOpen = true; }}
+					onclick={() => alerteModalOpen = true}
 					class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-accent border border-accent/30 rounded-lg hover:bg-accent/5 cursor-pointer transition-colors"
 				>
 					<span class="material-symbols-outlined text-[16px]">notifications_active</span>
@@ -251,61 +213,8 @@
 		</div>
 	</div>
 
-
-	<!-- Liste recherches sauvegardées -->
-	{#if recherchesOpen}
-		<div class="p-4 bg-white rounded-xl border border-border shadow-xs space-y-2">
-			<div class="flex items-center justify-between mb-1">
-				<div class="flex items-center gap-2">
-					<span class="material-symbols-outlined text-[18px] text-accent">bookmarks</span>
-					<h3 class="text-sm font-semibold text-text">Mes recherches sauvegardées</h3>
-				</div>
-				<button onclick={() => recherchesOpen = false} class="text-sm text-text-muted hover:text-text cursor-pointer">Fermer</button>
-			</div>
-			{#each data.recherches as rech}
-				<div class="flex items-center justify-between p-3 rounded-lg bg-surface-alt/60 border border-border/50 hover:border-accent/20 transition-colors">
-					<div class="flex items-center gap-3">
-						<button
-							onclick={() => chargerRecherche(rech)}
-							class="text-sm font-semibold text-accent hover:underline cursor-pointer"
-						>
-							{rech.nom}
-						</button>
-						<span class="text-xs text-text-muted">
-							{[
-								rech.sources?.length ? rech.sources.map((s: string) => sourceLabel(s)).join(', ') : null,
-								rech.cantons?.length ? rech.cantons.map((c: string) => cantonNoms[c] ?? c).join(', ') : null,
-								rech.temperatures?.length ? rech.temperatures.map((t: string) => t === 'chaud' ? 'Chaud' : t === 'tiede' ? 'Tiède' : 'Froid').join(', ') : null,
-								rech.mots_cles?.length ? rech.mots_cles.join(', ') : null,
-								rech.score_minimum ? `Score ${rech.score_minimum}+` : null,
-							].filter(Boolean).join(' · ') || 'Tous les critères'}
-						</span>
-						{#if rech.alerte_active}
-							<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent">
-								<span class="material-symbols-outlined text-[12px]">notifications</span>
-								{rech.frequence_alerte === 'quotidien' ? 'Quotidienne' : 'Hebdomadaire'}
-							</span>
-						{/if}
-						{#if rech.nb_nouveaux && rech.nb_nouveaux > 0}
-							<span class="text-xs px-2 py-0.5 rounded-full bg-danger/10 text-danger font-semibold">{rech.nb_nouveaux} nouveau{rech.nb_nouveaux > 1 ? 'x' : ''}</span>
-						{/if}
-					</div>
-					<form method="POST" action="?/deleteRecherche" use:enhance={() => {
-						return async ({ result, update }) => {
-							if (result.type === 'success') toasts.success('Recherche supprimée');
-							else toasts.error('Erreur lors de la suppression');
-							await update();
-						};
-					}}>
-						<input type="hidden" name="id" value={rech.id} />
-						<button type="submit" class="text-text-muted hover:text-danger cursor-pointer transition-colors" title="Supprimer cette recherche">
-							<span class="material-symbols-outlined text-[16px]">delete</span>
-						</button>
-					</form>
-				</div>
-			{/each}
-		</div>
-	{/if}
+	<!-- Recherches sauvegardées -->
+	<RecherchesPanel bind:open={recherchesOpen} recherches={data.recherches} onCharger={chargerRecherche} />
 
 	<!-- Notification import/enrichissement -->
 	{#if importResult}
@@ -319,88 +228,44 @@
 	{/if}
 
 	<!-- Barre actions batch -->
-	{#if selectedIds.size > 0}
-		<div class="flex items-center gap-3 p-3 rounded-xl border shadow-xs" style="background: linear-gradient(to right, #EDF1F5, #F0ECF5); border-color: #8B9DB640">
-			<span class="text-sm font-semibold text-text">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
-			<form method="POST" action="?/batchStatut" use:enhance={() => {
-				const count = selectedIds.size;
-				return async ({ result, update }) => {
-					selectedIds = new Set();
-					if (result.type === 'success') toasts.success(`${count} prospect${count > 1 ? 's' : ''} marqué${count > 1 ? 's' : ''} intéressé${count > 1 ? 's' : ''}`);
-					else toasts.error('Erreur lors de la mise à jour');
-					await update();
-				};
-			}}>
-				<input type="hidden" name="ids" value={JSON.stringify([...selectedIds])} />
-				<input type="hidden" name="statut" value="interesse" />
-				<button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-accent border border-accent rounded-lg hover:bg-accent/10 cursor-pointer transition-colors">
-					<span class="material-symbols-outlined text-[16px]">thumb_up</span>
-					Marquer intéressé
-				</button>
-			</form>
-			<form method="POST" action="?/batchStatut" use:enhance={() => {
-				const count = selectedIds.size;
-				return async ({ result, update }) => {
-					selectedIds = new Set();
-					if (result.type === 'success') toasts.success(`${count} prospect${count > 1 ? 's' : ''} écarté${count > 1 ? 's' : ''}`);
-					else toasts.error('Erreur lors de la mise à jour');
-					await update();
-				};
-			}}>
-				<input type="hidden" name="ids" value={JSON.stringify([...selectedIds])} />
-				<input type="hidden" name="statut" value="ecarte" />
-				<button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-text-muted border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors">
-					<span class="material-symbols-outlined text-[16px]">block</span>
-					Écarter
-				</button>
-			</form>
-			<button
-				onclick={() => { enrichBatchIds = [...selectedIds]; enrichBatchOpen = true; }}
-				class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border rounded-lg cursor-pointer transition-colors"
-				style="color: #7B6A9A; border-color: #7B6A9A; background: transparent"
-				onmouseenter={(e) => { (e.currentTarget as HTMLElement).style.background = '#7B6A9A10'; }}
-				onmouseleave={(e) => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}
-			>
-				<span class="material-symbols-outlined text-[16px]">auto_fix_high</span>
-				Enrichir
-			</button>
-			<button
-				onclick={() => selectedIds = new Set()}
-				class="ml-auto text-sm text-text-muted hover:text-text cursor-pointer"
-			>
-				Désélectionner
-			</button>
-		</div>
-	{/if}
+	<BatchActionsBar bind:selectedIds bind:enrichBatchIds bind:enrichBatchOpen />
 
-	{#if data.leads.length === 0}
+	{#if data.totalLeads === 0 && activeFilterCount === 0}
 		<div class="flex flex-col items-center justify-center py-16 px-6">
-			<div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-5" style="background: linear-gradient(135deg, #EDF1F5, #F0ECF5)">
-				<span class="material-symbols-outlined text-[32px]" style="color: #5A7190">search</span>
+			<div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-5" style="background: linear-gradient(135deg, var(--color-prosp-import-bg), var(--color-prosp-enrich-bg))">
+				<span class="material-symbols-outlined text-[32px] text-prosp-import">search</span>
 			</div>
 			<h3 class="text-lg font-semibold text-text mb-2">Trouvez vos premiers prospects</h3>
 			<p class="text-sm text-text-muted text-center max-w-lg mb-6">
 				Importez des entreprises depuis les sources publiques suisses (registre du commerce, marchés publics, feuille officielle, registre des bâtiments, Minergie). Qualifiez-les, puis convertissez les plus pertinentes en entreprises dans votre CRM.
 			</p>
-			<div class="flex flex-col items-center gap-3">
-				<button
-					onclick={() => importModalOpen = true}
-					class="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg cursor-pointer shadow-md transition-colors"
-				>
-					<span class="material-symbols-outlined text-[18px]">cloud_download</span>
-					Lancer un import
-				</button>
-			</div>
+			<button
+				onclick={() => importModalOpen = true}
+				class="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg cursor-pointer shadow-md transition-colors"
+			>
+				<span class="material-symbols-outlined text-[18px]">cloud_download</span>
+				Lancer un import
+			</button>
 		</div>
 	{:else}
 	<DataTable
-		data={filteredLeads}
+		data={data.leads}
 		{columns}
 		selectable={true}
 		bind:selectedIds
 		onRowClick={openDetail}
 		searchPlaceholder="Rechercher un prospect…"
 		emptyMessage="Aucun prospect correspondant aux filtres."
+		serverMode={true}
+		totalCount={data.totalLeads}
+		currentServerPage={data.page}
+		serverSortKey={data.sort}
+		serverSortAsc={data.sortAsc}
+		serverSearch={data.search}
+		pageSize={data.pageSize}
+		onPageChange={(p) => goto(buildUrl({ page: p }), { invalidateAll: true, keepFocus: true })}
+		onSortChange={(key, asc) => goto(buildUrl({ sort: key, dir: asc ? 'asc' : 'desc', page: 0 }), { invalidateAll: true, keepFocus: true })}
+		onSearchChange={(q) => goto(buildUrl({ q, page: 0 }), { invalidateAll: true, keepFocus: true })}
 	>
 		{#snippet row(lead, _i)}
 			<td class="px-4 py-2.5 w-28">
@@ -423,142 +288,7 @@
 <LeadSlideOut bind:open={slideOutOpen} bind:lead={selectedLead} bind:importResult leads={data.leads} />
 
 <!-- Modal création alerte -->
-<ModalForm
-	bind:open={alerteModalOpen}
-	title="Créer une alerte"
-	icon="notifications_active"
-	headerVariant="accent"
-	maxWidth="max-w-lg"
->
-	<form
-		method="POST"
-		action="?/saveRecherche"
-		use:enhance={() => {
-			savingAlerte = true;
-			return async ({ result, update }) => {
-				savingAlerte = false;
-				if (result.type === 'success') {
-					alerteModalOpen = false;
-					resetAlerte();
-					toasts.success('Alerte créée');
-				} else {
-					toasts.error('Erreur lors de la création');
-				}
-				await update();
-			};
-		}}
-	>
-		<div class="space-y-5">
-			<div class="flex items-start gap-3 p-3.5 rounded-lg bg-accent/5 border border-accent/10">
-				<span class="material-symbols-outlined text-[20px] text-accent mt-0.5">info</span>
-				<p class="text-sm text-text-body">Recevez une notification lorsque de nouveaux prospects correspondent à vos critères.</p>
-			</div>
-
-			<div>
-				<label class="block text-sm font-medium text-text mb-1.5">Nom de l'alerte</label>
-				<input
-					type="text"
-					name="nom"
-					bind:value={alerteNom}
-					placeholder="Ex : Construction Genève chauds"
-					required
-					class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
-				/>
-			</div>
-
-			<div class="p-4 rounded-lg bg-surface-alt space-y-4">
-				<p class="text-xs font-semibold text-text-muted uppercase tracking-wide">Critères de filtrage</p>
-				<MultiSelectDropdown
-					bind:selected={alerteSources}
-					options={sourceOptions}
-					icon="database"
-					label="Sources"
-					tooltip="Registres et bases de données à surveiller"
-				/>
-				<MultiSelectDropdown
-					bind:selected={alerteCantons}
-					options={cantonOptions}
-					icon="location_on"
-					label="Cantons"
-					tooltip="Zones géographiques à surveiller"
-				/>
-				<MultiSelectDropdown
-					bind:selected={alerteTemperatures}
-					options={temperatureOptions}
-					icon="thermostat"
-					label="Température"
-					tooltip="Niveau d'intérêt estimé du prospect"
-				/>
-			</div>
-
-			<div class="p-4 rounded-lg bg-surface-alt">
-				<label class="block text-sm font-medium text-text mb-1">
-					<span class="inline-flex items-center gap-1.5">
-						<span class="material-symbols-outlined text-[16px] text-accent">sell</span>
-						Mots-clés
-					</span>
-				</label>
-				<p class="text-xs text-text-muted mb-3">Insensible aux accents : « fenetre » trouvera aussi « fenêtre »</p>
-				{#if alerteMotsCles.length > 0}
-					<div class="flex flex-wrap gap-2 mb-3">
-						{#each alerteMotsCles as mot}
-							<span class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs rounded-full bg-accent/10 text-accent font-medium border border-accent/15">
-								{mot}
-								<button type="button" onclick={() => removeMotCle(mot)} class="flex items-center justify-center w-4 h-4 rounded-full hover:bg-accent/20 text-accent/60 hover:text-accent cursor-pointer transition-colors" aria-label="Supprimer {mot}">
-									<span class="text-[10px] leading-none font-bold">&times;</span>
-								</button>
-							</span>
-						{/each}
-					</div>
-				{/if}
-				<input
-					type="text"
-					bind:value={alerteMotCleInput}
-					placeholder="Taper un mot-clé puis Entrée"
-					class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
-					onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMotCle(); } }}
-				/>
-			</div>
-
-			<div>
-				<label class="block text-sm font-medium text-text mb-1.5">
-					<span class="inline-flex items-center gap-1.5">
-						<span class="material-symbols-outlined text-[16px] text-text-muted">schedule</span>
-						Fréquence
-					</span>
-				</label>
-				<select name="frequence_alerte" bind:value={alerteFrequence} class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white">
-					<option value="quotidien">Quotidienne</option>
-					<option value="hebdomadaire">Hebdomadaire</option>
-				</select>
-			</div>
-		</div>
-
-		<!-- Hidden fields -->
-		<input type="hidden" name="sources" value={alerteSources.length > 0 ? JSON.stringify(alerteSources) : ''} />
-		<input type="hidden" name="cantons" value={alerteCantons.length > 0 ? JSON.stringify(alerteCantons) : ''} />
-		<input type="hidden" name="temperatures" value={alerteTemperatures.length > 0 ? JSON.stringify(alerteTemperatures) : ''} />
-		<input type="hidden" name="mots_cles" value={alerteMotsCles.length > 0 ? JSON.stringify(alerteMotsCles) : ''} />
-		<input type="hidden" name="alerte_active" value="true" />
-
-		<div class="flex justify-end gap-3 pt-5 border-t border-border mt-2">
-			<button
-				type="button"
-				onclick={() => alerteModalOpen = false}
-				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
-			>
-				Annuler
-			</button>
-			<button
-				type="submit"
-				disabled={savingAlerte || !alerteNom}
-				class="px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
-			>
-				{savingAlerte ? 'Création…' : 'Créer l\'alerte'}
-			</button>
-		</div>
-	</form>
-</ModalForm>
+<AlerteModal bind:open={alerteModalOpen} />
 
 <!-- Modal import sources -->
 <ImportModal bind:open={importModalOpen} bind:importResult />

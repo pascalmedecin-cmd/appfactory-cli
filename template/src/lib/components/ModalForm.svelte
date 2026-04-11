@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { fade, scale } from 'svelte/transition';
+	import { trapFocus } from '$lib/actions/trapFocus';
 
 	let {
 		open = $bindable(false),
@@ -53,6 +54,9 @@
 	<div class="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 pointer-events-none">
 		<div
 			class="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full {maxWidth} pointer-events-auto flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden {headerVariant === 'accent' ? '' : 'border border-border/30'}"
+			role="dialog"
+			aria-modal="true"
+			use:trapFocus
 			transition:scale={{ start: 0.95, duration: 200 }}
 		>
 			<div class="flex items-center justify-between px-6 py-4 {headerVariant === 'accent' ? 'bg-primary text-white' : 'border-b border-border'}">
