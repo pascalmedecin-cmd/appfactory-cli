@@ -532,6 +532,7 @@ export type Database = {
           score_minimum: number | null
           secteurs: string[] | null
           sources: string[] | null
+          temperatures: string[] | null
         }
         Insert: {
           alerte_active?: boolean | null
@@ -546,6 +547,7 @@ export type Database = {
           score_minimum?: number | null
           secteurs?: string[] | null
           sources?: string[] | null
+          temperatures?: string[] | null
         }
         Update: {
           alerte_active?: boolean | null
@@ -560,6 +562,7 @@ export type Database = {
           score_minimum?: number | null
           secteurs?: string[] | null
           sources?: string[] | null
+          temperatures?: string[] | null
         }
         Relationships: []
       }

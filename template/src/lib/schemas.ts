@@ -208,6 +208,7 @@ export const LeadTransfertSchema = z.object({
 // -- Recherches sauvegardees --
 
 export const FREQUENCES_ALERTE = ['quotidien', 'hebdomadaire'] as const;
+export const TEMPERATURES_LEAD = ['chaud', 'tiede', 'froid'] as const;
 
 export const RechercheCreateSchema = z.object({
 	nom: z.string().min(1, 'Le nom est requis').max(200),
@@ -216,6 +217,7 @@ export const RechercheCreateSchema = z.object({
 	mots_cles: z.array(z.string().max(100)).optional(),
 	secteurs: z.array(z.string().max(100)).optional(),
 	score_minimum: z.coerce.number().int().min(0).max(13).optional(),
+	temperatures: z.array(z.enum(TEMPERATURES_LEAD)).optional(),
 	alerte_active: z.boolean().optional(),
 	frequence_alerte: z.enum(FREQUENCES_ALERTE).optional(),
 });

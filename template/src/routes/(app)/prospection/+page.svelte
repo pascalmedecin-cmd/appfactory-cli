@@ -10,6 +10,7 @@
 	import ImportModal from '$lib/components/prospection/ImportModal.svelte';
 	import LeadSlideOut from '$lib/components/prospection/LeadSlideOut.svelte';
 	import TemperatureSelect from '$lib/components/prospection/TemperatureSelect.svelte';
+	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
 	import type { PageData } from './$types';
@@ -33,12 +34,36 @@
 	let saving = $state(false);
 	let importResult = $state<{ message: string; type: 'success' | 'error' } | null>(null);
 	let selectedIds = $state<Set<string>>(new Set());
-	let saveSearchOpen = $state(false);
-	let saveSearchName = $state('');
-	let saveSearchAlerte = $state(true);
-	let saveSearchFrequence = $state('quotidien');
-	let savingSearch = $state(false);
+	let alerteModalOpen = $state(false);
+	let alerteNom = $state('');
+	let alerteSources = $state<string[]>([]);
+	let alerteCantons = $state<string[]>([]);
+	let alerteTemperatures = $state<string[]>([]);
+	let alerteFrequence = $state('quotidien');
+	let savingAlerte = $state(false);
 	let recherchesOpen = $state(false);
+
+	const alerteSourceOptions = [
+		{ value: 'zefix', label: 'Zefix (registre du commerce)' },
+		{ value: 'simap', label: 'SIMAP (marchés publics)' },
+		{ value: 'search_ch', label: 'search.ch (annuaire)' },
+		{ value: 'sitg', label: 'SITG (géodonnées Genève)' },
+		{ value: 'fosc', label: 'FOSC (feuille officielle)' },
+	];
+	const alerteCantonOptions = cantons.map(c => ({ value: c, label: `${cantonNoms[c] ?? c} (${c})` }));
+	const alerteTemperatureOptions = [
+		{ value: 'chaud', label: 'Chaud', dotColor: 'bg-danger' },
+		{ value: 'tiede', label: 'Tiède', dotColor: 'bg-warning' },
+		{ value: 'froid', label: 'Froid', dotColor: 'bg-text-muted' },
+	];
+
+	function resetAlerte() {
+		alerteNom = '';
+		alerteSources = [];
+		alerteCantons = [];
+		alerteTemperatures = [];
+		alerteFrequence = 'quotidien';
+	}
 
 	// Filters
 	let filterSource = $state('');
@@ -310,7 +335,6 @@
 				{/each}
 				<option value="sitg">{sourceLabel('sitg')}</option>
 				<option value="fosc">{sourceLabel('fosc')}</option>
-				<option value="manuel">{sourceLabel('manuel')}</option>
 			</select>
 
 			<div class="ml-auto flex items-center gap-2">
@@ -324,7 +348,7 @@
 					</button>
 				{/if}
 				<button
-					onclick={() => saveSearchOpen = !saveSearchOpen}
+					onclick={() => { resetAlerte(); alerteModalOpen = true; }}
 					class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-accent border border-accent/30 rounded-lg hover:bg-accent/5 cursor-pointer transition-colors"
 				>
 					<span class="material-symbols-outlined text-[16px]">notifications_active</span>
@@ -365,74 +389,6 @@
 		{/if}
 	</div>
 
-	<!-- Formulaire sauvegarde recherche (alerte) -->
-	{#if saveSearchOpen}
-		<form
-			method="POST"
-			action="?/saveRecherche"
-			class="p-4 bg-gradient-to-r from-accent/5 to-accent/10 rounded-xl border border-accent/20 shadow-xs"
-			use:enhance={() => {
-				savingSearch = true;
-				return async ({ result, update }) => {
-					savingSearch = false;
-					saveSearchOpen = false;
-					saveSearchName = '';
-					if (result.type === 'success') toasts.success('Alerte créée');
-					else toasts.error('Erreur lors de la création');
-					await update();
-				};
-			}}
-		>
-			<div class="flex items-center gap-2 mb-3">
-				<span class="material-symbols-outlined text-[18px] text-accent">notifications_active</span>
-				<span class="text-sm font-semibold text-text">Créer une alerte sur ces filtres</span>
-			</div>
-			<p class="text-xs text-text-muted mb-3">Vous serez notifié lorsque de nouveaux prospects correspondent à vos critères actuels.</p>
-			<div class="flex flex-wrap items-end gap-3">
-				<div class="flex-1 min-w-48">
-					<label class="block text-xs font-medium text-text mb-1">Nom de l'alerte</label>
-					<input
-						type="text"
-						name="nom"
-						bind:value={saveSearchName}
-						placeholder="Ex : Construction Genève chauds"
-						required
-						class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
-					/>
-				</div>
-				<div>
-					<label class="block text-xs font-medium text-text mb-1">Fréquence</label>
-					<select name="frequence_alerte" bind:value={saveSearchFrequence} class="px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
-						<option value="quotidien">Quotidienne</option>
-						<option value="hebdomadaire">Hebdomadaire</option>
-					</select>
-				</div>
-				<label class="flex items-center gap-2 text-sm text-text cursor-pointer">
-					<input type="checkbox" bind:checked={saveSearchAlerte} class="rounded" />
-					Active
-				</label>
-				<!-- Hidden fields for current filters -->
-				<input type="hidden" name="sources" value={filterSource ? JSON.stringify([filterSource]) : ''} />
-				<input type="hidden" name="cantons" value={filterCanton ? JSON.stringify([filterCanton]) : ''} />
-				<input type="hidden" name="score_minimum" value={filterScoreMin} />
-				<input type="hidden" name="alerte_active" value={String(saveSearchAlerte)} />
-				<button
-					type="submit"
-					disabled={savingSearch || !saveSearchName}
-					class="px-4 py-1.5 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
-				>
-					{savingSearch ? 'Création...' : 'Créer l\'alerte'}
-				</button>
-				<button
-					type="button"
-					onclick={() => saveSearchOpen = false}
-					class="px-3 py-1.5 text-sm text-text-muted hover:text-text cursor-pointer"
-				>
-					Annuler
-				</button>
-			</div>
-		</form>
-	{/if}
 
 	<!-- Liste recherches sauvegardées -->
 	{#if recherchesOpen}
@@ -457,7 +413,8 @@
 							{[
 								rech.sources?.length ? rech.sources.map((s: string) => sourceLabel(s)).join(', ') : null,
 								rech.cantons?.length ? rech.cantons.map((c: string) => cantonNoms[c] ?? c).join(', ') : null,
-								rech.score_minimum ? `${scoreLabel(rech.score_minimum)} (${rech.score_minimum}+)` : null,
+								rech.temperatures?.length ? rech.temperatures.map((t: string) => t === 'chaud' ? 'Chaud' : t === 'tiede' ? 'Tiède' : 'Froid').join(', ') : null,
+								rech.score_minimum ? `Score ${rech.score_minimum}+` : null,
 							].filter(Boolean).join(' · ') || 'Tous les critères'}
 						</span>
 						{#if rech.alerte_active}
@@ -657,6 +614,103 @@
 				class="px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
 			>
 				{saving ? 'Enregistrement...' : 'Créer le prospect'}
+			</button>
+		</div>
+	</form>
+</ModalForm>
+
+<!-- Modal création alerte -->
+<ModalForm
+	bind:open={alerteModalOpen}
+	title="Créer une alerte"
+	maxWidth="max-w-md"
+>
+	<form
+		method="POST"
+		action="?/saveRecherche"
+		use:enhance={() => {
+			savingAlerte = true;
+			return async ({ result, update }) => {
+				savingAlerte = false;
+				if (result.type === 'success') {
+					alerteModalOpen = false;
+					resetAlerte();
+					toasts.success('Alerte créée');
+				} else {
+					toasts.error('Erreur lors de la création');
+				}
+				await update();
+			};
+		}}
+	>
+		<div class="space-y-4">
+			<p class="text-xs text-text-muted">Recevez une notification lorsque de nouveaux prospects correspondent à vos critères.</p>
+
+			<div>
+				<label class="block text-xs font-medium text-text mb-1">Nom de l'alerte</label>
+				<input
+					type="text"
+					name="nom"
+					bind:value={alerteNom}
+					placeholder="Ex : Construction Genève chauds"
+					required
+					class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
+				/>
+			</div>
+
+			<div class="space-y-3">
+				<MultiSelectDropdown
+					bind:selected={alerteSources}
+					options={alerteSourceOptions}
+					icon="database"
+					label="Sources"
+					tooltip="Registres et bases de données à surveiller"
+				/>
+				<MultiSelectDropdown
+					bind:selected={alerteCantons}
+					options={alerteCantonOptions}
+					icon="location_on"
+					label="Cantons"
+					tooltip="Zones géographiques à surveiller"
+				/>
+				<MultiSelectDropdown
+					bind:selected={alerteTemperatures}
+					options={alerteTemperatureOptions}
+					icon="thermostat"
+					label="Température"
+					tooltip="Niveau d'intérêt estimé du prospect"
+				/>
+			</div>
+
+			<div>
+				<label class="block text-xs font-medium text-text mb-1">Fréquence</label>
+				<select name="frequence_alerte" bind:value={alerteFrequence} class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white">
+					<option value="quotidien">Quotidienne</option>
+					<option value="hebdomadaire">Hebdomadaire</option>
+				</select>
+			</div>
+		</div>
+
+		<!-- Hidden fields -->
+		<input type="hidden" name="sources" value={alerteSources.length > 0 ? JSON.stringify(alerteSources) : ''} />
+		<input type="hidden" name="cantons" value={alerteCantons.length > 0 ? JSON.stringify(alerteCantons) : ''} />
+		<input type="hidden" name="temperatures" value={alerteTemperatures.length > 0 ? JSON.stringify(alerteTemperatures) : ''} />
+		<input type="hidden" name="alerte_active" value="true" />
+
+		<div class="flex justify-end gap-3 pt-4">
+			<button
+				type="button"
+				onclick={() => alerteModalOpen = false}
+				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+			>
+				Annuler
+			</button>
+			<button
+				type="submit"
+				disabled={savingAlerte || !alerteNom}
+				class="px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
+			>
+				{savingAlerte ? 'Création...' : 'Créer l\'alerte'}
 			</button>
 		</div>
 	</form>
