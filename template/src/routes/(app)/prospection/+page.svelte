@@ -244,44 +244,45 @@
 </script>
 
 <div class="space-y-5">
-	<!-- Bandeau workflow 4 étapes -->
-	<div class="flex items-center gap-5 sm:gap-8 py-3">
-		<div class="flex flex-col items-center gap-1.5">
-			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-primary-light">
-				<span class="material-symbols-outlined text-[26px] text-primary">cloud_download</span>
-			</span>
-			<span class="text-sm font-semibold text-text">Importer</span>
-			<span class="text-xs text-text-muted">{data.leads.length} prospect{data.leads.length > 1 ? 's' : ''}</span>
+	<!-- Stepper workflow 4 étapes -->
+	<div class="relative flex items-start justify-between px-6 py-5 rounded-xl border border-border bg-white">
+		<!-- Ligne connectrice -->
+		<div class="absolute top-[42px] left-[calc(12.5%+20px)] right-[calc(12.5%+20px)] h-[2px] rounded-full" style="background: linear-gradient(to right, #8B9DB6, #9B8BB5, #B5976E, #7BAA8E)"></div>
+
+		<!-- Étape 1 — Importer -->
+		<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
+			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-sm" style="background: #EDF1F5; border: 2px solid #8B9DB6">
+				<span class="material-symbols-outlined text-[20px]" style="color: #5A7190">cloud_download</span>
+			</div>
+			<span class="text-[13px] font-semibold text-text">Importer</span>
+			<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background: #EDF1F5; color: #5A7190">{data.leads.length}</span>
 		</div>
-		<div class="flex items-center mt-[-22px]">
-			<span class="material-symbols-outlined text-[22px] text-border-strong">arrow_forward</span>
+
+		<!-- Étape 2 — Enrichir -->
+		<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
+			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-sm" style="background: #F0ECF5; border: 2px solid #9B8BB5">
+				<span class="material-symbols-outlined text-[20px]" style="color: #7B6A9A">auto_fix_high</span>
+			</div>
+			<span class="text-[13px] font-semibold text-text">Enrichir</span>
+			<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background: #F0ECF5; color: #7B6A9A">{enrichedCount}</span>
 		</div>
-		<div class="flex flex-col items-center gap-1.5">
-			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-accent-light">
-				<span class="material-symbols-outlined text-[26px] text-accent">auto_fix_high</span>
-			</span>
-			<span class="text-sm font-semibold text-text">Enrichir</span>
-			<span class="text-xs text-text-muted">{enrichedCount} enrichi{enrichedCount > 1 ? 's' : ''}</span>
+
+		<!-- Étape 3 — Qualifier -->
+		<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
+			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-sm" style="background: #F5F0E8; border: 2px solid #B5976E">
+				<span class="material-symbols-outlined text-[20px]" style="color: #917548">filter_list</span>
+			</div>
+			<span class="text-[13px] font-semibold text-text">Qualifier</span>
+			<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background: #F5F0E8; color: #917548">{qualifiedCount}</span>
 		</div>
-		<div class="flex items-center mt-[-22px]">
-			<span class="material-symbols-outlined text-[22px] text-border-strong">arrow_forward</span>
-		</div>
-		<div class="flex flex-col items-center gap-1.5">
-			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-warning-light">
-				<span class="material-symbols-outlined text-[26px] text-warning">filter_list</span>
-			</span>
-			<span class="text-sm font-semibold text-text">Qualifier</span>
-			<span class="text-xs text-text-muted">{qualifiedCount} qualifié{qualifiedCount > 1 ? 's' : ''}</span>
-		</div>
-		<div class="flex items-center mt-[-22px]">
-			<span class="material-symbols-outlined text-[22px] text-border-strong">arrow_forward</span>
-		</div>
-		<div class="flex flex-col items-center gap-1.5">
-			<span class="flex items-center justify-center w-12 h-12 rounded-full bg-success-light">
-				<span class="material-symbols-outlined text-[26px] text-success">domain_add</span>
-			</span>
-			<span class="text-sm font-semibold text-text">Convertir</span>
-			<span class="text-xs text-text-muted">{convertedCount} converti{convertedCount > 1 ? 's' : ''}</span>
+
+		<!-- Étape 4 — Convertir -->
+		<div class="flex flex-col items-center gap-2 relative z-10 flex-1">
+			<div class="flex items-center justify-center w-10 h-10 rounded-full shadow-sm" style="background: #EBF3EF; border: 2px solid #7BAA8E">
+				<span class="material-symbols-outlined text-[20px]" style="color: #538B6B">domain_add</span>
+			</div>
+			<span class="text-[13px] font-semibold text-text">Convertir</span>
+			<span class="text-xs font-medium px-2 py-0.5 rounded-full" style="background: #EBF3EF; color: #538B6B">{convertedCount}</span>
 		</div>
 	</div>
 
