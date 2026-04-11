@@ -119,7 +119,7 @@
 	}
 </script>
 
-<div class="space-y-5">
+<div class="flex flex-col gap-5 h-[calc(100dvh-var(--header-height)-3rem)]">
 	<!-- Workflow 4 étapes -->
 	<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
 		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs bg-prosp-import-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 85%)">
@@ -172,9 +172,10 @@
 				onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
 				class="flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich/20"
 				disabled={data.leads.filter(l => l.statut !== 'transfere').length === 0}
+				title="Enrichit uniquement les {data.leads.filter(l => l.statut !== 'transfere').length} leads de cette page"
 			>
 				<span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
-				<span class="hidden sm:inline">Enrichir les filtrés</span>
+				<span class="hidden sm:inline">Enrichir cette page ({data.leads.filter(l => l.statut !== 'transfere').length})</span>
 			</button>
 			<button
 				onclick={() => importModalOpen = true}
@@ -232,6 +233,7 @@
 	<!-- Barre actions batch -->
 	<BatchActionsBar bind:selectedIds bind:enrichBatchIds bind:enrichBatchOpen />
 
+	<div class="flex-1 min-h-0 flex flex-col">
 	{#if data.totalLeads === 0 && activeFilterCount === 0}
 		<div class="flex flex-col items-center justify-center py-16 px-6">
 			<div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-5" style="background: linear-gradient(135deg, var(--color-prosp-import-bg), var(--color-prosp-enrich-bg))">
@@ -284,6 +286,7 @@
 		{/snippet}
 	</DataTable>
 	{/if}
+	</div>
 </div>
 
 <!-- Lead detail slide-out -->

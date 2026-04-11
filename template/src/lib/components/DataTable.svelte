@@ -136,7 +136,7 @@
 	}
 </script>
 
-<div class="bg-white rounded-xl border border-border shadow-sm">
+<div class="bg-white rounded-xl border border-border shadow-sm flex flex-col min-h-0">
 	{#if searchable}
 		<div class="px-4 py-3 border-b border-border">
 			<input
@@ -149,10 +149,10 @@
 		</div>
 	{/if}
 
-	<div class="overflow-x-auto">
+	<div class="overflow-x-auto flex-1 min-h-0 overflow-y-auto">
 		<table class="w-full text-sm">
-			<thead>
-				<tr class="border-b border-border bg-surface-alt/60">
+			<thead class="sticky top-0 z-10">
+				<tr class="border-b border-border bg-surface-alt">
 					{#if selectable}
 						<th class="w-10 px-4 py-2.5">
 							<input type="checkbox" checked={selectedIds.size === paged.length && paged.length > 0} onchange={toggleSelectAll} />
@@ -216,7 +216,7 @@
 	</div>
 
 	{#if totalPages > 1}
-		<div class="px-4 py-3 border-t border-border flex items-center justify-between text-sm text-text-muted">
+		<div class="px-4 py-3 border-t border-border flex items-center justify-between text-sm text-text-muted shrink-0">
 			<span>{effectiveTotalCount} résultat{effectiveTotalCount > 1 ? 's' : ''}</span>
 			<div class="flex items-center gap-2">
 				<button
