@@ -67,11 +67,8 @@ export function sourceLabel(s: string): string {
 	const labels: Record<string, string> = {
 		zefix: 'Registre du commerce',
 		simap: 'Marchés publics',
-		search_ch: 'Annuaire',
-		sitg: 'Géodonnées',
-		fosc: 'Feuille officielle',
 		regbl: 'Registre des bâtiments',
-		minergie: 'Minergie',
+		search_ch: 'Annuaire',
 	};
 	return labels[s] ?? s;
 }
@@ -81,11 +78,8 @@ export function sourceLabel(s: string): string {
 export const sourceOptions = [
 	{ value: 'zefix', label: 'Zefix (registre du commerce)' },
 	{ value: 'simap', label: 'SIMAP (marchés publics)' },
-	{ value: 'search_ch', label: 'search.ch (annuaire)' },
-	{ value: 'sitg', label: 'SITG (géodonnées Genève)' },
-	{ value: 'fosc', label: 'FOSC (feuille officielle)' },
 	{ value: 'regbl', label: 'RegBL (registre des bâtiments)' },
-	{ value: 'minergie', label: 'Minergie (bâtiments certifiés)' },
+	{ value: 'search_ch', label: 'search.ch (annuaire)' },
 ];
 
 const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];

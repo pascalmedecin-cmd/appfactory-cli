@@ -13,34 +13,30 @@
 	} = $props();
 
 	let importing = $state(false);
-	let activeTab = $state<'zefix' | 'simap' | 'fosc' | 'regbl' | 'minergie'>('zefix');
+	let activeTab = $state<'zefix' | 'simap' | 'regbl'>('zefix');
 	let importCanton = $state('GE');
 	let importLimit = $state('50');
 	let importZefixName = $state('');
 	let importSimapSearch = $state('');
 	let importSimapDays = $state('30');
-	let importFoscDays = $state('7');
-	let importFoscCantons = $state<string[]>(['GE', 'VD']);
 	let importRegblCantons = $state<string[]>(['GE', 'VD']);
-	let importMinergieCantons = $state<string[]>(['GE', 'VD']);
-	let importMinergiePremium = $state(false);
 
 	const zefixMaxResults = API_LIMITS.zefix.maxResultsPerQuery;
+
+	let simapSearchInvalid = $derived(
+		importSimapSearch.trim().length > 0 && importSimapSearch.trim().length < 3
+	);
 
 	const tabColorMap: Record<string, { cssVar: string; bgCssVar: string; borderCssVar: string }> = {
 		zefix:    { cssVar: '--color-prosp-import',  bgCssVar: '--color-prosp-import-bg',  borderCssVar: '--color-prosp-import-border' },
 		simap:    { cssVar: '--color-prosp-qualify',  bgCssVar: '--color-prosp-qualify-bg',  borderCssVar: '--color-prosp-qualify-border' },
-		fosc:     { cssVar: '--color-prosp-enrich',   bgCssVar: '--color-prosp-enrich-bg',   borderCssVar: '--color-prosp-enrich-border' },
 		regbl:    { cssVar: '--color-prosp-convert',  bgCssVar: '--color-prosp-convert-bg',  borderCssVar: '--color-prosp-convert-border' },
-		minergie: { cssVar: '--color-prosp-convert',  bgCssVar: '--color-prosp-convert-bg',  borderCssVar: '--color-prosp-convert-border' },
 	};
 
 	const tabs = [
 		{ key: 'zefix' as const, label: 'Registre du commerce', icon: 'business', desc: 'RC' },
 		{ key: 'simap' as const, label: 'Marchés publics', icon: 'gavel', desc: 'SIMAP' },
-		{ key: 'fosc' as const, label: 'Feuille officielle', icon: 'newspaper', desc: 'FOSC' },
 		{ key: 'regbl' as const, label: 'Registre des bâtiments', icon: 'apartment', desc: 'RegBL' },
-		{ key: 'minergie' as const, label: 'Minergie', icon: 'eco', desc: 'Minergie' },
 	];
 
 	let activeColors = $derived(tabColorMap[activeTab]);
@@ -78,17 +74,11 @@
 	}
 
 	function importSimap() {
+		const search = importSimapSearch.trim();
 		return importFromSource('/api/prospection/simap', {
 			canton: importCanton,
-			search: importSimapSearch || undefined,
+			search: search.length >= 3 ? search : undefined,
 			daysBack: Number(importSimapDays) || 30,
-		});
-	}
-
-	function importFosc() {
-		return importFromSource('/api/prospection/fosc', {
-			cantons: importFoscCantons,
-			daysBack: Number(importFoscDays) || 7,
 		});
 	}
 
@@ -96,14 +86,6 @@
 		return importFromSource('/api/prospection/regbl', {
 			cantons: importRegblCantons,
 			limit: Number(importLimit) || 50,
-		});
-	}
-
-	function importMinergie() {
-		return importFromSource('/api/prospection/minergie', {
-			cantons: importMinergieCantons,
-			limit: Number(importLimit) || 50,
-			premiumOnly: importMinergiePremium,
 		});
 	}
 
@@ -144,7 +126,7 @@
 					<span class="material-symbols-outlined text-[22px] mt-0.5 shrink-0" style="color: var({activeColors.cssVar})">business</span>
 					<div>
 						<p class="text-sm font-semibold text-text">Registre du commerce</p>
-						<p class="text-xs text-text-body mt-0.5">Entreprises suisses avec but social, capital nominal et publications FOSC.</p>
+						<p class="text-xs text-text-body mt-0.5">Entreprises suisses avec but social, capital nominal et informations légales officielles.</p>
 						<p class="text-xs text-text-muted mt-1.5">
 							<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
 							Un import ciblé (nom + canton) donne de meilleurs résultats qu'un import large sans filtre. Mieux vaut 50 prospects qualifiés que 500 à trier.
@@ -228,62 +210,15 @@
 						type="text"
 						bind:value={importSimapSearch}
 						placeholder="rénovation, façade…"
-						class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
+						class="w-full px-3 py-1.5 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent {simapSearchInvalid ? 'border-danger' : 'border-border'}"
 					/>
+					{#if simapSearchInvalid}
+						<p class="text-xs text-danger mt-1">Saisir au moins 3 caractères ou laisser vide.</p>
+					{/if}
 				</div>
 				<button
 					onclick={importSimap}
-					disabled={importing}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
-					style="background-color: var({activeColors.cssVar})"
-				>
-					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
-					{importing ? 'Import en cours…' : 'Lancer l\'import'}
-				</button>
-			</div>
-		{/if}
-
-		<!-- FOSC -->
-		{#if activeTab === 'fosc'}
-			<div class="space-y-4">
-				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
-					<span class="material-symbols-outlined text-[22px] mt-0.5 shrink-0" style="color: var({activeColors.cssVar})">newspaper</span>
-					<div>
-						<p class="text-sm font-semibold text-text">FOSC - Feuille officielle suisse du commerce</p>
-						<p class="text-xs text-text-body mt-0.5">Nouvelles inscriptions au registre du commerce, filtrées par secteur construction/bâtiment.</p>
-						<p class="text-xs text-text-muted mt-1.5">
-							<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
-							Signal chaud : une nouvelle entreprise du bâtiment a besoin de tout au démarrage. Publications mises à jour quotidiennement.
-						</p>
-					</div>
-				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label class="block text-sm font-medium text-text mb-1">Cantons</label>
-						<div class="flex flex-wrap gap-2">
-							{#each cantons as c}
-								<button
-									onclick={() => importFoscCantons = toggleCanton(importFoscCantons, c)}
-									class="px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors {importFoscCantons.includes(c) ? 'text-white' : 'bg-surface-alt text-text-muted hover:text-text'}"
-									style={importFoscCantons.includes(c) ? `background-color: var(${activeColors.cssVar})` : ''}
-								>
-									{cantonNoms[c] ?? c}
-								</button>
-							{/each}
-						</div>
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-text mb-1">Période</label>
-						<select bind:value={importFoscDays} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
-							<option value="7">7 derniers jours</option>
-							<option value="14">14 derniers jours</option>
-							<option value="30">30 derniers jours</option>
-						</select>
-					</div>
-				</div>
-				<button
-					onclick={importFosc}
-					disabled={importing || importFoscCantons.length === 0}
+					disabled={importing || simapSearchInvalid}
 					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
 					style="background-color: var({activeColors.cssVar})"
 				>
@@ -334,62 +269,6 @@
 				<button
 					onclick={importRegbl}
 					disabled={importing || importRegblCantons.length === 0}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
-					style="background-color: var({activeColors.cssVar})"
-				>
-					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
-					{importing ? 'Import en cours…' : 'Lancer l\'import'}
-				</button>
-			</div>
-		{/if}
-
-		<!-- Minergie -->
-		{#if activeTab === 'minergie'}
-			<div class="space-y-4">
-				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
-					<span class="material-symbols-outlined text-[22px] mt-0.5 shrink-0" style="color: var({activeColors.cssVar})">eco</span>
-					<div>
-						<p class="text-sm font-semibold text-text">Minergie - Bâtiments certifiés</p>
-						<p class="text-xs text-text-body mt-0.5">Projets haut de gamme avec label énergétique (Minergie, P, A, ECO). Architectes sensibles à la performance.</p>
-						<p class="text-xs text-text-muted mt-1.5">
-							<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
-							Les labels Minergie-P et Minergie-A indiquent des projets premium, cibles idéales pour les films de protection solaire et thermique.
-						</p>
-					</div>
-				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label class="block text-sm font-medium text-text mb-1">Cantons</label>
-						<div class="flex flex-wrap gap-2">
-							{#each cantons as c}
-								<button
-									onclick={() => importMinergieCantons = toggleCanton(importMinergieCantons, c)}
-									class="px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors {importMinergieCantons.includes(c) ? 'text-white' : 'bg-surface-alt text-text-muted hover:text-text'}"
-									style={importMinergieCantons.includes(c) ? `background-color: var(${activeColors.cssVar})` : ''}
-								>
-									{cantonNoms[c] ?? c}
-								</button>
-							{/each}
-						</div>
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-text mb-1">Nombre de résultats</label>
-						<select bind:value={importLimit} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
-							<option value="20">20 (ciblé)</option>
-							<option value="50">50 (recommandé)</option>
-							<option value="100">100</option>
-						</select>
-					</div>
-				</div>
-				<div>
-					<label class="flex items-center gap-2 cursor-pointer">
-						<input type="checkbox" bind:checked={importMinergiePremium} class="rounded border-border" />
-						<span class="text-sm text-text">Labels premium uniquement (P, A, ECO)</span>
-					</label>
-				</div>
-				<button
-					onclick={importMinergie}
-					disabled={importing || importMinergieCantons.length === 0}
 					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
 					style="background-color: var({activeColors.cssVar})"
 				>

@@ -80,7 +80,7 @@ export const config = {
 		},
 		sourcesChaudes: {
 			points: 2,
-			values: ['simap', 'sitg'],
+			values: ['simap'],
 		},
 		recence: [
 			{
@@ -121,16 +121,8 @@ export const config = {
 				label: 'search.ch (annuaire)',
 				enabled: true,
 			},
-			fosc: {
-				label: 'FOSC (feuille officielle)',
-				enabled: true,
-			},
 			regbl: {
 				label: 'RegBL (registre des bâtiments)',
-				enabled: true,
-			},
-			minergie: {
-				label: 'Minergie (bâtiments certifiés)',
 				enabled: true,
 			},
 		},

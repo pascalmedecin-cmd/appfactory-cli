@@ -241,7 +241,7 @@
 			</div>
 			<h3 class="text-lg font-semibold text-text mb-2">Trouvez vos premiers prospects</h3>
 			<p class="text-sm text-text-muted text-center max-w-lg mb-6">
-				Importez des entreprises depuis les sources publiques suisses (registre du commerce, marchés publics, feuille officielle, registre des bâtiments, Minergie). Qualifiez-les, puis convertissez les plus pertinentes en entreprises dans votre CRM.
+				Importez des entreprises depuis les sources publiques suisses (registre du commerce, marchés publics, registre des bâtiments). Qualifiez-les, puis convertissez les plus pertinentes en entreprises dans votre CRM.
 			</p>
 			<button
 				onclick={() => importModalOpen = true}

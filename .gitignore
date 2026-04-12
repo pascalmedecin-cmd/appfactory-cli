@@ -18,3 +18,4 @@ supabase/.temp/
 .claude/session-activations.json
 .vercel
 template/test-results/
+template/backups/

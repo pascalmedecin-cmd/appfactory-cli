@@ -1,17 +1,17 @@
 /**
  * Limites et quotas des API externes — source de vérité centralisée.
  *
- * search.ch : 1 000 req/mois, max 200 résultats/req (documenté officiellement)
- * Zefix : pas de limites publiées, convention communautaire 1 req/sec
+ * search.ch : 1 000 req/mois, max 20 résultats/req (documenté officiellement)
+ * Zefix : pas de limites publiées, maxEntries 250 (Swagger officiel), convention 1 req/sec
  * SIMAP : pas de limites publiées, accès public gratuit
- * FOSC/SHAB : accès via Zefix (sogc endpoints)
+ * RegBL : Level A public, fair use (geo.admin.ch)
  */
 
 export const API_LIMITS = {
 	search_ch: {
 		label: 'search.ch',
 		monthlyQuota: 1000,
-		maxResultsPerQuery: 200,
+		maxResultsPerQuery: 20,
 		/** Seuil d'avertissement (% du quota mensuel) */
 		warningThreshold: 0.8,
 		/** Seuil critique */
@@ -22,7 +22,7 @@ export const API_LIMITS = {
 	zefix: {
 		label: 'Zefix',
 		monthlyQuota: null as number | null, // pas de quota publié
-		maxResultsPerQuery: 500,
+		maxResultsPerQuery: 250,
 		batchDelay: 300,
 		/** Convention communautaire : 1 req/sec minimum */
 		minInterval: 1000,

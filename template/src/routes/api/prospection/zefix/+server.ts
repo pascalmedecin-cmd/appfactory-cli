@@ -68,7 +68,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const canton: string = body.canton;
 	const name: string = body.name ?? '';
 	const activeOnly: boolean = body.activeOnly ?? true;
-	const limit: number = Math.min(body.limit ?? 100, 500);
+	const limit: number = Math.min(body.limit ?? 100, 250);
 
 	if (!canton || !CANTON_MAP[canton]) {
 		return json({ error: 'Canton requis (GE, VD, VS, NE, FR, JU)' }, { status: 400 });

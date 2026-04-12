@@ -526,7 +526,7 @@
 									<tr><td>Canton prioritaire</td><td class="font-medium">+3</td><td>GE, VD, VS</td></tr>
 									<tr><td>Canton secondaire</td><td class="font-medium">+1</td><td>NE, FR, JU</td></tr>
 									<tr><td>Secteur cible</td><td class="font-medium">+3</td><td>Construction, architecture, HVAC, électricité...</td></tr>
-									<tr><td>Signal chaud</td><td class="font-medium">+2</td><td>Source SIMAP ou SITG</td></tr>
+									<tr><td>Signal chaud</td><td class="font-medium">+2</td><td>Source SIMAP (appel d'offres)</td></tr>
 									<tr><td>Récent (&lt; 30j)</td><td class="font-medium">+2</td><td>Date de publication</td></tr>
 									<tr><td>Récent (&lt; 90j)</td><td class="font-medium">+1</td><td>Date de publication</td></tr>
 									<tr><td>Téléphone disponible</td><td class="font-medium">+1</td><td>Numéro renseigné</td></tr>
@@ -542,7 +542,7 @@
 						</div>
 
 						<h3 class="aide-h3">Sources disponibles</h3>
-						<p>7 sources alimentent la prospection : registre du commerce (Zefix), marchés publics (SIMAP), annuaire (search.ch), géodonnées Genève (SITG), feuille officielle (FOSC), registre des bâtiments (RegBL) et bâtiments certifiés (Minergie). Utilisez <strong>Importer des prospects</strong> pour lancer un import depuis une source.</p>
+						<p>4 sources alimentent la prospection : registre du commerce (Zefix), marchés publics (SIMAP), registre des bâtiments (RegBL) et annuaire pour l'enrichissement (search.ch). Utilisez <strong>Importer des prospects</strong> pour lancer un import depuis une source.</p>
 
 						<h3 class="aide-h3">Filtrer et trier</h3>
 						<p>4 filtres disponibles en haut : source, canton, statut, score minimum. La barre de recherche filtre par texte dans toutes les colonnes. Cliquez un en-tête de colonne pour trier.</p>
@@ -556,8 +556,9 @@
 						<h3 class="aide-h3">Importer depuis des sources publiques</h3>
 						<p>Cliquez <strong>Importer</strong> en haut à droite. Choisissez une source :</p>
 						<ul class="aide-list">
-							<li><strong>Registre du commerce</strong> — Entreprises suisses avec but social, capital nominal et publications FOSC (source technique : API Zefix)</li>
+							<li><strong>Registre du commerce</strong> — Entreprises suisses avec but social, capital nominal et informations légales (source technique : API Zefix)</li>
 							<li><strong>Marchés publics</strong> — Appels d'offres construction par canton et période (source technique : SIMAP)</li>
+							<li><strong>Registre des bâtiments</strong> — Bâtiments autorisés ou en construction par canton (source technique : RegBL / geo.admin.ch)</li>
 							<li><strong>Annuaire</strong> — Enrichissement des numéros de téléphone (source technique : search.ch)</li>
 						</ul>
 						<p>Les doublons sont détectés automatiquement. Les leads écartés ou transférés ne sont jamais réimportés. Les leads sans canton reconnu sont exclus à l'import.</p>
@@ -579,7 +580,7 @@
 					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">notifications</span> Signaux d'affaires</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Comprendre les signaux</h3>
-						<p>Les signaux sont des informations détectées depuis des sources publiques : appels d'offres, permis de construire, créations d'entreprise, publications FOSC.</p>
+						<p>Les signaux sont des informations détectées depuis des sources publiques : appels d'offres, permis de construire, créations d'entreprise.</p>
 
 						<h3 class="aide-h3">Types de signaux</h3>
 						<div class="flex flex-wrap gap-2 my-3">

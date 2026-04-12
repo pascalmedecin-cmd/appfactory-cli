@@ -256,11 +256,16 @@
 						</label>
 					</div>
 
-					{#if useSearchCh && searchChEstimate.warning}
-						<div class="flex items-start gap-2.5 p-3 rounded-lg {searchChEstimate.percentOfMonthly >= 95 ? 'bg-danger-light border border-danger/20' : 'bg-warning-light border border-warning/20'}">
-							<span class="material-symbols-outlined text-[18px] mt-0.5 {searchChEstimate.percentOfMonthly >= 95 ? 'text-danger' : 'text-warning'}">warning</span>
+					{#if useSearchCh}
+						{@const pct = searchChEstimate.percentOfMonthly}
+						{@const critical = pct >= 95}
+						{@const warn = pct >= 50}
+						<div class="flex items-start gap-2.5 p-3 rounded-lg {critical ? 'bg-danger-light border border-danger/20' : warn ? 'bg-warning-light border border-warning/20' : 'bg-surface-alt border border-border'}">
+							<span class="material-symbols-outlined text-[18px] mt-0.5 {critical ? 'text-danger' : warn ? 'text-warning' : 'text-text-muted'}">{critical || warn ? 'warning' : 'info'}</span>
 							<div>
-								<p class="text-sm font-medium {searchChEstimate.percentOfMonthly >= 95 ? 'text-danger' : 'text-warning'}">{searchChEstimate.warning}</p>
+								<p class="text-sm font-medium {critical ? 'text-danger' : warn ? 'text-warning' : 'text-text'}">
+									{searchChEstimate.requests} requête{searchChEstimate.requests > 1 ? 's' : ''} search.ch ({pct.toFixed(1)}% du quota mensuel de 1000)
+								</p>
 								{#if batchTooLarge}
 									<p class="text-xs text-text-muted mt-1">Recommandation : enrichir par lots de {SEARCH_CH_SAFE_BATCH_SIZE} maximum.</p>
 								{/if}

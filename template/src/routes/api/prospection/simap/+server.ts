@@ -35,13 +35,18 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		return json({ error: 'Canton requis (GE, VD, VS, NE, FR, JU)' }, { status: 400 });
 	}
 
+	const searchTrim = search.trim();
+	if (searchTrim.length > 0 && searchTrim.length < 3) {
+		return json({ error: 'Mots-clés : saisir au moins 3 caractères ou laisser vide' }, { status: 400 });
+	}
+
 	// Build query params
 	const params = new URLSearchParams();
 	params.append('orderAddressCantons', canton);
 	params.append('projectSubTypes', 'construction');
 
-	if (search && search.length >= 3) {
-		params.append('search', search);
+	if (searchTrim.length >= 3) {
+		params.append('search', searchTrim);
 	}
 
 	// Date range
