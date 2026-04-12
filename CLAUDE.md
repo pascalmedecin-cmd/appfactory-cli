@@ -4,7 +4,7 @@
 **Derniere mise a jour :** 2026-04-12
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Audit 360 APIs prospection + refonte client-ready (42e session, 2026-04-12). Retrait complet FOSC, Minergie, SITG, LINDAS (sources non-contractuelles ou fantomes). Conserve 4 sources contractuelles : Zefix, SIMAP, RegBL (import) + search.ch (enrichissement). Pass HIGH UX : SIMAP validation min 3 chars client+serveur, search.ch quota toujours visible dans EnrichBatchModal, Zefix cap aligne 250 (Swagger). Base videe : prospect_leads + signaux_affaires (backup JSON local). 160/160 tests, 0 regression. Commit be517a5 (-616 lignes).
+**Session precedente :** Cron mensuel nettoyage CRM Zefix + test navigateur prospection (43e session, 2026-04-12). Route /api/cron/nettoyage-crm (batch 200, FIFO date_derniere_verification_zefix, archive auto CANCELLED/NOT_FOUND), migration entreprises (statut_archive + archivee_at + motif_archivage + date_derniere_verification_zefix + index FIFO), schedule vercel.json mensuel (0 3 1 * *), 4 tests motifArchivage. Test navigateur prospection post-refonte : 3 sources conformes (Zefix, SIMAP, RegBL), validation SIMAP 3 chars validee (vide/≥3 OK, 1-2 refus), 0 erreur console. Fix a11y : aria-pressed sur chips cantons RegBL. 164/164 tests, tsc clean. Commit b0301d7.
 
 ---
 
@@ -135,10 +135,10 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Zefix REST** : credentials configures (local .env + Vercel prod/preview), compte actif depuis 2026-04-08
 - **search.ch** : cle API configuree en local (.env) + Vercel prod+preview
 - **Securite** : OTP code email @filmpro.ch (validation domaine serveur, Google OAuth desactive, email provider active), ALLOWED_DOMAINS + ALLOWED_EMAILS env vars, session 7 jours max (cookie login_at), validation Zod sur toutes les form actions (19 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
-- **Tests** : Vitest (160 tests : scoring + 19/19 schemas + validation + extractForm + API sparql/helpers + 16 auth email + prospection-utils) + Playwright (5 tests e2e : navigation + auth redirect)
+- **Tests** : Vitest (164 tests : scoring + 19/19 schemas + validation + extractForm + API sparql/helpers + 16 auth email + prospection-utils) + Playwright (5 tests e2e : navigation + auth redirect)
 - **Accessibilité** : focus trap clavier (trapFocus action) sur toutes les modales et slide-outs, role="dialog" aria-modal="true", confirmations destructives via ConfirmModal (plus de window.confirm)
 - **Pagination serveur** : page prospection paginée côté serveur (URL params page/sort/dir/source/canton/statut/temp/q, Supabase count+range, 25/page)
-- **Cron** : `/api/cron/signaux` quotidien 6h (veille Zefix+SIMAP) + `/api/cron/alertes` quotidien 7h, securises par CRON_SECRET (configure Vercel prod), service role client (bypass RLS)
+- **Cron** : `/api/cron/signaux` quotidien 6h (veille Zefix+SIMAP) + `/api/cron/alertes` quotidien 7h + `/api/cron/nettoyage-crm` mensuel 3h le 1er (archive entreprises radiees Zefix, batch 200 FIFO), securises par CRON_SECRET (configure Vercel prod), service role client (bypass RLS)
 - **SUPABASE_SERVICE_ROLE_KEY** : configuree local .env + Vercel prod (preview non configure — projet sans repo Git lie)
 
 ## WORKFLOW APPFACTORY
@@ -259,8 +259,7 @@ Fichiers cles :
 
 - [ ] Ameliorer scoring temperature leads : reduire poids canton (+3 -> +2), ajouter +1 entreprise identifiee (enrichissement Zefix), passer a 3 niveaux (supprimer Faible), ajuster seuils - fichiers config.ts + scoring.ts + tests
 - [ ] Propager le template UX prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard) - audit termine, utils partagees pretes
-- [ ] Cron mensuel nettoyage CRM : appeler Zefix /company/uid/{uid} sur entreprises du CRM, flag archivee si radiee (remplace besoin FOSC)
-- [ ] Test navigateur import prospection post-refonte (Zefix, SIMAP, RegBL) + validation SIMAP 1-2 chars + quota search.ch visible
+- [ ] Test navigateur import reel Zefix/SIMAP/RegBL avec donnees (dedup + insertion + EnrichBatchModal quota avec leads en base) - UI/validations deja verifiees session 43
 - [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
 - [ ] Dashboard/reporting : requetes SQL agregees (pipeline par mois, taux conversion par source, activite 30/90j) + graphiques legers
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
