@@ -1,10 +1,10 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-12 (session 45)
+**Derniere mise a jour :** 2026-04-12 (session 46)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Audit 360 responsive page /prospection sur prod, 3 viewports (1440/768/375) avec seed [AUDIT] de 25 leads. 9 findings livres dans `docs/GOLDEN_STANDARDS_RESPONSIVE.md` (2 P0, 5 P1, 2 P2). P0 corriges + valides prod : F1 BatchActionsBar flex-wrap mobile (plus d'overflow horizontal, scrollWidth=innerWidth=500), F2 SlideOut header opaque + titre truncate + close 44x44px (plus de chevauchement). Bug annexe : build prod en echec depuis 2h (session 43) car `motifArchivage` n'est pas un export SvelteKit valide -> renomme en `_motifArchivage`. 164/164 tests. 8 golden rules formalisees pour propagation. Commits 23d104f + 7297255.
+**Session precedente :** Correction perimetre tache golden standards. User a signale que la tache 1b avait ete reduite au responsive alors que l'intention originale etait la charte complete (graphique, composants, etats, feedback, accessibilite, ton). Tache reecrite en 4 phases : extraction depuis /prospection (gabarit exclusif, wizards hors scope), redaction `docs/GOLDEN_STANDARDS.md` unique (absorbe et remplace `_RESPONSIVE.md`), audit delta par page, application page par page. A adresser session suivante. Pas de modif code, uniquement CLAUDE.md.
 
 ---
 
@@ -258,7 +258,15 @@ Fichiers cles :
 ## Prochaine session
 
 - [ ] Ameliorer scoring temperature leads : reduire poids canton (+3 -> +2), ajouter +1 entreprise identifiee (enrichissement Zefix), passer a 3 niveaux (supprimer Faible), ajuster seuils - fichiers config.ts + scoring.ts + tests
-- [ ] Propager golden standards responsive (docs/GOLDEN_STANDARDS_RESPONSIVE.md) aux 5 autres pages : contacts, entreprises, pipeline, signaux, dashboard (checklist en fin de doc)
+- [ ] Définir les golden standards UX/UI complets du CRM et les propager aux 5 autres pages
+  - **Gabarit de référence exclusif :** page `/prospection` du CRM FilmPro (wizards AppFactory hors périmètre)
+  - **Périmètre complet (pas que responsive) :** charte graphique (couleurs palette workflow premium ardoise/violet/ambre/sauge, typo Inter, tokens CSS, radius, shadows, accents FR obligatoires), layout et responsive, composants (boutons, cards workflow, modales, slide-outs, stepper, badges, tables, filtres multi-select, pagination serveur, batch actions bar), états (hover, focus, disabled, loading, empty, error, success), feedback (toasts, ConfirmModal destructives, messages scoped par contexte), micro-interactions et animations, accessibilité (focus trap, touch targets 44px, aria, contraste), ton et copie (labels explicites, pas d'« Autre », accents FR)
+  - **Phase 1 - Extraction :** scanner tous les fichiers touchant `/prospection` et ses composants pour extraire les règles UX/UI réellement appliquées (src/routes/prospection/, src/lib/components/prospection/*, composants partagés invoqués, tokens CSS utilisés)
+  - **Phase 2 - Rédaction :** produire `docs/GOLDEN_STANDARDS.md` (document unique et complet) qui absorbe et remplace `docs/GOLDEN_STANDARDS_RESPONSIVE.md` (à supprimer après fusion). Sections : charte graphique, layout/responsive, composants, états, feedback, micro-interactions, accessibilité, ton/copie, checklist de propagation par page, méthodologie d'audit réutilisable
+  - **Phase 3 - Audit delta :** tableau écarts vs standards par page (contacts, entreprises, pipeline, signaux, dashboard) avec sévérité + effort
+  - **Phase 4 - Application :** corrections page par page, 1 commit atomique par page, tests Vitest + Playwright après chaque
+  - **Durée estimée :** 3-4 sessions (Phase 1+2 = 1 session, Phase 3 = 0.5, Phase 4 = 1 par 2 pages)
+  - **Contexte historique :** la session 45 a livré un doc scopé « responsive uniquement » (9 findings layout/overflow sur 3 viewports), nom du fichier et formulation de la tâche ont verrouillé ce périmètre réduit sans signaler. Cette tâche rétablit le périmètre complet demandé à l'origine.
 - [ ] Traiter 7 findings P1/P2 restants audit responsive : accents prod (encoding?), Zefix 400 required, SIMAP dedup logging, sidebar burger < 1024px, tablette overflow, enrich compteur mobile, touch targets 44px checkboxes table
 - [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
 - [ ] Dashboard/reporting : requetes SQL agregees (pipeline par mois, taux conversion par source, activite 30/90j) + graphiques legers
