@@ -14,8 +14,8 @@
 </script>
 
 {#if selectedIds.size > 0}
-	<div class="flex items-center gap-3 p-3 rounded-xl border shadow-xs" style="background: linear-gradient(to right, var(--color-prosp-import-bg), var(--color-prosp-enrich-bg)); border-color: color-mix(in srgb, var(--color-prosp-import-border), transparent 75%)">
-		<span class="text-sm font-semibold text-text">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
+	<div class="flex flex-wrap items-center gap-2 md:gap-3 p-3 rounded-xl border shadow-xs" style="background: linear-gradient(to right, var(--color-prosp-import-bg), var(--color-prosp-enrich-bg)); border-color: color-mix(in srgb, var(--color-prosp-import-border), transparent 75%)">
+		<span class="text-sm font-semibold text-text w-full md:w-auto">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
 		<form method="POST" action="?/batchStatut" use:enhance={() => {
 			const count = selectedIds.size;
 			return async ({ result, update }) => {
@@ -57,7 +57,7 @@
 		</button>
 		<button
 			onclick={() => selectedIds = new Set()}
-			class="ml-auto text-sm text-text-muted hover:text-text cursor-pointer"
+			class="md:ml-auto text-sm text-text-muted hover:text-text cursor-pointer"
 		>
 			Désélectionner
 		</button>

@@ -41,11 +41,12 @@
 		use:trapFocus
 		transition:fly={{ x: 300, duration: 250 }}
 	>
-		<div class="h-(--header-height) flex items-center justify-between px-6 border-b border-border shrink-0">
-			<h2 class="text-lg font-semibold text-text">{title}</h2>
+		<div class="h-(--header-height) flex items-center justify-between gap-4 px-6 border-b border-border shrink-0 bg-white">
+			<h2 class="text-lg font-semibold text-text truncate" title={title}>{title}</h2>
 			<button
 				onclick={() => open = false}
-				class="text-text-muted hover:text-text cursor-pointer"
+				class="text-text-muted hover:text-text cursor-pointer shrink-0 inline-flex items-center justify-center w-11 h-11 -mr-2 rounded-lg"
+				aria-label="Fermer"
 			>
 				<span class="material-symbols-outlined text-[20px]">close</span>
 			</button>
