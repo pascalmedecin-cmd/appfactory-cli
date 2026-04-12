@@ -248,6 +248,8 @@
 						<div class="flex flex-wrap gap-2">
 							{#each cantons as c}
 								<button
+									type="button"
+									aria-pressed={importRegblCantons.includes(c)}
 									onclick={() => importRegblCantons = toggleCanton(importRegblCantons, c)}
 									class="px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors {importRegblCantons.includes(c) ? 'text-white' : 'bg-surface-alt text-text-muted hover:text-text'}"
 									style={importRegblCantons.includes(c) ? `background-color: var(${activeColors.cssVar})` : ''}

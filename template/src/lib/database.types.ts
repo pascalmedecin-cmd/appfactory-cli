@@ -189,10 +189,13 @@ export type Database = {
       entreprises: {
         Row: {
           adresse_siege: string | null
+          archivee_at: string | null
           canton: string | null
           date_derniere_modification: string | null
+          date_derniere_verification_zefix: string | null
           date_import_ajout: string | null
           id: string
+          motif_archivage: string | null
           notes_libres: string | null
           numero_ide: string | null
           raison_sociale: string
@@ -202,16 +205,20 @@ export type Database = {
           segment_cible: string | null
           site_web: string | null
           source: string | null
+          statut_archive: boolean
           statut_qualification: string | null
           tags: string | null
           taille_estimee: string | null
         }
         Insert: {
           adresse_siege?: string | null
+          archivee_at?: string | null
           canton?: string | null
           date_derniere_modification?: string | null
+          date_derniere_verification_zefix?: string | null
           date_import_ajout?: string | null
           id: string
+          motif_archivage?: string | null
           notes_libres?: string | null
           numero_ide?: string | null
           raison_sociale: string
@@ -221,16 +228,20 @@ export type Database = {
           segment_cible?: string | null
           site_web?: string | null
           source?: string | null
+          statut_archive?: boolean
           statut_qualification?: string | null
           tags?: string | null
           taille_estimee?: string | null
         }
         Update: {
           adresse_siege?: string | null
+          archivee_at?: string | null
           canton?: string | null
           date_derniere_modification?: string | null
+          date_derniere_verification_zefix?: string | null
           date_import_ajout?: string | null
           id?: string
+          motif_archivage?: string | null
           notes_libres?: string | null
           numero_ide?: string | null
           raison_sociale?: string
@@ -240,6 +251,7 @@ export type Database = {
           segment_cible?: string | null
           site_web?: string | null
           source?: string | null
+          statut_archive?: boolean
           statut_qualification?: string | null
           tags?: string | null
           taille_estimee?: string | null
