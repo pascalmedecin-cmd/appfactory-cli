@@ -7,7 +7,7 @@ const ZEFIX_BASE = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
 const BATCH_LIMIT = 200;
 const DELAY_MS = 150;
 
-export function motifArchivage(status: string | null): string | null {
+export function _motifArchivage(status: string | null): string | null {
 	if (status === 'CANCELLED') return 'Radiée du registre du commerce (Zefix)';
 	if (status === 'NOT_FOUND') return 'Introuvable dans Zefix';
 	return null;
@@ -92,7 +92,7 @@ export async function GET(event: RequestEvent) {
 			continue;
 		}
 
-		const motif = motifArchivage(status);
+		const motif = _motifArchivage(status);
 
 		if (motif) {
 			const { error: updErr } = await supabase

@@ -1,21 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { motifArchivage } from './+server';
+import { _motifArchivage } from './+server';
 
-describe('motifArchivage', () => {
+describe('_motifArchivage', () => {
 	it('archive les entreprises CANCELLED', () => {
-		expect(motifArchivage('CANCELLED')).toBe('Radiée du registre du commerce (Zefix)');
+		expect(_motifArchivage('CANCELLED')).toBe('Radiée du registre du commerce (Zefix)');
 	});
 
 	it('archive les entreprises NOT_FOUND', () => {
-		expect(motifArchivage('NOT_FOUND')).toBe('Introuvable dans Zefix');
+		expect(_motifArchivage('NOT_FOUND')).toBe('Introuvable dans Zefix');
 	});
 
 	it('conserve les entreprises ACTIVE', () => {
-		expect(motifArchivage('ACTIVE')).toBeNull();
+		expect(_motifArchivage('ACTIVE')).toBeNull();
 	});
 
 	it('conserve sur status inconnu ou null', () => {
-		expect(motifArchivage(null)).toBeNull();
-		expect(motifArchivage('UNKNOWN')).toBeNull();
+		expect(_motifArchivage(null)).toBeNull();
+		expect(_motifArchivage('UNKNOWN')).toBeNull();
 	});
 });
