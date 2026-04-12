@@ -1,10 +1,10 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-12 (session 44)
+**Derniere mise a jour :** 2026-04-12 (session 45)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Test navigateur import reel Zefix + SIMAP + RegBL (44e session, 2026-04-12). 2 bugs bloquants decouverts et corriges : (1) Zefix search endpoint ne retourne PAS canton/address/purpose/capitalNominal (seul l'endpoint detail /company/uid/{uid} les fournit) -> utiliser body.canton et ehraid pour URL, enrichissement remplit le reste ; (2) SIMAP orderAddress utilise cantonId (pas canton). + Accents manquants importe/ignore corriges dans messages Zefix + SIMAP. Tests reussis : Zefix 5/5 + enrichissement 3/5, SIMAP 20/20, RegBL 20/20, dedup 0/N sur re-import des 3 sources. 164/164 tests. Commit 18ce773.
+**Session precedente :** Audit 360 responsive page /prospection sur prod, 3 viewports (1440/768/375) avec seed [AUDIT] de 25 leads. 9 findings livres dans `docs/GOLDEN_STANDARDS_RESPONSIVE.md` (2 P0, 5 P1, 2 P2). P0 corriges + valides prod : F1 BatchActionsBar flex-wrap mobile (plus d'overflow horizontal, scrollWidth=innerWidth=500), F2 SlideOut header opaque + titre truncate + close 44x44px (plus de chevauchement). Bug annexe : build prod en echec depuis 2h (session 43) car `motifArchivage` n'est pas un export SvelteKit valide -> renomme en `_motifArchivage`. 164/164 tests. 8 golden rules formalisees pour propagation. Commits 23d104f + 7297255.
 
 ---
 
@@ -258,7 +258,8 @@ Fichiers cles :
 ## Prochaine session
 
 - [ ] Ameliorer scoring temperature leads : reduire poids canton (+3 -> +2), ajouter +1 entreprise identifiee (enrichissement Zefix), passer a 3 niveaux (supprimer Faible), ajuster seuils - fichiers config.ts + scoring.ts + tests
-- [ ] Propager le template UX prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard) - audit termine, utils partagees pretes
+- [ ] Propager golden standards responsive (docs/GOLDEN_STANDARDS_RESPONSIVE.md) aux 5 autres pages : contacts, entreprises, pipeline, signaux, dashboard (checklist en fin de doc)
+- [ ] Traiter 7 findings P1/P2 restants audit responsive : accents prod (encoding?), Zefix 400 required, SIMAP dedup logging, sidebar burger < 1024px, tablette overflow, enrich compteur mobile, touch targets 44px checkboxes table
 - [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
 - [ ] Dashboard/reporting : requetes SQL agregees (pipeline par mois, taux conversion par source, activite 30/90j) + graphiques legers
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
