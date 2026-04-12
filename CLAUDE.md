@@ -1,10 +1,10 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-12 (session 46)
+**Derniere mise a jour :** 2026-04-12 (session 47)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Correction perimetre tache golden standards. User a signale que la tache 1b avait ete reduite au responsive alors que l'intention originale etait la charte complete (graphique, composants, etats, feedback, accessibilite, ton). Tache reecrite en 4 phases : extraction depuis /prospection (gabarit exclusif, wizards hors scope), redaction `docs/GOLDEN_STANDARDS.md` unique (absorbe et remplace `_RESPONSIVE.md`), audit delta par page, application page par page. A adresser session suivante. Pas de modif code, uniquement CLAUDE.md.
+**Session precedente :** Traitement des 7 findings P1/P2 audit responsive. F7 sidebar burger breakpoint md(768)→lg(1023) sur layout+Header+app.css. F9 checkboxes table avec hit-area 44px via label+pseudo-element before:-inset-3, dropdowns filtres min-h-11 + options py-2.5. F8 bouton "Enrichir cette page" compteur en badge rond toujours visible mobile. F4 Zefix champ nom required UI (min 2 chars) + message explicatif + bouton disabled si invalide. F6 ImportModal reset importResult au change d'onglet. F5 SIMAP skipReasons detaille (missingId/existing/dismissed/unknownCanton) remonte dans la reponse + message utilisateur explicite avec causes. F3 charset=utf-8 force dans hooks.server.ts sur toutes les reponses JSON pour preserver accents en prod. 2 commits atomiques (b05c758 UI responsive, 9ce8d8f imports prospection). Tests 164/164, type-check 0 erreur. Deploy prod Vercel OK.
 
 ---
 
@@ -267,7 +267,7 @@ Fichiers cles :
   - **Phase 4 - Application :** corrections page par page, 1 commit atomique par page, tests Vitest + Playwright après chaque
   - **Durée estimée :** 3-4 sessions (Phase 1+2 = 1 session, Phase 3 = 0.5, Phase 4 = 1 par 2 pages)
   - **Contexte historique :** la session 45 a livré un doc scopé « responsive uniquement » (9 findings layout/overflow sur 3 viewports), nom du fichier et formulation de la tâche ont verrouillé ce périmètre réduit sans signaler. Cette tâche rétablit le périmètre complet demandé à l'origine.
-- [ ] Traiter 7 findings P1/P2 restants audit responsive : accents prod (encoding?), Zefix 400 required, SIMAP dedup logging, sidebar burger < 1024px, tablette overflow, enrich compteur mobile, touch targets 44px checkboxes table
+- [ ] Verifier en navigateur prod que les 7 fixes responsive tiennent (F3 accents apres charset fix, F7 burger 768/1023, F9 touch 44px, F8 badge compteur mobile, F4 Zefix required, F5 messages SIMAP, F6 reset onglets). Si F3 encore cassee -> investiguer encoding plus loin (build output, Vercel)
 - [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
 - [ ] Dashboard/reporting : requetes SQL agregees (pipeline par mois, taux conversion par source, activite 30/90j) + graphiques legers
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
