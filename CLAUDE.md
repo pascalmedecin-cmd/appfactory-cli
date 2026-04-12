@@ -1,10 +1,10 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-12
+**Derniere mise a jour :** 2026-04-12 (session 44)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Cron mensuel nettoyage CRM Zefix + test navigateur prospection (43e session, 2026-04-12). Route /api/cron/nettoyage-crm (batch 200, FIFO date_derniere_verification_zefix, archive auto CANCELLED/NOT_FOUND), migration entreprises (statut_archive + archivee_at + motif_archivage + date_derniere_verification_zefix + index FIFO), schedule vercel.json mensuel (0 3 1 * *), 4 tests motifArchivage. Test navigateur prospection post-refonte : 3 sources conformes (Zefix, SIMAP, RegBL), validation SIMAP 3 chars validee (vide/≥3 OK, 1-2 refus), 0 erreur console. Fix a11y : aria-pressed sur chips cantons RegBL. 164/164 tests, tsc clean. Commit b0301d7.
+**Session precedente :** Test navigateur import reel Zefix + SIMAP + RegBL (44e session, 2026-04-12). 2 bugs bloquants decouverts et corriges : (1) Zefix search endpoint ne retourne PAS canton/address/purpose/capitalNominal (seul l'endpoint detail /company/uid/{uid} les fournit) -> utiliser body.canton et ehraid pour URL, enrichissement remplit le reste ; (2) SIMAP orderAddress utilise cantonId (pas canton). + Accents manquants importe/ignore corriges dans messages Zefix + SIMAP. Tests reussis : Zefix 5/5 + enrichissement 3/5, SIMAP 20/20, RegBL 20/20, dedup 0/N sur re-import des 3 sources. 164/164 tests. Commit 18ce773.
 
 ---
 
@@ -259,7 +259,6 @@ Fichiers cles :
 
 - [ ] Ameliorer scoring temperature leads : reduire poids canton (+3 -> +2), ajouter +1 entreprise identifiee (enrichissement Zefix), passer a 3 niveaux (supprimer Faible), ajuster seuils - fichiers config.ts + scoring.ts + tests
 - [ ] Propager le template UX prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard) - audit termine, utils partagees pretes
-- [ ] Test navigateur import reel Zefix/SIMAP/RegBL avec donnees (dedup + insertion + EnrichBatchModal quota avec leads en base) - UI/validations deja verifiees session 43
 - [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
 - [ ] Dashboard/reporting : requetes SQL agregees (pipeline par mois, taux conversion par source, activite 30/90j) + graphiques legers
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
