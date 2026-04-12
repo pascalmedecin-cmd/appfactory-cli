@@ -80,7 +80,7 @@
 }
 
 /* Mobile : masquer le bloc titre de page (affiché dans le header sticky) */
-@media (max-width: 767px) {
+@media (max-width: 1023px) {
 	.page-header-block {
 		display: none;
 	}

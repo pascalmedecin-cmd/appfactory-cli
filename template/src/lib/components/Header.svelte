@@ -74,7 +74,7 @@
 		line-height: 1;
 	}
 
-	@media (max-width: 767px) {
+	@media (max-width: 1023px) {
 		header {
 			left: 0 !important;
 		}

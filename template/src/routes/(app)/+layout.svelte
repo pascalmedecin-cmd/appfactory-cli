@@ -69,7 +69,7 @@
 	}
 
 	/* Mobile : sidebar masquée, slide-in au toggle */
-	@media (max-width: 767px) {
+	@media (max-width: 1023px) {
 		main {
 			padding-left: 0 !important;
 		}

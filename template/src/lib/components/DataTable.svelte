@@ -155,7 +155,9 @@
 				<tr class="border-b border-border bg-surface-alt">
 					{#if selectable}
 						<th class="w-10 px-4 py-2.5">
-							<input type="checkbox" checked={selectedIds.size === paged.length && paged.length > 0} onchange={toggleSelectAll} />
+							<label class="relative inline-flex items-center justify-center w-5 h-5 cursor-pointer before:absolute before:content-[''] before:-inset-3">
+								<input type="checkbox" class="w-4 h-4 cursor-pointer" checked={selectedIds.size === paged.length && paged.length > 0} onchange={toggleSelectAll} aria-label="Tout sélectionner" />
+							</label>
 						</th>
 					{/if}
 					{#each columns as col}
@@ -196,7 +198,9 @@
 						>
 							{#if selectable}
 								<td class="w-10 px-4 py-2.5" onclick={(e) => e.stopPropagation()}>
-									<input type="checkbox" checked={selectedIds.has(row.id)} onchange={() => toggleSelect(row.id)} />
+									<label class="relative inline-flex items-center justify-center w-5 h-5 cursor-pointer before:absolute before:content-[''] before:-inset-3">
+										<input type="checkbox" class="w-4 h-4 cursor-pointer" checked={selectedIds.has(row.id)} onchange={() => toggleSelect(row.id)} aria-label="Sélectionner la ligne" />
+									</label>
 								</td>
 							{/if}
 							{#if rowSnippet}

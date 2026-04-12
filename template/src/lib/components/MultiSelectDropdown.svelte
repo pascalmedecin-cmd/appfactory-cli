@@ -64,7 +64,7 @@
 		bind:this={buttonEl}
 		type="button"
 		onclick={toggle}
-		class="flex items-center gap-2 w-full px-3 py-2 text-sm border border-border rounded-lg bg-white cursor-pointer transition-colors hover:border-accent/40"
+		class="flex items-center gap-2 w-full min-h-11 px-3 py-2.5 text-sm border border-border rounded-lg bg-white cursor-pointer transition-colors hover:border-accent/40"
 		title={tooltip}
 	>
 		{#if icon}
@@ -85,7 +85,7 @@
 				<button
 					type="button"
 					onclick={() => toggleOption(opt.value)}
-					class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left cursor-pointer transition-colors hover:bg-surface-alt"
+					class="w-full flex items-center gap-2.5 min-h-11 px-3 py-2.5 text-sm text-left cursor-pointer transition-colors hover:bg-surface-alt"
 				>
 					<span class="flex items-center justify-center w-4 h-4 border rounded {selected.includes(opt.value) ? 'border-accent bg-accent' : 'border-border-strong'}">
 						{#if selected.includes(opt.value)}

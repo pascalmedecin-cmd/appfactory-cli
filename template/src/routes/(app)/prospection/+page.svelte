@@ -175,7 +175,8 @@
 				title="Enrichit uniquement les {data.leads.filter(l => l.statut !== 'transfere').length} leads de cette page"
 			>
 				<span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
-				<span class="hidden sm:inline">Enrichir cette page ({data.leads.filter(l => l.statut !== 'transfere').length})</span>
+				<span class="hidden sm:inline">Enrichir cette page</span>
+				<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich/10 text-prosp-enrich">{data.leads.filter(l => l.statut !== 'transfere').length}</span>
 			</button>
 			<button
 				onclick={() => importModalOpen = true}
