@@ -10,19 +10,10 @@ interface ZefixCompany {
 	name: string;
 	uid: string; // CHE-xxx.xxx.xxx
 	chid: string;
-	ehpiId: number;
+	ehraid: number;
 	legalSeat: string;
-	canton: { cantonAbbreviation: string };
 	legalForm: { name: { fr?: string; de?: string } };
 	status: string;
-	purpose?: { fr?: string; de?: string; it?: string };
-	address?: {
-		street?: string;
-		houseNumber?: string;
-		swissZipCode?: string;
-		city?: string;
-	};
-	capitalNominal?: number;
 	sogcDate?: string; // Last FOSC publication date
 }
 
@@ -145,43 +136,45 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	const inserts = [];
 
+	// The Zefix search endpoint only returns identity fields — canton/address/purpose/capital
+	// come from the detail endpoint (/company/uid/{uid}) via the enrichment feature.
+	// Since we filter by canton in the search request, all results belong to `canton`.
+	const cantonCode = cantonToLead(canton);
+
 	for (const company of companies) {
 		if (!company.name || !company.uid) { skipped++; continue; }
 		if (existingIds.has(company.uid) || dismissedIds.has(company.uid)) { skipped++; continue; }
-
-		const purpose = company.purpose?.fr || company.purpose?.de || company.purpose?.it || '';
-		const cantonCode = cantonToLead(company.canton?.cantonAbbreviation ?? '');
 		if (!cantonCode) { skipped++; continue; }
-		const secteur = detectSecteur(`${purpose} ${company.name}`);
-		const addr = company.address;
+
+		const secteur = detectSecteur(company.name);
 
 		const scoreResult = calculerScore({
 			canton: cantonCode,
-			description: purpose,
+			description: '',
 			raison_sociale: company.name,
 			source: 'zefix',
 			date_publication: company.sogcDate ?? null,
 			telephone: null,
-			montant: company.capitalNominal ?? null,
+			montant: null,
 		});
 
 		inserts.push({
 			id: randomUUID(),
 			source: 'zefix' as const,
 			source_id: company.uid,
-			source_url: `https://www.zefix.admin.ch/fr/search/entity/list/firm/${company.ehpiId}`,
+			source_url: `https://www.zefix.admin.ch/fr/search/entity/list/firm/${company.ehraid}`,
 			raison_sociale: company.name,
 			nom_contact: null,
-			adresse: addr ? [addr.street, addr.houseNumber].filter(Boolean).join(' ') || null : null,
-			npa: addr?.swissZipCode ?? null,
-			localite: addr?.city ?? company.legalSeat ?? null,
+			adresse: null,
+			npa: null,
+			localite: company.legalSeat ?? null,
 			canton: cantonCode,
 			telephone: null,
 			site_web: null,
 			email: null,
 			secteur_detecte: secteur,
-			description: purpose.slice(0, 5000) || null,
-			montant: company.capitalNominal ?? null,
+			description: null,
+			montant: null,
 			date_publication: company.sogcDate ?? null,
 			score_pertinence: scoreResult.total,
 			statut: 'nouveau',
@@ -211,6 +204,6 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		imported,
 		skipped,
 		total_zefix: companies.length,
-		message: `${imported} lead${imported > 1 ? 's' : ''} importe${imported > 1 ? 's' : ''} depuis Zefix, ${skipped} ignore${skipped > 1 ? 's' : ''}.`,
+		message: `${imported} lead${imported > 1 ? 's' : ''} importé${imported > 1 ? 's' : ''} depuis Zefix, ${skipped} ignoré${skipped > 1 ? 's' : ''}.`,
 	});
 };

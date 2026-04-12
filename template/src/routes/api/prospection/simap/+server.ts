@@ -17,7 +17,7 @@ interface SimapProject {
 	procOfficeName: Translation;
 	orderAddress?: {
 		city?: string | Translation | null;
-		canton?: string | null;
+		cantonId?: string | null;
 		postalCode?: string | null;
 	} | null;
 }
@@ -115,7 +115,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		const title = translate(project.title);
 		const procOffice = translate(project.procOfficeName);
 		const addr = project.orderAddress;
-		const cantonCode = cantonToLead(addr?.canton);
+		const cantonCode = cantonToLead(addr?.cantonId);
 		if (!cantonCode) { skipped++; continue; }
 		const city = addr?.city ? translate(addr.city as Translation) : '';
 
@@ -178,6 +178,6 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		imported,
 		skipped,
 		total_simap: projects.length,
-		message: `${imported} appel${imported > 1 ? 's' : ''} d'offres importe${imported > 1 ? 's' : ''}, ${skipped} ignore${skipped > 1 ? 's' : ''}.`,
+		message: `${imported} appel${imported > 1 ? 's' : ''} d'offres importé${imported > 1 ? 's' : ''}, ${skipped} ignoré${skipped > 1 ? 's' : ''}.`,
 	});
 };
