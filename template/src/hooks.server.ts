@@ -98,6 +98,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	});
 
+	// Forcer charset=utf-8 sur les reponses JSON (accents FR)
+	const contentType = response.headers.get('content-type');
+	if (contentType && contentType.startsWith('application/json') && !contentType.includes('charset')) {
+		response.headers.set('content-type', 'application/json; charset=utf-8');
+	}
+
 	// Headers securite
 	response.headers.set('X-Frame-Options', 'DENY');
 	response.headers.set('X-Content-Type-Options', 'nosniff');

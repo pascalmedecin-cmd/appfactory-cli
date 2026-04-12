@@ -27,6 +27,8 @@
 		importSimapSearch.trim().length > 0 && importSimapSearch.trim().length < 3
 	);
 
+	let zefixNameInvalid = $derived(importZefixName.trim().length < 2);
+
 	const tabColorMap: Record<string, { cssVar: string; bgCssVar: string; borderCssVar: string }> = {
 		zefix:    { cssVar: '--color-prosp-import',  bgCssVar: '--color-prosp-import-bg',  borderCssVar: '--color-prosp-import-border' },
 		simap:    { cssVar: '--color-prosp-qualify',  bgCssVar: '--color-prosp-qualify-bg',  borderCssVar: '--color-prosp-qualify-border' },
@@ -65,9 +67,10 @@
 	}
 
 	function importZefix() {
+		if (zefixNameInvalid) return;
 		return importFromSource('/api/prospection/zefix', {
 			canton: importCanton,
-			name: importZefixName || undefined,
+			name: importZefixName.trim(),
 			activeOnly: true,
 			limit: Number(importLimit) || 100,
 		});
@@ -108,7 +111,7 @@
 			{#each tabs as tab}
 				{@const tc = tabColorMap[tab.key]}
 				<button
-					onclick={() => activeTab = tab.key}
+					onclick={() => { activeTab = tab.key; importResult = null; }}
 					class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer {activeTab === tab.key ? 'border' : 'text-text-muted hover:text-text hover:bg-surface-alt border border-transparent'}"
 					style={activeTab === tab.key ? `color: var(${tc.cssVar}); background: var(${tc.bgCssVar}); border-color: color-mix(in srgb, var(${tc.borderCssVar}), transparent 60%)` : ''}
 				>
@@ -152,17 +155,23 @@
 					</div>
 				</div>
 				<div>
-					<label class="block text-sm font-medium text-text mb-1">Filtrer par nom <span class="font-normal text-text-muted">(recommandé pour des résultats pertinents)</span></label>
+					<label class="block text-sm font-medium text-text mb-1">Filtrer par nom <span class="font-normal text-danger">*</span></label>
 					<input
 						type="text"
+						required
 						bind:value={importZefixName}
 						placeholder="Ex : construction, rénovation, architecte…"
-						class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
+						class="w-full px-3 py-1.5 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent {zefixNameInvalid ? 'border-danger' : 'border-border'}"
 					/>
+					{#if zefixNameInvalid}
+						<p class="text-xs text-danger mt-1">Saisir au moins 2 caractères. L'API Zefix exige un filtre par nom.</p>
+					{:else}
+						<p class="text-xs text-text-muted mt-1">L'API Zefix exige un filtre par nom pour éviter les requêtes trop larges.</p>
+					{/if}
 				</div>
 				<button
 					onclick={importZefix}
-					disabled={importing}
+					disabled={importing || zefixNameInvalid}
 					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
 					style="background-color: var({activeColors.cssVar})"
 				>

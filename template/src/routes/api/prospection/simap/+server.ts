@@ -105,18 +105,19 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	const now = new Date().toISOString();
 	let imported = 0;
-	let skipped = 0;
+	const skipReasons = { missingId: 0, existing: 0, dismissed: 0, unknownCanton: 0 };
 	const inserts = [];
 
 	for (const project of projects) {
-		if (!project.id || !project.title) { skipped++; continue; }
-		if (existingIds.has(project.id) || dismissedIds.has(project.id)) { skipped++; continue; }
+		if (!project.id || !project.title) { skipReasons.missingId++; continue; }
+		if (existingIds.has(project.id)) { skipReasons.existing++; continue; }
+		if (dismissedIds.has(project.id)) { skipReasons.dismissed++; continue; }
 
 		const title = translate(project.title);
 		const procOffice = translate(project.procOfficeName);
 		const addr = project.orderAddress;
 		const cantonCode = cantonToLead(addr?.cantonId);
-		if (!cantonCode) { skipped++; continue; }
+		if (!cantonCode) { skipReasons.unknownCanton++; continue; }
 		const city = addr?.city ? translate(addr.city as Translation) : '';
 
 		const description = [
@@ -161,6 +162,8 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		});
 	}
 
+	const skipped = skipReasons.missingId + skipReasons.existing + skipReasons.dismissed + skipReasons.unknownCanton;
+
 	// Batch insert
 	if (inserts.length > 0) {
 		const batchSize = 500;
@@ -168,16 +171,26 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			const batch = inserts.slice(i, i + batchSize);
 			const { error } = await locals.supabase.from('prospect_leads').insert(batch);
 			if (error) {
-				return json({ error: `Erreur insertion: ${error.message}`, imported, skipped }, { status: 500 });
+				return json({ error: `Erreur insertion: ${error.message}`, imported, skipped, skipReasons }, { status: 500 });
 			}
 			imported += batch.length;
 		}
 	}
 
+	const skipDetails: string[] = [];
+	if (skipReasons.existing > 0) skipDetails.push(`${skipReasons.existing} déjà en base`);
+	if (skipReasons.dismissed > 0) skipDetails.push(`${skipReasons.dismissed} écarté${skipReasons.dismissed > 1 ? 's' : ''} précédemment`);
+	if (skipReasons.unknownCanton > 0) skipDetails.push(`${skipReasons.unknownCanton} canton inconnu`);
+	if (skipReasons.missingId > 0) skipDetails.push(`${skipReasons.missingId} ID/titre manquant`);
+
+	const baseMsg = `${imported} appel${imported > 1 ? 's' : ''} d'offres importé${imported > 1 ? 's' : ''}, ${skipped} ignoré${skipped > 1 ? 's' : ''}`;
+	const message = skipDetails.length > 0 ? `${baseMsg} (${skipDetails.join(', ')}).` : `${baseMsg}.`;
+
 	return json({
 		imported,
 		skipped,
+		skipReasons,
 		total_simap: projects.length,
-		message: `${imported} appel${imported > 1 ? 's' : ''} d'offres importé${imported > 1 ? 's' : ''}, ${skipped} ignoré${skipped > 1 ? 's' : ''}.`,
+		message,
 	});
 };
