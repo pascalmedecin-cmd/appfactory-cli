@@ -1,10 +1,10 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-11
+**Derniere mise a jour :** 2026-04-12
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** UX prospection 3 ameliorations (41e session, 2026-04-11). Colonne Secteur remplacee par Localite (plus pertinent, Secteur reste dans slide-out). Modales Import et Alerte enrichies visuellement : couleurs par source (palette workflow ardoise/violet/ambre/sauge), bandeaux info colores, icones thematiques, pills cantons colores. Verifie navigateur (table 7 colonnes, 3 onglets import, modale alerte). 160/160 tests, 0 regression.
+**Session precedente :** Audit 360 APIs prospection + refonte client-ready (42e session, 2026-04-12). Retrait complet FOSC, Minergie, SITG, LINDAS (sources non-contractuelles ou fantomes). Conserve 4 sources contractuelles : Zefix, SIMAP, RegBL (import) + search.ch (enrichissement). Pass HIGH UX : SIMAP validation min 3 chars client+serveur, search.ch quota toujours visible dans EnrichBatchModal, Zefix cap aligne 250 (Swagger). Base videe : prospect_leads + signaux_affaires (backup JSON local). 160/160 tests, 0 regression. Commit be517a5 (-616 lignes).
 
 ---
 
@@ -259,6 +259,8 @@ Fichiers cles :
 
 - [ ] Ameliorer scoring temperature leads : reduire poids canton (+3 -> +2), ajouter +1 entreprise identifiee (enrichissement Zefix), passer a 3 niveaux (supprimer Faible), ajuster seuils - fichiers config.ts + scoring.ts + tests
 - [ ] Propager le template UX prospection aux autres pages (contacts, entreprises, pipeline, signaux, dashboard) - audit termine, utils partagees pretes
+- [ ] Cron mensuel nettoyage CRM : appeler Zefix /company/uid/{uid} sur entreprises du CRM, flag archivee si radiee (remplace besoin FOSC)
+- [ ] Test navigateur import prospection post-refonte (Zefix, SIMAP, RegBL) + validation SIMAP 1-2 chars + quota search.ch visible
 - [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
 - [ ] Dashboard/reporting : requetes SQL agregees (pipeline par mois, taux conversion par source, activite 30/90j) + graphiques legers
 - [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
