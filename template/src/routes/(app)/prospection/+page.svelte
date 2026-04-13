@@ -87,13 +87,13 @@
 	});
 
 	const columns = [
-		{ key: 'score_pertinence', label: 'Température', sortable: true, class: 'w-28' },
-		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true, class: 'min-w-[120px] max-w-[180px]' },
-		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-24' },
-		{ key: 'localite', label: 'Localité', sortable: true, class: 'w-40' },
-		{ key: 'source', label: 'Source', sortable: true, class: 'w-44' },
-		{ key: 'statut', label: 'Statut', sortable: true, class: 'w-32' },
-		{ key: 'date_import', label: 'Ajouté', sortable: true, class: 'w-28' },
+		{ key: 'score_pertinence', label: 'Température', sortable: true, class: 'w-[9%]' },
+		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true, class: 'w-[20%]' },
+		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[8%]' },
+		{ key: 'localite', label: 'Localité', sortable: true, class: 'w-[17%]' },
+		{ key: 'source', label: 'Source', sortable: true, class: 'w-[20%]' },
+		{ key: 'statut', label: 'Statut', sortable: true, class: 'w-[13%]' },
+		{ key: 'date_import', label: 'Ajouté', sortable: true, class: 'w-[10%]' },
 	];
 
 	function openDetail(lead: Lead) {
@@ -273,17 +273,17 @@
 		onSearchChange={(q) => goto(buildUrl({ q, page: 0 }), { invalidateAll: true, keepFocus: true })}
 	>
 		{#snippet row(lead, _i)}
-			<td class="px-4 py-2.5 w-28">
+			<td class="px-4 py-2.5 w-[9%]">
 				<Badge label={scoreLabel(lead.score_pertinence ?? 0)} variant={scoreBadgeVariant(lead.score_pertinence ?? 0)} dot={true} />
 			</td>
-			<td class="px-4 py-2.5 font-medium text-text min-w-[120px] max-w-[180px] truncate" title={lead.raison_sociale}>{lead.raison_sociale}</td>
-			<td class="px-4 py-2.5 text-text w-24">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '—'}</td>
-			<td class="px-4 py-2.5 text-text w-40 truncate" title={lead.localite ?? ''}>{lead.localite ?? '—'}</td>
-			<td class="px-4 py-2.5 text-text-muted text-xs w-44">{sourceLabel(lead.source)}</td>
-			<td class="px-4 py-2.5 w-32">
+			<td class="px-4 py-2.5 font-medium text-text w-[20%] truncate" title={lead.raison_sociale}>{lead.raison_sociale}</td>
+			<td class="px-4 py-2.5 text-text w-[8%]">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '—'}</td>
+			<td class="px-4 py-2.5 text-text w-[17%] truncate" title={lead.localite ?? ''}>{lead.localite ?? '—'}</td>
+			<td class="px-4 py-2.5 text-text-muted text-xs w-[20%] truncate">{sourceLabel(lead.source)}</td>
+			<td class="px-4 py-2.5 w-[13%]">
 				<Badge label={statutLabel(lead.statut)} variant={statutBadgeVariant(lead.statut)} dot={true} />
 			</td>
-			<td class="px-4 py-2.5 text-text-muted text-xs w-28">{relativeDate(lead.date_import)}</td>
+			<td class="px-4 py-2.5 text-text-muted text-xs w-[10%]">{relativeDate(lead.date_import)}</td>
 		{/snippet}
 	</DataTable>
 	{/if}
