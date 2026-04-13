@@ -130,7 +130,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Auth** : OTP code email 6 chiffres via Supabase (signInWithOtp sans emailRedirectTo), domaine @filmpro.ch valide cote serveur (form action), login 2 ecrans (email → code), session max 7 jours via cookie httpOnly login_at (hooks.server.ts), callback /auth/callback conserve pour compatibilite
 - **SMTP** : Resend (free plan permanent, 3000 emails/mois), domaine filmpro.ch verifie, sender noreply@filmpro.ch, DNS Infomaniak (DKIM + MX + SPF sur sous-domaine send)
 - **Runtime** : Node.js 22.x sur Vercel
-- **Supabase CLI** : v2.84.2, projet linke (fmflvjubjtpidvxwhqab)
+- **Supabase CLI** : v2.90.0, projet linke (fmflvjubjtpidvxwhqab)
 - **BDD** : 10 tables PostgreSQL (+ prospect_leads, recherches_sauvegardees), FK, index, RLS (authenticated full access), types TS generes
 - **Zefix REST** : credentials configures (local .env + Vercel prod/preview), compte actif depuis 2026-04-08
 - **search.ch** : cle API configuree en local (.env) + Vercel prod+preview

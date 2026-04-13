@@ -1,21 +1,71 @@
-node_modules/
+# Secrets / env
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*_secret*
+*_token*
+credentials.json
+service-account*.json
+.regen_secret
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Node / SvelteKit
+node_modules/
+.svelte-kit/
+.next/
+out/
 dist/
 build/
-.svelte-kit/
-.vercel/
-.DS_Store
-*.log
-.regen_secret
+*.tsbuildinfo
+.npm/
+.pnpm-store/
+
+# Supabase
+.supabase/
+supabase/.branches/
 supabase/.temp/
 **/supabase/.temp/
 
-# Skills empruntes (symlinks vers ~/.claude/skills-library/)
-# Generes par /plan-session, nettoyes par /fin-session
+# Vercel
+.vercel/
+.vercel
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude local
+.claude/settings.local.json
 .claude/skills-borrowed.txt
 .claude/session-activations.json
-.vercel
+
+# Template / tests / backups
 template/test-results/
 template/backups/
+
+# Previews / generated
+_previews/
+.env*.local
