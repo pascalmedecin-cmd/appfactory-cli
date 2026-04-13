@@ -1,10 +1,11 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-12 (session 47)
+**Derniere mise a jour :** 2026-04-13 (session reconnexion cloud post-crash)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Traitement des 7 findings P1/P2 audit responsive. F7 sidebar burger breakpoint md(768)→lg(1023) sur layout+Header+app.css. F9 checkboxes table avec hit-area 44px via label+pseudo-element before:-inset-3, dropdowns filtres min-h-11 + options py-2.5. F8 bouton "Enrichir cette page" compteur en badge rond toujours visible mobile. F4 Zefix champ nom required UI (min 2 chars) + message explicatif + bouton disabled si invalide. F6 ImportModal reset importResult au change d'onglet. F5 SIMAP skipReasons detaille (missingId/existing/dismissed/unknownCanton) remonte dans la reponse + message utilisateur explicite avec causes. F3 charset=utf-8 force dans hooks.server.ts sur toutes les reponses JSON pour preserver accents en prod. 2 commits atomiques (b05c758 UI responsive, 9ce8d8f imports prospection). Tests 164/164, type-check 0 erreur. Deploy prod Vercel OK.
+**Session precedente :** Reconnexion complete du local aux sources de verite cloud apres le crash du 2026-04-12. Forensic confirmé : stack = SvelteKit (pas Next.js), scaffold unique = template/, code intact sur GitHub (repo pascalmedecin-cmd/appfactory-cli, push 2026-04-12T11:09Z). Local remis a plat : move → clone repo → reinjection fichiers post-crash (venv, requirements, notes, blockers), merge .gitignore, bump Supabase CLI 2.84.2 → 2.90.0 dans doc. Connexions operationnelles : GitHub (gh auth), Vercel (project filmpro-crm linké, 9 secrets prod pullés dans .env.local), Supabase CLI (projet appfactory linké, ref fmflvjubjtpidvxwhqab). Build template verifie (2.91s). Commit 92b652a push main (auto-deploy Vercel declenche). Backup defensif : ~/Desktop/Claude_Archive/AppFactory_pre_reconnect_20260413_2130 + ~/Claude/Projets/AppFactory.OLD.
+**Session precedente -1 :** Traitement des 7 findings P1/P2 audit responsive (session 47 pre-crash). F7 sidebar burger md→lg, F9 touch targets 44px, F8 badge compteur mobile, F4 Zefix nom required, F6 ImportModal reset, F5 SIMAP skipReasons, F3 charset utf-8. Commits b05c758 + 9ce8d8f. Tests 164/164, deploy prod OK.
 
 ---
 
