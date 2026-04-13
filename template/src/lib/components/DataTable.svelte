@@ -150,7 +150,7 @@
 	{/if}
 
 	<div class="overflow-x-auto flex-1 min-h-0 overflow-y-auto">
-		<table class="w-full text-sm">
+		<table class="w-full text-sm table-fixed">
 			<thead class="sticky top-0 z-10">
 				<tr class="border-b border-border bg-surface-alt">
 					{#if selectable}
