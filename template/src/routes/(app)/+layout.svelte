@@ -42,7 +42,7 @@
 
 <!-- Sidebar unique : desktop = static, mobile = slide-in -->
 <div class="sidebar-wrapper" class:open={mobileMenuOpen}>
-	<Sidebar bind:collapsed={sidebarCollapsed} currentPath={page.url.pathname} />
+	<Sidebar bind:collapsed={sidebarCollapsed} currentPath={page.url.pathname} unreadIntelligence={data.unreadIntelligence} />
 </div>
 
 <Header user={data.user} {sidebarCollapsed} onMenuToggle={() => mobileMenuOpen = !mobileMenuOpen} pageTitle={pageTitle()} />
