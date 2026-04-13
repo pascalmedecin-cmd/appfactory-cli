@@ -1,11 +1,11 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML (cadrage + generate + deploy)
-**Derniere mise a jour :** 2026-04-13 (session reconnexion cloud post-crash)
+**Derniere mise a jour :** 2026-04-13 (session 48 : audit post-reconnexion + UX prospection table)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Reconnexion complete du local aux sources de verite cloud apres le crash du 2026-04-12. Forensic confirmé : stack = SvelteKit (pas Next.js), scaffold unique = template/, code intact sur GitHub (repo pascalmedecin-cmd/appfactory-cli, push 2026-04-12T11:09Z). Local remis a plat : move → clone repo → reinjection fichiers post-crash (venv, requirements, notes, blockers), merge .gitignore, bump Supabase CLI 2.84.2 → 2.90.0 dans doc. Connexions operationnelles : GitHub (gh auth), Vercel (project filmpro-crm linké, 9 secrets prod pullés dans .env.local), Supabase CLI (projet appfactory linké, ref fmflvjubjtpidvxwhqab). Build template verifie (2.91s). Commit 92b652a push main (auto-deploy Vercel declenche). Backup defensif : ~/Desktop/Claude_Archive/AppFactory_pre_reconnect_20260413_2130 + ~/Claude/Projets/AppFactory.OLD.
-**Session precedente -1 :** Traitement des 7 findings P1/P2 audit responsive (session 47 pre-crash). F7 sidebar burger md→lg, F9 touch targets 44px, F8 badge compteur mobile, F4 Zefix nom required, F6 ImportModal reset, F5 SIMAP skipReasons, F3 charset utf-8. Commits b05c758 + 9ce8d8f. Tests 164/164, deploy prod OK.
+**Session precedente :** Audit complet post-reconnexion cloud : git clean, build template OK (3.05s), Vitest 164/164, Vercel prod Ready, Supabase linké → reconstruction validée. Tâche 1c (vérif 7 fixes responsive) clôturée : F3 charset UTF-8 vérifié runtime, F4-F9 vérifiés via code source (commits b05c758 + 9ce8d8f). Validation visuelle 375px déléguée à Pascal en DevTools. UX prospection table : 4 itérations sur largeurs colonnes — bug racine identifié = `<table>` en `table-layout: auto` ignorait les `max-w` ; fix `table-fixed` sur DataTable + refonte propre des 7 colonnes en pourcentages (cohérent avec /contacts), raison sociale 20%, source 20%, localité 17%. Commits bfdde79, 63f0604, 50e86b3, 96f61c5 push main, Vercel auto-deploy.
+**Session precedente -1 :** Reconnexion complete du local aux sources de verite cloud apres le crash du 2026-04-12. Forensic confirmé : stack = SvelteKit, scaffold unique = template/, code intact sur GitHub. Local remis a plat : clone repo + reinjection fichiers post-crash, merge .gitignore. Connexions operationnelles : GitHub, Vercel (filmpro-crm), Supabase CLI (appfactory). Build verifie. Commit 92b652a push main.
 
 ---
 
@@ -258,8 +258,9 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [ ] Ameliorer scoring temperature leads : reduire poids canton (+3 -> +2), ajouter +1 entreprise identifiee (enrichissement Zefix), passer a 3 niveaux (supprimer Faible), ajuster seuils - fichiers config.ts + scoring.ts + tests
-- [ ] Définir les golden standards UX/UI complets du CRM et les propager aux 5 autres pages
+- [x] ~~Verifier en navigateur prod que les 7 fixes responsive tiennent~~ — Fait 2026-04-13 : F3 charset UTF-8 vérifié runtime + accents OK, F4-F9 vérifiés via code source (commits b05c758 + 9ce8d8f). Validation visuelle 375px en DevTools déléguée à Pascal
+- [ ] **[EXÉCUTABLE]** Ameliorer scoring temperature leads : reduire poids canton (+3 -> +2), ajouter +1 entreprise identifiee (enrichissement Zefix), passer a 3 niveaux (supprimer Faible), ajuster seuils - fichiers config.ts + scoring.ts + tests
+- [ ] **[EXÉCUTABLE]** Définir les golden standards UX/UI complets du CRM et les propager aux 5 autres pages
   - **Gabarit de référence exclusif :** page `/prospection` du CRM FilmPro (wizards AppFactory hors périmètre)
   - **Périmètre complet (pas que responsive) :** charte graphique (couleurs palette workflow premium ardoise/violet/ambre/sauge, typo Inter, tokens CSS, radius, shadows, accents FR obligatoires), layout et responsive, composants (boutons, cards workflow, modales, slide-outs, stepper, badges, tables, filtres multi-select, pagination serveur, batch actions bar), états (hover, focus, disabled, loading, empty, error, success), feedback (toasts, ConfirmModal destructives, messages scoped par contexte), micro-interactions et animations, accessibilité (focus trap, touch targets 44px, aria, contraste), ton et copie (labels explicites, pas d'« Autre », accents FR)
   - **Phase 1 - Extraction :** scanner tous les fichiers touchant `/prospection` et ses composants pour extraire les règles UX/UI réellement appliquées (src/routes/prospection/, src/lib/components/prospection/*, composants partagés invoqués, tokens CSS utilisés)
@@ -268,7 +269,7 @@ Fichiers cles :
   - **Phase 4 - Application :** corrections page par page, 1 commit atomique par page, tests Vitest + Playwright après chaque
   - **Durée estimée :** 3-4 sessions (Phase 1+2 = 1 session, Phase 3 = 0.5, Phase 4 = 1 par 2 pages)
   - **Contexte historique :** la session 45 a livré un doc scopé « responsive uniquement » (9 findings layout/overflow sur 3 viewports), nom du fichier et formulation de la tâche ont verrouillé ce périmètre réduit sans signaler. Cette tâche rétablit le périmètre complet demandé à l'origine.
-- [ ] Verifier en navigateur prod que les 7 fixes responsive tiennent (F3 accents apres charset fix, F7 burger 768/1023, F9 touch 44px, F8 badge compteur mobile, F4 Zefix required, F5 messages SIMAP, F6 reset onglets). Si F3 encore cassee -> investiguer encoding plus loin (build output, Vercel)
-- [ ] Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
-- [ ] Dashboard/reporting : requetes SQL agregees (pipeline par mois, taux conversion par source, activite 30/90j) + graphiques legers
-- [ ] Figma API a configurer : Personal Access Token + plugin MCP figma scope projet (en attente)
+  - **Ajout session 48 :** intégrer la règle « tables HTML : `table-fixed` obligatoire dès que des contraintes de largeur sont posées sur `<td>/<th>` (sinon `table-layout:auto` ignore les `max-w`) ; préférer les pourcentages `w-[X%]` aux pixels pour scale auto » — bug rencontré 2026-04-13 sur DataTable
+- [ ] **[EXÉCUTABLE]** Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
+- [ ] **[EXÉCUTABLE]** Dashboard/reporting : requetes SQL agregees (pipeline par mois, taux conversion par source, activite 30/90j) + graphiques legers
+- [ ] **[BLOQUÉ ← attente PAT Figma]** Figma API a configurer : Personal Access Token + plugin MCP figma scope projet
