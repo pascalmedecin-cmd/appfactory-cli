@@ -37,11 +37,11 @@
 		{/if}
 	</div>
 
-	<nav class="flex-1 px-3 py-1 overflow-y-auto space-y-0.5">
+	<nav class="flex-1 px-3 py-1 overflow-y-auto space-y-0.5 md:space-y-1.5">
 		{#each navItems as item}
 			<a
 				href={item.href}
-				class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors
+				class="flex items-center gap-3 px-3 py-2 md:py-2.5 text-sm md:text-[15px] rounded-lg transition-colors
 					{isActive(item.href) ? 'bg-white/15 text-white font-medium shadow-xs' : 'text-white/65 hover:bg-white/8 hover:text-white'}"
 				title={collapsed ? item.label : undefined}
 			>
