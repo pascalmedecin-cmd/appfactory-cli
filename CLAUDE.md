@@ -1,12 +1,12 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production
-**Derniere mise a jour :** 2026-04-14 (session 57 : Bloc 1 refonte /veille livré + recovery post-crash CLI)
+**Derniere mise a jour :** 2026-04-14 (session 58 : Sprint 3 P1 fraîcheur déterministe livré + diagnostic qualité sources LLM)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente -2 :** Test empirique Sprint 1 P0 validé. Édition W16 hallucinée (cas Plattix) supprimée en DB, regen via `GET /api/cron/intelligence` en 158s.
-**Session precedente -1 :** Sprint 2 P1 anti-hallucination (`ef8c6bf`) + fix robustesse images (`fe06883`) + cadrage refonte /veille validé (Option C).
-**Session precedente :** Bloc 1 refonte /veille complet livré. Commits `d9973d7` (Phase 1 prep : schéma Zod segment/actionability/search_terms par item, migration DB `items_hidden`, 222 tests), `f825b72` (Phase 2 UI : fil chrono + 4 badges primaires + 2 conditionnels + sticky bar + chips search_terms + détail item + recheck-historical + cron archivage 1 an), `f0c8243` (fix auth recheck-historical ajout allowlist). Recovery post-crash CLI : push prod effectué, régen empirique W16 (9 items avec nouveaux champs validés), recheck-historical lancé (4/9 items masqués URLs mortes), validation visuelle Chrome MCP OK (fil chrono + sticky bar + counts + badges + 2 dates + toggle archives + détail item). Plan détaillé source : `memory/project_refonte_veille_plan.md`.
+**Session precedente -2 :** Sprint 2 P1 anti-hallucination (`ef8c6bf`) + fix robustesse images (`fe06883`) + cadrage refonte /veille validé (Option C).
+**Session precedente -1 :** Bloc 1 refonte /veille complet livré (commits `d9973d7` + `f825b72` + `f0c8243`).
+**Session precedente :** Sprint 3 P1 fraîcheur déterministe livré (commit `023a328`). parse-date.ts + fetch-og-date.ts + intégration pipeline (fetch og-date parallèle, source of truth og > llm, hors fenêtre → maturity:speculatif + verification.date_ok:false + date_source). 24 nouveaux tests, 247/247 verts. Régen empirique W16 : **7/7 items date_ok:false** → filtre fonctionne techniquement, mais révèle que le LLM fabule massivement sur dates/URLs (2 items og-date=2026-01-19 présentés comme actuels, 4 url_ok=false dates LLM 2025, 1 W14 hors fenêtre 7j). 3 leviers identifiés à arbitrer : (1) élargir fenêtre 14j, (2) durcir prompt, (3) Sprint 4 pipeline 2 phases. Bloc 1 refonte /veille livré. Commits `d9973d7` (Phase 1 prep : schéma Zod segment/actionability/search_terms par item, migration DB `items_hidden`, 222 tests), `f825b72` (Phase 2 UI : fil chrono + 4 badges primaires + 2 conditionnels + sticky bar + chips search_terms + détail item + recheck-historical + cron archivage 1 an), `f0c8243` (fix auth recheck-historical ajout allowlist). Recovery post-crash CLI : push prod effectué, régen empirique W16 (9 items avec nouveaux champs validés), recheck-historical lancé (4/9 items masqués URLs mortes), validation visuelle Chrome MCP OK (fil chrono + sticky bar + counts + badges + 2 dates + toggle archives + détail item). Plan détaillé source : `memory/project_refonte_veille_plan.md`.
 
 ---
 
@@ -264,25 +264,29 @@ Fichiers cles :
 Tâches regroupées en blocs autonomes (validation visuelle via Chrome MCP + Puppeteer par Claude, pas de validation manuelle Pascal hors décisions design majeures non-cadrées).
 
 - [x] ~~Bloc 1 refonte /veille complète~~ — Fait 2026-04-14 session 57 (commits `d9973d7` + `f825b72` + `f0c8243`) : Phase 1 prep (schéma Zod segment/actionability/search_terms par item, prompt LLM, migration DB items_hidden + archived_at, 222 tests verts), Phase 2 UI (fil chrono + 4 badges primaires + 2 conditionnels + sticky bar horizontale + chips search_terms cliquables + 2 dates + détail item/[slug] + recheck-historical endpoint + cron archivage 1 an), fix auth recheck-historical (ajout allowlist hooks.server.ts). Recovery post-crash CLI : deploy prod, régen empirique W16 (9 items nouveaux champs OK), recheck-historical (4/9 masqués), validation visuelle Chrome MCP complète.
-- [ ] **[EXÉCUTABLE — Bloc 2 — autonome ~4h]** Pipeline LLM Veille (Sprint 3 + Sprint 4 batchés, cadrage session 53) :
-  - Sprint 3 P1 fraîcheur déterministe : parser dates post-hoc + `og:published_time` AVANT appel LLM, rejet items hors fenêtre temporelle
-  - Sprint 4 P2 prompt caching 90% + pipeline 2 phases température
+- [x] ~~Sprint 3 P1 fraîcheur déterministe~~ — Fait 2026-04-14 session 58 (commit `023a328`) : parse-date.ts + fetch-og-date.ts + intégration generate.ts (fetch og-date en parallèle url/entity verify, source of truth og > llm, hors fenêtre [dateStart, dateEnd] → maturity:speculatif + verification.date_ok:false + date_source 'og'|'llm'|'none'). Schéma Zod étendu (date_ok/date_source optionnels). 24 tests, 247/247 verts. Régen empirique W16 validée : filtre fonctionne 7/7, révèle pb qualité sources LLM → voir Bloc 2bis.
+- [ ] **[EXÉCUTABLE — Bloc 2 — autonome ~2h]** Sprint 4 P2 prompt caching 90% + pipeline 2 phases température (cadrage session 53). Restructurer tool/system pour max cacheable (role + mission + rules + output_format en bloc ephemeral, éviter cacher previous_titles + search results). Split call : phase 1 extraction/tri temp 0.0-0.2, phase 2 rédaction éditoriale temp 0.4-0.5.
+- [ ] **[EXÉCUTABLE — Bloc 2bis — autonome ~2h]** Corriger qualité sources LLM Veille (révélé par régen W16 session 58 : 7/7 items hors fenêtre temporelle, LLM fabule dates/URLs). Arbitrage 3 leviers : (1) élargir fenêtre à 14j dans `week-utils.ts` pour absorber délai indexation web_search, (2) durcir system prompt (rejet explicite article si date publication non vérifiable dans les 14 derniers jours + interdiction référencer article sans og:published_time présent), (3) pré-requis Sprint 4 : en phase 1, filtre programmatique des candidats hors fenêtre avant phase 2 rédaction, relance web_search si pool vide. Recommandation : combiner (1)+(2) en quick win, puis (3) via Sprint 4. Validation Chrome MCP régen W17 après correction.
 - [ ] **[EXÉCUTABLE — Bloc 3 — autonome ~2h]** Scoring v2 signaux Veille dans température : lead avec `source_intelligence_id` non nul → bonus proportionnel `filmpro_relevance`/`maturity` item Veille source (etabli+OK FilmPro +2, emergent +1, speculatif 0). Décroissance temporelle (>4 semaines → bonus perdu). Fichiers : scoring.ts (param `intelligenceSignal?: { maturity, complianceTag, weeksSince }`), config.ts, tests, propagation 3 endpoints import (join intelligence_items via source_intelligence_id avant scoring)
 - [ ] **[EXÉCUTABLE — Bloc 4 — autonome ~2h]** Auto-exécution prospection depuis term Veille : clic chip search_term → exécution serveur Zefix/SIMAP/REGBL directe → `/prospection` avec items importés. UX déjà spec'ée par Option C (chips cliquables). Validation parcours complet via Chrome MCP
+  - **Pré-requis** : revoir les termes de recherche proposés sur page Veille. Ils doivent être pertinents avec ce qui peut être filtré sur les APIs interrogées dans Prospection (Zefix/SIMAP/REGBL). Sinon aucun intérêt de créer un pont entre Veille et Prospection.
 - [ ] **[EXÉCUTABLE — Bloc 5 — autonome ~10h, 3-4 sessions]** Golden standards UX/UI complets CRM (gabarit exclusif `/prospection`, wizards AppFactory hors périmètre). Phase 1 extraction + Phase 2 rédaction `docs/GOLDEN_STANDARDS.md` (absorbe + remplace `docs/GOLDEN_STANDARDS_RESPONSIVE.md`) + Phase 3 audit delta par page + Phase 4 application (1 commit atomique par page, Vitest + Playwright + screenshots before/after Chrome MCP après chaque).
   - Périmètre complet : charte graphique (palette workflow ardoise/violet/ambre/sauge, Inter, tokens CSS, radius, shadows, accents FR), layout/responsive, composants (boutons, cards, modales, slide-outs, stepper, badges, tables, filtres multi-select, pagination serveur, batch actions bar), états (hover/focus/disabled/loading/empty/error/success), feedback (toasts, ConfirmModal, messages scoped), micro-interactions, accessibilité (focus trap, touch targets 44px, aria, contraste), ton/copie (labels explicites, pas d'« Autre », accents FR)
   - Règle table-fixed (session 48) : `table-fixed` obligatoire dès contraintes largeur sur td/th, préférer `w-[X%]` aux pixels
   - Ingérer palette /prospection ET patterns /veille refondue (Bloc 1 livré)
-- [ ] **[EXÉCUTABLE — Bloc 6 — autonome ~4h]** Import/export CSV + Dashboard/reporting (batchés, patterns SQL + tableaux partagés) :
+- [ ] **[EXÉCUTABLE — Bloc 6bis — autonome ~2h]** Qualité images /veille : scoring image source (dimensions min 600×315, ratio proche 1.91:1, détection placeholder/favicon, HEAD check content-type) à l'ingestion → stocker `image_quality_ok` en DB. Fallback hiérarchique : og:image valide → image banque locale par `segment` (6-8 visuels sobres, libres de droits) → gradient actuel. Validation Chrome MCP sur W16.
+- [ ] **[EXÉCUTABLE — Bloc 7 — autonome ~4h]** Import/export CSV + Dashboard/reporting (batchés, patterns SQL + tableaux partagés) :
   - CSV : export bouton Contacts/Entreprises/Leads (form action SELECT → CSV) + import validation Zod ligne par ligne + preview erreurs
   - Reporting : requêtes SQL agrégées (pipeline par mois, taux conversion par source, activité 30/90j) + graphiques légers
 - [ ] **[BLOQUÉ ← attente PAT Figma]** Figma API : Personal Access Token + plugin MCP figma scope projet
 
 ### Séquence
 
-1. **Bloc 2 — Pipeline LLM Veille** (Sprint 3 + 4 batchés)
-2. **Bloc 3 — Scoring v2 signaux Veille**
-3. **Bloc 4 — Auto-exécution prospection**
-4. **Bloc 5 — Golden standards UX/UI** (gros chantier 3-4 sessions)
-5. **Bloc 6 — CSV + Reporting** (batchés, indépendants)
+1. **Bloc 2bis — Corriger qualité sources LLM Veille** (prérequis crédibilité /veille avant Sprint 4)
+2. **Bloc 2 — Sprint 4 prompt caching + 2 phases température**
+3. **Bloc 3 — Scoring v2 signaux Veille**
+4. **Bloc 4 — Auto-exécution prospection** (pré-requis cohérence search_terms/APIs)
+5. **Bloc 5 — Golden standards UX/UI** (gros chantier 3-4 sessions)
+6. **Bloc 6bis — Qualité images /veille**
+7. **Bloc 7 — CSV + Reporting** (batchés, indépendants)
 - Hors séquence (BLOQUÉ) : Figma (attente PAT)
