@@ -6,6 +6,8 @@ import {
 } from './schema';
 import { INTELLIGENCE_SYSTEM_PROMPT, buildUserPrompt } from './prompt';
 import { enrichItemsWithOgImages } from './og-image';
+import { verifyUrl } from './url-verify';
+import { verifyEntitiesInText } from './entity-verify';
 
 const MODEL = 'claude-sonnet-4-6';
 const MAX_TOKENS = 16000;
@@ -269,7 +271,38 @@ export async function generateIntelligenceReport(
 		};
 	}
 
-	const enrichedItems = await enrichItemsWithOgImages(parsed.data.items);
+	// Verifications post-generation : URLs (HEAD check) + entites Zefix.
+	// Executees en parallele par item pour limiter la latence. Le resultat est
+	// ajoute dans item.verification. Les items en echec ne sont PAS retires
+	// automatiquement : ils sont bascules en maturity=speculatif et l'UI
+	// affiche un badge "Non verifie". Cela preserve la tracabilite cote DB.
+	const verifiedItems = await Promise.all(
+		parsed.data.items.map(async (item) => {
+			const [urlResult, entityResult] = await Promise.all([
+				verifyUrl(item.source.url),
+				verifyEntitiesInText(
+					[item.title, item.summary, item.deep_dive ?? ''].join('\n')
+				)
+			]);
+
+			const urlOk = urlResult.ok;
+			const entityOk = entityResult.entity_ok;
+			const needsFlag = !urlOk || entityOk === false;
+
+			return {
+				...item,
+				maturity: needsFlag ? ('speculatif' as const) : item.maturity,
+				verification: {
+					url_ok: urlOk,
+					url_reason: urlResult.reason,
+					entity_ok: entityOk,
+					unverified_entities: entityResult.unverified_entities
+				}
+			};
+		})
+	);
+
+	const enrichedItems = await enrichItemsWithOgImages(verifiedItems);
 	const enrichedReport: IntelligenceReport = { ...parsed.data, items: enrichedItems };
 
 	return { success: true, report: enrichedReport, raw: response! };

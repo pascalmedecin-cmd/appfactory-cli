@@ -185,6 +185,17 @@
 								<span class="px-2 py-0.5 rounded {MATURITY_STYLES[item.maturity]} text-[10px] font-semibold">
 									{MATURITY_LABELS[item.maturity]}
 								</span>
+								{#if item.verification && (item.verification.url_ok === false || item.verification.entity_ok === false)}
+									<span
+										class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-semibold inline-flex items-center gap-1"
+										title={item.verification.url_ok === false
+											? `Lien non vérifié (${item.verification.url_reason ?? 'erreur'})`
+											: `Entité(s) absente(s) de Zefix : ${item.verification.unverified_entities.join(', ')}`}
+									>
+										<span class="material-symbols-outlined text-[12px]">warning</span>
+										Non vérifié
+									</span>
+								{/if}
 							</div>
 							<h3 class="mag-display-3 text-xl md:text-[26px] mb-3 text-primary-dark">{item.title}</h3>
 							<p class="mag-body text-slate-700 mb-4">{item.summary}</p>

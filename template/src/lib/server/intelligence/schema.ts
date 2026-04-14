@@ -71,7 +71,17 @@ export const IntelligenceItemSchema = z.object({
 			.transform((s) => (s.includes('T') ? s : `${s}T00:00:00Z`))
 	}),
 	deep_dive: z.string().max(400).nullable(),
-	image_url: HttpsUrl.nullable()
+	image_url: HttpsUrl.nullable(),
+	// Champs de verification post-generation (ajoutes serveur, pas par le modele).
+	// Optionnels pour retro-compat avec les editions pre-Sprint 2.
+	verification: z
+		.object({
+			url_ok: z.boolean(),
+			url_reason: z.string().optional(),
+			entity_ok: z.boolean().nullable(),
+			unverified_entities: z.array(z.string()).default([])
+		})
+		.optional()
 });
 
 export const ImpactFilmproSchema = z.object({
