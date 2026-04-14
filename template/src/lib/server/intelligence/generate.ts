@@ -2,9 +2,16 @@ import Anthropic from '@anthropic-ai/sdk';
 import { env } from '$env/dynamic/private';
 import {
 	IntelligenceReportSchema,
-	type IntelligenceReport
+	IntelligenceCandidatesSchema,
+	type IntelligenceReport,
+	type IntelligenceCandidate
 } from './schema';
-import { INTELLIGENCE_SYSTEM_PROMPT, buildUserPrompt } from './prompt';
+import {
+	PHASE1_SYSTEM_PROMPT,
+	buildPhase1UserPrompt,
+	CANDIDATES_JSON_SCHEMA
+} from './prompt-phase1';
+import { PHASE2_SYSTEM_PROMPT, buildPhase2UserPrompt } from './prompt-phase2';
 import { enrichItemsWithOgImages } from './og-image';
 import { verifyUrl } from './url-verify';
 import { verifyEntitiesInText } from './entity-verify';
@@ -12,14 +19,13 @@ import { fetchPublishedDate } from './fetch-og-date';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
 
 const MODEL = 'claude-sonnet-4-6';
-const MAX_TOKENS = 16000;
+const MAX_TOKENS_PHASE1 = 8000;
+const MAX_TOKENS_PHASE2 = 16000;
+const TEMP_PHASE1 = 0.1;
+const TEMP_PHASE2 = 0.45;
 
-// JSON schema conforme au subset supporte par strict mode Anthropic :
-// - Pas de minLength/maxLength/minimum/maximum/multipleOf (400 error)
-// - Pas de minItems/maxItems autres que 0 ou 1
-// - additionalProperties: false obligatoire sur chaque objet
-// - Contraintes min/max exprimees en description (le SDK officiel fait pareil)
-// Doc: https://docs.anthropic.com/en/docs/build-with-claude/structured-outputs#json-schema-limitations
+// JSON schema emit_report (Phase 2) — conforme subset strict-mode Anthropic.
+// Contraintes min/max exprimées en description (cf. doc Anthropic structured outputs).
 const REPORT_JSON_SCHEMA = {
 	type: 'object',
 	additionalProperties: false,
@@ -46,13 +52,13 @@ const REPORT_JSON_SCHEMA = {
 				},
 				executive_summary: {
 					type: 'string',
-					description: 'Synthèse executive de 80 à 600 caractères'
+					description: 'Synthèse executive de 80 à 1200 caractères'
 				}
 			}
 		},
 		items: {
 			type: 'array',
-			description: 'Entre 1 et 10 items classés par pertinence descendante',
+			description: 'Entre 0 et 10 items classés par pertinence descendante',
 			items: {
 				type: 'object',
 				additionalProperties: false,
@@ -139,12 +145,12 @@ const REPORT_JSON_SCHEMA = {
 						type: 'string',
 						enum: ['action_directe', 'veille_active', 'a_surveiller'],
 						description:
-							'Pertinence FilmPro : action_directe = prospecter maintenant ; veille_active = suivre et nourrir le pipe ; a_surveiller = signal faible'
+							'action_directe = prospecter maintenant ; veille_active = suivre ; a_surveiller = signal faible'
 					},
 					search_terms: {
 						type: 'array',
 						description:
-							'Entre 2 et 4 termes de recherche directement exploitables (Zefix/SIMAP/search.ch) attachés à cet item',
+							'Entre 2 et 4 termes de recherche exploitables (Zefix/SIMAP/search.ch)',
 						items: {
 							type: 'string',
 							description: 'Terme de 3 à 120 caractères'
@@ -155,7 +161,7 @@ const REPORT_JSON_SCHEMA = {
 		},
 		impacts_filmpro: {
 			type: 'array',
-			description: 'Entre 1 et 3 impacts métier FilmPro',
+			description: 'Entre 0 et 3 impacts métier FilmPro',
 			items: {
 				type: 'object',
 				additionalProperties: false,
@@ -199,9 +205,14 @@ export interface GenerateResult {
 	report?: IntelligenceReport;
 	error?: string;
 	raw?: unknown;
+	/** Debug pipeline 2 phases : candidats bruts et candidats survivants au filtre. */
+	candidatesRaw?: IntelligenceCandidate[];
+	candidatesFiltered?: IntelligenceCandidate[];
 }
 
-async function callAnthropic(
+// ---------- Phase 1 : extraction candidats ----------
+
+async function callPhase1(
 	client: Anthropic,
 	input: GenerateInput
 ): Promise<Anthropic.Message> {
@@ -212,30 +223,183 @@ async function callAnthropic(
 			max_uses: 10
 		} as unknown as Anthropic.Tool,
 		{
-			name: 'emit_report',
+			name: 'emit_candidates',
 			description:
-				"Émettre l'édition hebdomadaire finale au format JSON strict conforme au schéma. À appeler UNE SEULE FOIS, en toute fin, après avoir effectué les recherches web nécessaires.",
-			input_schema: REPORT_JSON_SCHEMA as unknown as Anthropic.Tool.InputSchema,
-			// strict: true active le grammar-constrained sampling cote Anthropic
-			// (garantit conformite au JSON schema). GA sur Sonnet 4.6.
-			strict: true
+				"Émettre la liste brute de candidats (URL + date + hints). À appeler UNE SEULE FOIS en fin d'analyse, après les recherches web.",
+			input_schema: CANDIDATES_JSON_SCHEMA as unknown as Anthropic.Tool.InputSchema,
+			strict: true,
+			// cache_control sur le dernier tool → cache = system + tools complet.
+			cache_control: { type: 'ephemeral' }
 		} as unknown as Anthropic.Tool
 	];
 
 	return client.messages.create({
 		model: MODEL,
-		max_tokens: MAX_TOKENS,
+		max_tokens: MAX_TOKENS_PHASE1,
+		temperature: TEMP_PHASE1,
 		system: [
 			{
 				type: 'text',
-				text: INTELLIGENCE_SYSTEM_PROMPT,
+				text: PHASE1_SYSTEM_PROMPT,
 				cache_control: { type: 'ephemeral' }
 			}
 		],
 		tools,
-		messages: [{ role: 'user', content: buildUserPrompt(input) }]
+		messages: [{ role: 'user', content: buildPhase1UserPrompt(input) }]
 	});
 }
+
+async function runPhase1Candidates(
+	client: Anthropic,
+	input: GenerateInput
+): Promise<{ candidates: IntelligenceCandidate[]; raw: Anthropic.Message; error?: string }> {
+	let response: Anthropic.Message | undefined;
+	let emitBlock: Anthropic.ToolUseBlock | undefined;
+	let lastError = '';
+
+	for (let attempt = 0; attempt < 2; attempt++) {
+		response = await callPhase1(client, input);
+		emitBlock = response.content.find(
+			(b): b is Anthropic.ToolUseBlock =>
+				b.type === 'tool_use' && b.name === 'emit_candidates'
+		);
+		if (emitBlock) break;
+		lastError = `Phase 1 : modèle n'a pas appelé emit_candidates (stop_reason=${response.stop_reason})`;
+	}
+
+	if (!emitBlock || !response) {
+		return { candidates: [], raw: response!, error: lastError };
+	}
+
+	const parsed = IntelligenceCandidatesSchema.safeParse(emitBlock.input);
+	if (!parsed.success) {
+		return {
+			candidates: [],
+			raw: response,
+			error: `Phase 1 validation Zod échouée : ${parsed.error.message}`
+		};
+	}
+	return { candidates: parsed.data.candidates, raw: response };
+}
+
+// ---------- Filtre programmatique 14j ----------
+
+/**
+ * Vérifie chaque candidat en parallèle :
+ * - URL HEAD reachable (verifyUrl)
+ * - og:published_time si dispo (source of truth), sinon date LLM
+ * - Date dans fenêtre [windowStart, dateEnd]
+ * Retourne les candidats survivants, avec published_at normalisé à la date vérifiée.
+ */
+export async function filterCandidatesByWindow(
+	candidates: IntelligenceCandidate[],
+	windowStart: string,
+	windowEnd: string
+): Promise<IntelligenceCandidate[]> {
+	const results = await Promise.all(
+		candidates.map(async (c) => {
+			const [urlResult, ogDate] = await Promise.all([
+				verifyUrl(c.url),
+				fetchPublishedDate(c.url)
+			]);
+			if (!urlResult.ok) return null;
+
+			const llmDate = parseFlexibleDate(c.published_at);
+			const dateToCheck = ogDate ?? llmDate;
+			if (!dateToCheck) return null;
+			if (!isWithinWindow(dateToCheck, windowStart, windowEnd)) return null;
+
+			// Normaliser published_at à la date vérifiée (og prioritaire).
+			const normalized = dateToCheck.toISOString();
+			return { ...c, published_at: normalized };
+		})
+	);
+	return results.filter((c): c is IntelligenceCandidate => c !== null);
+}
+
+// ---------- Phase 2 : rédaction ----------
+
+async function callPhase2(
+	client: Anthropic,
+	input: GenerateInput,
+	candidates: IntelligenceCandidate[]
+): Promise<Anthropic.Message> {
+	const tools: Anthropic.Tool[] = [
+		{
+			type: 'web_search_20250305',
+			name: 'web_search',
+			max_uses: 3
+		} as unknown as Anthropic.Tool,
+		{
+			name: 'emit_report',
+			description:
+				"Émettre l'édition hebdomadaire finale conforme au schéma. À appeler UNE SEULE FOIS en toute fin.",
+			input_schema: REPORT_JSON_SCHEMA as unknown as Anthropic.Tool.InputSchema,
+			strict: true,
+			cache_control: { type: 'ephemeral' }
+		} as unknown as Anthropic.Tool
+	];
+
+	return client.messages.create({
+		model: MODEL,
+		max_tokens: MAX_TOKENS_PHASE2,
+		temperature: TEMP_PHASE2,
+		system: [
+			{
+				type: 'text',
+				text: PHASE2_SYSTEM_PROMPT,
+				cache_control: { type: 'ephemeral' }
+			}
+		],
+		tools,
+		messages: [
+			{
+				role: 'user',
+				content: buildPhase2UserPrompt({
+					weekLabel: input.weekLabel,
+					dateStart: input.dateStart,
+					dateEnd: input.dateEnd,
+					candidates,
+					previousTitles: input.previousTitles
+				})
+			}
+		]
+	});
+}
+
+async function runPhase2Report(
+	client: Anthropic,
+	input: GenerateInput,
+	candidates: IntelligenceCandidate[]
+): Promise<{ report?: IntelligenceReport; raw: Anthropic.Message; error?: string }> {
+	let response: Anthropic.Message | undefined;
+	let emitBlock: Anthropic.ToolUseBlock | undefined;
+	let lastError = '';
+
+	for (let attempt = 0; attempt < 2; attempt++) {
+		response = await callPhase2(client, input, candidates);
+		emitBlock = response.content.find(
+			(b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'emit_report'
+		);
+		if (emitBlock) break;
+		lastError = `Phase 2 : modèle n'a pas appelé emit_report (stop_reason=${response.stop_reason})`;
+	}
+
+	if (!emitBlock || !response) {
+		return { raw: response!, error: lastError };
+	}
+
+	const parsed = IntelligenceReportSchema.safeParse(emitBlock.input);
+	if (!parsed.success) {
+		return {
+			raw: response,
+			error: `Phase 2 validation Zod échouée : ${parsed.error.message}`
+		};
+	}
+	return { report: parsed.data, raw: response };
+}
+
+// ---------- Orchestrateur public ----------
 
 export async function generateIntelligenceReport(
 	input: GenerateInput
@@ -247,41 +411,37 @@ export async function generateIntelligenceReport(
 
 	const client = new Anthropic({ apiKey });
 
-	let response: Anthropic.Message;
-	let emitBlock: Anthropic.ToolUseBlock | undefined;
-	let lastError = '';
-
-	// Retry 1 fois si emit_report absent (le modele a pu terminer en text only
-	// apres des recherches web sans appeler l outil). Filet minimal, pas de boucle.
-	for (let attempt = 0; attempt < 2; attempt++) {
-		response = await callAnthropic(client, input);
-		emitBlock = response.content.find(
-			(b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'emit_report'
-		);
-		if (emitBlock) break;
-		lastError = `Modèle n'a pas appelé emit_report (stop_reason=${response.stop_reason})`;
+	// Phase 1 : extraction candidats bruts.
+	const phase1 = await runPhase1Candidates(client, input);
+	if (phase1.error) {
+		return { success: false, error: phase1.error, raw: phase1.raw };
 	}
 
-	if (!emitBlock) {
-		return { success: false, error: lastError, raw: response! };
-	}
+	// Filtre programmatique : URL + og-date + fenêtre 14j.
+	const windowStart = input.windowStart ?? input.dateStart;
+	const filtered = await filterCandidatesByWindow(
+		phase1.candidates,
+		windowStart,
+		input.dateEnd
+	);
 
-	const parsed = IntelligenceReportSchema.safeParse(emitBlock.input);
-	if (!parsed.success) {
+	// Phase 2 : rédaction éditoriale.
+	const phase2 = await runPhase2Report(client, input, filtered);
+	if (phase2.error || !phase2.report) {
 		return {
 			success: false,
-			error: `Validation Zod échouée : ${parsed.error.message}`,
-			raw: response!
+			error: phase2.error,
+			raw: phase2.raw,
+			candidatesRaw: phase1.candidates,
+			candidatesFiltered: filtered
 		};
 	}
 
-	// Verifications post-generation : URLs (HEAD check) + entites Zefix.
-	// Executees en parallele par item pour limiter la latence. Le resultat est
-	// ajoute dans item.verification. Les items en echec ne sont PAS retires
-	// automatiquement : ils sont bascules en maturity=speculatif et l'UI
-	// affiche un badge "Non verifie". Cela preserve la tracabilite cote DB.
+	// Vérifications post-génération (URLs + entités + date) : redondantes avec
+	// le filtre Phase 1 mais préservées pour compatibilité badge "Non vérifié"
+	// et traçabilité (item.verification conservé dans la DB).
 	const verifiedItems = await Promise.all(
-		parsed.data.items.map(async (item) => {
+		phase2.report.items.map(async (item) => {
 			const [urlResult, entityResult, ogDate] = await Promise.all([
 				verifyUrl(item.source.url),
 				verifyEntitiesInText(
@@ -290,16 +450,11 @@ export async function generateIntelligenceReport(
 				fetchPublishedDate(item.source.url)
 			]);
 
-			// Sprint 3 P1 : source of truth = og-date si présente, sinon date LLM.
 			const llmDate = parseFlexibleDate(item.source.published_at);
 			const dateToCheck = ogDate ?? llmDate;
-			const dateSource: 'og' | 'llm' | 'none' = ogDate
-				? 'og'
-				: llmDate
-					? 'llm'
-					: 'none';
+			const dateSource: 'og' | 'llm' | 'none' = ogDate ? 'og' : llmDate ? 'llm' : 'none';
 			const dateOk = dateToCheck
-				? isWithinWindow(dateToCheck, input.windowStart ?? input.dateStart, input.dateEnd)
+				? isWithinWindow(dateToCheck, windowStart, input.dateEnd)
 				: false;
 
 			const urlOk = urlResult.ok;
@@ -322,7 +477,16 @@ export async function generateIntelligenceReport(
 	);
 
 	const enrichedItems = await enrichItemsWithOgImages(verifiedItems);
-	const enrichedReport: IntelligenceReport = { ...parsed.data, items: enrichedItems };
+	const enrichedReport: IntelligenceReport = {
+		...phase2.report,
+		items: enrichedItems
+	};
 
-	return { success: true, report: enrichedReport, raw: response! };
+	return {
+		success: true,
+		report: enrichedReport,
+		raw: phase2.raw,
+		candidatesRaw: phase1.candidates,
+		candidatesFiltered: filtered
+	};
 }

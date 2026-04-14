@@ -99,6 +99,31 @@ export const IntelligenceItemSchema = z.object({
 		.optional()
 });
 
+// Phase 1 (Bloc 2) : sortie LLM extraction/tri brute avant filtre programmatique.
+// Format volontairement minimaliste : pas de rédaction éditoriale, juste les
+// faits nécessaires au filtre (URL + date + hints de classement).
+export const IntelligenceCandidateSchema = z.object({
+	url: HttpsUrl,
+	proposed_title: z.string().min(5).max(250),
+	published_at: z
+		.string()
+		.regex(
+			/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?Z?)?$/,
+			'Format attendu : YYYY-MM-DD ou YYYY-MM-DDTHH:MM:SSZ'
+		),
+	source_name: z.string().min(2).max(120),
+	excerpt: z.string().min(20).max(600),
+	theme: ThemeEnum,
+	geo_scope: GeoScopeEnum,
+	rationale: z.string().min(10).max(300)
+});
+
+export const IntelligenceCandidatesSchema = z.object({
+	candidates: z.array(IntelligenceCandidateSchema).min(0).max(20)
+});
+
+export type IntelligenceCandidate = z.infer<typeof IntelligenceCandidateSchema>;
+
 export const ImpactFilmproSchema = z.object({
 	axis: ImpactAxisEnum,
 	note: z.string().min(10).max(500)
