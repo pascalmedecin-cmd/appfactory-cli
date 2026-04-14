@@ -1,13 +1,13 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production
-**Derniere mise a jour :** 2026-04-14 (session 59 : Bloc 2bis qualité sources LLM livré — fenêtre 14j + prompt durci)
+**Derniere mise a jour :** 2026-04-14 (session 60 : Bloc 2 pipeline 2 phases Veille livré + validé en prod)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente -3 :** Sprint 2 P1 anti-hallucination (`ef8c6bf`) + fix robustesse images (`fe06883`) + cadrage refonte /veille validé (Option C).
-**Session precedente -2 :** Bloc 1 refonte /veille livré (`d9973d7` + `f825b72` + `f0c8243`) — schéma Zod segment/actionability/search_terms par item, fil chrono + badges + sticky bar + détail item + recheck-historical + cron archivage 1 an. Plan : `memory/project_refonte_veille_plan.md`.
-**Session precedente -1 :** Sprint 3 P1 fraîcheur déterministe (`023a328`) — parse-date.ts + fetch-og-date.ts + filtre fenêtre (og > llm source of truth, hors fenêtre → speculatif + date_ok:false). Régen W16 révèle LLM fabule dates/URLs → 3 leviers identifiés → Bloc 2bis ci-dessous.
-**Session precedente :** Bloc 2bis qualité sources LLM Veille livré (commits `122082b` + `3f75134` + `ad84222`). Fenêtre vérification élargie à 14j (nouvelle fn `extendedWindowStart` dans week-utils.ts, param `windowStart` optionnel sur `GenerateInput`), weekLabel ISO inchangé pour affichage. Prompt système durci : règle critique vérifiabilité date (og:published_time requis, rejet si absente/antérieure 14j/postérieure aujourd'hui). User prompt mentionne tolérance technique. Allowlist `/api/intelligence/trigger` ajoutée (même pattern que recheck-historical session 57, nécessaire pour régen manuelle CLI). 3 tests ajoutés sur `extendedWindowStart`, 250/250 verts. Régen empirique W16 : 2/5 items date_ok=true (vs 0/7 régen précédente), fenêtre 14j opérationnelle, og-date source of truth respectée (rank 3 og=2026-02-02 > llm=date fictive). 3/5 items LLM encore hors fenêtre → solution complète nécessite Sprint 4 (Bloc 2) avec filtre programmatique phase 1 avant phase 2 rédaction. Validation Chrome MCP : fil chrono affiche 5 items, counts (5/2/3) corrects, badges "Non vérifié" présents sur items url_ok=false ou date_ok=false.
+**Session precedente -3 :** Bloc 1 refonte /veille livré (schéma Zod segment/actionability/search_terms par item, fil chrono + badges + sticky bar).
+**Session precedente -2 :** Sprint 3 P1 fraîcheur déterministe (`023a328`) — parse-date.ts + fetch-og-date.ts + filtre fenêtre (og > llm source of truth).
+**Session precedente -1 :** Bloc 2bis qualité sources LLM livré (fenêtre 14j + prompt durci). Régen W16 : 2/5 date_ok=true.
+**Session precedente :** Bloc 2 pipeline 2 phases Veille livré (commit `be08674`). Refactor `generate.ts` en 3 étapes : Phase 1 extraction candidats (`prompt-phase1.ts`, temp 0.1, tool `emit_candidates`) → filtre programmatique `filterCandidatesByWindow` (HEAD URL + og-date + fenêtre 14j, normalise `published_at` à la date vérifiée) → Phase 2 rédaction éditoriale (`prompt-phase2.ts`, temp 0.45, tool `emit_report`). Schéma Zod `IntelligenceCandidateSchema` ajouté. `cache_control` ephemeral sur dernier tool de chaque phase (system+tools cachés). Tests 83/83 verts (suite intelligence), typecheck 3 erreurs pré-existantes inchangées. **Validation prod W16** : régen en 2m19s, 2 items publiés (vs 5 session 59), **2/2 date_ok=true (vs 2/5)**, 0 speculatif auto (vs 3/5), rank 2 sur og-date source of truth. Trade-off volume/qualité cohérent avec philosophie prompt. Observation : URLs retenues ont segment de chemin doublé (HEAD 200 OK) — à surveiller, potentiel bug Phase 2 réécrivant URL candidat. Détail : `notes/handoff.md`.
 
 ---
 
@@ -267,7 +267,7 @@ Tâches regroupées en blocs autonomes (validation visuelle via Chrome MCP + Pup
 - [x] ~~Bloc 1 refonte /veille complète~~ — Fait 2026-04-14 session 57 (commits `d9973d7` + `f825b72` + `f0c8243`) : Phase 1 prep (schéma Zod segment/actionability/search_terms par item, prompt LLM, migration DB items_hidden + archived_at, 222 tests verts), Phase 2 UI (fil chrono + 4 badges primaires + 2 conditionnels + sticky bar horizontale + chips search_terms cliquables + 2 dates + détail item/[slug] + recheck-historical endpoint + cron archivage 1 an), fix auth recheck-historical (ajout allowlist hooks.server.ts). Recovery post-crash CLI : deploy prod, régen empirique W16 (9 items nouveaux champs OK), recheck-historical (4/9 masqués), validation visuelle Chrome MCP complète.
 - [x] ~~Sprint 3 P1 fraîcheur déterministe~~ — Fait 2026-04-14 session 58 (commit `023a328`) : parse-date.ts + fetch-og-date.ts + intégration pipeline, 24 tests.
 - [x] ~~Bloc 2bis qualité sources LLM Veille~~ — Fait 2026-04-14 session 59 (commits `122082b` + `3f75134` + `ad84222`) : fenêtre 14j (`extendedWindowStart` + param `windowStart`), prompt système durci (règle critique vérifiabilité date, og:published_time requis), allowlist trigger, +3 tests 250/250. Régen W16 : 2/5 date_ok=true (vs 0/7). 3/5 items LLM encore hors fenêtre → solution complète = Sprint 4 (filtre programmatique phase 1).
-- [ ] **[EXÉCUTABLE — Bloc 2 — autonome ~2h]** Sprint 4 P2 prompt caching 90% + pipeline 2 phases température (cadrage session 53). Restructurer tool/system pour max cacheable (role + mission + rules + output_format en bloc ephemeral, éviter cacher previous_titles + search results). Split call : phase 1 extraction/tri temp 0.0-0.2 + **filtre programmatique candidats hors fenêtre 14j avant rédaction** (pré-requis identifié Bloc 2bis session 59), phase 2 rédaction éditoriale temp 0.4-0.5.
+- [x] ~~Bloc 2 pipeline 2 phases + prompt caching tools~~ — Fait 2026-04-14 session 60 (commit `be08674`) : refactor `generate.ts` en 3 étapes (Phase 1 extraction `prompt-phase1.ts` temp 0.1 + filtre `filterCandidatesByWindow` HEAD+og+14j + Phase 2 rédaction `prompt-phase2.ts` temp 0.45). Schéma Zod `IntelligenceCandidateSchema`. `cache_control` ephemeral sur dernier tool des 2 phases. Tests 83/83 verts. Validation prod W16 : 2/2 date_ok=true (vs 2/5), 0 speculatif auto, rank 2 sur og-date source of truth. Détail `notes/handoff.md`.
 - [ ] **[EXÉCUTABLE — Bloc 3 — autonome ~2h]** Scoring v2 signaux Veille dans température : lead avec `source_intelligence_id` non nul → bonus proportionnel `filmpro_relevance`/`maturity` item Veille source (etabli+OK FilmPro +2, emergent +1, speculatif 0). Décroissance temporelle (>4 semaines → bonus perdu). Fichiers : scoring.ts (param `intelligenceSignal?: { maturity, complianceTag, weeksSince }`), config.ts, tests, propagation 3 endpoints import (join intelligence_items via source_intelligence_id avant scoring)
 - [ ] **[EXÉCUTABLE — Bloc 4 — autonome ~2h]** Auto-exécution prospection depuis term Veille : clic chip search_term → exécution serveur Zefix/SIMAP/REGBL directe → `/prospection` avec items importés. UX déjà spec'ée par Option C (chips cliquables). Validation parcours complet via Chrome MCP
   - **Pré-requis** : revoir les termes de recherche proposés sur page Veille. Ils doivent être pertinents avec ce qui peut être filtré sur les APIs interrogées dans Prospection (Zefix/SIMAP/REGBL). Sinon aucun intérêt de créer un pont entre Veille et Prospection.
@@ -283,10 +283,9 @@ Tâches regroupées en blocs autonomes (validation visuelle via Chrome MCP + Pup
 
 ### Séquence
 
-1. **Bloc 2 — Sprint 4 prompt caching + 2 phases température** (inclut filtre programmatique 14j pré-requis Bloc 2bis)
-2. **Bloc 3 — Scoring v2 signaux Veille**
-3. **Bloc 4 — Auto-exécution prospection** (pré-requis cohérence search_terms/APIs)
-4. **Bloc 5 — Golden standards UX/UI** (gros chantier 3-4 sessions)
-5. **Bloc 6bis — Qualité images /veille**
-6. **Bloc 7 — CSV + Reporting** (batchés, indépendants)
+1. **Bloc 3 — Scoring v2 signaux Veille**
+2. **Bloc 4 — Auto-exécution prospection** (pré-requis cohérence search_terms/APIs)
+3. **Bloc 5 — Golden standards UX/UI** (gros chantier 3-4 sessions)
+4. **Bloc 6bis — Qualité images /veille**
+5. **Bloc 7 — CSV + Reporting** (batchés, indépendants)
 - Hors séquence (BLOQUÉ) : Figma (attente PAT)
