@@ -90,7 +90,11 @@ export const IntelligenceItemSchema = z.object({
 			url_ok: z.boolean(),
 			url_reason: z.string().optional(),
 			entity_ok: z.boolean().nullable(),
-			unverified_entities: z.array(z.string()).default([])
+			unverified_entities: z.array(z.string()).default([]),
+			// Sprint 3 P1 fraîcheur déterministe : date_ok=false → item hors fenêtre
+			// temporelle de la semaine cible. date_source indique l'origine de la date.
+			date_ok: z.boolean().optional(),
+			date_source: z.enum(['og', 'llm', 'none']).optional()
 		})
 		.optional()
 });

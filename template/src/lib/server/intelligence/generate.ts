@@ -8,6 +8,8 @@ import { INTELLIGENCE_SYSTEM_PROMPT, buildUserPrompt } from './prompt';
 import { enrichItemsWithOgImages } from './og-image';
 import { verifyUrl } from './url-verify';
 import { verifyEntitiesInText } from './entity-verify';
+import { fetchPublishedDate } from './fetch-og-date';
+import { parseFlexibleDate, isWithinWindow } from './parse-date';
 
 const MODEL = 'claude-sonnet-4-6';
 const MAX_TOKENS = 16000;
@@ -278,16 +280,29 @@ export async function generateIntelligenceReport(
 	// affiche un badge "Non verifie". Cela preserve la tracabilite cote DB.
 	const verifiedItems = await Promise.all(
 		parsed.data.items.map(async (item) => {
-			const [urlResult, entityResult] = await Promise.all([
+			const [urlResult, entityResult, ogDate] = await Promise.all([
 				verifyUrl(item.source.url),
 				verifyEntitiesInText(
 					[item.title, item.summary, item.deep_dive ?? ''].join('\n')
-				)
+				),
+				fetchPublishedDate(item.source.url)
 			]);
+
+			// Sprint 3 P1 : source of truth = og-date si présente, sinon date LLM.
+			const llmDate = parseFlexibleDate(item.source.published_at);
+			const dateToCheck = ogDate ?? llmDate;
+			const dateSource: 'og' | 'llm' | 'none' = ogDate
+				? 'og'
+				: llmDate
+					? 'llm'
+					: 'none';
+			const dateOk = dateToCheck
+				? isWithinWindow(dateToCheck, input.dateStart, input.dateEnd)
+				: false;
 
 			const urlOk = urlResult.ok;
 			const entityOk = entityResult.entity_ok;
-			const needsFlag = !urlOk || entityOk === false;
+			const needsFlag = !urlOk || entityOk === false || !dateOk;
 
 			return {
 				...item,
@@ -296,7 +311,9 @@ export async function generateIntelligenceReport(
 					url_ok: urlOk,
 					url_reason: urlResult.reason,
 					entity_ok: entityOk,
-					unverified_entities: entityResult.unverified_entities
+					unverified_entities: entityResult.unverified_entities,
+					date_ok: dateOk,
+					date_source: dateSource
 				}
 			};
 		})
