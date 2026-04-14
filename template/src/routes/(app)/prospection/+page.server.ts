@@ -19,6 +19,13 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const filterTemperatures = url.searchParams.getAll('temp');
 	const search = url.searchParams.get('q') ?? '';
 
+	// Tracabilite Veille -> Prospection : propagee depuis /veille/[id] via URL.
+	// UUID = tracable vers intelligence_reports, term = libre (max 200).
+	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+	const rawFromIntelligence = url.searchParams.get('from_intelligence');
+	const fromIntelligence = rawFromIntelligence && UUID_RE.test(rawFromIntelligence) ? rawFromIntelligence : null;
+	const fromTerm = (url.searchParams.get('from_term') ?? '').slice(0, 200) || null;
+
 	let query = locals.supabase
 		.from('prospect_leads')
 		.select('*', { count: 'exact' });
@@ -29,9 +36,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	if (filterStatuts.length > 0) query = query.in('statut', filterStatuts);
 	if (filterTemperatures.length > 0) {
 		const ranges: string[] = [];
-		if (filterTemperatures.includes('chaud')) ranges.push('score_pertinence.gte.8');
-		if (filterTemperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.5,score_pertinence.lte.7)');
-		if (filterTemperatures.includes('froid')) ranges.push('score_pertinence.lte.4');
+		if (filterTemperatures.includes('chaud')) ranges.push('score_pertinence.gte.7');
+		if (filterTemperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.4,score_pertinence.lte.6)');
+		if (filterTemperatures.includes('froid')) ranges.push('score_pertinence.lte.3');
 		if (ranges.length > 0) query = query.or(ranges.join(','));
 	}
 	if (search) {
@@ -81,6 +88,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		search,
 		entreprises: entreprisesRes.data ?? [],
 		recherches: recherchesRes.data ?? [],
+		fromIntelligence,
+		fromTerm,
 	};
 };
 
@@ -92,6 +101,12 @@ export const actions: Actions = {
 		if (!parsed.success) return fail(400, { error: parsed.error });
 
 		const d = parsed.data;
+
+		// Tracabilite Veille -> Prospection (form fields optionnels, hors schema Zod).
+		const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+		const rawFromI = (form.get('from_intelligence') as string) ?? '';
+		const fromIntelligence = rawFromI && UUID_RE.test(rawFromI) ? rawFromI : null;
+		const fromTerm = ((form.get('from_term') as string) ?? '').slice(0, 200) || null;
 
 		const scoreResult = calculerScore({
 			canton: d.canton || null,
@@ -153,6 +168,8 @@ export const actions: Actions = {
 			statut: 'nouveau',
 			date_import: now(),
 			date_modification: now(),
+			source_intelligence_id: fromIntelligence,
+			source_intelligence_term: fromTerm,
 		});
 
 		return dbFail(error) ?? { success: true };

@@ -49,6 +49,10 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const cantons: string[] = body.cantons ?? ['GE', 'VD'];
 	const limit: number = Math.min(body.limit ?? 50, 200);
 
+	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+	const fromIntelligence = typeof body.from_intelligence === 'string' && UUID_RE.test(body.from_intelligence) ? body.from_intelligence : null;
+	const fromTerm = typeof body.from_term === 'string' ? body.from_term.slice(0, 200) || null : null;
+
 	const validCantons = cantons.filter((c) => CANTON_MAP[c]);
 	if (validCantons.length === 0) {
 		return json({ error: 'Au moins un canton romand requis (GE, VD, VS, NE, FR, JU)' }, { status: 400 });
@@ -179,6 +183,8 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			statut: 'nouveau',
 			date_import: now,
 			date_modification: now,
+			source_intelligence_id: fromIntelligence,
+			source_intelligence_term: fromTerm,
 		});
 
 		existingIds.add(egid);

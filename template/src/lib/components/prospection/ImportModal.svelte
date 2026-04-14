@@ -7,9 +7,16 @@
 
 	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
 
-	let { open = $bindable(false), importResult = $bindable<{ message: string; type: 'success' | 'error' } | null>(null) }: {
+	let {
+		open = $bindable(false),
+		importResult = $bindable<{ message: string; type: 'success' | 'error' } | null>(null),
+		fromIntelligence = null,
+		fromTerm = null,
+	}: {
 		open: boolean;
 		importResult: { message: string; type: 'success' | 'error' } | null;
+		fromIntelligence?: string | null;
+		fromTerm?: string | null;
 	} = $props();
 
 	let importing = $state(false);
@@ -46,11 +53,16 @@
 	async function importFromSource(url: string, body: Record<string, unknown>) {
 		importing = true;
 		importResult = null;
+		const bodyWithTrace = {
+			...body,
+			...(fromIntelligence ? { from_intelligence: fromIntelligence } : {}),
+			...(fromTerm ? { from_term: fromTerm } : {}),
+		};
 		try {
 			const resp = await fetch(url, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify(body),
+				body: JSON.stringify(bodyWithTrace),
 			});
 			const result = await resp.json();
 			if (resp.ok) {

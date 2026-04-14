@@ -297,7 +297,7 @@
 <AlerteModal bind:open={alerteModalOpen} />
 
 <!-- Modal import sources -->
-<ImportModal bind:open={importModalOpen} bind:importResult />
+<ImportModal bind:open={importModalOpen} bind:importResult fromIntelligence={data.fromIntelligence} fromTerm={data.fromTerm} />
 
 <!-- Modal enrichissement batch -->
 <EnrichBatchModal

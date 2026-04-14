@@ -31,6 +31,10 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const search: string = body.search ?? '';
 	const daysBack: number = Math.min(body.daysBack ?? 30, 365);
 
+	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+	const fromIntelligence = typeof body.from_intelligence === 'string' && UUID_RE.test(body.from_intelligence) ? body.from_intelligence : null;
+	const fromTerm = typeof body.from_term === 'string' ? body.from_term.slice(0, 200) || null : null;
+
 	if (!canton || !CANTON_MAP[canton]) {
 		return json({ error: 'Canton requis (GE, VD, VS, NE, FR, JU)' }, { status: 400 });
 	}
@@ -159,6 +163,8 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			statut: 'nouveau',
 			date_import: now,
 			date_modification: now,
+			source_intelligence_id: fromIntelligence,
+			source_intelligence_term: fromTerm,
 		});
 	}
 
