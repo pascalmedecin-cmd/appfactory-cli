@@ -1,0 +1,218 @@
+<script lang="ts">
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import type { PageData } from './$types';
+	import type { Actionability, Segment, Theme, Maturity } from '$lib/server/intelligence/schema';
+
+	let { data }: { data: PageData } = $props();
+
+	$effect(() => {
+		$pageSubtitle = `Édition ${data.report.week_label}`;
+	});
+
+	const ACTIONABILITY_LABELS: Record<Actionability, string> = {
+		action_directe: 'Action directe',
+		veille_active: 'Veille active',
+		a_surveiller: 'À surveiller'
+	};
+
+	const SEGMENT_LABELS: Record<Segment, string> = {
+		tertiaire: 'Tertiaire',
+		residentiel: 'Résidentiel',
+		commerces: 'Commerces',
+		erp: 'ERP',
+		partenaires: 'Partenaires'
+	};
+
+	const THEME_LABELS: Record<Theme, string> = {
+		films_solaires: 'Films solaires',
+		films_securite: 'Films sécurité',
+		discretion_smartfilm: 'Discrétion',
+		batiment_renovation: 'Bâtiment',
+		ia_outils: 'IA & outils',
+		reglementation: 'Réglementation',
+		autre: 'Autre'
+	};
+
+	const MATURITY_LABELS: Record<Maturity, string> = {
+		emergent: 'Émergent',
+		etabli: 'Établi',
+		speculatif: 'Spéculatif'
+	};
+
+	const ACTIONABILITY_STYLES: Record<Actionability, string> = {
+		action_directe: 'bg-danger-light text-danger border-danger/20',
+		veille_active: 'bg-warning-light text-warning border-warning/20',
+		a_surveiller: 'bg-surface-alt text-text-muted border-border'
+	};
+
+	const SEGMENT_STYLES: Record<Segment, string> = {
+		tertiaire: 'bg-prosp-import-bg text-prosp-import border-prosp-import/30',
+		residentiel: 'bg-prosp-qualify-bg text-prosp-qualify border-prosp-qualify/30',
+		commerces: 'bg-prosp-convert-bg text-prosp-convert border-prosp-convert/30',
+		erp: 'bg-prosp-enrich-bg text-prosp-enrich border-prosp-enrich/30',
+		partenaires: 'bg-primary/10 text-primary border-primary/20'
+	};
+
+	function formatDateLong(iso: string): string {
+		return new Date(iso).toLocaleDateString('fr-CH', {
+			day: 'numeric',
+			month: 'long',
+			year: 'numeric'
+		});
+	}
+
+	function prospectionHrefFromTerm(term: string): string {
+		const params = new URLSearchParams({
+			q: term,
+			from_intelligence: data.report.id,
+			from_term: term
+		});
+		return `/prospection?${params.toString()}`;
+	}
+
+	function geoLabel(g: string): string {
+		if (g === 'suisse_romande') return 'Romandie';
+		if (g === 'suisse') return 'CH';
+		return 'Monde';
+	}
+</script>
+
+<div class="max-w-3xl mx-auto px-3 md:px-6 py-6">
+	<!-- Breadcrumb -->
+	<a href="/veille" class="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4">
+		<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+		Retour au fil
+	</a>
+
+	<!-- Meta -->
+	<div class="flex items-center gap-3 text-xs text-text-muted mb-3 flex-wrap">
+		<span class="font-semibold text-text">{formatDateLong(data.report.generated_at)}</span>
+		<span>·</span>
+		<span>Édition {data.report.week_label}</span>
+		<span>·</span>
+		<span>Rang {data.item.rank}</span>
+	</div>
+
+	<!-- Titre -->
+	<h1 class="text-2xl md:text-3xl font-bold text-text leading-tight mb-4">
+		{data.item.title}
+	</h1>
+
+	<!-- Badges -->
+	<div class="flex flex-wrap gap-1.5 text-[11px] mb-5">
+		<span
+			class="inline-flex items-center px-2 py-0.5 rounded-full border font-semibold {ACTIONABILITY_STYLES[data.item.actionability]}"
+		>
+			{ACTIONABILITY_LABELS[data.item.actionability]}
+		</span>
+		<span
+			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium {SEGMENT_STYLES[data.item.segment]}"
+		>
+			{SEGMENT_LABELS[data.item.segment]}
+		</span>
+		<span
+			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium bg-surface-alt text-text border-border"
+		>
+			{geoLabel(data.item.geo_scope)}
+		</span>
+		<span
+			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium bg-accent/8 text-accent border-accent/20"
+		>
+			{THEME_LABELS[data.item.theme]}
+		</span>
+		<span
+			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium bg-surface-alt text-text-muted border-border"
+		>
+			Maturité : {MATURITY_LABELS[data.item.maturity]}
+		</span>
+		{#if data.item.verification && (data.item.verification.url_ok === false || data.item.verification.entity_ok === false)}
+			<span
+				class="inline-flex items-center px-2 py-0.5 rounded-full border font-semibold bg-danger-light text-danger border-danger/30"
+				title={data.item.verification.url_reason ?? 'Entités non vérifiées'}
+			>
+				Non vérifié
+			</span>
+		{/if}
+	</div>
+
+	<!-- Image -->
+	{#if data.item.image_url}
+		<div class="rounded-xl overflow-hidden border border-border mb-5 bg-gradient-to-br from-primary via-accent to-primary-dark aspect-[1200/630]">
+			<img
+				src={data.item.image_url}
+				alt=""
+				loading="lazy"
+				class="w-full h-full object-cover"
+			/>
+		</div>
+	{/if}
+
+	<!-- Résumé -->
+	<section class="mb-6">
+		<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Résumé</h2>
+		<p class="text-base text-text-body leading-relaxed">{data.item.summary}</p>
+	</section>
+
+	<!-- Pertinence FilmPro -->
+	<section class="mb-6 border-l-4 border-accent bg-accent/5 pl-4 py-3 rounded-r">
+		<h2 class="text-xs font-semibold uppercase tracking-wider text-accent mb-1">
+			Pertinence FilmPro
+		</h2>
+		<p class="text-sm text-text-body leading-relaxed">{data.item.filmpro_relevance}</p>
+	</section>
+
+	<!-- Deep dive optionnel -->
+	{#if data.item.deep_dive}
+		<section class="mb-6">
+			<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">
+				Analyse approfondie
+			</h2>
+			<p class="text-sm text-text-body leading-relaxed">{data.item.deep_dive}</p>
+		</section>
+	{/if}
+
+	<!-- Source -->
+	<section class="mb-6 p-4 rounded-xl border border-border bg-surface-alt/50">
+		<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Source</h2>
+		<div class="flex items-center justify-between gap-3 flex-wrap">
+			<div class="flex flex-col gap-0.5">
+				<span class="text-sm font-semibold text-text">{data.item.source.name}</span>
+				<span class="text-xs text-text-muted">
+					Article publié le {formatDateLong(data.item.source.published_at)}
+				</span>
+			</div>
+			<a
+				href={data.item.source.url}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary border border-primary/30 rounded-lg hover:bg-primary/10"
+			>
+				<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+				Ouvrir l'article
+			</a>
+		</div>
+	</section>
+
+	<!-- Search terms -->
+	{#if data.item.search_terms && data.item.search_terms.length > 0}
+		<section class="mb-6">
+			<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">
+				Prospecter depuis ce signal
+			</h2>
+			<div class="flex flex-wrap gap-2">
+				{#each data.item.search_terms as term (term)}
+					<a
+						href={prospectionHrefFromTerm(term)}
+						class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-accent/8 text-accent border border-accent/20 hover:bg-accent/15 transition-colors font-medium"
+					>
+						<span class="material-symbols-outlined text-[16px]">search</span>
+						{term}
+					</a>
+				{/each}
+			</div>
+			<p class="text-xs text-text-muted mt-2">
+				Cliquez sur un terme pour lancer une recherche dans Prospection.
+			</p>
+		</section>
+	{/if}
+</div>

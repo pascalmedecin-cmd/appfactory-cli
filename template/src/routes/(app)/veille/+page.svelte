@@ -1,53 +1,63 @@
 <script lang="ts">
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import type { PageData } from './$types';
-	import type { IntelligenceItem, ImpactFilmpro, SearchTerm } from '$lib/server/intelligence/schema';
+	import type { FeedItem } from './+page.server';
+	import type { Actionability, Segment, Theme } from '$lib/server/intelligence/schema';
 
 	let { data }: { data: PageData } = $props();
 
-	const readSet = $derived(new Set(data.readIds));
-
 	$effect(() => {
-		const n = data.reports.length;
-		$pageSubtitle = n === 0 ? 'Aucune édition' : `${n} édition${n > 1 ? 's' : ''}`;
+		const n = data.feed.length;
+		const total = data.facets.total;
+		$pageSubtitle =
+			n === total ? `${n} signal${n > 1 ? 's' : ''}` : `${n} / ${total} signaux`;
 	});
 
-	const THEME_LABELS: Record<string, string> = {
+	// Labels
+	const ACTIONABILITY_LABELS: Record<Actionability, string> = {
+		action_directe: 'Action directe',
+		veille_active: 'Veille active',
+		a_surveiller: 'À surveiller'
+	};
+
+	const SEGMENT_LABELS: Record<Segment, string> = {
+		tertiaire: 'Tertiaire',
+		residentiel: 'Résidentiel',
+		commerces: 'Commerces',
+		erp: 'ERP',
+		partenaires: 'Partenaires'
+	};
+
+	const THEME_LABELS: Record<Theme, string> = {
 		films_solaires: 'Films solaires',
 		films_securite: 'Films sécurité',
-		discretion_smartfilm: 'Discrétion / smart film',
-		batiment_renovation: 'Bâtiment / rénovation',
+		discretion_smartfilm: 'Discrétion',
+		batiment_renovation: 'Bâtiment',
 		ia_outils: 'IA & outils',
 		reglementation: 'Réglementation',
 		autre: 'Autre'
 	};
 
-	const MATURITY_LABELS: Record<string, string> = {
-		emergent: 'Émergent',
-		etabli: 'Établi',
-		speculatif: 'Spéculatif'
+	// Classes badges (palette extraite /prospection)
+	const ACTIONABILITY_STYLES: Record<Actionability, string> = {
+		action_directe: 'bg-danger-light text-danger border-danger/20',
+		veille_active: 'bg-warning-light text-warning border-warning/20',
+		a_surveiller: 'bg-surface-alt text-text-muted border-border'
 	};
 
-	const GEO_LABELS: Record<string, string> = {
-		suisse_romande: 'Suisse romande',
-		suisse: 'Suisse',
-		monde: 'Monde'
+	// 5 segments : on mappe sur les 4 couleurs workflow + primary pour partenaires
+	const SEGMENT_STYLES: Record<Segment, string> = {
+		tertiaire: 'bg-prosp-import-bg text-prosp-import border-prosp-import/30',
+		residentiel: 'bg-prosp-qualify-bg text-prosp-qualify border-prosp-qualify/30',
+		commerces: 'bg-prosp-convert-bg text-prosp-convert border-prosp-convert/30',
+		erp: 'bg-prosp-enrich-bg text-prosp-enrich border-prosp-enrich/30',
+		partenaires: 'bg-primary/10 text-primary border-primary/20'
 	};
 
-	const COMPLIANCE_STYLES: Record<string, string> = {
-		'OK FilmPro': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-		'Adjacent pertinent': 'bg-sky-50 text-sky-700 border-sky-200',
-		'À surveiller': 'bg-amber-50 text-amber-700 border-amber-200',
-		'Non exploitable': 'bg-slate-50 text-slate-600 border-slate-200'
-	};
-
-	const MATURITY_STYLES: Record<string, string> = {
-		etabli: 'bg-emerald-50 text-emerald-700',
-		emergent: 'bg-amber-50 text-amber-700',
-		speculatif: 'bg-slate-100 text-slate-600'
-	};
-
-	function formatDate(iso: string): string {
+	// Dates
+	function formatDateLong(iso: string): string {
 		return new Date(iso).toLocaleDateString('fr-CH', {
 			day: 'numeric',
 			month: 'long',
@@ -55,12 +65,53 @@
 		});
 	}
 
-	function formatShortDate(iso: string): string {
+	function formatDateShort(iso: string): string {
 		return new Date(iso).toLocaleDateString('fr-CH', {
 			day: 'numeric',
-			month: 'long'
+			month: 'short'
 		});
 	}
+
+	// Filtres : toggle via URL state, préserve les autres params
+	function buildFilterUrl(key: string, value: string | null): string {
+		const params = new URLSearchParams(page.url.searchParams);
+		const current = params.get(key);
+		if (current === value) {
+			params.delete(key);
+		} else if (value === null) {
+			params.delete(key);
+		} else {
+			params.set(key, value);
+		}
+		const qs = params.toString();
+		return qs ? `?${qs}` : '/veille';
+	}
+
+	function toggleBoolFilter(key: string): string {
+		const params = new URLSearchParams(page.url.searchParams);
+		if (params.get(key) === '1') params.delete(key);
+		else params.set(key, '1');
+		const qs = params.toString();
+		return qs ? `?${qs}` : '/veille';
+	}
+
+	function clearFilters(): string {
+		const params = new URLSearchParams();
+		if (data.filters.archives) params.set('archives', '1');
+		const qs = params.toString();
+		return qs ? `?${qs}` : '/veille';
+	}
+
+	const hasFilters = $derived(
+		!!(
+			data.filters.pertinence ||
+			data.filters.segment ||
+			data.filters.geo ||
+			data.filters.theme ||
+			data.filters.hot ||
+			data.filters.recurrent
+		)
+	);
 
 	async function markAsRead(reportId: string) {
 		await fetch('/api/veille/read', {
@@ -70,322 +121,329 @@
 		});
 	}
 
-	function prospectionLink(term: SearchTerm, reportId: string): string {
+	function itemDetailHref(item: FeedItem): string {
+		return `/veille/item/${item.report_id}-${item.rank}`;
+	}
+
+	function prospectionHrefFromTerm(term: string, item: FeedItem): string {
 		const params = new URLSearchParams({
-			q: term.term,
-			from_intelligence: reportId,
-			from_term: term.term
+			q: term,
+			from_intelligence: item.report_id,
+			from_term: term
 		});
 		return `/prospection?${params.toString()}`;
 	}
 
-	function editionNumber(weekLabel: string): string {
-		const match = weekLabel.match(/W(\d+)/);
-		return match ? match[1] : weekLabel;
+	function onImageError(e: Event) {
+		const img = e.currentTarget as HTMLImageElement;
+		img.style.display = 'none';
+		const fallback = img.nextElementSibling as HTMLElement | null;
+		if (fallback) fallback.style.display = 'block';
 	}
 
-	const latest = $derived(data.reports[0]);
-	const archives = $derived(data.reports.slice(1));
-	const latestItems = $derived(latest ? (latest.items as IntelligenceItem[]) : []);
-	const latestImpacts = $derived(latest ? (latest.impacts_filmpro as ImpactFilmpro[]) : []);
-	const latestTerms = $derived(latest ? (latest.search_terms as SearchTerm[]) : []);
-
-	const SEGMENT_LABELS: Record<string, string> = {
-		tertiaire: 'tertiaire',
-		residentiel: 'résidentiel',
-		commerces: 'commerces',
-		erp: 'erp',
-		partenaires: 'partenaires'
-	};
+	function onImageLoad(e: Event) {
+		const img = e.currentTarget as HTMLImageElement;
+		if (img.naturalWidth > 0 && img.naturalWidth < img.clientWidth * 0.8) {
+			img.style.display = 'none';
+			const fallback = img.nextElementSibling as HTMLElement | null;
+			if (fallback) fallback.style.display = 'block';
+		}
+	}
 </script>
 
-{#if !latest}
-	<div class="max-w-3xl mx-auto mt-8 bg-white rounded-xl border border-slate-200 p-10 text-center">
-		<span class="material-symbols-outlined text-5xl text-slate-400">radar</span>
-		<h2 class="mt-4 text-lg font-semibold text-slate-900">Aucune édition publiée</h2>
-		<p class="mt-2 text-sm text-slate-600">
-			La veille sectorielle est générée automatiquement chaque vendredi matin. La première édition apparaîtra ici dès qu'elle sera disponible.
-		</p>
+<div class="max-w-[1100px] mx-auto px-3 md:px-6 py-4 md:py-6">
+	<!-- Sticky bar filtres -->
+	<div
+		class="sticky top-0 z-10 -mx-3 md:-mx-6 px-3 md:px-6 py-2 bg-surface/95 backdrop-blur border-b border-border"
+	>
+		<div class="flex items-center gap-2 overflow-x-auto whitespace-nowrap text-xs">
+			<!-- Total -->
+			<a
+				href={clearFilters()}
+				class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border font-semibold transition-colors {hasFilters
+					? 'border-border bg-white text-text-muted hover:bg-surface-alt'
+					: 'border-primary bg-primary/10 text-primary'}"
+			>
+				Tous <span class="text-text-muted font-normal">[{data.facets.total}]</span>
+			</a>
+
+			<span class="text-text-muted/40">|</span>
+
+			<!-- Actionability -->
+			{#each ['action_directe', 'veille_active', 'a_surveiller'] as key (key)}
+				{@const k = key as Actionability}
+				{@const count = data.facets.actionability[k]}
+				{@const active = data.filters.pertinence === k}
+				<a
+					href={buildFilterUrl('pertinence', k)}
+					class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border font-medium transition-colors {active
+						? 'ring-2 ring-primary/40 '
+						: ''}{ACTIONABILITY_STYLES[k]}"
+				>
+					{ACTIONABILITY_LABELS[k]} <span class="opacity-70 font-normal">[{count}]</span>
+				</a>
+			{/each}
+
+			<span class="text-text-muted/40">|</span>
+
+			<!-- Segments -->
+			{#each ['tertiaire', 'residentiel', 'commerces', 'erp', 'partenaires'] as key (key)}
+				{@const k = key as Segment}
+				{@const count = data.facets.segment[k]}
+				{#if count > 0}
+					{@const active = data.filters.segment === k}
+					<a
+						href={buildFilterUrl('segment', k)}
+						class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border font-medium transition-colors {active
+							? 'ring-2 ring-primary/40 '
+							: ''}{SEGMENT_STYLES[k]}"
+					>
+						{SEGMENT_LABELS[k]} <span class="opacity-70 font-normal">[{count}]</span>
+					</a>
+				{/if}
+			{/each}
+
+			<span class="text-text-muted/40">|</span>
+
+			<!-- Geo -->
+			{#each Object.entries(data.facets.geo) as [label, count] (label)}
+				{@const active = data.filters.geo === label}
+				<a
+					href={buildFilterUrl('geo', label)}
+					class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border font-medium transition-colors {active
+						? 'border-primary bg-primary/10 text-primary'
+						: 'border-border bg-white text-text hover:bg-surface-alt'}"
+				>
+					{label} <span class="text-text-muted font-normal">[{count}]</span>
+				</a>
+			{/each}
+
+			<span class="text-text-muted/40">|</span>
+
+			<!-- Conditionnels -->
+			{#if data.facets.hot > 0}
+				<a
+					href={toggleBoolFilter('hot')}
+					class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border font-semibold transition-colors {data
+						.filters.hot
+						? 'bg-danger text-white border-danger'
+						: 'bg-danger-light text-danger border-danger/30 hover:bg-danger-light/80'}"
+				>
+					<span aria-hidden="true">🔥</span> Signal chaud
+					<span class="opacity-70 font-normal">[{data.facets.hot}]</span>
+				</a>
+			{/if}
+			{#if data.facets.recurrent > 0}
+				<a
+					href={toggleBoolFilter('recurrent')}
+					class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border font-semibold transition-colors {data
+						.filters.recurrent
+						? 'bg-primary text-white border-primary'
+						: 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/15'}"
+				>
+					×N Récurrent <span class="opacity-70 font-normal">[{data.facets.recurrent}]</span>
+				</a>
+			{/if}
+
+			<span class="text-text-muted/40 ml-2">|</span>
+
+			<!-- Archives toggle -->
+			<a
+				href={data.filters.archives ? clearFilters().replace('archives=1', '').replace(/[?&]$/, '') || '/veille' : '?archives=1'}
+				class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full border font-medium transition-colors {data
+					.filters.archives
+					? 'bg-surface-alt text-text border-border'
+					: 'bg-white text-text-muted border-border hover:bg-surface-alt'}"
+			>
+				<span class="material-symbols-outlined text-[14px]">inventory_2</span>
+				{data.filters.archives ? 'Masquer les archives' : 'Afficher les archives'}
+			</a>
+		</div>
 	</div>
-{:else}
-	{@const isUnread = !readSet.has(latest.id)}
-	{@const lead = latestItems[0]}
-	{@const others = latestItems.slice(1, 3)}
-	{@const pullquote = latestImpacts[0]}
 
-	<div class="max-w-[1100px] mx-auto px-2 md:px-8 py-6 md:py-10">
-		<!-- Masthead -->
-		<header class="flex items-end justify-between pb-6 border-b-2 border-primary-dark gap-6 flex-wrap">
-			<div>
-				<div class="mag-kicker text-primary">Veille sectorielle FilmPro</div>
-				<h1 class="mag-display text-4xl md:text-5xl mt-2 text-primary-dark">La semaine du vitrage</h1>
-				<p class="text-sm text-slate-500 mt-2">Signaux, tendances et mouvements du marché — chaque vendredi</p>
+	<!-- Fil chronologique -->
+	<div class="mt-6 space-y-5">
+		{#if data.feed.length === 0}
+			<div class="bg-white rounded-xl border border-border p-10 text-center">
+				<span class="material-symbols-outlined text-5xl text-text-muted">radar</span>
+				<h2 class="mt-4 text-lg font-semibold text-text">
+					{hasFilters ? 'Aucun signal ne correspond aux filtres' : 'Aucune édition publiée'}
+				</h2>
+				{#if hasFilters}
+					<a href={clearFilters()} class="mt-4 inline-block text-sm text-primary hover:underline">
+						Réinitialiser les filtres
+					</a>
+				{:else}
+					<p class="mt-2 text-sm text-text-muted">
+						La veille sectorielle est générée automatiquement chaque vendredi matin.
+					</p>
+				{/if}
 			</div>
-			<div class="text-right text-xs text-slate-500">
-				<div class="font-semibold text-slate-900">Édition n° {editionNumber(latest.week_label)}</div>
-				<div>{formatDate(latest.generated_at)}</div>
-				<div class="mt-2 flex items-center gap-2 justify-end">
-					{#if isUnread}
-						<span class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-semibold uppercase tracking-wider">Non lu</span>
-					{/if}
-					<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border {COMPLIANCE_STYLES[latest.compliance_tag] ?? ''}">
-						{latest.compliance_tag}
-					</span>
-				</div>
-			</div>
-		</header>
-
-		<!-- Édition sans signaux -->
-		{#if !lead}
-			<section class="mt-8 md:mt-10 bg-white rounded-lg border border-slate-200 p-8 md:p-12 text-center">
-				<div class="mag-kicker text-primary mb-3">Synthèse de la semaine</div>
-				<p class="mag-body text-slate-700 max-w-2xl mx-auto">{latest.executive_summary}</p>
-				<div class="mt-6 inline-flex items-center gap-2 text-sm text-slate-500">
-					<span class="material-symbols-outlined text-base">inbox</span>
-					Aucun signal exploitable cette semaine
-				</div>
-			</section>
 		{/if}
 
-		<!-- HERO -->
-		{#if lead}
-			<article class="mt-8 md:mt-10">
-				<div class="grid grid-cols-12 gap-6 md:gap-8">
-					<div class="col-span-12 lg:col-span-7">
-						<a
-							href="/veille/{latest.id}"
-							onclick={() => isUnread && markAsRead(latest.id)}
-							class="block relative overflow-hidden rounded-lg group"
-						>
-							{#if lead.image_url}
-								<img src={lead.image_url} alt="" class="w-full h-[280px] md:h-[420px] object-cover group-hover:scale-[1.02] transition-transform duration-500" />
-							{:else}
-								<div class="w-full h-[280px] md:h-[420px] bg-gradient-to-br from-primary via-accent to-primary-dark"></div>
-							{/if}
-							<div class="absolute top-4 left-4">
-								<span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/95 text-[11px] font-semibold text-slate-900 shadow-sm">
-									<span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-									{latest.compliance_tag} · {latestItems.length} signaux
+		{#each data.feed as item (item.report_id + '-' + item.rank)}
+			<article
+				class="rounded-xl border border-border bg-white shadow-xs overflow-hidden hover:shadow-sm transition-shadow"
+			>
+				<div class="grid grid-cols-1 md:grid-cols-[280px_1fr]">
+					<!-- Image -->
+					<a
+						href={itemDetailHref(item)}
+						onclick={() => item.is_unread && markAsRead(item.report_id)}
+						class="block relative aspect-[1200/630] md:aspect-auto md:h-full bg-gradient-to-br from-primary via-accent to-primary-dark"
+					>
+						{#if item.image_url}
+							<img
+								src={item.image_url}
+								alt=""
+								loading="lazy"
+								decoding="async"
+								onerror={onImageError}
+								onload={onImageLoad}
+								class="absolute inset-0 w-full h-full object-cover"
+							/>
+							<span
+								class="absolute inset-0 bg-gradient-to-br from-primary via-accent to-primary-dark"
+								style="display: none"
+								aria-hidden="true"
+							></span>
+						{/if}
+					</a>
+
+					<!-- Content -->
+					<div class="p-4 md:p-5 flex flex-col gap-3">
+						<!-- Date principale + semaine + unread -->
+						<div class="flex items-center gap-3 text-xs text-text-muted flex-wrap">
+							<span class="font-semibold text-text">{formatDateLong(item.report_generated_at)}</span>
+							<span>·</span>
+							<span>{item.report_week_label}</span>
+							{#if item.is_unread}
+								<span
+									class="px-1.5 py-0.5 rounded-full bg-warning text-white text-[10px] font-semibold uppercase tracking-wider"
+								>
+									Non lu
 								</span>
-							</div>
-						</a>
-					</div>
-
-					<div class="col-span-12 lg:col-span-5 flex flex-col justify-center">
-						<div class="mag-kicker text-primary mb-3">Synthèse de la semaine</div>
-						<h2 class="mag-display-2 text-[32px] md:text-[44px] mb-4 text-primary-dark">
-							{lead.title}
-						</h2>
-						<p class="mag-body text-slate-700 mb-4">{latest.executive_summary}</p>
-						<div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 pt-3 border-t border-slate-200">
-							<span>{latestItems.length} signaux analysés</span>
-							<span>·</span>
-							<span>{latestImpacts.length} impacts stratégiques</span>
-							<span>·</span>
-							<span>{latestTerms.length} termes Zefix / SIMAP</span>
-							<a
-								href="/veille/{latest.id}"
-								onclick={() => isUnread && markAsRead(latest.id)}
-								class="ml-auto text-primary font-semibold hover:text-accent"
-							>
-								Lire l'édition →
-							</a>
-						</div>
-					</div>
-				</div>
-
-				<!-- Top 3 -->
-				{#if lead || others.length > 0}
-					<section class="mt-12 md:mt-14 pt-8 border-t-2 border-primary-dark">
-						<div class="flex items-end justify-between mb-6 md:mb-8 gap-4 flex-wrap">
-							<div>
-								<div class="mag-kicker text-primary">À la une</div>
-								<h3 class="mag-display-3 text-2xl md:text-3xl mt-1 text-primary-dark">
-									Les {Math.min(3, latestItems.length)} signaux à retenir
-								</h3>
-							</div>
-							<a
-								href="/veille/{latest.id}"
-								onclick={() => isUnread && markAsRead(latest.id)}
-								class="text-sm font-semibold text-primary hover:text-accent"
-							>
-								Voir les {latestItems.length} signaux →
-							</a>
+							{/if}
 						</div>
 
-						<div class="grid grid-cols-12 gap-6 md:gap-8">
-							<!-- Featured -->
-							{#if lead}
-								<article class="col-span-12 md:col-span-7 group">
-									<a href={lead.source.url} target="_blank" rel="noopener noreferrer" class="block overflow-hidden rounded-lg mb-4">
-										{#if lead.image_url}
-											<img src={lead.image_url} alt="" class="w-full h-[220px] md:h-[280px] object-cover group-hover:scale-[1.02] transition-transform duration-500" />
-										{:else}
-											<div class="w-full h-[220px] md:h-[280px] bg-gradient-to-br from-primary-light to-accent-light"></div>
-										{/if}
+						<!-- Titre -->
+						<h3 class="text-lg md:text-xl font-bold text-text leading-tight">
+							<a
+								href={itemDetailHref(item)}
+								onclick={() => item.is_unread && markAsRead(item.report_id)}
+								class="hover:text-primary transition-colors"
+							>
+								{item.title}
+							</a>
+						</h3>
+
+						<!-- Badges primaires + conditionnels -->
+						<div class="flex flex-wrap gap-1.5 text-[11px]">
+							<!-- 1. Pertinence -->
+							<span
+								class="inline-flex items-center px-2 py-0.5 rounded-full border font-semibold {ACTIONABILITY_STYLES[
+									item.actionability
+								]}"
+							>
+								{ACTIONABILITY_LABELS[item.actionability]}
+							</span>
+							<!-- 2. Segment -->
+							<span
+								class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium {SEGMENT_STYLES[
+									item.segment
+								]}"
+							>
+								{SEGMENT_LABELS[item.segment]}
+							</span>
+							<!-- 3. Geo -->
+							<span
+								class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium bg-surface-alt text-text border-border"
+							>
+								{item.geo_label}
+							</span>
+							<!-- 4. Thème -->
+							<span
+								class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium bg-accent/8 text-accent border-accent/20"
+							>
+								{THEME_LABELS[item.theme]}
+							</span>
+
+							<!-- Conditionnels -->
+							{#if item.is_hot}
+								<span
+									class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-semibold bg-danger text-white border-danger"
+								>
+									<span aria-hidden="true">🔥</span> Signal chaud
+								</span>
+							{/if}
+							{#if item.recurrence_count >= 2}
+								<span
+									class="inline-flex items-center px-2 py-0.5 rounded-full border font-semibold bg-primary/10 text-primary border-primary/20"
+								>
+									×{item.recurrence_count} Récurrent
+								</span>
+							{/if}
+
+							{#if item.verification && (item.verification.url_ok === false || item.verification.entity_ok === false)}
+								<span
+									class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border font-semibold bg-danger-light text-danger border-danger/30"
+									title={item.verification.url_reason ?? 'Entités non vérifiées'}
+								>
+									Non vérifié
+								</span>
+							{/if}
+						</div>
+
+						<!-- Résumé -->
+						<p class="text-sm text-text-body leading-relaxed">{item.summary}</p>
+
+						<!-- Chips search_terms -->
+						{#if item.search_terms && item.search_terms.length > 0}
+							<div class="flex flex-wrap gap-1.5 pt-1">
+								{#each item.search_terms as term (term)}
+									<a
+										href={prospectionHrefFromTerm(term, item)}
+										class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] bg-accent/8 text-accent border border-accent/20 hover:bg-accent/15 transition-colors"
+									>
+										<span class="material-symbols-outlined text-[12px]">search</span>
+										{term}
 									</a>
-									<div class="flex items-center gap-2 text-xs text-slate-500 mb-3 flex-wrap">
-										<span class="mag-kicker text-primary">{THEME_LABELS[lead.theme] ?? lead.theme}</span>
-										<span>·</span>
-										<span>{GEO_LABELS[lead.geo_scope] ?? lead.geo_scope}</span>
-										<span class="px-2 py-0.5 rounded {MATURITY_STYLES[lead.maturity]} text-[10px] font-semibold">
-											{MATURITY_LABELS[lead.maturity]}
-										</span>
-									</div>
-									<h4 class="mag-display-3 text-[22px] md:text-[26px] mb-3 text-primary-dark">{lead.title}</h4>
-									<p class="mag-body text-slate-700 mb-4">{lead.summary}</p>
-									<div class="border-l-4 border-amber-500 bg-amber-50/50 pl-4 py-3 mb-4 rounded-r">
-										<div class="mag-kicker text-amber-700 mb-1">Pour FilmPro</div>
-										<p class="text-sm text-slate-900 leading-relaxed">{lead.filmpro_relevance}</p>
-									</div>
-									<div class="flex items-center gap-3 text-xs text-slate-500">
-										<span class="font-semibold text-slate-900">{lead.source.name}</span>
-										<span>·</span>
-										<span>{formatShortDate(lead.source.published_at)}</span>
-										<a href={lead.source.url} target="_blank" rel="noopener noreferrer" class="ml-auto text-primary font-semibold hover:underline inline-flex items-center gap-1">
-											Lire l'article
-											<span class="material-symbols-outlined text-[14px]">open_in_new</span>
-										</a>
-									</div>
-								</article>
-							{/if}
-
-							<!-- Stacked side -->
-							{#if others.length > 0}
-								<div class="col-span-12 md:col-span-5 space-y-6 md:space-y-8">
-									{#each others as item}
-										<article class="group">
-											<a href={item.source.url} target="_blank" rel="noopener noreferrer" class="block overflow-hidden rounded-lg mb-3">
-												{#if item.image_url}
-													<img src={item.image_url} alt="" class="w-full h-[160px] md:h-[180px] object-cover group-hover:scale-[1.02] transition-transform duration-500" />
-												{:else}
-													<div class="w-full h-[160px] md:h-[180px] bg-gradient-to-br from-accent-light to-primary-light"></div>
-												{/if}
-											</a>
-											<div class="flex items-center gap-2 text-xs text-slate-500 mb-2 flex-wrap">
-												<span class="mag-kicker text-primary">{THEME_LABELS[item.theme] ?? item.theme}</span>
-												<span>·</span>
-												<span>{GEO_LABELS[item.geo_scope] ?? item.geo_scope}</span>
-												<span class="px-1.5 py-0.5 rounded {MATURITY_STYLES[item.maturity]} text-[10px] font-semibold ml-1">
-													{MATURITY_LABELS[item.maturity]}
-												</span>
-											</div>
-											<h4 class="mag-display-3 text-lg md:text-xl mb-2 text-primary-dark">{item.title}</h4>
-											<p class="text-sm text-slate-700 leading-relaxed mb-2">{item.summary}</p>
-											<div class="text-xs text-slate-500">
-												<span class="font-semibold text-slate-900">{item.source.name}</span> · {formatShortDate(item.source.published_at)}
-											</div>
-										</article>
-									{/each}
-								</div>
-							{/if}
-						</div>
-					</section>
-				{/if}
-
-				<!-- Pullquote -->
-				{#if pullquote}
-					<section class="my-12 md:my-16 px-6 md:px-10 py-8 md:py-10 bg-white border-l-4 border-primary rounded-r-lg shadow-sm">
-						<div class="mag-kicker text-primary mb-3">Impact stratégique</div>
-						<p class="mag-display-3 text-xl md:text-2xl text-primary-dark leading-snug">
-							« {pullquote.note} »
-						</p>
-						<div class="mt-4 text-xs text-slate-500 font-medium uppercase tracking-wider">
-							Axe {pullquote.axis} · Édition {latest.week_label}
-						</div>
-					</section>
-				{/if}
-
-				<!-- Search terms -->
-				{#if latestTerms.length > 0}
-					<section class="my-10 md:my-12 pt-8 border-t border-slate-200">
-						<div class="flex items-baseline justify-between mb-5 md:mb-6 gap-4 flex-wrap">
-							<div>
-								<div class="mag-kicker text-primary">Termes de recherche générés</div>
-								<h3 class="mag-display-3 text-xl md:text-2xl mt-1 text-primary-dark">À lancer dans Prospection</h3>
+								{/each}
 							</div>
-							<span class="text-xs text-slate-500">{latestTerms.length} termes · mis à jour hebdo</span>
-						</div>
-						<div class="flex flex-wrap gap-2">
-							{#each latestTerms.slice(0, 5) as term}
-								<a
-									href={prospectionLink(term, latest.id)}
-									class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 bg-white hover:border-primary hover:bg-accent-light text-sm font-medium text-slate-700 transition-colors"
-								>
-									<span class="material-symbols-outlined text-[16px] text-primary">search</span>
-									{term.term}
-									<span class="text-[10px] text-slate-500 ml-1 font-normal">{SEGMENT_LABELS[term.segment] ?? term.segment}</span>
-								</a>
-							{/each}
-							{#if latestTerms.length > 5}
-								<a
-									href="/veille/{latest.id}"
-									onclick={() => isUnread && markAsRead(latest.id)}
-									class="inline-flex items-center px-4 py-2 text-sm text-slate-500 hover:text-primary"
-								>
-									+ {latestTerms.length - 5} autres
-								</a>
-							{/if}
-						</div>
-					</section>
-				{/if}
-			</article>
-		{/if}
+						{/if}
 
-		<!-- ARCHIVES -->
-		{#if archives.length > 0}
-			<section class="mt-16 md:mt-20 pt-8 md:pt-10 border-t-2 border-primary-dark">
-				<div class="flex items-end justify-between mb-6 md:mb-8 gap-4 flex-wrap">
-					<div>
-						<div class="mag-kicker text-primary">Archives</div>
-						<h3 class="mag-display-3 text-2xl md:text-3xl mt-1 text-primary-dark">Éditions précédentes</h3>
+						<!-- Footer : source + date article -->
+						<div class="flex items-center gap-2 text-xs text-text-muted pt-2 border-t border-border/60">
+							<span class="font-semibold text-text">{item.source.name}</span>
+							<span>·</span>
+							<a
+								href={item.source.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-alt hover:bg-surface-alt/60 text-text-muted hover:text-primary transition-colors"
+								title="Ouvrir l'article source ({formatDateLong(item.source.published_at)})"
+							>
+								<span class="material-symbols-outlined text-[14px]">open_in_new</span>
+								{formatDateShort(item.source.published_at)}
+							</a>
+							<a
+								href={itemDetailHref(item)}
+								onclick={() => item.is_unread && markAsRead(item.report_id)}
+								class="ml-auto font-semibold text-primary hover:text-primary-dark"
+							>
+								Détail →
+							</a>
+						</div>
 					</div>
-					<span class="text-sm text-slate-500">{archives.length} édition{archives.length > 1 ? 's' : ''}</span>
 				</div>
+			</article>
+		{/each}
+	</div>
 
-				<div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-					{#each archives as report}
-						{@const archItems = report.items as IntelligenceItem[]}
-						{@const firstItem = archItems[0]}
-						{@const archUnread = !readSet.has(report.id)}
-						<a
-							href="/veille/{report.id}"
-							onclick={() => archUnread && markAsRead(report.id)}
-							class="mag-archive-card group"
-						>
-							<div class="overflow-hidden rounded-lg mb-4">
-								{#if firstItem?.image_url}
-									<img src={firstItem.image_url} alt="" class="w-full h-[180px] md:h-[200px] object-cover group-hover:scale-[1.02] transition-transform duration-500" />
-								{:else}
-									<div class="w-full h-[180px] md:h-[200px] bg-gradient-to-br from-primary-light via-accent-light to-primary-light"></div>
-								{/if}
-							</div>
-							<div class="flex items-center gap-2 text-xs text-slate-500 mb-2">
-								<span class="mag-kicker text-primary">Édition {editionNumber(report.week_label)}</span>
-								<span>·</span>
-								<span>{formatShortDate(report.generated_at)}</span>
-								{#if archUnread}
-									<span class="px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[9px] font-semibold uppercase tracking-wider">Non lu</span>
-								{/if}
-							</div>
-							<h4 class="mag-display-3 text-lg md:text-xl mag-archive-title mb-2 transition-colors text-primary-dark">
-								{firstItem?.title ?? `Édition ${report.week_label}`}
-							</h4>
-							<p class="text-sm text-slate-700 leading-relaxed">{report.executive_summary}</p>
-							<div class="mt-3">
-								<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border {COMPLIANCE_STYLES[report.compliance_tag] ?? ''}">
-									{report.compliance_tag}
-								</span>
-							</div>
-						</a>
-					{/each}
-				</div>
-			</section>
-		{/if}
-
-		<footer class="mt-16 md:mt-20 pt-8 border-t border-slate-200 text-xs text-slate-500 flex items-center justify-between">
-			<div>Veille FilmPro · Généré par Claude Sonnet chaque vendredi</div>
+	{#if data.feed.length > 0}
+		<footer class="mt-10 pt-6 border-t border-border text-xs text-text-muted flex items-center justify-between">
+			<div>Veille FilmPro · Généré par Claude chaque vendredi</div>
 			<div class="font-semibold">FilmPro</div>
 		</footer>
-	</div>
-{/if}
+	{/if}
+</div>
