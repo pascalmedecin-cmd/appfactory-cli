@@ -135,6 +135,18 @@
 			</div>
 		</header>
 
+		<!-- Édition sans signaux -->
+		{#if !lead}
+			<section class="mt-8 md:mt-10 bg-white rounded-lg border border-slate-200 p-8 md:p-12 text-center">
+				<div class="mag-kicker text-primary mb-3">Synthèse de la semaine</div>
+				<p class="mag-body text-slate-700 max-w-2xl mx-auto">{latest.executive_summary}</p>
+				<div class="mt-6 inline-flex items-center gap-2 text-sm text-slate-500">
+					<span class="material-symbols-outlined text-base">inbox</span>
+					Aucun signal exploitable cette semaine
+				</div>
+			</section>
+		{/if}
+
 		<!-- HERO -->
 		{#if lead}
 			<article class="mt-8 md:mt-10">
