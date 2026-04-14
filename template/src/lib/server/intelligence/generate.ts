@@ -196,7 +196,23 @@ export async function generateIntelligenceReport(
 		};
 	}
 
-	const parsed = IntelligenceReportSchema.safeParse(emitBlock.input);
+	// Defensive unwrap : certaines versions de Sonnet wrappent tool_use.input
+	// dans une clef unique (ex: { parameter: {...} } ou { meta: {report} }).
+	// Déballer tant que la structure attendue n'est pas au top level.
+	const EXPECTED_KEYS = ['meta', 'items', 'impacts_filmpro', 'search_terms'];
+	function hasExpected(obj: unknown): boolean {
+		if (!obj || typeof obj !== 'object') return false;
+		return EXPECTED_KEYS.every((k) => k in (obj as Record<string, unknown>));
+	}
+	let payload: unknown = emitBlock.input;
+	for (let depth = 0; depth < 3 && !hasExpected(payload); depth++) {
+		if (!payload || typeof payload !== 'object') break;
+		const keys = Object.keys(payload as Record<string, unknown>);
+		if (keys.length !== 1) break;
+		payload = (payload as Record<string, unknown>)[keys[0]];
+	}
+
+	const parsed = IntelligenceReportSchema.safeParse(payload);
 	if (!parsed.success) {
 		return {
 			success: false,
