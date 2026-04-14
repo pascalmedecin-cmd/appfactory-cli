@@ -40,7 +40,7 @@ Prompt claude.ai Research rédigé, 5 axes : (A) prompt engineering Veille, (B) 
 
 - `main` : `792b485`, pushé, 204/204 verts
 - Git clean, pas de WIP
-- Backlog Prochaine session : tâche 1a (best practices tool use) reste priorité haute après réception research, golden standards + import/export + dashboard indépendants, scoring v2 BLOQUÉ, Figma BLOQUÉ PAT
+- Backlog Prochaine session : tâche 1a (best practices tool use) reste priorité haute après réception research, golden standards + import/export + dashboard indépendants, scoring v2 BLOQUÉ, Figma BLOQUÉ PAT (détail complet dans CLAUDE.md section "Prochaine session")
 
 ## Hypothèses à vérifier prochaine session
 

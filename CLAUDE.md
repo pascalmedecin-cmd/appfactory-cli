@@ -282,10 +282,9 @@ Fichiers cles :
 
 ### Séquence
 
-1. **Best practices tool use Sonnet 4.5** — priorité haute, débloque régénération naturelle W17
-2. **Wire-up traçabilité Veille → Prospection** — indépendant
-3. **Scoring température leads** — indépendant
-4. **Golden standards UX** — gros chantier 3-4 sessions, à lancer quand reste vert
-5. **Import/export CSV** — indépendant
-6. **Dashboard/reporting** — indépendant
+1. **Best practices tool use Sonnet 4.5** - priorité haute, débloque régénération naturelle W17 (attente résultats research claude.ai)
+2. **Golden standards UX** - gros chantier 3-4 sessions, à lancer quand reste vert
+3. **Import/export CSV** - indépendant
+4. **Dashboard/reporting** - indépendant
+- Hors séquence (BLOQUÉS) : Scoring v2 signaux marché (attente page Veille enrichie), Figma (attente PAT)
 7. **Figma** — BLOQUÉ hors séquence
