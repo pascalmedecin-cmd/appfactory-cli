@@ -20,10 +20,10 @@ Décision : chips deviennent `{kind, canton, query, label}`. REGBL exclu du pont
 
 ## Validation
 
-- **Tests unitaires** : 285/285 verts (15 tests → 285 tests, +15 nouveaux). Couverture :
-  - `chip-normalize.test.ts` : detectCanton, detectKind, normalizeStringToChip, normalizeStoredChips, buildChipLabel (20 tests)
-  - `schema.test.ts` : union SearchChip/legacy, retrocompat strings, rejets invalides (7 tests ajoutés)
-  - `scoring.test.ts` : calculerBonusVeille tous cas + intégration calculerScore (13 tests ajoutés)
+- **Tests unitaires** : 285/285 verts (baseline 270 → 285, +15 net). Certains tests existants ont été modifiés en place (union SearchChip remplace rejets string). Nouveaux fichiers/ajouts :
+  - `chip-normalize.test.ts` (nouveau) : detectCanton, detectKind, normalizeStringToChip, normalizeStoredChips, buildChipLabel (24 tests)
+  - `schema.test.ts` (modifié) : union SearchChip/legacy, retrocompat strings, rejets invalides
+  - `scoring.test.ts` (étendu) : calculerBonusVeille tous cas + intégration calculerScore (+13 tests)
 - **Typecheck** : 3 erreurs pré-existantes inchangées (2x `run-generation.ts`, 1x `signaux/+page.svelte`).
 - **Chrome MCP / parcours live** : NON validé en session (skip autonomie : nécessite dev server + session Supabase connectée + données fresh avec chips structurés). Pascal à valider : navigate `/veille`, cliquer un chip, vérifier redirect `/prospection` + count imported.
 
@@ -52,7 +52,7 @@ Décision : chips deviennent `{kind, canton, query, label}`. REGBL exclu du pont
 
 ## À faire prochaine session
 
-1. **Validation parcours live** (priorité 1, 15 min) : Pascal ou Claude via Chrome MCP. Navigate `/veille`, cliquer chip legacy (existing W16), vérifier redirect + count imported prospection. Tester SIMAP + Zefix si possible.
+1. **Validation parcours live** (priorité 1, 15 min, Claude via Chrome MCP) : Navigate `/veille`, cliquer chip legacy (existing W16), vérifier redirect + count imported prospection. Tester SIMAP + Zefix si possible.
 2. **Régen W17** : vérifier que le LLM produit des chips structurés conformes au nouveau JSON schema (lecture DB + log `intelligence_reports.items[].search_terms`).
 3. **Bloc 5 (Golden standards UX/UI)** : débloqué après validation ; périmètre complet, gabarit `/prospection`, absorption `GOLDEN_STANDARDS_RESPONSIVE.md`.
 4. **Bloc 6bis (qualité images /veille)** : score dimensions + fallback banque locale.
