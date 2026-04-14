@@ -14,9 +14,9 @@ const MAX_TOKENS = 16000;
 // plutot que zod-to-json-schema pour eviter dependance + garder controle strict.
 const REPORT_JSON_SCHEMA = {
 	type: 'object',
-	required: ['edition', 'items', 'impacts_filmpro', 'search_terms'],
+	required: ['meta', 'items', 'impacts_filmpro', 'search_terms'],
 	properties: {
-		edition: {
+		meta: {
 			type: 'object',
 			required: ['week_label', 'generated_at', 'compliance_tag', 'executive_summary'],
 			properties: {

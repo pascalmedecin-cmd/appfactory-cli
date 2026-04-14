@@ -86,7 +86,7 @@ export const IntelligenceEditionSchema = z.object({
 });
 
 export const IntelligenceReportSchema = z.object({
-	edition: IntelligenceEditionSchema,
+	meta: IntelligenceEditionSchema,
 	items: z.array(IntelligenceItemSchema).min(0).max(10),
 	impacts_filmpro: z.array(ImpactFilmproSchema).min(0).max(3),
 	search_terms: z.array(SearchTermSchema).min(8).max(15)

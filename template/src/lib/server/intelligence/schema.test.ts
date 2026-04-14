@@ -33,7 +33,7 @@ const validSearchTerm = {
 };
 
 const validReport = {
-	edition: {
+	meta: {
 		week_label: '2026-W15',
 		generated_at: '2026-04-10T08:00:00Z',
 		compliance_tag: 'OK FilmPro' as const,
@@ -59,7 +59,7 @@ describe('IntelligenceReportSchema', () => {
 	it('rejette week_label mal formaté', () => {
 		const r = IntelligenceReportSchema.safeParse({
 			...validReport,
-			edition: { ...validReport.edition, week_label: '2026-15' }
+			meta: { ...validReport.meta, week_label: '2026-15' }
 		});
 		expect(r.success).toBe(false);
 	});
@@ -107,7 +107,7 @@ describe('IntelligenceReportSchema', () => {
 	it('rejette un compliance_tag inconnu', () => {
 		const r = IntelligenceReportSchema.safeParse({
 			...validReport,
-			edition: { ...validReport.edition, compliance_tag: 'Inconnu' }
+			meta: { ...validReport.meta, compliance_tag: 'Inconnu' }
 		});
 		expect(r.success).toBe(false);
 	});

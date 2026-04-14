@@ -89,9 +89,9 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 		.upsert(
 			{
 				week_label: week.weekLabel,
-				generated_at: report.edition.generated_at,
-				compliance_tag: report.edition.compliance_tag,
-				executive_summary: report.edition.executive_summary,
+				generated_at: report.meta.generated_at,
+				compliance_tag: report.meta.compliance_tag,
+				executive_summary: report.meta.executive_summary,
 				items: report.items,
 				impacts_filmpro: report.impacts_filmpro,
 				search_terms: report.search_terms,

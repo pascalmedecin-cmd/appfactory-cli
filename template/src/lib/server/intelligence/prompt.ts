@@ -52,7 +52,15 @@ Termes directement exploitables dans Zefix / SIMAP / search.ch pour alimenter l'
 Compter les caractères avant de renvoyer. Si une valeur dépasse, réécrire plus court. Aucune valeur hors limites n'est tolérée.
 
 # Style
-Factuel, sans marketing. Titres explicites, résumés 2-4 lignes. Images : toujours null (résolues serveur après appel).`;
+Factuel, sans marketing. Titres explicites, résumés 2-4 lignes. Images : toujours null (résolues serveur après appel).
+
+# Structure JSON (CRITIQUE)
+Le tool emit_report attend EXACTEMENT 4 clés racines : meta, items, impacts_filmpro, search_terms.
+- meta contient : week_label, generated_at, compliance_tag, executive_summary.
+- NE PAS wrapper le rapport entier dans un objet supplémentaire.
+- NE PAS imbriquer meta dans meta.
+Exemple structure attendue :
+{ "meta": { "week_label": "...", ... }, "items": [...], "impacts_filmpro": [...], "search_terms": [...] }`;
 
 export interface UserPromptInput {
 	weekLabel: string;
