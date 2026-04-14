@@ -65,14 +65,18 @@ export const config = {
 	},
 
 	scoring: {
-		maxPoints: 13,
+		maxPoints: 12,
 		cantonsPrioritaires: {
-			points: 3,
+			points: 2,
 			values: ['GE', 'VD', 'VS'],
 		},
 		cantonsSecondaires: {
 			points: 1,
 			values: ['NE', 'FR', 'JU'],
+		},
+		entrepriseIdentifiee: {
+			points: 1,
+			sources: ['zefix'],
 		},
 		secteursCibles: {
 			points: 3,
@@ -100,9 +104,8 @@ export const config = {
 			points: 1,
 		},
 		labels: {
-			chaud: 8,
-			tiede: 5,
-			froid: 2,
+			chaud: 7,
+			tiede: 4,
 		},
 	},
 

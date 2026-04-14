@@ -52,15 +52,19 @@ pipeline:
 
 # Configuration du scoring des leads de prospection
 scoring:
-  max_points: 13
+  max_points: 12
 
   cantons_prioritaires:
-    points: 3
+    points: 2
     values: [GE, VD, VS]
 
   cantons_secondaires:
     points: 1
     values: [NE, FR, JU]
+
+  entreprise_identifiee:
+    points: 1
+    sources: [zefix]
 
   secteurs_cibles:
     points: 3
@@ -103,10 +107,9 @@ scoring:
     points: 1
 
   labels:
-    chaud: 8
-    tiede: 5
-    froid: 2
-    # en dessous de froid = non_qualifie
+    chaud: 7
+    tiede: 4
+    # en dessous de tiede = froid (3 niveaux stricts)
 
 # Sources de prospection activees
 prospection:

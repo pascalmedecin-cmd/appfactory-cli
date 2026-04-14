@@ -19,7 +19,7 @@ interface LeadScoring {
 
 export interface ScoreDetail {
 	total: number;
-	label: 'chaud' | 'tiede' | 'froid' | 'non_qualifie';
+	label: 'chaud' | 'tiede' | 'froid';
 	criteres: string[];
 }
 
@@ -54,6 +54,12 @@ export function calculerScore(lead: LeadScoring): ScoreDetail {
 		criteres.push(`Signal ${lead.source.toUpperCase()} (+${scoring.sourcesChaudes.points})`);
 	}
 
+	// Entreprise identifiee (Zefix = inscription RC avec UID)
+	if (scoring.entrepriseIdentifiee.sources.includes(lead.source as typeof scoring.entrepriseIdentifiee.sources[number])) {
+		total += scoring.entrepriseIdentifiee.points;
+		criteres.push(`Entreprise identifiee (+${scoring.entrepriseIdentifiee.points})`);
+	}
+
 	// Recence
 	if (lead.date_publication) {
 		const datePub = lead.date_publication instanceof Date
@@ -86,12 +92,11 @@ export function calculerScore(lead: LeadScoring): ScoreDetail {
 		criteres.push(`Montant > ${scoring.montantMinimum.seuil / 1000}k (+${scoring.montantMinimum.points})`);
 	}
 
-	// Label
+	// Label (3 niveaux stricts : chaud / tiede / froid)
 	let label: ScoreDetail['label'];
 	if (total >= scoring.labels.chaud) label = 'chaud';
 	else if (total >= scoring.labels.tiede) label = 'tiede';
-	else if (total >= scoring.labels.froid) label = 'froid';
-	else label = 'non_qualifie';
+	else label = 'froid';
 
 	return { total, label, criteres };
 }

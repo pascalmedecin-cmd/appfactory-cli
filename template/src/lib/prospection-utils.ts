@@ -22,15 +22,13 @@ export const cantonNoms: Record<string, string> = {
 export function scoreLabel(score: number): string {
 	if (score >= scoreLabels.chaud) return 'Chaud';
 	if (score >= scoreLabels.tiede) return 'Tiède';
-	if (score >= scoreLabels.froid) return 'Froid';
-	return 'Faible';
+	return 'Froid';
 }
 
-export function scoreBadgeVariant(score: number): 'danger' | 'warning' | 'muted' | 'default' {
+export function scoreBadgeVariant(score: number): 'danger' | 'warning' | 'muted' {
 	if (score >= scoreLabels.chaud) return 'danger';
 	if (score >= scoreLabels.tiede) return 'warning';
-	if (score >= scoreLabels.froid) return 'muted';
-	return 'default';
+	return 'muted';
 }
 
 export function scoreToCategory(score: number): string {
