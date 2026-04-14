@@ -54,16 +54,23 @@ export const IntelligenceItemSchema = z.object({
 	rank: z.number().int().min(1).max(10),
 	title: z.string().min(10).max(200),
 	summary: z.string().min(40).max(800),
-	filmpro_relevance: z.string().min(20).max(300),
+	filmpro_relevance: z.string().min(20).max(600),
 	maturity: MaturityEnum,
 	theme: ThemeEnum,
 	geo_scope: GeoScopeEnum,
 	source: z.object({
 		name: z.string().min(2).max(120),
 		url: HttpsUrl,
-		published_at: z.string().datetime()
+		// Accepte date seule (YYYY-MM-DD) ou datetime complet ; normalisée serveur.
+		published_at: z
+			.string()
+			.regex(
+				/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?Z?)?$/,
+				'Format attendu : YYYY-MM-DD ou YYYY-MM-DDTHH:MM:SSZ'
+			)
+			.transform((s) => (s.includes('T') ? s : `${s}T00:00:00Z`))
 	}),
-	deep_dive: z.string().max(200).nullable(),
+	deep_dive: z.string().max(400).nullable(),
 	image_url: HttpsUrl.nullable()
 });
 

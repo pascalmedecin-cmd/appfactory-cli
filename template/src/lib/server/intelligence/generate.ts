@@ -51,7 +51,7 @@ const REPORT_JSON_SCHEMA = {
 					rank: { type: 'integer', minimum: 1, maximum: 10 },
 					title: { type: 'string', minLength: 10, maxLength: 200 },
 					summary: { type: 'string', minLength: 40, maxLength: 800 },
-					filmpro_relevance: { type: 'string', minLength: 20, maxLength: 300 },
+					filmpro_relevance: { type: 'string', minLength: 20, maxLength: 600 },
 					maturity: { type: 'string', enum: ['emergent', 'etabli', 'speculatif'] },
 					theme: {
 						type: 'string',
@@ -75,7 +75,7 @@ const REPORT_JSON_SCHEMA = {
 							published_at: { type: 'string' }
 						}
 					},
-					deep_dive: { type: ['string', 'null'], maxLength: 200 },
+					deep_dive: { type: ['string', 'null'], maxLength: 400 },
 					image_url: { type: ['string', 'null'] }
 				}
 			}

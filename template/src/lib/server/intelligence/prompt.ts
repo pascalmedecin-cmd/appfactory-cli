@@ -45,7 +45,7 @@ Termes directement exploitables dans Zefix / SIMAP / search.ch pour alimenter l'
 # Limites strictes de longueur (RESPECTER ABSOLUMENT, sinon rejet total)
 - executive_summary : 80 à 1200 caractères (vise 600-900)
 - items : 0 à 10 (0 accepté si compliance_tag = "Non exploitable")
-- item.title : 10-200 chars ; item.summary : 40-800 chars ; item.filmpro_relevance : 20-300 chars
+- item.title : 10-200 chars ; item.summary : 40-800 chars ; item.filmpro_relevance : 20-600 chars ; item.deep_dive : 0-400 chars
 - impacts_filmpro : 0 à 3 entrées ; impacts_filmpro[].note : 10 à 500 caractères
 - search_terms : 8 à 15 ; term : 3-120 ; rationale : 10-200
 
