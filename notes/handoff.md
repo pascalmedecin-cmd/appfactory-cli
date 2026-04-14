@@ -1,55 +1,49 @@
-# Handoff — Session 51 : Refonte UI magazine /veille livrée prod + seed démo client
+# Handoff - Session 52 : Traçabilité Veille→Prospection + Scoring v1
 
 ## Objectif
 
-Porter le wireframe magazine DM Sans validé session 50 dans `/veille` + `/veille/[id]`, ajouter OG image scraping, valider en prod.
+2 quick wins backend pendant que la recherche best practices tool use Sonnet 4.5 tourne côté Pascal (prompt claude.ai Research).
 
 ## Livré prod
 
 | Commit | Description |
 |---|---|
-| `485919b` | Refonte UI listing + détail magazine (masthead, hero 7/5, top 3 asymétriques, pullquote, chips, archive grid, classes mag-*) |
-| `adb32b6` | Service OG scraping `og-image.ts` + `enrichItemsWithOgImages`, branché dans `generate.ts`, 11 tests unit |
-| `1976639` | État fallback édition publiée sans signaux |
-| `76444e8` | Rename `edition` → `meta` dans schema (fix double-wrap Sonnet) |
-| `2c77a3a` | `reglementation` ajouté à `ImpactAxisEnum` |
-| `bc756d5` | Unwrap défensif tool_use.input (3 niveaux max) |
-| `a463322` | Bump `filmpro_relevance` 300→600, `deep_dive` 200→400, `published_at` accepte YYYY-MM-DD |
-| `33d1927` | Ajout tâche best practices Sonnet dans CLAUDE.md |
+| `b7d4210` | Wire-up traçabilité : load +page.server + action create + ImportModal + 3 API endpoints (zefix/simap/regbl) lisent from_intelligence + from_term et les écrivent sur chaque lead |
+| `792b485` | Scoring v1 : canton prioritaire 3→2, +1 entreprise identifiée pour zefix, labels 3 niveaux (chaud/tiede/froid), seuils chaud≥7 / tiede≥4, max_points 12 |
 
-Tests : 201/201 (+11 og-image).
+Tests : 204/204 (+3 vs session 51, tous sur scoring).
 
-## Déviations
+## Fichiers modifiés
 
-- **Vercel Blob rehosting skippé** : DB sert de cache permanent (image_url persisté par report). Migration Blob = ticket optionnel si sources deviennent instables.
-- **Régénération naturelle W16 échouée 4 fois** : après 4 fixes de schema, Sonnet continuait à produire `filmpro_relevance` >600 chars. Whack-a-mole stoppé.
-- **Seed SQL manuel W16 pour démo client** : INSERT avec 5 items / 3 impacts / 10 termes, 3 images Unsplash + 2 fallbacks gradient. Compliance "OK FilmPro". Édition id `43d8ff8c-19a5-42a8-b6cb-bde03b6b2b35`. Pascal parti chez client avec URL `filmpro-crm.vercel.app/veille`.
+**1b (traçabilité)** : 6 fichiers - `template/src/routes/(app)/prospection/+page.server.ts`, `+page.svelte`, `template/src/lib/components/prospection/ImportModal.svelte`, `template/src/routes/api/prospection/{zefix,simap,regbl}/+server.ts`.
+
+**1c (scoring)** : 6 fichiers - `template/project.yaml`, `template/src/lib/config.ts`, `scoring.ts`, `scoring.test.ts`, `prospection-utils.ts`, `template/src/routes/(app)/prospection/+page.server.ts` (filtre serveur).
 
 ## Décisions structurantes
 
-1. Service OG sans rehost CDN : pragmatisme MVP, DB fait cache.
-2. Schema `meta` plutôt qu'`edition` : nom neutre, évite hallucination du modèle.
-3. Seed SQL > continuer régénération : sortir du whack-a-mole pour ne pas bloquer la démo client.
-4. Prochaine session dédiée best practices Sonnet tool use : approche structurée (doc Anthropic, strict tool choice, JSON mode, descriptions enrichies) au lieu de durcir le schema au coup par coup.
+1. **Traçabilité implémentée via query params + body POST** (pas form actions natives) car le flow UI réel est : URL depuis /veille → ImportModal → fetch POST JSON vers API. Form fields ajoutés sur `create` action quand même pour cohérence.
+2. **Validation UUID côté serveur** pour `from_intelligence` (regex stricte) + troncature 200 chars sur `from_term` : défense en profondeur, paramètres propagés côté client ne sont jamais fiables.
+3. **Scoring v1 intentionnellement simple** : canton/secteur/récence/source/tél/montant/entreprise identifiée. v2 (signaux marché Veille) documentée en BLOQUÉ, attend page Veille enrichie.
+4. **"Entreprise identifiée" = source zefix** : proxy pragmatique. Un lead Zefix a toujours un UID RC, donc l'entreprise est formellement identifiable. Les leads SIMAP/RegBL/search.ch n'ont pas cette garantie.
+5. **3 niveaux stricts (suppression "Faible")** : UI avait 4 labels (scoreLabel retournait "Faible" pour score < 2) alors que le filtre et scoreToCategory avaient déjà 3 niveaux. Incohérence résolue.
 
-## Bugs découverts (journal)
+## Déviations
 
-- Sonnet 4.5 tool_use.input wrappé aléatoirement dans clé parasite (`{parameter: {...}}` ou `{edition: {...full report...}}`). Unwrap défensif ajouté (commit `bc756d5`) mais cause racine non résolue.
-- Sonnet dépasse systématiquement les `.max()` Zod sur strings narratives (`filmpro_relevance`, `deep_dive`).
-- `published_at` renvoyé au format `YYYY-MM-DD` et non datetime ISO complet.
-- `ImpactAxisEnum` incomplet : `reglementation` manquait alors que Sonnet l'utilise naturellement.
+- **Slip tiret long** sur 1er commit scoring v1 (title `scoring v1 — canton`). Corrigé par `reset --soft` + recommit `792b485`. Règle "jamais de tiret long" renforcée en feedback memory (`feedback_no_em_dash.md`).
+- **Prompt claude.ai non exécuté** : livré à Pascal, en attente résultats pour trancher options [A]+[B] du /dig tool use.
 
-## État prod validé
+## Research en cours (externe)
 
-- https://filmpro-crm.vercel.app/veille — listing magazine : 4 articles, 5 images, hero MoPEC, pullquote pricing, chips prospection.
-- https://filmpro-crm.vercel.app/veille/43d8ff8c-19a5-42a8-b6cb-bde03b6b2b35 — détail : 5 items (3 avec image Unsplash + 2 fallback gradient), 3 impacts, 11 chips.
+Prompt claude.ai Research rédigé, 5 axes : (A) prompt engineering Veille, (B) structured output tool use stability Sonnet 4.5, (C) résumé/hiérarchisation/titrage, (D) UX/UI layout magazine moderne, (E) pipeline éditorial + fiabilité. Résultats attendus pour trancher stratégie de stabilisation W17.
 
-## Git
+## État à la sortie
 
-Main à `33d1927`, pushé origin.
+- `main` : `792b485`, pushé, 204/204 verts
+- Git clean, pas de WIP
+- Backlog Prochaine session : tâche 1a (best practices tool use) reste priorité haute après réception research, golden standards + import/export + dashboard indépendants, scoring v2 BLOQUÉ, Figma BLOQUÉ PAT
 
-## Prochaine session
+## Hypothèses à vérifier prochaine session
 
-Priorité 1 : **Best practices tool use Sonnet 4.5** pour stabiliser la génération naturelle (doc Anthropic, strict tool choice, schema descriptions enrichies). Livrable attendu : génération W17 naturelle qui passe Zod du premier coup sans unwrap défensif ni seed manuel.
-
-Voir CLAUDE.md § Prochaine session pour la liste complète.
+1. La recherche claude.ai va-t-elle valider l'hypothèse "descriptions par champ réduisent les dépassements de maxLength" ? Si oui → implémentation rapide.
+2. `tool_choice: {type: "any", disable_parallel_tool_use: true}` compatible avec `web_search` server-tool ? À tester.
+3. L'"entreprise identifiée" (+1 zefix) est-elle trop grossière ? Devrait-elle s'étendre à tout lead avec `numero_ide` non nul (plus précis) ?
