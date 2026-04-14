@@ -5,6 +5,7 @@ import {
 	type IntelligenceReport
 } from './schema';
 import { INTELLIGENCE_SYSTEM_PROMPT, buildUserPrompt } from './prompt';
+import { enrichItemsWithOgImages } from './og-image';
 
 const MODEL = 'claude-sonnet-4-5-20250929'; // TODO: passer a claude-sonnet-4-6 des dispo GA
 const MAX_TOKENS = 16000;
@@ -203,5 +204,11 @@ export async function generateIntelligenceReport(
 		};
 	}
 
-	return { success: true, report: parsed.data, raw: response };
+	// Enrichissement OG images : resout image_url depuis source.url quand
+	// le modele n'a pas rempli le champ. Best-effort, silencieux en cas
+	// d'echec reseau (fallback UI gradient themé gère l'absence d'image).
+	const enrichedItems = await enrichItemsWithOgImages(parsed.data.items);
+	const enrichedReport: IntelligenceReport = { ...parsed.data, items: enrichedItems };
+
+	return { success: true, report: enrichedReport, raw: response };
 }
