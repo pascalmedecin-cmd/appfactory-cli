@@ -1,78 +1,68 @@
-# Handoff - Session 55 : Sprint 1 P0 validé, Sprint 2 débloqué
+# Handoff - Session 59 : Bloc 2bis qualité sources LLM Veille
 
 ## Objectif session
 
-Valider empiriquement Sprint 1 P0 (`ba07149`) en générant une édition Veille propre.
+Livrer Bloc 2bis : corriger qualité sources LLM Veille en combinant levier (1) élargir fenêtre à 14j + levier (2) durcir prompt système. Reporter levier (3) filtre programmatique au Sprint 4.
 
 ## Livré
 
-| Action | Résultat |
+| Commit | Contenu |
 |---|---|
-| DELETE SQL `intelligence_reports WHERE week_label = '2026-W16'` | Rapport halluciné (cas Plattix) purgé |
-| GET `/api/cron/intelligence` avec CRON_SECRET | HTTP 200 `ok:true`, 158s, status `published` |
-| Nouveau reportId | `2940d626-8d08-499b-9f7a-ef505997f8c5` |
-| Contenu | 10 items + 3 impacts FilmPro + 13 termes de recherche, error_message null |
+| `122082b` | Fenêtre 14j : fn `extendedWindowStart(range, days=14)` dans `week-utils.ts`, param `windowStart?` sur `GenerateInput`, utilisation dans `isWithinWindow`. `run-generation.ts` passe `extendedWindowStart(week, 14)`. Prompt système durci (règle critique vérifiabilité date, og:published_time requis, rejet si absente/hors 14j/future). User prompt mentionne tolérance technique. 3 tests ajoutés. |
+| `3f75134` | Allowlist `/api/intelligence/trigger` dans `hooks.server.ts` (même pattern que `/api/intelligence/recheck-historical` session 57, nécessaire pour régen manuelle via CLI — endpoint est protégé par `CRON_SECRET` Bearer). |
+| `ecdc28f` | Log debug temporaire `[veille:date-check]` pour diagnostiquer pourquoi 1ère régen retournait date_ok=false sur 2026-04-01. Cause identifiée : 1ère régen tournait encore sur build 15 min avant, 2nde régen a confirmé windowStart=2026-03-30 bien appliqué. |
+| `ad84222` | Retrait log debug. |
 
-**Sprint 1 P0 validé** : strict tool use Sonnet 4.6 + schéma sans contraintes numériques + Zod en filet → Zod passé sans retry visible, génération naturelle.
+Tests : 250/250 verts (vs 247/247 session 58, +3 sur `extendedWindowStart`).
 
-## Correction handoff précédent
+## Validation empirique W16 après fix
 
-Le mode opératoire de session 54 indiquait `POST /api/intelligence/trigger`. **Faux** : cet endpoint est intercepté par `hooks.server.ts:67` (redirect `/login` avant vérif Bearer). Seuls les chemins `/api/cron/*` sont dans `isCronRoute` et bypassent l'auth Supabase.
+DELETE `intelligence_reports WHERE week_label='2026-W16'` puis `POST /api/intelligence/trigger` (Bearer CRON_SECRET, 122s, HTTP 200).
 
-**Endpoint correct pour trigger manuel** :
+5 items générés (vs 7 régen précédente → prompt durci a réduit volume) :
+
+| Rank | published_at LLM | og-date | date_ok | url_ok | Note |
+|---|---|---|---|---|---|
+| 1 | 2026-04-10 | null | **true** | false | Dans fenêtre 14j ✓ |
+| 2 | 2026-02-01 | null | false | true | Hors fenêtre, correct |
+| 3 | (ignoré) | 2026-02-02 | false | true | **og > llm** source of truth ✓ |
+| 4 | 2026-04-08 | 2026-04-08 | **true** | true | Meilleur item, tout OK ✓ |
+| 5 | 2026-01-01 | null | false | false | Hors fenêtre + URL morte |
+
+**2/5 items date_ok=true (vs 0/7 régen précédente)** → amélioration nette. Fenêtre 14j opérationnelle. og-date source of truth respectée (rank 3 basculé à false par og vs llm).
+
+## Correction endpoint trigger
+
+Le handoff session 55 disait d'utiliser `GET /api/cron/intelligence` car `/api/intelligence/trigger` était bloqué par middleware. **Depuis session 59, `/api/intelligence/trigger` est dans l'allowlist** et accepte POST avec Bearer CRON_SECRET. Les deux endpoints fonctionnent maintenant.
+
 ```bash
-curl -X GET https://filmpro-crm.vercel.app/api/cron/intelligence \
+curl -sS -X POST https://filmpro-crm.vercel.app/api/intelligence/trigger \
   -H "Authorization: Bearer f7b3e8ed7c246e3ddc4e0ee70906c71213bcc7463cec8ea2cc410241c8ecfd9f" \
-  --max-time 180
-```
-Attention : **GET**, pas POST. Durée 90-160s.
-
-Pour forcer une regen alors qu'un report existe déjà pour la semaine courante :
-```bash
-supabase db query --linked "DELETE FROM intelligence_reports WHERE week_label = 'YYYY-Www';"
+  --max-time 400
 ```
 
-## Décisions structurantes
+## Validation Chrome MCP
 
-1. **Supprimer un rapport halluciné** : Pascal a validé la destruction de la W16 de mauvaise qualité (cas Plattix entièrement inventé). Approche propre : delete DB + regen, pas d'ajout de param `?force`.
-2. **Fin de session au bon moment** : tâche 1a livrée, Pascal a demandé l'estimation de contexte restant. Choix de clôturer pour entamer Sprint 2 avec fenêtre propre plutôt que forcer dans la même session.
+`GET /veille` (prod) :
+- 5 items en fil chrono ✓
+- Counts sticky bar corrects : 5 signals · 2 Action directe · 3 Veille active ✓
+- 17 occurrences DOM du badge "Non vérifié" (rendu sur items url_ok=false ou date_ok=false) ✓
+- Pas de régression visuelle
 
-## Déviations
+## Limite résiduelle
 
-Aucune. Périmètre = tâche 1a uniquement, livrée.
+3/5 items LLM pointent encore vers articles anciens (fév/jan 2026) malgré prompt durci. Le LLM continue de "compléter" avec des sources hors fenêtre. Solution complète = **Bloc 2 (Sprint 4)** avec filtre programmatique phase 1 : rejeter candidats hors fenêtre 14j AVANT phase 2 rédaction, relancer web_search si pool vide. Incorporé dans la description Bloc 2.
 
-## Bugs découverts
+## Prochaine session
 
-Aucun.
+Bloc 2 (Sprint 4) : prompt caching 90% + pipeline 2 phases température + filtre programmatique 14j. ~2h, autonome.
 
-## Prochaine session - Sprint 2 P1 anti-hallucination + URLs fonctionnelles
+## Files modifiés
 
-**Contexte** : le cas Plattix (entreprise inventée de toutes pièces + lien cassé non détecté) doit être impossible après ce sprint. Cadrage complet en session 53.
+- `template/src/lib/server/intelligence/week-utils.ts` (+ test)
+- `template/src/lib/server/intelligence/generate.ts`
+- `template/src/lib/server/intelligence/run-generation.ts`
+- `template/src/lib/server/intelligence/prompt.ts`
+- `template/src/hooks.server.ts`
 
-**5 sous-tâches** (ordre d'exécution recommandé) :
-
-1. **Bloc `<company_context>` dans system prompt** (`template/src/lib/server/intelligence/generate.ts`) : injecter le profil FilmPro comme `<company_context purpose="relevance_filter_only">` pour que le modèle filtre les items hors périmètre sans halluciner des parties prenantes FilmPro-compatibles.
-
-2. **Autoriser "je ne sais pas"** : ajouter instruction explicite dans le system prompt autorisant l'omission d'un item si incertain, exiger citations directes (extrait texte source + URL) pour toute affirmation chiffrée ou nominative.
-
-3. **HEAD check URLs post-génération** : nouveau utilitaire `template/src/lib/server/intelligence/url-check.ts`, vérifier chaque URL `source.url` et `evidence.url` retournée (code 200 + path non-trivial, pas juste `/` ou domaine racine). Si URL casse → flag item ou rejeter.
-
-4. **Lookup Zefix côté serveur** : pour toute entité suisse nommée dans un item (champ `entities[].name`), appeler Zefix REST. Si 0 résultat → marquer `maturity: speculatif` automatiquement (override du modèle).
-
-5. **Badge UI "non vérifié"** : `template/src/routes/veille/+page.svelte` (ou composants items), afficher un badge visuel discret pour items `maturity: speculatif`.
-
-**Critère d'acceptation** : regénérer W16 une 2e fois après Sprint 2, aucun item nominatif sans source vérifiable, aucune URL cassée, entités non-Zefix tagguées speculatif.
-
-**Tests attendus** : vitest unitaires sur `url-check.ts` (URLs valides/cassées/timeout/redirect) + zefix lookup (mock API).
-
-**Estimation** : 1 session dédiée (~2-3h code + tests + 1 regen de validation).
-
-## Risques résiduels
-
-- HEAD check peut timeout sur certaines sources lentes → prévoir `AbortSignal.timeout(5000)` + degrad gracieux (flag sans rejeter).
-- Zefix lookup déjà configuré (credentials prod), mais attention au rate limit API (compter appels par génération).
-
-## Skills à considérer Sprint 2
-
-- `claude-api` si ajustement prompt non trivial
-- `audit-uiux` pour le badge "non vérifié" (harmonie avec page /veille existante)
+Git status : clean, main à jour avec origin/main (ad84222).
