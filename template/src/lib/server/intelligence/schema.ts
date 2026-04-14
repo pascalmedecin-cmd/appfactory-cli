@@ -68,7 +68,7 @@ export const IntelligenceItemSchema = z.object({
 
 export const ImpactFilmproSchema = z.object({
 	axis: ImpactAxisEnum,
-	note: z.string().min(10).max(300)
+	note: z.string().min(10).max(500)
 });
 
 export const SearchTermSchema = z.object({
@@ -82,13 +82,13 @@ export const IntelligenceEditionSchema = z.object({
 
 	generated_at: z.string().datetime(),
 	compliance_tag: ComplianceTagEnum,
-	executive_summary: z.string().min(80).max(600)
+	executive_summary: z.string().min(80).max(1200)
 });
 
 export const IntelligenceReportSchema = z.object({
 	edition: IntelligenceEditionSchema,
-	items: z.array(IntelligenceItemSchema).min(1).max(10),
-	impacts_filmpro: z.array(ImpactFilmproSchema).min(1).max(3),
+	items: z.array(IntelligenceItemSchema).min(0).max(10),
+	impacts_filmpro: z.array(ImpactFilmproSchema).min(0).max(3),
 	search_terms: z.array(SearchTermSchema).min(8).max(15)
 });
 

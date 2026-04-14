@@ -72,9 +72,9 @@ describe('IntelligenceReportSchema', () => {
 		expect(r.success).toBe(false);
 	});
 
-	it('rejette 0 item', () => {
+	it('accepte 0 item (semaine Non exploitable)', () => {
 		const r = IntelligenceReportSchema.safeParse({ ...validReport, items: [] });
-		expect(r.success).toBe(false);
+		expect(r.success).toBe(true);
 	});
 
 	it('rejette moins de 8 search_terms', () => {
