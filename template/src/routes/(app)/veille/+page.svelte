@@ -125,13 +125,35 @@
 		return `/veille/item/${item.report_id}-${item.rank}`;
 	}
 
-	function prospectionHrefFromTerm(term: string, item: FeedItem): string {
-		const params = new URLSearchParams({
-			q: term,
-			from_intelligence: item.report_id,
-			from_term: term
-		});
-		return `/prospection?${params.toString()}`;
+	// Bloc 4 : auto-exécution prospection depuis chip structuré.
+	// Pendant l'appel API, le chip est disabled + affiche un spinner discret.
+	let chipLoading = $state<string | null>(null); // clé "report_id:index"
+
+	async function runChipSearch(
+		chip: { kind: string; canton: string; query: string; label: string },
+		item: FeedItem,
+		index: number
+	) {
+		const key = `${item.report_id}:${index}`;
+		if (chipLoading) return; // un seul clic à la fois
+		chipLoading = key;
+		try {
+			const resp = await fetch('/api/prospection/from-intelligence', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ chip, report_id: item.report_id, item_rank: item.rank })
+			});
+			const data = await resp.json();
+			if (!resp.ok) {
+				alert(`Échec import : ${data?.error ?? resp.statusText}`);
+				return;
+			}
+			goto(data.redirect, { invalidateAll: true });
+		} catch (err) {
+			alert(`Erreur réseau : ${String(err)}`);
+		} finally {
+			chipLoading = null;
+		}
 	}
 
 	function onImageError(e: Event) {
@@ -397,17 +419,24 @@
 						<!-- Résumé -->
 						<p class="text-sm text-text-body leading-relaxed">{item.summary}</p>
 
-						<!-- Chips search_terms -->
+						<!-- Chips search_terms : auto-exécution prospection au clic (Bloc 4) -->
 						{#if item.search_terms && item.search_terms.length > 0}
 							<div class="flex flex-wrap gap-1.5 pt-1">
-								{#each item.search_terms as term (term)}
-									<a
-										href={prospectionHrefFromTerm(term, item)}
-										class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] bg-accent/8 text-accent border border-accent/20 hover:bg-accent/15 transition-colors"
+								{#each item.search_terms as chip, idx (chip.label ?? idx)}
+									{@const loadingKey = `${item.report_id}:${idx}`}
+									{@const isLoading = chipLoading === loadingKey}
+									<button
+										type="button"
+										disabled={chipLoading !== null}
+										onclick={() => runChipSearch(chip, item, idx)}
+										title="Auto-exécuter {chip.kind === 'zefix' ? 'Zefix' : 'SIMAP'} · {chip.canton} · {chip.query}"
+										class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] bg-accent/8 text-accent border border-accent/20 hover:bg-accent/15 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
 									>
-										<span class="material-symbols-outlined text-[12px]">search</span>
-										{term}
-									</a>
+										<span class="material-symbols-outlined text-[12px]">
+											{isLoading ? 'progress_activity' : chip.kind === 'zefix' ? 'business' : 'gavel'}
+										</span>
+										{chip.label}
+									</button>
 								{/each}
 							</div>
 						{/if}

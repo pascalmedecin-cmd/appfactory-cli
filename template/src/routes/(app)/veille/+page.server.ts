@@ -6,6 +6,7 @@ import type {
 	Theme,
 	IntelligenceItem
 } from '$lib/server/intelligence/schema';
+import { normalizeStoredChips } from '$lib/server/intelligence/chip-normalize';
 
 // Item aplati pour le fil chronologique : 1 ligne de DB -> N items individuels.
 export type FeedItem = IntelligenceItem & {
@@ -122,7 +123,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				...raw,
 				segment: raw.segment ?? SEG_DEFAULTS,
 				actionability: raw.actionability ?? ACT_DEFAULTS,
-				search_terms: raw.search_terms ?? []
+				search_terms: normalizeStoredChips(raw.search_terms) as unknown as IntelligenceItem['search_terms']
 			};
 
 			const fp = titleFingerprint(item.title ?? '');

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import { goto } from '$app/navigation';
 	import type { PageData } from './$types';
 	import type { Actionability, Segment, Theme, Maturity } from '$lib/server/intelligence/schema';
 
@@ -61,13 +62,36 @@
 		});
 	}
 
-	function prospectionHrefFromTerm(term: string): string {
-		const params = new URLSearchParams({
-			q: term,
-			from_intelligence: data.report.id,
-			from_term: term
-		});
-		return `/prospection?${params.toString()}`;
+	// Bloc 4 : auto-exécution prospection depuis chip structuré
+	let chipLoading = $state<number | null>(null);
+
+	async function runChipSearch(
+		chip: { kind: string; canton: string; query: string; label: string },
+		idx: number
+	) {
+		if (chipLoading !== null) return;
+		chipLoading = idx;
+		try {
+			const resp = await fetch('/api/prospection/from-intelligence', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					chip,
+					report_id: data.report.id,
+					item_rank: data.item.rank
+				})
+			});
+			const result = await resp.json();
+			if (!resp.ok) {
+				alert(`Échec import : ${result?.error ?? resp.statusText}`);
+				return;
+			}
+			goto(result.redirect, { invalidateAll: true });
+		} catch (err) {
+			alert(`Erreur réseau : ${String(err)}`);
+		} finally {
+			chipLoading = null;
+		}
 	}
 
 	function geoLabel(g: string): string {
@@ -200,18 +224,24 @@
 				Prospecter depuis ce signal
 			</h2>
 			<div class="flex flex-wrap gap-2">
-				{#each data.item.search_terms as term (term)}
-					<a
-						href={prospectionHrefFromTerm(term)}
-						class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-accent/8 text-accent border border-accent/20 hover:bg-accent/15 transition-colors font-medium"
+				{#each data.item.search_terms as chip, idx (chip.label ?? idx)}
+					{@const isLoading = chipLoading === idx}
+					<button
+						type="button"
+						disabled={chipLoading !== null}
+						onclick={() => runChipSearch(chip, idx)}
+						title="Auto-exécuter {chip.kind === 'zefix' ? 'Zefix' : 'SIMAP'} · {chip.canton} · {chip.query}"
+						class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-accent/8 text-accent border border-accent/20 hover:bg-accent/15 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
 					>
-						<span class="material-symbols-outlined text-[16px]">search</span>
-						{term}
-					</a>
+						<span class="material-symbols-outlined text-[16px]">
+							{isLoading ? 'progress_activity' : chip.kind === 'zefix' ? 'business' : 'gavel'}
+						</span>
+						{chip.label}
+					</button>
 				{/each}
 			</div>
 			<p class="text-xs text-text-muted mt-2">
-				Cliquez sur un terme pour lancer une recherche dans Prospection.
+				Cliquez pour lancer la recherche et importer les résultats dans Prospection.
 			</p>
 		</section>
 	{/if}

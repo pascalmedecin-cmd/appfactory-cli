@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { IntelligenceItem } from '$lib/server/intelligence/schema';
+import { normalizeStoredChips } from '$lib/server/intelligence/chip-normalize';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	// slug = "<report_uuid>-<rank>"
@@ -31,7 +32,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			...item,
 			segment: item.segment ?? 'tertiaire',
 			actionability: item.actionability ?? 'a_surveiller',
-			search_terms: item.search_terms ?? []
+			search_terms: normalizeStoredChips(item.search_terms) as unknown as IntelligenceItem['search_terms']
 		} as IntelligenceItem,
 		report: {
 			id: report.id,

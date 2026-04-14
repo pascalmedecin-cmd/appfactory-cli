@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectCanton, detectKind, normalizeStringToChip, buildChipLabel } from './chip-normalize';
+import { detectCanton, detectKind, normalizeStringToChip, buildChipLabel, normalizeStoredChips } from './chip-normalize';
 
 describe('detectCanton', () => {
 	it('détecte les abréviations cantonales', () => {
@@ -87,6 +87,45 @@ describe('normalizeStringToChip', () => {
 	it('trim les espaces de bord', () => {
 		const chip = normalizeStringToChip('  école Lausanne  ');
 		expect(chip.query).toBe('école Lausanne');
+	});
+});
+
+describe('normalizeStoredChips', () => {
+	it('normalise un mix string + chip structuré', () => {
+		const result = normalizeStoredChips([
+			'école Vaud rénovation',
+			{ kind: 'zefix', canton: 'GE', query: 'Losinger', label: 'Zefix · GE · Losinger' }
+		]);
+		expect(result).toHaveLength(2);
+		expect(result[0]).toMatchObject({ kind: 'simap', canton: 'VD' });
+		expect(result[1]).toMatchObject({ kind: 'zefix', canton: 'GE', query: 'Losinger' });
+	});
+
+	it('reconstruit le label manquant', () => {
+		const result = normalizeStoredChips([
+			{ kind: 'simap', canton: 'VD', query: 'vitrage école' }
+		]);
+		expect(result[0].label).toBe('SIMAP · VD · vitrage école');
+	});
+
+	it('retourne tableau vide sur input non-array', () => {
+		expect(normalizeStoredChips(null)).toEqual([]);
+		expect(normalizeStoredChips(undefined)).toEqual([]);
+		expect(normalizeStoredChips({})).toEqual([]);
+		expect(normalizeStoredChips('string')).toEqual([]);
+	});
+
+	it('ignore les entrées invalides (chip mal formé)', () => {
+		const result = normalizeStoredChips([
+			'valide école',
+			{ kind: 'simap' }, // canton + query manquants → skip
+			null,
+			42,
+			{ kind: 'simap', canton: 'VD', query: 'autre valide', label: 'custom' }
+		]);
+		expect(result).toHaveLength(2);
+		expect(result[0].query).toBe('valide école');
+		expect(result[1].query).toBe('autre valide');
 	});
 });
 

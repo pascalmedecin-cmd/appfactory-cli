@@ -68,3 +68,34 @@ export function buildChipLabel(kind: ChipKind, canton: ChipCanton, query: string
 	const clipped = query.length > 80 ? query.slice(0, 77) + '…' : query;
 	return `${kindLabel} · ${canton} · ${clipped}`;
 }
+
+/**
+ * Normalise un tableau mixte (strings legacy + chips structurés) stocké en DB
+ * en SearchChip[] garantis. Utilisé côté +page.server.ts /veille et item/[slug].
+ */
+export function normalizeStoredChips(raw: unknown): SearchChip[] {
+	if (!Array.isArray(raw)) return [];
+	const out: SearchChip[] = [];
+	for (const entry of raw) {
+		if (typeof entry === 'string') {
+			out.push(normalizeStringToChip(entry));
+			continue;
+		}
+		if (
+			entry &&
+			typeof entry === 'object' &&
+			typeof (entry as SearchChip).kind === 'string' &&
+			typeof (entry as SearchChip).canton === 'string' &&
+			typeof (entry as SearchChip).query === 'string'
+		) {
+			const e = entry as SearchChip;
+			out.push({
+				kind: e.kind,
+				canton: e.canton,
+				query: e.query,
+				label: e.label ?? buildChipLabel(e.kind, e.canton, e.query)
+			});
+		}
+	}
+	return out;
+}
