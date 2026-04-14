@@ -1,70 +1,78 @@
-# Handoff - Session 54 : Sprint 1 P0 strict tool use Sonnet 4.6
+# Handoff - Session 55 : Sprint 1 P0 validé, Sprint 2 débloqué
 
-## Objectif
+## Objectif session
 
-Exécuter Sprint 1 P0 du cadrage 360 (session 53) : stabiliser `emit_report` du module Veille via `strict: true` Anthropic + migration modèle, pour générer une édition naturelle qui passe Zod du premier coup sans unwrap défensif ni seed manuel.
+Valider empiriquement Sprint 1 P0 (`ba07149`) en générant une édition Veille propre.
 
-## Livré prod
+## Livré
 
-| Commit | Description |
+| Action | Résultat |
 |---|---|
-| `ba07149` | strict tool use sur emit_report : modèle `claude-sonnet-4-6`, `strict: true`, `additionalProperties: false` partout, contraintes min/max retirées du JSON schema (migrées en description), retry 1x si emit absent, unwrap défensif retiré |
+| DELETE SQL `intelligence_reports WHERE week_label = '2026-W16'` | Rapport halluciné (cas Plattix) purgé |
+| GET `/api/cron/intelligence` avec CRON_SECRET | HTTP 200 `ok:true`, 158s, status `published` |
+| Nouveau reportId | `2940d626-8d08-499b-9f7a-ef505997f8c5` |
+| Contenu | 10 items + 3 impacts FilmPro + 13 termes de recherche, error_message null |
 
-Tests : non re-lancés cette session (changement isolé sur generate.ts, pas de logique métier touchée). Compile OK (`npm run check` : 0 nouvelle erreur sur generate.ts, 10 erreurs préexistantes hors périmètre).
+**Sprint 1 P0 validé** : strict tool use Sonnet 4.6 + schéma sans contraintes numériques + Zod en filet → Zod passé sans retry visible, génération naturelle.
 
-## Fichiers modifiés
+## Correction handoff précédent
 
-- `template/src/lib/server/intelligence/generate.ts` (+116/-71)
+Le mode opératoire de session 54 indiquait `POST /api/intelligence/trigger`. **Faux** : cet endpoint est intercepté par `hooks.server.ts:67` (redirect `/login` avant vérif Bearer). Seuls les chemins `/api/cron/*` sont dans `isCronRoute` et bypassent l'auth Supabase.
+
+**Endpoint correct pour trigger manuel** :
+```bash
+curl -X GET https://filmpro-crm.vercel.app/api/cron/intelligence \
+  -H "Authorization: Bearer f7b3e8ed7c246e3ddc4e0ee70906c71213bcc7463cec8ea2cc410241c8ecfd9f" \
+  --max-time 180
+```
+Attention : **GET**, pas POST. Durée 90-160s.
+
+Pour forcer une regen alors qu'un report existe déjà pour la semaine courante :
+```bash
+supabase db query --linked "DELETE FROM intelligence_reports WHERE week_label = 'YYYY-Www';"
+```
 
 ## Décisions structurantes
 
-1. **Sources primaires consultées avant code** (rule quality "factuel et documenté") : 2 fetches doc Anthropic - `tool-use/strict-tool-use` et `build-with-claude/structured-outputs#json-schema-limitations`. Confirmé GA Sonnet 4.6, listé subset JSON Schema supporté, identifié 9 violations à corriger dans le schéma actuel.
-2. **Zod conservé inchangé côté serveur** : strict garantit la structure JSON mais ne valide PAS les contraintes numériques (min/max length, min/max value). Zod reste le filet pour ces validations - approche défense en profondeur.
-3. **Contraintes min/max migrées en description** au lieu d'être supprimées : aligné sur ce que font les SDK officiels Python/TS Anthropic via `zodOutputFormat()` (stripping + append en description). Le modèle respecte mieux quand exprimé en NL.
-4. **Retry 1x si emit_report absent** : filet minimal sans boucle agentic (web_search est server tool, géré côté Anthropic dans le même tour).
+1. **Supprimer un rapport halluciné** : Pascal a validé la destruction de la W16 de mauvaise qualité (cas Plattix entièrement inventé). Approche propre : delete DB + regen, pas d'ajout de param `?force`.
+2. **Fin de session au bon moment** : tâche 1a livrée, Pascal a demandé l'estimation de contexte restant. Choix de clôturer pour entamer Sprint 2 avec fenêtre propre plutôt que forcer dans la même session.
 
 ## Déviations
 
-Aucune. Plan exécuté tel que validé par Pascal après 2 challenges (réflexion sur cohabitation strict + web_search server tool, confiance Moyen documentée).
-
-## Test critique en attente
-
-**État** : code livré ba07149 sur main → Vercel deploy auto en cours. **Pas testé empiriquement.**
-
-**À faire au prochain démarrage de session** :
-
-1. Vérifier deploy live sur https://vercel.com/pascals-projects-d4f3eda9/filmpro-crm/deployments (commit `ba07149` doit être "Ready")
-2. Trigger génération W17 via cette commande shell :
-   ```bash
-   curl -X POST https://filmpro-crm.vercel.app/api/intelligence/trigger \
-     -H "Authorization: Bearer f7b3e8ed7c246e3ddc4e0ee70906c71213bcc7463cec8ea2cc410241c8ecfd9f" \
-     -H "Content-Type: application/json" \
-     -w "\n\nHTTP_STATUS: %{http_code}\nDURATION: %{time_total}s\n"
-   ```
-3. Durée attendue : 30-90s
-4. 3 cas possibles à diagnostiquer :
-   - `200` + `"ok": true` → succès, enchaîner Sprint 2 (anti-hallucination + URLs fonctionnelles + fraîcheur)
-   - `500` + erreur Anthropic 400 schéma → message API explicite, ajuster JSON schema
-   - `500` + Zod échoue → strict OK mais min/max violés, durcir le prompt système
-
-## Risques résiduels
-
-- **Cohabitation `strict: true` + web_search server tool non testée empiriquement** (confiance Moyen). Doc Anthropic ne mentionne pas de restriction et garantit "tool name valid (from provided tools or server tools)" suggérant compat. Mitigation : si 400 au premier trigger, message API sera explicite.
-- **Limite 16 union types max en strict** : on a 2 (`deep_dive`, `image_url` en `['string','null']`). Large en dessous.
-- **Limite 24 optionnels max** : tous nos champs sont required. Aucun optionnel.
+Aucune. Périmètre = tâche 1a uniquement, livrée.
 
 ## Bugs découverts
 
-Aucun nouveau bug en session.
+Aucun.
 
-## Skills utilisés
+## Prochaine session - Sprint 2 P1 anti-hallucination + URLs fonctionnelles
 
-- WebFetch x3 (doc Anthropic) - source primaire avant décision technique
+**Contexte** : le cas Plattix (entreprise inventée de toutes pièces + lien cassé non détecté) doit être impossible après ce sprint. Cadrage complet en session 53.
 
-## Mémoires créées
+**5 sous-tâches** (ordre d'exécution recommandé) :
 
-- `feedback_explicit_instructions.md` : Pascal n'est pas dev, toute action manuelle doit être un mode opératoire complet (URL, commande copy-paste prête, résultat attendu). Ajouté à MEMORY.md.
+1. **Bloc `<company_context>` dans system prompt** (`template/src/lib/server/intelligence/generate.ts`) : injecter le profil FilmPro comme `<company_context purpose="relevance_filter_only">` pour que le modèle filtre les items hors périmètre sans halluciner des parties prenantes FilmPro-compatibles.
 
-## Prochaine session
+2. **Autoriser "je ne sais pas"** : ajouter instruction explicite dans le system prompt autorisant l'omission d'un item si incertain, exiger citations directes (extrait texte source + URL) pour toute affirmation chiffrée ou nominative.
 
-Sprint 1 P0 : exécuter le test W17 (mode op ci-dessus), puis selon résultat enchaîner Sprint 2 (anti-hallucination Plattix + URLs fonctionnelles HEAD check + fraîcheur déterministe) ou debug.
+3. **HEAD check URLs post-génération** : nouveau utilitaire `template/src/lib/server/intelligence/url-check.ts`, vérifier chaque URL `source.url` et `evidence.url` retournée (code 200 + path non-trivial, pas juste `/` ou domaine racine). Si URL casse → flag item ou rejeter.
+
+4. **Lookup Zefix côté serveur** : pour toute entité suisse nommée dans un item (champ `entities[].name`), appeler Zefix REST. Si 0 résultat → marquer `maturity: speculatif` automatiquement (override du modèle).
+
+5. **Badge UI "non vérifié"** : `template/src/routes/veille/+page.svelte` (ou composants items), afficher un badge visuel discret pour items `maturity: speculatif`.
+
+**Critère d'acceptation** : regénérer W16 une 2e fois après Sprint 2, aucun item nominatif sans source vérifiable, aucune URL cassée, entités non-Zefix tagguées speculatif.
+
+**Tests attendus** : vitest unitaires sur `url-check.ts` (URLs valides/cassées/timeout/redirect) + zefix lookup (mock API).
+
+**Estimation** : 1 session dédiée (~2-3h code + tests + 1 regen de validation).
+
+## Risques résiduels
+
+- HEAD check peut timeout sur certaines sources lentes → prévoir `AbortSignal.timeout(5000)` + degrad gracieux (flag sans rejeter).
+- Zefix lookup déjà configuré (credentials prod), mais attention au rate limit API (compter appels par génération).
+
+## Skills à considérer Sprint 2
+
+- `claude-api` si ajustement prompt non trivial
+- `audit-uiux` pour le badge "non vérifié" (harmonie avec page /veille existante)

@@ -1,13 +1,13 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production
-**Derniere mise a jour :** 2026-04-14 (session 54 : Sprint 1 P0 strict tool use Sonnet 4.6 livré ba07149, test W17 en attente)
+**Derniere mise a jour :** 2026-04-14 (session 55 : Sprint 1 P0 validé empiriquement, édition W16 regénérée propre)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente -2 :** Cadrage 360 tâche 1a à partir de 2 études (Veille Sectorielle DOCX + compass markdown). Synthèse en 3 sprints : P0 stabilité (`strict:true` GA Anthropic, schéma sans contraintes numériques, retry, migration Sonnet 4.6) ; P1 anti-hallucination + URLs fonctionnelles (cas Plattix) ; P1 fraîcheur déterministe ; P2 caching + pipeline 2 phases. Commit 7ad97ca. Pas d'exécution.
-**Session precedente :** Sprint 1 P0 livré (`ba07149`) : modèle `claude-sonnet-4-6`, `strict: true` sur emit_report, `additionalProperties: false` partout, contraintes min/max retirées du JSON schema (migrées en description), retry 1x si emit absent, unwrap défensif retiré. Doc Anthropic vérifiée AVANT code (rule quality) : 2 fetches (`tool-use/strict-tool-use` + `structured-outputs#json-schema-limitations`). Zod inchangé (filet pour les contraintes numériques que strict ne couvre pas). Compile OK (0 erreur sur generate.ts). **Test empirique W17 NON FAIT** - mode opératoire complet documenté dans `notes/handoff.md` : trigger `POST /api/intelligence/trigger` avec CRON_SECRET, 30-90s, 3 cas à diagnostiquer. Mémoire créée : règle "instructions pas-à-pas" (Pascal n'est pas dev, toute action manuelle doit être un mode opératoire complet copy-paste).
+**Session precedente -2 :** Sprint 1 P0 livré (`ba07149`) : modèle `claude-sonnet-4-6`, `strict: true` sur emit_report, `additionalProperties: false` partout, contraintes min/max retirées du JSON schema (migrées en description), retry 1x si emit absent, unwrap défensif retiré. Compile OK. Test empirique W17 non fait en session.
+**Session precedente :** Test empirique Sprint 1 P0 validé. Édition W16 hallucinée (cas Plattix) supprimée en DB, regen via `GET /api/cron/intelligence` en 158s, HTTP 200 `ok:true`, status `published`, 10 items + 3 impacts + 13 termes, Zod passé sans retry. Mode opératoire handoff corrigé : le bon endpoint est `GET /api/cron/intelligence` (dans allowlist `isCronRoute` du hook), pas `POST /api/intelligence/trigger` (bloqué par redirect /login). Sprint 2 débloqué.
 
-**Session precedente -1 :** 2 tâches livrées : Wire-up traçabilité Veille → Prospection (b7d4210) + Scoring v1 (792b485). 204/204 tests verts. Règle "jamais de tiret long" renforcée. Scoring v2 documenté en BLOQUÉ (attente page Veille enrichie).
+**Session precedente -1 :** Sprint 1 P0 livré (`ba07149`) : strict tool use Sonnet 4.6 sur emit_report, doc Anthropic vérifiée avant code, Zod conservé en filet défense en profondeur.
 
 ---
 
@@ -262,9 +262,9 @@ Fichiers cles :
 
 - [x] ~~Verifier en navigateur prod que les 7 fixes responsive tiennent~~ — Fait 2026-04-13
 - [x] ~~Valider module Veille sectorielle sur preview Vercel puis merger feat/veille-sectorielle → main~~ — Fait 2026-04-14 : mergé 838667e, trigger prod HTTP 200 reportId 43d8ff8c, édition 2026-W16 live sur filmpro-crm.vercel.app/veille
-- [ ] **[EXÉCUTABLE — priorité haute]** Tester génération W17 réelle pour valider Sprint 1 P0 (commit `ba07149` livré session 54). Mode opératoire complet dans `notes/handoff.md` section "Test critique en attente" : vérifier deploy `ba07149` Ready sur Vercel → curl POST `/api/intelligence/trigger` avec CRON_SECRET (commande prête à copier-coller dans handoff) → analyser réponse JSON. 3 cas à diagnostiquer : `200 ok=true` → succès, enchaîner Sprint 2 ; `500` Anthropic 400 schéma → ajuster JSON schema ; `500` Zod échoue → durcir prompt système.
-- [ ] **[BLOQUÉ — attente succès test W17]** Sprint 2 P1 anti-hallucination + URLs fonctionnelles (cadrage session 53) : (a) bloc `<company_context purpose="relevance_filter_only">` dans system prompt, (b) autoriser "je ne sais pas" et exiger citations directes, (c) HEAD check URLs post-génération (code 200 + path non-trivial, pas juste `/`), (d) lookup Zefix côté serveur pour entités suisses revendiquées (si 0 résultat → flag `maturity: speculatif`), (e) badge UI "non vérifié" pour items speculatifs. Cas Plattix (entreprise inventée + lien cassé non détecté en prod) doit être bloqué.
-- [ ] **[BLOQUÉ — attente Sprint 2]** Sprint 3 P1 fraîcheur déterministe (cadrage session 53) : parser dates post-hoc + `og:published_time` AVANT appel LLM, rejeter items hors fenêtre temporelle de l'édition.
+- [x] ~~Tester génération réelle pour valider Sprint 1 P0 (`ba07149`)~~ — Fait 2026-04-14 session 55 : W16 hallucinée supprimée en DB, regen via `GET /api/cron/intelligence` en 158s, HTTP 200 `ok:true` status `published`, 10 items + 3 impacts + 13 termes, Zod passé sans retry. Sprint 1 P0 validé empiriquement.
+- [ ] **[EXÉCUTABLE — priorité haute]** Sprint 2 P1 anti-hallucination + URLs fonctionnelles (cadrage session 53) : (a) bloc `<company_context purpose="relevance_filter_only">` dans system prompt, (b) autoriser "je ne sais pas" et exiger citations directes, (c) HEAD check URLs post-génération (code 200 + path non-trivial, pas juste `/`), (d) lookup Zefix côté serveur pour entités suisses revendiquées (si 0 résultat → flag `maturity: speculatif`), (e) badge UI "non vérifié" pour items speculatifs. Cas Plattix (entreprise inventée + lien cassé non détecté en prod) doit être bloqué.
+- [ ] **[BLOQUÉ — attente Sprint 2 livré]** Sprint 3 P1 fraîcheur déterministe (cadrage session 53) : parser dates post-hoc + `og:published_time` AVANT appel LLM, rejeter items hors fenêtre temporelle de l'édition.
 - [ ] **[BLOQUÉ — attente Sprint 3]** Sprint 4 P2 prompt caching 90% + pipeline 2 phases température (cadrage session 53).
 - [x] ~~Refonte UI /veille Session N+1 (typo + layout magazine)~~ — Fait 2026-04-14 : commits 485919b + 1976639 prod
 - [x] ~~Refonte UI /veille Session N+2 (OG image scraping)~~ — Fait 2026-04-14 partiellement : commit adb32b6, service OG livré et branché. Vercel Blob rehosting SKIPPÉ (DB sert de cache via image_url persisté par report). Migration Blob = nouveau ticket si sources instables
@@ -287,11 +287,10 @@ Fichiers cles :
 
 ### Séquence
 
-1. **Test génération W17** - priorité haute, valide Sprint 1 P0 livré ba07149 (mode op dans notes/handoff.md)
-2. **Sprint 2 anti-hallucination + URLs fonctionnelles** - démarre dès W17 OK
-3. **Sprint 3 fraîcheur déterministe** - après Sprint 2
-4. **Sprint 4 prompt caching + 2 phases température** - après Sprint 3
-5. **Golden standards UX** - gros chantier 3-4 sessions, à lancer quand Sprints Veille verts
-6. **Import/export CSV** - indépendant
-7. **Dashboard/reporting** - indépendant
+1. **Sprint 2 anti-hallucination + URLs fonctionnelles** - priorité haute, débloqué par validation Sprint 1 P0 (session 55)
+2. **Sprint 3 fraîcheur déterministe** - après Sprint 2
+3. **Sprint 4 prompt caching + 2 phases température** - après Sprint 3
+4. **Golden standards UX** - gros chantier 3-4 sessions, à lancer quand Sprints Veille verts
+5. **Import/export CSV** - indépendant
+6. **Dashboard/reporting** - indépendant
 - Hors séquence (BLOQUÉS) : Scoring v2 signaux marché Veille (attente page Veille enrichie), Figma (attente PAT)
