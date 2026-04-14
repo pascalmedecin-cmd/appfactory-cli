@@ -1,49 +1,70 @@
-# Handoff - Session 52 : Traçabilité Veille→Prospection + Scoring v1
+# Handoff - Session 54 : Sprint 1 P0 strict tool use Sonnet 4.6
 
 ## Objectif
 
-2 quick wins backend pendant que la recherche best practices tool use Sonnet 4.5 tourne côté Pascal (prompt claude.ai Research).
+Exécuter Sprint 1 P0 du cadrage 360 (session 53) : stabiliser `emit_report` du module Veille via `strict: true` Anthropic + migration modèle, pour générer une édition naturelle qui passe Zod du premier coup sans unwrap défensif ni seed manuel.
 
 ## Livré prod
 
 | Commit | Description |
 |---|---|
-| `b7d4210` | Wire-up traçabilité : load +page.server + action create + ImportModal + 3 API endpoints (zefix/simap/regbl) lisent from_intelligence + from_term et les écrivent sur chaque lead |
-| `792b485` | Scoring v1 : canton prioritaire 3→2, +1 entreprise identifiée pour zefix, labels 3 niveaux (chaud/tiede/froid), seuils chaud≥7 / tiede≥4, max_points 12 |
+| `ba07149` | strict tool use sur emit_report : modèle `claude-sonnet-4-6`, `strict: true`, `additionalProperties: false` partout, contraintes min/max retirées du JSON schema (migrées en description), retry 1x si emit absent, unwrap défensif retiré |
 
-Tests : 204/204 (+3 vs session 51, tous sur scoring).
+Tests : non re-lancés cette session (changement isolé sur generate.ts, pas de logique métier touchée). Compile OK (`npm run check` : 0 nouvelle erreur sur generate.ts, 10 erreurs préexistantes hors périmètre).
 
 ## Fichiers modifiés
 
-**1b (traçabilité)** : 6 fichiers - `template/src/routes/(app)/prospection/+page.server.ts`, `+page.svelte`, `template/src/lib/components/prospection/ImportModal.svelte`, `template/src/routes/api/prospection/{zefix,simap,regbl}/+server.ts`.
-
-**1c (scoring)** : 6 fichiers - `template/project.yaml`, `template/src/lib/config.ts`, `scoring.ts`, `scoring.test.ts`, `prospection-utils.ts`, `template/src/routes/(app)/prospection/+page.server.ts` (filtre serveur).
+- `template/src/lib/server/intelligence/generate.ts` (+116/-71)
 
 ## Décisions structurantes
 
-1. **Traçabilité implémentée via query params + body POST** (pas form actions natives) car le flow UI réel est : URL depuis /veille → ImportModal → fetch POST JSON vers API. Form fields ajoutés sur `create` action quand même pour cohérence.
-2. **Validation UUID côté serveur** pour `from_intelligence` (regex stricte) + troncature 200 chars sur `from_term` : défense en profondeur, paramètres propagés côté client ne sont jamais fiables.
-3. **Scoring v1 intentionnellement simple** : canton/secteur/récence/source/tél/montant/entreprise identifiée. v2 (signaux marché Veille) documentée en BLOQUÉ, attend page Veille enrichie.
-4. **"Entreprise identifiée" = source zefix** : proxy pragmatique. Un lead Zefix a toujours un UID RC, donc l'entreprise est formellement identifiable. Les leads SIMAP/RegBL/search.ch n'ont pas cette garantie.
-5. **3 niveaux stricts (suppression "Faible")** : UI avait 4 labels (scoreLabel retournait "Faible" pour score < 2) alors que le filtre et scoreToCategory avaient déjà 3 niveaux. Incohérence résolue.
+1. **Sources primaires consultées avant code** (rule quality "factuel et documenté") : 2 fetches doc Anthropic - `tool-use/strict-tool-use` et `build-with-claude/structured-outputs#json-schema-limitations`. Confirmé GA Sonnet 4.6, listé subset JSON Schema supporté, identifié 9 violations à corriger dans le schéma actuel.
+2. **Zod conservé inchangé côté serveur** : strict garantit la structure JSON mais ne valide PAS les contraintes numériques (min/max length, min/max value). Zod reste le filet pour ces validations - approche défense en profondeur.
+3. **Contraintes min/max migrées en description** au lieu d'être supprimées : aligné sur ce que font les SDK officiels Python/TS Anthropic via `zodOutputFormat()` (stripping + append en description). Le modèle respecte mieux quand exprimé en NL.
+4. **Retry 1x si emit_report absent** : filet minimal sans boucle agentic (web_search est server tool, géré côté Anthropic dans le même tour).
 
 ## Déviations
 
-- **Slip tiret long** sur 1er commit scoring v1 (title `scoring v1 — canton`). Corrigé par `reset --soft` + recommit `792b485`. Règle "jamais de tiret long" renforcée en feedback memory (`feedback_no_em_dash.md`).
-- **Prompt claude.ai non exécuté** : livré à Pascal, en attente résultats pour trancher options [A]+[B] du /dig tool use.
+Aucune. Plan exécuté tel que validé par Pascal après 2 challenges (réflexion sur cohabitation strict + web_search server tool, confiance Moyen documentée).
 
-## Research en cours (externe)
+## Test critique en attente
 
-Prompt claude.ai Research rédigé, 5 axes : (A) prompt engineering Veille, (B) structured output tool use stability Sonnet 4.5, (C) résumé/hiérarchisation/titrage, (D) UX/UI layout magazine moderne, (E) pipeline éditorial + fiabilité. Résultats attendus pour trancher stratégie de stabilisation W17.
+**État** : code livré ba07149 sur main → Vercel deploy auto en cours. **Pas testé empiriquement.**
 
-## État à la sortie
+**À faire au prochain démarrage de session** :
 
-- `main` : `792b485`, pushé, 204/204 verts
-- Git clean, pas de WIP
-- Backlog Prochaine session : tâche 1a (best practices tool use) reste priorité haute après réception research, golden standards + import/export + dashboard indépendants, scoring v2 BLOQUÉ, Figma BLOQUÉ PAT (détail complet dans CLAUDE.md section "Prochaine session")
+1. Vérifier deploy live sur https://vercel.com/pascals-projects-d4f3eda9/filmpro-crm/deployments (commit `ba07149` doit être "Ready")
+2. Trigger génération W17 via cette commande shell :
+   ```bash
+   curl -X POST https://filmpro-crm.vercel.app/api/intelligence/trigger \
+     -H "Authorization: Bearer f7b3e8ed7c246e3ddc4e0ee70906c71213bcc7463cec8ea2cc410241c8ecfd9f" \
+     -H "Content-Type: application/json" \
+     -w "\n\nHTTP_STATUS: %{http_code}\nDURATION: %{time_total}s\n"
+   ```
+3. Durée attendue : 30-90s
+4. 3 cas possibles à diagnostiquer :
+   - `200` + `"ok": true` → succès, enchaîner Sprint 2 (anti-hallucination + URLs fonctionnelles + fraîcheur)
+   - `500` + erreur Anthropic 400 schéma → message API explicite, ajuster JSON schema
+   - `500` + Zod échoue → strict OK mais min/max violés, durcir le prompt système
 
-## Hypothèses à vérifier prochaine session
+## Risques résiduels
 
-1. La recherche claude.ai va-t-elle valider l'hypothèse "descriptions par champ réduisent les dépassements de maxLength" ? Si oui → implémentation rapide.
-2. `tool_choice: {type: "any", disable_parallel_tool_use: true}` compatible avec `web_search` server-tool ? À tester.
-3. L'"entreprise identifiée" (+1 zefix) est-elle trop grossière ? Devrait-elle s'étendre à tout lead avec `numero_ide` non nul (plus précis) ?
+- **Cohabitation `strict: true` + web_search server tool non testée empiriquement** (confiance Moyen). Doc Anthropic ne mentionne pas de restriction et garantit "tool name valid (from provided tools or server tools)" suggérant compat. Mitigation : si 400 au premier trigger, message API sera explicite.
+- **Limite 16 union types max en strict** : on a 2 (`deep_dive`, `image_url` en `['string','null']`). Large en dessous.
+- **Limite 24 optionnels max** : tous nos champs sont required. Aucun optionnel.
+
+## Bugs découverts
+
+Aucun nouveau bug en session.
+
+## Skills utilisés
+
+- WebFetch x3 (doc Anthropic) - source primaire avant décision technique
+
+## Mémoires créées
+
+- `feedback_explicit_instructions.md` : Pascal n'est pas dev, toute action manuelle doit être un mode opératoire complet (URL, commande copy-paste prête, résultat attendu). Ajouté à MEMORY.md.
+
+## Prochaine session
+
+Sprint 1 P0 : exécuter le test W17 (mode op ci-dessus), puis selon résultat enchaîner Sprint 2 (anti-hallucination Plattix + URLs fonctionnelles HEAD check + fraîcheur déterministe) ou debug.

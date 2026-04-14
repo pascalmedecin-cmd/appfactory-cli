@@ -1,13 +1,13 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production
-**Derniere mise a jour :** 2026-04-14 (session 53 : cadrage 360 tâche 1a à partir de 2 études best practices veille LLM)
+**Derniere mise a jour :** 2026-04-14 (session 54 : Sprint 1 P0 strict tool use Sonnet 4.6 livré ba07149, test W17 en attente)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente -2 :** 2 tâches livrées : (1) Wire-up traçabilité Veille → Prospection (b7d4210) - +page.server.ts load + action create, ImportModal props, 3 API endpoints (zefix/simap/regbl) lisent from_intelligence + from_term et écrivent source_intelligence_id + source_intelligence_term sur chaque lead. (2) Scoring v1 (792b485) - canton prioritaire 3→2, nouveau +1 "Entreprise identifiée" pour zefix, labels 3 niveaux stricts (suppression "Faible"), seuils chaud≥7 / tiede≥4, max_points 12. 204/204 tests verts. Prompt de recherche claude.ai (Research) rédigé sur 5 axes : prompt engineering Veille, structured output tool use stability, summarization/hierarchisation, UX/UI layout magazine moderne, pipeline éditorial - en attente résultats Pascal. Règle "jamais de tiret long" renforcée en feedback memory (slip corrigé sur commit scoring v1 via reset soft). Scoring v2 "signaux marché Veille" documenté en BLOQUÉ (attente page Veille enrichie).
-**Session precedente :** Cadrage 360 tâche 1a à partir de 2 études (Veille Sectorielle DOCX + compass markdown). Synthèse en 3 sprints : P0 stabilité (`strict:true` GA Anthropic, schéma Zod sans contraintes numériques stripées par SDK, API native vs LiteLLM, retry `is_error:true`, troncation serveur, migration Sonnet 4.6) ; P1 anti-hallucination (bloc `<company_context purpose="relevance_filter_only">`, autoriser "je ne sais pas", citations directes obligatoires, HEAD check URLs ~78% fabrications attrapées, lookup Zefix entités suisses, flag `maturity: speculatif`) + **contrainte URLs fonctionnelles ajoutée (cas Plattix) : tous liens /veille doivent pointer page exacte article, HEAD 200 + path non-trivial** ; P1 fraîcheur déterministe (parsing dates post-hoc + og:published_time avant LLM) ; P2 prompt caching 90%, pipeline 2 phases température. Commit 7ad97ca. Pas d'exécution : cadrage validé, Sprint 1 reporté prochaine session.
+**Session precedente -2 :** Cadrage 360 tâche 1a à partir de 2 études (Veille Sectorielle DOCX + compass markdown). Synthèse en 3 sprints : P0 stabilité (`strict:true` GA Anthropic, schéma sans contraintes numériques, retry, migration Sonnet 4.6) ; P1 anti-hallucination + URLs fonctionnelles (cas Plattix) ; P1 fraîcheur déterministe ; P2 caching + pipeline 2 phases. Commit 7ad97ca. Pas d'exécution.
+**Session precedente :** Sprint 1 P0 livré (`ba07149`) : modèle `claude-sonnet-4-6`, `strict: true` sur emit_report, `additionalProperties: false` partout, contraintes min/max retirées du JSON schema (migrées en description), retry 1x si emit absent, unwrap défensif retiré. Doc Anthropic vérifiée AVANT code (rule quality) : 2 fetches (`tool-use/strict-tool-use` + `structured-outputs#json-schema-limitations`). Zod inchangé (filet pour les contraintes numériques que strict ne couvre pas). Compile OK (0 erreur sur generate.ts). **Test empirique W17 NON FAIT** - mode opératoire complet documenté dans `notes/handoff.md` : trigger `POST /api/intelligence/trigger` avec CRON_SECRET, 30-90s, 3 cas à diagnostiquer. Mémoire créée : règle "instructions pas-à-pas" (Pascal n'est pas dev, toute action manuelle doit être un mode opératoire complet copy-paste).
 
-**Session precedente -1 :** Refonte UI /veille magazine DM Sans livrée prod (485919b + 1976639) + service OG scraping (adb32b6). 5 itérations schema Veille W16 échouées → seed SQL manuel pour démo client. Tâche suivante : best practices tool use Sonnet 4.5.
+**Session precedente -1 :** 2 tâches livrées : Wire-up traçabilité Veille → Prospection (b7d4210) + Scoring v1 (792b485). 204/204 tests verts. Règle "jamais de tiret long" renforcée. Scoring v2 documenté en BLOQUÉ (attente page Veille enrichie).
 
 ---
 
@@ -262,8 +262,10 @@ Fichiers cles :
 
 - [x] ~~Verifier en navigateur prod que les 7 fixes responsive tiennent~~ — Fait 2026-04-13
 - [x] ~~Valider module Veille sectorielle sur preview Vercel puis merger feat/veille-sectorielle → main~~ — Fait 2026-04-14 : mergé 838667e, trigger prod HTTP 200 reportId 43d8ff8c, édition 2026-W16 live sur filmpro-crm.vercel.app/veille
-- [ ] **[EXÉCUTABLE — priorité haute]** Best practices tool use Sonnet 4.5 : rechercher doc Anthropic pour stabiliser emit_report (wrap parasite parameter/edition, dépassement limites string, date partielle, hallucination enum axis). Tester strict tool choice, JSON mode, tool schema descriptions enrichies. Livrable : génération W17 naturelle qui passe Zod du premier coup, sans unwrap défensif ni seed manuel. Contexte : session 51 a dû renommer edition→meta, ajouter unwrap {parameter}, bump filmpro_relevance 300→600, bump deep_dive 200→400, normaliser date, ajouter reglementation à ImpactAxisEnum, et finalement seed SQL manuel pour démo client.
-  - **Ajout session 52 : anti-hallucination entités propres.** Cas confirmé 2026-04-14 : Sonnet a inventé l'entreprise "Plattix" (diagnostic thermique smartphone PME) dans le rapport Veille prod - zéro trace web, zéro Zefix, zéro communiqué, et le lien source affiché ne fonctionnait pas. Contraintes à ajouter au pipeline : (1) toute entité nommée (entreprise, produit) doit avoir un `source_url` résolvable côté schéma Zod, sinon rejet ou flag `maturity: speculatif` + badge UI "non vérifié" ; (2) pour entité suisse revendiquée, validation Zefix côté serveur avant insert `intelligence_items` (lookup par nom, match fuzzy, si 0 résultat → flag speculatif) ; (3) tester avec prompt explicite "ne jamais inventer d'entreprise, citer URL source pour chaque entité nommée" ; (4) **tous les liens/URL affichés sur la page /veille doivent être fonctionnels et pointer sur la page exacte de l'article source, jamais sur une page d'accueil ou une racine de domaine** — validation HEAD request post-génération (code 200) + check que l'URL contient un path non-trivial (pas juste `/` ou `/index`), rejet ou flag si échec. Cas Plattix : lien cassé non détecté, aurait dû bloquer la publication.
+- [ ] **[EXÉCUTABLE — priorité haute]** Tester génération W17 réelle pour valider Sprint 1 P0 (commit `ba07149` livré session 54). Mode opératoire complet dans `notes/handoff.md` section "Test critique en attente" : vérifier deploy `ba07149` Ready sur Vercel → curl POST `/api/intelligence/trigger` avec CRON_SECRET (commande prête à copier-coller dans handoff) → analyser réponse JSON. 3 cas à diagnostiquer : `200 ok=true` → succès, enchaîner Sprint 2 ; `500` Anthropic 400 schéma → ajuster JSON schema ; `500` Zod échoue → durcir prompt système.
+- [ ] **[BLOQUÉ — attente succès test W17]** Sprint 2 P1 anti-hallucination + URLs fonctionnelles (cadrage session 53) : (a) bloc `<company_context purpose="relevance_filter_only">` dans system prompt, (b) autoriser "je ne sais pas" et exiger citations directes, (c) HEAD check URLs post-génération (code 200 + path non-trivial, pas juste `/`), (d) lookup Zefix côté serveur pour entités suisses revendiquées (si 0 résultat → flag `maturity: speculatif`), (e) badge UI "non vérifié" pour items speculatifs. Cas Plattix (entreprise inventée + lien cassé non détecté en prod) doit être bloqué.
+- [ ] **[BLOQUÉ — attente Sprint 2]** Sprint 3 P1 fraîcheur déterministe (cadrage session 53) : parser dates post-hoc + `og:published_time` AVANT appel LLM, rejeter items hors fenêtre temporelle de l'édition.
+- [ ] **[BLOQUÉ — attente Sprint 3]** Sprint 4 P2 prompt caching 90% + pipeline 2 phases température (cadrage session 53).
 - [x] ~~Refonte UI /veille Session N+1 (typo + layout magazine)~~ — Fait 2026-04-14 : commits 485919b + 1976639 prod
 - [x] ~~Refonte UI /veille Session N+2 (OG image scraping)~~ — Fait 2026-04-14 partiellement : commit adb32b6, service OG livré et branché. Vercel Blob rehosting SKIPPÉ (DB sert de cache via image_url persisté par report). Migration Blob = nouveau ticket si sources instables
 - [x] ~~Wire-up traçabilité Veille → Prospection (v1.1)~~ — Fait session 52 : +page.server.ts (load + action create), ImportModal, 3 API endpoints (zefix/simap/regbl) lisent from_intelligence + from_term et écrivent source_intelligence_id + source_intelligence_term
@@ -285,9 +287,11 @@ Fichiers cles :
 
 ### Séquence
 
-1. **Best practices tool use Sonnet 4.5** - priorité haute, débloque régénération naturelle W17 (attente résultats research claude.ai)
-2. **Golden standards UX** - gros chantier 3-4 sessions, à lancer quand reste vert
-3. **Import/export CSV** - indépendant
-4. **Dashboard/reporting** - indépendant
-- Hors séquence (BLOQUÉS) : Scoring v2 signaux marché (attente page Veille enrichie), Figma (attente PAT)
-7. **Figma** — BLOQUÉ hors séquence
+1. **Test génération W17** - priorité haute, valide Sprint 1 P0 livré ba07149 (mode op dans notes/handoff.md)
+2. **Sprint 2 anti-hallucination + URLs fonctionnelles** - démarre dès W17 OK
+3. **Sprint 3 fraîcheur déterministe** - après Sprint 2
+4. **Sprint 4 prompt caching + 2 phases température** - après Sprint 3
+5. **Golden standards UX** - gros chantier 3-4 sessions, à lancer quand Sprints Veille verts
+6. **Import/export CSV** - indépendant
+7. **Dashboard/reporting** - indépendant
+- Hors séquence (BLOQUÉS) : Scoring v2 signaux marché Veille (attente page Veille enrichie), Figma (attente PAT)
