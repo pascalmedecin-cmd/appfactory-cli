@@ -1,11 +1,11 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production
-**Derniere mise a jour :** 2026-04-14 (session 50 : Veille validée prod + wireframe magazine DM Sans validé)
+**Derniere mise a jour :** 2026-04-14 (session 51 : refonte UI magazine /veille livrée prod + OG scraping + seed démo client)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Module Veille sectorielle mergé feat/veille-sectorielle → main (commit 838667e, conflit Sidebar résolu), trigger cron prod HTTP 200 (reportId 43d8ff8c-19a5-42a8-b6cb-bde03b6b2b35, édition 2026-W16 générée par Sonnet 4.5 en 60s). Bugs rencontrés : (1) /api/intelligence/trigger redirigé /login car hooks.server.ts exempte seulement /api/cron/* (workaround : utiliser /api/cron/intelligence GET, pas de fix nécessaire) ; (2) Vercel Deployment Protection bloque curl sur previews nouvellement créées (vercel curl SSO redirect 303/307 casse POST) - validation migrée vers prod. (3) schema Zod trop strict pour sortie Sonnet : executive_summary >600, note >300, items vide - fix commit d7a6174 (schema 1200/500 + items min 0) + prompt durci section "Limites strictes" + test mis à jour (190/190). Sidebar : demande Pascal plus d'espacement + texte +1px desktop → commit 86f7034 (space-y-1.5 md, py-2.5 md, text-[15px] md). Wireframe magazine /veille : 2 itérations (Fraunces rejetée, DM Sans charte CRM validée) → `previews/veille-magazine.html` commit 1e1eb57. Layout éditorial (masthead, hero 7/5, top 3 asymétriques, pullquote, search chips, archive grid 3). Plan 2 sessions : typo+layout puis OG scraping.
-**Session precedente -1 :** Reconstruction module Veille sectorielle depuis trace pré-crash (JSONL 2026-04-12 + étude iCloud intacte). Branche `feat/veille-sectorielle` créée + 3 commits pushés (47d44ba + ab4091c + 2f8b139) : migration Supabase intelligence_reports, service Claude Sonnet + web_search, UI /veille + /veille/[id] + sidebar item radar, navigation search_term → prospection. 190/190 tests.
+**Session precedente :** Refonte UI /veille magazine DM Sans livrée prod (commits 485919b listing+détail avec masthead, hero 7/5, top 3 asymétriques, pullquote, chips, archive grid + classes mag-* dans app.css ; 1976639 fallback édition vide). Service OG scraping ajouté (adb32b6 : og-image.ts avec resolveOgImage + enrichItemsWithOgImages, branché dans generate.ts post-Zod, 11 tests unit, 201/201 total). Vercel Blob skippé (DB sert de cache permanent via colonne image_url). Tentative régénération naturelle W16 échouée 4x : (1) rename edition→meta nécessaire (Sonnet doublait le wrap), (2) unwrap défensif {parameter:{...}} ajouté (bc756d5), (3) ImpactAxisEnum +reglementation (2c77a3a), (4) bump filmpro_relevance 300→600, deep_dive 200→400, published_at accepte YYYY-MM-DD + normalise T00:00:00Z (a463322), (5) malgré tout Sonnet produit encore filmpro_relevance >600. Whack-a-mole sur schema : STOP, seed SQL manuel édition démo W16 pour présentation client (5 items, 3 impacts, 10 termes, compliance OK FilmPro, 3 images Unsplash + 2 fallbacks gradient). Pascal validé visuel, parti chez client. Tâche suivante : best practices tool use Sonnet 4.5 pour stabiliser génération naturelle.
+**Session precedente -1 :** Module Veille sectorielle mergé feat/veille-sectorielle → main (838667e). Première génération W16 live (Sonnet 4.5, 60s). Bugs : schema trop strict (d7a6174 : schema 1200/500 + items min 0). Wireframe magazine DM Sans validé (1e1eb57).
 
 ---
 
@@ -261,8 +261,8 @@ Fichiers cles :
 - [x] ~~Verifier en navigateur prod que les 7 fixes responsive tiennent~~ — Fait 2026-04-13
 - [x] ~~Valider module Veille sectorielle sur preview Vercel puis merger feat/veille-sectorielle → main~~ — Fait 2026-04-14 : mergé 838667e, trigger prod HTTP 200 reportId 43d8ff8c, édition 2026-W16 live sur filmpro-crm.vercel.app/veille
 - [ ] **[EXÉCUTABLE — priorité haute]** Best practices tool use Sonnet 4.5 : rechercher doc Anthropic pour stabiliser emit_report (wrap parasite parameter/edition, dépassement limites string, date partielle, hallucination enum axis). Tester strict tool choice, JSON mode, tool schema descriptions enrichies. Livrable : génération W17 naturelle qui passe Zod du premier coup, sans unwrap défensif ni seed manuel. Contexte : session 51 a dû renommer edition→meta, ajouter unwrap {parameter}, bump filmpro_relevance 300→600, bump deep_dive 200→400, normaliser date, ajouter reglementation à ImpactAxisEnum, et finalement seed SQL manuel pour démo client
-- [ ] **[EXÉCUTABLE — priorité haute]** Refonte UI /veille magazine éditorial — **Session N+1 (typo + layout)** : porter le wireframe validé `previews/veille-magazine.html` (commit 1e1eb57) dans `template/src/routes/(app)/veille/+page.svelte` et `[id]/+page.svelte`. Éléments : masthead journal (kicker + display 5xl), hero 7/5 (image lead + executive_summary), top 3 signaux asymétriques (1 featured 7/12 + 2 stackés 5/12), pullquote impacts_filmpro sur fond blanc + border-left primary, search terms chips, archive grid 3 cols. Charge DM Sans poids 300-900 dans `app.html` (actuellement 100-1000 italic seulement, check si déjà couvert). Palette : primary `#2F5A9E`, primary-dark `#0A1628`, accent `#3B6CB7`. Titres display class : font-weight 800, letter-spacing -0.03em, line-height 1.02. Sans toucher au schema ni à la génération IA. Tests Playwright visuel régression
-- [ ] **[BLOQUÉ ← Session N+1 refonte UI]** Refonte UI /veille — **Session N+2 (OG image scraping)** : créer `template/src/lib/server/intelligence/og-image.ts` = service `resolveOgImage(url: string): Promise<string | null>` qui fetch la page source, parse `<meta property="og:image">` (regex ou cheerio), valide HTTPS + taille raisonnable, cache 7j via Vercel Blob. Post-process dans `generate.ts` après validation Zod : boucle sur items, appelle resolveOgImage(item.source.url), écrit item.image_url. Fallback si OG KO : garder image_url=null, UI utilise pattern gradient themé (à définir dans le composant). Taux hit OG attendu 70-85%. Ajouter 3 tests unit (fetch OK, fetch KO, cache hit)
+- [x] ~~Refonte UI /veille Session N+1 (typo + layout magazine)~~ — Fait 2026-04-14 : commits 485919b + 1976639 prod
+- [x] ~~Refonte UI /veille Session N+2 (OG image scraping)~~ — Fait 2026-04-14 partiellement : commit adb32b6, service OG livré et branché. Vercel Blob rehosting SKIPPÉ (DB sert de cache via image_url persisté par report). Migration Blob = nouveau ticket si sources instables
 - [ ] **[EXÉCUTABLE]** Wire-up traçabilité Veille → Prospection (v1.1) : brancher les form actions import de `/prospection/+page.server.ts` pour lire les query params `from_intelligence` + `from_term` (déjà propagés par les boutons "Rechercher" du détail /veille/[id]) et les écrire sur chaque lead créé dans les colonnes `source_intelligence_id` + `source_intelligence_term` (colonnes DB déjà présentes depuis commit 47d44ba). Impact : dashboard analytique "quelle édition Veille → quel CA" sans autre migration
 - [ ] **[EXÉCUTABLE]** Ameliorer scoring temperature leads : reduire poids canton (+3 -> +2), ajouter +1 entreprise identifiee (enrichissement Zefix), passer a 3 niveaux (supprimer Faible), ajuster seuils - fichiers config.ts + scoring.ts + tests
 - [ ] **[EXÉCUTABLE]** Définir les golden standards UX/UI complets du CRM et les propager aux 5 autres pages
@@ -281,11 +281,10 @@ Fichiers cles :
 
 ### Séquence
 
-1. **Refonte UI /veille Session N+1** (typo + layout magazine) — priorité haute, débloque N+2
-2. **Refonte UI /veille Session N+2** (OG image scraping) — BLOQUÉ par 1
-3. **Wire-up traçabilité Veille → Prospection** — indépendant, peut précéder ou suivre
-4. **Scoring température leads** — indépendant
-5. **Golden standards UX** — gros chantier 3-4 sessions, à lancer quand reste vert
-6. **Import/export CSV** — indépendant
-7. **Dashboard/reporting** — indépendant
-8. **Figma** — BLOQUÉ hors séquence
+1. **Best practices tool use Sonnet 4.5** — priorité haute, débloque régénération naturelle W17
+2. **Wire-up traçabilité Veille → Prospection** — indépendant
+3. **Scoring température leads** — indépendant
+4. **Golden standards UX** — gros chantier 3-4 sessions, à lancer quand reste vert
+5. **Import/export CSV** — indépendant
+6. **Dashboard/reporting** — indépendant
+7. **Figma** — BLOQUÉ hors séquence

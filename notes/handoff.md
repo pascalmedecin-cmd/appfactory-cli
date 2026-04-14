@@ -1,40 +1,55 @@
-# Handoff — Session 50 : Veille live prod + wireframe magazine validé
+# Handoff — Session 51 : Refonte UI magazine /veille livrée prod + seed démo client
 
 ## Objectif
 
-Valider le module Veille sectorielle sur preview, merger dans main, démarrer la refonte UI magazine demandée par Pascal.
+Porter le wireframe magazine DM Sans validé session 50 dans `/veille` + `/veille/[id]`, ajouter OG image scraping, valider en prod.
 
-## Livré
+## Livré prod
 
-1. **Module Veille live en prod** : `filmpro-crm.vercel.app/veille`
-   - Merge feat/veille-sectorielle → main (commit 838667e, conflit Sidebar résolu)
-   - Trigger cron `/api/cron/intelligence` GET Bearer → HTTP 200 en 60s
-   - reportId `43d8ff8c-19a5-42a8-b6cb-bde03b6b2b35`, édition 2026-W16 générée par Sonnet 4.5
-2. **Fix schema + prompt** (commit d7a6174) : executive_summary 80-1200, note 10-500, items min 0, prompt section "Limites strictes" pour rappeler les bornes à Sonnet. 190/190 tests.
-3. **Sidebar nav** (commit 86f7034) : espacement + texte +1px desktop (md:space-y-1.5, md:py-2.5, md:text-[15px]).
-4. **Wireframe magazine validé** (commit 1e1eb57) : `previews/veille-magazine.html` — 100% DM Sans, palette charte CRM, layout éditorial (masthead, hero 7/5, top 3 asymétriques, pullquote, search chips, archive grid).
-5. **Handoff** (commit 225e856) : CLAUDE.md statut + Session precedente + Prochaine session + Séquence.
+| Commit | Description |
+|---|---|
+| `485919b` | Refonte UI listing + détail magazine (masthead, hero 7/5, top 3 asymétriques, pullquote, chips, archive grid, classes mag-*) |
+| `adb32b6` | Service OG scraping `og-image.ts` + `enrichItemsWithOgImages`, branché dans `generate.ts`, 11 tests unit |
+| `1976639` | État fallback édition publiée sans signaux |
+| `76444e8` | Rename `edition` → `meta` dans schema (fix double-wrap Sonnet) |
+| `2c77a3a` | `reglementation` ajouté à `ImpactAxisEnum` |
+| `bc756d5` | Unwrap défensif tool_use.input (3 niveaux max) |
+| `a463322` | Bump `filmpro_relevance` 300→600, `deep_dive` 200→400, `published_at` accepte YYYY-MM-DD |
+| `33d1927` | Ajout tâche best practices Sonnet dans CLAUDE.md |
 
-## Bugs rencontrés
+Tests : 201/201 (+11 og-image).
 
-1. `/api/intelligence/trigger` redirigé `/login` : `hooks.server.ts` exempte seulement `/api/cron/*`. Workaround : utiliser `/api/cron/intelligence` (GET Bearer).
-2. **Vercel Deployment Protection** bloque curl sur previews (SSO 303/307 casse POST bypass token). Validation impossible via curl → contournement : merge main + trigger prod direct.
-3. **Schema Zod vs sortie Sonnet** : executive_summary >600, note >300, items vide → bornes assouplies + prompt durci.
+## Déviations
+
+- **Vercel Blob rehosting skippé** : DB sert de cache permanent (image_url persisté par report). Migration Blob = ticket optionnel si sources deviennent instables.
+- **Régénération naturelle W16 échouée 4 fois** : après 4 fixes de schema, Sonnet continuait à produire `filmpro_relevance` >600 chars. Whack-a-mole stoppé.
+- **Seed SQL manuel W16 pour démo client** : INSERT avec 5 items / 3 impacts / 10 termes, 3 images Unsplash + 2 fallbacks gradient. Compliance "OK FilmPro". Édition id `43d8ff8c-19a5-42a8-b6cb-bde03b6b2b35`. Pascal parti chez client avec URL `filmpro-crm.vercel.app/veille`.
 
 ## Décisions structurantes
 
-- **Typo** : 100% DM Sans sur /veille (cohérence charte CRM). Pas de Fraunces, pas de Geologica.
-- **Palette** : primary `#2F5A9E`, primary-dark `#0A1628`, accent `#3B6CB7`.
-- **Refonte /veille en 2 sessions** : N+1 typo+layout, N+2 OG image scraping.
-- **Validation preview abandonnée au profit validation prod** quand SSO bloque (fix conservatif acceptable).
+1. Service OG sans rehost CDN : pragmatisme MVP, DB fait cache.
+2. Schema `meta` plutôt qu'`edition` : nom neutre, évite hallucination du modèle.
+3. Seed SQL > continuer régénération : sortir du whack-a-mole pour ne pas bloquer la démo client.
+4. Prochaine session dédiée best practices Sonnet tool use : approche structurée (doc Anthropic, strict tool choice, JSON mode, descriptions enrichies) au lieu de durcir le schema au coup par coup.
+
+## Bugs découverts (journal)
+
+- Sonnet 4.5 tool_use.input wrappé aléatoirement dans clé parasite (`{parameter: {...}}` ou `{edition: {...full report...}}`). Unwrap défensif ajouté (commit `bc756d5`) mais cause racine non résolue.
+- Sonnet dépasse systématiquement les `.max()` Zod sur strings narratives (`filmpro_relevance`, `deep_dive`).
+- `published_at` renvoyé au format `YYYY-MM-DD` et non datetime ISO complet.
+- `ImpactAxisEnum` incomplet : `reglementation` manquait alors que Sonnet l'utilise naturellement.
+
+## État prod validé
+
+- https://filmpro-crm.vercel.app/veille — listing magazine : 4 articles, 5 images, hero MoPEC, pullquote pricing, chips prospection.
+- https://filmpro-crm.vercel.app/veille/43d8ff8c-19a5-42a8-b6cb-bde03b6b2b35 — détail : 5 items (3 avec image Unsplash + 2 fallback gradient), 3 impacts, 11 chips.
+
+## Git
+
+Main à `33d1927`, pushé origin.
 
 ## Prochaine session
 
-Voir CLAUDE.md section "Prochaine session" — priorité haute : Session N+1 refonte UI /veille (port wireframe `previews/veille-magazine.html` dans `routes/(app)/veille/+page.svelte` + `[id]/+page.svelte`). Sans toucher schema ni génération IA.
+Priorité 1 : **Best practices tool use Sonnet 4.5** pour stabiliser la génération naturelle (doc Anthropic, strict tool choice, schema descriptions enrichies). Livrable attendu : génération W17 naturelle qui passe Zod du premier coup sans unwrap défensif ni seed manuel.
 
-## Métadonnées
-
-- **Date** : 2026-04-14
-- **Durée** : ~1h30
-- **Commits** : d7a6174, 86f7034, 838667e, 1e1eb57, 225e856 (+ ce handoff)
-- **Tests** : 190/190 ✓
+Voir CLAUDE.md § Prochaine session pour la liste complète.
