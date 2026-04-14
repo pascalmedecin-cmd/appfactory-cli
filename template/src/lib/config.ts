@@ -203,6 +203,11 @@ export const config = {
 				label: 'Signaux',
 				icon: 'notifications',
 			},
+			{
+				href: '/veille',
+				label: 'Veille Sectorielle',
+				icon: 'radar',
+			},
 		],
 		secondary: [
 			{

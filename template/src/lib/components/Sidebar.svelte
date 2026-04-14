@@ -2,7 +2,7 @@
 	import { config } from '$lib/config';
 	import { createSupabaseBrowserClient } from '$lib/supabase';
 
-	let { collapsed = $bindable(false), currentPath = '' }: { collapsed?: boolean; currentPath?: string } = $props();
+	let { collapsed = $bindable(false), currentPath = '', unreadIntelligence = 0 }: { collapsed?: boolean; currentPath?: string; unreadIntelligence?: number } = $props();
 
 	const navItems = config.navigation.primary;
 	const secondaryItems = config.navigation.secondary;
@@ -39,15 +39,24 @@
 
 	<nav class="flex-1 px-3 py-1 overflow-y-auto space-y-0.5 md:space-y-1.5">
 		{#each navItems as item}
+			{@const badge = item.href === '/veille' && unreadIntelligence > 0 ? unreadIntelligence : 0}
 			<a
 				href={item.href}
-				class="flex items-center gap-3 px-3 py-2 md:py-2.5 text-sm md:text-[15px] rounded-lg transition-colors
+				class="flex items-center gap-3 px-3 py-2 md:py-2.5 text-sm md:text-[15px] rounded-lg transition-colors relative
 					{isActive(item.href) ? 'bg-white/15 text-white font-medium shadow-xs' : 'text-white/65 hover:bg-white/8 hover:text-white'}"
-				title={collapsed ? item.label : undefined}
+				title={collapsed ? item.label + (badge > 0 ? ` (${badge} non lus)` : '') : undefined}
 			>
-				<span class="material-symbols-outlined text-[20px] shrink-0">{item.icon}</span>
+				<span class="material-symbols-outlined text-[20px] shrink-0 relative">
+					{item.icon}
+					{#if collapsed && badge > 0}
+						<span class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-amber-500 text-primary-dark text-[10px] font-bold flex items-center justify-center">{badge}</span>
+					{/if}
+				</span>
 				{#if !collapsed}
-					<span>{item.label}</span>
+					<span class="flex-1">{item.label}</span>
+					{#if badge > 0}
+						<span class="min-w-[20px] h-5 px-1.5 rounded-full bg-amber-500 text-primary-dark text-xs font-bold flex items-center justify-center">{badge}</span>
+					{/if}
 				{/if}
 			</a>
 		{/each}

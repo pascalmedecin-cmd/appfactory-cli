@@ -1,3 +1,4 @@
+Initialising login role...
 export type Json =
   | string
   | number
@@ -11,31 +12,6 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.5"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
   }
   public: {
     Tables: {
@@ -305,6 +281,77 @@ export type Database = {
           },
         ]
       }
+      intelligence_reads: {
+        Row: {
+          read_at: string
+          report_id: string
+          user_id: string
+        }
+        Insert: {
+          read_at?: string
+          report_id: string
+          user_id: string
+        }
+        Update: {
+          read_at?: string
+          report_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intelligence_reads_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intelligence_reports: {
+        Row: {
+          archived_at: string | null
+          compliance_tag: string
+          error_message: string | null
+          executive_summary: string
+          generated_at: string
+          id: string
+          impacts_filmpro: Json
+          items: Json
+          raw_response: Json | null
+          search_terms: Json
+          status: string
+          week_label: string
+        }
+        Insert: {
+          archived_at?: string | null
+          compliance_tag: string
+          error_message?: string | null
+          executive_summary: string
+          generated_at?: string
+          id?: string
+          impacts_filmpro: Json
+          items: Json
+          raw_response?: Json | null
+          search_terms: Json
+          status?: string
+          week_label: string
+        }
+        Update: {
+          archived_at?: string | null
+          compliance_tag?: string
+          error_message?: string | null
+          executive_summary?: string
+          generated_at?: string
+          id?: string
+          impacts_filmpro?: Json
+          items?: Json
+          raw_response?: Json | null
+          search_terms?: Json
+          status?: string
+          week_label?: string
+        }
+        Relationships: []
+      }
       opportunites: {
         Row: {
           contact_id: string | null
@@ -455,6 +502,8 @@ export type Database = {
           site_web: string | null
           source: string
           source_id: string | null
+          source_intelligence_id: string | null
+          source_intelligence_term: string | null
           source_url: string | null
           statut: string
           telephone: string | null
@@ -481,6 +530,8 @@ export type Database = {
           site_web?: string | null
           source: string
           source_id?: string | null
+          source_intelligence_id?: string | null
+          source_intelligence_term?: string | null
           source_url?: string | null
           statut?: string
           telephone?: string | null
@@ -507,6 +558,8 @@ export type Database = {
           site_web?: string | null
           source?: string
           source_id?: string | null
+          source_intelligence_id?: string | null
+          source_intelligence_term?: string | null
           source_url?: string | null
           statut?: string
           telephone?: string | null
@@ -514,6 +567,13 @@ export type Database = {
           transfere_vers_entreprise_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "prospect_leads_source_intelligence_id_fkey"
+            columns: ["source_intelligence_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_reports"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "prospect_leads_transfere_vers_contact_id_fkey"
             columns: ["transfere_vers_contact_id"]
@@ -820,9 +880,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

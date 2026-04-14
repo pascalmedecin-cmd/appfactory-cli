@@ -11,6 +11,10 @@
 		{
 			"path": "/api/cron/nettoyage-crm",
 			"schedule": "0 3 1 * *"
+		},
+		{
+			"path": "/api/cron/intelligence",
+			"schedule": "0 8 * * 5"
 		}
 	]
 }
