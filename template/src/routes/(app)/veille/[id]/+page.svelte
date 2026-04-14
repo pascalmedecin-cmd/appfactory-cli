@@ -18,6 +18,23 @@
 	const impacts = $derived(data.report.impacts_filmpro as ImpactFilmpro[]);
 	const searchTerms = $derived(data.report.search_terms as SearchTerm[]);
 
+	// Etat d'echec image par item (404 client, upscale agressif, image cassee).
+	// Bascule sur gradient fallback au lieu d'afficher une image floue ou cassee.
+	let imgFailed = $state<Record<number, boolean>>({});
+
+	function handleImgError(idx: number) {
+		imgFailed[idx] = true;
+	}
+
+	// onload : bascule gradient si l'image source est trop petite par rapport
+	// au container rendu (seuil 0.8 : tolere le legere upscale, rejette le flou).
+	function handleImgLoad(idx: number, e: Event) {
+		const img = e.currentTarget as HTMLImageElement;
+		if (img.naturalWidth > 0 && img.naturalWidth < img.clientWidth * 0.8) {
+			imgFailed[idx] = true;
+		}
+	}
+
 	const THEME_LABELS: Record<string, string> = {
 		films_solaires: 'Films solaires',
 		films_securite: 'Films sécurité',
@@ -168,10 +185,18 @@
 					<article class="grid grid-cols-12 gap-6 md:gap-8">
 						<div class="col-span-12 lg:col-span-5">
 							<a href={item.source.url} target="_blank" rel="noopener noreferrer" class="block overflow-hidden rounded-lg group">
-								{#if item.image_url}
-									<img src={item.image_url} alt="" class="w-full h-[220px] md:h-[280px] object-cover group-hover:scale-[1.02] transition-transform duration-500" />
+								{#if item.image_url && !imgFailed[i]}
+									<img
+										src={item.image_url}
+										alt=""
+										loading="lazy"
+										decoding="async"
+										class="w-full aspect-[1200/630] object-cover group-hover:scale-[1.02] transition-transform duration-500"
+										onerror={() => handleImgError(i)}
+										onload={(e) => handleImgLoad(i, e)}
+									/>
 								{:else}
-									<div class="w-full h-[220px] md:h-[280px] bg-gradient-to-br from-primary-light via-accent-light to-primary-light"></div>
+									<div class="w-full aspect-[1200/630] bg-gradient-to-br from-primary-light via-accent-light to-primary-light"></div>
 								{/if}
 							</a>
 						</div>
