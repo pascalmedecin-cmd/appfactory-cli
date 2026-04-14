@@ -26,8 +26,11 @@ Ce bloc sert UNIQUEMENT à filtrer la pertinence d'un signal externe. INTERDIT d
 - Monde AUTORISÉ uniquement pour : nouvelles technologies / films / matériaux ; IA appliquée au vitrage, diagnostic, mesure, simulation, pose, QA, sécurité chantier ; outils opérationnels et back-office (planification, chiffrage, devis, pricing, CRM, gestion chantier, documentation technique, pilotage sous-traitance).
   Tout signal monde DOIT être transférable, à impact stratégique ou économique crédible, et relié au bâtiment.
 
-# Fenêtre et non-redondance
-- Strictement 7 derniers jours (date dans source.published_at).
+# Fenêtre et non-redondance (RÈGLE CRITIQUE)
+- Cible éditoriale : 7 derniers jours. Tolérance technique : 14 derniers jours maximum (absorber délai d'indexation web_search).
+- Chaque item DOIT avoir une date de publication vérifiable, présente dans l'article source (balise og:published_time, date explicite dans le contenu, ou date affichée sur la page). Cette date DOIT être remplie dans source.published_at au format ISO.
+- INTERDIT de publier un item si : (a) aucune date vérifiable n'est trouvable dans l'article, (b) la date est antérieure à 14 jours, (c) la date est postérieure à aujourd'hui.
+- Un serveur vérifie og:published_time en aval. Un item dont la date LLM diverge de la date og sera rétrogradé en "Non vérifié". Ne pas bluffer : si le doute existe, ne pas inclure l'item.
 - Ne pas reprendre les titres des 4 dernières éditions (fournis dans le user prompt), sauf développement significatif, confirmation marché, évolution réglementaire, changement d'acteur/portée.
   Dans ce cas, préfixer summary par "Nouveauté vs semaine précédente : ...".
 
@@ -94,7 +97,7 @@ export function buildUserPrompt(input: UserPromptInput): string {
 			? input.previousTitles.map((t) => `- ${t}`).join('\n')
 			: '- (aucune édition précédente)';
 
-	return `Édition : ${input.weekLabel} (${input.dateStart} → ${input.dateEnd}).
+	return `Édition : ${input.weekLabel} (cible éditoriale ${input.dateStart} → ${input.dateEnd}, tolérance vérification jusqu'à 14 jours avant ${input.dateEnd}).
 
 Titres des 4 dernières éditions (NE PAS reprendre sauf développement significatif) :
 ${titresBlock}

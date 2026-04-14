@@ -189,6 +189,8 @@ export interface GenerateInput {
 	weekLabel: string;
 	dateStart: string;
 	dateEnd: string;
+	/** Début de fenêtre de vérification (tolérance délai indexation). Défaut = dateStart. */
+	windowStart?: string;
 	previousTitles: string[];
 }
 
@@ -297,7 +299,7 @@ export async function generateIntelligenceReport(
 					? 'llm'
 					: 'none';
 			const dateOk = dateToCheck
-				? isWithinWindow(dateToCheck, input.dateStart, input.dateEnd)
+				? isWithinWindow(dateToCheck, input.windowStart ?? input.dateStart, input.dateEnd)
 				: false;
 
 			const urlOk = urlResult.ok;

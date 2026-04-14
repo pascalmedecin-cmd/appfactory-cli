@@ -48,3 +48,14 @@ export function currentWeekRange(now: Date = new Date()): WeekRange {
 		dateEnd: toIsoDate(sunday)
 	};
 }
+
+/**
+ * Fenêtre de vérification étendue (tolérance délai d'indexation web_search).
+ * Éditorial = 7 jours (dateStart -> dateEnd). Filtre date = dateEnd - (days-1).
+ * Par défaut 14 jours : absorbe le retard typique d'indexation sans ouvrir trop large.
+ */
+export function extendedWindowStart(range: WeekRange, days: number = 14): string {
+	const end = new Date(`${range.dateEnd}T00:00:00Z`);
+	end.setUTCDate(end.getUTCDate() - (days - 1));
+	return toIsoDate(end);
+}

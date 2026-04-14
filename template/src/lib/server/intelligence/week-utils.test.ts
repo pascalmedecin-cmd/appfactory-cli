@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getIsoWeek, formatWeekLabel, currentWeekRange } from './week-utils';
+import { getIsoWeek, formatWeekLabel, currentWeekRange, extendedWindowStart } from './week-utils';
 
 describe('getIsoWeek', () => {
 	it('renvoie W01 pour le 4 janvier 2026', () => {
@@ -40,5 +40,22 @@ describe('currentWeekRange', () => {
 	it('gere un dimanche correctement (toujours dans la meme semaine ISO)', () => {
 		const r = currentWeekRange(new Date('2026-04-12T23:00:00Z'));
 		expect(r.weekLabel).toBe('2026-W15');
+	});
+});
+
+describe('extendedWindowStart', () => {
+	it('renvoie dateEnd - 13 jours pour une fenêtre 14j', () => {
+		const range = { weekLabel: '2026-W15', dateStart: '2026-04-06', dateEnd: '2026-04-12' };
+		expect(extendedWindowStart(range, 14)).toBe('2026-03-30');
+	});
+
+	it('renvoie dateStart (identique) pour une fenêtre 7j', () => {
+		const range = { weekLabel: '2026-W15', dateStart: '2026-04-06', dateEnd: '2026-04-12' };
+		expect(extendedWindowStart(range, 7)).toBe('2026-04-06');
+	});
+
+	it('défaut = 14j', () => {
+		const range = { weekLabel: '2026-W15', dateStart: '2026-04-06', dateEnd: '2026-04-12' };
+		expect(extendedWindowStart(range)).toBe('2026-03-30');
 	});
 });

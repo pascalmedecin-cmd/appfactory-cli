@@ -1,6 +1,6 @@
 import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { generateIntelligenceReport } from './generate';
-import { currentWeekRange } from './week-utils';
+import { currentWeekRange, extendedWindowStart } from './week-utils';
 import type { IntelligenceReport } from './schema';
 
 export interface RunResult {
@@ -50,6 +50,7 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 		weekLabel: week.weekLabel,
 		dateStart: week.dateStart,
 		dateEnd: week.dateEnd,
+		windowStart: extendedWindowStart(week, 14),
 		previousTitles
 	});
 
