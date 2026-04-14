@@ -1,5 +1,6 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { calculerScore } from '$lib/scoring';
+import { fetchIntelligenceSignal } from '$lib/server/intelligence/signal-lookup';
 import { randomUUID } from 'crypto';
 import { translate, cantonToLead, CANTON_MAP, type Translation } from './helpers';
 
@@ -34,6 +35,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 	const fromIntelligence = typeof body.from_intelligence === 'string' && UUID_RE.test(body.from_intelligence) ? body.from_intelligence : null;
 	const fromTerm = typeof body.from_term === 'string' ? body.from_term.slice(0, 200) || null : null;
+	const fromItemRank = typeof body.from_item_rank === 'number' && body.from_item_rank >= 1 && body.from_item_rank <= 10
+		? body.from_item_rank
+		: null;
 
 	if (!canton || !CANTON_MAP[canton]) {
 		return json({ error: 'Canton requis (GE, VD, VS, NE, FR, JU)' }, { status: 400 });
@@ -112,6 +116,11 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const skipReasons = { missingId: 0, existing: 0, dismissed: 0, unknownCanton: 0 };
 	const inserts = [];
 
+	// Bloc 3 : fetch signal Veille source pour bonus scoring.
+	const intelligenceSignal = fromIntelligence
+		? await fetchIntelligenceSignal(locals.supabase, fromIntelligence, fromItemRank)
+		: null;
+
 	for (const project of projects) {
 		if (!project.id || !project.title) { skipReasons.missingId++; continue; }
 		if (existingIds.has(project.id)) { skipReasons.existing++; continue; }
@@ -139,6 +148,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			date_publication: project.publicationDate,
 			telephone: null,
 			montant: null,
+			intelligenceSignal
 		});
 
 		inserts.push({

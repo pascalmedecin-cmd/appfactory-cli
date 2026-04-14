@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { calculerScore } from '$lib/scoring';
+import { fetchIntelligenceSignal } from '$lib/server/intelligence/signal-lookup';
 import { randomUUID } from 'crypto';
 
 const ZEFIX_BASE = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
@@ -65,6 +66,10 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 	const fromIntelligence = typeof body.from_intelligence === 'string' && UUID_RE.test(body.from_intelligence) ? body.from_intelligence : null;
 	const fromTerm = typeof body.from_term === 'string' ? body.from_term.slice(0, 200) || null : null;
+	// Bloc 3 : from_item_rank permet le lookup de l'item Veille source pour bonus scoring.
+	const fromItemRank = typeof body.from_item_rank === 'number' && body.from_item_rank >= 1 && body.from_item_rank <= 10
+		? body.from_item_rank
+		: null;
 
 	if (!canton || !CANTON_MAP[canton]) {
 		return json({ error: 'Canton requis (GE, VD, VS, NE, FR, JU)' }, { status: 400 });
@@ -146,6 +151,12 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	// Since we filter by canton in the search request, all results belong to `canton`.
 	const cantonCode = cantonToLead(canton);
 
+	// Bloc 3 : fetch du signal Veille source (si from_intelligence + from_item_rank fournis).
+	// Un seul lookup pour toute la batch = pas d'impact perf.
+	const intelligenceSignal = fromIntelligence
+		? await fetchIntelligenceSignal(locals.supabase, fromIntelligence, fromItemRank)
+		: null;
+
 	for (const company of companies) {
 		if (!company.name || !company.uid) { skipped++; continue; }
 		if (existingIds.has(company.uid) || dismissedIds.has(company.uid)) { skipped++; continue; }
@@ -161,6 +172,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			date_publication: company.sogcDate ?? null,
 			telephone: null,
 			montant: null,
+			intelligenceSignal
 		});
 
 		inserts.push({

@@ -1,5 +1,6 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { calculerScore } from '$lib/scoring';
+import { fetchIntelligenceSignal } from '$lib/server/intelligence/signal-lookup';
 import { randomUUID } from 'crypto';
 
 // RegBL -Registre fédéral des bâtiments et logements
@@ -52,6 +53,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 	const fromIntelligence = typeof body.from_intelligence === 'string' && UUID_RE.test(body.from_intelligence) ? body.from_intelligence : null;
 	const fromTerm = typeof body.from_term === 'string' ? body.from_term.slice(0, 200) || null : null;
+	const fromItemRank = typeof body.from_item_rank === 'number' && body.from_item_rank >= 1 && body.from_item_rank <= 10
+		? body.from_item_rank
+		: null;
 
 	const validCantons = cantons.filter((c) => CANTON_MAP[c]);
 	if (validCantons.length === 0) {
@@ -132,6 +136,11 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	let skipped = 0;
 	const inserts = [];
 
+	// Bloc 3 : fetch signal Veille source pour bonus scoring.
+	const intelligenceSignal = fromIntelligence
+		? await fetchIntelligenceSignal(locals.supabase, fromIntelligence, fromItemRank)
+		: null;
+
 	for (const feature of allFeatures) {
 		const a = feature.attributes;
 		const egid = String(a.egid);
@@ -159,6 +168,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			date_publication: null,
 			telephone: null,
 			montant: null,
+			intelligenceSignal
 		});
 
 		inserts.push({

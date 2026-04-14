@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { calculerScore } from './scoring';
+import { calculerScore, calculerBonusVeille, SIGNAL_VEILLE_SCORING } from './scoring';
 
 describe('calculerScore', () => {
 	it('retourne +1 pour un lead Zefix seul (entreprise identifiee)', () => {
@@ -162,5 +162,129 @@ describe('calculerScore', () => {
 		// canton GE (2) + secteur (3) + entreprise identifiee zefix (1) + tel (1) = 7
 		expect(result.total).toBe(7);
 		expect(result.label).toBe('chaud');
+	});
+});
+
+describe('calculerBonusVeille (Bloc 3)', () => {
+	it('retourne +2 pour etabli + OK FilmPro dans la fenêtre', () => {
+		const bonus = calculerBonusVeille({
+			maturity: 'etabli',
+			complianceTag: 'OK FilmPro',
+			weeksSince: 1
+		});
+		expect(bonus).not.toBeNull();
+		expect(bonus!.points).toBe(2);
+		expect(bonus!.critere).toContain('OK FilmPro');
+	});
+
+	it('retourne +1 pour etabli avec compliance autre', () => {
+		const bonus = calculerBonusVeille({
+			maturity: 'etabli',
+			complianceTag: 'Adjacent pertinent',
+			weeksSince: 2
+		});
+		expect(bonus!.points).toBe(1);
+	});
+
+	it('retourne +1 pour emergent peu importe compliance', () => {
+		const bonus = calculerBonusVeille({
+			maturity: 'emergent',
+			complianceTag: 'OK FilmPro',
+			weeksSince: 0
+		});
+		expect(bonus!.points).toBe(1);
+	});
+
+	it('retourne null pour speculatif (0 point explicite)', () => {
+		const bonus = calculerBonusVeille({
+			maturity: 'speculatif',
+			complianceTag: 'OK FilmPro',
+			weeksSince: 0
+		});
+		expect(bonus).toBeNull();
+	});
+
+	it('retourne null au-delà de 4 semaines (décroissance totale)', () => {
+		const bonus = calculerBonusVeille({
+			maturity: 'etabli',
+			complianceTag: 'OK FilmPro',
+			weeksSince: 5
+		});
+		expect(bonus).toBeNull();
+	});
+
+	it('retourne null pour weeksSince négatif (bug date future)', () => {
+		const bonus = calculerBonusVeille({
+			maturity: 'etabli',
+			complianceTag: 'OK FilmPro',
+			weeksSince: -1
+		});
+		expect(bonus).toBeNull();
+	});
+
+	it('retourne le bonus exactement à 4 semaines (bord inclus)', () => {
+		const bonus = calculerBonusVeille({
+			maturity: 'etabli',
+			complianceTag: 'OK FilmPro',
+			weeksSince: SIGNAL_VEILLE_SCORING.decayWeeks
+		});
+		expect(bonus).not.toBeNull();
+		expect(bonus!.points).toBe(2);
+	});
+});
+
+describe('calculerScore avec intelligenceSignal (Bloc 3)', () => {
+	it('applique le bonus Veille en plus du scoring classique', () => {
+		const withoutSignal = calculerScore({
+			canton: 'VD',
+			source: 'simap',
+			raison_sociale: 'construction sa',
+		});
+		const withSignal = calculerScore({
+			canton: 'VD',
+			source: 'simap',
+			raison_sociale: 'construction sa',
+			intelligenceSignal: {
+				maturity: 'etabli',
+				complianceTag: 'OK FilmPro',
+				weeksSince: 1
+			}
+		});
+		expect(withSignal.total).toBe(withoutSignal.total + 2);
+		expect(withSignal.criteres.some((c) => c.includes('OK FilmPro'))).toBe(true);
+	});
+
+	it('ignore intelligenceSignal si fenêtre dépassée', () => {
+		const baseline = calculerScore({
+			canton: 'GE',
+			source: 'simap',
+		});
+		const stale = calculerScore({
+			canton: 'GE',
+			source: 'simap',
+			intelligenceSignal: {
+				maturity: 'etabli',
+				complianceTag: 'OK FilmPro',
+				weeksSince: 10
+			}
+		});
+		expect(stale.total).toBe(baseline.total);
+	});
+
+	it('accepte intelligenceSignal null sans effet', () => {
+		const result = calculerScore({
+			source: 'simap',
+			intelligenceSignal: null
+		});
+		expect(result.total).toBe(2); // juste signal simap
+	});
+
+	it('speculatif ne modifie pas le score', () => {
+		const baseline = calculerScore({ source: 'simap' });
+		const specu = calculerScore({
+			source: 'simap',
+			intelligenceSignal: { maturity: 'speculatif', weeksSince: 0 }
+		});
+		expect(specu.total).toBe(baseline.total);
 	});
 });

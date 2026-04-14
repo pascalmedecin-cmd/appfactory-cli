@@ -56,7 +56,8 @@ export const POST = async ({ request, locals, fetch }: RequestEvent) => {
 			search: query,
 			daysBack: 90,
 			from_intelligence: reportId,
-			from_term: fromTerm
+			from_term: fromTerm,
+			from_item_rank: body.item_rank ?? null
 		};
 		const resp = await fetch('/api/prospection/simap', {
 			method: 'POST',
