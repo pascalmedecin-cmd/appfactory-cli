@@ -62,7 +62,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Allowlist explicite — ne jamais utiliser de prefix match sur /auth/*
 	const AUTH_EXEMPT_ROUTES = ['/login', '/auth/callback'];
 	const isAuthRoute = AUTH_EXEMPT_ROUTES.includes(event.url.pathname);
-	const isCronRoute = event.url.pathname.startsWith('/api/cron/');
+	const isCronRoute =
+		event.url.pathname.startsWith('/api/cron/') ||
+		event.url.pathname === '/api/intelligence/recheck-historical';
 
 	if (!session && !isAuthRoute && !isCronRoute) {
 		throw redirect(303, '/login');
