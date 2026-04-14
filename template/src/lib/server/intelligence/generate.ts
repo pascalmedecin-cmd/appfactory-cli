@@ -98,7 +98,8 @@ const REPORT_JSON_SCHEMA = {
 							'capacite',
 							'qualite',
 							'organisation',
-							'image'
+							'image',
+							'reglementation'
 						]
 					},
 					note: { type: 'string', minLength: 10, maxLength: 300 }

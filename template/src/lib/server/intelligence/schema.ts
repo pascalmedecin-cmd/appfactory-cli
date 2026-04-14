@@ -37,7 +37,8 @@ export const ImpactAxisEnum = z.enum([
 	'capacite',
 	'qualite',
 	'organisation',
-	'image'
+	'image',
+	'reglementation'
 ]);
 
 export const StatusEnum = z.enum(['published', 'draft', 'error']);

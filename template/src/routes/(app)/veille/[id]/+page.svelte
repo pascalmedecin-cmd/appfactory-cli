@@ -48,7 +48,8 @@
 		capacite: 'Capacité',
 		qualite: 'Qualité',
 		organisation: 'Organisation',
-		image: 'Image'
+		image: 'Image',
+		reglementation: 'Réglementation'
 	};
 
 	const SEGMENT_LABELS: Record<string, string> = {
