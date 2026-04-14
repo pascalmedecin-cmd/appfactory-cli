@@ -298,9 +298,19 @@ export async function generateIntelligenceReport(
 				: llmDate
 					? 'llm'
 					: 'none';
+			const effectiveStart = input.windowStart ?? input.dateStart;
 			const dateOk = dateToCheck
-				? isWithinWindow(dateToCheck, input.windowStart ?? input.dateStart, input.dateEnd)
+				? isWithinWindow(dateToCheck, effectiveStart, input.dateEnd)
 				: false;
+			console.log('[veille:date-check]', {
+				rank: item.rank,
+				llm: item.source.published_at,
+				og: ogDate?.toISOString(),
+				effectiveStart,
+				dateEnd: input.dateEnd,
+				dateOk,
+				dateSource
+			});
 
 			const urlOk = urlResult.ok;
 			const entityOk = entityResult.entity_ok;
