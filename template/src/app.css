@@ -86,6 +86,37 @@
 	}
 }
 
+/* Magazine typography — module Veille (éditorial) */
+.mag-kicker {
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+	font-size: 11px;
+	font-weight: 700;
+}
+.mag-display {
+	font-weight: 800;
+	letter-spacing: -0.03em;
+	line-height: 1.02;
+}
+.mag-display-2 {
+	font-weight: 800;
+	letter-spacing: -0.025em;
+	line-height: 1.05;
+}
+.mag-display-3 {
+	font-weight: 700;
+	letter-spacing: -0.02em;
+	line-height: 1.1;
+}
+.mag-body {
+	font-size: 17px;
+	line-height: 1.7;
+	font-weight: 400;
+}
+.mag-archive-card:hover .mag-archive-title {
+	color: var(--color-primary);
+}
+
 /* Focus visible — accessibilité clavier */
 button:focus-visible,
 a:focus-visible,
