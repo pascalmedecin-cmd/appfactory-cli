@@ -28,9 +28,9 @@ const validItem = {
 	segment: 'erp' as const,
 	actionability: 'action_directe' as const,
 	search_terms: [
-		'appel d offres école Vaud vitrage 2026',
-		'Ville Lausanne école rénovation',
-		'SIMAP école vitrage'
+		{ kind: 'simap' as const, canton: 'VD' as const, query: 'école rénovation vitrage', label: 'SIMAP VD · école rénovation vitrage' },
+		{ kind: 'simap' as const, canton: 'VD' as const, query: 'Ville Lausanne bâtiment scolaire', label: 'SIMAP VD · Ville Lausanne bâtiment scolaire' },
+		{ kind: 'zefix' as const, canton: 'VD' as const, query: 'Losinger Marazzi', label: 'Zefix VD · Losinger Marazzi' }
 	]
 };
 
@@ -158,7 +158,10 @@ describe('IntelligenceItemSchema', () => {
 
 	it('rejette moins de 2 search_terms', () => {
 		expect(
-			IntelligenceItemSchema.safeParse({ ...validItem, search_terms: ['un seul'] }).success
+			IntelligenceItemSchema.safeParse({
+				...validItem,
+				search_terms: [validItem.search_terms[0]]
+			}).success
 		).toBe(false);
 	});
 
@@ -166,15 +169,81 @@ describe('IntelligenceItemSchema', () => {
 		expect(
 			IntelligenceItemSchema.safeParse({
 				...validItem,
-				search_terms: ['a', 'b', 'c', 'd', 'e'].map((s) => `terme ${s}`)
+				search_terms: Array.from({ length: 5 }, (_, i) => ({
+					kind: 'simap' as const,
+					canton: 'VD' as const,
+					query: `terme ${i}`,
+					label: `SIMAP VD · terme ${i}`
+				}))
 			}).success
 		).toBe(false);
 	});
 
-	it('rejette un search_term trop court', () => {
+	it('rejette un chip avec canton hors enum', () => {
 		expect(
-			IntelligenceItemSchema.safeParse({ ...validItem, search_terms: ['ab', 'terme ok valide'] })
-				.success
+			IntelligenceItemSchema.safeParse({
+				...validItem,
+				search_terms: [
+					{ kind: 'simap', canton: 'ZH', query: 'test', label: 'SIMAP ZH · test' },
+					validItem.search_terms[1]
+				]
+			}).success
+		).toBe(false);
+	});
+
+	it('rejette un chip avec kind invalide', () => {
+		expect(
+			IntelligenceItemSchema.safeParse({
+				...validItem,
+				search_terms: [
+					{ kind: 'sparql', canton: 'VD', query: 'test', label: 'SPARQL VD · test' },
+					validItem.search_terms[1]
+				]
+			}).success
+		).toBe(false);
+	});
+
+	it('rétro-compat : accepte legacy strings et les normalise en chips', () => {
+		const result = IntelligenceItemSchema.safeParse({
+			...validItem,
+			search_terms: [
+				'appel d offres école Vaud vitrage',
+				'Ville Lausanne rénovation'
+			]
+		});
+		expect(result.success).toBe(true);
+		if (result.success) {
+			const chips = result.data.search_terms;
+			expect(chips).toHaveLength(2);
+			expect(chips[0]).toMatchObject({ kind: 'simap', canton: 'VD' });
+			expect(chips[0].label).toContain('SIMAP');
+			expect(chips[1]).toMatchObject({ kind: 'simap', canton: 'VD' });
+		}
+	});
+
+	it('rétro-compat : détecte kind zefix via indices raison sociale', () => {
+		const result = IntelligenceItemSchema.safeParse({
+			...validItem,
+			search_terms: [
+				'Losinger Marazzi SA Genève',
+				'vitrage tertiaire'
+			]
+		});
+		expect(result.success).toBe(true);
+		if (result.success) {
+			expect(result.data.search_terms[0]).toMatchObject({ kind: 'zefix', canton: 'GE' });
+		}
+	});
+
+	it('rejette un chip query trop court', () => {
+		expect(
+			IntelligenceItemSchema.safeParse({
+				...validItem,
+				search_terms: [
+					{ kind: 'simap', canton: 'VD', query: 'x', label: 'SIMAP VD · x' },
+					validItem.search_terms[1]
+				]
+			}).success
 		).toBe(false);
 	});
 });

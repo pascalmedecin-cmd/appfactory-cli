@@ -39,14 +39,24 @@ Classer les items par ordre DÉCROISSANT de valeur FilmPro (rank 1..N, max 10). 
   - action_directe : opportunité identifiée, prospecter maintenant.
   - veille_active : à suivre et nourrir le pipe.
   - a_surveiller : signal faible, pas d'action immédiate.
-- search_terms : 2 à 4 termes courts exploitables dans Zefix/SIMAP/search.ch pour alimenter des leads liés à CET item. Exemple item "AO école Lausanne 2026" -> ["appel d'offres école Vaud vitrage", "Ville Lausanne école rénovation", "SIMAP école vitrage 2026"].
+- search_terms : 2 à 4 chips structurés auto-exécutables. Chaque chip = {kind, canton, query, label}.
+  - kind : "simap" (appels d'offres publics, mots-clés libres) OU "zefix" (raison sociale entreprise au registre du commerce). Choisir selon le signal : AO / marché public / commune → simap ; entreprise identifiée, nom de société → zefix.
+  - canton : GE, VD, VS, NE, FR ou JU. OBLIGATOIRE (les APIs filtrent par canton). Déduire du signal (Lausanne→VD, Genève→GE, Sion→VS, etc.). Si multi-canton, choisir le plus probable.
+  - query : SIMAP = 3-8 mots-clés métier en français (ex: "rénovation école vitrage", "enveloppe bâtiment hospitalier"). Zefix = nom d'entreprise précis (raison sociale, 2-60 chars).
+  - label : libellé court FR pour le chip UI, format "<KIND> <CANTON> · <query>" (ex: "SIMAP VD · rénovation école vitrage").
+  - Exemples pour item "AO école Lausanne 2026" :
+    [{"kind":"simap","canton":"VD","query":"école rénovation vitrage","label":"SIMAP VD · école rénovation vitrage"},
+     {"kind":"simap","canton":"VD","query":"Ville Lausanne bâtiment scolaire","label":"SIMAP VD · Ville Lausanne bâtiment scolaire"}]
+  - Exemples pour item "Losinger Marazzi rachète Y sur vitrage haute performance" :
+    [{"kind":"zefix","canton":"GE","query":"Losinger Marazzi","label":"Zefix GE · Losinger Marazzi"},
+     {"kind":"simap","canton":"GE","query":"vitrage haute performance tertiaire","label":"SIMAP GE · vitrage haute performance tertiaire"}]
 
 # Limites strictes de longueur (RESPECTER ABSOLUMENT, sinon rejet total)
 - executive_summary : 80 à 1200 caractères (vise 600-900)
 - items : 0 à 10
 - item.title : 10-200 chars ; item.summary : 40-800 chars ; item.filmpro_relevance : 20-600 chars ; item.deep_dive : 0-400 chars
 - impacts_filmpro : 0 à 3 entrées ; note : 10 à 500 chars
-- item.search_terms : 2 à 4 termes ; chaque terme : 3-120 chars
+- item.search_terms : 2 à 4 chips ; par chip : query 2-120 chars, label 3-160 chars
 
 Compter les caractères avant de renvoyer. Aucune valeur hors limites n'est tolérée.
 

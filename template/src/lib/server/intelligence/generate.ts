@@ -150,10 +150,34 @@ const REPORT_JSON_SCHEMA = {
 					search_terms: {
 						type: 'array',
 						description:
-							'Entre 2 et 4 termes de recherche exploitables (Zefix/SIMAP/search.ch)',
+							'Entre 2 et 4 chips structurés auto-exécutables pour la prospection. Chaque chip = {kind, canton, query, label}.',
 						items: {
-							type: 'string',
-							description: 'Terme de 3 à 120 caractères'
+							type: 'object',
+							additionalProperties: false,
+							required: ['kind', 'canton', 'query', 'label'],
+							properties: {
+								kind: {
+									type: 'string',
+									enum: ['simap', 'zefix'],
+									description:
+										'simap = recherche appels d offres publics (mots-clés libres) ; zefix = recherche raison sociale entreprise (registre du commerce)'
+								},
+								canton: {
+									type: 'string',
+									enum: ['GE', 'VD', 'VS', 'NE', 'FR', 'JU'],
+									description: 'Canton romand ciblé par la recherche (obligatoire côté APIs)'
+								},
+								query: {
+									type: 'string',
+									description:
+										'SIMAP : 3-8 mots-clés métier (ex: "rénovation école vitrage"). Zefix : nom d entreprise pressenti (ex: "Losinger Marazzi"). 2 à 120 caractères.'
+								},
+								label: {
+									type: 'string',
+									description:
+										'Libellé FR court affiché sur le chip UI, ex: "SIMAP VD · rénovation école vitrage" ou "Zefix GE · Losinger Marazzi". 3 à 160 caractères.'
+								}
+							}
 						}
 					}
 				}

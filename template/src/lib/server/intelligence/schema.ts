@@ -1,4 +1,25 @@
 import { z } from 'zod';
+import { normalizeStringToChip } from './chip-normalize';
+
+export const CantonEnum = z.enum(['GE', 'VD', 'VS', 'NE', 'FR', 'JU']);
+
+export const ChipKindEnum = z.enum(['simap', 'zefix']);
+
+// Chip structuré auto-exécutable (Bloc 4).
+// Un chip = une recherche prospection qui peut partir immédiatement au clic.
+export const SearchChipSchema = z.object({
+	kind: ChipKindEnum,
+	canton: CantonEnum,
+	query: z.string().min(2).max(120),
+	label: z.string().min(3).max(160)
+});
+
+// Accepte soit un chip structuré (nouveau format Bloc 4), soit une string libre
+// (rétro-compat pré-Bloc 4 : normalise via heuristique canton+kind).
+export const SearchChipOrLegacySchema = z.union([
+	SearchChipSchema,
+	z.string().min(3).max(120).transform((s) => normalizeStringToChip(s))
+]);
 
 export const ThemeEnum = z.enum([
 	'films_solaires',
@@ -81,8 +102,9 @@ export const IntelligenceItemSchema = z.object({
 	// Attribution commerciale par item (refonte /veille, remplace search_terms globaux).
 	segment: SegmentEnum,
 	actionability: ActionabilityEnum,
-	// 2 à 4 termes de recherche par item, directement exploitables dans Zefix/SIMAP/search.ch.
-	search_terms: z.array(z.string().min(3).max(120)).min(2).max(4),
+	// 2 à 4 chips structurés par item (Bloc 4). Union accepte legacy string pour rétro-compat
+	// (items pré-Bloc 4 en DB). Chaque chip cliqué → auto-exécute prospection (SIMAP/Zefix).
+	search_terms: z.array(SearchChipOrLegacySchema).min(2).max(4),
 	// Champs de verification post-generation (ajoutes serveur, pas par le modele).
 	// Optionnels pour retro-compat avec les editions pre-Sprint 2.
 	verification: z
@@ -151,6 +173,9 @@ export const IntelligenceReportSchema = z.object({
 	impacts_filmpro: z.array(ImpactFilmproSchema).min(0).max(3)
 });
 
+export type Canton = z.infer<typeof CantonEnum>;
+export type ChipKind = z.infer<typeof ChipKindEnum>;
+export type SearchChip = z.infer<typeof SearchChipSchema>;
 export type Theme = z.infer<typeof ThemeEnum>;
 export type Maturity = z.infer<typeof MaturityEnum>;
 export type GeoScope = z.infer<typeof GeoScopeEnum>;
