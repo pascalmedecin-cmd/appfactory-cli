@@ -50,15 +50,21 @@ Classer les items par ordre DÉCROISSANT de valeur FilmPro (champ rank 1..N, max
 - "À surveiller" : signaux faibles, pas d'action immédiate.
 - "Non exploitable" : rien de probant cette semaine. Rester honnête.
 
-# search_terms (8-15 par édition)
-Termes directement exploitables dans Zefix / SIMAP / search.ch pour alimenter l'outil d'import de leads. Chaque terme reflète un signal de l'édition. segment appartient à {tertiaire, residentiel, commerces, erp, partenaires}. Exemple : signal "AO école Lausanne" -> term "appel d'offres école Vaud vitrage 2026", segment "erp".
+# Attribution commerciale par item (OBLIGATOIRE)
+Chaque item DOIT porter :
+- segment : {tertiaire, residentiel, commerces, erp, partenaires}. Choisir le segment le plus directement ciblé par le signal.
+- actionability : {action_directe, veille_active, a_surveiller}.
+  - action_directe : opportunité identifiée, prospecter maintenant (appel d'offres ouvert, projet annoncé avec porteur nommé, réglementation active dans la fenêtre, etc.).
+  - veille_active : à suivre et nourrir le pipe (tendance confirmée, acteur pertinent, évolution marché exploitable à court terme).
+  - a_surveiller : signal faible, pas d'action immédiate mais à garder en radar.
+- search_terms : 2 à 4 termes courts directement exploitables dans Zefix / SIMAP / search.ch pour alimenter l'import de leads liés à CET item. Exemple item "AO école Lausanne 2026" -> ["appel d'offres école Vaud vitrage", "Ville Lausanne école rénovation", "SIMAP école vitrage 2026"]. Pas de rationale textuel, juste le terme.
 
 # Limites strictes de longueur (RESPECTER ABSOLUMENT, sinon rejet total)
 - executive_summary : 80 à 1200 caractères (vise 600-900)
 - items : 0 à 10 (0 accepté si compliance_tag = "Non exploitable")
 - item.title : 10-200 chars ; item.summary : 40-800 chars ; item.filmpro_relevance : 20-600 chars ; item.deep_dive : 0-400 chars
 - impacts_filmpro : 0 à 3 entrées ; impacts_filmpro[].note : 10 à 500 caractères
-- search_terms : 8 à 15 ; term : 3-120 ; rationale : 10-200
+- item.search_terms : 2 à 4 termes ; chaque terme : 3-120 chars
 
 Compter les caractères avant de renvoyer. Si une valeur dépasse, réécrire plus court. Aucune valeur hors limites n'est tolérée.
 
@@ -66,12 +72,14 @@ Compter les caractères avant de renvoyer. Si une valeur dépasse, réécrire pl
 Factuel, sans marketing. Titres explicites, résumés 2-4 lignes. Images : toujours null (résolues serveur après appel).
 
 # Structure JSON (CRITIQUE)
-Le tool emit_report attend EXACTEMENT 4 clés racines : meta, items, impacts_filmpro, search_terms.
+Le tool emit_report attend EXACTEMENT 3 clés racines : meta, items, impacts_filmpro.
 - meta contient : week_label, generated_at, compliance_tag, executive_summary.
+- Chaque item contient : rank, title, summary, filmpro_relevance, maturity, theme, geo_scope, source, deep_dive, image_url, segment, actionability, search_terms.
 - NE PAS wrapper le rapport entier dans un objet supplémentaire.
 - NE PAS imbriquer meta dans meta.
+- Les search_terms sont désormais PAR ITEM, il n'y a plus de liste globale.
 Exemple structure attendue :
-{ "meta": { "week_label": "...", ... }, "items": [...], "impacts_filmpro": [...], "search_terms": [...] }`;
+{ "meta": { "week_label": "...", ... }, "items": [{ "rank": 1, ..., "segment": "erp", "actionability": "action_directe", "search_terms": ["...", "..."] }], "impacts_filmpro": [...] }`;
 
 export interface UserPromptInput {
 	weekLabel: string;

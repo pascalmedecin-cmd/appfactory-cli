@@ -29,6 +29,12 @@ export const SegmentEnum = z.enum([
 	'partenaires'
 ]);
 
+export const ActionabilityEnum = z.enum([
+	'action_directe',
+	'veille_active',
+	'a_surveiller'
+]);
+
 export const ImpactAxisEnum = z.enum([
 	'diagnostic',
 	'go_nogo',
@@ -72,6 +78,11 @@ export const IntelligenceItemSchema = z.object({
 	}),
 	deep_dive: z.string().max(400).nullable(),
 	image_url: HttpsUrl.nullable(),
+	// Attribution commerciale par item (refonte /veille, remplace search_terms globaux).
+	segment: SegmentEnum,
+	actionability: ActionabilityEnum,
+	// 2 à 4 termes de recherche par item, directement exploitables dans Zefix/SIMAP/search.ch.
+	search_terms: z.array(z.string().min(3).max(120)).min(2).max(4),
 	// Champs de verification post-generation (ajoutes serveur, pas par le modele).
 	// Optionnels pour retro-compat avec les editions pre-Sprint 2.
 	verification: z
@@ -89,7 +100,9 @@ export const ImpactFilmproSchema = z.object({
 	note: z.string().min(10).max(500)
 });
 
-export const SearchTermSchema = z.object({
+// Legacy (rétro-compat lectures pré-refonte /veille) : anciennes éditions ont
+// search_terms globaux { term, rationale, segment }. Non produit par le modèle depuis la refonte.
+export const LegacySearchTermSchema = z.object({
 	term: z.string().min(3).max(120),
 	rationale: z.string().min(10).max(200),
 	segment: SegmentEnum
@@ -106,8 +119,7 @@ export const IntelligenceEditionSchema = z.object({
 export const IntelligenceReportSchema = z.object({
 	meta: IntelligenceEditionSchema,
 	items: z.array(IntelligenceItemSchema).min(0).max(10),
-	impacts_filmpro: z.array(ImpactFilmproSchema).min(0).max(3),
-	search_terms: z.array(SearchTermSchema).min(8).max(15)
+	impacts_filmpro: z.array(ImpactFilmproSchema).min(0).max(3)
 });
 
 export type Theme = z.infer<typeof ThemeEnum>;
@@ -115,9 +127,12 @@ export type Maturity = z.infer<typeof MaturityEnum>;
 export type GeoScope = z.infer<typeof GeoScopeEnum>;
 export type ComplianceTag = z.infer<typeof ComplianceTagEnum>;
 export type Segment = z.infer<typeof SegmentEnum>;
+export type Actionability = z.infer<typeof ActionabilityEnum>;
 export type ImpactAxis = z.infer<typeof ImpactAxisEnum>;
 export type IntelligenceItem = z.infer<typeof IntelligenceItemSchema>;
 export type ImpactFilmpro = z.infer<typeof ImpactFilmproSchema>;
-export type SearchTerm = z.infer<typeof SearchTermSchema>;
+export type LegacySearchTerm = z.infer<typeof LegacySearchTermSchema>;
+/** @deprecated — alias legacy, sera retiré en Phase 2 (refonte UI /veille). */
+export type SearchTerm = LegacySearchTerm;
 export type IntelligenceEdition = z.infer<typeof IntelligenceEditionSchema>;
 export type IntelligenceReport = z.infer<typeof IntelligenceReportSchema>;

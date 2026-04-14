@@ -21,7 +21,7 @@ const MAX_TOKENS = 16000;
 const REPORT_JSON_SCHEMA = {
 	type: 'object',
 	additionalProperties: false,
-	required: ['meta', 'items', 'impacts_filmpro', 'search_terms'],
+	required: ['meta', 'items', 'impacts_filmpro'],
 	properties: {
 		meta: {
 			type: 'object',
@@ -64,7 +64,10 @@ const REPORT_JSON_SCHEMA = {
 					'geo_scope',
 					'source',
 					'deep_dive',
-					'image_url'
+					'image_url',
+					'segment',
+					'actionability',
+					'search_terms'
 				],
 				properties: {
 					rank: {
@@ -124,6 +127,26 @@ const REPORT_JSON_SCHEMA = {
 					image_url: {
 						type: ['string', 'null'],
 						description: 'URL image optionnelle (HTTPS)'
+					},
+					segment: {
+						type: 'string',
+						enum: ['tertiaire', 'residentiel', 'commerces', 'erp', 'partenaires'],
+						description: 'Segment commercial FilmPro principal ciblé par ce signal'
+					},
+					actionability: {
+						type: 'string',
+						enum: ['action_directe', 'veille_active', 'a_surveiller'],
+						description:
+							'Pertinence FilmPro : action_directe = prospecter maintenant ; veille_active = suivre et nourrir le pipe ; a_surveiller = signal faible'
+					},
+					search_terms: {
+						type: 'array',
+						description:
+							'Entre 2 et 4 termes de recherche directement exploitables (Zefix/SIMAP/search.ch) attachés à cet item',
+						items: {
+							type: 'string',
+							description: 'Terme de 3 à 120 caractères'
+						}
 					}
 				}
 			}
@@ -153,29 +176,6 @@ const REPORT_JSON_SCHEMA = {
 					note: {
 						type: 'string',
 						description: 'Note d impact de 10 à 500 caractères'
-					}
-				}
-			}
-		},
-		search_terms: {
-			type: 'array',
-			description: 'Entre 8 et 15 termes de recherche pour alimenter le prospecting',
-			items: {
-				type: 'object',
-				additionalProperties: false,
-				required: ['term', 'rationale', 'segment'],
-				properties: {
-					term: {
-						type: 'string',
-						description: 'Terme de recherche de 3 à 120 caractères'
-					},
-					rationale: {
-						type: 'string',
-						description: 'Justification de 10 à 200 caractères'
-					},
-					segment: {
-						type: 'string',
-						enum: ['tertiaire', 'residentiel', 'commerces', 'erp', 'partenaires']
 					}
 				}
 			}

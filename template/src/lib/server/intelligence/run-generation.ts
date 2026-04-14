@@ -94,7 +94,11 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 				executive_summary: report.meta.executive_summary,
 				items: report.items,
 				impacts_filmpro: report.impacts_filmpro,
-				search_terms: report.search_terms,
+				// search_terms globaux supprimés depuis la refonte /veille :
+				// les termes sont désormais portés par chaque item.
+				// La colonne DB est conservée pour rétro-compatibilité lecture
+				// des anciennes éditions, nouvelles lignes = tableau vide.
+				search_terms: [],
 				raw_response: gen.raw ?? null,
 				status: 'published',
 				error_message: null

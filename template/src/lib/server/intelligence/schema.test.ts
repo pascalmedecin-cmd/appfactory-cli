@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
 	IntelligenceReportSchema,
 	IntelligenceItemSchema,
-	SearchTermSchema,
+	LegacySearchTermSchema,
 	ThemeEnum,
 	SegmentEnum,
+	ActionabilityEnum,
 	ComplianceTagEnum
 } from './schema';
 
@@ -23,10 +24,17 @@ const validItem = {
 		published_at: '2026-04-10T08:00:00Z'
 	},
 	deep_dive: null,
-	image_url: null
+	image_url: null,
+	segment: 'erp' as const,
+	actionability: 'action_directe' as const,
+	search_terms: [
+		'appel d offres école Vaud vitrage 2026',
+		'Ville Lausanne école rénovation',
+		'SIMAP école vitrage'
+	]
 };
 
-const validSearchTerm = {
+const validLegacySearchTerm = {
 	term: 'appel d offres école Vaud vitrage 2026',
 	rationale: 'Reprendre la requête SIMAP qui a remonté ce signal.',
 	segment: 'erp' as const
@@ -43,11 +51,7 @@ const validReport = {
 	items: [validItem, { ...validItem, rank: 2, title: 'Deuxième signal pertinent' }],
 	impacts_filmpro: [
 		{ axis: 'diagnostic' as const, note: 'Renforcer la grille de diagnostic sur les ERP scolaires.' }
-	],
-	search_terms: Array.from({ length: 10 }, (_, i) => ({
-		...validSearchTerm,
-		term: `${validSearchTerm.term} ${i}`
-	}))
+	]
 };
 
 describe('IntelligenceReportSchema', () => {
@@ -77,22 +81,6 @@ describe('IntelligenceReportSchema', () => {
 		expect(r.success).toBe(true);
 	});
 
-	it('rejette moins de 8 search_terms', () => {
-		const r = IntelligenceReportSchema.safeParse({
-			...validReport,
-			search_terms: validReport.search_terms.slice(0, 7)
-		});
-		expect(r.success).toBe(false);
-	});
-
-	it('rejette plus de 15 search_terms', () => {
-		const r = IntelligenceReportSchema.safeParse({
-			...validReport,
-			search_terms: Array.from({ length: 16 }, () => validSearchTerm)
-		});
-		expect(r.success).toBe(false);
-	});
-
 	it('rejette plus de 3 impacts_filmpro', () => {
 		const r = IntelligenceReportSchema.safeParse({
 			...validReport,
@@ -110,6 +98,12 @@ describe('IntelligenceReportSchema', () => {
 			meta: { ...validReport.meta, compliance_tag: 'Inconnu' }
 		});
 		expect(r.success).toBe(false);
+	});
+
+	it('ne demande plus de search_terms globaux au niveau racine', () => {
+		// refonte /veille : terms par item, plus de liste globale
+		const r = IntelligenceReportSchema.safeParse(validReport);
+		expect(r.success).toBe(true);
 	});
 });
 
@@ -149,21 +143,51 @@ describe('IntelligenceItemSchema', () => {
 			IntelligenceItemSchema.safeParse({ ...validItem, deep_dive: null, image_url: null }).success
 		).toBe(true);
 	});
+
+	it('rejette un segment hors enum', () => {
+		expect(
+			IntelligenceItemSchema.safeParse({ ...validItem, segment: 'industriel' }).success
+		).toBe(false);
+	});
+
+	it('rejette une actionability hors enum', () => {
+		expect(
+			IntelligenceItemSchema.safeParse({ ...validItem, actionability: 'maintenant' }).success
+		).toBe(false);
+	});
+
+	it('rejette moins de 2 search_terms', () => {
+		expect(
+			IntelligenceItemSchema.safeParse({ ...validItem, search_terms: ['un seul'] }).success
+		).toBe(false);
+	});
+
+	it('rejette plus de 4 search_terms', () => {
+		expect(
+			IntelligenceItemSchema.safeParse({
+				...validItem,
+				search_terms: ['a', 'b', 'c', 'd', 'e'].map((s) => `terme ${s}`)
+			}).success
+		).toBe(false);
+	});
+
+	it('rejette un search_term trop court', () => {
+		expect(
+			IntelligenceItemSchema.safeParse({ ...validItem, search_terms: ['ab', 'terme ok valide'] })
+				.success
+		).toBe(false);
+	});
 });
 
-describe('SearchTermSchema', () => {
-	it('accepte un terme valide', () => {
-		expect(SearchTermSchema.safeParse(validSearchTerm).success).toBe(true);
+describe('LegacySearchTermSchema (rétro-compat anciennes éditions)', () => {
+	it('accepte un terme legacy valide', () => {
+		expect(LegacySearchTermSchema.safeParse(validLegacySearchTerm).success).toBe(true);
 	});
 
 	it('rejette un segment hors enum', () => {
 		expect(
-			SearchTermSchema.safeParse({ ...validSearchTerm, segment: 'industriel' }).success
+			LegacySearchTermSchema.safeParse({ ...validLegacySearchTerm, segment: 'industriel' }).success
 		).toBe(false);
-	});
-
-	it('rejette un terme trop court', () => {
-		expect(SearchTermSchema.safeParse({ ...validSearchTerm, term: 'ab' }).success).toBe(false);
 	});
 });
 
@@ -171,6 +195,14 @@ describe('Enums', () => {
 	it('SegmentEnum contient les 5 segments FilmPro', () => {
 		const values = SegmentEnum.options;
 		expect(values).toEqual(['tertiaire', 'residentiel', 'commerces', 'erp', 'partenaires']);
+	});
+
+	it('ActionabilityEnum contient les 3 niveaux', () => {
+		expect(ActionabilityEnum.options).toEqual([
+			'action_directe',
+			'veille_active',
+			'a_surveiller'
+		]);
 	});
 
 	it('ThemeEnum contient les 7 thèmes', () => {
