@@ -1,11 +1,11 @@
 # AppFactory — CLAUDE.md
 
-**Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en preview
-**Derniere mise a jour :** 2026-04-14 (session 49 : module Veille sectorielle construit sur branche feat/veille-sectorielle, 3 commits)
+**Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production
+**Derniere mise a jour :** 2026-04-14 (session 50 : Veille validée prod + wireframe magazine DM Sans validé)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Reconstruction module Veille sectorielle depuis trace pré-crash (JSONL 2026-04-12 + étude iCloud intacte). Branche `feat/veille-sectorielle` créée + 3 commits pushés (47d44ba + ab4091c + 2f8b139) : (1) migration Supabase intelligence_reports + intelligence_reads + colonnes traçabilité sur prospect_leads, schema Zod strict URLs HTTPS-only, prompt système v2 condensé 50 lignes ; (2) service Claude Sonnet 4.5 + web_search natif + tool emit_report structured output, cron hebdo vendredi 8h UTC + trigger manuel, 6 tests week-utils ISO 8601 ; (3) UI /veille (feed 20 éditions) + /veille/[id] (détail) + sidebar item radar + badge non-lus amber + navigation search_term → /prospection?q=...&from_intelligence=...&from_term=... Infra : migration appliquée cloud Supabase, ANTHROPIC_API_KEY configurée Vercel prod + preview (clé v2 après rotation v1 compromise dans chat). 190/190 tests. 3 audits security-auditor : 0 High/Critical. Modèle choisi Sonnet (pas Opus : tâche encadrée par schema, réversible en 1 constante). Validation preview + décision merge main à faire en session suivante.
-**Session precedente -1 :** Audit complet post-reconnexion cloud : git clean, build template OK (3.05s), Vitest 164/164, Vercel prod Ready, Supabase linké → reconstruction validée. Tâche 1c (vérif 7 fixes responsive) clôturée. UX prospection table : fix `table-fixed` sur DataTable + refonte 7 colonnes en pourcentages.
+**Session precedente :** Module Veille sectorielle mergé feat/veille-sectorielle → main (commit 838667e, conflit Sidebar résolu), trigger cron prod HTTP 200 (reportId 43d8ff8c-19a5-42a8-b6cb-bde03b6b2b35, édition 2026-W16 générée par Sonnet 4.5 en 60s). Bugs rencontrés : (1) /api/intelligence/trigger redirigé /login car hooks.server.ts exempte seulement /api/cron/* (workaround : utiliser /api/cron/intelligence GET, pas de fix nécessaire) ; (2) Vercel Deployment Protection bloque curl sur previews nouvellement créées (vercel curl SSO redirect 303/307 casse POST) - validation migrée vers prod. (3) schema Zod trop strict pour sortie Sonnet : executive_summary >600, note >300, items vide - fix commit d7a6174 (schema 1200/500 + items min 0) + prompt durci section "Limites strictes" + test mis à jour (190/190). Sidebar : demande Pascal plus d'espacement + texte +1px desktop → commit 86f7034 (space-y-1.5 md, py-2.5 md, text-[15px] md). Wireframe magazine /veille : 2 itérations (Fraunces rejetée, DM Sans charte CRM validée) → `previews/veille-magazine.html` commit 1e1eb57. Layout éditorial (masthead, hero 7/5, top 3 asymétriques, pullquote, search chips, archive grid 3). Plan 2 sessions : typo+layout puis OG scraping.
+**Session precedente -1 :** Reconstruction module Veille sectorielle depuis trace pré-crash (JSONL 2026-04-12 + étude iCloud intacte). Branche `feat/veille-sectorielle` créée + 3 commits pushés (47d44ba + ab4091c + 2f8b139) : migration Supabase intelligence_reports, service Claude Sonnet + web_search, UI /veille + /veille/[id] + sidebar item radar, navigation search_term → prospection. 190/190 tests.
 
 ---
 
@@ -258,9 +258,11 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [x] ~~Verifier en navigateur prod que les 7 fixes responsive tiennent~~ — Fait 2026-04-13 : F3 charset UTF-8 vérifié runtime + accents OK, F4-F9 vérifiés via code source (commits b05c758 + 9ce8d8f). Validation visuelle 375px en DevTools déléguée à Pascal
-- [ ] **[EXÉCUTABLE — priorité haute]** Valider module Veille sectorielle sur preview Vercel puis merger `feat/veille-sectorielle` → `main`. Voir `memory/project_veille_sectorielle.md` pour état complet. Étapes : (1) ouvrir preview URL (auto-déployée sur la branche), (2) tester /veille vide, (3) `vercel env pull .env.vercel` pour récupérer CRON_SECRET, (4) `curl -X POST -H "Authorization: Bearer $CRON_SECRET" <preview-url>/api/intelligence/trigger` pour déclencher une vraie génération, (5) rafraîchir /veille et juger qualité Sonnet, (6) tester bouton "Rechercher dans Prospection", (7) si OK → PR + merge main, sinon basculer Opus (1 constante MODEL dans `template/src/lib/server/intelligence/generate.ts:11`)
-- [ ] **[BLOQUÉ ← merge feat/veille-sectorielle]** Wire-up effectif traçabilité Veille → Prospection (v1.1) : brancher les form actions import de `/prospection/+page.server.ts` pour lire les query params `from_intelligence` + `from_term` (déjà propagés par les boutons "Rechercher" du détail /veille/[id]) et les écrire sur chaque lead créé dans les colonnes `source_intelligence_id` + `source_intelligence_term` (colonnes DB déjà présentes depuis commit 47d44ba). Impact : permet le dashboard analytique "quelle édition Veille → quel CA" sans autre migration
+- [x] ~~Verifier en navigateur prod que les 7 fixes responsive tiennent~~ — Fait 2026-04-13
+- [x] ~~Valider module Veille sectorielle sur preview Vercel puis merger feat/veille-sectorielle → main~~ — Fait 2026-04-14 : mergé 838667e, trigger prod HTTP 200 reportId 43d8ff8c, édition 2026-W16 live sur filmpro-crm.vercel.app/veille
+- [ ] **[EXÉCUTABLE — priorité haute]** Refonte UI /veille magazine éditorial — **Session N+1 (typo + layout)** : porter le wireframe validé `previews/veille-magazine.html` (commit 1e1eb57) dans `template/src/routes/(app)/veille/+page.svelte` et `[id]/+page.svelte`. Éléments : masthead journal (kicker + display 5xl), hero 7/5 (image lead + executive_summary), top 3 signaux asymétriques (1 featured 7/12 + 2 stackés 5/12), pullquote impacts_filmpro sur fond blanc + border-left primary, search terms chips, archive grid 3 cols. Charge DM Sans poids 300-900 dans `app.html` (actuellement 100-1000 italic seulement, check si déjà couvert). Palette : primary `#2F5A9E`, primary-dark `#0A1628`, accent `#3B6CB7`. Titres display class : font-weight 800, letter-spacing -0.03em, line-height 1.02. Sans toucher au schema ni à la génération IA. Tests Playwright visuel régression
+- [ ] **[BLOQUÉ ← Session N+1 refonte UI]** Refonte UI /veille — **Session N+2 (OG image scraping)** : créer `template/src/lib/server/intelligence/og-image.ts` = service `resolveOgImage(url: string): Promise<string | null>` qui fetch la page source, parse `<meta property="og:image">` (regex ou cheerio), valide HTTPS + taille raisonnable, cache 7j via Vercel Blob. Post-process dans `generate.ts` après validation Zod : boucle sur items, appelle resolveOgImage(item.source.url), écrit item.image_url. Fallback si OG KO : garder image_url=null, UI utilise pattern gradient themé (à définir dans le composant). Taux hit OG attendu 70-85%. Ajouter 3 tests unit (fetch OK, fetch KO, cache hit)
+- [ ] **[EXÉCUTABLE]** Wire-up traçabilité Veille → Prospection (v1.1) : brancher les form actions import de `/prospection/+page.server.ts` pour lire les query params `from_intelligence` + `from_term` (déjà propagés par les boutons "Rechercher" du détail /veille/[id]) et les écrire sur chaque lead créé dans les colonnes `source_intelligence_id` + `source_intelligence_term` (colonnes DB déjà présentes depuis commit 47d44ba). Impact : dashboard analytique "quelle édition Veille → quel CA" sans autre migration
 - [ ] **[EXÉCUTABLE]** Ameliorer scoring temperature leads : reduire poids canton (+3 -> +2), ajouter +1 entreprise identifiee (enrichissement Zefix), passer a 3 niveaux (supprimer Faible), ajuster seuils - fichiers config.ts + scoring.ts + tests
 - [ ] **[EXÉCUTABLE]** Définir les golden standards UX/UI complets du CRM et les propager aux 5 autres pages
   - **Gabarit de référence exclusif :** page `/prospection` du CRM FilmPro (wizards AppFactory hors périmètre)
@@ -275,3 +277,14 @@ Fichiers cles :
 - [ ] **[EXÉCUTABLE]** Import/export CSV : export bouton sur Contacts, Entreprises, Leads (form action SELECT -> CSV) + import avec validation Zod ligne par ligne et preview erreurs
 - [ ] **[EXÉCUTABLE]** Dashboard/reporting : requetes SQL agregees (pipeline par mois, taux conversion par source, activite 30/90j) + graphiques legers
 - [ ] **[BLOQUÉ ← attente PAT Figma]** Figma API a configurer : Personal Access Token + plugin MCP figma scope projet
+
+### Séquence
+
+1. **Refonte UI /veille Session N+1** (typo + layout magazine) — priorité haute, débloque N+2
+2. **Refonte UI /veille Session N+2** (OG image scraping) — BLOQUÉ par 1
+3. **Wire-up traçabilité Veille → Prospection** — indépendant, peut précéder ou suivre
+4. **Scoring température leads** — indépendant
+5. **Golden standards UX** — gros chantier 3-4 sessions, à lancer quand reste vert
+6. **Import/export CSV** — indépendant
+7. **Dashboard/reporting** — indépendant
+8. **Figma** — BLOQUÉ hors séquence
