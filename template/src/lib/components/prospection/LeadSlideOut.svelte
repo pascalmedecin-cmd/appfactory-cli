@@ -42,7 +42,7 @@
 	let enriching = $state(false);
 
 	function getScoreDetail(l: Lead) {
-		return calculerScore({
+		const detail = calculerScore({
 			canton: l.canton,
 			description: l.description,
 			raison_sociale: l.raison_sociale,
@@ -51,6 +51,18 @@
 			telephone: l.telephone,
 			montant: l.montant ? Number(l.montant) : null,
 		});
+		// Bonus Veille appliqué au score stocké mais recalcul client n'a pas accès au signal source.
+		// Si le score DB dépasse la somme des critères, on expose le delta en ligne explicite.
+		const stored = l.score_pertinence ?? 0;
+		const delta = stored - detail.total;
+		if (delta > 0) {
+			return {
+				...detail,
+				total: stored,
+				criteres: [...detail.criteres, `Signal Veille (+${delta})`],
+			};
+		}
+		return detail;
 	}
 
 	async function enrichirTelephone(leadId: string) {
