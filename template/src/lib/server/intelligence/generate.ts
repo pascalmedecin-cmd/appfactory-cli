@@ -234,6 +234,21 @@ export interface GenerateResult {
 	candidatesFiltered?: IntelligenceCandidate[];
 }
 
+/**
+ * Normalise une URL pour comparaison (détection mutation Phase 2) :
+ * - lowercase host, strip trailing slash, strip hash/query (chemin = vérité).
+ * Si parsing échoue → retourne brut (sera traité comme mutation).
+ */
+function normalizeUrlForCompare(url: string): string {
+	try {
+		const u = new URL(url);
+		const path = u.pathname.replace(/\/$/, '');
+		return `${u.protocol}//${u.host.toLowerCase()}${path}`;
+	} catch {
+		return url;
+	}
+}
+
 // ---------- Phase 1 : extraction candidats ----------
 
 async function callPhase1(
@@ -461,6 +476,9 @@ export async function generateIntelligenceReport(
 		};
 	}
 
+	// Set des URLs candidates filtrées (normalisées) → détection mutation Phase 2.
+	const candidateUrlSet = new Set(filtered.map((c) => normalizeUrlForCompare(c.url)));
+
 	// Vérifications post-génération (URLs + entités + date) : redondantes avec
 	// le filtre Phase 1 mais préservées pour compatibilité badge "Non vérifié"
 	// et traçabilité (item.verification conservé dans la DB).
@@ -483,7 +501,17 @@ export async function generateIntelligenceReport(
 
 			const urlOk = urlResult.ok;
 			const entityOk = entityResult.entity_ok;
-			const needsFlag = !urlOk || entityOk === false || !dateOk;
+
+			// Détection mutation URL : Phase 2 a-t-il émis une URL hors candidats ?
+			const urlNorm = normalizeUrlForCompare(item.source.url);
+			const urlMutated = candidateUrlSet.size > 0 && !candidateUrlSet.has(urlNorm);
+			if (urlMutated) {
+				console.warn(
+					`[URL_MUTATED] rank=${item.rank} final=${item.source.url} not in candidates (${candidateUrlSet.size} filtered)`
+				);
+			}
+
+			const needsFlag = !urlOk || entityOk === false || !dateOk || urlMutated;
 
 			return {
 				...item,
@@ -494,7 +522,8 @@ export async function generateIntelligenceReport(
 					entity_ok: entityOk,
 					unverified_entities: entityResult.unverified_entities,
 					date_ok: dateOk,
-					date_source: dateSource
+					date_source: dateSource,
+					url_mutated: urlMutated
 				}
 			};
 		})

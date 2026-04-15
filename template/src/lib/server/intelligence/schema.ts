@@ -116,7 +116,10 @@ export const IntelligenceItemSchema = z.object({
 			// Sprint 3 P1 fraîcheur déterministe : date_ok=false → item hors fenêtre
 			// temporelle de la semaine cible. date_source indique l'origine de la date.
 			date_ok: z.boolean().optional(),
-			date_source: z.enum(['og', 'llm', 'none']).optional()
+			date_source: z.enum(['og', 'llm', 'none']).optional(),
+			// Bug URL doublée (session 60) : true si Phase 2 a émis une URL absente
+			// des candidats Phase 1 filtrés (hallucination ou réécriture du chemin).
+			url_mutated: z.boolean().optional()
 		})
 		.optional()
 });
