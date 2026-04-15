@@ -1,59 +1,56 @@
-# Handoff - Session 61 : Bloc 4 (pont Veille → Prospection) + Bloc 3 (scoring v2 signaux Veille) livrés
+# Handoff - Session 63 : validation live Bloc 3+4 + diagnostic bug URL mutée Phase 2
 
 ## Objectif session
 
-Livrer Blocs 4 et 3 en autonome : (1) auto-exécution de recherches prospection depuis les chips search_term des articles Veille, (2) bonus de scoring pour les leads issus de signaux Veille chauds et actuels.
-
-## Pré-requis Bloc 4 : /dig
-
-Analyse compatibilité search_terms LLM avec filtres Zefix/SIMAP/REGBL. Verdict : Option B (migration schéma structuré) choisie. Raisons : Zefix n'accepte qu'un nom d'entreprise, REGBL n'accepte pas de texte libre, string libre ingérable à 2/3.
-
-Décision : chips deviennent `{kind, canton, query, label}`. REGBL exclu du pont.
+Reprise après session 62 avortée (extension Chrome déconnectée). Deux tâches :
+1. **[1a]** Valider parcours live Chrome MCP : chip Veille W16 → redirect /prospection → import + bonus scoring.
+2. **[1b]** Diagnostiquer bug URL doublée Phase 2 (session 60) et ajouter garde-fou.
 
 ## Livré
 
-| Commit | Contenu |
-|---|---|
-| `7682ec4` | **Bloc 4A** — Schema structuré. `SearchChipSchema` (kind `simap\|zefix`, canton romand, query 2-120, label 3-160). `IntelligenceItemSchema.search_terms` devient `Array<ChipOrLegacy>` (union Zod avec transform string → chip via heuristique `chip-normalize.ts`). `emit_report` JSON schema exige objet structuré. Prompt Phase 2 réécrit avec exemples contrastés SIMAP/Zefix. 270/270 verts (+44 : chip-normalize tests + union/retrocompat schema tests). |
-| `877c3a2` | **Bloc 4B** — Pont UI → endpoint. Nouvel endpoint `POST /api/prospection/from-intelligence` qui valide `{chip, report_id, item_rank}`, route vers SIMAP/Zefix via `event.fetch` (préserve cookies auth), propage `from_intelligence`, `from_term`, `from_item_rank`. `normalizeStoredChips` parse le mix legacy/structuré au load `/veille`. Chips deviennent `<button>` avec loading state, disabled pendant appel, redirect `/prospection?source=X&canton=Y&from_intelligence=Z&sort=date_import&dir=desc` on success. Icônes : `gavel` (SIMAP), `business` (Zefix), `progress_activity` (loading). |
-| `3aa1ad6` | **Bloc 3** — Scoring v2 signaux Veille. `scoring.ts` : param optionnel `intelligenceSignal{maturity, complianceTag, weeksSince}` + `calculerBonusVeille` exporté. Barème : etabli+OK FilmPro=+2, etabli=+1, emergent=+1, speculatif=0. Décroissance : bonus perdu au-delà de 4 semaines depuis `generated_at`. Nouveau `signal-lookup.ts` (défensif, catch → null). Endpoints zefix/simap/regbl acceptent `from_item_rank` (1-10), lookup unique par batch, pass au scoring. Endpoint `from-intelligence` propage `item_rank` dans le body downstream. 285/285 verts (+15). |
+### 1a — Validation parcours live (prod)
 
-## Validation
+Parcours complet exécuté sur `filmpro-crm.vercel.app` :
+- Chip W16 "SIMAP · VD · film solaire vitrage façade Suisse" cliqué.
+- Redirect OK : `/prospection?source=simap&canton=VD&from_intelligence=3d9db0dc-ef55-4511-9935-53ade01e2558&from_term=...`
+- Import auto effectif : 16 prospects SIMAP/VD chargés, tous `Chaud`, `Aujourd'hui`.
+- Lead SITSE ouvert : **badge total 10/13** vs détail listant 9 pts (canton VD +2, secteur +3, SIMAP +2, récence +2 = 9). Écart de **+1** correspond au bonus signal Veille, correctement appliqué au score total.
 
-- **Tests unitaires** : 285/285 verts (baseline 270 → 285, +15 net). Certains tests existants ont été modifiés en place (union SearchChip remplace rejets string). Nouveaux fichiers/ajouts :
-  - `chip-normalize.test.ts` (nouveau) : detectCanton, detectKind, normalizeStringToChip, normalizeStoredChips, buildChipLabel (24 tests)
-  - `schema.test.ts` (modifié) : union SearchChip/legacy, retrocompat strings, rejets invalides
-  - `scoring.test.ts` (étendu) : calculerBonusVeille tous cas + intégration calculerScore (+13 tests)
-- **Typecheck** : 3 erreurs pré-existantes inchangées (2x `run-generation.ts`, 1x `signaux/+page.svelte`).
-- **Chrome MCP / parcours live** : NON validé en session (skip autonomie : nécessite dev server + session Supabase connectée + données fresh avec chips structurés). Pascal à valider : navigate `/veille`, cliquer un chip, vérifier redirect `/prospection` + count imported.
+### Bug UI mineur découvert
 
-## Observations
+Slide-out détail prospect : la ligne `Signal Veille (+N)` n'apparaît pas dans le breakdown "Scoring détaillé" quand `from_intelligence` est présent. Le bonus est calculé et sommé mais invisible pour l'utilisateur → écart total/somme déroutant.
 
-- Les items actuels en DB ont des `search_terms` en format legacy (string[]). La normalisation runtime (`normalizeStoredChips`) convertit à l'affichage : SIMAP par défaut, canton extrait par regex ou VD fallback. Les chips fonctionnent donc rétro-activement sur W16, W15, etc.
-- Pour des chips Zefix structurés par le LLM (nom d'entreprise précis), il faut régénérer une édition W17+ après déploiement. Le prompt Phase 2 est déjà updaté.
-- L'URL doublée observée session 60 (pompe-a-chaleur/pompe-a-chaleur-radiateurs) reste à surveiller — pas adressée dans cette session.
+Correctif : ajouter une 5e ligne dans le breakdown quand `intelligence_signal.bonus > 0`, au même format que les autres.
 
-## Décisions structurantes
+### 1b — Détection mutation URL Phase 2
 
-- **Option B** (schéma structuré) retenue vs Option C (SIMAP only). Coût : +1h vs MVP minimal, mais évite un mensonge dans le prompt et permet Zefix.
-- **REGBL non ciblé** par le pont Veille (pas de filtre texte natif). RegBL `from_item_rank` accepté quand même côté endpoint pour cohérence traçabilité.
-- **Canton fallback VD** dans `normalizeStringToChip` : VD = canton FilmPro le plus actif, fallback sûr. Alternative (marquer chip comme "non résolu" + disabled) jugée trop complexe pour le gain.
-- **Bonus Veille non propagé aux leads pré-existants** : recalcul du score uniquement à l'import/insert. Rescoring rétroactif non implémenté (peut être ajouté ultérieurement via script one-shot si nécessaire).
-- **Item_rank contrainte 1-10** dans les endpoints : aligné avec le schéma Zod (max 10 items par édition).
+Commit `921e71a` (pushed main) :
 
-## Trace
+- `schema.ts` : ajout `verification.url_mutated?: boolean` optionnel (rétro-compat).
+- `generate.ts` :
+  - Helper `normalizeUrlForCompare` (host lowercase, strip trailing slash, strip query/hash).
+  - Post-Phase 2 : `candidateUrlSet = Set(filtered.map(normalize))`.
+  - Pour chaque item : `urlMutated = !candidateUrlSet.has(normalize(item.source.url))`.
+  - Si `urlMutated` : `console.warn([URL_MUTATED] rank=X final=URL ...)` + bascule `maturity=speculatif`.
+- Badge UI "Non vérifié" existant déclenché automatiquement via speculatif (aucune modif UI nécessaire).
 
-| Niveau | Description |
-|---|---|
-| **Endpoints** | `/api/prospection/from-intelligence` (nouveau, 401 anonyme ✓) ; `zefix`, `simap`, `regbl` +server.ts étendus avec `from_item_rank` + `intelligenceSignal` |
-| **Lib** | `$lib/server/intelligence/chip-normalize.ts` (nouveau) ; `$lib/server/intelligence/signal-lookup.ts` (nouveau) ; `$lib/scoring.ts` (étendu) ; `$lib/server/intelligence/schema.ts` (SearchChipSchema + union) ; `$lib/server/intelligence/generate.ts` (JSON schema structuré) ; `$lib/server/intelligence/prompt-phase2.ts` (instructions + exemples) |
-| **UI** | `(app)/veille/+page.svelte` + `(app)/veille/item/[slug]/+page.svelte` (chips cliquables) ; `(app)/veille/+page.server.ts` + `(app)/veille/item/[slug]/+page.server.ts` (normalizeStoredChips au load) |
-| **Tests** | `chip-normalize.test.ts` (nouveau, 24 tests) ; `schema.test.ts` (+7) ; `scoring.test.ts` (+13) |
+**Tests** : 285/285 verts. Typecheck : 2 erreurs pré-existantes inchangées (`run-generation.ts` Supabase types, notées S61).
 
-## À faire prochaine session
+**Diagnostic activé** : dès la prochaine régen (W17, ~lundi 20 avril) les logs Vercel révéleront les cas de mutation. Pas de décision fix prompt vs garde-fou ferme avant observation.
 
-1. **Validation parcours live** (priorité 1, 15 min, Claude via Chrome MCP) : Navigate `/veille`, cliquer chip legacy (existing W16), vérifier redirect + count imported prospection. Tester SIMAP + Zefix si possible.
-2. **Régen W17** : vérifier que le LLM produit des chips structurés conformes au nouveau JSON schema (lecture DB + log `intelligence_reports.items[].search_terms`).
-3. **Bloc 5 (Golden standards UX/UI)** : débloqué après validation ; périmètre complet, gabarit `/prospection`, absorption `GOLDEN_STANDARDS_RESPONSIVE.md`.
-4. **Bloc 6bis (qualité images /veille)** : score dimensions + fallback banque locale.
-5. **Bloc 7 (CSV + Reporting)** : batché indépendant.
+## Validation Chrome MCP
+
+- Extension connectée, tab `filmpro-crm.vercel.app/veille` préexistant.
+- Parcours exécuté sans erreur, tous selectors trouvés du premier coup.
+- Session Supabase prod utilisée (Pascal déjà connecté).
+
+## Non-fait / reporté
+
+- **Régen W17** : reportée (semaine pas encore démarrée, génération auto prévue lundi 20 avril via cron hebdo ou déclenchement manuel).
+- **Décision finale bug URL mutée** : attendre 1 régen avec le nouveau logging pour trancher prompt vs hard reject.
+- **Bloc 5 Golden standards** : gros chantier 3-4 sessions, pas démarré aujourd'hui.
+
+## État git
+
+- `main` : `921e71a` — pushed GitHub, Vercel deploy auto en cours.
+- Working tree clean (hors `.claude/scheduled_tasks.lock` non-versionné).
