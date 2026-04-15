@@ -1,13 +1,13 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production
-**Derniere mise a jour :** 2026-04-15 (session 64 : fix UI breakdown scoring bonus Veille)
+**Derniere mise a jour :** 2026-04-15 (session 65 : bascule cron Veille jeudi 7h)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente -3 :** Bloc 4 pont Veille→Prospection + Bloc 3 scoring v2 signaux Veille livrés (commits `7682ec4` + `877c3a2` + `3aa1ad6`). Validation Chrome MCP reportée.
-**Session precedente -2 :** Session 62 très courte. Push Blocs 3+4 sur prod. Tentative validation Chrome MCP avortée : extension Chrome déconnectée. Validation reportée.
-**Session precedente -1 :** Session 63. Validation live Bloc 3+4 OK sur prod (16 prospects SIMAP/VD, bonus Veille appliqué au total 10/13 mais invisible dans breakdown). Diagnostic mutation URL Phase 2 (commit `921e71a`) : détection `url_mutated` + bascule speculatif + observation activée pour régen W17. 285/285 tests verts.
-**Session precedente :** Session 64. Fix UI breakdown scoring (commit `7ca08e5` pushed). Slide-out prospection affiche désormais ligne synthétique `Signal Veille (+N)` quand `score_pertinence` DB > somme critères recalculés + total aligné sur la DB (source de vérité). Approche : pas de refetch DB, delta calculé côté client. 285/285 tests verts. Vercel CLI mis à jour 50.42.0 → 51.2.1. Détail : `notes/handoff.md`.
+**Session precedente -3 :** Session 62 très courte. Push Blocs 3+4 sur prod. Tentative validation Chrome MCP avortée : extension Chrome déconnectée. Validation reportée.
+**Session precedente -2 :** Session 63. Validation live Bloc 3+4 OK sur prod (16 prospects SIMAP/VD, bonus Veille appliqué au total 10/13 mais invisible dans breakdown). Diagnostic mutation URL Phase 2 (commit `921e71a`) : détection `url_mutated` + bascule speculatif + observation activée pour régen W17. 285/285 tests verts.
+**Session precedente -1 :** Session 64. Fix UI breakdown scoring (commit `7ca08e5` pushed). Slide-out prospection affiche désormais ligne synthétique `Signal Veille (+N)` quand `score_pertinence` DB > somme critères recalculés + total aligné sur la DB (source de vérité). Approche : pas de refetch DB, delta calculé côté client. 285/285 tests verts. Vercel CLI mis à jour 50.42.0 → 51.2.1.
+**Session precedente :** Session 65 (très courte). Bascule cron Veille vendredi 8h → jeudi 7h (commit `126e246` pushed, `template/vercel.json`). Suppression row W16 en DB (2 items seulement, relance propre). Prochaine régen auto = jeudi 16 avril 7h → générera W16 fresh, permettra lecture logs `[URL_MUTATED]` pour décision bug URL.
 
 ---
 
@@ -273,7 +273,7 @@ Tâches regroupées en blocs autonomes (validation visuelle via Chrome MCP + Pup
 - [x] ~~Validation parcours live Chrome MCP (Bloc 3+4)~~ — Fait 2026-04-15 session 63 : chip W16 SIMAP/VD → redirect + 16 prospects importés + bonus Veille appliqué au score total (10/13 vs 9 somme critères).
 - [x] ~~Bug veille URL doublée — diagnostic~~ — Fait 2026-04-15 session 63 (commit `921e71a` pushed) : `verification.url_mutated` + détection post-Phase 2 + `console.warn [URL_MUTATED]` + bascule speculatif. Observation activée pour régen W17.
 - [x] ~~Bug UI scoring breakdown~~ — Fait 2026-04-15 session 64 (commit `7ca08e5` pushed) : `LeadSlideOut.svelte` calcule delta `score_pertinence` DB vs somme critères recalculés, ajoute ligne synthétique `Signal Veille (+N)` si delta > 0 et aligne total affiché sur DB. Pas de refetch.
-- [ ] **[EXÉCUTABLE — Régen W17 + décision bug URL — autonome ~30min, dès semaine W17]** Déclencher régen W17 (manuelle ou cron hebdo), lire logs Vercel pour `[URL_MUTATED]` + requête SQL `SELECT items FROM intelligence_reports WHERE week_label='2026-W17'` pour lister les items avec `verification.url_mutated=true`. Si 0 occurrence sur 10 items → retirer la détection (dead code). Si ≥1 occurrence → décider entre (a) durcir prompt Phase 2 (« tu DOIS réutiliser l URL du candidat telle quelle, aucune mutation de chemin ») ou (b) hard reject (exclure l item du rapport final au lieu de speculatif).
+- [ ] **[BLOQUÉ ← régen W16 auto jeudi 16 avril 7h]** Décision bug URL mutated : après régen jeudi matin, lire logs Vercel pour `[URL_MUTATED]` + requête SQL `SELECT items FROM intelligence_reports WHERE week_label='2026-W16'` pour lister les items avec `verification.url_mutated=true`. Si 0 occurrence → retirer la détection (dead code). Si ≥1 occurrence → décider entre (a) durcir prompt Phase 2 (« tu DOIS réutiliser l URL du candidat telle quelle, aucune mutation de chemin ») ou (b) hard reject (exclure l item du rapport final au lieu de speculatif). Cron désormais hebdo jeudi 7h (commit `126e246`).
 - [ ] **[EXÉCUTABLE — Bloc 5 — autonome ~10h, 3-4 sessions]** Golden standards UX/UI complets CRM (gabarit exclusif `/prospection`, wizards AppFactory hors périmètre). Phase 1 extraction + Phase 2 rédaction `docs/GOLDEN_STANDARDS.md` (absorbe + remplace `docs/GOLDEN_STANDARDS_RESPONSIVE.md`) + Phase 3 audit delta par page + Phase 4 application (1 commit atomique par page, Vitest + Playwright + screenshots before/after Chrome MCP après chaque).
   - Périmètre complet : charte graphique (palette workflow ardoise/violet/ambre/sauge, Inter, tokens CSS, radius, shadows, accents FR), layout/responsive, composants (boutons, cards, modales, slide-outs, stepper, badges, tables, filtres multi-select, pagination serveur, batch actions bar), états (hover/focus/disabled/loading/empty/error/success), feedback (toasts, ConfirmModal, messages scoped), micro-interactions, accessibilité (focus trap, touch targets 44px, aria, contraste), ton/copie (labels explicites, pas d'« Autre », accents FR)
   - Règle table-fixed (session 48) : `table-fixed` obligatoire dès contraintes largeur sur td/th, préférer `w-[X%]` aux pixels
@@ -286,8 +286,8 @@ Tâches regroupées en blocs autonomes (validation visuelle via Chrome MCP + Pup
 
 ### Séquence
 
-1. **Régen W17 + décision bug URL** (bloqué jusqu'à W17 démarrée, ~lundi 20 avril).
-2. **Bloc 6bis — Qualité images /veille** (~2h, autonome).
+1. **Décision bug URL** (bloqué jusqu'à régen auto jeudi 16 avril 7h).
+2. **Bloc 6bis — Qualité images /veille** (~2h, autonome, idéalement après régen jeudi pour contenu frais).
 3. **Bloc 5 — Golden standards UX/UI** (gros chantier 3-4 sessions).
 4. **Bloc 7 — CSV + Reporting**.
 - Hors séquence (BLOQUÉ) : Figma (attente PAT)
