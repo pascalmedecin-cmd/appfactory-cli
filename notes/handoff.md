@@ -1,100 +1,102 @@
-# Handoff - Session 67 : Bloc 6ter/quater — pipeline images Flux 1.1 Pro Ultra + retrait Pexels/Unsplash
+# Handoff - Session 69 : formation-ia uniquement (dette <title> + GitHub→Vercel lié)
 
 ## Objectif session
 
-Initialement : valider le fallback /veille Bloc 6bis + décider du bug `url_mutated`. Étendu en cours de session par Pascal : (1) refondre le pipeline image avec génération IA (fal.ai), (2) sortir Pexels/Unsplash du flow, (3) adopter cascade 4 niveaux avec audits Vision.
+Deux tâches exécutables bouclées sur formation-ia en attendant la deep research marketing de Pascal (bloquante pour l'ingestion parcours).
 
-## Décisions structurelles
+## Périmètre
 
-### Modèle text-to-image : Flux 1.1 Pro Ultra (vs Recraft V3)
+- **Scope** : sous-projet `formation-ia/` uniquement (repo `pascalmedecin-cmd/onboarding-ia`)
+- **CRM FilmPro (racine AppFactory)** : aucune modif code **de cette session**, juste la MAJ `CLAUDE.md` racine pour décaler les sessions précédentes
 
-`/dig` comparatif effectué (Artificial Analysis ELO leaderboard + fal.ai 2026 pricing) :
-- Recraft V3 ELO #1 (1172) mais API sans `negative_prompt` ni style variant utile pour nos use cases
-- **Flux 1.1 Pro Ultra** ELO #2 (1143), `aspect_ratio 16:9` natif 2K (2752×1536), $0.06/image
-- Tests isolés sur 3 cas via `scripts/test-fal-prompt.ts` : Recraft v1 (Sonnet) 1/3 ≥7 vs Flux Pro Ultra (Sonnet) 2/3 ≥7
-- Qualité résolution +50% avec Flux → retenu
+### Modif non commitée hors scope session (à statuer Pascal)
 
-### Modèle brief LLM : Sonnet 4.6 (vs Opus)
+Détectée en fin de session par l'audit : `template/src/lib/server/intelligence/generate.ts` a une modif non commitée (mtime `2026-04-16 18:37:38`) que je n'ai pas faite dans cette session. Contenu :
 
-Test Opus brief a produit résultats *pires* (pertinence moy 4.7 vs 6 avec Sonnet) : Opus trop poétique/abstrait pour Flux qui ne matérialise pas les nuances subtiles (« films à peine perceptibles »). Sonnet produit des briefs matériels que le diffusion model visualise mieux.
+- Ligne 23 : `const MODEL = 'claude-opus-4-6'` → `'claude-opus-4-7'`
+- Ligne 278-280 : ajout spread cast `...({ thinking: { type: 'adaptive' }, output_config: { effort: 'high' } } as Record<string, unknown>)` dans `callPhase1` avec commentaire `// Opus 4.7 : adaptive thinking + effort high (migration 4.6 → 4.7, 2026-04-16)`
 
-Règle apprise : « Opus partout = qualité max » ne s'applique pas mécaniquement. Pour piloter un text-to-image limité, Sonnet matériel > Opus littéraire.
+Ce fichier pilote le cron veille hebdo (`/api/cron/intelligence` jeudi 7h UTC). La modif est cohérente avec une migration Opus 4.6 → 4.7 mais n'a pas été commitée ni annoncée dans cette session. Origine probable : autre session Claude Code en parallèle, ou tentative manuelle interrompue.
 
-### Modèle audit Vision : Sonnet 4.6 (contrainte timeout Vercel Hobby)
+**Action attendue Pascal :**
+- Si migration intentionnelle → relire le diff, tester localement, committer dans une session dédiée (risque prod sur cron veille, ne pas committer en fin de session sans test)
+- Si dérive → `git restore template/src/lib/server/intelligence/generate.ts` (revient à Opus 4.6)
 
-Initialement Opus 4.6 (qualité critique filet de sécurité), mais timeout 300s Vercel Hobby atteint. Switch Vision Opus → Sonnet a ramené à 154s. Régen W16 OK mais Vision Sonnet moins exigeant qu'Opus — probablement une des causes du rejet QA Pascal fin session.
+Je n'ai ni commité ni restauré ce fichier : hors mandat session 69.
 
-### Retrait Pexels/Unsplash
+## Livré
 
-Décision Pascal : inutiles dans flow temps réel depuis pivot génération fal.ai. Lib garde labels 'pexels'/'unsplash' comme historique (pas de nouveaux imports). Purge manuelle 156 → 44 images via viewer HTML servi par Python http.server + Chrome MCP.
+### 1. Dette SEO + a11y `<title>` résolue (commit `32c74cd`)
 
-## Livré (commits pushed main)
+`<svelte:head><title>` ajouté sur les 7 routes formation-ia :
+- `/` : `Accueil - Onboarding IA`
+- `/login` : `Connexion - Onboarding IA`
+- `/admin/allowlist` : `Allowlist - Onboarding IA`
+- `/parcours/[slug]` : `{parcours?.nom ?? 'Parcours'} - Onboarding IA`
+- `/parcours/[slug]/jour/[n]` : `Jour {n} - Onboarding IA`
+- `/parcours/[slug]/jour/[n]/exercice/[m]` : `{exercice?.titre ?? 'Exercice'} - Onboarding IA`
+- `/parcours/[slug]/jour/[n]/quiz` : `Quiz jour {n} - Onboarding IA`
 
-- `46d368e` — Pipeline images 4 niveaux v1 (Recraft V3) + segment-mapper + og-image-quality + cascade UI + migration CHECK fal-ai
-- `146256f` — Fix URL absolue generated_image_url + audit technique
-- `c269bd1` — Pivot Flux 1.1 Pro Ultra + Vision Opus + retrait code Pexels/Unsplash
-- `d3a6792` — maxDuration=800 (rejeté Vercel Hobby)
-- `fd24ebb` — Perf Vision Sonnet + concurrence 3 + maxDuration=300
-- `769a6c1` — Docs session 67 (CLAUDE.md)
+Pas de `+error.svelte` dans les routes (route absente). Fallbacks gracieux pour données DB manquantes. Convention tiret court (règle Pascal) + suffixe uniforme.
 
-## État prod W16 (post-régen session 67)
+Tests 21/21 verts, `npm run check` 0 erreur, `npm run build` OK. Deploy prod manuel `dpl_B8g7kuwBu8HUi9hGqLfZvejjsjfF` READY.
 
-- Item rank 1 « Nature U-value vitrages 2-4.5 → 0.5-1.5 W/m²K » → og:image Springer schéma 1570px (niveau 1)
-- Item rank 2 « Guide sectoriel films commerciaux énergie 10-30% » → fal.ai Flux 2752×1536 (niveau 2)
+### 2. Connexion GitHub→Vercel activée (commit test vide `5bf14ba`)
 
-**Pascal a signalé les 2 images comme non conformes en fin de session** — QA cadrage + traitement reportés à prochaine session. Contexte complet dans `memory/project_qa_images_veille.md`.
+- Vercel GitHub App permissions étendues au repo `onboarding-ia` côté GitHub Settings (Installations → Vercel → Configure → add repo)
+- `vercel git connect https://github.com/pascalmedecin-cmd/onboarding-ia.git` côté CLI → `Connected`
+- Test bout-en-bout : commit vide → push → deploy auto `onboarding-7au1agn0h` déclenché en **11s**, Ready en **15s**
+- **Résultat** : plus besoin de `npx vercel --prod` manuel pour les prochaines livraisons formation-ia. Chaque push sur `main` déclenche auto le deploy.
 
-## Tests
+### 3. Docs (commits `766533d` formation-ia + `8471402` AppFactory racine)
 
-- 334/334 verts (+35 nouveaux : segment-mapper, og-image-quality, veille-fallback, test-fal-prompt)
-- Build OK
-- Régen W16 prod durée cron : 154s (sous 300s timeout)
+- `formation-ia/CLAUDE.md` : section « Session courante » réécrite, 2 tâches cochées dans « Prochaine session (S3) », sessions précédentes décalées
+- `AppFactory/CLAUDE.md` : sessions précédentes décalées (-3 S2 archivée du header, 67 condensée en prélude -2)
 
-## Bloquants déverrouillés
+## Tournant de session : quiproquo Vercel multi-projets
 
-- Validation live fallback /veille : DONE
-- Décision `url_mutated` : première observation faite (0 occurrence W16 régénéré), plan d'observation W17+W18+W19 avant retrait dead code
+Pascal a d'abord connecté le mauvais repo (`pascalmedecin-cmd/appfactory-cli`, le repo CRM parent) au projet Vercel `onboarding-ia` au lieu de `pascalmedecin-cmd/onboarding-ia`. Correction :
+1. Disconnect côté Vercel UI
+2. Extension Vercel GitHub App perms côté GitHub (`onboarding-ia` ajouté)
+3. `vercel git connect` CLI côté Claude Code
 
-## Bloquants nouveaux (voir CLAUDE.md Prochaine session)
+**Risque évité** : sans correction, un push ultérieur sur appfactory-cli (CRM) aurait déclenché un deploy erroné sur onboarding-ia (Root Directory `.` → pas de SvelteKit formation-ia à cet endroit).
 
-- **[PRIORITÉ]** QA cadrage images /veille (rejet Pascal fin session) — démarre la prochaine session. Voir `memory/project_qa_images_veille.md`.
-- Email récap veille post-cron (spec prête dans `memory/project_email_veille_recap.md`) — débloqué.
-- Dashboard coûts CRM — reste bloqué par email récap + session page dashboard dédiée.
+**Leçon captée** : `memory/feedback_vercel_repo_disambiguation.md` — tout pas-à-pas Vercel multi-projets doit nommer le repo cible en full-path + demander confirmation visuelle avant clic.
+
+## Non fait (toujours bloqué)
+
+- **Ingestion parcours marketing** : en attente deep research markdown de Pascal (Claude chat). Workflow prêt (`docs/INGESTION.md` + `docs/PEDAGOGIE.md`).
+- **Audit E2E contenu réel** : bloqué par l'ingestion marketing.
+- **Autres parcours thématiques** : même blocage (opération, commercial).
+- **Script sync charte-outils** : tâche tracée au niveau `~/.claude/CLAUDE.md` (transversale).
+
+## Tests + build
+
+- Vitest : 21/21 verts (inchangé)
+- `npm run check` : 0 erreur, 0 warning
+- `npm run build` : OK
+
+## Deploys
+
+- `dpl_B8g7kuwBu8HUi9hGqLfZvejjsjfF` READY — commit `32c74cd` titres svelte:head
+- `dpl_7au1agn0h` READY — commit vide `5bf14ba` test deploy auto
+- (Deploy auto probable sur commit `766533d` post-fin-session — docs-only, sans impact prod)
 
 ## Credentials / env vars (changements session)
 
-**Ajoutées Vercel prod** (via `vercel env add` ou pipé depuis Enseignement `.env`) :
-- `FAL_KEY` (production uniquement, preview bloqué par interactive prompt CLI — à ajouter plus tard si besoin preview). Clé partagée avec projet Enseignement. Scope : génération fal.ai Flux 1.1 Pro Ultra pour niveau 2 cascade /veille.
-
-**Retirées Vercel prod** (via `vercel env rm --yes`) :
-- `PEXELS_API_KEY`
-- `UNSPLASH_ACCESS_KEY`
-
-**Ajoutées/retirées local `.env.local` AppFactory** (miroir Vercel) :
-- Ajout : `FAL_KEY`
-- Retrait : `PEXELS_API_KEY`, `UNSPLASH_ACCESS_KEY`
-
-**Pas touché** : clés Enseignement (dossier séparé, Pascal conserve l'usage là-bas).
+Aucun changement.
 
 ## Subagents
 
-Aucun subagent BLOCK cette session (pas de Task Agent invoqué pour analyse parallèle). Sonnet utilisé uniquement via SDK Anthropic pour brief LLM dans le pipeline. Opus utilisé pour Phase 1+2 Veille text.
+Aucun subagent invoqué cette session (travail direct sur fichiers + CLI, pas de parallélisation).
 
-## Garde-fous / sécurité
+## Prochaine action
 
-- Tests 334/334 verts avant push
-- Build OK avant deploy
-- Migration Supabase `20260416120000_media_library_fal.sql` appliquée via `supabase db query --linked --file` (contournement conflit `db push` sur version collision) puis `migration repair --status applied` pour tracking cohérent
-- maxDuration cron intelligence explicitement à 300s (limite Hobby) pour éviter timeout silencieux
-- Audit Vision backend : image stockée toujours en lib (réutilisable), mais pas servie pour l'item si pertinence < 6/10 (cascade fallback prend le relais)
-
-## Prochaine action (priorité)
-
-**QA cadrage images /veille** : démarrer prochaine session en parcourant visuellement les 2 images W16 actuelles avec Pascal, lister les problèmes précis, puis proposition structurée. Spec/contexte : `memory/project_qa_images_veille.md`. Ne pas modifier le pipeline avant validation du diagnostic.
+**En attente côté Pascal** : deep research marketing (markdown Claude chat). Quand elle arrive, lancer l'option `[3] Intégrer un parcours` depuis le menu `/start` Formation IA (workflow Opus 4.6, ~2-3h, validations jour par jour).
 
 ## Apprentissages méthodo
 
-- **« Opus partout » n'est pas mécaniquement la bonne règle** : pour piloter un diffusion model, Sonnet matériel > Opus littéraire.
-- **Vercel Hobby maxDuration = 300s** limite dure. Pipeline complexe doit tenir dedans ou upgrade Pro (25€/mois).
-- **Supabase migration collision** : fichiers avec même prefix YYYYMMDD → Supabase tronque version. Solution : timestamp long YYYYMMDDHHMMSS + exécution SQL directe via `supabase db query --linked` quand `db push` refuse à cause d'historique.
-- **fal.ai Flux Pro Ultra** : prompt max ~1000 chars (Recraft même limite). Toujours truncate défensif à 990 chars.
+- **Vercel CLI `vercel git connect`** : fonctionne si la Vercel GitHub App a accès au repo. Sinon échec silencieux côté API → il faut d'abord étendre les perms côté GitHub Settings.
+- **Deploy Vercel Hobby** : 15s de build pour le test commit vide → cold start réduit, pas d'impact user.
+- **Commit vide `--allow-empty`** : outil utile pour tester un hook Git sans créer de changement métier.
