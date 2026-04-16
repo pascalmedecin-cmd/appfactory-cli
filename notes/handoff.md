@@ -9,20 +9,21 @@ Deux tâches exécutables bouclées sur formation-ia en attendant la deep resear
 - **Scope** : sous-projet `formation-ia/` uniquement (repo `pascalmedecin-cmd/onboarding-ia`)
 - **CRM FilmPro (racine AppFactory)** : aucune modif code **de cette session**, juste la MAJ `CLAUDE.md` racine pour décaler les sessions précédentes
 
-### Modif non commitée hors scope session (à statuer Pascal)
+### Migration `generate.ts` Opus 4.6 → 4.7 — résolue hors session (commit `499f137`)
 
-Détectée en fin de session par l'audit : `template/src/lib/server/intelligence/generate.ts` a une modif non commitée (mtime `2026-04-16 18:37:38`) que je n'ai pas faite dans cette session. Contenu :
+Statut : **résolu**. Signalée comme non commitée en fin de session 69, la modif a été produite par une session méta `~/.claude` parallèle (migration API Claude cross-projet pilotée par la règle « dernière version à prix égal »), puis commitée par Pascal le 2026-04-16 18:42 :
 
-- Ligne 23 : `const MODEL = 'claude-opus-4-6'` → `'claude-opus-4-7'`
-- Ligne 278-280 : ajout spread cast `...({ thinking: { type: 'adaptive' }, output_config: { effort: 'high' } } as Record<string, unknown>)` dans `callPhase1` avec commentaire `// Opus 4.7 : adaptive thinking + effort high (migration 4.6 → 4.7, 2026-04-16)`
+```
+499f137 chore: migre Opus 4.6 → 4.7 sur cron veille (generate.ts)
+```
 
-Ce fichier pilote le cron veille hebdo (`/api/cron/intelligence` jeudi 7h UTC). La modif est cohérente avec une migration Opus 4.6 → 4.7 mais n'a pas été commitée ni annoncée dans cette session. Origine probable : autre session Claude Code en parallèle, ou tentative manuelle interrompue.
+Contenu final de la migration (Phase 1 + Phase 2 du pipeline `/api/cron/intelligence`) :
+- Ligne 23 : `const MODEL = 'claude-opus-4-7'`
+- Lignes ~282-283 et ~392-393 : spread cast `...({ thinking: { type: 'adaptive' }, output_config: { effort: 'high' } } as Record<string, unknown>)` dans `callPhase1` et `callPhase2`. Cast via `Record<string, unknown>` car SDK `@anthropic-ai/sdk@0.88` ne type pas encore `output_config`.
 
-**Action attendue Pascal :**
-- Si migration intentionnelle → relire le diff, tester localement, committer dans une session dédiée (risque prod sur cron veille, ne pas committer en fin de session sans test)
-- Si dérive → `git restore template/src/lib/server/intelligence/generate.ts` (revient à Opus 4.6)
+Le message de commit signale 3 ERRORs TypeScript préexistantes (`run-generation.ts:61`, `run-generation.ts:92`, `signaux/+page.svelte:161`) indépendantes de la modif.
 
-Je n'ai ni commité ni restauré ce fichier : hors mandat session 69.
+**Point de vigilance (prochaine session AppFactory)** : observer le 1er run du cron veille hebdo post-migration (coût tokens thinking + latence end-to-end vs baseline 4.6). Adaptive thinking peut consommer plus de tokens output. Si régression budgétaire → envisager passer effort de `high` à `medium`, ou retirer le bloc thinking.
 
 ## Livré
 
