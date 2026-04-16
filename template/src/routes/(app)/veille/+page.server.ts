@@ -7,6 +7,8 @@ import type {
 	IntelligenceItem
 } from '$lib/server/intelligence/schema';
 import { normalizeStoredChips } from '$lib/server/intelligence/chip-normalize';
+import { loadFallbackPool, pickFallback } from '$lib/server/veille-fallback';
+import { env as publicEnv } from '$env/dynamic/public';
 
 // Item aplati pour le fil chronologique : 1 ligne de DB -> N items individuels.
 export type FeedItem = IntelligenceItem & {
@@ -20,6 +22,8 @@ export type FeedItem = IntelligenceItem & {
 	recurrence_count: number;
 	// Filtres dérivés (geo_scope normalisé pour badge court)
 	geo_label: string;
+	// URL fallback media_library si image_url manquante/invalide (Bloc 6bis)
+	fallback_image_url: string | null;
 };
 
 export type FacetCounts = {
@@ -91,6 +95,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		readIds = new Set((reads ?? []).map((r) => r.report_id));
 	}
 
+	// Pool fallback media_library (1 seule query pour tous les items)
+	const fallbackPool = await loadFallbackPool(locals.supabase, publicEnv.PUBLIC_SUPABASE_URL ?? '');
+
 	// Aplatir et enrichir
 	const now = Date.now();
 	const sevenDaysMs = 7 * 24 * 3600 * 1000;
@@ -133,6 +140,12 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				ageMs <= sevenDaysMs &&
 				item.geo_scope === 'suisse_romande';
 
+			const fallback = pickFallback(
+				fallbackPool,
+				item.segment,
+				`${r.id}-${item.rank}`
+			);
+
 			feed.push({
 				...item,
 				report_id: r.id,
@@ -142,7 +155,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				is_unread: !readIds.has(r.id),
 				is_hot: isHot,
 				recurrence_count: recurrence,
-				geo_label: geoToLabel(item.geo_scope)
+				geo_label: geoToLabel(item.geo_scope),
+				fallback_image_url: fallback
 			});
 		}
 	}

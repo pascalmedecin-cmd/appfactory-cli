@@ -158,6 +158,13 @@
 
 	function onImageError(e: Event) {
 		const img = e.currentTarget as HTMLImageElement;
+		// Bloc 6bis : si un fallback media_library est disponible, on l'essaie avant le gradient
+		const fb = img.dataset.fallback;
+		if (fb && img.src !== fb) {
+			img.dataset.fallback = '';
+			img.src = fb;
+			return;
+		}
 		img.style.display = 'none';
 		const fallback = img.nextElementSibling as HTMLElement | null;
 		if (fallback) fallback.style.display = 'block';
@@ -166,6 +173,13 @@
 	function onImageLoad(e: Event) {
 		const img = e.currentTarget as HTMLImageElement;
 		if (img.naturalWidth > 0 && img.naturalWidth < img.clientWidth * 0.8) {
+			// Image suspecte (trop petite rendu vs réel) : tenter fallback avant gradient
+			const fb = img.dataset.fallback;
+			if (fb && img.src !== fb) {
+				img.dataset.fallback = '';
+				img.src = fb;
+				return;
+			}
 			img.style.display = 'none';
 			const fallback = img.nextElementSibling as HTMLElement | null;
 			if (fallback) fallback.style.display = 'block';
@@ -314,9 +328,12 @@
 						onclick={() => item.is_unread && markAsRead(item.report_id)}
 						class="block relative aspect-[1200/630] md:aspect-auto md:h-full bg-gradient-to-br from-primary via-accent to-primary-dark"
 					>
-						{#if item.image_url}
+						{#if item.image_url || item.fallback_image_url}
 							<img
-								src={item.image_url}
+								src={item.image_url ?? item.fallback_image_url}
+								data-fallback={item.image_url && item.fallback_image_url
+									? item.fallback_image_url
+									: ''}
 								alt=""
 								loading="lazy"
 								decoding="async"
