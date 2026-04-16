@@ -18,7 +18,7 @@ L'arborescence d'AppFactory héberge des sous-projets autonomes (chacun a son pr
 | Dossier | Repo Git | Statut | URL prod | CLAUDE.md |
 |---------|----------|--------|----------|-----------|
 | `template/` (CRM FilmPro) | `pascalmedecin-cmd/appfactory-cli` (=racine actuelle) | Production | <https://filmpro-crm.vercel.app> | (ce fichier) |
-| `formation-ia/` | `pascalmedecin-cmd/onboarding-ia` (séparé, ignoré dans `.gitignore`) | S1 + CP2 + S2 livrés | <https://onboarding-ia.vercel.app> | `formation-ia/CLAUDE.md` |
+| `formation-ia/` | `pascalmedecin-cmd/onboarding-ia` (séparé, ignoré dans `.gitignore`) | S1 + CP2 + S2 + UI refresh livrés | <https://onboarding-ia.vercel.app> | `formation-ia/CLAUDE.md` |
 
 Pour travailler sur un sous-projet : `cd formation-ia/` puis lire son `CLAUDE.md` propre. Les tâches du sous-projet sont tracées dans son CLAUDE.md, pas dans celui-ci.
 
