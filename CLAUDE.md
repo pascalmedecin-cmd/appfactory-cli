@@ -1,13 +1,13 @@
 # AppFactory — CLAUDE.md
 
-**Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production
-**Derniere mise a jour :** 2026-04-15 (session 65 : bascule cron Veille jeudi 7h)
+**Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production + bibliothèque photo FilmPro
+**Derniere mise a jour :** 2026-04-16 (session 66 : Bloc 6bis — media_library + fallback /veille)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente -3 :** Session 62 très courte. Push Blocs 3+4 sur prod. Tentative validation Chrome MCP avortée : extension Chrome déconnectée. Validation reportée.
-**Session precedente -2 :** Session 63. Validation live Bloc 3+4 OK sur prod (16 prospects SIMAP/VD, bonus Veille appliqué au total 10/13 mais invisible dans breakdown). Diagnostic mutation URL Phase 2 (commit `921e71a`) : détection `url_mutated` + bascule speculatif + observation activée pour régen W17. 285/285 tests verts.
-**Session precedente -1 :** Session 64. Fix UI breakdown scoring (commit `7ca08e5` pushed). Slide-out prospection affiche désormais ligne synthétique `Signal Veille (+N)` quand `score_pertinence` DB > somme critères recalculés + total aligné sur la DB (source de vérité). Approche : pas de refetch DB, delta calculé côté client. 285/285 tests verts. Vercel CLI mis à jour 50.42.0 → 51.2.1.
-**Session precedente :** Session 65 (très courte). Bascule cron Veille vendredi 8h → jeudi 7h (commit `126e246` pushed, `template/vercel.json`). Suppression row W16 en DB (2 items seulement, relance propre). Prochaine régen auto = jeudi 16 avril 7h → générera W16 fresh, permettra lecture logs `[URL_MUTATED]` pour décision bug URL.
+**Session precedente -3 :** Session 63. Validation live Bloc 3+4 OK sur prod (16 prospects SIMAP/VD, bonus Veille appliqué au total 10/13 mais invisible dans breakdown). Diagnostic mutation URL Phase 2 (commit `921e71a`) : détection `url_mutated` + bascule speculatif + observation activée pour régen W17. 285/285 tests verts.
+**Session precedente -2 :** Session 64. Fix UI breakdown scoring (commit `7ca08e5` pushed). Slide-out prospection affiche désormais ligne synthétique `Signal Veille (+N)` quand `score_pertinence` DB > somme critères recalculés + total aligné sur la DB (source de vérité). Approche : pas de refetch DB, delta calculé côté client. 285/285 tests verts. Vercel CLI mis à jour 50.42.0 → 51.2.1.
+**Session precedente -1 :** Session 65 (très courte). Bascule cron Veille vendredi 8h → jeudi 7h (commit `126e246` pushed, `template/vercel.json`). Suppression row W16 en DB (2 items seulement, relance propre). Prochaine régen auto = jeudi 16 avril 7h → générera W16 fresh, permettra lecture logs `[URL_MUTATED]` pour décision bug URL.
+**Session precedente :** Session 66 (Bloc 6bis livré complet). Bibliothèque photo FilmPro : table `media_library` Postgres + bucket Supabase Storage `media-library` (public, CDN) + module upload idempotent dedup SHA256 + scoring qualité 0-10 (dimensions, ratio og:image, format, placeholder). Seed : 30 images iCloud importées (11 segments mappés normalize NFD). Module enrich Pexels + Unsplash (11 segments, 2-3 queries landscape min 1200×630) + endpoint cron `/api/cron/media-enrich` (jeudi 8h UTC) + CLI `scripts/media/enrich-cli.ts`. Fallback /veille branché : mapping 5 segments Veille → 11 segments media_library, picker déterministe par hash, UI bascule og:image → media_library → gradient. Clés `UNSPLASH_ACCESS_KEY` + `PEXELS_API_KEY` ajoutées Vercel prod (preview non configuré). 41 images en DB (30 seed + 11 enrich test). 299/299 tests verts (14 nouveaux). Commits `e260e05` + `b9b3272` pushed.
 
 ---
 
@@ -273,12 +273,14 @@ Tâches regroupées en blocs autonomes (validation visuelle via Chrome MCP + Pup
 - [x] ~~Validation parcours live Chrome MCP (Bloc 3+4)~~ — Fait 2026-04-15 session 63 : chip W16 SIMAP/VD → redirect + 16 prospects importés + bonus Veille appliqué au score total (10/13 vs 9 somme critères).
 - [x] ~~Bug veille URL doublée — diagnostic~~ — Fait 2026-04-15 session 63 (commit `921e71a` pushed) : `verification.url_mutated` + détection post-Phase 2 + `console.warn [URL_MUTATED]` + bascule speculatif. Observation activée pour régen W17.
 - [x] ~~Bug UI scoring breakdown~~ — Fait 2026-04-15 session 64 (commit `7ca08e5` pushed) : `LeadSlideOut.svelte` calcule delta `score_pertinence` DB vs somme critères recalculés, ajoute ligne synthétique `Signal Veille (+N)` si delta > 0 et aligne total affiché sur DB. Pas de refetch.
+- [x] ~~Bloc 6bis — Qualité images /veille~~ — Fait 2026-04-16 session 66 (commits `e260e05` + `b9b3272` pushed) : table `media_library` Postgres + bucket Supabase Storage public + module upload idempotent dedup SHA256 + scoring qualité 0-10 + seed 30 images iCloud (11 segments normalize NFD) + enrichissement Pexels + Unsplash (endpoint cron jeudi 8h UTC + CLI) + fallback /veille branché (mapping 5 segments Veille → 11 segments media_library, picker déterministe par hash, UI cascade og:image → media_library → gradient). 41 images en DB (30 seed + 11 enrich test). 299/299 tests verts.
 - [ ] **[BLOQUÉ ← régen W16 auto jeudi 16 avril 7h]** Décision bug URL mutated : après régen jeudi matin, lire logs Vercel pour `[URL_MUTATED]` + requête SQL `SELECT items FROM intelligence_reports WHERE week_label='2026-W16'` pour lister les items avec `verification.url_mutated=true`. Si 0 occurrence → retirer la détection (dead code). Si ≥1 occurrence → décider entre (a) durcir prompt Phase 2 (« tu DOIS réutiliser l URL du candidat telle quelle, aucune mutation de chemin ») ou (b) hard reject (exclure l item du rapport final au lieu de speculatif). Cron désormais hebdo jeudi 7h (commit `126e246`).
+- [ ] **[EXÉCUTABLE — ~15 min]** Validation live fallback /veille sur prod après deploy `b9b3272` : ouvrir `https://filmpro-crm.vercel.app/veille`, vérifier qu'au moins 1 item sans og:image (ou avec og:image cassée) affiche une image media_library (bucket `media-library` public, URL `https://fmflvjubjtpidvxwhqab.supabase.co/storage/v1/object/public/media-library/filmpro/...`). Si tout affiche gradient → inspecter DevTools Network pour voir si `fallback_image_url` est null côté props (problème query Supabase ou mapping segment).
+- [ ] **[EXÉCUTABLE — ~5 min]** Déclenchement manuel cron `/api/cron/media-enrich` une fois pour peupler la lib au-delà des 41 images seed+test : `curl -H "Authorization: Bearer $CRON_SECRET" https://filmpro-crm.vercel.app/api/cron/media-enrich` → doit retourner `{ok:true, summary:{inserted:~30-50, duplicate:~11}}`. 11 segments × 2-3 queries × 2 sources × 2 images ≈ 100 max fetchés, souvent ~50 nouveaux après dedup.
 - [ ] **[EXÉCUTABLE — Bloc 5 — autonome ~10h, 3-4 sessions]** Golden standards UX/UI complets CRM (gabarit exclusif `/prospection`, wizards AppFactory hors périmètre). Phase 1 extraction + Phase 2 rédaction `docs/GOLDEN_STANDARDS.md` (absorbe + remplace `docs/GOLDEN_STANDARDS_RESPONSIVE.md`) + Phase 3 audit delta par page + Phase 4 application (1 commit atomique par page, Vitest + Playwright + screenshots before/after Chrome MCP après chaque).
   - Périmètre complet : charte graphique (palette workflow ardoise/violet/ambre/sauge, Inter, tokens CSS, radius, shadows, accents FR), layout/responsive, composants (boutons, cards, modales, slide-outs, stepper, badges, tables, filtres multi-select, pagination serveur, batch actions bar), états (hover/focus/disabled/loading/empty/error/success), feedback (toasts, ConfirmModal, messages scoped), micro-interactions, accessibilité (focus trap, touch targets 44px, aria, contraste), ton/copie (labels explicites, pas d'« Autre », accents FR)
   - Règle table-fixed (session 48) : `table-fixed` obligatoire dès contraintes largeur sur td/th, préférer `w-[X%]` aux pixels
   - Ingérer palette /prospection ET patterns /veille refondue (Bloc 1 livré)
-- [ ] **[EXÉCUTABLE — Bloc 6bis — autonome ~2h]** Qualité images /veille : scoring image source (dimensions min 600×315, ratio proche 1.91:1, détection placeholder/favicon, HEAD check content-type) à l'ingestion → stocker `image_quality_ok` en DB. Fallback hiérarchique : og:image valide → image banque locale par `segment` (6-8 visuels sobres, libres de droits) → gradient actuel. Validation Chrome MCP sur W16.
 - [ ] **[EXÉCUTABLE — Bloc 7 — autonome ~4h]** Import/export CSV + Dashboard/reporting (batchés, patterns SQL + tableaux partagés) :
   - CSV : export bouton Contacts/Entreprises/Leads (form action SELECT → CSV) + import validation Zod ligne par ligne + preview erreurs
   - Reporting : requêtes SQL agrégées (pipeline par mois, taux conversion par source, activité 30/90j) + graphiques légers
@@ -286,8 +288,9 @@ Tâches regroupées en blocs autonomes (validation visuelle via Chrome MCP + Pup
 
 ### Séquence
 
-1. **Décision bug URL** (bloqué jusqu'à régen auto jeudi 16 avril 7h).
-2. **Bloc 6bis — Qualité images /veille** (~2h, autonome, idéalement après régen jeudi pour contenu frais).
-3. **Bloc 5 — Golden standards UX/UI** (gros chantier 3-4 sessions).
-4. **Bloc 7 — CSV + Reporting**.
+1. **Validation live fallback /veille** (~15 min, post-deploy `b9b3272`).
+2. **Déclenchement manuel cron media-enrich** (~5 min, à faire une seule fois pour enrichir la lib).
+3. **Décision bug URL** (bloqué jusqu'à régen auto jeudi 16 avril 7h — à vérifier une fois la régen passée).
+4. **Bloc 5 — Golden standards UX/UI** (gros chantier 3-4 sessions).
+5. **Bloc 7 — CSV + Reporting**.
 - Hors séquence (BLOQUÉ) : Figma (attente PAT)
