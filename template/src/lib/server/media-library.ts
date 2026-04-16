@@ -2,9 +2,13 @@
  * Media Library — upload + dedup + scoring qualité
  *
  * Utilisé par :
- *  - scripts/media/seed-icloud.ts       (seed initial 30 images)
- *  - src/routes/api/media/enrich/...    (enrichissement hebdo Pexels/Unsplash)
- *  - src/lib/server/veille-fallback.ts  (sélection fallback /veille)
+ *  - scripts/media/seed-icloud.ts                       (seed initial 30 images)
+ *  - src/lib/server/intelligence/image-fallback-generator.ts  (génération fal.ai au cron veille)
+ *  - src/lib/server/veille-fallback.ts                  (sélection fallback /veille)
+ *
+ * Note : les sources 'pexels' et 'unsplash' sont des labels HISTORIQUES (images
+ * déjà uploadées avant le pivot Bloc 6quater session 67). Plus aucun import nouveau
+ * depuis ces APIs ; conservées comme pool de fallback statique.
  */
 import crypto from 'node:crypto';
 import { imageSize } from 'image-size';

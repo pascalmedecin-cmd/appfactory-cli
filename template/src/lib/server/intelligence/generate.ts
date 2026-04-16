@@ -555,7 +555,7 @@ export async function generateIntelligenceReport(
 	const falKey = env.FAL_KEY ?? process.env.FAL_KEY;
 	const { items: itemsWithGenerated, outcomes: genOutcomes } = await generateFallbacksForItems(
 		filteredItems,
-		{ apiKey: falKey, supabaseUrl }
+		{ apiKey: falKey, supabaseUrl, anthropicKey: apiKey }
 	);
 	const generatedCount = genOutcomes.filter((o) => o.status === 'generated').length;
 	const failedCount = genOutcomes.filter((o) => o.status === 'failed').length;

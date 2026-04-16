@@ -1,29 +1,32 @@
 /**
- * Génération d'images via fal.ai (Recraft V3) pour items Veille.
+ * Génération d'images via fal.ai (Flux 1.1 Pro Ultra) pour items Veille.
  *
  * Use case : pipeline cron intelligence — quand l'og:image source n'est pas
- * fiable (logo/placeholder/404) ET le fallback media_library pas pertinent
- * (segment lib inféré vide), on génère une image custom via fal.ai puis on
+ * fiable (logo/placeholder/404), on génère une image custom via fal.ai puis on
  * la stocke dans media_library (source='fal-ai') pour réutilisation future.
  *
- * Coût : ~0.04 USD / image. Volume max : 5-9 items/semaine = ~0.36 USD/sem.
+ * Modèle : Flux 1.1 Pro Ultra (#2 ELO Artificial Analysis prompt adherence,
+ * resolution 2K natif 2752×1536, $0.06 USD/image). Choisi vs Recraft V3 pour
+ * sa meilleure adhérence aux prompts longs (max 990 chars).
+ *
+ * Coût : ~0.06 USD / image. Volume max : 5-9 items/semaine = ~0.54 USD/sem.
  *
  * Pattern queue : POST → request_id → poll status_url → GET response_url.
  */
 
-const ENDPOINT = 'https://queue.fal.run/fal-ai/recraft/v3/text-to-image';
+const ENDPOINT = 'https://queue.fal.run/fal-ai/flux-pro/v1.1-ultra';
 const SUBMIT_TIMEOUT_MS = 30_000;
 const POLL_TIMEOUT_MS = 15_000;
 const POLL_INTERVAL_MS = 2_000;
 const MAX_POLL_ATTEMPTS = 90; // ~3 min max
 
-const SAFETY_TOLERANCE = 3;
+const SAFETY_TOLERANCE = 2; // 1=strict, 6=permissif (défaut Flux Ultra)
 const OUTPUT_FORMAT = 'jpeg';
-const STYLE = 'realistic_image';
-const IMAGE_SIZE = 'landscape_16_9';
+const ASPECT_RATIO = '16:9'; // ratio og:image standard (1.91:1 ≈ 16:9)
+const MAX_PROMPT_CHARS = 990; // Flux limit ~1000
 
 const PROMPT_SUFFIX =
-	', shot on Phase One IQ4 150MP, natural lighting, sharp focus, high dynamic range, no text, no logos, no watermarks, no people, no faces';
+	' No people, no faces, no text overlays, no logos, no watermarks.';
 
 export interface FalGenerateInput {
 	prompt: string;
@@ -77,14 +80,17 @@ export async function generateImageViaFal(
 		'Content-Type': 'application/json'
 	};
 
-	const fullPrompt = `${input.prompt}${PROMPT_SUFFIX}`;
+	let fullPrompt = `${input.prompt}${PROMPT_SUFFIX}`;
+	if (fullPrompt.length > MAX_PROMPT_CHARS) {
+		fullPrompt = fullPrompt.slice(0, MAX_PROMPT_CHARS);
+	}
 
 	const body = JSON.stringify({
 		prompt: fullPrompt,
-		image_size: IMAGE_SIZE,
-		style: STYLE,
+		aspect_ratio: ASPECT_RATIO,
 		output_format: OUTPUT_FORMAT,
-		safety_tolerance: SAFETY_TOLERANCE
+		safety_tolerance: SAFETY_TOLERANCE,
+		raw: false // false = légèrement stylisé éditorial, true = brut/photo journalistique
 	});
 
 	let submitData: FalSubmitResponse;
