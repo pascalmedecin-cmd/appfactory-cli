@@ -12,7 +12,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 const BUCKET = 'media-library';
 
-export type MediaSource = 'seed' | 'pexels' | 'unsplash';
+export type MediaSource = 'seed' | 'pexels' | 'unsplash' | 'fal-ai';
 
 export interface MediaUploadInput {
   buffer: Buffer;

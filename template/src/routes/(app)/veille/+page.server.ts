@@ -24,6 +24,8 @@ export type FeedItem = IntelligenceItem & {
 	geo_label: string;
 	// URL fallback media_library si image_url manquante/invalide (Bloc 6bis)
 	fallback_image_url: string | null;
+	// URL image générée fal.ai au pipeline cron (Bloc 6ter), niveau 2 de la cascade
+	generated_image_url: string | null;
 };
 
 export type FacetCounts = {
@@ -143,7 +145,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			const fallback = pickFallback(
 				fallbackPool,
 				item.segment,
-				`${r.id}-${item.rank}`
+				`${r.id}-${item.rank}`,
+				{ title: item.title ?? '', summary: item.summary ?? '' }
 			);
 
 			feed.push({
@@ -156,7 +159,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 				is_hot: isHot,
 				recurrence_count: recurrence,
 				geo_label: geoToLabel(item.geo_scope),
-				fallback_image_url: fallback
+				fallback_image_url: fallback,
+				generated_image_url: item.generated_image_url ?? null
 			});
 		}
 	}

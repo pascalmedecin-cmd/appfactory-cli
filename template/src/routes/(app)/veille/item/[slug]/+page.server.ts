@@ -1,7 +1,9 @@
 import { error } from '@sveltejs/kit';
+import { env as publicEnv } from '$env/dynamic/public';
 import type { PageServerLoad } from './$types';
 import type { IntelligenceItem } from '$lib/server/intelligence/schema';
 import { normalizeStoredChips } from '$lib/server/intelligence/chip-normalize';
+import { loadFallbackPool, pickFallback } from '$lib/server/veille-fallback';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	// slug = "<report_uuid>-<rank>"
@@ -27,13 +29,23 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const item = items.find((it) => it.rank === rank);
 	if (!item) throw error(404, 'Signal introuvable dans cette édition');
 
+	const supabaseUrl = (publicEnv.PUBLIC_SUPABASE_URL ?? '').replace(/\\n/g, '').trim();
+	const fallbackPools = await loadFallbackPool(locals.supabase, supabaseUrl);
+	const fallback_image_url = pickFallback(
+		fallbackPools,
+		item.segment ?? 'tertiaire',
+		`${report.id}-${item.rank}`,
+		{ title: item.title ?? '', summary: item.summary ?? '' }
+	);
+
 	return {
 		item: {
 			...item,
 			segment: item.segment ?? 'tertiaire',
 			actionability: item.actionability ?? 'a_surveiller',
-			search_terms: normalizeStoredChips(item.search_terms) as unknown as IntelligenceItem['search_terms']
-		} as IntelligenceItem,
+			search_terms: normalizeStoredChips(item.search_terms) as unknown as IntelligenceItem['search_terms'],
+			fallback_image_url
+		} as IntelligenceItem & { fallback_image_url: string | null },
 		report: {
 			id: report.id,
 			week_label: report.week_label,

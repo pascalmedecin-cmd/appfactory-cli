@@ -13,12 +13,14 @@ import {
 } from './prompt-phase1';
 import { PHASE2_SYSTEM_PROMPT, buildPhase2UserPrompt } from './prompt-phase2';
 import { enrichItemsWithOgImages } from './og-image';
+import { checkOgImageQuality } from './og-image-quality';
+import { generateFallbacksForItems } from './image-fallback-generator';
 import { verifyUrl } from './url-verify';
 import { verifyEntitiesInText } from './entity-verify';
 import { fetchPublishedDate } from './fetch-og-date';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
 
-const MODEL = 'claude-sonnet-4-6';
+const MODEL = 'claude-opus-4-6';
 const MAX_TOKENS_PHASE1 = 8000;
 const MAX_TOKENS_PHASE2 = 16000;
 const TEMP_PHASE1 = 0.1;
@@ -530,9 +532,41 @@ export async function generateIntelligenceReport(
 	);
 
 	const enrichedItems = await enrichItemsWithOgImages(verifiedItems);
+
+	// Bloc 6ter : filtrage qualité og:image — drop logo/placeholder/wrong-content-type
+	// pour forcer la cascade fallback (génération fal.ai puis media_library).
+	const filteredItems = await Promise.all(
+		enrichedItems.map(async (it) => {
+			if (!it.image_url) return it;
+			const quality = await checkOgImageQuality(it.image_url);
+			if (quality.ok) return it;
+			console.log(
+				`[og-quality] reject rank=${it.rank} reason=${quality.reason} url=${it.image_url}`
+			);
+			return { ...it, image_url: null };
+		})
+	);
+
+	// Bloc 6ter : génération fal.ai pour items sans og:image fiable.
+	const supabaseUrl = (env.PUBLIC_SUPABASE_URL ?? '').replace(/\\n/g, '').trim();
+	const falKey = env.FAL_KEY;
+	const { items: itemsWithGenerated, outcomes: genOutcomes } = await generateFallbacksForItems(
+		filteredItems,
+		{ apiKey: falKey, supabaseUrl }
+	);
+	const generatedCount = genOutcomes.filter((o) => o.status === 'generated').length;
+	const failedCount = genOutcomes.filter((o) => o.status === 'failed').length;
+	if (generatedCount > 0 || failedCount > 0) {
+		console.log(
+			`[fal.ai fallback] generated=${generatedCount} failed=${failedCount} skipped_has_image=${
+				genOutcomes.filter((o) => o.status === 'skipped_has_image').length
+			} skipped_no_key=${genOutcomes.filter((o) => o.status === 'skipped_no_key').length}`
+		);
+	}
+
 	const enrichedReport: IntelligenceReport = {
 		...phase2.report,
-		items: enrichedItems
+		items: itemsWithGenerated
 	};
 
 	return {

@@ -159,11 +159,11 @@
 		{/if}
 	</div>
 
-	<!-- Image -->
-	{#if data.item.image_url}
+	<!-- Image (cascade og → generated fal.ai → fallback media_library → gradient) -->
+	{#if data.item.image_url || data.item.generated_image_url || data.item.fallback_image_url}
 		<div class="rounded-xl overflow-hidden border border-border mb-5 bg-gradient-to-br from-primary via-accent to-primary-dark aspect-[1200/630]">
 			<img
-				src={data.item.image_url}
+				src={data.item.image_url ?? data.item.generated_image_url ?? data.item.fallback_image_url}
 				alt=""
 				loading="lazy"
 				class="w-full h-full object-cover"

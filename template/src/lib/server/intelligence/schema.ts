@@ -99,6 +99,10 @@ export const IntelligenceItemSchema = z.object({
 	}),
 	deep_dive: z.string().max(400).nullable(),
 	image_url: HttpsUrl.nullable(),
+	// Image générée via fal.ai (recraft V3) au pipeline cron quand l'og:image
+	// n'est pas fiable et le fallback media_library pas pertinent.
+	// URL publique vers media_library bucket (source='fal-ai').
+	generated_image_url: HttpsUrl.nullable().optional(),
 	// Attribution commerciale par item (refonte /veille, remplace search_terms globaux).
 	segment: SegmentEnum,
 	actionability: ActionabilityEnum,

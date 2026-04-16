@@ -1,12 +1,9 @@
 /**
  * Résout l'image Open Graph d'une URL (meta og:image ou twitter:image).
  *
- * MVP : retourne l'URL source telle quelle (pas de rehost CDN). L'image_url
- * est persistée dans la table intelligence_reports.items, donc la DB sert de
- * cache permanent. Si une image source disparaît à terme, la page /veille
- * affiche un fallback gradient (géré côté UI).
- *
- * TODO : rehoster via Vercel Blob pour stabilité + contrôle format si besoin.
+ * Le filtrage qualité (logo, placeholder, taille) est appliqué séparément par
+ * le pipeline cron via checkOgImageQuality (./og-image-quality.ts) — séparation
+ * volontaire pour faciliter le test unitaire de la résolution pure.
  */
 
 const FETCH_TIMEOUT_MS = 5000;
