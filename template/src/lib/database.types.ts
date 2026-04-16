@@ -379,6 +379,90 @@ export type Database = {
         }
         Relationships: []
       }
+      media_library: {
+        Row: {
+          aspect_ratio: number | null
+          content_hash: string
+          created_at: string
+          credit: string | null
+          description: string | null
+          dominant_color: string | null
+          file_size_kb: number
+          format: string
+          height: number
+          id: string
+          imported_at: string
+          is_placeholder: boolean
+          last_used_at: string | null
+          license: string | null
+          notes: string | null
+          orientation: string | null
+          quality_score: number | null
+          segment: string | null
+          source: string
+          source_id: string | null
+          source_url: string | null
+          storage_path: string
+          tags: string[]
+          use_count: number
+          width: number
+        }
+        Insert: {
+          aspect_ratio?: number | null
+          content_hash: string
+          created_at?: string
+          credit?: string | null
+          description?: string | null
+          dominant_color?: string | null
+          file_size_kb: number
+          format: string
+          height: number
+          id?: string
+          imported_at?: string
+          is_placeholder?: boolean
+          last_used_at?: string | null
+          license?: string | null
+          notes?: string | null
+          orientation?: string | null
+          quality_score?: number | null
+          segment?: string | null
+          source: string
+          source_id?: string | null
+          source_url?: string | null
+          storage_path: string
+          tags?: string[]
+          use_count?: number
+          width: number
+        }
+        Update: {
+          aspect_ratio?: number | null
+          content_hash?: string
+          created_at?: string
+          credit?: string | null
+          description?: string | null
+          dominant_color?: string | null
+          file_size_kb?: number
+          format?: string
+          height?: number
+          id?: string
+          imported_at?: string
+          is_placeholder?: boolean
+          last_used_at?: string | null
+          license?: string | null
+          notes?: string | null
+          orientation?: string | null
+          quality_score?: number | null
+          segment?: string | null
+          source?: string
+          source_id?: string | null
+          source_url?: string | null
+          storage_path?: string
+          tags?: string[]
+          use_count?: number
+          width?: number
+        }
+        Relationships: []
+      }
       opportunites: {
         Row: {
           contact_id: string | null
