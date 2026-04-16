@@ -20,7 +20,7 @@ import { verifyEntitiesInText } from './entity-verify';
 import { fetchPublishedDate } from './fetch-og-date';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
 
-const MODEL = 'claude-opus-4-6';
+const MODEL = 'claude-opus-4-7';
 const MAX_TOKENS_PHASE1 = 8000;
 const MAX_TOKENS_PHASE2 = 16000;
 const TEMP_PHASE1 = 0.1;
@@ -278,6 +278,9 @@ async function callPhase1(
 		model: MODEL,
 		max_tokens: MAX_TOKENS_PHASE1,
 		temperature: TEMP_PHASE1,
+		// Opus 4.7 : adaptive thinking + effort high (migration 4.6 → 4.7, 2026-04-16).
+		// Cast via spread : output_config pas encore typé dans SDK 0.88.
+		...({ thinking: { type: 'adaptive' }, output_config: { effort: 'high' } } as Record<string, unknown>),
 		system: [
 			{
 				type: 'text',
@@ -385,6 +388,9 @@ async function callPhase2(
 		model: MODEL,
 		max_tokens: MAX_TOKENS_PHASE2,
 		temperature: TEMP_PHASE2,
+		// Opus 4.7 : adaptive thinking + effort high (migration 4.6 → 4.7, 2026-04-16).
+		// Cast via spread : output_config pas encore typé dans SDK 0.88.
+		...({ thinking: { type: 'adaptive' }, output_config: { effort: 'high' } } as Record<string, unknown>),
 		system: [
 			{
 				type: 'text',
