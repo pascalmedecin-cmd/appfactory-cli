@@ -3,6 +3,10 @@ import { env } from '$env/dynamic/private';
 import { timingSafeEqual } from 'crypto';
 import { runWeeklyGeneration } from '$lib/server/intelligence/run-generation';
 
+// Pipeline complet (Phase 1+2 LLM Opus + brief Sonnet × N + fal.ai × N + Vision audit × N)
+// peut dépasser 300s default. 800s = marge confortable.
+export const config = { maxDuration: 800 };
+
 function verifyCronSecret(authHeader: string | null): boolean {
 	const secret = env.CRON_SECRET;
 	if (!secret || !authHeader) return false;
