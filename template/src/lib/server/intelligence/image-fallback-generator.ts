@@ -18,8 +18,8 @@ import { uploadMedia, getServiceClient } from '../media-library';
 const BUCKET = 'media-library';
 const DOWNLOAD_TIMEOUT_MS = 30_000;
 const MIN_RELEVANCE_SCORE = 6; // /10 — seuil audit Vision pour servir l'image générée
-const BRIEF_MODEL = 'claude-sonnet-4-6'; // matériel/concret pour Recraft/Flux
-const VISION_MODEL = 'claude-opus-4-6'; // qualité critique du filet de sécurité
+const BRIEF_MODEL = 'claude-sonnet-4-6'; // matériel/concret pour Flux
+const VISION_MODEL = 'claude-sonnet-4-6'; // Sonnet pour Vision (~3x + rapide qu'Opus, contrainte timeout 300s Vercel Hobby)
 
 interface VisualBrief {
 	main_subject: string;
@@ -312,7 +312,7 @@ export async function generateFallbacksForItems<T extends ItemForGeneration>(
 		};
 	}
 
-	const concurrency = options.concurrency ?? 2;
+	const concurrency = options.concurrency ?? 3;
 	const targets = items
 		.map((item, idx) => ({ item, idx }))
 		.filter(({ item }) => !item.image_url);

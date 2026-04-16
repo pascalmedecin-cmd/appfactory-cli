@@ -3,9 +3,9 @@ import { env } from '$env/dynamic/private';
 import { timingSafeEqual } from 'crypto';
 import { runWeeklyGeneration } from '$lib/server/intelligence/run-generation';
 
-// Pipeline complet (Phase 1+2 LLM Opus + brief Sonnet × N + fal.ai × N + Vision audit × N)
-// peut dépasser 300s default. 800s = marge confortable.
-export const config = { maxDuration: 800 };
+// Vercel Hobby max 300s. Pipeline doit fit dedans (Phase 1+2 Opus + N items
+// avec brief Sonnet + fal.ai + Vision Sonnet en parallèle concurrence=3).
+export const config = { maxDuration: 300 };
 
 function verifyCronSecret(authHeader: string | null): boolean {
 	const secret = env.CRON_SECRET;
