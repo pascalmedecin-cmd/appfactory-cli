@@ -548,8 +548,11 @@ export async function generateIntelligenceReport(
 	);
 
 	// Bloc 6ter : génération fal.ai pour items sans og:image fiable.
-	const supabaseUrl = (env.PUBLIC_SUPABASE_URL ?? '').replace(/\\n/g, '').trim();
-	const falKey = env.FAL_KEY;
+	// process.env.PUBLIC_SUPABASE_URL plus fiable que $env/dynamic/private dans contexte cron.
+	const supabaseUrl = (process.env.PUBLIC_SUPABASE_URL ?? env.PUBLIC_SUPABASE_URL ?? '')
+		.replace(/\\n/g, '')
+		.trim();
+	const falKey = env.FAL_KEY ?? process.env.FAL_KEY;
 	const { items: itemsWithGenerated, outcomes: genOutcomes } = await generateFallbacksForItems(
 		filteredItems,
 		{ apiKey: falKey, supabaseUrl }

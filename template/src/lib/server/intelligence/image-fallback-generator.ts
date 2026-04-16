@@ -99,8 +99,56 @@ export async function generateAndStoreFallback(
 		};
 	}
 
+	// Audit qualité backend : ne grave generated_image_url que si l'image
+	// passe le seuil minimum (cohérent avec loadFallbackPool qui filtre >=7).
+	// L'image reste en lib (orpheline pour cet item) — réutilisable par d'autres
+	// rapports mais pas servie pour l'item en cours.
+	const auditResult = await auditUploadedImage(supabase, upload.id!);
+	if (!auditResult.ok) {
+		return {
+			rank: item.rank,
+			status: 'failed',
+			reason: `audit rejected: ${auditResult.reason}`
+		};
+	}
+
 	const publicUrl = `${supabaseUrl}/storage/v1/object/public/${BUCKET}/${upload.storage_path}`;
 	return { rank: item.rank, status: 'generated', publicUrl };
+}
+
+/**
+ * Audit backend post-upload : récupère le row media_library complet pour valider
+ * quality_score et is_placeholder. Évite de servir une image médiocre ou marquée
+ * placeholder par qualityScore() (ratio aberrant, taille suspecte, format dégradé).
+ */
+const MIN_QUALITY_SCORE_FAL = 7;
+
+async function auditUploadedImage(
+	supabase: ReturnType<typeof getServiceClient>,
+	mediaId: string
+): Promise<{ ok: boolean; reason?: string }> {
+	const { data, error } = await supabase
+		.from('media_library')
+		.select('quality_score, is_placeholder, width, height')
+		.eq('id', mediaId)
+		.maybeSingle();
+	if (error || !data) {
+		return { ok: false, reason: `audit fetch failed: ${error?.message ?? 'no row'}` };
+	}
+	if (data.is_placeholder) {
+		return { ok: false, reason: 'flagged is_placeholder' };
+	}
+	if ((data.quality_score ?? 0) < MIN_QUALITY_SCORE_FAL) {
+		return {
+			ok: false,
+			reason: `quality_score ${data.quality_score} < ${MIN_QUALITY_SCORE_FAL}`
+		};
+	}
+	// Sanity dim : Recraft V3 landscape_16_9 attendu ~1820×1024. Tolérance large.
+	if ((data.width ?? 0) < 800 || (data.height ?? 0) < 400) {
+		return { ok: false, reason: `dimensions trop faibles ${data.width}x${data.height}` };
+	}
+	return { ok: true };
 }
 
 /**
