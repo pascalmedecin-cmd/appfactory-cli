@@ -61,6 +61,37 @@ Décision Pascal : inutiles dans flow temps réel depuis pivot génération fal.
 - Email récap veille post-cron (spec prête dans `memory/project_email_veille_recap.md`) — débloqué.
 - Dashboard coûts CRM — reste bloqué par email récap + session page dashboard dédiée.
 
+## Credentials / env vars (changements session)
+
+**Ajoutées Vercel prod** (via `vercel env add` ou pipé depuis Enseignement `.env`) :
+- `FAL_KEY` (production uniquement, preview bloqué par interactive prompt CLI — à ajouter plus tard si besoin preview). Clé partagée avec projet Enseignement. Scope : génération fal.ai Flux 1.1 Pro Ultra pour niveau 2 cascade /veille.
+
+**Retirées Vercel prod** (via `vercel env rm --yes`) :
+- `PEXELS_API_KEY`
+- `UNSPLASH_ACCESS_KEY`
+
+**Ajoutées/retirées local `.env.local` AppFactory** (miroir Vercel) :
+- Ajout : `FAL_KEY`
+- Retrait : `PEXELS_API_KEY`, `UNSPLASH_ACCESS_KEY`
+
+**Pas touché** : clés Enseignement (dossier séparé, Pascal conserve l'usage là-bas).
+
+## Subagents
+
+Aucun subagent BLOCK cette session (pas de Task Agent invoqué pour analyse parallèle). Sonnet utilisé uniquement via SDK Anthropic pour brief LLM dans le pipeline. Opus utilisé pour Phase 1+2 Veille text.
+
+## Garde-fous / sécurité
+
+- Tests 334/334 verts avant push
+- Build OK avant deploy
+- Migration Supabase `20260416120000_media_library_fal.sql` appliquée via `supabase db query --linked --file` (contournement conflit `db push` sur version collision) puis `migration repair --status applied` pour tracking cohérent
+- maxDuration cron intelligence explicitement à 300s (limite Hobby) pour éviter timeout silencieux
+- Audit Vision backend : image stockée toujours en lib (réutilisable), mais pas servie pour l'item si pertinence < 6/10 (cascade fallback prend le relais)
+
+## Prochaine action (priorité)
+
+**QA cadrage images /veille** : démarrer prochaine session en parcourant visuellement les 2 images W16 actuelles avec Pascal, lister les problèmes précis, puis proposition structurée. Spec/contexte : `memory/project_qa_images_veille.md`. Ne pas modifier le pipeline avant validation du diagnostic.
+
 ## Apprentissages méthodo
 
 - **« Opus partout » n'est pas mécaniquement la bonne règle** : pour piloter un diffusion model, Sonnet matériel > Opus littéraire.
