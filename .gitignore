@@ -68,4 +68,8 @@ template/backups/
 
 # Previews / generated
 _previews/
+scripts/image-rework/output/
 .env*.local
+
+# Sous-projets autonomes (ont leur propre repo Git)
+formation-ia/
