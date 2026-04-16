@@ -1,13 +1,26 @@
 # AppFactory — CLAUDE.md
 
 **Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production + pipeline images 4 niveaux (Flux 1.1 Pro Ultra + audits Vision)
-**Derniere mise a jour :** 2026-04-16 (session 67 : Bloc 6ter/quater — pivot Flux + audits Vision + retrait Pexels/Unsplash)
+**Derniere mise a jour :** 2026-04-16 (session 68 : nouveau sous-projet `formation-ia/` livré S1 + CP2 — voir section Sous-projets ci-dessous)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
 **Session precedente -3 :** Session 64. Fix UI breakdown scoring (commit `7ca08e5` pushed). Slide-out prospection affiche désormais ligne synthétique `Signal Veille (+N)` quand `score_pertinence` DB > somme critères recalculés + total aligné sur la DB. 285/285 tests verts.
 **Session precedente -2 :** Session 65 (très courte). Bascule cron Veille vendredi 8h → jeudi 7h (commit `126e246` pushed, `template/vercel.json`). Suppression row W16 en DB.
 **Session precedente -1 :** Session 66 (Bloc 6bis livré complet). Bibliothèque photo FilmPro : table `media_library` Postgres + bucket Supabase Storage `media-library` (public, CDN) + module upload idempotent dedup SHA256 + scoring qualité 0-10. Seed 30 images iCloud + module enrich Pexels/Unsplash + cron hebdo jeudi 8h UTC + fallback /veille. 41 images en DB. 299/299 tests verts. Commits `e260e05` + `b9b3272`.
 **Session precedente :** Session 67 (Bloc 6ter/quater livré, **QA visuel images rejeté en fin de session**). Pipeline images refondu en cascade 4 niveaux : (1) og:image filtrée (filtres URL pattern + HEAD content-type/size), (2) fal.ai **Flux 1.1 Pro Ultra** ($0.06/img, 2K natif) avec brief LLM Sonnet 4.6 structuré JSON (ancrage métier vitrages) + audit Vision Sonnet 4.6 pertinence ≥6/10, (3) media_library picker top-N quality_score, (4) gradient. **Retrait complet Pexels + Unsplash** (code, cron, env vars Vercel, refs). Lib purgée manuellement via viewer HTML (156 → 44 images : 27 seed + 10 pexels + 7 unsplash). Bascule Veille text Sonnet → **Opus 4.6**. Vision audit initialement Opus → Sonnet (contrainte timeout 300s Vercel Hobby). `maxDuration=300` sur `/api/cron/intelligence`. 334/334 tests verts (+35 nouveaux : segment-mapper, og-image-quality, veille-fallback, test-fal-prompt). Régen W16 prod : item 1 og Springer (niveau 1, schéma scientifique probablement non conforme), item 2 fal.ai Flux 2752×1536 (niveau 2). Commits `46d368e` + `146256f` + `c269bd1` + `d3a6792` + `fd24ebb` pushed. Migration DB `media_library_source_check` étendue à 'fal-ai' via Management API. **Pascal a signalé en fin de session : "image veille test non conformes, continuer cadrage QA prochaine session"** — voir `memory/project_qa_images_veille.md` pour contexte + actions à évaluer.
+
+---
+
+## SOUS-PROJETS
+
+L'arborescence d'AppFactory héberge des sous-projets autonomes (chacun a son propre repo Git, sa propre stack, son propre CLAUDE.md). Pascal navigue par thème depuis ce dossier.
+
+| Dossier | Repo Git | Statut | URL prod | CLAUDE.md |
+|---------|----------|--------|----------|-----------|
+| `template/` (CRM FilmPro) | `pascalmedecin-cmd/appfactory-cli` (=racine actuelle) | Production | <https://filmpro-crm.vercel.app> | (ce fichier) |
+| `formation-ia/` | `pascalmedecin-cmd/onboarding-ia` (séparé, ignoré dans `.gitignore`) | S1 + CP2 livrés | <https://onboarding-ia.vercel.app> | `formation-ia/CLAUDE.md` |
+
+Pour travailler sur un sous-projet : `cd formation-ia/` puis lire son `CLAUDE.md` propre. Les tâches du sous-projet sont tracées dans son CLAUDE.md, pas dans celui-ci.
 
 ---
 
@@ -279,6 +292,8 @@ Fichiers cles :
   - CSV : export bouton Contacts/Entreprises/Leads (form action SELECT → CSV) + import validation Zod ligne par ligne + preview erreurs
   - Reporting : requêtes SQL agrégées (pipeline par mois, taux conversion par source, activité 30/90j) + graphiques légers
 - [ ] **[BLOQUÉ ← attente PAT Figma]** Figma API : Personal Access Token + plugin MCP figma scope projet
+- [ ] **[EXÉCUTABLE — premier run e2e]** Tester `/golden-standard` + `/audit-uiux` Express sur 1 page CRM. Système construit le 2026-04-14 sans projet cible, jamais éprouvé en interaction browser réelle. Checklist complète + angles morts (wizard HTML, extracteur, auto-close onglet, firewall macOS, détection routes) → voir `~/.claude/projects/-Users-pascal--claude/memory/project_audit_uiux_first_e2e_test.md`. Bugs trouvés → `parked.md` ou tâche fix dans CLAUDE.md global.
+- [ ] **[EXÉCUTABLE — faible priorité]** Revoir validité des 3 commandes custom AppFactory (`cadrage`, `generate`, `deploy` dans `.claude/commands/`). Pascal n'est pas sûr qu'elles soient encore valides suite à l'évolution du workflow. Vérifier que chaque commande correspond à l'usage réel actuel (skills wizard HTML port 3334, scaffold SvelteKit depuis project.yaml, deploy Vercel preview/prod). Si obsolète → actualiser ou supprimer. Contexte : exclues du guide PDF des commandes customs produit le 2026-04-16 en raison de cette incertitude.
 
 ### Séquence
 
