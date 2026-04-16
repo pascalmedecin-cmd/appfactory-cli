@@ -1,7 +1,7 @@
 # AppFactory — CLAUDE.md
 
-**Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production + pipeline images 4 niveaux (Flux 1.1 Pro Ultra + audits Vision)
-**Derniere mise a jour :** 2026-04-16 (session 68 : nouveau sous-projet `formation-ia/` livré S1 + CP2 — voir section Sous-projets ci-dessous)
+**Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production + pipeline images 4 niveaux (Flux 1.1 Pro Ultra + audits Vision) + sous-projet `formation-ia/` S2 livrée
+**Derniere mise a jour :** 2026-04-16 (session 68 fin : formation-ia S2 livrée — charte Anthropic appliquée, features core DB branchées, 34 tests verts, deploy prod)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
 **Session precedente -3 :** Session 64. Fix UI breakdown scoring (commit `7ca08e5` pushed). Slide-out prospection affiche désormais ligne synthétique `Signal Veille (+N)` quand `score_pertinence` DB > somme critères recalculés + total aligné sur la DB. 285/285 tests verts.

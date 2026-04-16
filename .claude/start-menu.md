@@ -2,7 +2,30 @@
 
 ## Actions pré-menu
 
-Lire `registry.yaml` à la racine (source de vérité des entreprises et apps).
+1. Lire `registry.yaml` à la racine (source de vérité des entreprises et apps).
+2. Scanner les CLAUDE.md des sous-projets autonomes pour agréger leurs tâches `## Prochaine session` :
+   - `template/` = CRM FilmPro (tâches dans le CLAUDE.md racine de ce projet)
+   - `formation-ia/CLAUDE.md` = Formation IA
+
+## Règle d'affichage des tâches (override du comportement standard)
+
+Quand l'utilisateur choisit `[1] Reprendre`, **grouper les tâches par sous-projet** avec un en-tête clair par groupe. Format :
+
+```
+TÂCHES EN COURS
+
+  CRM FilmPro
+    [1a] ...
+    [1b] ...
+
+  Formation IA
+    [1c] ...
+    [1d] ...
+```
+
+Numérotation continue (1a, 1b, 1c...) traversant les groupes pour que l'utilisateur puisse référencer n'importe quelle tâche par son ID unique. Chaque tâche conserve ses tags ([EXÉCUTABLE], [BLOQUÉ], [PRIORITÉ], etc.) et son pointeur vers la spec (`→ voir memory/...`).
+
+Le compteur `[1] Reprendre {N} tâches` dans le menu additionne les tâches des deux sous-projets.
 
 ## Options projet
 
