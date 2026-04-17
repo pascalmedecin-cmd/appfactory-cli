@@ -23,8 +23,6 @@ import { parseFlexibleDate, isWithinWindow } from './parse-date';
 const MODEL = 'claude-opus-4-7';
 const MAX_TOKENS_PHASE1 = 8000;
 const MAX_TOKENS_PHASE2 = 16000;
-const TEMP_PHASE1 = 0.1;
-const TEMP_PHASE2 = 0.45;
 
 // JSON schema emit_report (Phase 2) — conforme subset strict-mode Anthropic.
 // Contraintes min/max exprimées en description (cf. doc Anthropic structured outputs).
@@ -277,10 +275,9 @@ async function callPhase1(
 	return client.messages.create({
 		model: MODEL,
 		max_tokens: MAX_TOKENS_PHASE1,
-		temperature: TEMP_PHASE1,
-		// Opus 4.7 : adaptive thinking + effort high (migration 4.6 → 4.7, 2026-04-16).
-		// Cast via spread : output_config pas encore typé dans SDK 0.88.
-		...({ thinking: { type: 'adaptive' }, output_config: { effort: 'high' } } as Record<string, unknown>),
+		// Opus 4.7 : adaptive thinking + effort xhigh. Sampling params (temperature/top_p/top_k)
+		// retirés — rejetés 400 sur 4.7. Cast via spread : output_config pas encore typé SDK 0.88.
+		...({ thinking: { type: 'adaptive' }, output_config: { effort: 'xhigh' } } as Record<string, unknown>),
 		system: [
 			{
 				type: 'text',
@@ -387,10 +384,9 @@ async function callPhase2(
 	return client.messages.create({
 		model: MODEL,
 		max_tokens: MAX_TOKENS_PHASE2,
-		temperature: TEMP_PHASE2,
-		// Opus 4.7 : adaptive thinking + effort high (migration 4.6 → 4.7, 2026-04-16).
-		// Cast via spread : output_config pas encore typé dans SDK 0.88.
-		...({ thinking: { type: 'adaptive' }, output_config: { effort: 'high' } } as Record<string, unknown>),
+		// Opus 4.7 : adaptive thinking + effort xhigh. Sampling params (temperature/top_p/top_k)
+		// retirés — rejetés 400 sur 4.7. Cast via spread : output_config pas encore typé SDK 0.88.
+		...({ thinking: { type: 'adaptive' }, output_config: { effort: 'xhigh' } } as Record<string, unknown>),
 		system: [
 			{
 				type: 'text',
