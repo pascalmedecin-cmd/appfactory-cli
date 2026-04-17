@@ -14,6 +14,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { generateImageViaFal } from './image-generator-fal';
 import { inferSegmentFromText } from './segment-mapper';
 import { uploadMedia, getServiceClient } from '../media-library';
+import { costTracker } from './cost-tracker';
 
 const BUCKET = 'media-library';
 const DOWNLOAD_TIMEOUT_MS = 30_000;
@@ -99,6 +100,7 @@ Tu réponds UNIQUEMENT avec un JSON valide, sans markdown, format :
 			system: systemPrompt,
 			messages: [{ role: 'user', content: userPrompt }]
 		});
+		costTracker.addClaudeCall(BRIEF_MODEL, response.usage, 'Claude Brief LLM (image)');
 		const block = response.content.find((b) => b.type === 'text');
 		if (!block || block.type !== 'text') return null;
 		let jsonStr = block.text.trim();
@@ -165,6 +167,7 @@ Résumé : ${item.summary ?? '(pas de résumé)'}
 				}
 			]
 		});
+		costTracker.addClaudeCall(VISION_MODEL, response.usage, 'Claude Vision audit (image)');
 		const block = response.content.find((b) => b.type === 'text');
 		if (!block || block.type !== 'text') return null;
 		let jsonStr = block.text.trim();
@@ -208,6 +211,7 @@ export async function generateAndStoreFallback(
 	if (!gen.ok || !gen.url) {
 		return { rank: item.rank, status: 'failed', reason: gen.reason ?? 'fal returned no url' };
 	}
+	costTracker.addFalCall('flux-1.1-pro-ultra', 'fal.ai génération (image)');
 
 	const buffer = await downloadImageBuffer(gen.url);
 	if (!buffer) {

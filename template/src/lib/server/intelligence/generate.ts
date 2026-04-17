@@ -19,6 +19,7 @@ import { verifyUrl } from './url-verify';
 import { verifyEntitiesInText } from './entity-verify';
 import { fetchPublishedDate } from './fetch-og-date';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
+import { costTracker, type CostSummary } from './cost-tracker';
 
 const MODEL = 'claude-opus-4-7';
 const MAX_TOKENS_PHASE1 = 8000;
@@ -232,6 +233,8 @@ export interface GenerateResult {
 	/** Debug pipeline 2 phases : candidats bruts et candidats survivants au filtre. */
 	candidatesRaw?: IntelligenceCandidate[];
 	candidatesFiltered?: IntelligenceCandidate[];
+	/** Coûts agrégés de l'invocation (Claude API + fal.ai). */
+	costs?: CostSummary;
 }
 
 /**
@@ -300,6 +303,7 @@ async function runPhase1Candidates(
 
 	for (let attempt = 0; attempt < 2; attempt++) {
 		response = await callPhase1(client, input);
+		costTracker.addClaudeCall(MODEL, response.usage, 'Claude Phase 1 (candidats)');
 		emitBlock = response.content.find(
 			(b): b is Anthropic.ToolUseBlock =>
 				b.type === 'tool_use' && b.name === 'emit_candidates'
@@ -421,6 +425,7 @@ async function runPhase2Report(
 
 	for (let attempt = 0; attempt < 2; attempt++) {
 		response = await callPhase2(client, input, candidates);
+		costTracker.addClaudeCall(MODEL, response.usage, 'Claude Phase 2 (rédaction)');
 		emitBlock = response.content.find(
 			(b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'emit_report'
 		);
@@ -447,9 +452,12 @@ async function runPhase2Report(
 export async function generateIntelligenceReport(
 	input: GenerateInput
 ): Promise<GenerateResult> {
+	// Reset du tracker : une invocation = une collecte complète.
+	costTracker.reset();
+
 	const apiKey = env.ANTHROPIC_API_KEY;
 	if (!apiKey) {
-		return { success: false, error: 'ANTHROPIC_API_KEY manquante' };
+		return { success: false, error: 'ANTHROPIC_API_KEY manquante', costs: costTracker.summary() };
 	}
 
 	const client = new Anthropic({ apiKey });
@@ -457,7 +465,7 @@ export async function generateIntelligenceReport(
 	// Phase 1 : extraction candidats bruts.
 	const phase1 = await runPhase1Candidates(client, input);
 	if (phase1.error) {
-		return { success: false, error: phase1.error, raw: phase1.raw };
+		return { success: false, error: phase1.error, raw: phase1.raw, costs: costTracker.summary() };
 	}
 
 	// Filtre programmatique : URL + og-date + fenêtre 14j.
@@ -476,7 +484,8 @@ export async function generateIntelligenceReport(
 			error: phase2.error,
 			raw: phase2.raw,
 			candidatesRaw: phase1.candidates,
-			candidatesFiltered: filtered
+			candidatesFiltered: filtered,
+			costs: costTracker.summary()
 		};
 	}
 
@@ -579,6 +588,7 @@ export async function generateIntelligenceReport(
 		report: enrichedReport,
 		raw: phase2.raw,
 		candidatesRaw: phase1.candidates,
-		candidatesFiltered: filtered
+		candidatesFiltered: filtered,
+		costs: costTracker.summary()
 	};
 }

@@ -2,6 +2,7 @@ import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { generateIntelligenceReport } from './generate';
 import { currentWeekRange, extendedWindowStart } from './week-utils';
 import type { IntelligenceReport } from './schema';
+import { sendRecapEmail } from './email-recap';
 
 export interface RunResult {
 	ok: boolean;
@@ -75,6 +76,23 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 			.select('id')
 			.single();
 
+		// Email alerte échec (best-effort, n'influence pas le retour).
+		try {
+			const result = await sendRecapEmail({
+				mode: 'failure',
+				data: {
+					weekLabel: week.weekLabel,
+					errorMessage: gen.error ?? 'Erreur inconnue',
+					costs: gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 }
+				}
+			});
+			if (!result.ok && !result.skipped) {
+				console.warn(`[email-recap] failure alert not sent: ${result.reason}`);
+			}
+		} catch (e) {
+			console.error('[email-recap] unexpected error', e);
+		}
+
 		return {
 			ok: false,
 			weekLabel: week.weekLabel,
@@ -115,6 +133,23 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 			weekLabel: week.weekLabel,
 			error: `Insert DB échoué : ${insertError?.message ?? 'inconnu'}`
 		};
+	}
+
+	// Email récap succès (best-effort, n'influence pas le retour).
+	try {
+		const result = await sendRecapEmail({
+			mode: 'success',
+			data: {
+				weekLabel: week.weekLabel,
+				report,
+				costs: gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 }
+			}
+		});
+		if (!result.ok && !result.skipped) {
+			console.warn(`[email-recap] success recap not sent: ${result.reason}`);
+		}
+	} catch (e) {
+		console.error('[email-recap] unexpected error', e);
 	}
 
 	return { ok: true, weekLabel: week.weekLabel, reportId: inserted.id };
