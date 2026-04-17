@@ -31,7 +31,7 @@ Ton choix ?
 
 Règles :
 - `N1` = nombre de `- [ ]` dans la section `## Prochaine session` de `/Users/pascal/Claude/Projets/AppFactory/CLAUDE.md` (CRM FilmPro).
-- `N2` = nombre de `- [ ]` dans la section `## Prochaine session (S3)` de `/Users/pascal/Claude/Projets/AppFactory/formation-ia/CLAUDE.md`.
+- `N2` = nombre de `- [ ]` dans la section `## Prochaine session` de `/Users/pascal/Claude/Projets/AppFactory/formation-ia/CLAUDE.md`.
 - `M` = sous-ensemble avec tag `[BLOQUÉ]` ou `[BLOQUANT]`.
 - Pas de séparateur `───` au niveau racine.
 - `[+] Nouveau — objectif libre` **n'apparaît PAS au niveau racine** : l'utilisateur doit d'abord choisir un sous-projet pour un objectif libre scopé.
@@ -55,7 +55,7 @@ Affichage des tâches (`[1] Reprendre`) : **linéaire** (plus de groupement, pui
 
 Basculer vers le `/start` standard scopé à Formation IA — routage défini dans `formation-ia/.claude/start-menu.md`.
 
-Source tâches : `/Users/pascal/Claude/Projets/AppFactory/formation-ia/CLAUDE.md` section `## Prochaine session (S3)`.
+Source tâches : `/Users/pascal/Claude/Projets/AppFactory/formation-ia/CLAUDE.md` section `## Prochaine session`.
 Source idées : `/Users/pascal/Claude/Projets/AppFactory/formation-ia/.claude/parked.md`.
 
 Options projet Formation IA :
