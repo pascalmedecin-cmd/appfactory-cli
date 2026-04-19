@@ -120,13 +120,13 @@ function renderSuccessHtml(data: SendRecapSuccess): string {
 <body style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f6f6f6;margin:0;padding:24px;">
 	<div style="max-width:640px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e5e5e5;">
 		<div style="background:#1e293b;color:#fff;padding:16px 20px;">
-			<div style="font-size:18px;font-weight:600;">FilmPro Veille — W${escapeHtml(weekLabel)}</div>
+			<div style="font-size:18px;font-weight:600;">FilmPro Veille, W${escapeHtml(weekLabel)}</div>
 			<div style="font-size:13px;color:#cbd5e1;margin-top:2px;">Récap automatique post-cron</div>
 		</div>
 		<div style="padding:20px;">
 			<div style="margin-bottom:16px;">
 				<span style="color:#16a34a;font-weight:600;">✅ Veille publiée</span>
-				— <a href="${CRM_URL}/veille" style="color:#2563eb;">Ouvrir dans le CRM</a>
+ : <a href="${CRM_URL}/veille" style="color:#2563eb;">Ouvrir dans le CRM</a>
 			</div>
 
 			<h3 style="margin:20px 0 8px;font-size:14px;color:#475569;text-transform:uppercase;letter-spacing:.04em;">Métriques</h3>
@@ -169,7 +169,7 @@ function renderSuccessHtml(data: SendRecapSuccess): string {
 			</table>
 
 			<div style="margin-top:24px;color:#94a3b8;font-size:12px;border-top:1px solid #eee;padding-top:12px;">
-				Généré le ${escapeHtml(now)} — Résumé exécutif :
+				Généré le ${escapeHtml(now)} : Résumé exécutif :
 				<em>${escapeHtml(report.meta?.executive_summary ?? '')}</em>
 			</div>
 		</div>
@@ -182,7 +182,7 @@ function renderSuccessText(data: SendRecapSuccess): string {
 	const { report, weekLabel, costs } = data;
 	const imgs = countImageSources(report);
 	const lines: string[] = [];
-	lines.push(`FilmPro Veille — W${weekLabel}`);
+	lines.push(`FilmPro Veille : W${weekLabel}`);
 	lines.push(`=== Veille publiée ===`);
 	lines.push(`URL : ${CRM_URL}/veille`);
 	lines.push('');
@@ -221,8 +221,8 @@ function renderFailureHtml(data: SendRecapFailure): string {
 <body style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f6f6f6;margin:0;padding:24px;">
 	<div style="max-width:640px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #fecaca;">
 		<div style="background:#991b1b;color:#fff;padding:16px 20px;">
-			<div style="font-size:18px;font-weight:600;">[ALERTE] Veille FilmPro — échec</div>
-			<div style="font-size:13px;color:#fecaca;margin-top:2px;">W${escapeHtml(weekLabel)} — génération interrompue</div>
+			<div style="font-size:18px;font-weight:600;">[ALERTE] Veille FilmPro, échec</div>
+			<div style="font-size:13px;color:#fecaca;margin-top:2px;">W${escapeHtml(weekLabel)}, génération interrompue</div>
 		</div>
 		<div style="padding:20px;">
 			<div style="margin-bottom:16px;"><span style="color:#dc2626;font-weight:600;">❌ Échec génération</span></div>
@@ -254,7 +254,7 @@ function renderFailureText(data: SendRecapFailure): string {
 	const { weekLabel, errorMessage, costs } = data;
 	const truncated = errorMessage.length > 500 ? errorMessage.slice(0, 500) + '…' : errorMessage;
 	const lines: string[] = [];
-	lines.push(`[ALERTE] Veille FilmPro W${weekLabel} — échec génération`);
+	lines.push(`[ALERTE] Veille FilmPro W${weekLabel} : échec génération`);
 	lines.push('');
 	lines.push('Message d\'erreur :');
 	lines.push(truncated);
@@ -287,13 +287,13 @@ export function buildRecapPayload(input: SendRecapInput): {
 	if (input.mode === 'success') {
 		const { weekLabel, costs } = input.data;
 		return {
-			subject: `[Veille FilmPro] W${weekLabel} — ${input.data.report.items?.length ?? 0} items, ${fmtEur(costs.total_eur)}`,
+			subject: `[Veille FilmPro] W${weekLabel}, ${input.data.report.items?.length ?? 0} items, ${fmtEur(costs.total_eur)}`,
 			html: renderSuccessHtml(input.data),
 			text: renderSuccessText(input.data)
 		};
 	}
 	return {
-		subject: `[ALERTE] Veille FilmPro W${input.data.weekLabel} — échec génération`,
+		subject: `[ALERTE] Veille FilmPro W${input.data.weekLabel}, échec génération`,
 		html: renderFailureHtml(input.data),
 		text: renderFailureText(input.data)
 	};

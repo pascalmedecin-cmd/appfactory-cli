@@ -149,20 +149,20 @@
 					<div>
 						<span class="text-xs text-text-muted">Adresse</span>
 						<p class="font-medium text-text">
-							{[lead.adresse, lead.npa, lead.localite].filter(Boolean).join(', ') || '—'}
+							{[lead.adresse, lead.npa, lead.localite].filter(Boolean).join(', ') || '–'}
 						</p>
 					</div>
 					<div>
 						<span class="text-xs text-text-muted">Canton</span>
-						<p class="font-medium text-text">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '—'}</p>
+						<p class="font-medium text-text">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '–'}</p>
 					</div>
 					<div>
 						<span class="text-xs text-text-muted">Téléphone</span>
-						<p class="font-medium text-text">{lead.telephone ?? '—'}</p>
+						<p class="font-medium text-text">{lead.telephone ?? '–'}</p>
 					</div>
 					<div>
 						<span class="text-xs text-text-muted">Email</span>
-						<p class="font-medium text-text">{lead.email ?? '—'}</p>
+						<p class="font-medium text-text">{lead.email ?? '–'}</p>
 					</div>
 					{#if lead.nom_contact}
 						<div>

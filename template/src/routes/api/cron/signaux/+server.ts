@@ -300,7 +300,7 @@ export async function GET(event: RequestEvent) {
 	const totalErrors = [...zefix.errors, ...simap.errors];
 
 	if (totalErrors.length > 0) {
-		console.error('Cron signaux — erreurs:', totalErrors);
+		console.error('Cron signaux : erreurs:', totalErrors);
 	}
 
 	return json({

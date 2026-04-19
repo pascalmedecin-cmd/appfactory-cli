@@ -1,5 +1,5 @@
 /**
- * Helpers pour l'enrichissement batch — logique pure, testable sans I/O.
+ * Helpers pour l'enrichissement batch : logique pure, testable sans I/O.
  */
 
 export interface EnrichFields {

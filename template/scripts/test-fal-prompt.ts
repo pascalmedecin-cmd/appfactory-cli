@@ -81,7 +81,7 @@ INTERDITS :
 - Tuyauterie industrielle, machines, équipements techniques hors vitrage
 - Personnes, visages, mains
 - Textes, logos, watermarks
-- Style illustration, 3D rendu, dessin — UNIQUEMENT photoréalisme éditorial
+- Style illustration, 3D rendu, dessin : UNIQUEMENT photoréalisme éditorial
 
 Style cible : photographie éditoriale BtoB premium (architecture/Wallpaper/Dezeen), lumière naturelle, composition cinématographique, focale moyenne/longue, profondeur de champ marquée.
 
@@ -91,7 +91,7 @@ CONTRAINTE LONGUEUR (cruciale, fal.ai rejette >1000 chars) :
 
 Tu réponds UNIQUEMENT avec un JSON valide, sans markdown, format :
 {
-  "main_subject": "sujet principal — DOIT contenir vitrage/façade/baie (max 25 mots)",
+  "main_subject": "sujet principal, DOIT contenir vitrage/façade/baie (max 25 mots)",
   "foreground_detail": "détail premier plan (max 25 mots)",
   "background": "arrière-plan (max 25 mots)",
   "photographic_style": "lumière + ambiance + technique (max 25 mots)"
@@ -321,7 +321,7 @@ async function main() {
 	}
 
 	// Récap markdown
-	const md = ['# Test prompt fal.ai v2 — récap\n'];
+	const md = ['# Test prompt fal.ai v2 : récap\n'];
 	for (const r of results) {
 		md.push(`## ${r.testCase.id}\n`);
 		md.push(`**Titre** : ${r.testCase.title}\n`);

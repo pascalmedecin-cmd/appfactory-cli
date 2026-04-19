@@ -1,4 +1,4 @@
-# project.yaml — Configuration specifique client
+# project.yaml : Configuration specifique client
 # Ce fichier centralise tout ce qui est propre a un deploiement client.
 # Le template SvelteKit lit cette config pour adapter scoring, sources, pipeline, etc.
 
@@ -150,7 +150,7 @@ prospection:
     ingenieur: [ingenieur, bureau technique, ingenieurbuero]
     regie: [regie, facility, immobilier, verwaltung]
 
-# Signaux d'affaires — types configures
+# Signaux d'affaires : types configures
 signaux:
   types:
     - key: appel_offres

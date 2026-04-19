@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AppFactory — Cadrage : Récapitulatif</title>
+  <title>AppFactory : Cadrage : Récapitulatif</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="shared.css">
   <style>
@@ -112,8 +112,8 @@
   <div class="wizard-body">
 
     <div class="final-banner" id="banner">
-      <h2 id="app-title">—</h2>
-      <p id="app-desc">—</p>
+      <h2 id="app-title">–</h2>
+      <p id="app-desc">–</p>
     </div>
 
     <div class="section">
@@ -125,10 +125,10 @@
         <button class="btn btn-secondary" style="padding:4px 12px;font-size:12px;" onclick="postState({step:'pitch'}).then(()=>location.href='/pitch.html')"><span class="material-symbols-rounded" style="font-size:14px;">edit</span> Modifier</button>
       </div>
       <div class="recap-block">
-        <div class="recap-row"><span class="label">Problème</span><span id="r-problem">—</span></div>
-        <div class="recap-row"><span class="label">Solution actuelle</span><span id="r-current">—</span></div>
-        <div class="recap-row"><span class="label">Valeur ajoutée</span><span id="r-value">—</span></div>
-        <div class="recap-row"><span class="label">Langue</span><span id="r-locale">—</span></div>
+        <div class="recap-row"><span class="label">Problème</span><span id="r-problem">–</span></div>
+        <div class="recap-row"><span class="label">Solution actuelle</span><span id="r-current">–</span></div>
+        <div class="recap-row"><span class="label">Valeur ajoutée</span><span id="r-value">–</span></div>
+        <div class="recap-row"><span class="label">Langue</span><span id="r-locale">–</span></div>
       </div>
       <div id="r-profiles" style="margin-top:12px;"></div>
     </div>
@@ -172,9 +172,9 @@
         <button class="btn btn-secondary" style="padding:4px 12px;font-size:12px;" onclick="postState({step:'rules'}).then(()=>location.href='/rules.html')"><span class="material-symbols-rounded" style="font-size:14px;">edit</span> Modifier</button>
       </div>
       <div class="recap-block">
-        <div class="recap-row"><span class="label">Auth</span><span id="r-auth">—</span></div>
-        <div class="recap-row"><span class="label">Domaines</span><span id="r-domains">—</span></div>
-        <div class="recap-row"><span class="label">Crons</span><span id="r-crons">—</span></div>
+        <div class="recap-row"><span class="label">Auth</span><span id="r-auth">–</span></div>
+        <div class="recap-row"><span class="label">Domaines</span><span id="r-domains">–</span></div>
+        <div class="recap-row"><span class="label">Crons</span><span id="r-crons">–</span></div>
       </div>
       <div id="r-scoring-block" style="display:none;">
         <h3 style="font-size:13px;font-weight:700;text-transform:uppercase;color:var(--primary);margin:12px 0 8px;">Scoring</h3>
@@ -206,23 +206,23 @@
     getState().then(state => {
       // Pitch
       const p = state.pitch_data || {};
-      document.getElementById('app-title').textContent = p.app_name || '—';
-      document.getElementById('app-desc').textContent = p.app_desc || '—';
-      document.getElementById('r-problem').textContent = p.problem || '—';
-      document.getElementById('r-current').textContent = p.current_solution || '—';
-      document.getElementById('r-value').textContent = p.value || '—';
+      document.getElementById('app-title').textContent = p.app_name || '–';
+      document.getElementById('app-desc').textContent = p.app_desc || '–';
+      document.getElementById('r-problem').textContent = p.problem || '–';
+      document.getElementById('r-current').textContent = p.current_solution || '–';
+      document.getElementById('r-value').textContent = p.value || '–';
       // User profiles
       const profiles = p.user_profiles || [];
       document.getElementById('r-profiles').innerHTML = profiles.length > 0
         ? profiles.map(pr => `
           <div class="recap-block">
-            <h3><span class="material-symbols-rounded" style="font-size:14px;margin-right:4px;">person</span> ${pr.role || '—'}</h3>
-            <div class="recap-row"><span class="label">Nombre</span><span>${pr.count || '—'}</span></div>
+            <h3><span class="material-symbols-rounded" style="font-size:14px;margin-right:4px;">person</span> ${pr.role || '–'}</h3>
+            <div class="recap-row"><span class="label">Nombre</span><span>${pr.count || '–'}</span></div>
             ${pr.context ? `<div class="recap-row"><span class="label">Contexte</span><span>${pr.context}</span></div>` : ''}
           </div>
         `).join('')
         : '';
-      document.getElementById('r-locale').textContent = p.app_locale || '—';
+      document.getElementById('r-locale').textContent = p.app_locale || '–';
 
       // Entities
       const ents = state.entities_data || [];
@@ -259,7 +259,7 @@
 
       // Rules
       const r = state.rules_data || {};
-      document.getElementById('r-auth').textContent = r.auth_provider || '—';
+      document.getElementById('r-auth').textContent = r.auth_provider || '–';
       document.getElementById('r-domains').textContent = r.auth_domains || 'Tous';
       document.getElementById('r-crons').textContent = (r.cron_jobs || []).length > 0
         ? r.cron_jobs.map(c => `${c.path} (${c.schedule})`).join(', ')
@@ -305,7 +305,7 @@
         return;
       }
       postState({ cadrage_validated: true, step: 'done' }).then(() => {
-        btn.textContent = 'Validation envoyée — retour au terminal...';
+        btn.textContent = 'Validation envoyée : retour au terminal...';
         btn.disabled = true;
         btn.style.background = 'var(--text-muted)';
         showToast('Cadrage validé ! Claude génère le project.yaml...');

@@ -2,16 +2,16 @@
  * Validation qualité d'une URL og:image.
  *
  * Filtre 2 niveaux :
- *  1. Pattern URL (rapide, sans réseau) — détecte logo, favicon, sprite, placeholder
- *  2. HEAD HTTP (1-2s) — vérifie content-type image/* + content-length raisonnable
+ *  1. Pattern URL (rapide, sans réseau) : détecte logo, favicon, sprite, placeholder
+ *  2. HEAD HTTP (1-2s) : vérifie content-type image/* + content-length raisonnable
  *
  * Une og:image disqualifiée force le caller à passer au niveau suivant de la cascade
  * (generated_image_url fal.ai ou fallback media_library).
  */
 
 const FETCH_TIMEOUT_MS = 4000;
-const MIN_BYTES = 20 * 1024; // 20 KB — en dessous = probablement placeholder/icon
-const MAX_BYTES = 8 * 1024 * 1024; // 8 MB — au dessus = suspect / pas optimisé pour og
+const MIN_BYTES = 20 * 1024; // 20 KB : en dessous = probablement placeholder/icon
+const MAX_BYTES = 8 * 1024 * 1024; // 8 MB : au dessus = suspect / pas optimisé pour og
 
 const USER_AGENT =
 	'Mozilla/5.0 (compatible; FilmProBot/1.0; +https://filmpro-crm.vercel.app)';

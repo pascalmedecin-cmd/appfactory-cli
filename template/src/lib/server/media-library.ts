@@ -1,5 +1,5 @@
 /**
- * Media Library — upload + dedup + scoring qualité
+ * Media Library : upload + dedup + scoring qualité
  *
  * Utilisé par :
  *  - scripts/media/seed-icloud.ts                       (seed initial 30 images)

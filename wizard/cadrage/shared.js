@@ -1,4 +1,4 @@
-/* AppFactory Cadrage Wizard — Shared JS */
+/* AppFactory Cadrage Wizard : Shared JS */
 
 const STEPS = ['pitch', 'entities', 'pages', 'rules', 'recap'];
 const STEP_PAGES = {

@@ -7,7 +7,7 @@ import { config } from './config';
 
 const { scoring } = config;
 
-// Bloc 3 — Bonus scoring signaux Veille (intelligence_signal).
+// Bloc 3 : Bonus scoring signaux Veille (intelligence_signal).
 // Item Veille avec maturity + compliance_tag bien notés → bonus décroissant dans le temps.
 // Objectif : remonter la température des leads issus des signaux chauds actuels.
 export const SIGNAL_VEILLE_SCORING = {

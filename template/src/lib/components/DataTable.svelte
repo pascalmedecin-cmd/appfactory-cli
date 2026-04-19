@@ -208,7 +208,7 @@
 							{:else}
 								{#each columns as col}
 									<td class="px-4 py-2.5 text-text {col.class ?? ''}">
-										{col.render ? col.render(row) : (row[col.key] ?? '—')}
+										{col.render ? col.render(row) : (row[col.key] ?? '–')}
 									</td>
 								{/each}
 							{/if}

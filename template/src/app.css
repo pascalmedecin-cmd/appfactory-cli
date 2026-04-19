@@ -37,7 +37,7 @@
 	--color-info: #2E90FA;
 	--color-info-light: #EFF8FF;
 
-	/* Prospection workflow — palette 4 étapes */
+	/* Prospection workflow : palette 4 étapes */
 	--color-prosp-import: #5A7190;
 	--color-prosp-import-bg: #EDF1F5;
 	--color-prosp-import-border: #8B9DB6;
@@ -58,14 +58,14 @@
 	--font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
 	--font-mono: 'DM Mono', 'Consolas', 'Courier New', monospace;
 
-	/* Border Radius — Untitled UI: 8px base, 12px cards/modals */
+	/* Border Radius : Untitled UI: 8px base, 12px cards/modals */
 	--radius-sm: 6px;
 	--radius-md: 8px;
 	--radius-lg: 10px;
 	--radius-xl: 12px;
 	--radius-full: 9999px;
 
-	/* Shadows — Multi-layer premium (Untitled UI inspired) */
+	/* Shadows : Multi-layer premium (Untitled UI inspired) */
 	--shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
 	--shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.10), 0 1px 2px rgba(16, 24, 40, 0.06);
 	--shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.10), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
@@ -86,7 +86,7 @@
 	}
 }
 
-/* Magazine typography — module Veille (éditorial) */
+/* Magazine typography : module Veille (éditorial) */
 .mag-kicker {
 	letter-spacing: 0.14em;
 	text-transform: uppercase;
@@ -117,7 +117,7 @@
 	color: var(--color-primary);
 }
 
-/* Focus visible — accessibilité clavier */
+/* Focus visible : accessibilité clavier */
 button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible {

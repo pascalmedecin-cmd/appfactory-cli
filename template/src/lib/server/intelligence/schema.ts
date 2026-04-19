@@ -193,7 +193,7 @@ export type ImpactAxis = z.infer<typeof ImpactAxisEnum>;
 export type IntelligenceItem = z.infer<typeof IntelligenceItemSchema>;
 export type ImpactFilmpro = z.infer<typeof ImpactFilmproSchema>;
 export type LegacySearchTerm = z.infer<typeof LegacySearchTermSchema>;
-/** @deprecated — alias legacy, sera retiré en Phase 2 (refonte UI /veille). */
+/** @deprecated : alias legacy, sera retiré en Phase 2 (refonte UI /veille). */
 export type SearchTerm = LegacySearchTerm;
 export type IntelligenceEdition = z.infer<typeof IntelligenceEditionSchema>;
 export type IntelligenceReport = z.infer<typeof IntelligenceReportSchema>;

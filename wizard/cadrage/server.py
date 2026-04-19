@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Cadrage wizard server — AppFactory.
+Cadrage wizard server : AppFactory.
 Serves HTML wizard pages + state API for Claude Code injection.
 
 Usage:

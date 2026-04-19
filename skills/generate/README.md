@@ -9,8 +9,8 @@ project.yaml + tokens design -> scaffold SvelteKit complet.
 - Appliquer le design system (tokens -> Tailwind config)
 
 ## Input
-- `project.yaml` — specs du projet
-- `tokens.json` — tokens design Figma (optionnel, fallback design par defaut)
+- `project.yaml` : specs du projet
+- `tokens.json` : tokens design Figma (optionnel, fallback design par defaut)
 
 ## Output
 - Projet SvelteKit complet pret a deployer

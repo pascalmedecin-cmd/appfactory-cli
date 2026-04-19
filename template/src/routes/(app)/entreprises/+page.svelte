@@ -177,7 +177,7 @@
 						{#if entreprise.canton}
 							<span class="flex items-center gap-1">
 								<span class="material-symbols-outlined text-[14px]">location_on</span>
-								{entreprise.canton}{#if entreprise.adresse_siege} — {entreprise.adresse_siege}{/if}
+								{entreprise.canton}{#if entreprise.adresse_siege} : {entreprise.adresse_siege}{/if}
 							</span>
 						{/if}
 						{#if entreprise.site_web}
@@ -227,19 +227,19 @@
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
 				<div>
 					<span class="text-text-muted">Secteur</span>
-					<p class="font-medium text-text">{selectedEntreprise.secteur_activite ?? '—'}</p>
+					<p class="font-medium text-text">{selectedEntreprise.secteur_activite ?? '–'}</p>
 				</div>
 				<div>
 					<span class="text-text-muted">Canton</span>
-					<p class="font-medium text-text">{selectedEntreprise.canton ?? '—'}</p>
+					<p class="font-medium text-text">{selectedEntreprise.canton ?? '–'}</p>
 				</div>
 				<div>
 					<span class="text-text-muted">Taille</span>
-					<p class="font-medium text-text">{selectedEntreprise.taille_estimee ?? '—'}</p>
+					<p class="font-medium text-text">{selectedEntreprise.taille_estimee ?? '–'}</p>
 				</div>
 				<div>
 					<span class="text-text-muted">IDE</span>
-					<p class="font-medium text-text">{selectedEntreprise.numero_ide ?? '—'}</p>
+					<p class="font-medium text-text">{selectedEntreprise.numero_ide ?? '–'}</p>
 				</div>
 			</div>
 
@@ -283,7 +283,7 @@
 								<div>
 									<span class="font-medium text-text">{contact.prenom} {contact.nom}</span>
 									{#if contact.role_fonction}
-										<span class="text-text-muted"> — {contact.role_fonction}</span>
+										<span class="text-text-muted"> : {contact.role_fonction}</span>
 									{/if}
 								</div>
 								<a href="/contacts" class="text-accent text-xs hover:underline">Voir</a>

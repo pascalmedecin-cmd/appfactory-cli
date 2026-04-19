@@ -25,7 +25,7 @@ const MODEL = 'claude-opus-4-7';
 const MAX_TOKENS_PHASE1 = 8000;
 const MAX_TOKENS_PHASE2 = 16000;
 
-// JSON schema emit_report (Phase 2) — conforme subset strict-mode Anthropic.
+// JSON schema emit_report (Phase 2) : conforme subset strict-mode Anthropic.
 // Contraintes min/max exprimées en description (cf. doc Anthropic structured outputs).
 const REPORT_JSON_SCHEMA = {
 	type: 'object',
@@ -279,7 +279,7 @@ async function callPhase1(
 		model: MODEL,
 		max_tokens: MAX_TOKENS_PHASE1,
 		// Opus 4.7 : adaptive thinking + effort xhigh. Sampling params (temperature/top_p/top_k)
-		// retirés — rejetés 400 sur 4.7. Cast via spread : output_config pas encore typé SDK 0.88.
+		// retirés : rejetés 400 sur 4.7. Cast via spread : output_config pas encore typé SDK 0.88.
 		...({ thinking: { type: 'adaptive' }, output_config: { effort: 'xhigh' } } as Record<string, unknown>),
 		system: [
 			{
@@ -389,7 +389,7 @@ async function callPhase2(
 		model: MODEL,
 		max_tokens: MAX_TOKENS_PHASE2,
 		// Opus 4.7 : adaptive thinking + effort xhigh. Sampling params (temperature/top_p/top_k)
-		// retirés — rejetés 400 sur 4.7. Cast via spread : output_config pas encore typé SDK 0.88.
+		// retirés : rejetés 400 sur 4.7. Cast via spread : output_config pas encore typé SDK 0.88.
 		...({ thinking: { type: 'adaptive' }, output_config: { effort: 'xhigh' } } as Record<string, unknown>),
 		system: [
 			{
@@ -544,7 +544,7 @@ export async function generateIntelligenceReport(
 
 	const enrichedItems = await enrichItemsWithOgImages(verifiedItems);
 
-	// Bloc 6ter : filtrage qualité og:image — drop logo/placeholder/wrong-content-type
+	// Bloc 6ter : filtrage qualité og:image, drop logo/placeholder/wrong-content-type
 	// pour forcer la cascade fallback (génération fal.ai puis media_library).
 	const filteredItems = await Promise.all(
 		enrichedItems.map(async (it) => {

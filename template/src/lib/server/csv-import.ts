@@ -2,7 +2,7 @@
  * Import CSV : parser RFC 4180 (state-machine, gère guillemets doublés
  * et LF/CRLF intégrés). Utilisé par scripts/import-csv.ts.
  *
- * Pas de dépendance externe — parseur ~100 lignes suffisant pour les
+ * Pas de dépendance externe : parseur ~100 lignes suffisant pour les
  * volumes d'import CRM (milliers de lignes max).
  */
 
@@ -129,7 +129,7 @@ export interface ValidationSchema<T> {
 
 /**
  * Valide chaque ligne d'un CSV contre un schema Zod (parsé via
- * safeParse). Retourne ok + errors + total. N'insère rien — séparation
+ * safeParse). Retourne ok + errors + total. N'insère rien : séparation
  * parse ↔ persist pour faciliter `--dry-run` et preview.
  */
 export function validateRows<T>(

@@ -75,7 +75,7 @@ export async function verifyUrl(rawUrl: string): Promise<UrlVerifyResult> {
 				return { ok: false, reason: 'trivial_path', status: res.status };
 			}
 		} catch {
-			// URL.url non parseable — on ignore, on garde le check HTTP
+			// URL.url non parseable : on ignore, on garde le check HTTP
 		}
 
 		if (res.status >= 200 && res.status < 400) {

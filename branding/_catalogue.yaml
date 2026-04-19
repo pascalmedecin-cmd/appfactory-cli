@@ -6,7 +6,7 @@ themes:
   standard:
     nom: Standard
     ambiance: "Warm-neutral, professionnel et lisible. Fond creme, touches bronze."
-    style: "Polyvalent — convient a la majorite des apps metier"
+    style: "Polyvalent, convient a la majorite des apps metier"
     couleurs:
       primary: "#4A6B84"
       primary_hover: "#3B5A72"

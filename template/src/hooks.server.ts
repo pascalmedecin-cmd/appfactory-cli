@@ -59,7 +59,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	// Proteger toutes les routes sauf /login et /auth
 	const { session, user } = await event.locals.safeGetSession();
-	// Allowlist explicite — ne jamais utiliser de prefix match sur /auth/*
+	// Allowlist explicite : ne jamais utiliser de prefix match sur /auth/*
 	const AUTH_EXEMPT_ROUTES = ['/login', '/auth/callback'];
 	const isAuthRoute = AUTH_EXEMPT_ROUTES.includes(event.url.pathname);
 	const isCronRoute =

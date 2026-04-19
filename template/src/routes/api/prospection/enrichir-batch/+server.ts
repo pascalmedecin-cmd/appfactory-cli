@@ -171,7 +171,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 						} catch (err) {
 							const msg = String(err);
 							if (msg.includes('Quota search.ch')) {
-								// Quota épuisé — arrêter le batch proprement
+								// Quota épuisé : arrêter le batch proprement
 								controller.enqueue(encoder.encode(sseEvent('quota_exceeded', {
 									source: 'search_ch',
 									message: 'Quota mensuel search.ch atteint (1 000 requêtes/mois). Les requêtes restantes sont annulées.',

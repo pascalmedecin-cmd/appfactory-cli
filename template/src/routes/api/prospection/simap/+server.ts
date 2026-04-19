@@ -137,7 +137,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			title,
 			procOffice ? `Pouvoir adjudicateur: ${procOffice}` : '',
 			`Type: ${project.projectSubType} | Procedure: ${project.processType}`,
-			`Publication: ${project.pubType} — ${project.publicationDate}`,
+			`Publication: ${project.pubType}, ${project.publicationDate}`,
 		].filter(Boolean).join('\n');
 
 		const scoreResult = calculerScore({

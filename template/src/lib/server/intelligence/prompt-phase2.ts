@@ -1,11 +1,11 @@
-// Bloc 2 — Phase 2 : rédaction éditoriale à partir de candidats pré-vérifiés.
+// Bloc 2 : Phase 2 : rédaction éditoriale à partir de candidats pré-vérifiés.
 // Les candidats ont déjà passé le filtre serveur (URL HEAD OK, og-date dans fenêtre 14j).
 // Température plus élevée (~0.45) pour la qualité rédactionnelle.
 // Prompt stable → cachable (cache_control ephemeral côté appelant).
 
 import type { IntelligenceCandidate } from './schema';
 
-export const PHASE2_SYSTEM_PROMPT = `# Mission Phase 2 — Rédaction
+export const PHASE2_SYSTEM_PROMPT = `# Mission Phase 2 : Rédaction
 Moteur de veille sectorielle hebdomadaire FilmPro, étape 2/2 : RÉDACTION éditoriale.
 Rôle : à partir d'une liste de candidats pré-vérifiés par un filtre serveur (URLs valides, dates dans la fenêtre 14 jours), produire l'édition finale via le tool emit_report. Classer, synthétiser, attribuer segment commercial et actionabilité.
 
@@ -99,7 +99,7 @@ export function buildPhase2UserPrompt(input: Phase2UserInput): string {
   rationale: ${c.rationale}`
 					)
 					.join('\n\n')
-			: '(aucun candidat — émettre une édition avec items=[] et compliance_tag="Non exploitable")';
+			: '(aucun candidat : émettre une édition avec items=[] et compliance_tag="Non exploitable")';
 
 	return `Édition : ${input.weekLabel} (cible ${input.dateStart} → ${input.dateEnd}).
 

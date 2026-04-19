@@ -19,12 +19,12 @@
 	]);
 
 	function formatDate(dateStr: string | null): string {
-		if (!dateStr) return '—';
+		if (!dateStr) return '–';
 		return new Date(dateStr).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit' });
 	}
 
 	function formatDateTime(dateStr: string | null): string {
-		if (!dateStr) return '—';
+		if (!dateStr) return '–';
 		return new Date(dateStr).toLocaleDateString('fr-CH', {
 			day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
 		});
@@ -46,7 +46,7 @@
 					{data.stats.signaux} {data.stats.signaux > 1 ? 'signaux' : 'signal'} d'affaires à traiter
 				</p>
 				<p class="text-xs text-text-muted mt-0.5">
-					Appels d'offres, permis, créations d'entreprises — à analyser ou convertir en opportunité
+					Appels d'offres, permis, créations d'entreprises : à analyser ou convertir en opportunité
 				</p>
 			</div>
 			<span class="material-symbols-outlined text-[18px] text-primary">arrow_forward</span>
@@ -112,7 +112,7 @@
 								<div>
 									<p class="text-sm font-medium text-text">{relance.titre}</p>
 									<p class="text-xs text-text-muted">
-										{relance.etape_pipeline ?? '—'}
+										{relance.etape_pipeline ?? '–'}
 									</p>
 								</div>
 								<span class="text-xs text-text-muted">{formatDate(relance.date_relance_prevue)}</span>

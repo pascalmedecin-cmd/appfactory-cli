@@ -65,7 +65,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 		const text = await resp.text();
 
-		// Parse Atom XML response — extract first tel:phone
+		// Parse Atom XML response : extract first tel:phone
 		const phoneMatch = text.match(/<tel:phone>([^<]+)<\/tel:phone>/);
 		if (phoneMatch) {
 			telephone = phoneMatch[1].trim();

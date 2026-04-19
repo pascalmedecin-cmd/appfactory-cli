@@ -1,8 +1,8 @@
-# Blocages connus — AppFactory
+# Blocages connus : AppFactory
 
 Référencés depuis CLAUDE.md (tâche 1d). À lever avant le premier déploiement prod.
 
-## 1. Vercel — `SUPABASE_SERVICE_ROLE_KEY` via Git link
+## 1. Vercel : `SUPABASE_SERVICE_ROLE_KEY` via Git link
 
 **Symptôme** : la variable d'env `SUPABASE_SERVICE_ROLE_KEY` n'est pas injectée automatiquement au build Vercel quand le projet est lié à un repo Git sans configuration explicite.
 
@@ -14,7 +14,7 @@ Référencés depuis CLAUDE.md (tâche 1d). À lever avant le premier déploieme
    ```bash
    printf '%s' "$SERVICE_ROLE_KEY" | vercel env add SUPABASE_SERVICE_ROLE_KEY production
    ```
-   `printf '%s'` obligatoire (cf. memory `feedback_vercel_env_whitespace` — `echo` ajoute un newline qui casse la clé).
+   `printf '%s'` obligatoire (cf. memory `feedback_vercel_env_whitespace` : `echo` ajoute un newline qui casse la clé).
 3. Redéployer pour que la var soit injectée au build suivant.
 
 **Garde-fou sécurité** : `service_role` bypass RLS. Ne jamais l'exposer côté client, jamais dans `NEXT_PUBLIC_*`, jamais commit.

@@ -497,7 +497,7 @@
 				</div>
 				<span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold {sStyle.bg} {sStyle.color}">
 					<span class="material-symbols-outlined text-[18px]">{sStyle.icon}</span>
-					{selectedSignal.score_pertinence ?? 0}/{config.scoring.maxPoints} — {sStyle.label}
+					{selectedSignal.score_pertinence ?? 0}/{config.scoring.maxPoints} : {sStyle.label}
 				</span>
 			</div>
 
@@ -789,7 +789,7 @@
 			<div class="space-y-4">
 				<div class="p-3 bg-surface-alt/50 rounded-lg text-sm">
 					<p class="text-text-muted">Signal source</p>
-					<p class="font-medium text-text">{formatTypeLabel(selectedSignal.type_signal)} — {selectedSignal.maitre_ouvrage ?? ''}</p>
+					<p class="font-medium text-text">{formatTypeLabel(selectedSignal.type_signal)} : {selectedSignal.maitre_ouvrage ?? ''}</p>
 				</div>
 
 				<FormField label="Titre de l'opportunité" bind:value={opp_titre} required />

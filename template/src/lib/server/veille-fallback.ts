@@ -4,7 +4,7 @@
  * Cascade côté caller :
  *   1. og:image source (si fiable, cf. og-image-quality.ts)
  *   2. generated_image_url (fal.ai, gravée dans items)
- *   3. fallback media_library (cette fonction) — picker top-N quality_score + mapping titre→segment lib
+ *   3. fallback media_library (cette fonction) : picker top-N quality_score + mapping titre→segment lib
  *   4. gradient placeholder (UI)
  */
 import type { SupabaseClient } from '@supabase/supabase-js';

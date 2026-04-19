@@ -120,7 +120,7 @@ export async function GET(event: RequestEvent) {
 	}
 
 	if (errors.length > 0) {
-		console.error('Cron nettoyage-crm — erreurs:', errors);
+		console.error('Cron nettoyage-crm : erreurs:', errors);
 	}
 
 	return json({

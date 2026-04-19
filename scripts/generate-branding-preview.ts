@@ -93,7 +93,7 @@ function themeCard(key: string, theme: Theme, isDefault: boolean): string {
         <div style="margin-bottom:16px;">
           <h3 style="font-family:'${font}',sans-serif;font-size:16px;font-weight:600;color:${c.text_primary};margin:0 0 4px;">Titre en ${font}</h3>
           <p style="font-family:'${font}',sans-serif;font-size:14px;color:${c.text_body};margin:0 0 8px;line-height:1.5;">
-            Corps de texte — Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus.
+            Corps de texte : Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus.
           </p>
           <code style="font-family:'${mono}',monospace;font-size:13px;background:${c.surface};padding:4px 8px;border-radius:4px;color:${c.accent};">code: ${mono}</code>
         </div>
@@ -161,7 +161,7 @@ function generateHTML(catalogue: Catalogue): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AppFactory — Catalogue Branding</title>
+    <title>AppFactory : Catalogue Branding</title>
     ${fontLinks(themes)}
     <style>
       * { box-sizing: border-box; }
@@ -175,12 +175,12 @@ function generateHTML(catalogue: Catalogue): string {
 <body>
   <div class="container">
     <h1>Catalogue Branding</h1>
-    <p class="subtitle">5 thèmes disponibles — choisissez un point de départ, personnalisable ensuite.</p>
+    <p class="subtitle">5 thèmes disponibles : choisissez un point de départ, personnalisable ensuite.</p>
     <div class="grid">
       ${cards}
     </div>
     <p style="text-align:center;color:#999;font-size:12px;margin-top:32px;">
-      AppFactory — Chaque thème est entièrement personnalisable (couleurs, typo, logo, page login).
+      AppFactory : Chaque thème est entièrement personnalisable (couleurs, typo, logo, page login).
     </p>
   </div>
 </body>

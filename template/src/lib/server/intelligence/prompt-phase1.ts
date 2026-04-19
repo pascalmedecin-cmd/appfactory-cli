@@ -1,9 +1,9 @@
-// Bloc 2 — Phase 1 : extraction/tri brute des candidats via web_search.
+// Bloc 2 : Phase 1 : extraction/tri brute des candidats via web_search.
 // Sortie minimaliste (URL + date + hints). Pas de rédaction éditoriale.
 // Température basse (~0.1) pour maximiser la fidélité aux sources réelles.
 // Prompt stable → cachable (cache_control ephemeral côté appelant).
 
-export const PHASE1_SYSTEM_PROMPT = `# Mission Phase 1 — Extraction
+export const PHASE1_SYSTEM_PROMPT = `# Mission Phase 1 : Extraction
 Moteur de veille sectorielle hebdomadaire FilmPro, étape 1/2 : EXTRACTION de candidats.
 Rôle : explorer le web, identifier les articles publics pertinents publiés récemment, et émettre une liste brute de candidats via le tool emit_candidates. Aucune rédaction éditoriale, aucun classement final : seulement les faits bruts nécessaires au filtre serveur.
 

@@ -118,7 +118,7 @@
 
 	<!-- Évolution mensuelle -->
 	<section class="bg-white border border-border rounded-lg p-5 shadow-xs">
-		<h2 class="text-sm font-semibold text-text mb-1">Opportunités créées — 12 derniers mois</h2>
+		<h2 class="text-sm font-semibold text-text mb-1">Opportunités créées : 12 derniers mois</h2>
 		<p class="text-xs text-text-muted mb-4">Nombre d'opportunités ouvertes par mois.</p>
 
 		<div class="overflow-x-auto">

@@ -5,7 +5,7 @@ function entry(url: string, score = 8, segment = 'controle-solaire'): PoolEntry 
 	return { url, score, segment: segment as PoolEntry['segment'] };
 }
 
-describe('pickFallback — top-N quality_score', () => {
+describe('pickFallback : top-N quality_score', () => {
 	const pools: FallbackPools = {
 		byLibSegment: {
 			'controle-solaire': [

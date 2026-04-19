@@ -8,7 +8,7 @@
  * collecte progressive pendant, summary() à la fin. Pas thread-safe multi-invocation.
  *
  * Tarifs source : doc Anthropic (platform.claude.com, cache 2026-04-15).
- * Conversion EUR : taux fixe approximatif — valeur indicative, pas comptable.
+ * Conversion EUR : taux fixe approximatif, valeur indicative, pas comptable.
  */
 import type Anthropic from '@anthropic-ai/sdk';
 

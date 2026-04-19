@@ -6,7 +6,7 @@ import { randomUUID } from 'crypto';
 
 const ZEFIX_BASE = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
 
-// Zefix company search response (partial — fields we use)
+// Zefix company search response (partial : fields we use)
 interface ZefixCompany {
 	name: string;
 	uid: string; // CHE-xxx.xxx.xxx
@@ -75,7 +75,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		return json({ error: 'Canton requis (GE, VD, VS, NE, FR, JU)' }, { status: 400 });
 	}
 
-	// Zefix search — POST /api/v1/company/search
+	// Zefix search : POST /api/v1/company/search
 	const authHeader = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
 
 	let companies: ZefixCompany[];
@@ -146,7 +146,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	const inserts = [];
 
-	// The Zefix search endpoint only returns identity fields — canton/address/purpose/capital
+	// The Zefix search endpoint only returns identity fields : canton/address/purpose/capital
 	// come from the detail endpoint (/company/uid/{uid}) via the enrichment feature.
 	// Since we filter by canton in the search request, all results belong to `canton`.
 	const cantonCode = cantonToLead(canton);

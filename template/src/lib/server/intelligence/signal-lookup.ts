@@ -1,4 +1,4 @@
-// Bloc 3 — Fetch du signal Veille source pour bonus scoring.
+// Bloc 3 : Fetch du signal Veille source pour bonus scoring.
 // Lookup un item d'une édition de veille à partir de {report_id, rank}
 // et retourne les métadonnées nécessaires au scoring (maturity, compliance, age).
 

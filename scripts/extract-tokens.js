@@ -9,5 +9,5 @@
  * TODO: Implement when Figma integration is ready (Phase B)
  */
 
-console.log('Token extraction script — not yet implemented');
+console.log('Token extraction script : not yet implemented');
 console.log('This will convert Tokens Studio JSON -> tailwind.config.js');

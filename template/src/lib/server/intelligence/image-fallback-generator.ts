@@ -18,7 +18,7 @@ import { costTracker } from './cost-tracker';
 
 const BUCKET = 'media-library';
 const DOWNLOAD_TIMEOUT_MS = 30_000;
-const MIN_RELEVANCE_SCORE = 6; // /10 — seuil audit Vision pour servir l'image générée
+const MIN_RELEVANCE_SCORE = 6; // /10 : seuil audit Vision pour servir l'image générée
 const BRIEF_MODEL = 'claude-sonnet-4-6'; // matériel/concret pour Flux
 const VISION_MODEL = 'claude-sonnet-4-6'; // Sonnet pour Vision (~3x + rapide qu'Opus, contrainte timeout 300s Vercel Hobby)
 
@@ -65,7 +65,7 @@ async function downloadImageBuffer(url: string): Promise<Buffer | null> {
 }
 
 /**
- * Étape 1 — Brief LLM Sonnet → JSON visuel structuré.
+ * Étape 1 : Brief LLM Sonnet → JSON visuel structuré.
  * System prompt strict métier FilmPro (vitrages, façades, no people, photoréaliste).
  * Phrases courtes (~25 mots/champ) pour respecter limite Flux ~1000 chars.
  */
@@ -85,7 +85,7 @@ CONTRAINTE LONGUEUR : chaque champ = 1 phrase, MAX 25 mots, style télégraphiqu
 
 Tu réponds UNIQUEMENT avec un JSON valide, sans markdown, format :
 {
-  "main_subject": "sujet — DOIT contenir vitrage/façade/baie (max 25 mots)",
+  "main_subject": "sujet, DOIT contenir vitrage/façade/baie (max 25 mots)",
   "foreground_detail": "détail premier plan (max 25 mots)",
   "background": "arrière-plan (max 25 mots)",
   "photographic_style": "lumière + ambiance + technique (max 25 mots)"
@@ -115,7 +115,7 @@ Tu réponds UNIQUEMENT avec un JSON valide, sans markdown, format :
 }
 
 /**
- * Étape 2 — Construction prompt structure éditoriale (pattern Recraft + suffix Flux).
+ * Étape 2 : Construction prompt structure éditoriale (pattern Recraft + suffix Flux).
  * Sécurité longueur : truncate à 990 chars (limite Flux ~1000).
  */
 function buildPromptFromBrief(brief: VisualBrief): string {
@@ -129,7 +129,7 @@ function buildPromptFromBrief(brief: VisualBrief): string {
 }
 
 /**
- * Étape 3 — Audit Vision Opus pertinence sur l'image générée.
+ * Étape 3 : Audit Vision Opus pertinence sur l'image générée.
  * Score 0-10. Seuil de service = MIN_RELEVANCE_SCORE.
  * Justifie chaque décision (one_sentence_critique loggée).
  */
@@ -199,13 +199,13 @@ export async function generateAndStoreFallback(
 	const anthropic = new Anthropic({ apiKey: anthropicKey });
 	const inferredSegment = inferSegmentFromText(item.title, item.summary ?? '');
 
-	// Étape 1 — Brief LLM
+	// Étape 1 : Brief LLM
 	const brief = await buildBriefViaLLM(anthropic, item);
 	if (!brief) {
 		return { rank: item.rank, status: 'failed', reason: 'brief LLM échoué' };
 	}
 
-	// Étape 2 — Prompt + appel fal.ai Flux Pro Ultra
+	// Étape 2 : Prompt + appel fal.ai Flux Pro Ultra
 	const prompt = buildPromptFromBrief(brief);
 	const gen = await generateImageViaFal({ prompt, apiKey });
 	if (!gen.ok || !gen.url) {
@@ -234,20 +234,20 @@ export async function generateAndStoreFallback(
 		return { rank: item.rank, status: 'failed', reason: `upload failed: ${upload.reason ?? 'unknown'}` };
 	}
 
-	// Étape 3a — Audit qualité technique (dimensions, ratio, format)
+	// Étape 3a : Audit qualité technique (dimensions, ratio, format)
 	const technicalAudit = await auditUploadedImage(supabase, upload.id!);
 	if (!technicalAudit.ok) {
 		return { rank: item.rank, status: 'failed', reason: `technical audit: ${technicalAudit.reason}` };
 	}
 
-	// Étape 3b — Audit Vision pertinence sémantique
+	// Étape 3b : Audit Vision pertinence sémantique
 	const publicUrl = `${supabaseUrl}/storage/v1/object/public/${BUCKET}/${upload.storage_path}`;
 	const vision = await auditPertinenceViaVision(anthropic, publicUrl, item);
 	if (!vision) {
 		console.warn(`[fallback gen] vision audit indisponible rank=${item.rank}, image servie sans audit`);
 	} else {
 		console.log(
-			`[fallback gen] rank=${item.rank} vision_score=${vision.relevance_score}/10 — ${vision.one_sentence_critique}`
+			`[fallback gen] rank=${item.rank} vision_score=${vision.relevance_score}/10 : ${vision.one_sentence_critique}`
 		);
 		if (vision.relevance_score < MIN_RELEVANCE_SCORE) {
 			return {

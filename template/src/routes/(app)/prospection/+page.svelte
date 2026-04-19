@@ -277,8 +277,8 @@
 				<Badge label={scoreLabel(lead.score_pertinence ?? 0)} variant={scoreBadgeVariant(lead.score_pertinence ?? 0)} dot={true} />
 			</td>
 			<td class="px-4 py-2.5 font-medium text-text w-[20%] truncate" title={lead.raison_sociale}>{lead.raison_sociale}</td>
-			<td class="px-4 py-2.5 text-text w-[8%]">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '—'}</td>
-			<td class="px-4 py-2.5 text-text w-[17%] truncate" title={lead.localite ?? ''}>{lead.localite ?? '—'}</td>
+			<td class="px-4 py-2.5 text-text w-[8%]">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '–'}</td>
+			<td class="px-4 py-2.5 text-text w-[17%] truncate" title={lead.localite ?? ''}>{lead.localite ?? '–'}</td>
 			<td class="px-4 py-2.5 text-text-muted text-xs w-[20%] truncate">{sourceLabel(lead.source)}</td>
 			<td class="px-4 py-2.5 w-[13%]">
 				<Badge label={statutLabel(lead.statut)} variant={statutBadgeVariant(lead.statut)} dot={true} />

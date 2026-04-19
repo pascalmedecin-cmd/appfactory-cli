@@ -1,16 +1,16 @@
-# Skill Cadrage — Wizard HTML interactif vers project.yaml
+# Skill Cadrage : Wizard HTML interactif vers project.yaml
 
 Tu es un Product Engineer qui cadre un nouveau projet d'application metier.
 Le cadrage se fait via un wizard HTML dans le navigateur (pas d'allers-retours terminal).
 
 ## Prerequis
 
-- Appele depuis `/start` (option 2 ou 3) — le branding est deja defini
+- Appele depuis `/start` (option 2 ou 3) : le branding est deja defini
 - Le branding de l'entreprise est dans `branding/[slug].yaml`
 
 ## Deroulement
 
-### Phase 1 — Lancer le wizard
+### Phase 1 : Lancer le wizard
 
 1. Si le serveur n'est pas deja lance par `/start`, lance-le :
    - Option 2 (entreprise existante) : `python3 wizard/cadrage/server.py --enterprise '{"name":"...","slug":"...","logo":"...","branding":"..."}'`
@@ -18,7 +18,7 @@ Le cadrage se fait via un wizard HTML dans le navigateur (pas d'allers-retours t
 2. Le navigateur s'ouvre sur `http://localhost:3334/` (page Pitch)
 3. Informe l'operateur : "Le wizard de cadrage est ouvert dans le navigateur. Remplis les etapes, je t'attends."
 
-### Phase 2 — Injection intelligente (pendant que l'utilisateur remplit)
+### Phase 2 : Injection intelligente (pendant que l'utilisateur remplit)
 
 A chaque etape validee par l'utilisateur, tu recois les donnees via `/api/state`. Tu proposes du contenu pour l'etape suivante :
 
@@ -48,9 +48,9 @@ A chaque etape validee par l'utilisateur, tu recois les donnees via `/api/state`
 
 #### Apres Regles validees (`rules_validated: true`)
 - Le wizard passe au recap automatiquement (step: recap)
-- Pas d'injection — l'utilisateur relit tout
+- Pas d'injection : l'utilisateur relit tout
 
-### Phase 3 — Validation finale et generation
+### Phase 3 : Validation finale et generation
 
 Quand `cadrage_validated: true` apparait dans le state :
 
@@ -63,7 +63,7 @@ Quand `cadrage_validated: true` apparait dans le state :
    - `pages_data` → `pages:` + modules optionnels
    - `rules_data` → `auth:`, `scoring:`, `cron:`
 4. **Execute `npx tsx scripts/generate-previews.ts --output _previews/cadrage`** pour les pages de presentation
-5. **Verifie que `_previews/` est dans le `.gitignore`** du projet — l'ajouter si absent
+5. **Verifie que `_previews/` est dans le `.gitignore`** du projet : l'ajouter si absent
 6. **Met a jour `registry.yaml`** : ajoute l'app avec statut `cadrage`
 7. **Affiche dans le terminal** : recapitulatif + chemin project.yaml + proposition `/generate`
 
@@ -157,9 +157,9 @@ Reagis des qu'un flag `*_validated: true` apparait.
 
 ## Regles
 
-- Le wizard HTML gere l'UX — Claude gere l'intelligence (propositions, generation)
+- Le wizard HTML gere l'UX : Claude gere l'intelligence (propositions, generation)
 - Ne jamais poser de questions dans le terminal pendant que le wizard est ouvert
 - Si l'operateur dit "comme FilmPro" ou "similaire a [projet existant]", lis le project.yaml de reference dans template/project.yaml pour s'en inspirer
-- Le project.yaml doit etre COMPLET et autosuffisant — c'est la source de verite pour `/generate`
+- Le project.yaml doit etre COMPLET et autosuffisant : c'est la source de verite pour `/generate`
 - Les previews HTML sont generes par le script, pas a la main
-- Le branding n'est PAS demande dans le wizard — il est deja defini avant le cadrage
+- Le branding n'est PAS demande dans le wizard : il est deja defini avant le cadrage

@@ -1,5 +1,5 @@
 /**
- * Limites et quotas des API externes — source de vérité centralisée.
+ * Limites et quotas des API externes : source de vérité centralisée.
  *
  * search.ch : 1 000 req/mois, max 20 résultats/req (documenté officiellement)
  * Zefix : pas de limites publiées, maxEntries 250 (Swagger officiel), convention 1 req/sec

@@ -2,7 +2,7 @@
  * Résout l'image Open Graph d'une URL (meta og:image ou twitter:image).
  *
  * Le filtrage qualité (logo, placeholder, taille) est appliqué séparément par
- * le pipeline cron via checkOgImageQuality (./og-image-quality.ts) — séparation
+ * le pipeline cron via checkOgImageQuality (./og-image-quality.ts) : séparation
  * volontaire pour faciliter le test unitaire de la résolution pure.
  */
 

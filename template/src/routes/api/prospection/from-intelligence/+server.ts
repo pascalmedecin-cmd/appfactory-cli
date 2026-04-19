@@ -1,4 +1,4 @@
-// Bloc 4 — Endpoint auto-exécution prospection depuis un chip Veille structuré.
+// Bloc 4 : Endpoint auto-exécution prospection depuis un chip Veille structuré.
 // Reçoit {chip, item_id, report_id} depuis la UI /veille, route vers l'endpoint
 // SIMAP ou Zefix selon chip.kind, propage la traçabilité (source_intelligence_id/term).
 // Retourne le résultat d'import + URL de redirection /prospection avec filtres pré-appliqués.

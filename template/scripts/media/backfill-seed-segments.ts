@@ -41,7 +41,7 @@ function parseFilename(filename: string) {
   const prefix = parts[0]?.trim() ?? '';
   const rest = parts.slice(1).join(' ').trim();
   const segment = SEGMENT_MAP[normalize(prefix)] ?? null;
-  const description = rest ? `${prefix} — ${rest}` : prefix;
+  const description = rest ? `${prefix} : ${rest}` : prefix;
 
   const tags: string[] = [];
   if (segment) tags.push(segment);

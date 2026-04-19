@@ -1,6 +1,6 @@
-# AppFactory — CLAUDE.md
+# AppFactory : CLAUDE.md
 
-**Statut :** Phase C — Skills et templates HTML + module Veille sectorielle en production + pipeline images 4 niveaux (Flux 1.1 Pro Ultra + audits Vision) + email récap cron veille (gated) + export/import CSV + page /reporting + sous-projet `formation-ia/` (**S1 → S7 parcours marketing LIVRÉS, 12/12 modules en prod** + **chantier V2 roadmap 9/11 VALIDÉ post-S104** dont T9 Niveaux apprenant refondu multi-select libre : catalogue + ressources + matière pédago 111 entrées + 12 modules (3 fondations + 7 production + 1 analyse + 1 cadre) + 23 outils, audit fonctionnel `/audit-uiux` débloqué) + `/start` AppFactory en dispatcher 2 branches (FilmPro / Formation IA)
+**Statut :** Phase C, Skills et templates HTML + module Veille sectorielle en production + pipeline images 4 niveaux (Flux 1.1 Pro Ultra + audits Vision) + email récap cron veille (gated) + export/import CSV + page /reporting + sous-projet `formation-ia/` (**S1 → S7 parcours marketing LIVRÉS, 12/12 modules en prod** + **chantier V2 roadmap 9/11 VALIDÉ post-S104** dont T9 Niveaux apprenant refondu multi-select libre : catalogue + ressources + matière pédago 111 entrées + 12 modules (3 fondations + 7 production + 1 analyse + 1 cadre) + 23 outils, audit fonctionnel `/audit-uiux` débloqué) + `/start` AppFactory en dispatcher 2 branches (FilmPro / Formation IA)
 **Derniere mise a jour :** 2026-04-19 (session 104 formation-ia : refonte T9 mono-niveau_max → `niveaux_ouverts text[]` multi-select libre + modal conflit retrait. 2 commits prod `f71efc1` audit code T9 + `4adab94` refonte multi-select. 2 migrations SQL. Modal conflit 100% unit-tested, 0 smoke live. Gates svelte-check 575/0/0, vitest 169/169 (+12), build 1.79s. 0 modif côté CRM.)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
@@ -44,10 +44,10 @@ Pour travailler sur un sous-projet : `cd formation-ia/` puis lire son `CLAUDE.md
 # Stack : SvelteKit + Supabase + Vercel + Claude Code skills
 
 # Structure
-# skills/          — Skills Claude Code (cadrage, generate, deploy)
-# template/        — Template SvelteKit reutilisable (scaffold pour chaque app)
-# previews/        — Templates HTML Tailwind pour previsualisation client
-# scripts/         — Scripts utilitaires (yaml-to-config, etc.)
+# skills/ : Skills Claude Code (cadrage, generate, deploy)
+# template/ : Template SvelteKit reutilisable (scaffold pour chaque app)
+# previews/ : Templates HTML Tailwind pour previsualisation client
+# scripts/ : Scripts utilitaires (yaml-to-config, etc.)
 ```
 
 ---
@@ -76,11 +76,11 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## WORKFLOW 6 ETAPES
 
-1. **Cadrage** — Dialogue naturel terminal, pages HTML de validation client
-2. **Generation** — Scaffold SvelteKit complet depuis specs (project.yaml) + design system code-first
-3. **Preview et tests** — URL Vercel preview, tests automatises, client teste et donne feedback
-4. **Iteration** — Feedback client → modifications code → redeploy (minutes)
-5. **Mise en production** — Domaine personnalise, base propre, acces client
+1. **Cadrage** : Dialogue naturel terminal, pages HTML de validation client
+2. **Generation** : Scaffold SvelteKit complet depuis specs (project.yaml) + design system code-first
+3. **Preview et tests** : URL Vercel preview, tests automatises, client teste et donne feedback
+4. **Iteration** : Feedback client → modifications code → redeploy (minutes)
+5. **Mise en production** : Domaine personnalise, base propre, acces client
 
 ---
 
@@ -104,10 +104,10 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ## PLANNING INITIAL
 
-→ Planning Phase A (jours 1-9, tous ✓) archive dans archive/planning-phase-a.md — consulter si besoin de comprendre l'ordre de construction du CRM
+→ Planning Phase A (jours 1-9, tous ✓) archive dans archive/planning-phase-a.md : consulter si besoin de comprendre l'ordre de construction du CRM
 → Phase B ANNULEE (decision 2026-04-04 : pas de Figma Pro)
 
-### Phase C — Skills et templates HTML (jours 8-12)
+### Phase C : Skills et templates HTML (jours 8-12)
 - Jour 8-9 : Skill cadrage (dialogue -> project.yaml -> 4 pages HTML)
 - Jour 10-11 : Skill generate (project.yaml + tokens -> SvelteKit scaffold)
 - Jour 12 : Skill deploy (push -> Vercel preview/prod, test end-to-end)
@@ -122,7 +122,7 @@ Pilotage depuis le terminal via Claude Code skills.
 - Figma Pro abandonne (deep research 2026-04-04 : ratio cout/benefice defavorable pour solopreneur code-first)
 - Design = approche code-first : composants custom + kits Figma Community gratuits comme inspiration
 - Validation client = prototypes Vercel preview (pas de maquettes Figma)
-- CSS scoped obligatoire pour le layout structurel (sidebar, header, nav) — Tailwind responsive (md:hidden, md:block) ne fonctionne pas avec Tailwind v4 pour ce cas
+- CSS scoped obligatoire pour le layout structurel (sidebar, header, nav) : Tailwind responsive (md:hidden, md:block) ne fonctionne pas avec Tailwind v4 pour ce cas
 - HTML temporaires pour previsualisations client a chaque etape cle
 - Ancien projet AppFactory v1 (Apps Script) = archive consultable, pas de migration
 
@@ -170,12 +170,12 @@ Pilotage depuis le terminal via Claude Code skills.
 - **Accessibilité** : focus trap clavier (trapFocus action) sur toutes les modales et slide-outs, role="dialog" aria-modal="true", confirmations destructives via ConfirmModal (plus de window.confirm)
 - **Pagination serveur** : page prospection paginée côté serveur (URL params page/sort/dir/source/canton/statut/temp/q, Supabase count+range, 25/page)
 - **Cron** : `/api/cron/signaux` quotidien 6h (veille Zefix+SIMAP) + `/api/cron/alertes` quotidien 7h + `/api/cron/nettoyage-crm` mensuel 3h le 1er (archive entreprises radiees Zefix, batch 200 FIFO) + `/api/cron/intelligence` hebdo jeudi 7h UTC (Opus 4.6 + génération fal.ai Flux + audit Vision Sonnet, maxDuration=300s contrainte Hobby) + `/api/cron/intelligence-archive` quotidien 4h. Tous sécurisés par CRON_SECRET (Vercel prod), service role client (bypass RLS). Cron `media-enrich` SUPPRIMÉ session 67.
-- **SUPABASE_SERVICE_ROLE_KEY** : configuree local .env + Vercel prod (preview non configure — projet sans repo Git lie)
+- **SUPABASE_SERVICE_ROLE_KEY** : configuree local .env + Vercel prod (preview non configure, projet sans repo Git lie)
 
 ## WORKFLOW APPFACTORY
 
 ```
-/start (terminal) — menu standard + options projet
+/start (terminal) : menu standard + options projet
   ├─ [3] Modifier app existante → travail direct dans le code
   ├─ [4] Nouvelle app (entreprise existante) → /cadrage wizard HTML
   └─ [5] Nouvelle entreprise → wizard entreprise (navigateur) → /cadrage wizard HTML
@@ -190,19 +190,19 @@ Pilotage depuis le terminal via Claude Code skills.
 ```
 
 Fichiers cles :
-- `registry.yaml` — registre entreprises/apps (source de verite)
-- `branding/_catalogue.yaml` — 5 themes avec tokens complets
-- `branding/_default.yaml` — theme par defaut (standard)
-- `branding/[slug].yaml` — branding par entreprise
-- `wizard/cadrage/` — 5 pages HTML + server.py + shared.css/js + logo
-- `wizard/entreprise/` — wizard pre-cadrage entreprise (option 3), symlinks vers cadrage/shared.*
-- `scripts/generate-branding-preview.ts` — genere previews/branding.html
+- `registry.yaml` : registre entreprises/apps (source de verite)
+- `branding/_catalogue.yaml` : 5 themes avec tokens complets
+- `branding/_default.yaml` : theme par defaut (standard)
+- `branding/[slug].yaml` : branding par entreprise
+- `wizard/cadrage/` : 5 pages HTML + server.py + shared.css/js + logo
+- `wizard/entreprise/` : wizard pre-cadrage entreprise (option 3), symlinks vers cadrage/shared.*
+- `scripts/generate-branding-preview.ts` : genere previews/branding.html
 
 ## DOCUMENTATION
 
-- `docs/SPECS_PROSPECTION.md` — Specs completes module prospection (sources, modele, scoring, UI, dedup)
+- `docs/SPECS_PROSPECTION.md` : Specs completes module prospection (sources, modele, scoring, UI, dedup)
 
-→ Inventaire composants EN PLACE (11 composants, 6 pages, 4 API, scripts) archive dans archive/inventaire-composants.md — consulter si besoin de lister les composants existants avant d'en creer de nouveaux
+→ Inventaire composants EN PLACE (11 composants, 6 pages, 4 API, scripts) archive dans archive/inventaire-composants.md : consulter si besoin de lister les composants existants avant d'en creer de nouveaux
 
 ### Condensé thématique (sessions 9-16)
 
@@ -260,13 +260,13 @@ Fichiers cles :
 
 **Infra / Skills :**
 - registry.yaml registre central, catalogue branding 5 themes, preview HTML generee
-- Branding : aucun skill ne prescrit font/couleur — branding/*.yaml est l'arbitre unique
+- Branding : aucun skill ne prescrit font/couleur, branding/*.yaml est l'arbitre unique
 - 4 skills design coherents (refactoring-ui, ux-guide, frontend-design, theme-factory) : 0 conflit
 
 **Prerequis :**
 - Aucun bloquant technique
 
-→ Audit CRM FilmPro 2026-04-04 (4 sprints, tous corriges) archive dans archive/audit-crm-2026-04-04.md — consulter si regression securite/qualite/tests OU comme reference methodologique pour le prochain audit (5 agents, scoring par axe, sprints par severite)
+→ Audit CRM FilmPro 2026-04-04 (4 sprints, tous corriges) archive dans archive/audit-crm-2026-04-04.md : consulter si regression securite/qualite/tests OU comme reference methodologique pour le prochain audit (5 agents, scoring par axe, sprints par severite)
 
 ---
 
@@ -288,24 +288,24 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [x] ~~**[EXÉCUTABLE]** Email récap veille post-cron~~ — Fait 2026-04-17 session 70 : commit `e0f0b32` (modules `cost-tracker.ts` + `email-recap.ts` + hook `run-generation.ts`, 27 tests unit). Gate par `EMAIL_RECAP_ENABLED` désactivé par défaut. Envoi via Resend fetch direct (pas de dep npm). Instrumentation Phase 1/2 Opus 4.7 + Brief/Vision Sonnet 4.6 + fal.ai counter.
-- [x] ~~**[EXÉCUTABLE — Bloc 7]** Import/export CSV + Dashboard/reporting~~ — Fait 2026-04-17 session 70 : commit `12d8bc5` (3 endpoints GET `/api/export/[entity]`, script `scripts/import-csv.ts` CLI avec parser RFC 4180 + Zod validation + --dry-run, page `/reporting` avec 4 KPIs + 2 bar charts SVG inline, 50 tests unit).
-- [x] ~~Migration cron veille Opus 4.7 complète~~ — Fait 2026-04-17 session 70 : commit `e1353ba` retire `temperature` (rejeté 400 sur 4.7) + upgrade `effort: 'high'` → `'xhigh'` sur Phase 1 + Phase 2. Bug latent pré-migration évité (cron jeudi aurait planté).
+- [x] ~~**[EXÉCUTABLE]** Email récap veille post-cron~~ : Fait 2026-04-17 session 70 : commit `e0f0b32` (modules `cost-tracker.ts` + `email-recap.ts` + hook `run-generation.ts`, 27 tests unit). Gate par `EMAIL_RECAP_ENABLED` désactivé par défaut. Envoi via Resend fetch direct (pas de dep npm). Instrumentation Phase 1/2 Opus 4.7 + Brief/Vision Sonnet 4.6 + fal.ai counter.
+- [x] ~~**[EXÉCUTABLE : Bloc 7]** Import/export CSV + Dashboard/reporting~~, Fait 2026-04-17 session 70 : commit `12d8bc5` (3 endpoints GET `/api/export/[entity]`, script `scripts/import-csv.ts` CLI avec parser RFC 4180 + Zod validation + --dry-run, page `/reporting` avec 4 KPIs + 2 bar charts SVG inline, 50 tests unit).
+- [x] ~~Migration cron veille Opus 4.7 complète~~ : Fait 2026-04-17 session 70 : commit `e1353ba` retire `temperature` (rejeté 400 sur 4.7) + upgrade `effort: 'high'` → `'xhigh'` sur Phase 1 + Phase 2. Bug latent pré-migration évité (cron jeudi aurait planté).
 
-- [ ] **[EXÉCUTABLE — PRIORITÉ]** QA cadrage images /veille W16 (rejet Pascal fin session 67) : parcours visuel des 2 images W16 actuelles, listing problèmes précis (cadrage, sujet, type schéma vs photo, pertinence), puis proposition structurée (audit Vision Opus vs Sonnet, durcir seuil ≥7 ou ≥8, étendre filtrage og:image pour rejeter schémas/infographies, retry fal.ai si rejet, éventuel upgrade Vercel Pro pour libérer 300s). Script test isolé `scripts/test-fal-prompt.ts` à relancer avec ajustements avant toute modif pipeline. Spec/contexte → voir `memory/project_qa_images_veille.md`.
-- [ ] **[EXÉCUTABLE — ~10 min]** Activer email récap veille (prod). (a) Ajouter env Vercel prod : `EMAIL_RECAP_ENABLED=true` + `RESEND_API_KEY=re_...` (réutiliser la clé Resend existante côté Supabase SMTP OTP, cf. `memory/reference_resend_smtp.md` — ne pas en créer une nouvelle). (b) Premier test live = cron jeudi 23 avril 7h UTC (ou trigger manuel via `/api/intelligence/trigger` après activation). (c) Vérifier email reçu `pascal@filmpro.ch` : subject W{week} + split coûts cohérent vs logs Vercel. Modules concernés : `template/src/lib/server/intelligence/cost-tracker.ts` + `email-recap.ts`. Spec impl : `memory/project_email_veille_recap.md` + commit `e0f0b32`.
-- [ ] **[EXÉCUTABLE — ~20 min]** Smoke test livrables batch 1g (prod + local). (a) Page reporting : ouvrir https://filmpro-crm.vercel.app/reporting, vérifier 4 KPIs + 2 bar charts SVG + 3 boutons export. Pas dans nav (`config.navigation` auto-généré depuis project.yaml). (b) Export CSV : télécharger `/api/export/{contacts,entreprises,leads}` → vérifier accents préservés à l'ouverture Excel (BOM UTF-8). (c) Import CSV CLI : `cd template && npx tsx scripts/import-csv.ts contacts <file.csv> --dry-run` avec headers snake_case (`nom`, `prenom`, `email_professionnel`, `canton`, etc.). Ref : commit `12d8bc5`.
-- [ ] **[EXÉCUTABLE — ~30 min — hygiène doc]** Actualiser 2 commandes custom AppFactory obsolètes (audit fait 2026-04-17 session 70 via tâche 1j). (a) `.claude/commands/cadrage.md` ligne 8 : remplacer « Appele depuis `/start` (option 2 ou 3) » par « CRM FilmPro → [4] Créer une app ou [5] Nouveau projet entreprise » (dispatcher actuel). (b) `.claude/commands/deploy.md` Phase 3 + Phase 4 : basculer en flow GitHub→Vercel auto par défaut (`git push origin main` = deploy prod auto), `vercel` CLI devenant fallback explicite (projet pas lié, hotfix hors flow git). (c) `.claude/commands/generate.md` : GARDER tel quel (cohérent avec workflow actuel, valider lors du prochain scaffold réel).
+- [ ] **[EXÉCUTABLE : PRIORITÉ]** QA cadrage images /veille W16 (rejet Pascal fin session 67) : parcours visuel des 2 images W16 actuelles, listing problèmes précis (cadrage, sujet, type schéma vs photo, pertinence), puis proposition structurée (audit Vision Opus vs Sonnet, durcir seuil ≥7 ou ≥8, étendre filtrage og:image pour rejeter schémas/infographies, retry fal.ai si rejet, éventuel upgrade Vercel Pro pour libérer 300s). Script test isolé `scripts/test-fal-prompt.ts` à relancer avec ajustements avant toute modif pipeline. Spec/contexte → voir `memory/project_qa_images_veille.md`.
+- [ ] **[EXÉCUTABLE : ~10 min]** Activer email récap veille (prod). (a) Ajouter env Vercel prod : `EMAIL_RECAP_ENABLED=true` + `RESEND_API_KEY=re_...` (réutiliser la clé Resend existante côté Supabase SMTP OTP, cf. `memory/reference_resend_smtp.md`, ne pas en créer une nouvelle). (b) Premier test live = cron jeudi 23 avril 7h UTC (ou trigger manuel via `/api/intelligence/trigger` après activation). (c) Vérifier email reçu `pascal@filmpro.ch` : subject W{week} + split coûts cohérent vs logs Vercel. Modules concernés : `template/src/lib/server/intelligence/cost-tracker.ts` + `email-recap.ts`. Spec impl : `memory/project_email_veille_recap.md` + commit `e0f0b32`.
+- [ ] **[EXÉCUTABLE : ~20 min]** Smoke test livrables batch 1g (prod + local). (a) Page reporting : ouvrir https://filmpro-crm.vercel.app/reporting, vérifier 4 KPIs + 2 bar charts SVG + 3 boutons export. Pas dans nav (`config.navigation` auto-généré depuis project.yaml). (b) Export CSV : télécharger `/api/export/{contacts,entreprises,leads}` → vérifier accents préservés à l'ouverture Excel (BOM UTF-8). (c) Import CSV CLI : `cd template && npx tsx scripts/import-csv.ts contacts <file.csv> --dry-run` avec headers snake_case (`nom`, `prenom`, `email_professionnel`, `canton`, etc.). Ref : commit `12d8bc5`.
+- [ ] **[EXÉCUTABLE : ~30 min, hygiène doc]** Actualiser 2 commandes custom AppFactory obsolètes (audit fait 2026-04-17 session 70 via tâche 1j). (a) `.claude/commands/cadrage.md` ligne 8 : remplacer « Appele depuis `/start` (option 2 ou 3) » par « CRM FilmPro → [4] Créer une app ou [5] Nouveau projet entreprise » (dispatcher actuel). (b) `.claude/commands/deploy.md` Phase 3 + Phase 4 : basculer en flow GitHub→Vercel auto par défaut (`git push origin main` = deploy prod auto), `vercel` CLI devenant fallback explicite (projet pas lié, hotfix hors flow git). (c) `.claude/commands/generate.md` : GARDER tel quel (cohérent avec workflow actuel, valider lors du prochain scaffold réel).
 - [ ] **[BLOQUÉ ← observation 3 régens W17/W18/W19]** Décision retrait détection `url_mutated` : si 0 occurrence confirmée sur W17+W18+W19, retirer code défensif dans `generate.ts` (set candidateUrlSet + console.warn [URL_MUTATED] + bascule speculatif + champ Zod `verification.url_mutated`). Si ≥1 occurrence → durcir prompt Phase 2 OU hard reject. Ref : commit `921e71a` session 63.
-- [ ] **[BLOQUÉ ← session page dashboard dédiée]** Dashboard coûts CRM : page `/dashboard/couts` avec historique persistant table `cost_audit_runs` + graphique 12 semaines + split par cron/catégorie + métriques YTD + alerte seuil. Spec complète → voir `memory/project_dashboard_costs_crm.md`. Note : instrumentation coûts livrée cette session (`cost-tracker.ts` commit `e0f0b32`) — reste la table DB + la page dashboard.
-- [ ] **[EXÉCUTABLE — option — à évaluer après 3-4 régens prod]** Audit Vision cadrage niveau 3 fallback media_library : pour chaque pick top-N dans la lib, demander à Vision si cadrage/composition OK pour og:image 16:9. Si rejet → top-N+1. Objectif : justifier décision crop/positionnement comme demandé Pascal. Coût estimé ~$0.09/sem (9 items × $0.01 Sonnet). Non urgent tant que lib 44 images professionnelles Pexels/Unsplash/seed servent cadrage déjà correct.
-- [ ] **[EXÉCUTABLE — Bloc 5 — autonome ~10h, 3-4 sessions]** Golden standards UX/UI complets CRM (gabarit exclusif `/prospection`, wizards AppFactory hors périmètre). Phase 1 extraction + Phase 2 rédaction `docs/GOLDEN_STANDARDS.md` (absorbe + remplace `docs/GOLDEN_STANDARDS_RESPONSIVE.md`) + Phase 3 audit delta par page + Phase 4 application (1 commit atomique par page, Vitest + Playwright + screenshots before/after Chrome MCP après chaque).
+- [ ] **[BLOQUÉ ← session page dashboard dédiée]** Dashboard coûts CRM : page `/dashboard/couts` avec historique persistant table `cost_audit_runs` + graphique 12 semaines + split par cron/catégorie + métriques YTD + alerte seuil. Spec complète → voir `memory/project_dashboard_costs_crm.md`. Note : instrumentation coûts livrée cette session (`cost-tracker.ts` commit `e0f0b32`), reste la table DB + la page dashboard.
+- [ ] **[EXÉCUTABLE : option, à évaluer après 3-4 régens prod]** Audit Vision cadrage niveau 3 fallback media_library : pour chaque pick top-N dans la lib, demander à Vision si cadrage/composition OK pour og:image 16:9. Si rejet → top-N+1. Objectif : justifier décision crop/positionnement comme demandé Pascal. Coût estimé ~$0.09/sem (9 items × $0.01 Sonnet). Non urgent tant que lib 44 images professionnelles Pexels/Unsplash/seed servent cadrage déjà correct.
+- [ ] **[EXÉCUTABLE : Bloc 5, autonome ~10h, 3-4 sessions]** Golden standards UX/UI complets CRM (gabarit exclusif `/prospection`, wizards AppFactory hors périmètre). Phase 1 extraction + Phase 2 rédaction `docs/GOLDEN_STANDARDS.md` (absorbe + remplace `docs/GOLDEN_STANDARDS_RESPONSIVE.md`) + Phase 3 audit delta par page + Phase 4 application (1 commit atomique par page, Vitest + Playwright + screenshots before/after Chrome MCP après chaque).
   - Périmètre complet : charte graphique (palette workflow ardoise/violet/ambre/sauge, Inter, tokens CSS, radius, shadows, accents FR), layout/responsive, composants (boutons, cards, modales, slide-outs, stepper, badges, tables, filtres multi-select, pagination serveur, batch actions bar), états (hover/focus/disabled/loading/empty/error/success), feedback (toasts, ConfirmModal, messages scoped), micro-interactions, accessibilité (focus trap, touch targets 44px, aria, contraste), ton/copie (labels explicites, pas d'« Autre », accents FR)
   - Règle table-fixed (session 48) : `table-fixed` obligatoire dès contraintes largeur sur td/th, préférer `w-[X%]` aux pixels
   - Ingérer palette /prospection ET patterns /veille refondue (Bloc 1 livré)
 - [ ] **[BLOQUÉ ← attente PAT Figma]** Figma API : Personal Access Token + plugin MCP figma scope projet
-- [ ] **[EXÉCUTABLE — premier run e2e]** Tester `/golden-standard` + `/audit-uiux` Express sur 1 page CRM. Système construit le 2026-04-14 sans projet cible, jamais éprouvé en interaction browser réelle. Checklist complète + angles morts (wizard HTML, extracteur, auto-close onglet, firewall macOS, détection routes) → voir `~/.claude/projects/-Users-pascal--claude/memory/project_audit_uiux_first_e2e_test.md`. Bugs trouvés → `parked.md` ou tâche fix dans CLAUDE.md global.
-- [ ] **[BLOQUÉE ← Tâche architecture FilmPro — ~/.claude/CLAUDE.md Bloc 6 — session hygiène dédiée ~3-4h]** Harmoniser production PDF FilmPro : aligner `playbook-pdf` (WeasyPrint + charte-pdf-playbook) et `filmpro-pdf-lite` (reportlab + branding-lite) sur un standard best-in-class UNIQUE. 2 process différents pour fonction similaire = anomalie. 4 options évaluées ([1] WeasyPrint base / [2] reportlab base / [3] coexistence documentée + harmoniser gaps G1-G3-G5 / [4] moteur tiers rejeté). Reco [3] minimum viable. 5 gaps identifiés (G1 QA FR, G2 audit post-build, G3 fixtures, G4 dépendance Marketing fonts, G5 pointeur REDACTION-FR.md). Zéro régression sur PDFs existants. Emplacement de cette tâche susceptible de migrer vers `FilmPro/CLAUDE.md` si Tâche architecture adopte hub symlinks. → voir `memory/project_filmpro_pdf_harmonization.md`
+- [ ] **[EXÉCUTABLE : premier run e2e]** Tester `/golden-standard` + `/audit-uiux` Express sur 1 page CRM. Système construit le 2026-04-14 sans projet cible, jamais éprouvé en interaction browser réelle. Checklist complète + angles morts (wizard HTML, extracteur, auto-close onglet, firewall macOS, détection routes) → voir `~/.claude/projects/-Users-pascal--claude/memory/project_audit_uiux_first_e2e_test.md`. Bugs trouvés → `parked.md` ou tâche fix dans CLAUDE.md global.
+- [ ] **[BLOQUÉE ← Tâche architecture FilmPro : ~/.claude/CLAUDE.md Bloc 6, session hygiène dédiée ~3-4h]** Harmoniser production PDF FilmPro : aligner `playbook-pdf` (WeasyPrint + charte-pdf-playbook) et `filmpro-pdf-lite` (reportlab + branding-lite) sur un standard best-in-class UNIQUE. 2 process différents pour fonction similaire = anomalie. 4 options évaluées ([1] WeasyPrint base / [2] reportlab base / [3] coexistence documentée + harmoniser gaps G1-G3-G5 / [4] moteur tiers rejeté). Reco [3] minimum viable. 5 gaps identifiés (G1 QA FR, G2 audit post-build, G3 fixtures, G4 dépendance Marketing fonts, G5 pointeur REDACTION-FR.md). Zéro régression sur PDFs existants. Emplacement de cette tâche susceptible de migrer vers `FilmPro/CLAUDE.md` si Tâche architecture adopte hub symlinks. → voir `memory/project_filmpro_pdf_harmonization.md`
 
 ### Séquence
 
@@ -313,7 +313,7 @@ Fichiers cles :
 2. **Activer email récap veille prod** (~10 min, débloque le cron jeudi 23 avril).
 3. **Smoke test livrables batch 1g** (~20 min, valide reporting + export + import CLI).
 4. **Actualiser cadrage.md + deploy.md** (~30 min, hygiène doc).
-5. **Bloc 5 — Golden standards UX/UI** (gros chantier 3-4 sessions).
+5. **Bloc 5 : Golden standards UX/UI** (gros chantier 3-4 sessions).
 6. **Audit Vision cadrage niveau 3** (dépend conclusions QA #1).
 7. **Décision retrait url_mutated** (bloqué W17+W18+W19).
 8. **Dashboard coûts CRM** (bloqué session page dashboard dédiée).

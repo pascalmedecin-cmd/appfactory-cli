@@ -9,7 +9,7 @@
  * --dry-run : valide et affiche le rapport, n'insère rien en DB.
  *
  * Contraintes :
- *  - Utilise SUPABASE_SERVICE_ROLE_KEY (.env.local) — bypass RLS
+ *  - Utilise SUPABASE_SERVICE_ROLE_KEY (.env.local) : bypass RLS
  *  - Valide chaque ligne via les Zod schemas existants dans $lib/schemas
  *  - Headers CSV normalisés en snake_case (case-insensitive, espaces → _)
  *  - Stoppe avant INSERT si erreurs (affiche rapport, code de sortie 1)

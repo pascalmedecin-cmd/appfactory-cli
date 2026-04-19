@@ -1,4 +1,4 @@
-# Specifications — Module Prospection FilmPro CRM
+# Specifications : Module Prospection FilmPro CRM
 
 **Version :** 1.0
 **Date :** 2026-04-02
@@ -8,7 +8,7 @@
 
 ## 1. Vision
 
-Un flux continu de leads B2B qualifies, scores et filtrables, alimentes par des sources publiques suisses gratuites. L'utilisateur ne cherche pas — les leads viennent a lui, pre-qualifies et dedupliques.
+Un flux continu de leads B2B qualifies, scores et filtrables, alimentes par des sources publiques suisses gratuites. L'utilisateur ne cherche pas : les leads viennent a lui, pre-qualifies et dedupliques.
 
 **Utilisateurs :** 3 fondateurs FilmPro (commerciaux terrain, pas tech).
 **Frequence :** Usage quotidien (consultation alertes) + hebdomadaire (imports bulk).
@@ -20,7 +20,7 @@ Un flux continu de leads B2B qualifies, scores et filtrables, alimentes par des 
 ### 2.1 Zefix REST API (registre du commerce)
 
 - **Endpoint :** `https://www.zefix.admin.ch/ZefixPublicREST/api/v1`
-- **Auth :** Credentials gratuits (demande par email a zefix@bj.admin.ch) — DEMANDE EN COURS
+- **Auth :** Credentials gratuits (demande par email a zefix@bj.admin.ch), DEMANDE EN COURS
 - **Donnees :** raison sociale, adresse, UID, but social, capital nominal, organe de revision, publications FOSC, fusions/reprises, anciens noms
 - **Pas disponible :** noms des dirigeants (extraits cantonaux uniquement), telephone, email, site web
 - **Usage :** Import bulk par canton + mots-cles dans le but social, veille FOSC quotidienne (nouvelles inscriptions)
@@ -29,7 +29,7 @@ Un flux continu de leads B2B qualifies, scores et filtrables, alimentes par des 
 
 - **Endpoint :** `https://lindas.admin.ch/query/`
 - **Auth :** Aucune (acces libre)
-- **Donnees :** Sous-ensemble de Zefix REST (nom, adresse, UID, but social — sans capital, revision, FOSC)
+- **Donnees :** Sous-ensemble de Zefix REST (nom, adresse, UID, but social, sans capital, revision, FOSC)
 - **Usage :** Bulk queries SPARQL quand Zefix REST est indisponible ou pour des jointures complexes avec d'autres datasets federaux
 
 ### 2.3 SIMAP (marches publics)
@@ -59,7 +59,7 @@ Un flux continu de leads B2B qualifies, scores et filtrables, alimentes par des 
 
 - **Acces :** Via l'API Zefix REST (endpoint publications SOGC par date)
 - **Donnees :** Nouvelles inscriptions au registre du commerce, modifications, radiations
-- **Usage :** Veille quotidienne — nouvelles entreprises construction/batiment = leads chauds (besoin de tout au demarrage)
+- **Usage :** Veille quotidienne, nouvelles entreprises construction/batiment = leads chauds (besoin de tout au demarrage)
 
 ---
 
@@ -169,13 +169,13 @@ CREATE POLICY "authenticated_full_access" ON recherches_sauvegardees
 |---|---|---|---|---|---|---|
 | raison_sociale | `name` | `schema:legalName` | pouvoir adjudicateur | maitre d'ouvrage | `name` | `name` |
 | adresse | `address.street` | `locn:thoroughfare` | adresse avis | adresse chantier | `street` | `address` |
-| npa | `address.swissZipCode` | `locn:postCode` | — | — | `zip` | — |
-| localite | `address.city` | `locn:postName` | — | commune | `city` | `city` |
+| npa | `address.swissZipCode` | `locn:postCode` | – |, | `zip` | – |
+| localite | `address.city` | `locn:postName` | – | commune | `city` | `city` |
 | canton | `canton` | `admin:municipality` → canton | canton publication | `GE` (fixe) | deduit NPA | `canton` |
-| description | `purpose` | `schema:description` | objet du marche | description projet | — | but social |
-| montant | `capitalNominal` | — | valeur estimee | — | — | — |
+| description | `purpose` | `schema:description` | objet du marche | description projet | – | but social |
+| montant | `capitalNominal` | – | valeur estimee | – | : | – |
 | source_id | UID (CHE-xxx) | UID | n° publication | n° autorisation | tel.search ID | n° FOSC |
-| source_url | lien zefix.ch | — | lien simap.ch | lien SITG | — | lien shab.ch |
+| source_url | lien zefix.ch | – | lien simap.ch | lien SITG | – | lien shab.ch |
 | secteur_detecte | parse `purpose` | parse `description` | code CPV | type permis | categorie | parse but social |
 
 ---
@@ -285,8 +285,8 @@ Les doublons cross-source sont signales par un badge, pas fusionnes automatiquem
 │  └────────────────────────────────────────────────────────┘  │
 │                                                              │
 │  ┌─ Alertes sauvegardees ─────────────────────────────────┐  │
-│  │ "Architectes GE+VD" — 4 nouveaux   [Voir]              │  │
-│  │ "HVAC Suisse romande" — 0 nouveau                      │  │
+│  │ "Architectes GE+VD" : 4 nouveaux   [Voir]              │  │
+│  │ "HVAC Suisse romande" : 0 nouveau                      │  │
 │  └────────────────────────────────────────────────────────┘  │
 │                                                              │
 │  234 leads  │  Tri: Score ▾                                  │
@@ -340,7 +340,7 @@ Click sur un lead → panneau lateral (pas une nouvelle page) :
 │  ── Coordonnees ──                     │
 │  Adresse : Rue du Lac 12, 1201 Geneve  │
 │  Tel : +41 22 123 45 67 (search.ch)    │
-│  Web : —                               │
+│  Web : : │
 │                                        │
 │  ── But social ──                      │
 │  "Bureau d'architectes specialise      │
@@ -463,20 +463,20 @@ Le dashboard CRM affiche :
 
 ## 12. Roadmap implementation
 
-### Phase 1 (Jour 3-4) — Structure
+### Phase 1 (Jour 3-4) : Structure
 - Table `prospect_leads` + `recherches_sauvegardees` dans Supabase
 - Page `/prospection` avec liste, filtres, actions batch, slide-out
 - Import manuel (saisie directe)
 - Scoring automatique
 - Transfert vers CRM
 
-### Phase 2 (Jour 5-6) — Sources
+### Phase 2 (Jour 5-6) : Sources
 - Integration Zefix REST (quand credentials recus)
 - Integration LINDAS SPARQL (fallback immediat)
 - Integration search.ch (enrichissement)
 - Veille FOSC via Zefix
 
-### Phase 3 (Jour 7+) — Avance
+### Phase 3 (Jour 7+) : Avance
 - Integration SIMAP
 - Integration SITG (GE)
 - Alertes automatiques (cron jobs)

@@ -115,7 +115,7 @@ function htmlShell(title: string, body: string, navActive: string): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${escHtml(title)} — ${escHtml(app.name)}</title>
+  <title>${escHtml(title)} : ${escHtml(app.name)}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=${encodeURIComponent(font)}:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -163,7 +163,7 @@ function htmlShell(title: string, body: string, navActive: string): string {
 
   <!-- Footer -->
   <footer class="border-t mt-16 py-6 text-center text-sm text-gray-400">
-    ${escHtml(app.name)} — Document de cadrage genere par AppFactory
+    ${escHtml(app.name)} : Document de cadrage genere par AppFactory
   </footer>
 </body>
 </html>`;
@@ -194,7 +194,7 @@ function generatePitch(): string {
         <div class="text-sm text-gray-500 mt-1">Pages</div>
       </div>
       <div class="bg-white rounded-xl shadow p-6 text-center">
-        <div class="text-3xl font-bold text-primary">${entityCount || '—'}</div>
+        <div class="text-3xl font-bold text-primary">${entityCount || '–'}</div>
         <div class="text-sm text-gray-500 mt-1">Entites</div>
       </div>
       <div class="bg-white rounded-xl shadow p-6 text-center">
@@ -420,7 +420,7 @@ function generateSpecs(): string {
 		sections.push(`
     <div class="bg-white rounded-xl shadow p-8 mb-6">
       <h3 class="text-xl font-semibold text-primary-dark mb-4">Scoring</h3>
-      <div class="text-sm mb-4">Score maximum : <span class="font-bold text-primary">${s.max_points || '—'} points</span></div>
+      <div class="text-sm mb-4">Score maximum : <span class="font-bold text-primary">${s.max_points || '–'} points</span></div>
       ${s.labels ? `
       <div class="flex gap-3">
         ${Object.entries(s.labels).map(([label, seuil]) => `

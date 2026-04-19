@@ -22,12 +22,12 @@ scripts/         Scripts utilitaires (extraction tokens, etc.)
 
 ## Workflow
 
-1. **Cadrage** — Dialogue naturel, pages HTML de validation
-2. **Design Figma** — Maquettes generees, client commente
-3. **Extraction tokens** — Figma -> tailwind.config
-4. **Generation** — Scaffold SvelteKit depuis specs + tokens
-5. **Preview** — URL Vercel, tests automatises, client teste
-6. **Production** — Domaine personnalise, base propre
+1. **Cadrage** : Dialogue naturel, pages HTML de validation
+2. **Design Figma** : Maquettes generees, client commente
+3. **Extraction tokens** : Figma -> tailwind.config
+4. **Generation** : Scaffold SvelteKit depuis specs + tokens
+5. **Preview** : URL Vercel, tests automatises, client teste
+6. **Production** : Domaine personnalise, base propre
 
 ## Liens
 

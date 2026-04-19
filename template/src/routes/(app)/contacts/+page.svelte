@@ -91,7 +91,7 @@
 	const columns = [
 		{ key: 'nom', label: 'Nom', sortable: true, class: 'w-[12%]' },
 		{ key: 'prenom', label: 'Prénom', sortable: true, class: 'w-[10%]' },
-		{ key: 'entreprise', label: 'Entreprise', sortable: true, class: 'w-[15%]', render: (r: Contact) => r.entreprises?.raison_sociale ?? '—' },
+		{ key: 'entreprise', label: 'Entreprise', sortable: true, class: 'w-[15%]', render: (r: Contact) => r.entreprises?.raison_sociale ?? '–' },
 		{ key: 'role_fonction', label: 'Fonction', sortable: true, class: 'w-[12%]' },
 		{ key: 'email_professionnel', label: 'Email', class: 'w-[20%]' },
 		{ key: 'telephone', label: 'Téléphone', class: 'w-[15%] whitespace-nowrap' },
@@ -175,13 +175,13 @@
 		searchPlaceholder="Rechercher un contact…"
 	>
 		{#snippet row(contact, _i)}
-			<td class="px-4 py-2.5 font-medium text-text">{contact.nom ?? '—'}</td>
-			<td class="px-4 py-2.5 text-text">{contact.prenom ?? '—'}</td>
-			<td class="px-4 py-2.5 text-text">{contact.entreprises?.raison_sociale ?? '—'}</td>
-			<td class="px-4 py-2.5 text-text">{contact.role_fonction ?? '—'}</td>
-			<td class="px-4 py-2.5 text-text">{contact.email_professionnel ?? '—'}</td>
-			<td class="px-4 py-2.5 text-text">{contact.telephone ?? '—'}</td>
-			<td class="px-4 py-2.5 text-text w-20">{contact.canton ?? '—'}</td>
+			<td class="px-4 py-2.5 font-medium text-text">{contact.nom ?? '–'}</td>
+			<td class="px-4 py-2.5 text-text">{contact.prenom ?? '–'}</td>
+			<td class="px-4 py-2.5 text-text">{contact.entreprises?.raison_sociale ?? '–'}</td>
+			<td class="px-4 py-2.5 text-text">{contact.role_fonction ?? '–'}</td>
+			<td class="px-4 py-2.5 text-text">{contact.email_professionnel ?? '–'}</td>
+			<td class="px-4 py-2.5 text-text">{contact.telephone ?? '–'}</td>
+			<td class="px-4 py-2.5 text-text w-20">{contact.canton ?? '–'}</td>
 			<td class="px-4 py-2.5 w-24">
 				<Badge label={contact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(contact.statut_qualification)} />
 			</td>
@@ -213,7 +213,7 @@
 						</span>
 					{/if}
 					<div>
-						<p class="font-medium text-text">{selectedContact.entreprises?.raison_sociale ?? '—'}</p>
+						<p class="font-medium text-text">{selectedContact.entreprises?.raison_sociale ?? '–'}</p>
 						<p class="text-xs text-text-muted">{selectedContact.role_fonction ?? 'Fonction non renseignée'}</p>
 					</div>
 				</div>
@@ -223,32 +223,32 @@
 				{#if !selectedContact.entreprises?.raison_sociale}
 					<div>
 						<span class="text-text-muted">Fonction</span>
-						<p class="font-medium text-text">{selectedContact.role_fonction ?? '—'}</p>
+						<p class="font-medium text-text">{selectedContact.role_fonction ?? '–'}</p>
 					</div>
 				{/if}
 				<div>
 					<span class="text-text-muted">Email</span>
-					<p class="font-medium text-text">{selectedContact.email_professionnel ?? '—'}</p>
+					<p class="font-medium text-text">{selectedContact.email_professionnel ?? '–'}</p>
 				</div>
 				<div>
 					<span class="text-text-muted">Téléphone</span>
-					<p class="font-medium text-text">{selectedContact.telephone ?? '—'}</p>
+					<p class="font-medium text-text">{selectedContact.telephone ?? '–'}</p>
 				</div>
 				<div>
 					<span class="text-text-muted">Canton</span>
-					<p class="font-medium text-text">{selectedContact.canton ?? '—'}</p>
+					<p class="font-medium text-text">{selectedContact.canton ?? '–'}</p>
 				</div>
 				<div>
 					<span class="text-text-muted">Segment</span>
-					<p class="font-medium text-text">{selectedContact.segment ?? '—'}</p>
+					<p class="font-medium text-text">{selectedContact.segment ?? '–'}</p>
 				</div>
 				<div>
 					<span class="text-text-muted">Source</span>
-					<p class="font-medium text-text">{selectedContact.source ?? '—'}</p>
+					<p class="font-medium text-text">{selectedContact.source ?? '–'}</p>
 				</div>
 				<div>
 					<span class="text-text-muted">Score</span>
-					<p class="font-medium text-text">{selectedContact.score_priorite ?? '—'}</p>
+					<p class="font-medium text-text">{selectedContact.score_priorite ?? '–'}</p>
 				</div>
 			</div>
 

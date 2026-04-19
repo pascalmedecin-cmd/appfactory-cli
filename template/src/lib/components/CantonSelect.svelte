@@ -42,12 +42,12 @@
 		<option value="">-- Sélectionner --</option>
 		<optgroup label="Suisse romande">
 			{#each ROMANDS as c}
-				<option value={c}>{c} — {CANTON_LABELS[c]}</option>
+				<option value={c}>{c} : {CANTON_LABELS[c]}</option>
 			{/each}
 		</optgroup>
 		<optgroup label="Autres cantons">
 			{#each AUTRES as c}
-				<option value={c}>{c} — {CANTON_LABELS[c]}</option>
+				<option value={c}>{c} : {CANTON_LABELS[c]}</option>
 			{/each}
 		</optgroup>
 	</select>

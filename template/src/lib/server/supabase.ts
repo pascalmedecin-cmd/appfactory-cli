@@ -19,7 +19,7 @@ export function createSupabaseServerClient(cookies: Cookies) {
 }
 
 /**
- * Client Supabase avec service role key — bypass RLS.
+ * Client Supabase avec service role key : bypass RLS.
  * Réservé aux crons et opérations serveur sans session utilisateur.
  */
 export function createSupabaseServiceClient() {

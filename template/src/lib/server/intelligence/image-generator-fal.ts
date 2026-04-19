@@ -1,7 +1,7 @@
 /**
  * Génération d'images via fal.ai (Flux 1.1 Pro Ultra) pour items Veille.
  *
- * Use case : pipeline cron intelligence — quand l'og:image source n'est pas
+ * Use case : pipeline cron intelligence, quand l'og:image source n'est pas
  * fiable (logo/placeholder/404), on génère une image custom via fal.ai puis on
  * la stocke dans media_library (source='fal-ai') pour réutilisation future.
  *

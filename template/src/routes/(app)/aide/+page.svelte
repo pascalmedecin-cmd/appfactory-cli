@@ -389,12 +389,12 @@
 						<h3 class="aide-h3">Barre latérale</h3>
 						<p>La barre latérale gauche donne accès aux 6 sections principales :</p>
 						<ul class="aide-list">
-							<li><strong>Dashboard</strong> — Vue d'ensemble, relances du jour, alertes</li>
-							<li><strong>Contacts</strong> — Gestion des personnes</li>
-							<li><strong>Entreprises</strong> — Fiches entreprises</li>
-							<li><strong>Pipeline</strong> — Opportunités commerciales en kanban</li>
-							<li><strong>Prospection</strong> — Leads B2B depuis sources publiques</li>
-							<li><strong>Signaux</strong> — Signaux d'affaires détectés</li>
+							<li><strong>Dashboard</strong> : Vue d'ensemble, relances du jour, alertes</li>
+							<li><strong>Contacts</strong> : Gestion des personnes</li>
+							<li><strong>Entreprises</strong> : Fiches entreprises</li>
+							<li><strong>Pipeline</strong> : Opportunités commerciales en kanban</li>
+							<li><strong>Prospection</strong> : Leads B2B depuis sources publiques</li>
+							<li><strong>Signaux</strong> : Signaux d'affaires détectés</li>
 						</ul>
 						<p>La section <strong>Aide</strong> est accessible en bas de la barre latérale.</p>
 
@@ -556,10 +556,10 @@
 						<h3 class="aide-h3">Importer depuis des sources publiques</h3>
 						<p>Cliquez <strong>Importer</strong> en haut à droite. Choisissez une source :</p>
 						<ul class="aide-list">
-							<li><strong>Registre du commerce</strong> — Entreprises suisses avec but social, capital nominal et informations légales (source technique : API Zefix)</li>
-							<li><strong>Marchés publics</strong> — Appels d'offres construction par canton et période (source technique : SIMAP)</li>
-							<li><strong>Registre des bâtiments</strong> — Bâtiments autorisés ou en construction par canton (source technique : RegBL / geo.admin.ch)</li>
-							<li><strong>Annuaire</strong> — Enrichissement des numéros de téléphone (source technique : search.ch)</li>
+							<li><strong>Registre du commerce</strong> : Entreprises suisses avec but social, capital nominal et informations légales (source technique : API Zefix)</li>
+							<li><strong>Marchés publics</strong> : Appels d'offres construction par canton et période (source technique : SIMAP)</li>
+							<li><strong>Registre des bâtiments</strong> : Bâtiments autorisés ou en construction par canton (source technique : RegBL / geo.admin.ch)</li>
+							<li><strong>Annuaire</strong> : Enrichissement des numéros de téléphone (source technique : search.ch)</li>
 						</ul>
 						<p>Les doublons sont détectés automatiquement. Les leads écartés ou transférés ne sont jamais réimportés. Les leads sans canton reconnu sont exclus à l'import.</p>
 
@@ -628,10 +628,10 @@ APIs externes (Zefix, SIMAP, search.ch)</pre>
 
 						<h3 class="aide-h3">Principes</h3>
 						<ul class="aide-list">
-							<li><strong>SSR par défaut</strong> — Toutes les pages sont rendues côté serveur pour la performance et le SEO</li>
-							<li><strong>Form actions</strong> — Les mutations passent par les form actions SvelteKit (pas de fetch client)</li>
-							<li><strong>RLS</strong> — Row Level Security activée sur toutes les tables (authenticated = full access)</li>
-							<li><strong>Validation Zod</strong> — Toutes les entrées utilisateur sont validées côté serveur</li>
+							<li><strong>SSR par défaut</strong> : Toutes les pages sont rendues côté serveur pour la performance et le SEO</li>
+							<li><strong>Form actions</strong> : Les mutations passent par les form actions SvelteKit (pas de fetch client)</li>
+							<li><strong>RLS</strong> : Row Level Security activée sur toutes les tables (authenticated = full access)</li>
+							<li><strong>Validation Zod</strong> : Toutes les entrées utilisateur sont validées côté serveur</li>
 						</ul>
 					</div>
 				</section>
@@ -647,11 +647,11 @@ APIs externes (Zefix, SIMAP, search.ch)</pre>
 									<tr><td>SvelteKit</td><td>^2.50</td><td>Framework frontend + SSR</td></tr>
 									<tr><td>Svelte</td><td>^5.54</td><td>Composants UI (runes)</td></tr>
 									<tr><td>Tailwind CSS</td><td>^4.2</td><td>Styles utilitaires</td></tr>
-									<tr><td>Supabase</td><td>—</td><td>BDD + Auth + API REST</td></tr>
+									<tr><td>Supabase</td><td>–</td><td>BDD + Auth + API REST</td></tr>
 									<tr><td>Vercel</td><td>adapter-vercel ^6.3</td><td>Hébergement + CDN</td></tr>
 									<tr><td>Node.js</td><td>24.x</td><td>Runtime Vercel</td></tr>
-									<tr><td>Vitest</td><td>—</td><td>Tests unitaires (129 tests)</td></tr>
-									<tr><td>Playwright</td><td>—</td><td>Tests e2e (5 tests)</td></tr>
+									<tr><td>Vitest</td><td>–</td><td>Tests unitaires (129 tests)</td></tr>
+									<tr><td>Playwright</td><td>–</td><td>Tests e2e (5 tests)</td></tr>
 								</tbody>
 							</table>
 						</div>
@@ -694,8 +694,8 @@ npx supabase gen types typescript \
 
 						<h3 class="aide-h3">Migrations</h3>
 						<ul class="aide-list">
-							<li><code>20260402_001_schema_filmpro.sql</code> — 8 tables CRM initiales</li>
-							<li><code>20260403_001_prospect_leads.sql</code> — Tables prospection + RLS + index</li>
+							<li><code>20260402_001_schema_filmpro.sql</code> : 8 tables CRM initiales</li>
+							<li><code>20260403_001_prospect_leads.sql</code> : Tables prospection + RLS + index</li>
 						</ul>
 					</div>
 				</section>
@@ -736,7 +736,7 @@ npx supabase gen types typescript \
 
 						<h3 class="aide-h3">Protection des routes</h3>
 						<ul class="aide-list">
-							<li><code>hooks.server.ts</code> — Redirige vers <code>/login</code> si pas de session</li>
+							<li><code>hooks.server.ts</code> : Redirige vers <code>/login</code> si pas de session</li>
 							<li>Allowlist explicite : <code>/login</code>, <code>/auth/callback</code></li>
 							<li>Cookie <code>login_at</code> vérifié à chaque requête (max 7 jours)</li>
 						</ul>
@@ -827,7 +827,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 									<span class="font-semibold text-text">Veille signaux</span>
 								</div>
 								<p class="text-[13px] text-text-body"><code>/api/cron/signaux</code></p>
-								<p class="text-[13px] text-text-muted mt-1">Quotidien à 6h — Zefix + SIMAP</p>
+								<p class="text-[13px] text-text-muted mt-1">Quotidien à 6h : Zefix + SIMAP</p>
 							</div>
 							<div class="aide-env-card">
 								<div class="flex items-center gap-2 mb-2">
@@ -835,7 +835,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 									<span class="font-semibold text-text">Alertes prospection</span>
 								</div>
 								<p class="text-[13px] text-text-body"><code>/api/cron/alertes</code></p>
-								<p class="text-[13px] text-text-muted mt-1">Quotidien à 7h — recherches sauvegardées</p>
+								<p class="text-[13px] text-text-muted mt-1">Quotidien à 7h : recherches sauvegardées</p>
 							</div>
 						</div>
 
@@ -924,7 +924,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 
 						<h3 class="aide-h3">Modifier le scoring</h3>
 						<p>Le scoring est configuré dans <code>project.yaml</code> (source de vérité) et <code>src/lib/config.ts</code> (miroir TS). Modifier les deux en cohérence.</p>
-						<p>La fonction <code>calculerScore()</code> dans <code>src/lib/scoring.ts</code> lit la config — pas besoin de la modifier sauf changement de logique.</p>
+						<p>La fonction <code>calculerScore()</code> dans <code>src/lib/scoring.ts</code> lit la config : pas besoin de la modifier sauf changement de logique.</p>
 
 						<h3 class="aide-h3">Personnaliser pour un nouveau client</h3>
 						<div class="aide-steps">

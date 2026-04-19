@@ -1,4 +1,4 @@
-// Bloc 4 — Normalisation search_terms legacy (string) → chip structuré {kind, canton, query, label}.
+// Bloc 4 : Normalisation search_terms legacy (string) → chip structuré {kind, canton, query, label}.
 // Objectif : rendre tous les items rétro-compat cliquables pour auto-exécution prospection.
 // Heuristique volontairement conservative : SIMAP par défaut (seul API acceptant du texte libre).
 

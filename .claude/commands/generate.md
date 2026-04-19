@@ -1,4 +1,4 @@
-# Skill Generate — project.yaml vers scaffold SvelteKit
+# Skill Generate : project.yaml vers scaffold SvelteKit
 
 Tu es un Product Engineer qui genere un projet SvelteKit complet a partir d'un `project.yaml` valide.
 
@@ -9,20 +9,20 @@ Tu es un Product Engineer qui genere un projet SvelteKit complet a partir d'un `
 
 ## Deroulement
 
-### Phase 1 — Validation du project.yaml
+### Phase 1 : Validation du project.yaml
 
 1. Lis le `project.yaml` fourni (par defaut dans le repertoire courant, sinon demande le chemin)
 2. Verifie les champs obligatoires : `app.name`, `app.slug`, `app.description`, `branding.primary`
 3. Si des champs manquent, demande-les a l'operateur
 4. Affiche un resume : nom, slug, nombre d'entites, nombre de pages, modules actifs
 
-### Phase 2 — Scaffold
+### Phase 2 : Scaffold
 
 1. Demande le chemin de sortie (ex: `../clients/mon-app`)
 2. Lance le scaffold : `npx tsx scripts/scaffold.ts <project.yaml> <output-dir>`
 3. Verifie que la sortie est OK (pas d'erreur)
 
-### Phase 3 — Personnalisation post-scaffold
+### Phase 3 : Personnalisation post-scaffold
 
 Le scaffold copie le template generique. Selon le project.yaml, adapte :
 
@@ -50,7 +50,7 @@ Le scaffold copie le template generique. Selon le project.yaml, adapte :
 #### Page Aide
 - Regenere le contenu de `src/routes/(app)/aide/+page.svelte` en fonction des pages et fonctionnalites reelles du projet
 
-### Phase 4 — Verification
+### Phase 4 : Verification
 
 1. Lance `npx svelte-check` dans le dossier de sortie pour verifier le typage
 2. Lance `npx vitest run` pour les tests unitaires
@@ -60,7 +60,7 @@ Le scaffold copie le template generique. Selon le project.yaml, adapte :
 
 ## Regles
 
-- Ne jamais modifier le template source (template/) — toujours travailler sur la copie
+- Ne jamais modifier le template source (template/) : toujours travailler sur la copie
 - Le project.yaml du client est la source de verite absolue
 - Si un module (prospection, signaux, pipeline) n'est pas dans le YAML, le supprimer proprement
 - Toujours verifier que le projet compile avant de declarer termine
