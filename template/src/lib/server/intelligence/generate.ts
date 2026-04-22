@@ -14,6 +14,7 @@ import {
 import { PHASE2_SYSTEM_PROMPT, buildPhase2UserPrompt } from './prompt-phase2';
 import { enrichItemsWithOgImages } from './og-image';
 import { checkOgImageQuality } from './og-image-quality';
+import { auditOgImageVision } from './og-image-vision';
 import { generateFallbacksForItems } from './image-fallback-generator';
 import { verifyUrl } from './url-verify';
 import { verifyEntitiesInText } from './entity-verify';
@@ -558,6 +559,27 @@ export async function generateIntelligenceReport(
 		})
 	);
 
+	// Bloc 6quater : passe Vision Niveau 1 sur og:image ayant survécu aux filtres
+	// rapides. Rejette schémas scientifiques, infographies, captures, illustrations,
+	// stock banal hors-sujet. Un rejet force la cascade fal.ai (Niveau 2).
+	// Incident S108 W16 : Springer sert Fig1_HTML.png (diagramme) comme og:image,
+	// passe URL + HEAD mais est éditorialement inacceptable.
+	const visionClient = new Anthropic({ apiKey });
+	const visionFilteredItems = await Promise.all(
+		filteredItems.map(async (it) => {
+			if (!it.image_url) return it;
+			const vAudit = await auditOgImageVision(visionClient, it.image_url, {
+				title: it.title,
+				summary: it.summary
+			});
+			if (vAudit.ok) return it;
+			console.log(
+				`[og-vision] reject rank=${it.rank} reason=${vAudit.reason} score=${vAudit.audit?.contextual_score ?? '-'} url=${it.image_url}`
+			);
+			return { ...it, image_url: null };
+		})
+	);
+
 	// Bloc 6ter : génération fal.ai pour items sans og:image fiable.
 	// process.env.PUBLIC_SUPABASE_URL plus fiable que $env/dynamic/private dans contexte cron.
 	const supabaseUrl = (process.env.PUBLIC_SUPABASE_URL ?? env.PUBLIC_SUPABASE_URL ?? '')
@@ -565,7 +587,7 @@ export async function generateIntelligenceReport(
 		.trim();
 	const falKey = env.FAL_KEY ?? process.env.FAL_KEY;
 	const { items: itemsWithGenerated, outcomes: genOutcomes } = await generateFallbacksForItems(
-		filteredItems,
+		visionFilteredItems,
 		{ apiKey: falKey, supabaseUrl, anthropicKey: apiKey }
 	);
 	const generatedCount = genOutcomes.filter((o) => o.status === 'generated').length;

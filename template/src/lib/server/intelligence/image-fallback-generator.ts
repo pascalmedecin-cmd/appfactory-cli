@@ -18,7 +18,7 @@ import { costTracker } from './cost-tracker';
 
 const BUCKET = 'media-library';
 const DOWNLOAD_TIMEOUT_MS = 30_000;
-const MIN_RELEVANCE_SCORE = 6; // /10 : seuil audit Vision pour servir l'image générée
+const MIN_RELEVANCE_SCORE = 7; // /10 : seuil audit Vision pour servir l'image générée (durci 6→7 S108 W16 post-QA)
 const BRIEF_MODEL = 'claude-sonnet-4-6'; // matériel/concret pour Flux
 const VISION_MODEL = 'claude-sonnet-4-6'; // Sonnet pour Vision (~3x + rapide qu'Opus, contrainte timeout 300s Vercel Hobby)
 

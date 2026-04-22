@@ -1,5 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { isUrlPatternSafe, checkOgImageQuality } from './og-image-quality';
+import {
+	isUrlPatternSafe,
+	isScientificPublisherUrl,
+	isScientificFigurePath,
+	checkOgImageQuality
+} from './og-image-quality';
 
 describe('isUrlPatternSafe', () => {
 	it('accepte URLs propres', () => {
@@ -42,6 +47,67 @@ describe('isUrlPatternSafe', () => {
 	});
 });
 
+describe('isScientificPublisherUrl', () => {
+	it('rejette hosts nature.com / springernature.com / sciencedirect.com', () => {
+		expect(isScientificPublisherUrl('https://www.nature.com/articles/s41598-026-46722-4')).toBe(true);
+		expect(
+			isScientificPublisherUrl(
+				'https://media.springernature.com/full/springer-static/image/art%3A10.1038%2Fs41598-026-46722-4/MediaObjects/41598_2026_46722_Fig1_HTML.png'
+			)
+		).toBe(true);
+		expect(isScientificPublisherUrl('https://www.sciencedirect.com/science/article/pii/XYZ')).toBe(true);
+	});
+
+	it('rejette sous-domaines de publishers', () => {
+		expect(isScientificPublisherUrl('https://link.springer.com/article/10.1007/foo')).toBe(true);
+		expect(isScientificPublisherUrl('https://journals.plos.org/plosone/article?id=X')).toBe(true);
+	});
+
+	it('accepte médias généralistes', () => {
+		expect(isScientificPublisherUrl('https://www.letemps.ch/article/foo')).toBe(false);
+		expect(isScientificPublisherUrl('https://www.rts.ch/info/bar')).toBe(false);
+		expect(isScientificPublisherUrl('https://www.20min.ch/story/baz')).toBe(false);
+	});
+
+	it('URL invalide : false (pas de crash)', () => {
+		expect(isScientificPublisherUrl('not-a-url')).toBe(false);
+	});
+});
+
+describe('isScientificFigurePath', () => {
+	it('détecte Fig1_HTML, Fig12, Scheme3', () => {
+		expect(isScientificFigurePath('https://cdn.x/path/Fig1_HTML.png')).toBe(true);
+		expect(isScientificFigurePath('https://cdn.x/path/Fig12.jpg')).toBe(true);
+		expect(isScientificFigurePath('https://cdn.x/Scheme3.png')).toBe(true);
+	});
+
+	it('détecte MediaObjects/ (CDN Springer)', () => {
+		expect(
+			isScientificFigurePath(
+				'https://media.springernature.com/full/x/MediaObjects/41598_2026_46722_Fig1_HTML.png'
+			)
+		).toBe(true);
+	});
+
+	it('détecte DOI encodé art%3A10.', () => {
+		expect(
+			isScientificFigurePath(
+				'https://media.springernature.com/full/springer-static/image/art%3A10.1038%2Fs41598-026-46722-4/MediaObjects/41598_2026_46722_Fig1_HTML.png'
+			)
+		).toBe(true);
+	});
+
+	it('accepte chemins photos standard', () => {
+		expect(isScientificFigurePath('https://cdn.x/wp-content/uploads/2026/04/hero.jpg')).toBe(false);
+		expect(isScientificFigurePath('https://cdn.x/photos/building.jpg')).toBe(false);
+	});
+
+	it("n'invalide pas 'config' ou 'figuration' (boundary)", () => {
+		expect(isScientificFigurePath('https://cdn.x/configuration.jpg')).toBe(false);
+		expect(isScientificFigurePath('https://cdn.x/figurant.jpg')).toBe(false);
+	});
+});
+
 describe('checkOgImageQuality', () => {
 	beforeEach(() => {
 		vi.stubGlobal('fetch', vi.fn());
@@ -54,6 +120,22 @@ describe('checkOgImageQuality', () => {
 		const result = await checkOgImageQuality('https://example.com/site-logo.png');
 		expect(result.ok).toBe(false);
 		expect(result.reason).toBe('suspicious_pattern');
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('rejette host éditeur scientifique avant HEAD', async () => {
+		const result = await checkOgImageQuality(
+			'https://media.springernature.com/full/springer-static/image/art%3A10.1038%2Fs41598-026-46722-4/MediaObjects/41598_2026_46722_Fig1_HTML.png'
+		);
+		expect(result.ok).toBe(false);
+		expect(result.reason).toBe('scientific_publisher');
+		expect(fetch).not.toHaveBeenCalled();
+	});
+
+	it('rejette chemin figure scientifique avant HEAD', async () => {
+		const result = await checkOgImageQuality('https://cdn.example.com/papers/Fig1_HTML.png');
+		expect(result.ok).toBe(false);
+		expect(result.reason).toBe('scientific_figure');
 		expect(fetch).not.toHaveBeenCalled();
 	});
 
