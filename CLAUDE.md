@@ -1,22 +1,21 @@
 # AppFactory : CLAUDE.md
 
-**Statut :** Phase C, Skills et templates HTML + module Veille sectorielle en production + pipeline images 4 niveaux (Flux 1.1 Pro Ultra + audits Vision) + email récap cron veille (gated) + export/import CSV + page /reporting + sous-projet `formation-ia/` (**S1 → S7 parcours marketing LIVRÉS, 12/12 modules en prod** + **roadmap V2 refondue S105 en 9 blocs** post 6 demandes Pascal, **Bloc 0 Pipeline images intégralement `[VALIDÉ]` S107** : 12 images Nano Banana 2 1K seedées prod + page cockpit `/admin/parcours/[slug]/images` en prod) + `/start` AppFactory en dispatcher 2 branches (FilmPro / Formation IA)
-**Derniere mise a jour :** 2026-04-20 (session S107 formation-ia : Bloc 0 Phases 5+6 livrées bout en bout. Page cockpit `/admin/parcours/[slug]/images` en prod : grille 12 modules × N images + upload/replace/delete + ConfirmModal + admin guard. Commit `f253460`. Gates svelte-check 584/0/0, vitest 225/225 (+31 upload-validation), axe-core 0 serious sur 12 routes, smoke Chrome MCP 3 viewports 0 overflow, smoke prod 303→/login. Bloc 1 UI refonte 12 modules débloqué. 0 modif côté CRM.)
+**Statut :** Phase C, Skills et templates HTML + module Veille sectorielle en production + pipeline images 4 niveaux (Flux 1.1 Pro Ultra + audits Vision) + email récap cron veille (gated) + export/import CSV + page /reporting. Formation IA est un sous-projet autonome dans `formation-ia/`, accessible directement via `cc` option 2 (pas de dispatcher intermédiaire).
+**Derniere mise a jour :** 2026-04-22 (session S108 CRM : Pack P1 QA pipeline images /veille livré bout en bout. 3 leviers A+B+C intégrés dans `og-image-quality.ts` + `og-image-vision.ts` (nouveau) + `image-fallback-generator.ts` + `generate.ts`. Gates 422/422 tests Vitest, script test isolé 2/2 rejets W16 validés. Commit `a8a031f` + push main. Validation prod pending W17 jeudi 2026-04-23 via cron naturel.)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session precedente :** Session 79 (scope formation-ia uniquement, zéro modif côté CRM - session autonome `/effort xhigh`, time-box ~30 min sur 2h budget). **S7 ingestion 2 modules `analyse` + `cadre` livrés bout en bout** : seed prod Supabase (zéro commit code, JSON `content/marketing-analyse-cadre-2026-04-17.json` gitignoré, ~440 lignes). 1 nouvel outil (`perplexity`, plan Free 5 Deep Research/jour, 96.3% précision citations UCStrategies) + 5 existants réutilisés (`claude`, `chatgpt`, `gemini`, `notebooklm`, `mistral-le-chat`) + 2 jours (J11 `veille-concurrentielle` famille `analyse`, J12 `ai-act-rgpd` famille `cadre`) + 8 exercices (4 par module) + 16 liens outils + 8 questions quiz (4 par module). Stratégie ressources = 18 URLs sources officielles (eur-lex règlement 2024/1689 + directive 2019/790, cnil.fr, artificialintelligenceact.eu, légifrance loi 2023-451, Princeton GEO arxiv.org/abs/2311.09735, AIE Energy and AI 2024 sur iea.org, blog.google NotebookLM, ARPP Influence responsable, SACEM opt-out, Hugging Face, ADEME, C2PA, Spawning.ai). Disclaimer « règles en évolution, vérifier au moment de publier » sur intro J12 + Q2 J12 + check_question Ex4 J12 (point de vigilance AI Act applicable 2 août 2026). Sources VÉRIFIÉES/TOLÉRÉES exploitées : AI Act Article 50 pleinement applicable 2 août 2026 + sanctions 15 M€ ou 3% CA mondial (transparence), 35 M€/7% (pratiques interdites Article 5) - règlement UE 2024/1689 articles 99 et 113 ; loi française 2023-451 du 9 juin 2023 (loi Influence) ; directive UE 2019/790 article 4-3 (opt-out TDM) + SACEM opt-out 12 oct 2023 sur ~96M œuvres ; étude Princeton 2023 GEO - 50% contenus cités par LLM < 13 semaines, +30-40% visibilité via sources/stats ; UCStrategies 96.3% précision Perplexity Deep Research ; AIE 2024 - 1 prompt ChatGPT ≈ 10 Wh vs 0.3 Wh Google (33×) ; NotebookLM Audio Overviews FR depuis 29 avril 2025 + plan gratuit 50 sources/200 MB par PDF. Rédaction Opus tenue en une passe. Gates PEDAGOGIE auto 0 errors / 0 warns sur 11 gates. Smoke local 8/8 routes en 200, prod 8/8 en 303 (auth normale, DB partagée). **DB prod finale** : 12 modules J1-J12 + 23 outils + 42 exercices + 48 quiz questions. **Critère de sortie global du plan parcours marketing atteint**. Côté CRM : aucune modif.
-**Session precedente -1 :** Session 78 (scope formation-ia, docs-only côté CRM - session autonome `/effort xhigh`, ~25 min). **S6 ingestion 2 modules `production` livrés bout en bout** : seed prod Supabase (zéro commit code). 6 nouveaux outils (`google-veo`, `runway`, `heygen`, `synthesia`, `elevenlabs`, `descript`) + 3 existants réutilisés (`claude`, `notebooklm`, `mistral-le-chat`) + 2 jours (J9 `video-courte`, J10 `audio-voix`) + 8 exercices + 17 liens + 8 quiz. Sources VÉRIFIÉES : HubSpot 2026, AI Act Art. 50, CNIL biométrique, Artificial Analysis Runway Gen-4, NotebookLM FR, Mistral Voxtral, ElevenLabs pricing, Tennessee ELVIS Act, SynthID, HeyGen G2 #1, Synthesia SOC 2. Gates 0/0. DB prod à fin session 78 : 10 modules J1-J10 + 22 outils. Côté CRM : aucune modif.
-**Sessions précédentes (condensé)** - détail S70-S77 : `archive/decisions-sessions-70-77.md`. Détail S80-S97 : `formation-ia/CLAUDE.md` (sous-projet autonome, sessions V2 formation-ia).
+**Session courante :** Session 108 (CRM /veille, 2026-04-22, `/effort xhigh`). **Pack P1 QA pipeline images /veille** livré bout en bout après rejet Pascal S67 sur 2 images W16 (Springer schéma + fal.ai générique). Diagnostic 3 mécanismes défaillants (Niveau 1 sans audit contenu, Niveau 2 seuil 6/10 trop bas, brief segment-based générique). Implémentation : A. blacklist 18 hosts scientifiques + 6 patterns chemins (`Fig\d+_HTML`, `art%3A10.`, `MediaObjects/`...) ; B. passe Vision Sonnet Niveau 1 avec 5 critères (`is_photograph`, `is_editorial`, `no_diagram_or_infographic`, `no_screenshot_or_ui`, `contextual_score ≥7/10`), intégrée en Bloc 6quater après `checkOgImageQuality` et avant `generateFallbacksForItems` pour ne pas auto-rejeter les images fal.ai ; C. seuil Niveau 2 durci 6→7. Gates : 422/422 Vitest, svelte-check 3 erreurs pré-existantes hors scope, script `scripts/test-og-image-vision.ts` 2/2 rejets W16 confirmés. Commit `a8a031f` + push main. Pack P2 (D retry + E Opus Vision) en réserve si régression prod W17.
+**Session -1 :** Session 107 (formation-ia, 2026-04-20). Bloc 0 Phases 5+6 livrées bout en bout. Page cockpit `/admin/parcours/[slug]/images` + upload/replace/delete + admin guard. Commit `f253460`. Gates 584/0/0, vitest 225/225. Bloc 1 UI refonte 12 modules débloqué.
+**Sessions précédentes (condensé)** - détail S78-S79 : `archive/decisions-sessions-78-79.md`. Détail S70-S77 : `archive/decisions-sessions-70-77.md`. Détail S80-S107 : `formation-ia/CLAUDE.md` (sous-projet autonome, sessions V2 formation-ia).
 
-- **S80-S107** (formation-ia, 2026-04-17 / 2026-04-20) : chantier V2 formation-ia (post livraison parcours marketing 12/12 S79). Audit V1 vs best-practices + bench 15 sites + roadmap V2 11 tâches + cadrage 4 maquettes UX/UI. 2 specs : `docs/V2_UX_UI_SPEC.md` 738 lignes + `docs/COCKPIT_ADMIN_SPEC.md` 538 lignes. Hotfix prod S95 RLS allowlist. **S98** T6 Pack 1 MVP V2. **S99** T7 Pack 2 V2 (DashboardResume + AnchorNav + 5 sections + 13 covers SVG + 19 logos + endpoint PDF pdfkit + 7 composants + 2 migrations DB). **S100** Groupe dette 1D (a11y 9→0 axe-core + tokens --deep + scripts/audit-a11y/ + anti-hype intros). **S101** T8 Cockpit vidéos v1+v2 livré prod bout en bout ~4h xhigh. **S102** T8 `[VALIDÉ]` règle « Livrable fermé » + nouvelle page emplacements + axe-core 0 serious 11 routes. **S103** T5 ThemeCardPlaceholder (commit `07c3318`) + T9 initial (commit `ba26631`, invalidé S104). **S104** Refonte T9 multi-select libre `niveaux_ouverts text[]` + modal conflit retrait (commits `f71efc1` + `4adab94`). **S105** refonte roadmap V2 post 6 demandes Pascal (refonte plan 12 modules, 12 images par module + cockpit, diagrammes, audit contenu 360, code-review full, audit-uiux post-golden) → plan 9 blocs séquencés ~23h. **Bloc 0 Pipeline images Phase 1-4 livré** : migration DB + bucket Supabase + résolveur signed URL + composant apprenant + helpers écriture + script fal.ai Flux 1.1 Pro Ultra + 12 briefs editorial still life premium + 12 images seedées prod scores 7-9/10. 7 commits prod `edc1822` + `141cf98` + `a74eebc` + `7bb05b6` + `d56b142` + `69e2ac6` + `b77a8c5`. 3 itérations briefs (flat → warm → documentary) + /dig WebSearch best-practices Flux + combo validé A/B/C `raw=true + enhance_prompt=false` + préfixe « A hyperrealistic photograph of... » + fix anti-golden brass→pewter. Gates svelte-check 578/0/0, vitest 25/25. État roadmap V2 post-S105 : **Bloc 0 Phase 1-4 livré, reste Phase 5+6 + Blocs 1-8**. Nouvelles mémoires : `project_formation_ia_v2_refonte_s105.md` + `feedback_flux_prompt_best_practices.md` + `project_audit_externalisation_reflexion.md`. **S106 (2026-04-20)** : Phase 4 V1 Flux ABANDONNÉE après rejet Pascal (catalogue de Noël), bascule vers Nano Banana 2 1K + direction documentaire workspace contemporain + règle stricte zéro texte. 12 images prod remplacées, scores Vision 7-9/10, commit `c07c245`. Nouvelle mémoire `feedback_nano_banana_vs_flux.md` + helper A/B `scripts/test-image-direction-ab.mjs`. **S107 (2026-04-20)** : Bloc 0 Phases 5+6 livrées. Route admin `/admin/parcours/[slug]/images` : grille 12 modules × N images (preview signed URL + upload/replace/delete multipart + ConfirmModal + Toast + admin guard défense profondeur). Helpers purs `upload-validation.ts` (31 tests). Icon.svelte +3 Lucide. Replace atomique 3 étapes (new path uuid → UPDATE storage_path → remove old best-effort). Gates svelte-check 584/0/0, vitest 225/225, build OK, axe-core 0 serious sur 12 routes, Chrome MCP 3 viewports OK, smoke prod 303→/login. Commit `f253460`, deploy Vercel live. Bloc 0 (Phases 1-6) intégralement `[VALIDÉ]`. 0 modif côté CRM. Détails session par session : `formation-ia/CLAUDE.md`.
-- **S77** (formation-ia, 2026-04-17) : S5 ingestion production lourde (J7 + J8) + 8 outils nouveaux, docs-only.
-- **S76** (formation-ia, 2026-04-17) : S4 ingestion production 1 (J4-J6) + fix label dynamique (commit `7805be0`).
-- **S75** (formation-ia, 2026-04-17) : hygiène pré-S4, fix markdown consignes (commit `8790751`) + rotation `SUPABASE_SERVICE_ROLE_KEY`.
-- **S74** (formation-ia, 2026-04-17) : S3 ingestion fondations (J1-J3) seedés prod (commit `b85010c`).
-- **S73** (formation-ia, 2026-04-17) : S2 matière pédago, `SOURCES_MARKETING.md` 111 entrées + research-synthesis 476 lignes (commit `b7aa108`).
-- **S72** (formation-ia, 2026-04-17) : S1 infra technique, migration SQL additive + helpers + composants + refonte UI (commit `9966112`).
-- **S71** (formation-ia, 2026-04-17) : cadrage parcours marketing, pivot bibliothèque 12 modules indépendants (commit `65c40d5`).
-- **S70** (CRM FilmPro + méta, 2026-04-17) : batch autonome xhigh, fix cron veille Opus 4.7 + email récap + export/import CSV + reporting (commits `e1353ba`, `e0f0b32`, `12d8bc5`). 411/411 tests verts.
+- **S105** (formation-ia, 2026-04-20) : refonte roadmap V2 post 6 demandes Pascal → plan 9 blocs séquencés ~23h. **Bloc 0 Pipeline images Phase 1-4 livré** (migration DB + bucket Supabase + résolveur signed URL + composant apprenant + helpers + script fal.ai Flux + 12 briefs + 12 images prod scores 7-9/10). 7 commits : `edc1822`, `141cf98`, `a74eebc`, `7bb05b6`, `d56b142`, `69e2ac6`, `b77a8c5`. Gates 578/0/0, vitest 25/25.
+- **S104** (formation-ia, 2026-04-19) : refonte T9 multi-select libre `niveaux_ouverts text[]` + modal conflit retrait (commits `f71efc1`, `4adab94`).
+- **S103** (formation-ia, 2026-04-19) : T5 ThemeCardPlaceholder (commit `07c3318`) + T9 initial (commit `ba26631`, invalidé S104).
+- **S102** (formation-ia, 2026-04-18) : T8 `[VALIDÉ]` règle « Livrable fermé » + page emplacements + axe-core 0 serious 11 routes.
+- **S101** (formation-ia, 2026-04-18) : T8 Cockpit vidéos v1+v2 livré prod bout en bout (~4h xhigh).
+- **S100** (formation-ia, 2026-04-18) : groupe dette 1D (a11y 9→0 axe-core + tokens --deep + `scripts/audit-a11y/` + anti-hype intros).
+- **S99** (formation-ia, 2026-04-18) : T7 Pack 2 V2 (DashboardResume + AnchorNav + 5 sections + 13 covers SVG + 19 logos + endpoint PDF pdfkit + 7 composants + 2 migrations DB).
+- **S98** (formation-ia, 2026-04-18) : T6 Pack 1 MVP V2.
 
 ---
 
@@ -29,9 +28,9 @@ L'arborescence d'AppFactory héberge des sous-projets autonomes (chacun a son pr
 | `template/` (CRM FilmPro) | `pascalmedecin-cmd/appfactory-cli` (=racine actuelle) | Production | <https://filmpro-crm.vercel.app> | (ce fichier) |
 | `formation-ia/` | `pascalmedecin-cmd/onboarding-ia` (séparé, ignoré dans `.gitignore`) | S1→S7 livrés (12/12 modules en prod) | <https://onboarding-ia.vercel.app> | `formation-ia/CLAUDE.md` |
 
-Pour travailler sur un sous-projet : `cd formation-ia/` puis lire son `CLAUDE.md` propre. Les tâches du sous-projet sont tracées dans son CLAUDE.md, pas dans celui-ci.
+Pour travailler sur un sous-projet : taper `cc` au terminal et choisir `2. Formation IA`. Claude Code atterrit directement dans `formation-ia/`, charge son `CLAUDE.md` propre (plus léger), et les tâches sont scopées. Les tâches du sous-projet sont tracées dans son CLAUDE.md, pas dans celui-ci.
 
-**`/start` à la racine AppFactory = dispatcher 2 branches** (`[1] CRM FilmPro` / `[2] Formation IA`). Chaque branche ouvre le `/start` complet du sous-projet concerné (tâches, idées, options projet, nouveau). Source : `.claude/start-menu.md`.
+**`/start` à la racine AppFactory = menu CRM FilmPro scopé.** Plus de dispatcher 2 branches : Formation IA a sa propre entrée au menu terminal `cc`. Source : `.claude/start-menu.md`.
 
 **Extensibilité pédago** (Formation IA) : l'option `[3] Intégrer un parcours` dans le menu Formation IA permet d'ingérer une deep research markdown (marketing aujourd'hui, opération/commercial/autres demain) via un workflow conversationnel Claude Code CLI piloté par **Opus 4.6**. Règles pédago dans `formation-ia/docs/PEDAGOGIE.md`, protocole d'ingestion dans `formation-ia/docs/INGESTION.md`.
 
@@ -102,17 +101,6 @@ Pilotage depuis le terminal via Claude Code skills.
 
 ---
 
-## PLANNING INITIAL
-
-→ Planning Phase A (jours 1-9, tous ✓) archive dans archive/planning-phase-a.md : consulter si besoin de comprendre l'ordre de construction du CRM
-→ Phase B ANNULEE (decision 2026-04-04 : pas de Figma Pro)
-
-### Phase C : Skills et templates HTML (jours 8-12)
-- Jour 8-9 : Skill cadrage (dialogue -> project.yaml -> 4 pages HTML)
-- Jour 10-11 : Skill generate (project.yaml + tokens -> SvelteKit scaffold)
-- Jour 12 : Skill deploy (push -> Vercel preview/prod, test end-to-end)
-
----
 
 ## DECISIONS STRUCTURELLES
 
@@ -126,51 +114,21 @@ Pilotage depuis le terminal via Claude Code skills.
 - HTML temporaires pour previsualisations client a chaque etape cle
 - Ancien projet AppFactory v1 (Apps Script) = archive consultable, pas de migration
 
-### Decisions UX (G36)
+### Decisions UX + Prospection (G36)
 
-- **6 ecrans principaux** au lieu de 15 : Dashboard, Contacts, Entreprises, Pipeline, Prospection, Signaux + Parametres en menu secondaire
-- **Slide-out panels** au lieu de pages detail separees (liste reste visible)
-- **Saisie rapide** (6 champs) + accordeon "Plus de details" pour les formulaires
-- **Pas de page Prescripteurs** : filtre + badge dans Contacts
-- **Pas de page Journal equipe** : section dashboard + timeline sur les fiches
-- **Relances du jour** : bandeau dashboard + badges pipeline (pas une page separee)
-- **Prospection = page a part entiere** avec multi-sources, scoring, alertes, dedup, actions batch
-- **Page Aide** : documentation utilisateur integree (8 sections, sommaire, recherche)
-- **Documentation** : integree dans la page /aide interactive
-
-### Decisions Prospection (G36)
-
-- **100% sources gratuites** : Zefix REST + LINDAS SPARQL + SIMAP + SITG (GE) + search.ch + FOSC
-- **Pas de Google Places** ni source payante
-- **Modele unifie `prospect_leads`** : toutes les sources alimentent une table unique
-- **Scoring automatique** (0-13 points) : canton, secteur, signal chaud, recence, enrichissement
-- **Dedup a l'import** sur source+source_id, leads ecartes/transferes jamais reimportes
-- **Selection multiple + actions batch** : interesse / ecarter / transferer vers CRM
-- **Raccourcis clavier** pour traitement rapide en volume
-- **Recherches sauvegardees + alertes** (cron quotidien/hebdomadaire)
-- **Specs completes** : voir `docs/SPECS_PROSPECTION.md`
+→ Archive intégrale : `archive/decisions-structurelles-crm.md` (6 écrans principaux, slide-out panels, saisie rapide, 100% sources gratuites, modèle unifié `prospect_leads`, scoring auto 0-13). Specs prospection complètes : `docs/SPECS_PROSPECTION.md`.
 
 ---
 
 ## INFRA EN PLACE
 
-- **Vercel** : https://filmpro-crm.vercel.app (prod), GitHub lie (repo appfactory-cli, deploys auto), env vars configurees prod+preview (9 variables)
-- **Supabase** : projet `appfactory` (fmflvjubjtpidvxwhqab), region EU
-- **Auth** : OTP code email 6 chiffres via Supabase (signInWithOtp sans emailRedirectTo), domaine @filmpro.ch valide cote serveur (form action), login 2 ecrans (email → code), session max 7 jours via cookie httpOnly login_at (hooks.server.ts), callback /auth/callback conserve pour compatibilite
-- **SMTP** : Resend (free plan permanent, 3000 emails/mois), domaine filmpro.ch verifie, sender noreply@filmpro.ch, DNS Infomaniak (DKIM + MX + SPF sur sous-domaine send)
-- **Runtime** : Node.js 22.x sur Vercel
-- **Supabase CLI** : v2.90.0, projet linke (fmflvjubjtpidvxwhqab)
-- **BDD** : 10 tables PostgreSQL (+ prospect_leads, recherches_sauvegardees), FK, index, RLS (authenticated full access), types TS generes
-- **Zefix REST** : credentials configures (local .env + Vercel prod/preview), compte actif depuis 2026-04-08
-- **search.ch** : cle API configuree en local (.env) + Vercel prod+preview
-- **fal.ai** : FAL_KEY configurée local .env + Vercel prod (session 67, clé partagée avec Enseignement). Modèle utilisé : Flux 1.1 Pro Ultra ($0.06/image, aspect 16:9 2K natif) pour génération niveau 2 cascade /veille
-- **Pexels + Unsplash** : SUPPRIMÉS session 67 (local + Vercel prod). Labels 'pexels'/'unsplash' conservés en DB media_library comme historique, mais plus aucun import nouveau
-- **Securite** : OTP code email @filmpro.ch (validation domaine serveur, Google OAuth desactive, email provider active), ALLOWED_DOMAINS + ALLOWED_EMAILS env vars, session 7 jours max (cookie login_at), validation Zod sur toutes les form actions (19 actions, 4+1 pages), dep Zod v4, rate limiting 10 req/min/IP sur /api/prospection/*, sanitisation SPARQL (lindas), protection JSON.parse (saveRecherche), scoring dates invalides/futures ignore, headers securite (CSP, X-Frame-Options DENY, X-Content-Type-Options nosniff, Referrer-Policy, Permissions-Policy), timing-safe CRON_SECRET (crypto.timingSafeEqual), erreurs Supabase generiques cote client (console.error serveur), verification dependances avant delete entreprise, disabled sur boutons destructifs (anti double soumission)
-- **Tests** : Vitest (164 tests : scoring + 19/19 schemas + validation + extractForm + API sparql/helpers + 16 auth email + prospection-utils) + Playwright (5 tests e2e : navigation + auth redirect)
-- **Accessibilité** : focus trap clavier (trapFocus action) sur toutes les modales et slide-outs, role="dialog" aria-modal="true", confirmations destructives via ConfirmModal (plus de window.confirm)
-- **Pagination serveur** : page prospection paginée côté serveur (URL params page/sort/dir/source/canton/statut/temp/q, Supabase count+range, 25/page)
-- **Cron** : `/api/cron/signaux` quotidien 6h (veille Zefix+SIMAP) + `/api/cron/alertes` quotidien 7h + `/api/cron/nettoyage-crm` mensuel 3h le 1er (archive entreprises radiees Zefix, batch 200 FIFO) + `/api/cron/intelligence` hebdo jeudi 7h UTC (Opus 4.6 + génération fal.ai Flux + audit Vision Sonnet, maxDuration=300s contrainte Hobby) + `/api/cron/intelligence-archive` quotidien 4h. Tous sécurisés par CRON_SECRET (Vercel prod), service role client (bypass RLS). Cron `media-enrich` SUPPRIMÉ session 67.
-- **SUPABASE_SERVICE_ROLE_KEY** : configuree local .env + Vercel prod (preview non configure, projet sans repo Git lie)
+- **Prod** : https://filmpro-crm.vercel.app (Vercel, GitHub auto-deploy) + Supabase EU (projet `appfactory`, 10+ tables, RLS active, service role key configurée)
+- **Auth** : OTP email 6 chiffres @filmpro.ch + session 7 jours httpOnly ; SMTP Resend (domaine verifié, free plan)
+- **APIs** : Zefix REST + search.ch + fal.ai Flux 1.1 Pro Ultra (partage clé avec Enseignement) — Pexels/Unsplash supprimés S67
+- **Crons** : `/api/cron/{signaux,alertes,nettoyage-crm,intelligence,intelligence-archive}` tous sécurisés `CRON_SECRET` + service role (Cron `media-enrich` supprimé S67)
+- **Tests** : Vitest 164 + Playwright 5 e2e. Accessibilité : focus trap + ConfirmModal partout. Sécurité : Zod sur 19 form actions, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
+
+→ Détail intégral (env vars, BDD exhaustive, liste tests, liste crons, headers sécurité, pagination serveur) : `archive/infra-crm-detail.md`
 
 ## WORKFLOW APPFACTORY
 
@@ -204,69 +162,13 @@ Fichiers cles :
 
 → Inventaire composants EN PLACE (11 composants, 6 pages, 4 API, scripts) archive dans archive/inventaire-composants.md : consulter si besoin de lister les composants existants avant d'en creer de nouveaux
 
-### Condensé thématique (sessions 9-16)
+### Historique condensé (archives)
 
-→ Détail chronologique : `archive/decisions-sessions-9-16.md`
-
-**Auth / Sécurité :**
-- Migration Google OAuth → magic link Supabase (email OTP + PKCE), validation domaine @filmpro.ch serveur
-- MFA TOTP ajouté (Google Authenticator), obligatoire pour tous, allowlist routes auth (defense in depth)
-- Magic link Safari mobile OK (rate limit était la seule cause d'échec, pas PKCE)
-- 16 tests auth dont 7 refus, session permanente (CRM privé 2 utilisateurs)
-- Audit sécurité : 1 HIGH + 1 MEDIUM corrigés
-
-**Infra / Deploy :**
-- Vercel Root Directory → `template`, skip deployments hors template/
-- Projet renommé filmpro-crm (pas de domaine custom, URL Vercel suffit)
-- Node.js 22.x → 24.x (auto Vercel)
-
-**PWA :**
-- Manifest + icônes Logo FP (192/512/apple-touch), plein écran, theme-color, validé iPhone
-
-**UX / Design :**
-- Design premium Untitled UI + SnowUI + CRM Kit : tokens ombres multi-niveaux, radius 8-12px, badges dot+border
-- 13 grilles responsives, colonnes Contacts redistribuées
-- CSS scoped pour layout structurel (cf. DECISIONS STRUCTURELLES)
-
-**Prospection :**
-- 60 signaux corrompus nettoyés, 58 réimportés propres, scoring différencié par canton
-- Enrichissement Zefix validé, 6 bugs corrigés (typo, canton, autocomplete, pluriels)
-
-### Condensé thématique (sessions 1-8)
-
-→ Détail chronologique : `archive/decisions-sessions-1-8.md`
-
-**UX / Design :**
-- 6 ecrans principaux (Dashboard, Contacts, Entreprises, Pipeline, Prospection, Signaux) + Parametres secondaire
-- Slide-out panels (liste reste visible), saisie rapide 6 champs + accordeon details
-- Design premium Untitled UI + SnowUI : ombres multi-niveaux, radius 8-12px, sidebar 240px, badges dot+border
-- Score Refactoring UI : 6 → ~8/10 (CRM) et 6.5 → ~8/10 (wizards) apres 2 audits dual
-- Empty states avec CTA, dashboard onboarding 3 etapes, confirmations destructives, pagination Material
-- CantonSelect reutilisable (26 cantons, romands en premier)
-
-**Signaux / Prospection :**
-- Vue cards visuelles (icone type, badge statut, date relative), compteurs cliquables
-- Modal creation allegee 4 champs, edition complete en slide-out
-- Crons quotidiens : `/api/cron/signaux` (6h, Zefix+SIMAP) + `/api/cron/alertes` (7h)
-- Dedup source_officielle+source_id (unique index partiel), scoring 0-13 auto
-- Filtrage SIMAP sur 19 mots-cles secteursCibles, suppression batch Zod
-- Autocomplete entreprise fuzzy (strip SA/Sarl/GmbH), logo Clearbit, enrichissement Zefix `/enrichir`
-
-**Wizards :**
-- Wizard cadrage : 5 etapes HTML (pitch, entites, pages, regles, recap), serveur Python port 3334
-- Wizard entreprise : 3 etapes (infos → synthese IA → branding), serveur unifie --mode entreprise
-- Architecture : polling /api/state, injection Claude via curl, auto-navigation
-- 37 corrections WCAG appliquees (contraste, required, stepper cliquable, responsive)
-
-**Infra / Skills :**
-- registry.yaml registre central, catalogue branding 5 themes, preview HTML generee
-- Branding : aucun skill ne prescrit font/couleur, branding/*.yaml est l'arbitre unique
-- 4 skills design coherents (refactoring-ui, ux-guide, frontend-design, theme-factory) : 0 conflit
-
-**Prerequis :**
-- Aucun bloquant technique
-
-→ Audit CRM FilmPro 2026-04-04 (4 sprints, tous corriges) archive dans archive/audit-crm-2026-04-04.md : consulter si regression securite/qualite/tests OU comme reference methodologique pour le prochain audit (5 agents, scoring par axe, sprints par severite)
+- Sessions 1-8 : UX 6 écrans, design premium Untitled UI/SnowUI, wizards 5 étapes → `archive/decisions-sessions-1-8.md`
+- Sessions 9-16 : auth OTP+MFA, Vercel root `template`, PWA, refonte prospection → `archive/decisions-sessions-9-16.md`
+- Sessions 70-77 (formation-ia shared) : cadrage parcours + S1-S5 ingestion → `archive/decisions-sessions-70-77.md`
+- Sessions 78-79 (formation-ia shared) : S6-S7 ingestion critère sortie → `archive/decisions-sessions-78-79.md`
+- Audit CRM 2026-04-04 (méthodo 5 agents, 4 sprints correctifs) → `archive/audit-crm-2026-04-04.md`
 
 ---
 
@@ -288,34 +190,61 @@ Fichiers cles :
 
 ## Prochaine session
 
-- [x] ~~**[EXÉCUTABLE]** Email récap veille post-cron~~ : Fait 2026-04-17 session 70 : commit `e0f0b32` (modules `cost-tracker.ts` + `email-recap.ts` + hook `run-generation.ts`, 27 tests unit). Gate par `EMAIL_RECAP_ENABLED` désactivé par défaut. Envoi via Resend fetch direct (pas de dep npm). Instrumentation Phase 1/2 Opus 4.7 + Brief/Vision Sonnet 4.6 + fal.ai counter.
-- [x] ~~**[EXÉCUTABLE : Bloc 7]** Import/export CSV + Dashboard/reporting~~, Fait 2026-04-17 session 70 : commit `12d8bc5` (3 endpoints GET `/api/export/[entity]`, script `scripts/import-csv.ts` CLI avec parser RFC 4180 + Zod validation + --dry-run, page `/reporting` avec 4 KPIs + 2 bar charts SVG inline, 50 tests unit).
-- [x] ~~Migration cron veille Opus 4.7 complète~~ : Fait 2026-04-17 session 70 : commit `e1353ba` retire `temperature` (rejeté 400 sur 4.7) + upgrade `effort: 'high'` → `'xhigh'` sur Phase 1 + Phase 2. Bug latent pré-migration évité (cron jeudi aurait planté).
+**Prochaine attaque** : Bloc 0 - Validation prod W17 pipeline images - cron naturel jeudi 2026-04-23 23h, inspecte vendredi matin + clôture ou mobilise Pack P2.
 
-- [ ] **[EXÉCUTABLE : PRIORITÉ]** QA cadrage images /veille W16 (rejet Pascal fin session 67) : parcours visuel des 2 images W16 actuelles, listing problèmes précis (cadrage, sujet, type schéma vs photo, pertinence), puis proposition structurée (audit Vision Opus vs Sonnet, durcir seuil ≥7 ou ≥8, étendre filtrage og:image pour rejeter schémas/infographies, retry fal.ai si rejet, éventuel upgrade Vercel Pro pour libérer 300s). Script test isolé `scripts/test-fal-prompt.ts` à relancer avec ajustements avant toute modif pipeline. Spec/contexte → voir `memory/project_qa_images_veille.md`.
-- [ ] **[EXÉCUTABLE : ~10 min]** Activer email récap veille (prod). (a) Ajouter env Vercel prod : `EMAIL_RECAP_ENABLED=true` + `RESEND_API_KEY=re_...` (réutiliser la clé Resend existante côté Supabase SMTP OTP, cf. `memory/reference_resend_smtp.md`, ne pas en créer une nouvelle). (b) Premier test live = cron jeudi 23 avril 7h UTC (ou trigger manuel via `/api/intelligence/trigger` après activation). (c) Vérifier email reçu `pascal@filmpro.ch` : subject W{week} + split coûts cohérent vs logs Vercel. Modules concernés : `template/src/lib/server/intelligence/cost-tracker.ts` + `email-recap.ts`. Spec impl : `memory/project_email_veille_recap.md` + commit `e0f0b32`.
-- [ ] **[EXÉCUTABLE : ~20 min]** Smoke test livrables batch 1g (prod + local). (a) Page reporting : ouvrir https://filmpro-crm.vercel.app/reporting, vérifier 4 KPIs + 2 bar charts SVG + 3 boutons export. Pas dans nav (`config.navigation` auto-généré depuis project.yaml). (b) Export CSV : télécharger `/api/export/{contacts,entreprises,leads}` → vérifier accents préservés à l'ouverture Excel (BOM UTF-8). (c) Import CSV CLI : `cd template && npx tsx scripts/import-csv.ts contacts <file.csv> --dry-run` avec headers snake_case (`nom`, `prenom`, `email_professionnel`, `canton`, etc.). Ref : commit `12d8bc5`.
-- [ ] **[EXÉCUTABLE : ~30 min, hygiène doc]** Actualiser 2 commandes custom AppFactory obsolètes (audit fait 2026-04-17 session 70 via tâche 1j). (a) `.claude/commands/cadrage.md` ligne 8 : remplacer « Appele depuis `/start` (option 2 ou 3) » par « CRM FilmPro → [4] Créer une app ou [5] Nouveau projet entreprise » (dispatcher actuel). (b) `.claude/commands/deploy.md` Phase 3 + Phase 4 : basculer en flow GitHub→Vercel auto par défaut (`git push origin main` = deploy prod auto), `vercel` CLI devenant fallback explicite (projet pas lié, hotfix hors flow git). (c) `.claude/commands/generate.md` : GARDER tel quel (cohérent avec workflow actuel, valider lors du prochain scaffold réel).
-- [ ] **[BLOQUÉ ← observation 3 régens W17/W18/W19]** Décision retrait détection `url_mutated` : si 0 occurrence confirmée sur W17+W18+W19, retirer code défensif dans `generate.ts` (set candidateUrlSet + console.warn [URL_MUTATED] + bascule speculatif + champ Zod `verification.url_mutated`). Si ≥1 occurrence → durcir prompt Phase 2 OU hard reject. Ref : commit `921e71a` session 63.
-- [ ] **[BLOQUÉ ← session page dashboard dédiée]** Dashboard coûts CRM : page `/dashboard/couts` avec historique persistant table `cost_audit_runs` + graphique 12 semaines + split par cron/catégorie + métriques YTD + alerte seuil. Spec complète → voir `memory/project_dashboard_costs_crm.md`. Note : instrumentation coûts livrée cette session (`cost-tracker.ts` commit `e0f0b32`), reste la table DB + la page dashboard.
-- [ ] **[EXÉCUTABLE : option, à évaluer après 3-4 régens prod]** Audit Vision cadrage niveau 3 fallback media_library : pour chaque pick top-N dans la lib, demander à Vision si cadrage/composition OK pour og:image 16:9. Si rejet → top-N+1. Objectif : justifier décision crop/positionnement comme demandé Pascal. Coût estimé ~$0.09/sem (9 items × $0.01 Sonnet). Non urgent tant que lib 44 images professionnelles Pexels/Unsplash/seed servent cadrage déjà correct.
-- [ ] **[EXÉCUTABLE : Bloc 5, autonome ~10h, 3-4 sessions]** Golden standards UX/UI complets CRM (gabarit exclusif `/prospection`, wizards AppFactory hors périmètre). Phase 1 extraction + Phase 2 rédaction `docs/GOLDEN_STANDARDS.md` (absorbe + remplace `docs/GOLDEN_STANDARDS_RESPONSIVE.md`) + Phase 3 audit delta par page + Phase 4 application (1 commit atomique par page, Vitest + Playwright + screenshots before/after Chrome MCP après chaque).
-  - Périmètre complet : charte graphique (palette workflow ardoise/violet/ambre/sauge, Inter, tokens CSS, radius, shadows, accents FR), layout/responsive, composants (boutons, cards, modales, slide-outs, stepper, badges, tables, filtres multi-select, pagination serveur, batch actions bar), états (hover/focus/disabled/loading/empty/error/success), feedback (toasts, ConfirmModal, messages scoped), micro-interactions, accessibilité (focus trap, touch targets 44px, aria, contraste), ton/copie (labels explicites, pas d'« Autre », accents FR)
-  - Règle table-fixed (session 48) : `table-fixed` obligatoire dès contraintes largeur sur td/th, préférer `w-[X%]` aux pixels
-  - Ingérer palette /prospection ET patterns /veille refondue (Bloc 1 livré)
-- [ ] **[BLOQUÉ ← attente PAT Figma]** Figma API : Personal Access Token + plugin MCP figma scope projet
-- [ ] **[EXÉCUTABLE : premier run e2e]** Tester `/golden-standard` + `/audit-uiux` Express sur 1 page CRM. Système construit le 2026-04-14 sans projet cible, jamais éprouvé en interaction browser réelle. Checklist complète + angles morts (wizard HTML, extracteur, auto-close onglet, firewall macOS, détection routes) → voir `~/.claude/projects/-Users-pascal--claude/memory/project_audit_uiux_first_e2e_test.md`. Bugs trouvés → `parked.md` ou tâche fix dans CLAUDE.md global.
-- [ ] **[BLOQUÉE ← Tâche architecture FilmPro : ~/.claude/CLAUDE.md Bloc 6, session hygiène dédiée ~3-4h]** Harmoniser production PDF FilmPro : aligner `playbook-pdf` (WeasyPrint + charte-pdf-playbook) et `filmpro-pdf-lite` (reportlab + branding-lite) sur un standard best-in-class UNIQUE. 2 process différents pour fonction similaire = anomalie. 4 options évaluées ([1] WeasyPrint base / [2] reportlab base / [3] coexistence documentée + harmoniser gaps G1-G3-G5 / [4] moteur tiers rejeté). Reco [3] minimum viable. 5 gaps identifiés (G1 QA FR, G2 audit post-build, G3 fixtures, G4 dépendance Marketing fonts, G5 pointeur REDACTION-FR.md). Zéro régression sur PDFs existants. Emplacement de cette tâche susceptible de migrer vers `FilmPro/CLAUDE.md` si Tâche architecture adopte hub symlinks. → voir `memory/project_filmpro_pdf_harmonization.md`
+### 0. Validation prod W17 pipeline images [SUPERVISÉ • low • ~15 min]
 
-### Séquence
+**Pourquoi** : Pack P1 QA pipeline images livré S108 (commit `a8a031f` push main). Validation prod pending via cron naturel W17 jeudi 2026-04-23 23h UTC+2. Inspecte vendredi matin : images conformes → clôture ; régression → Pack P2 (D retry prompt affiné + E Opus Vision) mobilisable.
+**Prérequis** : date ≥ 2026-04-24 (matin post-cron W17).
 
-1. **[PRIORITÉ] QA cadrage images /veille W16** (démarre la prochaine session).
-2. **Activer email récap veille prod** (~10 min, débloque le cron jeudi 23 avril).
-3. **Smoke test livrables batch 1g** (~20 min, valide reporting + export + import CLI).
-4. **Actualiser cadrage.md + deploy.md** (~30 min, hygiène doc).
-5. **Bloc 5 : Golden standards UX/UI** (gros chantier 3-4 sessions).
-6. **Audit Vision cadrage niveau 3** (dépend conclusions QA #1).
-7. **Décision retrait url_mutated** (bloqué W17+W18+W19).
-8. **Dashboard coûts CRM** (bloqué session page dashboard dédiée).
-9. **Premier run e2e `/golden-standard`** (test système).
-- Hors séquence (BLOQUÉ) : Figma (attente PAT)
+- [ ] **[BLOQUÉ - date ≥ 2026-04-24 matin]** Inspecter https://filmpro-crm.vercel.app/veille W17. Valider visuellement chaque image vs titre/sujet. Si OK → clôturer tâche QA images (update `memory/project_qa_images_veille.md` en « livré S108+validé S109 »). Si KO → mobiliser Pack P2 : option D retry 1× fal.ai avec prompt affiné incluant sémantique article, option E bascule Vision Niveau 2 Opus (attention 300s Hobby). → voir `memory/project_qa_images_veille.md`
+
+### 1. Activation email récap veille prod [EXÉCUTABLE • low • ~10 min]
+
+**Pourquoi** : spec commit `e0f0b32` en attente d'activation. Premier test possible = cron jeudi 2026-04-23 (même cron que validation W17, pertinence combinée).
+
+- [ ] **[EXÉCUTABLE]** Env Vercel prod : `EMAIL_RECAP_ENABLED=true` + `RESEND_API_KEY` (clé Supabase SMTP existante). Vérifier arrivée mail post-cron jeudi. → voir `memory/project_email_veille_recap.md`
+
+### 2. Hygiène doc CRM [EXÉCUTABLE • low • ~20 min]
+
+**Pourquoi** : 2 commandes obsolètes + smoke test livrables batch 1g. Thème commun « petites validations / nettoyage » enchaînables sans bascule contextuelle.
+
+- [ ] **[EXÉCUTABLE]** Smoke test livrables batch 1g : page `/reporting` + export CSV BOM UTF-8 + import CSV CLI `--dry-run`. Ref commit `12d8bc5`
+- [ ] **[EXÉCUTABLE]** Actualiser commandes obsolètes `.claude/commands/cadrage.md` (dispatcher → menu CRM) + `deploy.md` (flow GitHub→Vercel auto par défaut). Keep `generate.md` tel quel
+
+### 3. Golden standards UX/UI complets CRM [SUPERVISÉ • xhigh • ~10h, 3-4 sessions]
+
+**Pourquoi** : chantier structurant. Gabarit exclusif `/prospection`, wizards hors périmètre. Ingère palettes /prospection + /veille refondue.
+**Prérequis** : décision démarrer explicitement (gros chantier, nécessite sessions dédiées).
+
+- [ ] **[EXÉCUTABLE]** Phase 1 extraction → Phase 2 rédaction `docs/GOLDEN_STANDARDS.md` → Phase 3 audit delta → Phase 4 application (1 commit/page). Règle table-fixed (S48)
+
+### 4. Premier run e2e /golden-standard + /audit-uiux [EXÉCUTABLE • medium • session test]
+
+**Pourquoi** : test système sur 1 page CRM avant usage étendu. Indépendant Bloc 3.
+
+- [ ] **[EXÉCUTABLE]** Premier run e2e `/golden-standard` + `/audit-uiux` Express sur 1 page CRM. → voir `~/.claude/projects/-Users-pascal--claude/memory/project_audit_uiux_first_e2e_test.md`
+
+### 5. Audit Vision cadrage Niveau 3 [BLOQUÉ • medium • option]
+
+- [ ] **[BLOQUÉ - après validation W17 + 3-4 régens conclusives sur Pack P1]** Audit Vision cadrage niveau 3 fallback media_library : top-N crop OK pour og:image 16:9. ~$0.09/sem
+
+### 6. Décision retrait url_mutated [BLOQUÉ • low • ~15 min]
+
+- [ ] **[BLOQUÉ - 3 régens W17/W18/W19 avec 0 occurrence]** Retirer code défensif `generate.ts` si 0 occurrence `[URL_MUTATED]` sur 3 semaines. Ref commit `921e71a`
+
+### 7. Dashboard coûts CRM [BLOQUÉ • high • session dédiée]
+
+- [ ] **[BLOQUÉ - session dashboard dédiée]** Dashboard coûts CRM `/dashboard/couts` : table `cost_audit_runs` + graphique 12 sem + split cron/catégorie + seuils. → voir `memory/project_dashboard_costs_crm.md`
+
+### 8. Figma API [BLOQUÉ • medium • ~1h]
+
+- [ ] **[BLOQUÉ - attente PAT Figma]** Figma API : PAT + plugin MCP figma scope projet
+
+### 9. Harmonisation PDF FilmPro [BLOQUÉ • high • ~2h]
+
+- [ ] **[BLOQUÉ - Tâche archi FilmPro ~/.claude/CLAUDE.md Bloc 6]** Harmoniser production PDF FilmPro : aligner `playbook-pdf` (WeasyPrint) et `filmpro-pdf-lite` (reportlab). Reco option [3] coexistence + combler gaps G1-G3-G5. → voir `memory/project_filmpro_pdf_harmonization.md`
+
+### Livré cette session (5 derniers)
+
+- [x] ~~QA cadrage images /veille W16 Pack P1 (A+B+C)~~ - Fait 2026-04-22 (S108) : 3 leviers + Vision Niveau 1 + seuil 6→7. Commit `a8a031f` push main. Validation prod pending W17.
