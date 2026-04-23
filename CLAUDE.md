@@ -1,11 +1,11 @@
 # AppFactory : CLAUDE.md
 
 **Statut :** Phase C, Skills et templates HTML + module Veille sectorielle en production + pipeline images 4 niveaux (Flux 1.1 Pro Ultra + audits Vision) + email récap cron veille (gated) + export/import CSV + page /reporting. Formation IA est un sous-projet autonome dans `formation-ia/`, accessible directement via `cc` option 2 (pas de dispatcher intermédiaire).
-**Derniere mise a jour :** 2026-04-22 (session S108 CRM : Pack P1 QA pipeline images /veille livré bout en bout. 3 leviers A+B+C intégrés dans `og-image-quality.ts` + `og-image-vision.ts` (nouveau) + `image-fallback-generator.ts` + `generate.ts`. Gates 422/422 tests Vitest, script test isolé 2/2 rejets W16 validés. Commit `a8a031f` + push main. Validation prod pending W17 jeudi 2026-04-23 via cron naturel.)
+**Derniere mise a jour :** 2026-04-23 (session S109 CRM : batch activations + nettoyage doc. Email récap veille activé prod + redeploy `filmpro-fxkoptuk2`. Doc `.claude/commands/cadrage.md` + `deploy.md` actualisées. Smoke test CSV 36/36 verts + CLI `--dry-run` validé + BOM UTF-8 confirmé. PDF point d'étape CRM FilmPro livré Desktop.)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session courante :** Session 108 (CRM /veille, 2026-04-22, `/effort xhigh`). **Pack P1 QA pipeline images /veille** livré bout en bout après rejet Pascal S67 sur 2 images W16 (Springer schéma + fal.ai générique). Diagnostic 3 mécanismes défaillants (Niveau 1 sans audit contenu, Niveau 2 seuil 6/10 trop bas, brief segment-based générique). Implémentation : A. blacklist 18 hosts scientifiques + 6 patterns chemins (`Fig\d+_HTML`, `art%3A10.`, `MediaObjects/`...) ; B. passe Vision Sonnet Niveau 1 avec 5 critères (`is_photograph`, `is_editorial`, `no_diagram_or_infographic`, `no_screenshot_or_ui`, `contextual_score ≥7/10`), intégrée en Bloc 6quater après `checkOgImageQuality` et avant `generateFallbacksForItems` pour ne pas auto-rejeter les images fal.ai ; C. seuil Niveau 2 durci 6→7. Gates : 422/422 Vitest, svelte-check 3 erreurs pré-existantes hors scope, script `scripts/test-og-image-vision.ts` 2/2 rejets W16 confirmés. Commit `a8a031f` + push main. Pack P2 (D retry + E Opus Vision) en réserve si régression prod W17.
-**Session -1 :** Session 107 (formation-ia, 2026-04-20). Bloc 0 Phases 5+6 livrées bout en bout. Page cockpit `/admin/parcours/[slug]/images` + upload/replace/delete + admin guard. Commit `f253460`. Gates 584/0/0, vitest 225/225. Bloc 1 UI refonte 12 modules débloqué.
+**Session courante :** Session 109 (CRM hygiène + activations, 2026-04-23, `/effort high`). Batch 3 tâches livrées : (1) **Email récap veille activé prod** : env vars `EMAIL_RECAP_ENABLED=true` + `RESEND_API_KEY` (format `re_Xr2…`, 36 chars, scope Sending access + filmpro.ch) poussées Vercel production + redeploy `filmpro-fxkoptuk2` alias `filmpro-crm.vercel.app` (build 36s). Activation effective pour cron `/api/cron/intelligence` jeudi 2026-04-23 23h UTC+2. (2) **Doc commands actualisée** : `cadrage.md` options `/start` 2/3→4/5 + ajout option 5 `--mode entreprise` ; `deploy.md` refonte complète flow GitHub→Vercel auto par défaut, CLI `vercel` rétrogradé en fallback, rappel redeploy après ajout env vars. (3) **Smoke test batch 1g** : tests csv-export + csv-import 36/36 verts, CLI `scripts/import-csv.ts contacts --dry-run` validation + mapping OK (schéma attend `email_professionnel` pas `email`), BOM UTF-8 confirmé `src/routes/api/export/[entity]/+server.ts:137` (`'﻿' + csv`). (4) **PDF point d'étape CRM** livré `~/Desktop/CRM_FilmPro_Point_etape_2026-04-23.pdf` via skill filmpro-pdf-lite (5 pages, patch path Geologica-Bold vers VariableFont installée car Marketing DORMANT).
+**Session -1 :** Session 108 (CRM /veille, 2026-04-22). Pack P1 QA pipeline images /veille livré bout en bout (3 leviers A+B+C : blacklist 18 hosts + 6 patterns + Vision Sonnet Niveau 1 + seuil Niveau 2 6→7). Commit `a8a031f` + push main. Validation prod pending W17.
 **Sessions précédentes (condensé)** - détail S78-S79 : `archive/decisions-sessions-78-79.md`. Détail S70-S77 : `archive/decisions-sessions-70-77.md`. Détail S80-S107 : `formation-ia/CLAUDE.md` (sous-projet autonome, sessions V2 formation-ia).
 
 - **S105** (formation-ia, 2026-04-20) : refonte roadmap V2 post 6 demandes Pascal → plan 9 blocs séquencés ~23h. **Bloc 0 Pipeline images Phase 1-4 livré** (migration DB + bucket Supabase + résolveur signed URL + composant apprenant + helpers + script fal.ai Flux + 12 briefs + 12 images prod scores 7-9/10). 7 commits : `edc1822`, `141cf98`, `a74eebc`, `7bb05b6`, `d56b142`, `69e2ac6`, `b77a8c5`. Gates 578/0/0, vitest 25/25.
@@ -190,61 +190,50 @@ Fichiers cles :
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 0 - Validation prod W17 pipeline images - cron naturel jeudi 2026-04-23 23h, inspecte vendredi matin + clôture ou mobilise Pack P2.
+**Prochaine attaque** : Bloc 0 - Double validation prod W17 vendredi matin (images veille + arrivée mail récap) - même cron jeudi 2026-04-23 23h, inspection combinée 2-en-1.
 
-### 0. Validation prod W17 pipeline images [SUPERVISÉ • low • ~15 min]
+### 0. Validation prod W17 pipeline images + email récap [SUPERVISÉ • low • ~20 min]
 
-**Pourquoi** : Pack P1 QA pipeline images livré S108 (commit `a8a031f` push main). Validation prod pending via cron naturel W17 jeudi 2026-04-23 23h UTC+2. Inspecte vendredi matin : images conformes → clôture ; régression → Pack P2 (D retry prompt affiné + E Opus Vision) mobilisable.
+**Pourquoi** : double validation issue du cron W17 naturel (jeudi 2026-04-23 23h UTC+2). (a) Pack P1 QA images livré S108 (commit `a8a031f`) à vérifier visuellement. (b) Email récap veille activé S109 (env vars poussées + redeploy prod 2026-04-23 `filmpro-fxkoptuk2`) : premier mail automatique déclenché par ce même cron, à vérifier dans la boîte `pascal@filmpro.ch`.
 **Prérequis** : date ≥ 2026-04-24 (matin post-cron W17).
 
-- [ ] **[BLOQUÉ - date ≥ 2026-04-24 matin]** Inspecter https://filmpro-crm.vercel.app/veille W17. Valider visuellement chaque image vs titre/sujet. Si OK → clôturer tâche QA images (update `memory/project_qa_images_veille.md` en « livré S108+validé S109 »). Si KO → mobiliser Pack P2 : option D retry 1× fal.ai avec prompt affiné incluant sémantique article, option E bascule Vision Niveau 2 Opus (attention 300s Hobby). → voir `memory/project_qa_images_veille.md`
+- [ ] **[BLOQUÉ - date ≥ 2026-04-24 matin]** Inspecter https://filmpro-crm.vercel.app/veille W17 + valider visuellement chaque image vs titre/sujet. Si OK → clôturer tâche QA images (update `memory/project_qa_images_veille.md` en « livré S108+validé S109 »). Si KO → mobiliser Pack P2 : option D retry 1× fal.ai avec prompt affiné incluant sémantique article, option E bascule Vision Niveau 2 Opus (attention 300s Hobby). → voir `memory/project_qa_images_veille.md`
+- [ ] **[BLOQUÉ - date ≥ 2026-04-24 matin]** Vérifier arrivée email récap sur `pascal@filmpro.ch` post-cron jeudi. Subject attendu : `[Veille FilmPro] W17 — {N} items, {total} EUR`. Si absent → diagnostiquer logs Vercel `/api/cron/intelligence` + Resend dashboard. Si présent → update `memory/project_email_veille_recap.md` en « activé prod S109 + validé S110 ». → voir `memory/project_email_veille_recap.md`
 
-### 1. Activation email récap veille prod [EXÉCUTABLE • low • ~10 min]
-
-**Pourquoi** : spec commit `e0f0b32` en attente d'activation. Premier test possible = cron jeudi 2026-04-23 (même cron que validation W17, pertinence combinée).
-
-- [ ] **[EXÉCUTABLE]** Env Vercel prod : `EMAIL_RECAP_ENABLED=true` + `RESEND_API_KEY` (clé Supabase SMTP existante). Vérifier arrivée mail post-cron jeudi. → voir `memory/project_email_veille_recap.md`
-
-### 2. Hygiène doc CRM [EXÉCUTABLE • low • ~20 min]
-
-**Pourquoi** : 2 commandes obsolètes + smoke test livrables batch 1g. Thème commun « petites validations / nettoyage » enchaînables sans bascule contextuelle.
-
-- [ ] **[EXÉCUTABLE]** Smoke test livrables batch 1g : page `/reporting` + export CSV BOM UTF-8 + import CSV CLI `--dry-run`. Ref commit `12d8bc5`
-- [ ] **[EXÉCUTABLE]** Actualiser commandes obsolètes `.claude/commands/cadrage.md` (dispatcher → menu CRM) + `deploy.md` (flow GitHub→Vercel auto par défaut). Keep `generate.md` tel quel
-
-### 3. Golden standards UX/UI complets CRM [SUPERVISÉ • xhigh • ~10h, 3-4 sessions]
+### 1. Golden standards UX/UI complets CRM [SUPERVISÉ • xhigh • ~10h, 3-4 sessions]
 
 **Pourquoi** : chantier structurant. Gabarit exclusif `/prospection`, wizards hors périmètre. Ingère palettes /prospection + /veille refondue.
 **Prérequis** : décision démarrer explicitement (gros chantier, nécessite sessions dédiées).
 
 - [ ] **[EXÉCUTABLE]** Phase 1 extraction → Phase 2 rédaction `docs/GOLDEN_STANDARDS.md` → Phase 3 audit delta → Phase 4 application (1 commit/page). Règle table-fixed (S48)
 
-### 4. Premier run e2e /golden-standard + /audit-uiux [EXÉCUTABLE • medium • session test]
+### 2. Premier run e2e /golden-standard + /audit-uiux [EXÉCUTABLE • medium • session test]
 
-**Pourquoi** : test système sur 1 page CRM avant usage étendu. Indépendant Bloc 3.
+**Pourquoi** : test système sur 1 page CRM avant usage étendu. Indépendant Bloc 1.
 
 - [ ] **[EXÉCUTABLE]** Premier run e2e `/golden-standard` + `/audit-uiux` Express sur 1 page CRM. → voir `~/.claude/projects/-Users-pascal--claude/memory/project_audit_uiux_first_e2e_test.md`
 
-### 5. Audit Vision cadrage Niveau 3 [BLOQUÉ • medium • option]
+### 3. Audit Vision cadrage Niveau 3 [BLOQUÉ • medium • option]
 
 - [ ] **[BLOQUÉ - après validation W17 + 3-4 régens conclusives sur Pack P1]** Audit Vision cadrage niveau 3 fallback media_library : top-N crop OK pour og:image 16:9. ~$0.09/sem
 
-### 6. Décision retrait url_mutated [BLOQUÉ • low • ~15 min]
+### 4. Décision retrait url_mutated [BLOQUÉ • low • ~15 min]
 
 - [ ] **[BLOQUÉ - 3 régens W17/W18/W19 avec 0 occurrence]** Retirer code défensif `generate.ts` si 0 occurrence `[URL_MUTATED]` sur 3 semaines. Ref commit `921e71a`
 
-### 7. Dashboard coûts CRM [BLOQUÉ • high • session dédiée]
+### 5. Dashboard coûts CRM [BLOQUÉ • high • session dédiée]
 
 - [ ] **[BLOQUÉ - session dashboard dédiée]** Dashboard coûts CRM `/dashboard/couts` : table `cost_audit_runs` + graphique 12 sem + split cron/catégorie + seuils. → voir `memory/project_dashboard_costs_crm.md`
 
-### 8. Figma API [BLOQUÉ • medium • ~1h]
+### 6. Figma API [BLOQUÉ • medium • ~1h]
 
 - [ ] **[BLOQUÉ - attente PAT Figma]** Figma API : PAT + plugin MCP figma scope projet
 
-### 9. Harmonisation PDF FilmPro [BLOQUÉ • high • ~2h]
+### 7. Harmonisation PDF FilmPro [BLOQUÉ • high • ~2h]
 
 - [ ] **[BLOQUÉ - Tâche archi FilmPro ~/.claude/CLAUDE.md Bloc 6]** Harmoniser production PDF FilmPro : aligner `playbook-pdf` (WeasyPrint) et `filmpro-pdf-lite` (reportlab). Reco option [3] coexistence + combler gaps G1-G3-G5. → voir `memory/project_filmpro_pdf_harmonization.md`
 
 ### Livré cette session (5 derniers)
 
+- [x] ~~Email récap veille prod activé + doc cadrage/deploy + smoke test CSV + PDF point d'étape CRM~~ - Fait 2026-04-23 (S109) : env vars `EMAIL_RECAP_ENABLED=true` + `RESEND_API_KEY` poussées prod + redeploy `filmpro-fxkoptuk2` alias `filmpro-crm.vercel.app`. `.claude/commands/cadrage.md` options 2/3→4/5. `.claude/commands/deploy.md` refonte flow GitHub→Vercel auto. Tests csv-export + csv-import 36/36 verts, CLI `--dry-run` validé, BOM UTF-8 confirmé. PDF `~/Desktop/CRM_FilmPro_Point_etape_2026-04-23.pdf` livré (5 pages, filmpro-pdf-lite).
 - [x] ~~QA cadrage images /veille W16 Pack P1 (A+B+C)~~ - Fait 2026-04-22 (S108) : 3 leviers + Vision Niveau 1 + seuil 6→7. Commit `a8a031f` push main. Validation prod pending W17.
