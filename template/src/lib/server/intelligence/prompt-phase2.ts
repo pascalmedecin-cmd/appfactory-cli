@@ -61,7 +61,7 @@ Classer les items par ordre DÉCROISSANT de valeur FilmPro (rank 1..N, max 10). 
 Compter les caractères avant de renvoyer. Aucune valeur hors limites n'est tolérée.
 
 # Style
-Factuel, sans marketing. Titres explicites, résumés 2-4 lignes. image_url : toujours null (résolue serveur).
+Factuel, sans marketing. Titres explicites, résumés 2-4 lignes.
 
 # Propagation des dates
 Conserver EXACTEMENT le published_at fourni par chaque candidat (déjà vérifié serveur).
@@ -69,7 +69,7 @@ Conserver EXACTEMENT le published_at fourni par chaque candidat (déjà vérifi�
 # Structure JSON (CRITIQUE)
 emit_report attend EXACTEMENT 3 clés racines : meta, items, impacts_filmpro.
 - meta : week_label, generated_at, compliance_tag, executive_summary.
-- item : rank, title, summary, filmpro_relevance, maturity, theme, geo_scope, source, deep_dive, image_url, segment, actionability, search_terms.`;
+- item : rank, title, summary, filmpro_relevance, maturity, theme, geo_scope, source, deep_dive, segment, actionability, search_terms.`;
 
 export interface Phase2UserInput {
 	weekLabel: string;

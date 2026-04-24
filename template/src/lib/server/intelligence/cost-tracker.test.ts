@@ -85,43 +85,7 @@ describe('CostTracker - addClaudeCall', () => {
 	});
 });
 
-describe('CostTracker - addFalCall', () => {
-	let tracker: CostTracker;
-	beforeEach(() => {
-		tracker = new CostTracker();
-	});
-
-	it('calcule coût Flux 1.1 Pro Ultra', () => {
-		tracker.addFalCall('flux-1.1-pro-ultra', 'fallback', 3);
-		const { total_usd } = tracker.summary();
-		// 3 × $0.06 = $0.18
-		expect(total_usd).toBeCloseTo(0.18, 4);
-	});
-
-	it('agrège count par (label, model)', () => {
-		tracker.addFalCall('flux-1.1-pro-ultra', 'fallback', 2);
-		tracker.addFalCall('flux-1.1-pro-ultra', 'fallback', 1);
-		const { breakdown } = tracker.summary();
-		expect(breakdown).toHaveLength(1);
-		const e = breakdown[0] as Extract<(typeof breakdown)[0], { kind: 'fal' }>;
-		expect(e.count).toBe(3);
-	});
-
-	it('count=1 par défaut', () => {
-		tracker.addFalCall('flux-1.1-pro-ultra', 'fallback');
-		const { breakdown } = tracker.summary();
-		const e = breakdown[0] as Extract<(typeof breakdown)[0], { kind: 'fal' }>;
-		expect(e.count).toBe(1);
-	});
-
-	it('model fal inconnu → coût 0', () => {
-		tracker.addFalCall('unknown-model', 'fallback', 5);
-		const { total_usd } = tracker.summary();
-		expect(total_usd).toBe(0);
-	});
-});
-
-describe('CostTracker - reset et mix', () => {
+describe('CostTracker - reset', () => {
 	let tracker: CostTracker;
 	beforeEach(() => {
 		tracker = new CostTracker();
@@ -129,21 +93,9 @@ describe('CostTracker - reset et mix', () => {
 
 	it('reset() vide les entrées', () => {
 		tracker.addClaudeCall('claude-opus-4-7', usage(1000, 100), 'Phase 1');
-		tracker.addFalCall('flux-1.1-pro-ultra', 'fallback', 2);
 		tracker.reset();
 		const { breakdown, total_usd } = tracker.summary();
 		expect(breakdown).toHaveLength(0);
 		expect(total_usd).toBe(0);
-	});
-
-	it('mix Claude + fal.ai additionne correctement', () => {
-		tracker.addClaudeCall('claude-sonnet-4-6', usage(100_000, 10_000), 'brief');
-		tracker.addFalCall('flux-1.1-pro-ultra', 'fallback', 2);
-		const { breakdown, total_usd } = tracker.summary();
-		expect(breakdown).toHaveLength(2);
-		// Claude : 100K × $3 + 10K × $15 = 0.3 + 0.15 = $0.45
-		// Fal : 2 × $0.06 = $0.12
-		// Total : $0.57
-		expect(total_usd).toBeCloseTo(0.57, 4);
 	});
 });

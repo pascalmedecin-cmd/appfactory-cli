@@ -2,7 +2,7 @@
  * Cost tracker pour le pipeline veille (cron /api/cron/intelligence).
  *
  * Agrège les coûts Claude API (tokens uncached + cache read + cache creation)
- * et fal.ai (count × tarif unitaire) sur une invocation complète.
+ * sur une invocation complète.
  *
  * Pattern : module-level singleton. Une invocation cron = un reset() au début,
  * collecte progressive pendant, summary() à la fin. Pas thread-safe multi-invocation.
@@ -36,12 +36,6 @@ const CACHE_WRITE_MULTIPLIER = 1.25;
 /** Multiplicateur cache read. */
 const CACHE_READ_MULTIPLIER = 0.1;
 
-/** Prix fal.ai par modèle (USD / image). */
-const FAL_USD_PER_IMAGE: Record<string, number> = {
-	'flux-1.1-pro-ultra': 0.06,
-	'recraft-v3': 0.04
-};
-
 /** Taux de conversion USD → EUR (approximatif, à actualiser si besoin). */
 const USD_TO_EUR = 0.92;
 
@@ -59,16 +53,7 @@ export interface ClaudeEntry {
 	eur: number;
 }
 
-export interface FalEntry {
-	kind: 'fal';
-	label: string;
-	model: string;
-	count: number;
-	usd: number;
-	eur: number;
-}
-
-export type CostEntry = ClaudeEntry | FalEntry;
+export type CostEntry = ClaudeEntry;
 
 export interface CostSummary {
 	breakdown: CostEntry[];
@@ -125,35 +110,6 @@ export class CostTracker {
 				output_tokens: output,
 				cache_read_tokens: cacheRead,
 				cache_creation_tokens: cacheCreation,
-				usd,
-				eur: usd * USD_TO_EUR
-			});
-		}
-	}
-
-	/**
-	 * Incrémente le compteur pour un appel fal.ai réussi.
-	 * Agrège par (label, model) comme addClaudeCall.
-	 */
-	addFalCall(model: string, label: string, count = 1): void {
-		const rate = FAL_USD_PER_IMAGE[model] ?? 0;
-		const usd = count * rate;
-
-		const existing = this.entries.find(
-			(e): e is FalEntry =>
-				e.kind === 'fal' && e.label === label && e.model === model
-		);
-
-		if (existing) {
-			existing.count += count;
-			existing.usd += usd;
-			existing.eur = existing.usd * USD_TO_EUR;
-		} else {
-			this.entries.push({
-				kind: 'fal',
-				label,
-				model,
-				count,
 				usd,
 				eur: usd * USD_TO_EUR
 			});

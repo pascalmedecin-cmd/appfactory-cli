@@ -156,41 +156,12 @@
 		}
 	}
 
-	function onImageError(e: Event) {
-		const img = e.currentTarget as HTMLImageElement;
-		// Bloc 6bis : si un fallback media_library est disponible, on l'essaie avant le gradient
-		const fb = img.dataset.fallback;
-		if (fb && img.src !== fb) {
-			img.dataset.fallback = '';
-			img.src = fb;
-			return;
-		}
-		img.style.display = 'none';
-		const fallback = img.nextElementSibling as HTMLElement | null;
-		if (fallback) fallback.style.display = 'block';
-	}
-
-	function onImageLoad(e: Event) {
-		const img = e.currentTarget as HTMLImageElement;
-		if (img.naturalWidth > 0 && img.naturalWidth < img.clientWidth * 0.8) {
-			// Image suspecte (trop petite rendu vs réel) : tenter fallback avant gradient
-			const fb = img.dataset.fallback;
-			if (fb && img.src !== fb) {
-				img.dataset.fallback = '';
-				img.src = fb;
-				return;
-			}
-			img.style.display = 'none';
-			const fallback = img.nextElementSibling as HTMLElement | null;
-			if (fallback) fallback.style.display = 'block';
-		}
-	}
 </script>
 
-<div class="max-w-[1100px] mx-auto px-3 md:px-6 py-4 md:py-6">
+<div class="max-w-[1280px] mx-auto px-4 md:px-10 py-6 md:py-10">
 	<!-- Sticky bar filtres -->
 	<div
-		class="sticky top-0 z-10 -mx-3 md:-mx-6 px-3 md:px-6 py-2 bg-surface/95 backdrop-blur border-b border-border"
+		class="sticky top-0 z-10 -mx-4 md:-mx-10 px-4 md:px-10 py-2 bg-surface/95 backdrop-blur border-b border-border"
 	>
 		<div class="flex items-center gap-2 overflow-x-auto whitespace-nowrap text-xs">
 			<!-- Total -->
@@ -321,38 +292,8 @@
 			<article
 				class="rounded-xl border border-border bg-white shadow-xs overflow-hidden hover:shadow-sm transition-shadow"
 			>
-				<div class="grid grid-cols-1 md:grid-cols-[280px_1fr]">
-					<!-- Image -->
-					<a
-						href={itemDetailHref(item)}
-						onclick={() => item.is_unread && markAsRead(item.report_id)}
-						class="block relative aspect-[1200/630] md:aspect-auto md:h-full bg-gradient-to-br from-primary via-accent to-primary-dark"
-					>
-						{#if item.image_url || item.generated_image_url || item.fallback_image_url}
-							<img
-								src={item.image_url ?? item.generated_image_url ?? item.fallback_image_url}
-								data-fallback={item.image_url
-									? (item.generated_image_url ?? item.fallback_image_url ?? '')
-									: item.generated_image_url
-										? (item.fallback_image_url ?? '')
-										: ''}
-								alt=""
-								loading="lazy"
-								decoding="async"
-								onerror={onImageError}
-								onload={onImageLoad}
-								class="absolute inset-0 w-full h-full object-cover"
-							/>
-							<span
-								class="absolute inset-0 bg-gradient-to-br from-primary via-accent to-primary-dark"
-								style="display: none"
-								aria-hidden="true"
-							></span>
-						{/if}
-					</a>
-
-					<!-- Content -->
-					<div class="p-4 md:p-5 flex flex-col gap-3">
+				<!-- Content -->
+				<div class="p-4 md:p-5 flex flex-col gap-3">
 						<!-- Date principale + semaine + unread -->
 						<div class="flex items-center gap-3 text-xs text-text-muted flex-wrap">
 							<span class="font-semibold text-text">{formatDateLong(item.report_generated_at)}</span>
@@ -482,7 +423,6 @@
 								Détail →
 							</a>
 						</div>
-					</div>
 				</div>
 			</article>
 		{/each}
