@@ -69,37 +69,14 @@ function escapeHtml(s: string): string {
 }
 
 function fmtEntryDetails(entry: CostEntry): string {
-	if (entry.kind === 'claude') {
-		return `in ${fmtInt(entry.input_tokens)} / out ${fmtInt(entry.output_tokens)} / cache ${fmtInt(entry.cache_read_tokens + entry.cache_creation_tokens)}`;
-	}
-	return `${entry.count} image(s)`;
-}
-
-// ---------- Comptage images (mode succès) ----------
-
-interface ImageCounts {
-	total: number;
-	with_image: number;
-	without_image: number;
-}
-
-/**
- * Compte agrégé sans distinguer la source (og / générée / media_library),
- * les items enrichis n'exposent pas de marqueur de provenance au niveau
- * du rapport (la provenance vit dans les logs + media_library.source).
- * Le split fin par source viendra dans le dashboard coûts CRM dédié.
- */
-function countImageSources(report: IntelligenceReport): ImageCounts {
-	const items = report.items ?? [];
-	const with_image = items.filter((it) => !!it.image_url).length;
-	return { total: items.length, with_image, without_image: items.length - with_image };
+	return `in ${fmtInt(entry.input_tokens)} / out ${fmtInt(entry.output_tokens)} / cache ${fmtInt(entry.cache_read_tokens + entry.cache_creation_tokens)}`;
 }
 
 // ---------- Templates ----------
 
 function renderSuccessHtml(data: SendRecapSuccess): string {
 	const { report, weekLabel, costs } = data;
-	const imgs = countImageSources(report);
+	const itemsCount = (report.items ?? []).length;
 	const rowsHtml = costs.breakdown
 		.map(
 			(e) => `
@@ -133,15 +110,7 @@ function renderSuccessHtml(data: SendRecapSuccess): string {
 			<table style="width:100%;border-collapse:collapse;font-size:14px;">
 				<tr>
 					<td style="padding:6px 10px;color:#64748b;">Items générés</td>
-					<td style="padding:6px 10px;text-align:right;font-weight:600;">${imgs.total}</td>
-				</tr>
-				<tr>
-					<td style="padding:6px 10px;color:#64748b;">Items avec image</td>
-					<td style="padding:6px 10px;text-align:right;">${imgs.with_image}</td>
-				</tr>
-				<tr>
-					<td style="padding:6px 10px;color:#64748b;">Items sans image</td>
-					<td style="padding:6px 10px;text-align:right;">${imgs.without_image}</td>
+					<td style="padding:6px 10px;text-align:right;font-weight:600;">${itemsCount}</td>
 				</tr>
 			</table>
 
@@ -180,14 +149,13 @@ function renderSuccessHtml(data: SendRecapSuccess): string {
 
 function renderSuccessText(data: SendRecapSuccess): string {
 	const { report, weekLabel, costs } = data;
-	const imgs = countImageSources(report);
+	const itemsCount = (report.items ?? []).length;
 	const lines: string[] = [];
 	lines.push(`FilmPro Veille : W${weekLabel}`);
 	lines.push(`=== Veille publiée ===`);
 	lines.push(`URL : ${CRM_URL}/veille`);
 	lines.push('');
-	lines.push(`Items générés : ${imgs.total}`);
-	lines.push(`  avec image : ${imgs.with_image} | sans image : ${imgs.without_image}`);
+	lines.push(`Items générés : ${itemsCount}`);
 	lines.push('');
 	lines.push('Coûts :');
 	for (const e of costs.breakdown) {

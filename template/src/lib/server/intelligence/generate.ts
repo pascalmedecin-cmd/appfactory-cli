@@ -12,10 +12,6 @@ import {
 	CANDIDATES_JSON_SCHEMA
 } from './prompt-phase1';
 import { PHASE2_SYSTEM_PROMPT, buildPhase2UserPrompt } from './prompt-phase2';
-import { enrichItemsWithOgImages } from './og-image';
-import { checkOgImageQuality } from './og-image-quality';
-import { auditOgImageVision } from './og-image-vision';
-import { generateFallbacksForItems } from './image-fallback-generator';
 import { verifyUrl } from './url-verify';
 import { verifyEntitiesInText } from './entity-verify';
 import { fetchPublishedDate } from './fetch-og-date';
@@ -74,7 +70,6 @@ const REPORT_JSON_SCHEMA = {
 					'geo_scope',
 					'source',
 					'deep_dive',
-					'image_url',
 					'segment',
 					'actionability',
 					'search_terms'
@@ -133,10 +128,6 @@ const REPORT_JSON_SCHEMA = {
 					deep_dive: {
 						type: ['string', 'null'],
 						description: 'Analyse approfondie optionnelle, 0 à 400 caractères'
-					},
-					image_url: {
-						type: ['string', 'null'],
-						description: 'URL image optionnelle (HTTPS)'
 					},
 					segment: {
 						type: 'string',
@@ -234,7 +225,7 @@ export interface GenerateResult {
 	/** Debug pipeline 2 phases : candidats bruts et candidats survivants au filtre. */
 	candidatesRaw?: IntelligenceCandidate[];
 	candidatesFiltered?: IntelligenceCandidate[];
-	/** Coûts agrégés de l'invocation (Claude API + fal.ai). */
+	/** Coûts agrégés de l'invocation (Claude API). */
 	costs?: CostSummary;
 }
 
@@ -543,66 +534,9 @@ export async function generateIntelligenceReport(
 		})
 	);
 
-	const enrichedItems = await enrichItemsWithOgImages(verifiedItems);
-
-	// Bloc 6ter : filtrage qualité og:image, drop logo/placeholder/wrong-content-type
-	// pour forcer la cascade fallback (génération fal.ai puis media_library).
-	const filteredItems = await Promise.all(
-		enrichedItems.map(async (it) => {
-			if (!it.image_url) return it;
-			const quality = await checkOgImageQuality(it.image_url);
-			if (quality.ok) return it;
-			console.log(
-				`[og-quality] reject rank=${it.rank} reason=${quality.reason} url=${it.image_url}`
-			);
-			return { ...it, image_url: null };
-		})
-	);
-
-	// Bloc 6quater : passe Vision Niveau 1 sur og:image ayant survécu aux filtres
-	// rapides. Rejette schémas scientifiques, infographies, captures, illustrations,
-	// stock banal hors-sujet. Un rejet force la cascade fal.ai (Niveau 2).
-	// Incident S108 W16 : Springer sert Fig1_HTML.png (diagramme) comme og:image,
-	// passe URL + HEAD mais est éditorialement inacceptable.
-	const visionClient = new Anthropic({ apiKey });
-	const visionFilteredItems = await Promise.all(
-		filteredItems.map(async (it) => {
-			if (!it.image_url) return it;
-			const vAudit = await auditOgImageVision(visionClient, it.image_url, {
-				title: it.title,
-				summary: it.summary
-			});
-			if (vAudit.ok) return it;
-			console.log(
-				`[og-vision] reject rank=${it.rank} reason=${vAudit.reason} score=${vAudit.audit?.contextual_score ?? '-'} url=${it.image_url}`
-			);
-			return { ...it, image_url: null };
-		})
-	);
-
-	// Bloc 6ter : génération fal.ai pour items sans og:image fiable.
-	// process.env.PUBLIC_SUPABASE_URL plus fiable que $env/dynamic/private dans contexte cron.
-	const supabaseUrl = (process.env.PUBLIC_SUPABASE_URL ?? env.PUBLIC_SUPABASE_URL ?? '')
-		.replace(/\\n/g, '')
-		.trim();
-	const falKey = env.FAL_KEY ?? process.env.FAL_KEY;
-	const { items: itemsWithGenerated, outcomes: genOutcomes } = await generateFallbacksForItems(
-		visionFilteredItems,
-		{ apiKey: falKey, supabaseUrl, anthropicKey: apiKey }
-	);
-	const generatedCount = genOutcomes.filter((o) => o.status === 'generated').length;
-	const failedCount = genOutcomes.filter((o) => o.status === 'failed').length;
-	if (generatedCount > 0 || failedCount > 0) {
-		console.log(
-			`[fal.ai fallback] generated=${generatedCount} failed=${failedCount} skipped_has_image=${
-				genOutcomes.filter((o) => o.status === 'skipped_has_image').length
-			} skipped_no_key=${genOutcomes.filter((o) => o.status === 'skipped_no_key').length}`
-		);
-	}
-
 	const enrichedReport: IntelligenceReport = {
 		...phase2.report,
-		items: itemsWithGenerated
+		items: verifiedItems
 	};
 
 	return {

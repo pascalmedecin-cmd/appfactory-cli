@@ -24,7 +24,6 @@ const validItem = {
 		published_at: '2026-04-10T08:00:00Z'
 	},
 	deep_dive: null,
-	image_url: null,
 	segment: 'erp' as const,
 	actionability: 'action_directe' as const,
 	search_terms: [
@@ -138,10 +137,8 @@ describe('IntelligenceItemSchema', () => {
 		).toBe(false);
 	});
 
-	it('accepte deep_dive et image_url null', () => {
-		expect(
-			IntelligenceItemSchema.safeParse({ ...validItem, deep_dive: null, image_url: null }).success
-		).toBe(true);
+	it('accepte deep_dive null', () => {
+		expect(IntelligenceItemSchema.safeParse({ ...validItem, deep_dive: null }).success).toBe(true);
 	});
 
 	it('rejette un segment hors enum', () => {

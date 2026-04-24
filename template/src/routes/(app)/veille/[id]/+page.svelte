@@ -18,23 +18,6 @@
 	const impacts = $derived(data.report.impacts_filmpro as ImpactFilmpro[]);
 	const searchTerms = $derived(data.report.search_terms as SearchTerm[]);
 
-	// Etat d'echec image par item (404 client, upscale agressif, image cassee).
-	// Bascule sur gradient fallback au lieu d'afficher une image floue ou cassee.
-	let imgFailed = $state<Record<number, boolean>>({});
-
-	function handleImgError(idx: number) {
-		imgFailed[idx] = true;
-	}
-
-	// onload : bascule gradient si l'image source est trop petite par rapport
-	// au container rendu (seuil 0.8 : tolere le legere upscale, rejette le flou).
-	function handleImgLoad(idx: number, e: Event) {
-		const img = e.currentTarget as HTMLImageElement;
-		if (img.naturalWidth > 0 && img.naturalWidth < img.clientWidth * 0.8) {
-			imgFailed[idx] = true;
-		}
-	}
-
 	const THEME_LABELS: Record<string, string> = {
 		films_solaires: 'Films solaires',
 		films_securite: 'Films sécurité',
@@ -132,7 +115,7 @@
 	}
 </script>
 
-<div class="max-w-[1100px] mx-auto px-2 md:px-8 py-6 md:py-10">
+<div class="max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12">
 	<div class="mb-6">
 		<a href="/veille" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-primary">
 			<span class="material-symbols-outlined text-base">arrow_back</span>
@@ -183,24 +166,7 @@
 			<div class="space-y-12 md:space-y-16">
 				{#each items as item, i}
 					<article class="grid grid-cols-12 gap-6 md:gap-8">
-						<div class="col-span-12 lg:col-span-5">
-							<a href={item.source.url} target="_blank" rel="noopener noreferrer" class="block overflow-hidden rounded-lg group">
-								{#if item.image_url && !imgFailed[i]}
-									<img
-										src={item.image_url}
-										alt=""
-										loading="lazy"
-										decoding="async"
-										class="w-full aspect-[1200/630] object-cover group-hover:scale-[1.02] transition-transform duration-500"
-										onerror={() => handleImgError(i)}
-										onload={(e) => handleImgLoad(i, e)}
-									/>
-								{:else}
-									<div class="w-full aspect-[1200/630] bg-gradient-to-br from-primary-light via-accent-light to-primary-light"></div>
-								{/if}
-							</a>
-						</div>
-						<div class="col-span-12 lg:col-span-7">
+						<div class="col-span-12">
 							<div class="flex items-center gap-2 text-xs text-slate-500 mb-3 flex-wrap">
 								<span class="mag-kicker text-primary">#{item.rank}</span>
 								<span>·</span>

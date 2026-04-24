@@ -101,7 +101,7 @@
 	}
 </script>
 
-<div class="max-w-3xl mx-auto px-3 md:px-6 py-6">
+<div class="max-w-5xl mx-auto px-4 md:px-12 py-8 md:py-12">
 	<!-- Breadcrumb -->
 	<a href="/veille" class="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4">
 		<span class="material-symbols-outlined text-[18px]">arrow_back</span>
@@ -158,18 +158,6 @@
 			</span>
 		{/if}
 	</div>
-
-	<!-- Image (cascade og → generated fal.ai → fallback media_library → gradient) -->
-	{#if data.item.image_url || data.item.generated_image_url || data.item.fallback_image_url}
-		<div class="rounded-xl overflow-hidden border border-border mb-5 bg-gradient-to-br from-primary via-accent to-primary-dark aspect-[1200/630]">
-			<img
-				src={data.item.image_url ?? data.item.generated_image_url ?? data.item.fallback_image_url}
-				alt=""
-				loading="lazy"
-				class="w-full h-full object-cover"
-			/>
-		</div>
-	{/if}
 
 	<!-- Résumé -->
 	<section class="mb-6">
