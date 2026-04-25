@@ -36,6 +36,7 @@ export interface SendRecapFailure {
 
 export type SendRecapInput =
 	| { mode: 'success'; data: SendRecapSuccess }
+	| { mode: 'sparse'; data: SendRecapSuccess }
 	| { mode: 'failure'; data: SendRecapFailure };
 
 export interface SendRecapResult {
@@ -168,6 +169,86 @@ function renderSuccessText(data: SendRecapSuccess): string {
 	return lines.join('\n');
 }
 
+function renderSparseHtml(data: SendRecapSuccess): string {
+	const { report, weekLabel, costs } = data;
+	const itemsCount = (report.items ?? []).length;
+	const rowsHtml = costs.breakdown
+		.map(
+			(e) => `
+				<tr>
+					<td style="padding:6px 10px;border-bottom:1px solid #eee;">${escapeHtml(e.label)}</td>
+					<td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right;">${escapeHtml(fmtEur(e.eur))}</td>
+				</tr>`
+		)
+		.join('');
+	const now = new Date().toLocaleString('fr-CH', { dateStyle: 'short', timeStyle: 'short' });
+
+	return `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="utf-8"></head>
+<body style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f6f6f6;margin:0;padding:24px;">
+	<div style="max-width:640px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #fed7aa;">
+		<div style="background:#9a3412;color:#fff;padding:16px 20px;">
+			<div style="font-size:18px;font-weight:600;">[ALERTE] Veille FilmPro, semaine creuse</div>
+			<div style="font-size:13px;color:#fed7aa;margin-top:2px;">W${escapeHtml(weekLabel)}, ${itemsCount} item${itemsCount > 1 ? 's' : ''} publié${itemsCount > 1 ? 's' : ''}</div>
+		</div>
+		<div style="padding:20px;">
+			<div style="margin-bottom:16px;">
+				<span style="color:#9a3412;font-weight:600;">⚠️ Volume anormalement bas (&lt; 2 items)</span>
+				 : <a href="${CRM_URL}/veille" style="color:#2563eb;">Ouvrir dans le CRM</a>
+			</div>
+
+			<p style="margin:0 0 12px;color:#475569;font-size:14px;line-height:1.5;">
+				La génération automatique n'a retenu que ${itemsCount} item${itemsCount > 1 ? 's' : ''} cette semaine. À investiguer : périmètre trop strict, fenêtre temporelle insuffisante, ou semaine réellement creuse côté actualité sectorielle.
+			</p>
+
+			<h3 style="margin:20px 0 8px;font-size:14px;color:#475569;">Résumé exécutif</h3>
+			<p style="margin:0 0 16px;color:#475569;font-size:13px;line-height:1.5;font-style:italic;">
+				${escapeHtml(report.meta?.executive_summary ?? '(aucun)')}
+			</p>
+
+			<h3 style="margin:20px 0 8px;font-size:14px;color:#475569;">Coûts</h3>
+			<table style="width:100%;border-collapse:collapse;font-size:14px;">
+				<tbody>${rowsHtml}</tbody>
+				<tfoot>
+					<tr>
+						<td style="padding:10px;text-align:right;font-weight:600;">Total</td>
+						<td style="padding:10px;text-align:right;font-weight:600;">${escapeHtml(fmtEur(costs.total_eur))}</td>
+					</tr>
+				</tfoot>
+			</table>
+
+			<div style="margin-top:24px;color:#94a3b8;font-size:12px;border-top:1px solid #eee;padding-top:12px;">
+				Généré le ${escapeHtml(now)}
+			</div>
+		</div>
+	</div>
+</body>
+</html>`;
+}
+
+function renderSparseText(data: SendRecapSuccess): string {
+	const { report, weekLabel, costs } = data;
+	const itemsCount = (report.items ?? []).length;
+	const lines: string[] = [];
+	lines.push(`[ALERTE] Veille FilmPro W${weekLabel} : semaine creuse (${itemsCount} item${itemsCount > 1 ? 's' : ''})`);
+	lines.push('');
+	lines.push(`URL : ${CRM_URL}/veille`);
+	lines.push('');
+	lines.push(`La génération automatique n'a retenu que ${itemsCount} item${itemsCount > 1 ? 's' : ''} cette semaine.`);
+	lines.push(`À investiguer : périmètre trop strict, fenêtre temporelle insuffisante, ou semaine réellement creuse.`);
+	lines.push('');
+	lines.push(`Résumé : ${report.meta?.executive_summary ?? '(aucun)'}`);
+	lines.push('');
+	lines.push('Coûts :');
+	for (const e of costs.breakdown) {
+		lines.push(`  - ${e.label} → ${fmtEur(e.eur)}`);
+	}
+	lines.push('');
+	lines.push(`Total : ${fmtEur(costs.total_eur)}`);
+	return lines.join('\n');
+}
+
 function renderFailureHtml(data: SendRecapFailure): string {
 	const { weekLabel, errorMessage, costs } = data;
 	const truncated = errorMessage.length > 500 ? errorMessage.slice(0, 500) + '…' : errorMessage;
@@ -258,6 +339,15 @@ export function buildRecapPayload(input: SendRecapInput): {
 			subject: `[Veille FilmPro] W${weekLabel}, ${input.data.report.items?.length ?? 0} items, ${fmtEur(costs.total_eur)}`,
 			html: renderSuccessHtml(input.data),
 			text: renderSuccessText(input.data)
+		};
+	}
+	if (input.mode === 'sparse') {
+		const { weekLabel } = input.data;
+		const n = input.data.report.items?.length ?? 0;
+		return {
+			subject: `[ALERTE] Veille FilmPro W${weekLabel}, semaine creuse (${n} item${n > 1 ? 's' : ''})`,
+			html: renderSparseHtml(input.data),
+			text: renderSparseText(input.data)
 		};
 	}
 	return {

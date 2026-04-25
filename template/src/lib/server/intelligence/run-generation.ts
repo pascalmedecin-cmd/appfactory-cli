@@ -15,6 +15,8 @@ export interface RunResult {
 }
 
 const DEFAULT_WINDOW_DAYS = 30;
+/** Seuil items en-dessous duquel on déclenche l'alerte « semaine creuse ». */
+const SPARSE_WEEK_THRESHOLD = 2;
 
 /**
  * Anti-doublons activé à partir d'un weekLabel seuil (format YYYY-Www).
@@ -173,11 +175,12 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 		};
 	}
 
-	// Email récap succès (best-effort, n'influence pas le retour).
-	// Le branchement `sparse` (alerte si items < 2) est ajouté au commit 4.
+	// Email récap (best-effort, n'influence pas le retour). Mode `sparse` si édition
+	// anormalement maigre (< SPARSE_WEEK_THRESHOLD items) → alerte distincte.
+	const isSparse = report.items.length < SPARSE_WEEK_THRESHOLD;
 	try {
 		const result = await sendRecapEmail({
-			mode: 'success',
+			mode: isSparse ? 'sparse' : 'success',
 			data: {
 				weekLabel: week.weekLabel,
 				report,
@@ -185,7 +188,9 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 			}
 		});
 		if (!result.ok && !result.skipped) {
-			console.warn(`[email-recap] success recap not sent: ${result.reason}`);
+			console.warn(
+				`[email-recap] ${isSparse ? 'sparse' : 'success'} recap not sent: ${result.reason}`
+			);
 		}
 	} catch (e) {
 		console.error('[email-recap] unexpected error', e);
