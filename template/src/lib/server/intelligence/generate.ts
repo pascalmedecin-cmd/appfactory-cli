@@ -65,7 +65,11 @@ async function callModel(
 		} as unknown as Anthropic.Tool
 	];
 
-	return client.messages.create({
+	// Anthropic SDK refuse l'appel non-streaming si la prédiction de durée
+	// dépasse 10 min (max_tokens 32K + adaptive thinking xhigh + 15 web_search
+	// = >> 10 min projetés). On passe en streaming et on récupère le message
+	// final accumulé. Comportement identique côté output (Anthropic.Message).
+	const stream = client.messages.stream({
 		model: MODEL,
 		max_tokens: MAX_TOKENS,
 		// Opus 4.7 : adaptive thinking + effort xhigh. Sampling params (temperature/top_p/top_k)
@@ -92,6 +96,7 @@ async function callModel(
 			}
 		]
 	});
+	return stream.finalMessage();
 }
 
 /**
