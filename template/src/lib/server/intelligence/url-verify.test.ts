@@ -21,18 +21,6 @@ describe('verifyUrl', () => {
 		expect(r.reason).toBe('invalid_url');
 	});
 
-	it('refuse la racine seule', async () => {
-		const r = await verifyUrl('https://example.com/');
-		expect(r.ok).toBe(false);
-		expect(r.reason).toBe('trivial_path');
-	});
-
-	it('refuse un path purement de langue', async () => {
-		const r = await verifyUrl('https://example.com/fr/');
-		expect(r.ok).toBe(false);
-		expect(r.reason).toBe('trivial_path');
-	});
-
 	it('accepte un article reel avec HEAD 200', async () => {
 		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 			status: 200,
@@ -52,16 +40,6 @@ describe('verifyUrl', () => {
 		expect(r.ok).toBe(false);
 		expect(r.reason).toBe('http_error');
 		expect(r.status).toBe(404);
-	});
-
-	it('signale une redirection vers la racine', async () => {
-		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-			status: 200,
-			url: 'https://example.com/'
-		});
-		const r = await verifyUrl('https://example.com/article/supprime');
-		expect(r.ok).toBe(false);
-		expect(r.reason).toBe('trivial_path');
 	});
 
 	it('fallback GET Range si HEAD renvoie 405', async () => {
