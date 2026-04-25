@@ -104,6 +104,70 @@ describe('buildRecapPayload - mode success', () => {
 	});
 });
 
+describe('buildRecapPayload - mode sparse', () => {
+	function sparseReport(itemsCount: number): IntelligenceReport {
+		const items = Array.from({ length: itemsCount }, (_, i) => ({
+			rank: i + 1,
+			title: `Item ${i + 1}`
+		}));
+		return {
+			meta: {
+				week_label: '18-2026',
+				generated_at: '2026-04-30T06:00:00Z',
+				compliance_tag: 'À surveiller',
+				executive_summary: 'Semaine très calme côté actualité sectorielle.'
+			},
+			items,
+			impacts_filmpro: []
+		} as unknown as IntelligenceReport;
+	}
+
+	it('subject préfixé [ALERTE] et compte les items', () => {
+		const p = buildRecapPayload({
+			mode: 'sparse',
+			data: { weekLabel: '18-2026', report: sparseReport(1), costs: mockCosts(0.32) }
+		});
+		expect(p.subject.startsWith('[ALERTE]')).toBe(true);
+		expect(p.subject).toContain('W18-2026');
+		expect(p.subject).toContain('semaine creuse');
+		expect(p.subject).toContain('(1 item)');
+	});
+
+	it('subject pluralise "items" si 0', () => {
+		const p = buildRecapPayload({
+			mode: 'sparse',
+			data: { weekLabel: '18-2026', report: sparseReport(0), costs: mockCosts(0.32) }
+		});
+		expect(p.subject).toContain('(0 items)');
+	});
+
+	it('html contient le contexte d\'investigation', () => {
+		const p = buildRecapPayload({
+			mode: 'sparse',
+			data: { weekLabel: '18-2026', report: sparseReport(1), costs: mockCosts(0.32) }
+		});
+		expect(p.html).toContain('investiguer');
+		expect(p.html).toContain('Volume anormalement bas');
+	});
+
+	it('html inclut le résumé exécutif', () => {
+		const p = buildRecapPayload({
+			mode: 'sparse',
+			data: { weekLabel: '18-2026', report: sparseReport(1), costs: mockCosts(0.32) }
+		});
+		expect(p.html).toContain('Semaine très calme');
+	});
+
+	it('text fallback présent', () => {
+		const p = buildRecapPayload({
+			mode: 'sparse',
+			data: { weekLabel: '18-2026', report: sparseReport(1), costs: mockCosts(0.32) }
+		});
+		expect(p.text).toContain('semaine creuse');
+		expect(p.text).toContain('investiguer');
+	});
+});
+
 describe('buildRecapPayload - mode failure', () => {
 	it('subject préfixé [ALERTE]', () => {
 		const p = buildRecapPayload({

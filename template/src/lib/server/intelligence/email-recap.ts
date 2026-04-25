@@ -345,7 +345,7 @@ export function buildRecapPayload(input: SendRecapInput): {
 		const { weekLabel } = input.data;
 		const n = input.data.report.items?.length ?? 0;
 		return {
-			subject: `[ALERTE] Veille FilmPro W${weekLabel}, semaine creuse (${n} item${n > 1 ? 's' : ''})`,
+			subject: `[ALERTE] Veille FilmPro W${weekLabel}, semaine creuse (${n} item${n !== 1 ? 's' : ''})`,
 			html: renderSparseHtml(input.data),
 			text: renderSparseText(input.data)
 		};
