@@ -82,8 +82,10 @@ const HttpsUrl = z
 export const IntelligenceItemSchema = z.object({
 	rank: z.number().int().min(1).max(10),
 	title: z.string().min(10).max(200),
-	summary: z.string().min(40).max(800),
-	filmpro_relevance: z.string().min(20).max(600),
+	// Limites élargies après run prod S112 (6/7 items dépassaient 800).
+	// Le prompt continue à viser 600-900 mais Zod ne rejette plus jusqu'à 1500.
+	summary: z.string().min(40).max(1500),
+	filmpro_relevance: z.string().min(20).max(1200),
 	maturity: MaturityEnum,
 	theme: ThemeEnum,
 	geo_scope: GeoScopeEnum,
@@ -99,7 +101,7 @@ export const IntelligenceItemSchema = z.object({
 			)
 			.transform((s) => (s.includes('T') ? s : `${s}T00:00:00Z`))
 	}),
-	deep_dive: z.string().max(400).nullable(),
+	deep_dive: z.string().max(800).nullable(),
 	// Attribution commerciale par item (refonte /veille, remplace search_terms globaux).
 	segment: SegmentEnum,
 	actionability: ActionabilityEnum,
@@ -152,8 +154,11 @@ export const IntelligenceEditionSchema = z.object({
 
 export const IntelligenceReportSchema = z.object({
 	meta: IntelligenceEditionSchema,
-	items: z.array(IntelligenceItemSchema).min(0).max(10),
-	impacts_filmpro: z.array(ImpactFilmproSchema).min(0).max(3)
+	// optional + default : Anthropic strict-mode peut omettre les clés "required"
+	// quand le modèle n'a rien à émettre (bug observé S112 : impacts_filmpro
+	// undefined dans le payload alors que listé dans required côté schema JSON).
+	items: z.array(IntelligenceItemSchema).min(0).max(10).optional().default([]),
+	impacts_filmpro: z.array(ImpactFilmproSchema).min(0).max(3).optional().default([])
 });
 
 export type Canton = z.infer<typeof CantonEnum>;

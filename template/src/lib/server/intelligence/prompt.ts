@@ -98,7 +98,7 @@ Classer les items par ordre DÉCROISSANT de valeur FilmPro (rank 1..N, max 10). 
 # Limites strictes de longueur (RESPECTER ABSOLUMENT, sinon rejet total)
 - executive_summary : 80 à 1200 caractères (vise 600-900)
 - items : 0 à 10
-- item.title : 10-200 chars ; item.summary : 40-800 chars ; item.filmpro_relevance : 20-600 chars ; item.deep_dive : 0-400 chars
+- item.title : 10-200 chars ; item.summary : 40-1500 chars (vise 600-900) ; item.filmpro_relevance : 20-1200 chars (vise 200-500) ; item.deep_dive : 0-800 chars
 - impacts_filmpro : 0 à 3 entrées ; note : 10 à 500 chars
 - item.search_terms : 2 à 4 chips ; par chip : query 2-120 chars, label 3-160 chars
 
