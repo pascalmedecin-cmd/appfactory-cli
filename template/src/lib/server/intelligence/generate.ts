@@ -52,7 +52,33 @@ async function callModel(
 		{
 			type: 'web_search_20250305',
 			name: 'web_search',
-			max_uses: WEB_SEARCH_MAX_USES
+			max_uses: WEB_SEARCH_MAX_USES,
+			// Bias géographique vers la Suisse pour que les recherches retournent
+			// en priorité des sources locales (sites .ch, presse romande). Sans ce
+			// paramètre, le moteur revient à Google standard et privilégie les
+			// résultats France/EN les mieux référencés.
+			user_location: {
+				type: 'approximate',
+				country: 'CH',
+				region: 'Vaud',
+				city: 'Lausanne',
+				timezone: 'Europe/Zurich'
+			},
+			// Filtre négatif : sources observées comme bruyantes ou bas de gamme
+			// dans les runs S112 (rapports génériques, annuaires, ag3-immobilier
+			// avec URL malformée, optimhome blog SEO bas qualité). Pas de
+			// allowed_domains (on veut garder le monde ouvert pour innovations).
+			blocked_domains: [
+				'natlawreview.com',
+				'optimhome.com',
+				'hellopro.fr',
+				'ag3-immobilier.fr',
+				'centralmedia.fr',
+				'indexbox.io',
+				'giiresearch.com',
+				'monimmeuble.com',
+				'labomaison.com'
+			]
 		} as unknown as Anthropic.Tool,
 		{
 			name: 'emit_report',

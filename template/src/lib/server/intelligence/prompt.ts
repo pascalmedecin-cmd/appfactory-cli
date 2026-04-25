@@ -37,6 +37,15 @@ Ce bloc sert à filtrer la pertinence et à attribuer segment/actionability. INT
 
 Reflet dans le champ geo_scope : "suisse_romande" (1), "suisse" (2), "monde" (3 à 6).
 
+# Méthode de recherche obligatoire (DOIT être respectée)
+Tu disposes d'environ 15 web_search uses. Répartition imposée :
+- **Au moins 5 web_search dédiées Suisse romande** AVANT toute recherche internationale : queries de la forme \`site:.ch [thème]\`, \`Suisse romande [thème] 2026\`, \`[canton VD/GE/VS/NE/FR/JU] [thème]\`, \`MoPEC Minergie [thème]\`, \`SIA EN [thème]\`. Ces 5 recherches doivent retourner les sujets candidats locaux avant que tu envisages des sujets monde.
+- **2-3 web_search Suisse alémanique + France miroir** : Bauen+Wohnen, Batiactu, Le Moniteur, ADEME, RE2020 ERP.
+- **3-5 web_search monde** : uniquement après les recherches CH+France, et uniquement pour innovations tech (smart glass, électrochrome, PDLC, IA bâtiment) ou mouvements concurrents (3M, Eastman, Avery, Madico, Solar Gard).
+- Les 1-2 dernières web_search servent à vérifier les dates / sources des items retenus.
+
+INTERDIT d'émettre une édition avec compliance_tag différent de "Non exploitable" si tu n'as pas effectué AU MOINS 3 recherches `site:.ch` ou ciblées Suisse romande dans la session.
+
 # Thèmes à couvrir
 Cœur métier (priorité haute) :
 - films_solaires : performance énergétique vitrage, contrôle solaire, gestion thermique
