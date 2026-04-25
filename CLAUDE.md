@@ -1,11 +1,12 @@
 # AppFactory : CLAUDE.md
 
-**Statut :** Phase C, Skills et templates HTML + module Veille sectorielle en production + pipeline images 4 niveaux (Flux 1.1 Pro Ultra + audits Vision) + email récap cron veille (gated) + export/import CSV + page /reporting. Formation IA est un sous-projet autonome dans `formation-ia/`, accessible directement via `cc` option 2 (pas de dispatcher intermédiaire).
-**Derniere mise a jour :** 2026-04-23 (session S109 CRM : batch activations + nettoyage doc. Email récap veille activé prod + redeploy `filmpro-fxkoptuk2`. Doc `.claude/commands/cadrage.md` + `deploy.md` actualisées. Smoke test CSV 36/36 verts + CLI `--dry-run` validé + BOM UTF-8 confirmé. PDF point d'étape CRM FilmPro livré Desktop.)
+**Statut :** Phase C, Skills et templates HTML + module Veille sectorielle refondu LEAN 1-phase Opus 4.7 streaming en production (S112) + email récap cron veille textuel (gated, actif) + export/import CSV + page /reporting. Formation IA est un sous-projet autonome dans `formation-ia/`, accessible directement via `cc` option 2.
+**Derniere mise a jour :** 2026-04-25 (session S112 CRM : refonte LEAN veille livrée prod en 13 commits (7 commits S112 + 6 hot-fixes). Run prod manuel exécuté, bug priorité géo SR identifié, hot-fix `user_location` Suisse + `blocked_domains` + prompt durci poussé. Validation finale = email cron du 01/05 lu par Pascal.)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session courante :** Session 109 (CRM hygiène + activations, 2026-04-23, `/effort high`). Batch 3 tâches livrées : (1) **Email récap veille activé prod** : env vars `EMAIL_RECAP_ENABLED=true` + `RESEND_API_KEY` (format `re_Xr2…`, 36 chars, scope Sending access + filmpro.ch) poussées Vercel production + redeploy `filmpro-fxkoptuk2` alias `filmpro-crm.vercel.app` (build 36s). Activation effective pour cron `/api/cron/intelligence` jeudi 2026-04-23 23h UTC+2. (2) **Doc commands actualisée** : `cadrage.md` options `/start` 2/3→4/5 + ajout option 5 `--mode entreprise` ; `deploy.md` refonte complète flow GitHub→Vercel auto par défaut, CLI `vercel` rétrogradé en fallback, rappel redeploy après ajout env vars. (3) **Smoke test batch 1g** : tests csv-export + csv-import 36/36 verts, CLI `scripts/import-csv.ts contacts --dry-run` validation + mapping OK (schéma attend `email_professionnel` pas `email`), BOM UTF-8 confirmé `src/routes/api/export/[entity]/+server.ts:137` (`'﻿' + csv`). (4) **PDF point d'étape CRM** livré `~/Desktop/CRM_FilmPro_Point_etape_2026-04-23.pdf` via skill filmpro-pdf-lite (5 pages, patch path Geologica-Bold vers VariableFont installée car Marketing DORMANT).
-**Session -1 :** Session 108 (CRM /veille, 2026-04-22). Pack P1 QA pipeline images /veille livré bout en bout (3 leviers A+B+C : blacklist 18 hosts + 6 patterns + Vision Sonnet Niveau 1 + seuil Niveau 2 6→7). Commit `a8a031f` + push main. Validation prod pending W17.
+**Session courante :** Session 112 (CRM, 2026-04-25, `/effort xhigh`). Refonte LEAN veille livrée : 7 commits S112 initiaux (1-phase Opus 4.7, suppression vérifs redondantes, UI cards magazine 3 éditions, alerte sparse < 2 items, cron vendredi 6h UTC, tests sparse) + 6 hot-fixes (badge Non vérifié transverse, Zod limites élargies + `optional().default([])`, max_tokens 16K → 32K + garde stop_reason, bascule `messages.create` → `messages.stream().finalMessage()` car Anthropic refuse non-streaming > 10 min projetés, revert maxDuration 800 build error Vercel cap plan, bias géo SR `user_location:{country:CH,city:Lausanne}` + `blocked_domains` 9 sources bruyantes + prompt « ≥5 web_search SR avant monde »). Run prod manuel `aa2b526a` (W17 retry 6) : HTTP 200 277s, 7 items mais 0 SR → root cause web_search Anthropic sans bias géo (vs Perplexity Sonar tuné par défaut, comparé sur même tâche, retournait 2/8 SR). W17 prod restauré depuis snapshot après chaque run pour ne pas casser /veille. Coût session ~$1.50 (5 runs investigation). Validation finale reportée au cron du 01/05 (gratuit).
+**Session -1 :** Session 111 (CRM, 2026-04-25, `/effort xhigh`). Audit 360 veille e2e + spec refonte LEAN validée. Aucun commit code, 100% lecture statique + raisonnement. Spec complète dans `notes/audit-veille-2026-04-25.md`.
+**Session -2 :** Session 110 (CRM, 2026-04-24, `/effort xhigh`). Retrait total pipeline images /veille livré prod (commit `dce99be`).
 **Sessions précédentes (condensé)** - détail S78-S79 : `archive/decisions-sessions-78-79.md`. Détail S70-S77 : `archive/decisions-sessions-70-77.md`. Détail S80-S107 : `formation-ia/CLAUDE.md` (sous-projet autonome, sessions V2 formation-ia).
 
 - **S105** (formation-ia, 2026-04-20) : refonte roadmap V2 post 6 demandes Pascal → plan 9 blocs séquencés ~23h. **Bloc 0 Pipeline images Phase 1-4 livré** (migration DB + bucket Supabase + résolveur signed URL + composant apprenant + helpers + script fal.ai Flux + 12 briefs + 12 images prod scores 7-9/10). 7 commits : `edc1822`, `141cf98`, `a74eebc`, `7bb05b6`, `d56b142`, `69e2ac6`, `b77a8c5`. Gates 578/0/0, vitest 25/25.
@@ -190,22 +191,21 @@ Fichiers cles :
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 0 - Double validation prod W17 vendredi matin (images veille + arrivée mail récap) - même cron jeudi 2026-04-23 23h, inspection combinée 2-en-1.
+**Prochaine attaque** : Bloc 0 - Évaluer email cron veille du 01/05 - validation finale S112. Si qualité OK (≥1 item Suisse romande, sources crédibles, pas de doublons W16/W17) → archiver S112 + drop stash. Si KO → désactiver cron tactiquement et investiguer paramètres web_search ou bascule moteur (Perplexity API ?).
 
-### 0. Validation prod W17 pipeline images + email récap [SUPERVISÉ • low • ~20 min]
+### 0. Évaluation cron veille 01/05 + clôture S112 [SUPERVISÉ • low • ~15 min]
 
-**Pourquoi** : double validation issue du cron W17 naturel (jeudi 2026-04-23 23h UTC+2). (a) Pack P1 QA images livré S108 (commit `a8a031f`) à vérifier visuellement. (b) Email récap veille activé S109 (env vars poussées + redeploy prod 2026-04-23 `filmpro-fxkoptuk2`) : premier mail automatique déclenché par ce même cron, à vérifier dans la boîte `pascal@filmpro.ch`.
-**Prérequis** : date ≥ 2026-04-24 (matin post-cron W17).
+**Pourquoi** : la refonte LEAN est en prod (commit `83fd7fd`) avec hot-fix bias géo SR. Aucun re-test API en S112 (volonté Pascal). Le cron normal du vendredi 01/05 ~08h CEST tournera et produira W18 ; la qualité de cet email = test gratuit du fix géo. Si OK, on archive ; si KO, on creuse autrement.
+**Prérequis** : être ≥ 2026-05-01, email cron reçu sur `pascal@filmpro.ch` ou consultation /veille.
 
-- [ ] **[BLOQUÉ - date ≥ 2026-04-24 matin]** Inspecter https://filmpro-crm.vercel.app/veille W17 + valider visuellement chaque image vs titre/sujet. Si OK → clôturer tâche QA images (update `memory/project_qa_images_veille.md` en « livré S108+validé S109 »). Si KO → mobiliser Pack P2 : option D retry 1× fal.ai avec prompt affiné incluant sémantique article, option E bascule Vision Niveau 2 Opus (attention 300s Hobby). → voir `memory/project_qa_images_veille.md`
-- [ ] **[BLOQUÉ - date ≥ 2026-04-24 matin]** Vérifier arrivée email récap sur `pascal@filmpro.ch` post-cron jeudi. Subject attendu : `[Veille FilmPro] W17 — {N} items, {total} EUR`. Si absent → diagnostiquer logs Vercel `/api/cron/intelligence` + Resend dashboard. Si présent → update `memory/project_email_veille_recap.md` en « activé prod S109 + validé S110 ». → voir `memory/project_email_veille_recap.md`
+- [ ] **[BLOQUÉ - date ≥ 2026-05-01]** Lire l'édition W18 reçue par email + sur /veille. Critères : (1) ≥1 item Suisse romande dans les rangs 1-3, (2) sources crédibles (pas de blog SEO bas de gamme), (3) anti-doublons W16/W17 respecté, (4) compliance_tag cohérent avec contenu, (5) volume 5-10 items. Si 4/5 critères OK → succès, archiver S112. Si < 3/5 → échec, désactiver cron + ouvrir session investigation. → voir `memory/project_veille_S112_apprentissages.md`
+- [ ] **[BLOQUÉ - validation Pascal cron 01/05]** Drop stash `stash@{0}` (`git stash drop stash@{0}`) une fois la refonte LEAN considérée stable. Le stash contenait des éléments S110 chantier B déjà intégrés ou écartés.
 
 ### 1. Golden standards UX/UI complets CRM [SUPERVISÉ • xhigh • ~10h, 3-4 sessions]
 
-**Pourquoi** : chantier structurant. Gabarit exclusif `/prospection`, wizards hors périmètre. Ingère palettes /prospection + /veille refondue.
-**Prérequis** : décision démarrer explicitement (gros chantier, nécessite sessions dédiées).
+**Pourquoi** : chantier structurant. Gabarit exclusif `/prospection`, wizards hors périmètre. Ingère palettes /prospection + /veille refondue (livrée S112).
 
-- [ ] **[EXÉCUTABLE]** Phase 1 extraction → Phase 2 rédaction `docs/GOLDEN_STANDARDS.md` → Phase 3 audit delta → Phase 4 application (1 commit/page). Règle table-fixed (S48)
+- [ ] **[EXÉCUTABLE]** Phase 1 extraction → Phase 2 rédaction `docs/GOLDEN_STANDARDS.md` → Phase 3 audit delta → Phase 4 application (1 commit/page). Règle table-fixed (S48). /veille refondue S112 livrée, palettes intégrables.
 
 ### 2. Premier run e2e /golden-standard + /audit-uiux [EXÉCUTABLE • medium • session test]
 
@@ -213,27 +213,28 @@ Fichiers cles :
 
 - [ ] **[EXÉCUTABLE]** Premier run e2e `/golden-standard` + `/audit-uiux` Express sur 1 page CRM. → voir `~/.claude/projects/-Users-pascal--claude/memory/project_audit_uiux_first_e2e_test.md`
 
-### 3. Audit Vision cadrage Niveau 3 [BLOQUÉ • medium • option]
+### 3. Investiguer éditions veille manquantes (préexistant) [EXÉCUTABLE • low • ~30 min]
 
-- [ ] **[BLOQUÉ - après validation W17 + 3-4 régens conclusives sur Pack P1]** Audit Vision cadrage niveau 3 fallback media_library : top-N crop OK pour og:image 16:9. ~$0.09/sem
+**Pourquoi** : la BDD `intelligence_reports` ne contient que W16 + W17 (vérifié S110), aucune édition antérieure. Cause préexistante (pas régression S110). À investiguer pour comprendre si DELETE manuel ancien, projet récent, ou bug archivage.
 
-### 4. Décision retrait url_mutated [BLOQUÉ • low • ~15 min]
+- [ ] **[EXÉCUTABLE]** Vérifier git log + Supabase audit log + cron `intelligence-archive` (n'archive qu'au-delà de 365 jours, soft via `archived_at`, pas DELETE). Tracer disparitions W1-W15.
 
-- [ ] **[BLOQUÉ - 3 régens W17/W18/W19 avec 0 occurrence]** Retirer code défensif `generate.ts` si 0 occurrence `[URL_MUTATED]` sur 3 semaines. Ref commit `921e71a`
-
-### 5. Dashboard coûts CRM [BLOQUÉ • high • session dédiée]
+### 4. Dashboard coûts CRM [BLOQUÉ • high • session dédiée]
 
 - [ ] **[BLOQUÉ - session dashboard dédiée]** Dashboard coûts CRM `/dashboard/couts` : table `cost_audit_runs` + graphique 12 sem + split cron/catégorie + seuils. → voir `memory/project_dashboard_costs_crm.md`
 
-### 6. Figma API [BLOQUÉ • medium • ~1h]
+### 5. Figma API [BLOQUÉ • medium • ~1h]
 
 - [ ] **[BLOQUÉ - attente PAT Figma]** Figma API : PAT + plugin MCP figma scope projet
 
-### 7. Harmonisation PDF FilmPro [BLOQUÉ • high • ~2h]
+### 6. Harmonisation PDF FilmPro [BLOQUÉ • high • ~2h]
 
 - [ ] **[BLOQUÉ - Tâche archi FilmPro ~/.claude/CLAUDE.md Bloc 6]** Harmoniser production PDF FilmPro : aligner `playbook-pdf` (WeasyPrint) et `filmpro-pdf-lite` (reportlab). Reco option [3] coexistence + combler gaps G1-G3-G5. → voir `memory/project_filmpro_pdf_harmonization.md`
 
 ### Livré cette session (5 derniers)
 
-- [x] ~~Email récap veille prod activé + doc cadrage/deploy + smoke test CSV + PDF point d'étape CRM~~ - Fait 2026-04-23 (S109) : env vars `EMAIL_RECAP_ENABLED=true` + `RESEND_API_KEY` poussées prod + redeploy `filmpro-fxkoptuk2` alias `filmpro-crm.vercel.app`. `.claude/commands/cadrage.md` options 2/3→4/5. `.claude/commands/deploy.md` refonte flow GitHub→Vercel auto. Tests csv-export + csv-import 36/36 verts, CLI `--dry-run` validé, BOM UTF-8 confirmé. PDF `~/Desktop/CRM_FilmPro_Point_etape_2026-04-23.pdf` livré (5 pages, filmpro-pdf-lite).
-- [x] ~~QA cadrage images /veille W16 Pack P1 (A+B+C)~~ - Fait 2026-04-22 (S108) : 3 leviers + Vision Niveau 1 + seuil 6→7. Commit `a8a031f` push main. Validation prod pending W17.
+- [x] ~~Refonte LEAN veille livrée prod (S112) + hot-fix bias géo SR~~ - Fait 2026-04-25 (S112, xhigh) : 13 commits poussés (7 commits S112 initiaux + 6 hot-fixes). Refonte 1-phase Opus 4.7 streaming + UI cards magazine 3 éditions + cron vendredi 6h UTC + alerte sparse < 2 items + bias géo SR (`user_location:CH/Lausanne` + `blocked_domains` 9 sources + prompt « ≥5 web_search SR avant monde »). Run prod manuel `aa2b526a` (W17 retry 6) HTTP 200 277s. Bug priorité géo SR identifié (0/7 SR vs Perplexity Sonar 2/8 SR), fix poussé sans re-test API. Validation finale = email cron 01/05. Coût session ~$1.50 (5 runs investigation).
+- [x] ~~Audit 360 veille e2e + spec refonte LEAN validée~~ - Fait 2026-04-25 (S111, xhigh) : Phase 1 cartographie (9 étages), Phase 2 inventaire bugs (5 fonctionnels + 5 UX + 5 archi), Phase 3 benchmark 3 options + reco Option [A] 1-phase Opus 4.7. Décisions Pascal : géo élargi avec priorités, fenêtre 30j, cron vendredi 6h UTC, suppression badge « Non vérifié »/`is_hot`/recurrence/filtres, UX magazine 3 cards. Spec complète dans `notes/audit-veille-2026-04-25.md` (8 sections). Aucun appel API Anthropic veille consommé (audit 100% lecture statique). Pas de commit code.
+- [x] ~~Retrait total pipeline images /veille~~ - Fait 2026-04-24 (S110) : 8 phases. Migration SQL `20260424_001_remove_media_library.sql` (DROP TABLE + strip JSONB). 13 fichiers DELETE + 9 modifiés. Bucket Storage purgé (45 objets). FAL_KEY retirée Vercel CRM prod. Tests 358/358 verts. Commit `d1a86b7` + merge `dce99be` + push main. Vercel deploy `filmpro-nckwob97j` (32s).
+- [x] ~~Investigation W17 0 items + cadrage élargi B (stashé)~~ - Fait 2026-04-24 (S110) : diagnostic complet (Phase 1 retournait 0 candidats avec ancien prompt strict, jusqu'à 12 candidats avec cadrage B). Code chantier B STASHÉ : `git stash list` → `stash@{0}: WIP S110 chantier B`. Coût debug ≈ $8.
+- [x] ~~Email récap veille prod activé + doc cadrage/deploy + smoke test CSV + PDF point d'étape CRM~~ - Fait 2026-04-23 (S109) : env vars `EMAIL_RECAP_ENABLED=true` + `RESEND_API_KEY` poussées prod + redeploy `filmpro-fxkoptuk2`. Tests csv-export + csv-import 36/36 verts.
