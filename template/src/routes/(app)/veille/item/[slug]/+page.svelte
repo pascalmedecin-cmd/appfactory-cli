@@ -149,14 +149,6 @@
 		>
 			Maturité : {MATURITY_LABELS[data.item.maturity]}
 		</span>
-		{#if data.item.verification && (data.item.verification.url_ok === false || data.item.verification.entity_ok === false)}
-			<span
-				class="inline-flex items-center px-2 py-0.5 rounded-full border font-semibold bg-danger-light text-danger border-danger/30"
-				title={data.item.verification.url_reason ?? 'Entités non vérifiées'}
-			>
-				Non vérifié
-			</span>
-		{/if}
 	</div>
 
 	<!-- Résumé -->
