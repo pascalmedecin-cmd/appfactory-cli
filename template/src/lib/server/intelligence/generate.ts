@@ -16,7 +16,11 @@ import { parseFlexibleDate, isWithinWindow } from './parse-date';
 import { costTracker, type CostSummary } from './cost-tracker';
 
 const MODEL = 'claude-opus-4-7';
-const MAX_TOKENS = 16000;
+// 32K : run prod S112 retry 1 a été coupé par max_tokens à 16K (12K thinking
+// + 13 web_search + emit_report partiel = items=[] alors que executive_summary
+// décrivait des signaux). 32K laisse marge pour adaptive thinking xhigh + 15
+// web_search + emit_report avec 5-10 items pleins.
+const MAX_TOKENS = 32000;
 const WEB_SEARCH_MAX_USES = 15;
 
 export interface GenerateInput {
@@ -143,6 +147,19 @@ export async function generateIntelligenceReport(
 
 	const response = await callModel(client, input);
 	costTracker.addClaudeCall(MODEL, response.usage, 'Claude veille (1-phase)');
+
+	// Garde stop_reason : si le modèle a été coupé par max_tokens, l'éventuel
+	// emit_report final est probablement tronqué (items vides alors que la
+	// recherche web a produit du signal). On échoue explicitement plutôt que
+	// d'enregistrer une édition incomplète + alerte semaine creuse trompeuse.
+	if (response.stop_reason === 'max_tokens') {
+		return {
+			success: false,
+			error: `Modèle coupé par max_tokens (${MAX_TOKENS} tokens consommés). Output partiel.`,
+			raw: response,
+			costs: costTracker.summary()
+		};
+	}
 
 	const emitBlock = response.content.find(
 		(b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'emit_report'
