@@ -3,10 +3,9 @@ import { env } from '$env/dynamic/private';
 import { timingSafeEqual } from 'crypto';
 import { runWeeklyGeneration } from '$lib/server/intelligence/run-generation';
 
-// 800s : cap Pro plan Fluid Compute. Refonte 1-phase Opus 4.7 streaming
-// peut tourner 5-10 min selon thinking adaptive + nombre de web_search.
-// (Ancienne valeur 300 héritée du pipeline 2-phases + images supprimé S110.)
-export const config = { maxDuration: 800 };
+// Vercel Hobby max 300s. Pipeline doit fit dedans (Phase 1+2 Opus + N items
+// avec brief Sonnet + fal.ai + Vision Sonnet en parallèle concurrence=3).
+export const config = { maxDuration: 300 };
 
 function verifyCronSecret(authHeader: string | null): boolean {
 	const secret = env.CRON_SECRET;

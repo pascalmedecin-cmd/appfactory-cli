@@ -3,10 +3,6 @@ import { env } from '$env/dynamic/private';
 import { timingSafeEqual } from 'crypto';
 import { runWeeklyGeneration } from '$lib/server/intelligence/run-generation';
 
-// 800s : cap Pro plan Fluid Compute. Refonte 1-phase Opus 4.7 streaming
-// peut tourner 5-10 min selon thinking adaptive + nombre de web_search.
-export const config = { maxDuration: 800 };
-
 function verifyBearer(authHeader: string | null): boolean {
 	const secret = env.CRON_SECRET;
 	if (!secret || !authHeader) return false;
