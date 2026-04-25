@@ -71,10 +71,12 @@ export const ImpactAxisEnum = z.enum([
 export const StatusEnum = z.enum(['published', 'draft', 'error']);
 
 // Refuse les schemes non-HTTP(S) (protège contre javascript:, data:, etc.)
+// Limite 2000 chars (RFC max effectif) : certains CMS/CDN ont URLs longues avec
+// tracking ou query params. Bug observé S110 W17 : 2 candidats avec URL > 500.
 const HttpsUrl = z
 	.string()
 	.url()
-	.max(500)
+	.max(2000)
 	.refine((u) => /^https?:\/\//i.test(u), { message: 'URL doit commencer par http(s)://' });
 
 export const IntelligenceItemSchema = z.object({
@@ -104,49 +106,28 @@ export const IntelligenceItemSchema = z.object({
 	// 2 à 4 chips structurés par item (Bloc 4). Union accepte legacy string pour rétro-compat
 	// (items pré-Bloc 4 en DB). Chaque chip cliqué → auto-exécute prospection (SIMAP/Zefix).
 	search_terms: z.array(SearchChipOrLegacySchema).min(2).max(4),
-	// Champs de verification post-generation (ajoutes serveur, pas par le modele).
-	// Optionnels pour retro-compat avec les editions pre-Sprint 2.
+	// Anti-doublons intelligent (refonte LEAN S112) : true si l'item est une mise
+	// à jour récente d'un sujet déjà couvert dans une édition antérieure (article
+	// plus récent que le précédent). previous_url pointe vers l'item antérieur.
+	is_update: z.boolean().optional(),
+	previous_url: HttpsUrl.optional(),
+	// Champs de vérification post-génération (ajoutés serveur, pas par le modèle).
+	// Optionnels pour rétro-compat avec les éditions pré-Sprint 2.
 	verification: z
 		.object({
 			url_ok: z.boolean(),
 			url_reason: z.string().optional(),
-			entity_ok: z.boolean().nullable(),
-			unverified_entities: z.array(z.string()).default([]),
-			// Sprint 3 P1 fraîcheur déterministe : date_ok=false → item hors fenêtre
-			// temporelle de la semaine cible. date_source indique l'origine de la date.
+			// Champs hérités (entity-verify, fetch-og-date, url_mutated) supprimés
+			// au commit 2 de la refonte LEAN. Conservés optional pour rétro-compat
+			// lecture des anciennes éditions (jsonb).
+			entity_ok: z.boolean().nullable().optional(),
+			unverified_entities: z.array(z.string()).optional().default([]),
 			date_ok: z.boolean().optional(),
 			date_source: z.enum(['og', 'llm', 'none']).optional(),
-			// Bug URL doublée (session 60) : true si Phase 2 a émis une URL absente
-			// des candidats Phase 1 filtrés (hallucination ou réécriture du chemin).
 			url_mutated: z.boolean().optional()
 		})
 		.optional()
 });
-
-// Phase 1 (Bloc 2) : sortie LLM extraction/tri brute avant filtre programmatique.
-// Format volontairement minimaliste : pas de rédaction éditoriale, juste les
-// faits nécessaires au filtre (URL + date + hints de classement).
-export const IntelligenceCandidateSchema = z.object({
-	url: HttpsUrl,
-	proposed_title: z.string().min(5).max(250),
-	published_at: z
-		.string()
-		.regex(
-			/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?Z?)?$/,
-			'Format attendu : YYYY-MM-DD ou YYYY-MM-DDTHH:MM:SSZ'
-		),
-	source_name: z.string().min(2).max(120),
-	excerpt: z.string().min(20).max(600),
-	theme: ThemeEnum,
-	geo_scope: GeoScopeEnum,
-	rationale: z.string().min(10).max(300)
-});
-
-export const IntelligenceCandidatesSchema = z.object({
-	candidates: z.array(IntelligenceCandidateSchema).min(0).max(20)
-});
-
-export type IntelligenceCandidate = z.infer<typeof IntelligenceCandidateSchema>;
 
 export const ImpactFilmproSchema = z.object({
 	axis: ImpactAxisEnum,

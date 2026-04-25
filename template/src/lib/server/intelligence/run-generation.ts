@@ -1,7 +1,9 @@
+import { env } from '$env/dynamic/private';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { generateIntelligenceReport } from './generate';
 import { currentWeekRange, extendedWindowStart } from './week-utils';
 import type { IntelligenceReport } from './schema';
+import type { PreviousItem } from './prompt';
 import { sendRecapEmail } from './email-recap';
 
 export interface RunResult {
@@ -12,16 +14,39 @@ export interface RunResult {
 	error?: string;
 }
 
+const DEFAULT_WINDOW_DAYS = 30;
+
 /**
- * Orchestrateur : calcule la semaine, charge les 4 titres precedents,
- * genere l'edition via Claude, valide, insere en DB. Idempotent via
- * contrainte UNIQUE sur week_label (skip si deja existante et status=published).
+ * Anti-doublons activé à partir d'un weekLabel seuil (format YYYY-Www).
+ * Avant le seuil : skip pour permettre une « édition zéro » sans contrainte.
+ * Si VEILLE_ANTI_DOUBLONS_FROM n'est pas défini, anti-doublons toujours actif.
+ */
+function antiDoublonsActive(currentWeek: string): boolean {
+	const seuil = env.VEILLE_ANTI_DOUBLONS_FROM;
+	if (!seuil) return true;
+	return currentWeek >= seuil;
+}
+
+/**
+ * Tolérance fenêtre vérification (jours). Default 30 (refonte LEAN S112).
+ * Override via env VEILLE_WINDOW_DAYS pour resserrer ou élargir.
+ */
+function windowDays(): number {
+	const v = parseInt(env.VEILLE_WINDOW_DAYS ?? '', 10);
+	return Number.isFinite(v) && v > 0 ? v : DEFAULT_WINDOW_DAYS;
+}
+
+/**
+ * Orchestrateur : calcule la semaine, charge les items des 4 dernières éditions
+ * (URL + titre + date) pour anti-doublons intelligent, génère l'édition via Claude
+ * 1-phase, valide, insère en DB. Idempotent via contrainte UNIQUE sur week_label
+ * (skip si déjà existante et status=published).
  */
 export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunResult> {
 	const week = currentWeekRange(now);
 	const supabase = createSupabaseServiceClient();
 
-	// Idempotence : ne pas regenerer si edition deja publiee cette semaine
+	// Idempotence : ne pas regénérer si édition déjà publiée cette semaine.
 	const { data: existing } = await supabase
 		.from('intelligence_reports')
 		.select('id, status')
@@ -32,31 +57,45 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 		return { ok: true, weekLabel: week.weekLabel, reportId: existing.id, skipped: true };
 	}
 
-	// Charger les 4 dernieres editions pour anti-redondance
-	const { data: previous } = await supabase
-		.from('intelligence_reports')
-		.select('items')
-		.eq('status', 'published')
-		.order('generated_at', { ascending: false })
-		.limit(4);
+	// Charge les 4 dernières éditions pour anti-doublons URL+date.
+	let previousItems: PreviousItem[] = [];
+	if (antiDoublonsActive(week.weekLabel)) {
+		const { data: previous } = await supabase
+			.from('intelligence_reports')
+			.select('week_label, items')
+			.eq('status', 'published')
+			.order('generated_at', { ascending: false })
+			.limit(4);
 
-	const previousTitles = (previous ?? [])
-		.map((r) => {
-			const items = r.items as Array<{ rank: number; title: string }> | null;
-			return items?.find((i) => i.rank === 1)?.title;
-		})
-		.filter((t): t is string => typeof t === 'string');
+		for (const r of previous ?? []) {
+			const items = r.items as Array<{
+				title?: string;
+				source?: { url?: string; published_at?: string };
+			}> | null;
+			for (const it of items ?? []) {
+				if (!it.title || !it.source?.url || !it.source?.published_at) continue;
+				previousItems.push({
+					week_label: r.week_label,
+					title: it.title,
+					url: it.source.url,
+					published_at: it.source.published_at
+				});
+			}
+		}
+	}
 
+	const days = windowDays();
 	const gen = await generateIntelligenceReport({
 		weekLabel: week.weekLabel,
 		dateStart: week.dateStart,
 		dateEnd: week.dateEnd,
-		windowStart: extendedWindowStart(week, 14),
-		previousTitles
+		windowStart: extendedWindowStart(week, days),
+		windowDays: days,
+		previousItems
 	});
 
 	if (!gen.success || !gen.report) {
-		// Log l'erreur en DB (upsert sur week_label, status=error)
+		// Log l'erreur en DB (upsert sur week_label, status=error).
 		const { data: errRow } = await supabase
 			.from('intelligence_reports')
 			.upsert(
@@ -101,7 +140,7 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 		};
 	}
 
-	// Insertion / upsert du rapport valide
+	// Insertion / upsert du rapport valide.
 	const report: IntelligenceReport = gen.report;
 	const { data: inserted, error: insertError } = await supabase
 		.from('intelligence_reports')
@@ -113,10 +152,9 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 				executive_summary: report.meta.executive_summary,
 				items: report.items,
 				impacts_filmpro: report.impacts_filmpro,
-				// search_terms globaux supprimés depuis la refonte /veille :
-				// les termes sont désormais portés par chaque item.
-				// La colonne DB est conservée pour rétro-compatibilité lecture
-				// des anciennes éditions, nouvelles lignes = tableau vide.
+				// search_terms globaux supprimés depuis la refonte /veille : les termes
+				// sont désormais portés par chaque item. La colonne DB est conservée
+				// pour rétro-compat lecture des anciennes éditions, nouvelles lignes = [].
 				search_terms: [],
 				raw_response: gen.raw ?? null,
 				status: 'published',
@@ -136,6 +174,7 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 	}
 
 	// Email récap succès (best-effort, n'influence pas le retour).
+	// Le branchement `sparse` (alerte si items < 2) est ajouté au commit 4.
 	try {
 		const result = await sendRecapEmail({
 			mode: 'success',

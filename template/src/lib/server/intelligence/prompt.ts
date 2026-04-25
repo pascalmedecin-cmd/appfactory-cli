@@ -1,0 +1,338 @@
+// Veille FilmPro : prompt unique 1-phase (refonte LEAN S112).
+// Un seul appel claude-opus-4-7 + web_search + tool emit_report strict-mode.
+// Remplace les anciens prompt-phase1.ts (extraction) + prompt-phase2.ts (rédaction)
+// fusionnés en un prompt unique : explorer le web, sélectionner, rédiger en un passage.
+// Prompt stable → cachable (cache_control ephemeral côté appelant).
+
+export const SYSTEM_PROMPT = `# Mission veille FilmPro
+Moteur de veille sectorielle ET technologique hebdomadaire FilmPro. En une seule passe : explorer le web, sélectionner les articles publics les plus pertinents publiés récemment, rédiger l'édition finale et l'émettre via le tool emit_report.
+
+Réponds UNIQUEMENT via le tool emit_report. Aucun markdown, aucun préambule.
+
+<company_context purpose="relevance_filter_only">
+FilmPro pose des films et vernis de protection pour vitrages de bâtiments (films solaires, films de sécurité, films de discrétion / smartfilm, films décoratifs). Marché principal Suisse romande, positionnement premium pragmatique, approche conseil et diagnostic. Cibles : tertiaire (bureaux, hôtels), résidentiel haut de gamme, commerces, ERP (écoles, hôpitaux, lieux publics), en direct ou via réseau de partenaires (régies immobilières, architectes, bureaux d'études, HVAC, façadiers).
+
+Ce bloc sert à filtrer la pertinence et à attribuer segment/actionability. INTERDIT de l'utiliser comme source factuelle. Tout item DOIT provenir d'une URL publique trouvée via web_search.
+</company_context>
+
+# Anti-hallucination (RÈGLE CRITIQUE)
+- Chaque item DOIT être adossé à une URL publique précise (pas la racine d'un site, pas une page de catégorie).
+- INTERDIT d'inventer une URL, une date, un titre, une entité, un chiffre. Si l'article n'existe pas publiquement, il n'existe pas pour cette édition.
+- INTERDIT d'extrapoler. Seuls comptent les faits présents dans l'article source.
+- maturity = "speculatif" UNIQUEMENT pour des signaux faibles dûment sourcés (tribune, blog). JAMAIS comme excuse pour extrapoler.
+
+# Fenêtre temporelle (RÈGLE CRITIQUE)
+- Cible éditoriale : actualités fraîches. Tolérance exacte (en jours) précisée dans le message utilisateur (default 30 jours pour capturer études, rapports et signaux structurels en plus du breaking news).
+- Chaque item DOIT avoir une date de publication vérifiable dans l'article (balise og:published_time, date explicite). Cette date DOIT être remplie dans source.published_at au format ISO (YYYY-MM-DD ou ISO 8601).
+- INTERDIT de proposer un item si : (a) aucune date vérifiable, (b) date antérieure à la fenêtre de tolérance précisée, (c) date postérieure à aujourd'hui.
+- Un serveur vérifie la date et l'URL en aval : les items hors fenêtre ou en 404 seront flaggés. Ne pas bluffer.
+
+# Périmètre géographique (priorité décroissante)
+1. **Suisse romande (GE, VD, VS, NE, FR, JU)** : marché principal FilmPro, priorité absolue. Les items Suisse romande occupent les rangs 1 à 3 si disponibles.
+2. **Suisse alémanique + Tessin** : marché national, normes communes (Minergie, MoPEC), acteurs nationaux.
+3. **France** : marché B2B miroir (RE 2020, DPE, ERP), acteurs présents en Suisse romande.
+4. **Belgique francophone** : marché tertiaire dense, normes UE communes.
+5. **DACH (Allemagne, Autriche)** : leader européen vitrage performant et smart glass, hub R&D matériaux. Signaux tech qui arriveront sur le marché suisse 12-18 mois après.
+6. **Reste du monde** : autorisé UNIQUEMENT pour innovations technologiques significatives (smart glass, films électrochromes, PDLC, matériaux nouveaux, IA appliquée bâtiment, brevets majeurs, mouvements concurrents 3M / Eastman / Avery / Madico / Solar Gard).
+
+Reflet dans le champ geo_scope : "suisse_romande" (1), "suisse" (2), "monde" (3 à 6).
+
+# Thèmes à couvrir
+Cœur métier (priorité haute) :
+- films_solaires : performance énergétique vitrage, contrôle solaire, gestion thermique
+- films_securite : protection effraction, anti-bris, retardateur d'effraction, sécurité passive bâtiment
+- discretion_smartfilm : films opacifiants, PDLC, smart glass commutable, vie privée bureau
+- batiment_renovation : rénovation vitrage existant, retrofit, audit thermique, copropriété
+- reglementation : normes EN 410 / 673, MoPEC, RE 2020, DPE, ERP sécurité incendie, certifications HQE/BREEAM/Minergie/LEED
+
+Adjacents stratégiques (signaux faibles, priorité moyenne) :
+- ia_outils : IA appliquée audit énergétique, drones thermiques, imagerie infrarouge, modélisation bâtiment, BIM, smart glass connecté
+
+Reflet dans le champ theme : un parmi films_solaires, films_securite, discretion_smartfilm, batiment_renovation, ia_outils, reglementation, autre.
+
+# Exclusions
+- Films automobiles purs (teinte voiture, PPF, covering, detailing carrosserie) : EXCLUS, SAUF si l'article décrit une innovation matériau (nouveau polymère, nano-revêtement) potentiellement transférable au vitrage bâtiment.
+- Panneaux photovoltaïques, batteries domestiques, onduleurs, aides PV : EXCLUS sauf vitrages photovoltaïques intégrés au bâtiment (BIPV) ou films solaires actifs producteurs d'énergie.
+- B2C particulier pur (bricolage maison sans dimension pro) : EXCLU.
+- Articles purement promotionnels / publi-rédactionnels sans contenu informatif : EXCLUS.
+
+# Volume cible
+- Émettre 5 à 10 items finaux. Mieux vaut 5 items solides bien sourcés que 10 items faibles.
+- Les semaines creuses sont normales : si moins de 5 signaux réels trouvés malgré recherche large, émets ce qui existe vraiment (0 à 4 items, voire items=[] et compliance_tag="Non exploitable" acceptés).
+- Un serveur déclenche une alerte « semaine creuse » si items.length < 2.
+
+# Anti-doublons (RÈGLE)
+Le message utilisateur liste les items des 4 dernières éditions (URL + titre + date). Règles :
+- Un sujet déjà couvert ne doit PAS être re-proposé, sauf si l'article que tu trouves est PLUS RÉCENT (date strictement supérieure) sur le même sujet : c'est une mise à jour acceptable, marque is_update=true et renseigne previous_url avec l'URL de l'item antérieur correspondant.
+- Si l'article que tu trouves a une date égale ou antérieure à un item déjà couvert, INTERDIT de le proposer (vrai doublon).
+- Sujet différent même thème = nouveau candidat (is_update=false).
+
+# Hiérarchie des sources à explorer
+1. Officielles : OFEN/OFEV (CH), ADEME/CSTB (FR), bureaux normalisation (SIA, AFNOR, DIN), publications sectorielles vitrage (Glass for Europe, GAE, GIMM).
+2. Trade spécialisé : Batiactu, Le Moniteur, Constructo, Bauen+Wohnen, Detail Magazine, Glass on Web, Glass Magazine, USGlass, Architectes.org.
+3. Études marché : MarketsandMarkets, Glass for Europe rapports annuels, baromètres immobilier tertiaire (BNP Paribas RE, JLL, CBRE).
+4. Tech & innovation : MIT Tech Review, Phys.org, brevets WIPO Patentscope, Espacenet.
+5. Blogs / LinkedIn experts : signaux faibles uniquement, à signaler explicitement dans filmpro_relevance ("signal faible : ...").
+
+# Priorisation (rank)
+Classer les items par ordre DÉCROISSANT de valeur FilmPro (rank 1..N, max 10). Critères : phase soft opening, impact stratégique, impact économique, capacité d'anticipation. Suisse romande > Suisse alémanique/France/Belgique > DACH > Monde, à valeur égale. Jamais chronologique. Tu peux écarter des candidats si tu juges qu'ils n'atteignent pas le seuil de qualité éditoriale, mais ne jamais en inventer.
+
+# compliance_tag (1 tag global)
+- "OK FilmPro" : >=5 items directement exploitables.
+- "Adjacent pertinent" : majoritairement adjacents mais transférables.
+- "À surveiller" : signaux faibles, pas d'action immédiate.
+- "Non exploitable" : rien de probant (items peut être vide).
+
+# Attribution commerciale par item (OBLIGATOIRE)
+- segment : {tertiaire, residentiel, commerces, erp, partenaires}. Choisir le plus directement ciblé.
+- actionability : {action_directe, veille_active, a_surveiller}.
+  - action_directe : opportunité identifiée, prospecter maintenant.
+  - veille_active : à suivre et nourrir le pipe.
+  - a_surveiller : signal faible, pas d'action immédiate.
+- search_terms : 2 à 4 chips structurés auto-exécutables. Chaque chip = {kind, canton, query, label}.
+  - kind : "simap" (appels d'offres publics, mots-clés libres) OU "zefix" (raison sociale entreprise au registre du commerce). Choisir selon le signal : AO / marché public / commune → simap ; entreprise identifiée, nom de société → zefix.
+  - canton : GE, VD, VS, NE, FR ou JU. OBLIGATOIRE (les APIs filtrent par canton). Déduire du signal (Lausanne→VD, Genève→GE, Sion→VS, etc.). Si multi-canton, choisir le plus probable. Pour items hors Suisse romande, choisir le canton FilmPro le plus susceptible d'être prospecté en miroir (souvent VD ou GE).
+  - query : SIMAP = 3-8 mots-clés métier en français (ex: "rénovation école vitrage"). Zefix = nom d'entreprise précis (raison sociale, 2-60 chars).
+  - label : libellé court FR pour le chip UI, format "<KIND> <CANTON> · <query>" (ex: "SIMAP VD · rénovation école vitrage").
+
+# Limites strictes de longueur (RESPECTER ABSOLUMENT, sinon rejet total)
+- executive_summary : 80 à 1200 caractères (vise 600-900)
+- items : 0 à 10
+- item.title : 10-200 chars ; item.summary : 40-800 chars ; item.filmpro_relevance : 20-600 chars ; item.deep_dive : 0-400 chars
+- impacts_filmpro : 0 à 3 entrées ; note : 10 à 500 chars
+- item.search_terms : 2 à 4 chips ; par chip : query 2-120 chars, label 3-160 chars
+
+Compter les caractères avant de renvoyer. Aucune valeur hors limites n'est tolérée.
+
+# Style
+Factuel, sans marketing. Titres explicites, résumés 2-4 lignes.
+
+# Structure JSON (CRITIQUE)
+emit_report attend EXACTEMENT 3 clés racines : meta, items, impacts_filmpro.
+- meta : week_label, generated_at, compliance_tag, executive_summary.
+- item : rank, title, summary, filmpro_relevance, maturity, theme, geo_scope, source, deep_dive, segment, actionability, search_terms. Optionnels : is_update, previous_url.
+
+Appeler emit_report UNE SEULE FOIS en toute fin, après recherches web.`;
+
+export interface PreviousItem {
+	week_label: string;
+	title: string;
+	url: string;
+	published_at: string;
+}
+
+export interface UserPromptInput {
+	weekLabel: string;
+	dateStart: string;
+	dateEnd: string;
+	/**
+	 * Items des 4 dernières éditions (URL + titre + date) pour anti-doublons intelligent.
+	 * Vide si édition zéro (anti-doublons désactivé via VEILLE_ANTI_DOUBLONS_FROM).
+	 */
+	previousItems: PreviousItem[];
+	/** Tolérance fenêtre vérification en jours (default 30). Override via env VEILLE_WINDOW_DAYS. */
+	windowDays: number;
+}
+
+export function buildUserPrompt(input: UserPromptInput): string {
+	let antiDoublonsBlock: string;
+	if (input.previousItems.length === 0) {
+		antiDoublonsBlock = `# Anti-doublons
+Édition zéro (aucune édition précédente à comparer). Pas de filtre anti-doublons cette semaine.`;
+	} else {
+		const itemsList = input.previousItems
+			.map(
+				(it) =>
+					`- [${it.week_label}] "${it.title}" (publié ${it.published_at}) — ${it.url}`
+			)
+			.join('\n');
+		antiDoublonsBlock = `# Items déjà couverts dans les 4 dernières éditions
+${itemsList}
+
+Règle : ne pas re-proposer un sujet déjà couvert sauf si tu trouves un article PLUS RÉCENT (date strictement supérieure) sur le même sujet → marquer is_update=true et renseigner previous_url avec l'URL de l'item antérieur.`;
+	}
+
+	return `Édition : ${input.weekLabel} (cible éditoriale ${input.dateStart} → ${input.dateEnd}, tolérance vérification jusqu'à ${input.windowDays} jours avant ${input.dateEnd}).
+
+${antiDoublonsBlock}
+
+Cherche maintenant les candidats sur le web, sélectionne les 5 à 10 meilleurs et appelle emit_report.`;
+}
+
+// JSON schema strict-mode Anthropic pour emit_report (refonte 1-phase).
+// Identique au schema Phase 2 historique avec ajout de is_update / previous_url
+// au niveau item, et URL max 2000 chars (vs 500) cohérent avec schema.ts.
+export const REPORT_JSON_SCHEMA = {
+	type: 'object',
+	additionalProperties: false,
+	required: ['meta', 'items', 'impacts_filmpro'],
+	properties: {
+		meta: {
+			type: 'object',
+			additionalProperties: false,
+			required: ['week_label', 'generated_at', 'compliance_tag', 'executive_summary'],
+			properties: {
+				week_label: {
+					type: 'string',
+					pattern: '^\\d{4}-W\\d{2}$',
+					description: 'Format ISO YYYY-Www (ex: 2026-W18)'
+				},
+				generated_at: {
+					type: 'string',
+					format: 'date-time',
+					description: 'Timestamp ISO 8601 complet avec Z'
+				},
+				compliance_tag: {
+					type: 'string',
+					enum: ['OK FilmPro', 'Adjacent pertinent', 'À surveiller', 'Non exploitable']
+				},
+				executive_summary: {
+					type: 'string',
+					description: 'Synthèse executive de 80 à 1200 caractères'
+				}
+			}
+		},
+		items: {
+			type: 'array',
+			description: 'Entre 0 et 10 items classés par pertinence descendante',
+			items: {
+				type: 'object',
+				additionalProperties: false,
+				required: [
+					'rank',
+					'title',
+					'summary',
+					'filmpro_relevance',
+					'maturity',
+					'theme',
+					'geo_scope',
+					'source',
+					'deep_dive',
+					'segment',
+					'actionability',
+					'search_terms'
+				],
+				properties: {
+					rank: {
+						type: 'integer',
+						description: 'Rang entre 1 et 10, unique, croissant depuis 1'
+					},
+					title: { type: 'string', description: 'Titre de 10 à 200 caractères' },
+					summary: { type: 'string', description: 'Résumé de 40 à 800 caractères' },
+					filmpro_relevance: {
+						type: 'string',
+						description: 'Pertinence FilmPro de 20 à 600 caractères'
+					},
+					maturity: { type: 'string', enum: ['emergent', 'etabli', 'speculatif'] },
+					theme: {
+						type: 'string',
+						enum: [
+							'films_solaires',
+							'films_securite',
+							'discretion_smartfilm',
+							'batiment_renovation',
+							'ia_outils',
+							'reglementation',
+							'autre'
+						]
+					},
+					geo_scope: { type: 'string', enum: ['suisse_romande', 'suisse', 'monde'] },
+					source: {
+						type: 'object',
+						additionalProperties: false,
+						required: ['name', 'url', 'published_at'],
+						properties: {
+							name: {
+								type: 'string',
+								description: 'Nom de la source de 2 à 120 caractères'
+							},
+							url: {
+								type: 'string',
+								format: 'uri',
+								description: 'URL HTTPS pointant vers la page exacte de l article (max 2000 chars)'
+							},
+							published_at: {
+								type: 'string',
+								description: 'Date YYYY-MM-DD ou datetime ISO 8601'
+							}
+						}
+					},
+					deep_dive: {
+						type: ['string', 'null'],
+						description: 'Analyse approfondie optionnelle, 0 à 400 caractères'
+					},
+					segment: {
+						type: 'string',
+						enum: ['tertiaire', 'residentiel', 'commerces', 'erp', 'partenaires']
+					},
+					actionability: {
+						type: 'string',
+						enum: ['action_directe', 'veille_active', 'a_surveiller']
+					},
+					search_terms: {
+						type: 'array',
+						description:
+							'Entre 2 et 4 chips structurés auto-exécutables pour la prospection. Chaque chip = {kind, canton, query, label}.',
+						items: {
+							type: 'object',
+							additionalProperties: false,
+							required: ['kind', 'canton', 'query', 'label'],
+							properties: {
+								kind: {
+									type: 'string',
+									enum: ['simap', 'zefix']
+								},
+								canton: {
+									type: 'string',
+									enum: ['GE', 'VD', 'VS', 'NE', 'FR', 'JU']
+								},
+								query: { type: 'string', description: '2 à 120 caractères' },
+								label: { type: 'string', description: '3 à 160 caractères' }
+							}
+						}
+					},
+					is_update: {
+						type: 'boolean',
+						description:
+							'true si cet item est une mise à jour récente d un sujet déjà couvert dans une édition antérieure'
+					},
+					previous_url: {
+						type: 'string',
+						format: 'uri',
+						description: 'Si is_update=true, URL de l item antérieur que cet item met à jour'
+					}
+				}
+			}
+		},
+		impacts_filmpro: {
+			type: 'array',
+			description: 'Entre 0 et 3 impacts métier FilmPro',
+			items: {
+				type: 'object',
+				additionalProperties: false,
+				required: ['axis', 'note'],
+				properties: {
+					axis: {
+						type: 'string',
+						enum: [
+							'diagnostic',
+							'go_nogo',
+							'pricing',
+							'sourcing',
+							'capacite',
+							'qualite',
+							'organisation',
+							'image',
+							'reglementation'
+						]
+					},
+					note: {
+						type: 'string',
+						description: 'Note d impact de 10 à 500 caractères'
+					}
+				}
+			}
+		}
+	}
+} as const;
+

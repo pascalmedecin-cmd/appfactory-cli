@@ -2,211 +2,22 @@ import Anthropic from '@anthropic-ai/sdk';
 import { env } from '$env/dynamic/private';
 import {
 	IntelligenceReportSchema,
-	IntelligenceCandidatesSchema,
 	type IntelligenceReport,
-	type IntelligenceCandidate
+	type IntelligenceItem
 } from './schema';
 import {
-	PHASE1_SYSTEM_PROMPT,
-	buildPhase1UserPrompt,
-	CANDIDATES_JSON_SCHEMA
-} from './prompt-phase1';
-import { PHASE2_SYSTEM_PROMPT, buildPhase2UserPrompt } from './prompt-phase2';
+	SYSTEM_PROMPT,
+	buildUserPrompt,
+	REPORT_JSON_SCHEMA,
+	type PreviousItem
+} from './prompt';
 import { verifyUrl } from './url-verify';
-import { verifyEntitiesInText } from './entity-verify';
-import { fetchPublishedDate } from './fetch-og-date';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
 import { costTracker, type CostSummary } from './cost-tracker';
 
 const MODEL = 'claude-opus-4-7';
-const MAX_TOKENS_PHASE1 = 8000;
-const MAX_TOKENS_PHASE2 = 16000;
-
-// JSON schema emit_report (Phase 2) : conforme subset strict-mode Anthropic.
-// Contraintes min/max exprimées en description (cf. doc Anthropic structured outputs).
-const REPORT_JSON_SCHEMA = {
-	type: 'object',
-	additionalProperties: false,
-	required: ['meta', 'items', 'impacts_filmpro'],
-	properties: {
-		meta: {
-			type: 'object',
-			additionalProperties: false,
-			required: ['week_label', 'generated_at', 'compliance_tag', 'executive_summary'],
-			properties: {
-				week_label: {
-					type: 'string',
-					pattern: '^\\d{4}-W\\d{2}$',
-					description: 'Format ISO YYYY-Www (ex: 2026-W16)'
-				},
-				generated_at: {
-					type: 'string',
-					format: 'date-time',
-					description: 'Timestamp ISO 8601 complet avec Z'
-				},
-				compliance_tag: {
-					type: 'string',
-					enum: ['OK FilmPro', 'Adjacent pertinent', 'À surveiller', 'Non exploitable']
-				},
-				executive_summary: {
-					type: 'string',
-					description: 'Synthèse executive de 80 à 1200 caractères'
-				}
-			}
-		},
-		items: {
-			type: 'array',
-			description: 'Entre 0 et 10 items classés par pertinence descendante',
-			items: {
-				type: 'object',
-				additionalProperties: false,
-				required: [
-					'rank',
-					'title',
-					'summary',
-					'filmpro_relevance',
-					'maturity',
-					'theme',
-					'geo_scope',
-					'source',
-					'deep_dive',
-					'segment',
-					'actionability',
-					'search_terms'
-				],
-				properties: {
-					rank: {
-						type: 'integer',
-						description: 'Rang entre 1 et 10, unique, croissant depuis 1'
-					},
-					title: {
-						type: 'string',
-						description: 'Titre de 10 à 200 caractères'
-					},
-					summary: {
-						type: 'string',
-						description: 'Résumé de 40 à 800 caractères'
-					},
-					filmpro_relevance: {
-						type: 'string',
-						description: 'Pertinence FilmPro de 20 à 600 caractères'
-					},
-					maturity: { type: 'string', enum: ['emergent', 'etabli', 'speculatif'] },
-					theme: {
-						type: 'string',
-						enum: [
-							'films_solaires',
-							'films_securite',
-							'discretion_smartfilm',
-							'batiment_renovation',
-							'ia_outils',
-							'reglementation',
-							'autre'
-						]
-					},
-					geo_scope: { type: 'string', enum: ['suisse_romande', 'suisse', 'monde'] },
-					source: {
-						type: 'object',
-						additionalProperties: false,
-						required: ['name', 'url', 'published_at'],
-						properties: {
-							name: {
-								type: 'string',
-								description: 'Nom de la source de 2 à 120 caractères'
-							},
-							url: {
-								type: 'string',
-								format: 'uri',
-								description: 'URL HTTPS pointant vers la page exacte de l article'
-							},
-							published_at: {
-								type: 'string',
-								description: 'Date YYYY-MM-DD ou datetime ISO 8601'
-							}
-						}
-					},
-					deep_dive: {
-						type: ['string', 'null'],
-						description: 'Analyse approfondie optionnelle, 0 à 400 caractères'
-					},
-					segment: {
-						type: 'string',
-						enum: ['tertiaire', 'residentiel', 'commerces', 'erp', 'partenaires'],
-						description: 'Segment commercial FilmPro principal ciblé par ce signal'
-					},
-					actionability: {
-						type: 'string',
-						enum: ['action_directe', 'veille_active', 'a_surveiller'],
-						description:
-							'action_directe = prospecter maintenant ; veille_active = suivre ; a_surveiller = signal faible'
-					},
-					search_terms: {
-						type: 'array',
-						description:
-							'Entre 2 et 4 chips structurés auto-exécutables pour la prospection. Chaque chip = {kind, canton, query, label}.',
-						items: {
-							type: 'object',
-							additionalProperties: false,
-							required: ['kind', 'canton', 'query', 'label'],
-							properties: {
-								kind: {
-									type: 'string',
-									enum: ['simap', 'zefix'],
-									description:
-										'simap = recherche appels d offres publics (mots-clés libres) ; zefix = recherche raison sociale entreprise (registre du commerce)'
-								},
-								canton: {
-									type: 'string',
-									enum: ['GE', 'VD', 'VS', 'NE', 'FR', 'JU'],
-									description: 'Canton romand ciblé par la recherche (obligatoire côté APIs)'
-								},
-								query: {
-									type: 'string',
-									description:
-										'SIMAP : 3-8 mots-clés métier (ex: "rénovation école vitrage"). Zefix : nom d entreprise pressenti (ex: "Losinger Marazzi"). 2 à 120 caractères.'
-								},
-								label: {
-									type: 'string',
-									description:
-										'Libellé FR court affiché sur le chip UI, ex: "SIMAP VD · rénovation école vitrage" ou "Zefix GE · Losinger Marazzi". 3 à 160 caractères.'
-								}
-							}
-						}
-					}
-				}
-			}
-		},
-		impacts_filmpro: {
-			type: 'array',
-			description: 'Entre 0 et 3 impacts métier FilmPro',
-			items: {
-				type: 'object',
-				additionalProperties: false,
-				required: ['axis', 'note'],
-				properties: {
-					axis: {
-						type: 'string',
-						enum: [
-							'diagnostic',
-							'go_nogo',
-							'pricing',
-							'sourcing',
-							'capacite',
-							'qualite',
-							'organisation',
-							'image',
-							'reglementation'
-						]
-					},
-					note: {
-						type: 'string',
-						description: 'Note d impact de 10 à 500 caractères'
-					}
-				}
-			}
-		}
-	}
-} as const;
+const MAX_TOKENS = 16000;
+const WEB_SEARCH_MAX_USES = 15;
 
 export interface GenerateInput {
 	weekLabel: string;
@@ -214,7 +25,10 @@ export interface GenerateInput {
 	dateEnd: string;
 	/** Début de fenêtre de vérification (tolérance délai indexation). Défaut = dateStart. */
 	windowStart?: string;
-	previousTitles: string[];
+	/** Items des 4 dernières éditions pour anti-doublons intelligent. */
+	previousItems: PreviousItem[];
+	/** Tolérance fenêtre vérification en jours (default 30). Propagé au user prompt. */
+	windowDays: number;
 }
 
 export interface GenerateResult {
@@ -222,31 +36,11 @@ export interface GenerateResult {
 	report?: IntelligenceReport;
 	error?: string;
 	raw?: unknown;
-	/** Debug pipeline 2 phases : candidats bruts et candidats survivants au filtre. */
-	candidatesRaw?: IntelligenceCandidate[];
-	candidatesFiltered?: IntelligenceCandidate[];
 	/** Coûts agrégés de l'invocation (Claude API). */
 	costs?: CostSummary;
 }
 
-/**
- * Normalise une URL pour comparaison (détection mutation Phase 2) :
- * - lowercase host, strip trailing slash, strip hash/query (chemin = vérité).
- * Si parsing échoue → retourne brut (sera traité comme mutation).
- */
-function normalizeUrlForCompare(url: string): string {
-	try {
-		const u = new URL(url);
-		const path = u.pathname.replace(/\/$/, '');
-		return `${u.protocol}//${u.host.toLowerCase()}${path}`;
-	} catch {
-		return url;
-	}
-}
-
-// ---------- Phase 1 : extraction candidats ----------
-
-async function callPhase1(
+async function callModel(
 	client: Anthropic,
 	input: GenerateInput
 ): Promise<Anthropic.Message> {
@@ -254,13 +48,13 @@ async function callPhase1(
 		{
 			type: 'web_search_20250305',
 			name: 'web_search',
-			max_uses: 10
+			max_uses: WEB_SEARCH_MAX_USES
 		} as unknown as Anthropic.Tool,
 		{
-			name: 'emit_candidates',
+			name: 'emit_report',
 			description:
-				"Émettre la liste brute de candidats (URL + date + hints). À appeler UNE SEULE FOIS en fin d'analyse, après les recherches web.",
-			input_schema: CANDIDATES_JSON_SCHEMA as unknown as Anthropic.Tool.InputSchema,
+				"Émettre l'édition hebdomadaire finale conforme au schéma. À appeler UNE SEULE FOIS en toute fin, après les recherches web.",
+			input_schema: REPORT_JSON_SCHEMA as unknown as Anthropic.Tool.InputSchema,
 			strict: true,
 			// cache_control sur le dernier tool → cache = system + tools complet.
 			cache_control: { type: 'ephemeral' }
@@ -269,124 +63,14 @@ async function callPhase1(
 
 	return client.messages.create({
 		model: MODEL,
-		max_tokens: MAX_TOKENS_PHASE1,
+		max_tokens: MAX_TOKENS,
 		// Opus 4.7 : adaptive thinking + effort xhigh. Sampling params (temperature/top_p/top_k)
 		// retirés : rejetés 400 sur 4.7. Cast via spread : output_config pas encore typé SDK 0.88.
 		...({ thinking: { type: 'adaptive' }, output_config: { effort: 'xhigh' } } as Record<string, unknown>),
 		system: [
 			{
 				type: 'text',
-				text: PHASE1_SYSTEM_PROMPT,
-				cache_control: { type: 'ephemeral' }
-			}
-		],
-		tools,
-		messages: [{ role: 'user', content: buildPhase1UserPrompt(input) }]
-	});
-}
-
-async function runPhase1Candidates(
-	client: Anthropic,
-	input: GenerateInput
-): Promise<{ candidates: IntelligenceCandidate[]; raw: Anthropic.Message; error?: string }> {
-	let response: Anthropic.Message | undefined;
-	let emitBlock: Anthropic.ToolUseBlock | undefined;
-	let lastError = '';
-
-	for (let attempt = 0; attempt < 2; attempt++) {
-		response = await callPhase1(client, input);
-		costTracker.addClaudeCall(MODEL, response.usage, 'Claude Phase 1 (candidats)');
-		emitBlock = response.content.find(
-			(b): b is Anthropic.ToolUseBlock =>
-				b.type === 'tool_use' && b.name === 'emit_candidates'
-		);
-		if (emitBlock) break;
-		lastError = `Phase 1 : modèle n'a pas appelé emit_candidates (stop_reason=${response.stop_reason})`;
-	}
-
-	if (!emitBlock || !response) {
-		return { candidates: [], raw: response!, error: lastError };
-	}
-
-	const parsed = IntelligenceCandidatesSchema.safeParse(emitBlock.input);
-	if (!parsed.success) {
-		return {
-			candidates: [],
-			raw: response,
-			error: `Phase 1 validation Zod échouée : ${parsed.error.message}`
-		};
-	}
-	return { candidates: parsed.data.candidates, raw: response };
-}
-
-// ---------- Filtre programmatique 14j ----------
-
-/**
- * Vérifie chaque candidat en parallèle :
- * - URL HEAD reachable (verifyUrl)
- * - og:published_time si dispo (source of truth), sinon date LLM
- * - Date dans fenêtre [windowStart, dateEnd]
- * Retourne les candidats survivants, avec published_at normalisé à la date vérifiée.
- */
-export async function filterCandidatesByWindow(
-	candidates: IntelligenceCandidate[],
-	windowStart: string,
-	windowEnd: string
-): Promise<IntelligenceCandidate[]> {
-	const results = await Promise.all(
-		candidates.map(async (c) => {
-			const [urlResult, ogDate] = await Promise.all([
-				verifyUrl(c.url),
-				fetchPublishedDate(c.url)
-			]);
-			if (!urlResult.ok) return null;
-
-			const llmDate = parseFlexibleDate(c.published_at);
-			const dateToCheck = ogDate ?? llmDate;
-			if (!dateToCheck) return null;
-			if (!isWithinWindow(dateToCheck, windowStart, windowEnd)) return null;
-
-			// Normaliser published_at à la date vérifiée (og prioritaire).
-			const normalized = dateToCheck.toISOString();
-			return { ...c, published_at: normalized };
-		})
-	);
-	return results.filter((c): c is IntelligenceCandidate => c !== null);
-}
-
-// ---------- Phase 2 : rédaction ----------
-
-async function callPhase2(
-	client: Anthropic,
-	input: GenerateInput,
-	candidates: IntelligenceCandidate[]
-): Promise<Anthropic.Message> {
-	const tools: Anthropic.Tool[] = [
-		{
-			type: 'web_search_20250305',
-			name: 'web_search',
-			max_uses: 3
-		} as unknown as Anthropic.Tool,
-		{
-			name: 'emit_report',
-			description:
-				"Émettre l'édition hebdomadaire finale conforme au schéma. À appeler UNE SEULE FOIS en toute fin.",
-			input_schema: REPORT_JSON_SCHEMA as unknown as Anthropic.Tool.InputSchema,
-			strict: true,
-			cache_control: { type: 'ephemeral' }
-		} as unknown as Anthropic.Tool
-	];
-
-	return client.messages.create({
-		model: MODEL,
-		max_tokens: MAX_TOKENS_PHASE2,
-		// Opus 4.7 : adaptive thinking + effort xhigh. Sampling params (temperature/top_p/top_k)
-		// retirés : rejetés 400 sur 4.7. Cast via spread : output_config pas encore typé SDK 0.88.
-		...({ thinking: { type: 'adaptive' }, output_config: { effort: 'xhigh' } } as Record<string, unknown>),
-		system: [
-			{
-				type: 'text',
-				text: PHASE2_SYSTEM_PROMPT,
+				text: SYSTEM_PROMPT,
 				cache_control: { type: 'ephemeral' }
 			}
 		],
@@ -394,52 +78,55 @@ async function callPhase2(
 		messages: [
 			{
 				role: 'user',
-				content: buildPhase2UserPrompt({
+				content: buildUserPrompt({
 					weekLabel: input.weekLabel,
 					dateStart: input.dateStart,
 					dateEnd: input.dateEnd,
-					candidates,
-					previousTitles: input.previousTitles
+					previousItems: input.previousItems,
+					windowDays: input.windowDays
 				})
 			}
 		]
 	});
 }
 
-async function runPhase2Report(
-	client: Anthropic,
-	input: GenerateInput,
-	candidates: IntelligenceCandidate[]
-): Promise<{ report?: IntelligenceReport; raw: Anthropic.Message; error?: string }> {
-	let response: Anthropic.Message | undefined;
-	let emitBlock: Anthropic.ToolUseBlock | undefined;
-	let lastError = '';
+/**
+ * Vérifie chaque item en parallèle :
+ * - URL parseable + HEAD 2xx (verifyUrl)
+ * - Date dans fenêtre [windowStart, windowEnd] (date LLM, pas de fetch og:published_time)
+ *
+ * Renseigne `verification.url_ok` + `verification.date_ok` sur chaque item.
+ * Les items hors fenêtre ou en 404 sont conservés mais leur maturity est dégradée
+ * en "speculatif" pour signaler l'anomalie en aval (le badge UI a été retiré, mais
+ * la traçabilité reste utile pour debug et investigation).
+ */
+async function verifyItems(
+	items: IntelligenceItem[],
+	windowStart: string,
+	windowEnd: string
+): Promise<IntelligenceItem[]> {
+	return Promise.all(
+		items.map(async (item) => {
+			const urlResult = await verifyUrl(item.source.url);
+			const llmDate = parseFlexibleDate(item.source.published_at);
+			const dateOk = llmDate ? isWithinWindow(llmDate, windowStart, windowEnd) : false;
+			const urlOk = urlResult.ok;
+			const needsFlag = !urlOk || !dateOk;
 
-	for (let attempt = 0; attempt < 2; attempt++) {
-		response = await callPhase2(client, input, candidates);
-		costTracker.addClaudeCall(MODEL, response.usage, 'Claude Phase 2 (rédaction)');
-		emitBlock = response.content.find(
-			(b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'emit_report'
-		);
-		if (emitBlock) break;
-		lastError = `Phase 2 : modèle n'a pas appelé emit_report (stop_reason=${response.stop_reason})`;
-	}
-
-	if (!emitBlock || !response) {
-		return { raw: response!, error: lastError };
-	}
-
-	const parsed = IntelligenceReportSchema.safeParse(emitBlock.input);
-	if (!parsed.success) {
-		return {
-			raw: response,
-			error: `Phase 2 validation Zod échouée : ${parsed.error.message}`
-		};
-	}
-	return { report: parsed.data, raw: response };
+			return {
+				...item,
+				maturity: needsFlag ? ('speculatif' as const) : item.maturity,
+				verification: {
+					url_ok: urlOk,
+					url_reason: urlResult.reason,
+					entity_ok: null,
+					unverified_entities: [],
+					date_ok: dateOk
+				}
+			};
+		})
+	);
 }
-
-// ---------- Orchestrateur public ----------
 
 export async function generateIntelligenceReport(
 	input: GenerateInput
@@ -454,97 +141,44 @@ export async function generateIntelligenceReport(
 
 	const client = new Anthropic({ apiKey });
 
-	// Phase 1 : extraction candidats bruts.
-	const phase1 = await runPhase1Candidates(client, input);
-	if (phase1.error) {
-		return { success: false, error: phase1.error, raw: phase1.raw, costs: costTracker.summary() };
-	}
+	const response = await callModel(client, input);
+	costTracker.addClaudeCall(MODEL, response.usage, 'Claude veille (1-phase)');
 
-	// Filtre programmatique : URL + og-date + fenêtre 14j.
-	const windowStart = input.windowStart ?? input.dateStart;
-	const filtered = await filterCandidatesByWindow(
-		phase1.candidates,
-		windowStart,
-		input.dateEnd
+	const emitBlock = response.content.find(
+		(b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'emit_report'
 	);
 
-	// Phase 2 : rédaction éditoriale.
-	const phase2 = await runPhase2Report(client, input, filtered);
-	if (phase2.error || !phase2.report) {
+	if (!emitBlock) {
 		return {
 			success: false,
-			error: phase2.error,
-			raw: phase2.raw,
-			candidatesRaw: phase1.candidates,
-			candidatesFiltered: filtered,
+			error: `Modèle n'a pas appelé emit_report (stop_reason=${response.stop_reason})`,
+			raw: response,
 			costs: costTracker.summary()
 		};
 	}
 
-	// Set des URLs candidates filtrées (normalisées) → détection mutation Phase 2.
-	const candidateUrlSet = new Set(filtered.map((c) => normalizeUrlForCompare(c.url)));
+	const parsed = IntelligenceReportSchema.safeParse(emitBlock.input);
+	if (!parsed.success) {
+		return {
+			success: false,
+			error: `Validation Zod échouée : ${parsed.error.message}`,
+			raw: response,
+			costs: costTracker.summary()
+		};
+	}
 
-	// Vérifications post-génération (URLs + entités + date) : redondantes avec
-	// le filtre Phase 1 mais préservées pour compatibilité badge "Non vérifié"
-	// et traçabilité (item.verification conservé dans la DB).
-	const verifiedItems = await Promise.all(
-		phase2.report.items.map(async (item) => {
-			const [urlResult, entityResult, ogDate] = await Promise.all([
-				verifyUrl(item.source.url),
-				verifyEntitiesInText(
-					[item.title, item.summary, item.deep_dive ?? ''].join('\n')
-				),
-				fetchPublishedDate(item.source.url)
-			]);
-
-			const llmDate = parseFlexibleDate(item.source.published_at);
-			const dateToCheck = ogDate ?? llmDate;
-			const dateSource: 'og' | 'llm' | 'none' = ogDate ? 'og' : llmDate ? 'llm' : 'none';
-			const dateOk = dateToCheck
-				? isWithinWindow(dateToCheck, windowStart, input.dateEnd)
-				: false;
-
-			const urlOk = urlResult.ok;
-			const entityOk = entityResult.entity_ok;
-
-			// Détection mutation URL : Phase 2 a-t-il émis une URL hors candidats ?
-			const urlNorm = normalizeUrlForCompare(item.source.url);
-			const urlMutated = candidateUrlSet.size > 0 && !candidateUrlSet.has(urlNorm);
-			if (urlMutated) {
-				console.warn(
-					`[URL_MUTATED] rank=${item.rank} final=${item.source.url} not in candidates (${candidateUrlSet.size} filtered)`
-				);
-			}
-
-			const needsFlag = !urlOk || entityOk === false || !dateOk || urlMutated;
-
-			return {
-				...item,
-				maturity: needsFlag ? ('speculatif' as const) : item.maturity,
-				verification: {
-					url_ok: urlOk,
-					url_reason: urlResult.reason,
-					entity_ok: entityOk,
-					unverified_entities: entityResult.unverified_entities,
-					date_ok: dateOk,
-					date_source: dateSource,
-					url_mutated: urlMutated
-				}
-			};
-		})
-	);
+	const windowStart = input.windowStart ?? input.dateStart;
+	const verifiedItems = await verifyItems(parsed.data.items, windowStart, input.dateEnd);
 
 	const enrichedReport: IntelligenceReport = {
-		...phase2.report,
+		...parsed.data,
 		items: verifiedItems
 	};
 
 	return {
 		success: true,
 		report: enrichedReport,
-		raw: phase2.raw,
-		candidatesRaw: phase1.candidates,
-		candidatesFiltered: filtered,
+		raw: response,
 		costs: costTracker.summary()
 	};
 }
