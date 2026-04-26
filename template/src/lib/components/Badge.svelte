@@ -4,14 +4,14 @@
 		label = '',
 		dot = false,
 	}: {
-		variant?: 'default' | 'accent' | 'success' | 'warning' | 'danger' | 'muted';
+		variant?: 'default' | 'info' | 'success' | 'warning' | 'danger' | 'muted';
 		label: string;
 		dot?: boolean;
 	} = $props();
 
 	const classes: Record<string, string> = {
 		default: 'bg-primary-light text-primary border border-primary',
-		accent: 'bg-primary-light text-primary border border-primary',
+		info: 'bg-info-light text-info border border-info/15',
 		success: 'bg-success-light text-success border border-success/15',
 		warning: 'bg-warning-light text-warning border border-warning/15',
 		danger: 'bg-danger-light text-danger border border-danger/15',
@@ -20,7 +20,7 @@
 
 	const dotColors: Record<string, string> = {
 		default: 'bg-primary',
-		accent: 'bg-primary',
+		info: 'bg-info',
 		success: 'bg-success',
 		warning: 'bg-warning',
 		danger: 'bg-danger',

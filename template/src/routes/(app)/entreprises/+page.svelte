@@ -107,10 +107,10 @@
 		source = ''; notes_libres = ''; tags = '';
 	}
 
-	function statutBadgeVariant(statut: string | null): 'default' | 'accent' | 'success' | 'warning' | 'danger' | 'muted' {
+	function statutBadgeVariant(statut: string | null): 'default' | 'info' | 'success' | 'warning' | 'danger' | 'muted' {
 		switch (statut) {
 			case 'qualifie': return 'success';
-			case 'en_cours': return 'accent';
+			case 'en_cours': return 'info';
 			case 'nouveau': return 'warning';
 			default: return 'default';
 		}

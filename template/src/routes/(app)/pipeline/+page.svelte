@@ -106,11 +106,11 @@
 		etape_pipeline = 'identification'; date_relance_prevue = ''; notes_libres = ''; responsable = '';
 	}
 
-	function etapeBadgeVariant(etape: string | null): 'default' | 'accent' | 'success' | 'warning' | 'danger' | 'muted' {
+	function etapeBadgeVariant(etape: string | null): 'default' | 'info' | 'success' | 'warning' | 'danger' | 'muted' {
 		switch (etape) {
 			case 'identification': return 'muted';
 			case 'qualification': return 'default';
-			case 'proposition': return 'accent';
+			case 'proposition': return 'info';
 			case 'negociation': return 'warning';
 			case 'gagne': return 'success';
 			case 'perdu': return 'danger';

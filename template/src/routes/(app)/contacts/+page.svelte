@@ -138,10 +138,10 @@
 		showSuggestions = false;
 	}
 
-	function statutBadgeVariant(statut: string | null): 'default' | 'accent' | 'success' | 'warning' | 'danger' | 'muted' {
+	function statutBadgeVariant(statut: string | null): 'default' | 'info' | 'success' | 'warning' | 'danger' | 'muted' {
 		switch (statut) {
 			case 'qualifie': return 'success';
-			case 'en_cours': return 'accent';
+			case 'en_cours': return 'info';
 			case 'nouveau': return 'warning';
 			case 'archive': return 'muted';
 			default: return 'default';
@@ -198,7 +198,7 @@
 			<div class="flex items-center justify-between">
 				<Badge label={selectedContact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(selectedContact.statut_qualification)} />
 				{#if selectedContact.est_prescripteur}
-					<Badge label="Prescripteur" variant="accent" />
+					<Badge label="Prescripteur" variant="default" />
 				{/if}
 			</div>
 

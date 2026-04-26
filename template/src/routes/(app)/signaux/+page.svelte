@@ -88,7 +88,7 @@
 
 	const STATUTS = [
 		{ key: 'nouveau', label: 'Nouveau', variant: 'warning' as const },
-		{ key: 'en_analyse', label: 'En analyse', variant: 'accent' as const },
+		{ key: 'en_analyse', label: 'En analyse', variant: 'info' as const },
 		{ key: 'interesse', label: 'Intéressé', variant: 'success' as const },
 		{ key: 'ecarte', label: 'Écarté', variant: 'muted' as const },
 		{ key: 'converti', label: 'Converti', variant: 'default' as const },
@@ -138,7 +138,7 @@
 		return formatDate(d);
 	}
 
-	function statutVariant(statut: string | null): 'default' | 'accent' | 'success' | 'warning' | 'danger' | 'muted' {
+	function statutVariant(statut: string | null): 'default' | 'info' | 'success' | 'warning' | 'danger' | 'muted' {
 		const found = STATUTS.find(s => s.key === statut);
 		return found?.variant ?? 'muted';
 	}

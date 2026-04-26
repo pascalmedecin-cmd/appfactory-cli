@@ -49,10 +49,10 @@ export function statutLabel(statut: string): string {
 	return labels[statut] ?? statut;
 }
 
-export function statutBadgeVariant(statut: string): 'default' | 'accent' | 'success' | 'warning' | 'danger' | 'muted' {
+export function statutBadgeVariant(statut: string): 'default' | 'info' | 'success' | 'warning' | 'danger' | 'muted' {
 	switch (statut) {
 		case 'nouveau': return 'warning';
-		case 'interesse': return 'accent';
+		case 'interesse': return 'info';
 		case 'ecarte': return 'muted';
 		case 'transfere': return 'success';
 		default: return 'default';
