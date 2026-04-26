@@ -37,11 +37,9 @@
 	{#if data.stats.signaux > 0}
 		<a
 			href="/signaux"
-			class="flex items-center gap-4 p-4 bg-primary/5 border border-primary/12 rounded-lg hover:bg-primary/8 hover:shadow-sm transition-all"
+			class="flex items-center gap-3 p-4 bg-info-light border border-info/30 rounded-lg hover:bg-info-light/80 transition-colors"
 		>
-			<span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-				<Icon name="radar" size={22} class="text-primary" />
-			</span>
+			<Icon name="radar" size={24} class="text-info" />
 			<div class="flex-1">
 				<p class="text-sm font-semibold text-text">
 					{data.stats.signaux} {data.stats.signaux > 1 ? 'signaux' : 'signal'} d'affaires à traiter
@@ -50,7 +48,7 @@
 					Appels d'offres, permis, créations d'entreprises : à analyser ou convertir en opportunité
 				</p>
 			</div>
-			<Icon name="arrow_forward" size={18} class="text-primary" />
+			<Icon name="arrow_forward" size={18} class="text-info" />
 		</a>
 	{/if}
 
