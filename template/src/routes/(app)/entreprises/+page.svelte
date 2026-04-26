@@ -198,7 +198,7 @@
 
 		{#if filteredEntreprises.length === 0}
 			<div class="text-center py-8">
-				<Icon name="filter_alt_off" size={24} class="text-text-muted mx-auto" />
+				<Icon name="filter_alt_off" size={24} class="text-text-muted inline-block" />
 				<p class="mt-2 text-sm text-text-muted">Aucune entreprise ne correspond à la recherche.</p>
 			</div>
 		{/if}

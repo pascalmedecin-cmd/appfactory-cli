@@ -220,14 +220,14 @@
 					{#if selectMode}
 						<button
 							onclick={exitSelectMode}
-							class="flex items-center gap-2 px-3 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+							class="flex items-center gap-2 h-10 px-4 box-border text-sm text-text-muted hover:text-text border border-border rounded-lg cursor-pointer"
 						>
 							Annuler
 						</button>
 					{:else}
 						<button
 							onclick={() => selectMode = true}
-							class="flex items-center gap-2 px-3 py-2 text-sm text-text-muted hover:text-text border border-border rounded-lg cursor-pointer"
+							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-text-muted hover:text-text border border-border rounded-lg cursor-pointer"
 						>
 							<Icon name="checklist" size={18} />
 							Sélectionner
@@ -236,7 +236,7 @@
 				{/if}
 				<button
 					onclick={openCreate}
-					class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
+					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 				>
 					<Icon name="add" size={18} />
 					Ajouter
@@ -266,7 +266,7 @@
 				{#if count > 0}
 					<button
 						onclick={() => filterStatut = filterStatut === s.key ? '' : s.key}
-						class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border transition-colors cursor-pointer {filterStatut === s.key ? 'bg-primary/10 border-primary text-primary font-medium' : 'bg-white border-border text-text-muted hover:border-primary/30'}"
+						class="flex items-center gap-2 px-3 py-1 text-sm rounded-full border transition-colors cursor-pointer {filterStatut === s.key ? 'bg-primary/10 border-primary text-primary font-medium' : 'bg-white border-border text-text-muted hover:border-primary/30'}"
 					>
 						<Badge label={String(count)} variant={s.variant} />
 						{s.label}
@@ -387,7 +387,7 @@
 						<button
 							type="submit"
 							disabled={batchDeleting}
-							class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-danger hover:bg-danger/80 rounded-lg cursor-pointer disabled:opacity-50"
+							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-danger hover:bg-danger/80 rounded-lg cursor-pointer disabled:opacity-50"
 						>
 							<Icon name="delete_forever" size={16} />
 							{batchDeleting ? 'Suppression…' : `Confirmer (${selectedIds.size})`}
@@ -431,7 +431,7 @@
 							</div>
 						</div>
 						<div class="flex items-center gap-2">
-							<span class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium {scoreStyle(signal.score_pertinence).bg} {scoreStyle(signal.score_pertinence).color}" title="Score {signal.score_pertinence ?? 0}/{config.scoring.maxPoints}">
+							<span class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium {scoreStyle(signal.score_pertinence).bg} {scoreStyle(signal.score_pertinence).color}" title="Score {signal.score_pertinence ?? 0}/{config.scoring.maxPoints}">
 								<Icon name={scoreStyle(signal.score_pertinence).icon} size={14} />
 								{signal.score_pertinence ?? 0}
 							</span>
@@ -467,7 +467,7 @@
 
 		{#if filteredSignaux.length === 0}
 			<div class="text-center py-8">
-				<Icon name="filter_alt_off" size={48} class="text-text-muted/30" />
+				<Icon name="filter_alt_off" size={24} class="text-text-muted inline-block" />
 				<p class="mt-2 text-sm text-text-muted">Aucun signal ne correspond aux filtres.</p>
 				<button
 					onclick={() => { filterType = ''; filterCanton = ''; filterStatut = ''; }}
@@ -496,7 +496,7 @@
 						<Badge label={statutLabel(selectedSignal.statut_traitement)} variant={statutVariant(selectedSignal.statut_traitement)} />
 					</div>
 				</div>
-				<span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold {sStyle.bg} {sStyle.color}">
+				<span class="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold {sStyle.bg} {sStyle.color}">
 					<Icon name={sStyle.icon} size={18} />
 					{selectedSignal.score_pertinence ?? 0}/{config.scoring.maxPoints} : {sStyle.label}
 				</span>
@@ -576,7 +576,7 @@
 					<h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Scoring</h4>
 					<div class="flex flex-wrap gap-2">
 						{#each selectedSignal.notes_libres.split(', ') as critere}
-							<span class="px-2 py-1 text-xs rounded-md bg-surface-alt/60 text-text">{critere}</span>
+							<span class="px-2 py-1 text-xs rounded-lg bg-surface-alt/60 text-text">{critere}</span>
 						{/each}
 					</div>
 				</div>
@@ -601,7 +601,7 @@
 				{#if selectedSignal.statut_traitement !== 'converti' && selectedSignal.statut_traitement !== 'ecarte'}
 					<button
 						onclick={openConvertModal}
-						class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg cursor-pointer"
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg cursor-pointer"
 					>
 						<Icon name="arrow_forward" size={16} />
 						Créer opportunité
@@ -643,7 +643,7 @@
 						<input type="hidden" name="id" value={selectedSignal.id} />
 						<button
 							type="submit"
-							class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-danger hover:bg-danger/80 rounded-lg cursor-pointer"
+							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-danger hover:bg-danger/80 rounded-lg cursor-pointer"
 						>
 							<Icon name="delete_forever" size={16} />
 							Confirmer la suppression
@@ -651,7 +651,7 @@
 					</form>
 					<button
 						onclick={() => deleteConfirm = null}
-						class="px-3 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+						class="h-10 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
 					>
 						Annuler
 					</button>
