@@ -1,12 +1,12 @@
 # AppFactory : CLAUDE.md
 
-**Statut :** Phase C, Skills et templates HTML + module Veille sectorielle refondu LEAN 1-phase Opus 4.7 streaming en production (S112) + email récap cron veille textuel (gated, actif) + export/import CSV + page /reporting. Formation IA est un sous-projet autonome dans `formation-ia/`, accessible directement via `cc` option 2.
-**Derniere mise a jour :** 2026-04-25 (session S112 CRM : refonte LEAN veille livrée prod en 13 commits (7 commits S112 + 6 hot-fixes). Run prod manuel exécuté, bug priorité géo SR identifié, hot-fix `user_location` Suisse + `blocked_domains` + prompt durci poussé. Validation finale = email cron du 01/05 lu par Pascal.)
+**Statut :** Phase C, Skills et templates HTML + module Veille sectorielle refondu LEAN (S112, prod) + email récap cron veille (gated, actif) + export/import CSV + page /reporting + **Golden Standards CRM v3 livré + Phase 4 application `/prospection` en prod (S114, commit `fbe1d81` push main, 12/12 fixes vérifiés getComputedStyle)**. Formation IA est un sous-projet autonome dans `formation-ia/`, accessible directement via `cc` option 2.
+**Derniere mise a jour :** 2026-04-26 (session S114 CRM : Bloc 1a Phase 4 `/prospection` livré commit `fbe1d81` push prod, 12/12 fixes P0+P1 vérifiés via chrome MCP getComputedStyle. Bloc 1c Golden v3 livré, snapshot v2 → v3 régularise règle skill « jamais d'écrasement ». Bloc 1d résolu : pas d'anomalie veille, W16 = première édition mathématiquement possible — module créé 2026-04-13.)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session courante :** Session 112 (CRM, 2026-04-25, `/effort xhigh`). Refonte LEAN veille livrée : 7 commits S112 initiaux (1-phase Opus 4.7, suppression vérifs redondantes, UI cards magazine 3 éditions, alerte sparse < 2 items, cron vendredi 6h UTC, tests sparse) + 6 hot-fixes (badge Non vérifié transverse, Zod limites élargies + `optional().default([])`, max_tokens 16K → 32K + garde stop_reason, bascule `messages.create` → `messages.stream().finalMessage()` car Anthropic refuse non-streaming > 10 min projetés, revert maxDuration 800 build error Vercel cap plan, bias géo SR `user_location:{country:CH,city:Lausanne}` + `blocked_domains` 9 sources bruyantes + prompt « ≥5 web_search SR avant monde »). Run prod manuel `aa2b526a` (W17 retry 6) : HTTP 200 277s, 7 items mais 0 SR → root cause web_search Anthropic sans bias géo (vs Perplexity Sonar tuné par défaut, comparé sur même tâche, retournait 2/8 SR). W17 prod restauré depuis snapshot après chaque run pour ne pas casser /veille. Coût session ~$1.50 (5 runs investigation). Validation finale reportée au cron du 01/05 (gratuit).
-**Session -1 :** Session 111 (CRM, 2026-04-25, `/effort xhigh`). Audit 360 veille e2e + spec refonte LEAN validée. Aucun commit code, 100% lecture statique + raisonnement. Spec complète dans `notes/audit-veille-2026-04-25.md`.
-**Session -2 :** Session 110 (CRM, 2026-04-24, `/effort xhigh`). Retrait total pipeline images /veille livré prod (commit `dce99be`).
+**Session courante :** Session 114 (CRM, 2026-04-26, `/effort xhigh`). 3 livraisons. **Bloc 1a Phase 4 `/prospection`** : 12 findings P0+P1 corrigés en 1 commit atomique `fbe1d81` (Header span→h1, DataTable header button text-muted/600/uppercase + pagination h-10 w-10 rounded-lg, Badge rounded-lg px-2 py-1 + dot 8px, Sidebar items 40px text-sm, MultiSelectDropdown filtres h-10 box-border, KPI cards rounded-xl→rounded-lg, boutons Enrichir/Importer/Mes recherches/Créer alerte h-10 box-border gap-2). Vérification visuelle locale via chrome MCP `getComputedStyle` : 12/12 conformes golden v3. Tests Vitest 344/344. Push `83fd7fd..fbe1d81 main`. **Bloc 1c Golden v3** : snapshot v2 → v3 (`audit-uiux-golden-v3-2026-04-26.json` + `.md`), symlink courant mis à jour, aucun changement fonctionnel — régularise règle skill `golden-standard` après édition directe v2 en S113. **Bloc 1d Investigation veille** : résolu en 3 mesures (cron archive fait UPDATE pas DELETE / premier commit module veille `ab4091c` 2026-04-13 / format week_label ISO 8601). Conclusion : pas d'éditions manquantes, W16 mathématiquement première possible. Découverte : `lucide-svelte` non installé dans `template/package.json` + 207 occurrences `material-symbols-outlined` (vs 120 estimées) → scope Bloc 1b corrigé.
+**Session -1 :** Session 113 (CRM, 2026-04-25, `/effort xhigh`). Bloc 1a Golden Standards Phases 1+2 livrées + Phase 3 sur 1/7 pages. Phase 1 extraction chrome MCP → golden v1. Phase 2 : 5 anomalies arbitrées par Pascal via wizard HTML interactif → golden v2 + `docs/GOLDEN_STANDARDS.md`. Phase 3 audit Express `/prospection` → 19 findings (3 P0 / 9 P1 / 7 P2). Conflit golden v2 P2-06 résolu (cellPaddingY 10→12, headerHeight 44→48). Aucun commit code.
+**Session -2 :** Session 112 (CRM, 2026-04-25, `/effort xhigh`). Refonte LEAN veille livrée prod en 13 commits (7 + 6 hot-fixes). Bug priorité géo SR identifié, fix bias `user_location:CH/Lausanne` + `blocked_domains` 9 sources poussé sans re-test. Validation finale = email cron 01/05.
 **Sessions précédentes (condensé)** - détail S78-S79 : `archive/decisions-sessions-78-79.md`. Détail S70-S77 : `archive/decisions-sessions-70-77.md`. Détail S80-S107 : `formation-ia/CLAUDE.md` (sous-projet autonome, sessions V2 formation-ia).
 
 - **S105** (formation-ia, 2026-04-20) : refonte roadmap V2 post 6 demandes Pascal → plan 9 blocs séquencés ~23h. **Bloc 0 Pipeline images Phase 1-4 livré** (migration DB + bucket Supabase + résolveur signed URL + composant apprenant + helpers + script fal.ai Flux + 12 briefs + 12 images prod scores 7-9/10). 7 commits : `edc1822`, `141cf98`, `a74eebc`, `7bb05b6`, `d56b142`, `69e2ac6`, `b77a8c5`. Gates 578/0/0, vitest 25/25.
@@ -191,7 +191,7 @@ Fichiers cles :
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 0 - Évaluer email cron veille du 01/05 - validation finale S112. Si qualité OK (≥1 item Suisse romande, sources crédibles, pas de doublons W16/W17) → archiver S112 + drop stash. Si KO → désactiver cron tactiquement et investiguer paramètres web_search ou bascule moteur (Perplexity API ?).
+**Prochaine attaque** : Bloc 1 - Cascade 6 pages CRM Phase 3+4 (delta réduit grâce aux composants partagés déjà alignés sur `/prospection` via S114). Alternative standalone : Bloc 2 (Migration Lucide) si time-box ≥ 4-5h disponible — scope corrigé S114 à 207 occurrences + dépendance non installée. Alternative session courte si date ≥ 2026-05-01 : Bloc 0 (validation cron veille).
 
 ### 0. Évaluation cron veille 01/05 + clôture S112 [SUPERVISÉ • low • ~15 min]
 
@@ -201,40 +201,36 @@ Fichiers cles :
 - [ ] **[BLOQUÉ - date ≥ 2026-05-01]** Lire l'édition W18 reçue par email + sur /veille. Critères : (1) ≥1 item Suisse romande dans les rangs 1-3, (2) sources crédibles (pas de blog SEO bas de gamme), (3) anti-doublons W16/W17 respecté, (4) compliance_tag cohérent avec contenu, (5) volume 5-10 items. Si 4/5 critères OK → succès, archiver S112. Si < 3/5 → échec, désactiver cron + ouvrir session investigation. → voir `memory/project_veille_S112_apprentissages.md`
 - [ ] **[BLOQUÉ - validation Pascal cron 01/05]** Drop stash `stash@{0}` (`git stash drop stash@{0}`) une fois la refonte LEAN considérée stable. Le stash contenait des éléments S110 chantier B déjà intégrés ou écartés.
 
-### 1. Golden standards UX/UI complets CRM [SUPERVISÉ • xhigh • ~10h, 3-4 sessions]
+### 1. Golden Standards Phase 3+4 sur 6 pages CRM restantes [SUPERVISÉ • xhigh • cascade 3 sessions]
 
-**Pourquoi** : chantier structurant. Gabarit exclusif `/prospection`, wizards hors périmètre. Ingère palettes /prospection + /veille refondue (livrée S112).
+**Pourquoi** : suite Bloc 1a après gabarit `/prospection` fixé en S114 (commit `fbe1d81` push main). Composants partagés (Header, DataTable, Badge, Sidebar, MultiSelectDropdown) déjà alignés golden v3 → delta attendu réduit sur les 6 pages restantes (mais audit Express requis sur chacune pour identifier les findings spécifiques).
+**Prérequis** : aucun (Bloc 1a Phase 4 prospection livré + push S114).
 
-- [ ] **[EXÉCUTABLE]** Phase 1 extraction → Phase 2 rédaction `docs/GOLDEN_STANDARDS.md` → Phase 3 audit delta → Phase 4 application (1 commit/page). Règle table-fixed (S48). /veille refondue S112 livrée, palettes intégrables.
+- [ ] **[EXÉCUTABLE]** Audit Express + application page par page, ordre `/dashboard` → `/contacts` → `/entreprises` → `/pipeline` → `/signaux` → `/veille`. 1 commit/page. Run audit dans `notes/audit-uiux-2026-04-25/` (réutilisable, snapshot golden v3 actif). Méthodo validée S113 (subagent ui-auditor opus + chrome MCP getComputedStyle). → voir `memory/project_golden_standards_crm_v2.md` § Backlog
 
-### 2. Premier run e2e /golden-standard + /audit-uiux [EXÉCUTABLE • medium • session test]
+### 2. Migration Material Symbols → Lucide [MIXTE • high • session dédiée ~4-5h]
 
-**Pourquoi** : test système sur 1 page CRM avant usage étendu. Indépendant Bloc 1.
+**Pourquoi** : décision golden v2 #5 (override Pascal 2026-04-25). **Scope corrigé S114** : 207 occurrences (vs 120 estimées dans le payload initial) + `lucide-svelte` non installé dans `template/package.json` → install préalable requis. Indépendant des Phases 3+4. Gain perf -80kb (font Material retirée), cohérence cross-projet avec formation-ia (Lucide déjà actif).
+**Prérequis** : aucun (préférable ≥ 1 page Phase 4 livrée pour figer le pattern `<Button icon={X}>` → ✓ S114 prospection).
 
-- [ ] **[EXÉCUTABLE]** Premier run e2e `/golden-standard` + `/audit-uiux` Express sur 1 page CRM. → voir `~/.claude/projects/-Users-pascal--claude/memory/project_audit_uiux_first_e2e_test.md`
+- [ ] **[EXÉCUTABLE]** Phase 1 install `lucide-svelte` + grep exhaustif → `lucide_mapping.md` (~50+ pictos uniques). Phase 2 remplacement composant par composant en commençant par partagés (Header/Sidebar/Button/Badge → propagation cross-pages). Phase 3 retrait font Material du `<head>`. Phase 4 tests visuels 7 pages chrome MCP. 1 PR atomique. → voir `memory/project_lucide_migration_crm.md` (à mettre à jour avec scope 207 + install requis)
 
-### 3. Investiguer éditions veille manquantes (préexistant) [EXÉCUTABLE • low • ~30 min]
-
-**Pourquoi** : la BDD `intelligence_reports` ne contient que W16 + W17 (vérifié S110), aucune édition antérieure. Cause préexistante (pas régression S110). À investiguer pour comprendre si DELETE manuel ancien, projet récent, ou bug archivage.
-
-- [ ] **[EXÉCUTABLE]** Vérifier git log + Supabase audit log + cron `intelligence-archive` (n'archive qu'au-delà de 365 jours, soft via `archived_at`, pas DELETE). Tracer disparitions W1-W15.
-
-### 4. Dashboard coûts CRM [BLOQUÉ • high • session dédiée]
+### 3. Dashboard coûts CRM [BLOQUÉ • high • session dédiée]
 
 - [ ] **[BLOQUÉ - session dashboard dédiée]** Dashboard coûts CRM `/dashboard/couts` : table `cost_audit_runs` + graphique 12 sem + split cron/catégorie + seuils. → voir `memory/project_dashboard_costs_crm.md`
 
-### 5. Figma API [BLOQUÉ • medium • ~1h]
+### 4. Figma API [BLOQUÉ • medium • ~1h]
 
 - [ ] **[BLOQUÉ - attente PAT Figma]** Figma API : PAT + plugin MCP figma scope projet
 
-### 6. Harmonisation PDF FilmPro [BLOQUÉ • high • ~2h]
+### 5. Harmonisation PDF FilmPro [BLOQUÉ • high • ~2h]
 
 - [ ] **[BLOQUÉ - Tâche archi FilmPro ~/.claude/CLAUDE.md Bloc 6]** Harmoniser production PDF FilmPro : aligner `playbook-pdf` (WeasyPrint) et `filmpro-pdf-lite` (reportlab). Reco option [3] coexistence + combler gaps G1-G3-G5. → voir `memory/project_filmpro_pdf_harmonization.md`
 
 ### Livré cette session (5 derniers)
 
-- [x] ~~Refonte LEAN veille livrée prod (S112) + hot-fix bias géo SR~~ - Fait 2026-04-25 (S112, xhigh) : 13 commits poussés (7 commits S112 initiaux + 6 hot-fixes). Refonte 1-phase Opus 4.7 streaming + UI cards magazine 3 éditions + cron vendredi 6h UTC + alerte sparse < 2 items + bias géo SR (`user_location:CH/Lausanne` + `blocked_domains` 9 sources + prompt « ≥5 web_search SR avant monde »). Run prod manuel `aa2b526a` (W17 retry 6) HTTP 200 277s. Bug priorité géo SR identifié (0/7 SR vs Perplexity Sonar 2/8 SR), fix poussé sans re-test API. Validation finale = email cron 01/05. Coût session ~$1.50 (5 runs investigation).
-- [x] ~~Audit 360 veille e2e + spec refonte LEAN validée~~ - Fait 2026-04-25 (S111, xhigh) : Phase 1 cartographie (9 étages), Phase 2 inventaire bugs (5 fonctionnels + 5 UX + 5 archi), Phase 3 benchmark 3 options + reco Option [A] 1-phase Opus 4.7. Décisions Pascal : géo élargi avec priorités, fenêtre 30j, cron vendredi 6h UTC, suppression badge « Non vérifié »/`is_hot`/recurrence/filtres, UX magazine 3 cards. Spec complète dans `notes/audit-veille-2026-04-25.md` (8 sections). Aucun appel API Anthropic veille consommé (audit 100% lecture statique). Pas de commit code.
-- [x] ~~Retrait total pipeline images /veille~~ - Fait 2026-04-24 (S110) : 8 phases. Migration SQL `20260424_001_remove_media_library.sql` (DROP TABLE + strip JSONB). 13 fichiers DELETE + 9 modifiés. Bucket Storage purgé (45 objets). FAL_KEY retirée Vercel CRM prod. Tests 358/358 verts. Commit `d1a86b7` + merge `dce99be` + push main. Vercel deploy `filmpro-nckwob97j` (32s).
-- [x] ~~Investigation W17 0 items + cadrage élargi B (stashé)~~ - Fait 2026-04-24 (S110) : diagnostic complet (Phase 1 retournait 0 candidats avec ancien prompt strict, jusqu'à 12 candidats avec cadrage B). Code chantier B STASHÉ : `git stash list` → `stash@{0}: WIP S110 chantier B`. Coût debug ≈ $8.
-- [x] ~~Email récap veille prod activé + doc cadrage/deploy + smoke test CSV + PDF point d'étape CRM~~ - Fait 2026-04-23 (S109) : env vars `EMAIL_RECAP_ENABLED=true` + `RESEND_API_KEY` poussées prod + redeploy `filmpro-fxkoptuk2`. Tests csv-export + csv-import 36/36 verts.
+- [x] ~~Bloc 1a Phase 4 application `/prospection`~~ - Fait 2026-04-26 (S114, xhigh) : 12 findings P0+P1 corrigés en commit atomique `fbe1d81` (Header span→h1, DataTable header button text-muted/600/uppercase + pagination h-10 w-10 rounded-lg, Badge rounded-lg px-2 py-1 + dot 8px, Sidebar items 40px text-sm, MultiSelectDropdown filtres h-10 box-border, KPI cards rounded-xl→rounded-lg, boutons Enrichir/Importer/Mes recherches/Créer alerte h-10 box-border gap-2). Vérification chrome MCP `getComputedStyle` 12/12 conformes. Tests Vitest 344/344. Push `83fd7fd..fbe1d81 main`.
+- [x] ~~Bloc 1c Golden v3 CRM (régularisation règle skill)~~ - Fait 2026-04-26 (S114, xhigh) : snapshot v2 → v3 (`audit-uiux-golden-v3-2026-04-26.json` + `.md`), symlink `audit-uiux-golden-current.json` → v3, aucun changement fonctionnel. Officialise les correctifs édités directement dans v2 source en S113 (cellPaddingY 12, headerHeight 48).
+- [x] ~~Bloc 1d Investigation veille manquantes (résolu : pas d'anomalie)~~ - Fait 2026-04-26 (S114, xhigh) : 3 mesures (cron archive UPDATE pas DELETE / premier commit module veille `ab4091c` 2026-04-13 / format week_label ISO 8601 `YYYY-Www`). Conclusion factuelle : W16 = première édition mathématiquement possible. Pas de bug, pas de DELETE manuel.
+- [x] ~~Bloc 1a Golden Standards Phases 1+2 + Phase 3 partielle (1/7 pages)~~ - Fait 2026-04-25 (S113, xhigh) : Phase 1 extraction chrome MCP → golden v1. Phase 2 : 5 anomalies arbitrées par Pascal via wizard HTML → golden v2 + `docs/GOLDEN_STANDARDS.md`. Phase 3 audit Express `/prospection` → 19 findings (3 P0 / 9 P1 / 7 P2). Conflit golden v2 P2-06 résolu (cellPaddingY 10→12, headerHeight 44→48).
+- [x] ~~Premier run e2e /golden-standard + /audit-uiux validé~~ - Fait 2026-04-25 (S113, xhigh) : système opérationnel bout en bout (extraction → arbitrage → rédaction → audit → findings + rapport). Méthodo validée pour les 6 pages restantes.
