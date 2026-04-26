@@ -5,6 +5,7 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import FormField from '$lib/components/FormField.svelte';
+	import Select from '$lib/components/Select.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 
 	$effect(() => { $pageSubtitle = `${filteredSignaux.length} ${filteredSignaux.length > 1 ? 'signaux' : 'signal'}`; });
@@ -75,6 +76,7 @@
 	let filterStatut = $state('');
 
 	const TYPES_MAP = new Map(config.signaux.types.map(t => [t.key, t.label]));
+	const TYPE_SIGNAL_OPTIONS = config.signaux.types.map(t => ({ value: t.key, label: t.label }));
 
 	const TYPE_ICONS: Record<string, string> = {
 		appel_offres: 'gavel',
@@ -695,19 +697,14 @@
 		{/if}
 
 		<div class="space-y-4">
-			<div class="space-y-1">
-				<label for="type_signal" class="block text-sm font-medium text-text">Type de signal <span class="text-danger">*</span></label>
-				<select
-					id="type_signal"
-					bind:value={type_signal}
-					class="w-full h-[34px] px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-				>
-					<option value="">-- Choisir --</option>
-					{#each config.signaux.types as t}
-						<option value={t.key}>{t.label}</option>
-					{/each}
-				</select>
-			</div>
+			<Select
+				id="type_signal"
+				label="Type de signal"
+				required
+				placeholder="-- Choisir --"
+				bind:value={type_signal}
+				options={TYPE_SIGNAL_OPTIONS}
+			/>
 			<FormField label="Description du projet" type="textarea" bind:value={description_projet} />
 			<div class="grid grid-cols-2 gap-4">
 				<CantonSelect bind:value={canton} />

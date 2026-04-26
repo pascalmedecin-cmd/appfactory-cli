@@ -5,6 +5,7 @@
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
+	import Select from '$lib/components/Select.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 
 	$effect(() => { $pageSubtitle = `${data.opportunites.length} opportunité${data.opportunites.length > 1 ? 's' : ''}`; });
@@ -18,6 +19,9 @@
 	type Opp = (typeof data.opportunites)[number];
 
 	const ETAPES = config.pipeline.etapes;
+	const ETAPE_OPTIONS = ETAPES.map(e => ({ value: e.key, label: e.label }));
+	const entrepriseOptions = $derived(data.entreprises.map(e => ({ value: e.id, label: e.raison_sociale })));
+	const contactOptions = $derived(data.contacts.map(c => ({ value: c.id, label: `${c.prenom ?? ''} ${c.nom ?? ''}`.trim() || '(sans nom)' })));
 
 	let slideOutOpen = $state(false);
 	let selectedOpp = $state<Opp | null>(null);
@@ -390,47 +394,29 @@
 		<div class="space-y-4">
 			<FormField label="Titre" bind:value={titre} required />
 			<div class="grid grid-cols-2 gap-4">
-				<div class="space-y-1">
-					<label for="entreprise_id" class="block text-sm font-medium text-text">Entreprise</label>
-					<select
-						id="entreprise_id"
-						bind:value={entreprise_id}
-						class="w-full h-[34px] px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-					>
-						<option value="">-- Aucune --</option>
-						{#each data.entreprises as e}
-							<option value={e.id}>{e.raison_sociale}</option>
-						{/each}
-					</select>
-				</div>
-				<div class="space-y-1">
-					<label for="contact_id" class="block text-sm font-medium text-text">Contact</label>
-					<select
-						id="contact_id"
-						bind:value={contact_id}
-						class="w-full h-[34px] px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-					>
-						<option value="">-- Aucun --</option>
-						{#each data.contacts as c}
-							<option value={c.id}>{c.prenom ?? ''} {c.nom ?? ''}</option>
-						{/each}
-					</select>
-				</div>
+				<Select
+					id="entreprise_id"
+					label="Entreprise"
+					placeholder="-- Aucune --"
+					bind:value={entreprise_id}
+					options={entrepriseOptions}
+				/>
+				<Select
+					id="contact_id"
+					label="Contact"
+					placeholder="-- Aucun --"
+					bind:value={contact_id}
+					options={contactOptions}
+				/>
 			</div>
 			<div class="grid grid-cols-2 gap-4">
 				<FormField label="Montant estimé (CHF)" type="number" bind:value={montant_estime} />
-				<div class="space-y-1">
-					<label for="etape_pipeline" class="block text-sm font-medium text-text">Etape</label>
-					<select
-						id="etape_pipeline"
-						bind:value={etape_pipeline}
-						class="w-full h-[34px] px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-					>
-						{#each ETAPES as e}
-							<option value={e.key}>{e.label}</option>
-						{/each}
-					</select>
-				</div>
+				<Select
+					id="etape_pipeline"
+					label="Etape"
+					bind:value={etape_pipeline}
+					options={ETAPE_OPTIONS}
+				/>
 			</div>
 			<div class="grid grid-cols-2 gap-4">
 				<FormField label="Date relance" type="date" bind:value={date_relance_prevue} />
