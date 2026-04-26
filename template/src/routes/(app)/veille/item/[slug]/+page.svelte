@@ -52,7 +52,7 @@
 		residentiel: 'bg-prosp-qualify-bg text-prosp-qualify border-prosp-qualify/30',
 		commerces: 'bg-prosp-convert-bg text-prosp-convert border-prosp-convert/30',
 		erp: 'bg-prosp-enrich-bg text-prosp-enrich border-prosp-enrich/30',
-		partenaires: 'bg-primary/10 text-primary border-primary/20'
+		partenaires: 'bg-primary-light text-primary border-primary'
 	};
 
 	function formatDateLong(iso: string): string {
@@ -141,7 +141,7 @@
 			{geoLabel(data.item.geo_scope)}
 		</span>
 		<span
-			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium bg-primary/8 text-primary border-primary/20"
+			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium bg-primary-light text-primary border-primary"
 		>
 			{THEME_LABELS[data.item.theme]}
 		</span>
@@ -159,7 +159,7 @@
 	</section>
 
 	<!-- Pertinence FilmPro -->
-	<section class="mb-6 border-l-4 border-primary bg-primary/5 pl-4 py-3 rounded-r">
+	<section class="mb-6 border-l-4 border-primary bg-primary-light pl-4 py-3 rounded-r">
 		<h2 class="text-xs font-semibold uppercase tracking-wider text-primary mb-1">
 			Pertinence FilmPro
 		</h2>
@@ -190,7 +190,7 @@
 				href={data.item.source.url}
 				target="_blank"
 				rel="noopener noreferrer"
-				class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary border border-primary/30 rounded-lg hover:bg-primary/10"
+				class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10"
 			>
 				<Icon name="open_in_new" size={16} />
 				Ouvrir l'article
@@ -212,7 +212,7 @@
 						disabled={chipLoading !== null}
 						onclick={() => runChipSearch(chip, idx)}
 						title="Auto-exécuter {chip.kind === 'zefix' ? 'Zefix' : 'SIMAP'} · {chip.canton} · {chip.query}"
-						class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-primary/8 text-primary border border-primary/20 hover:bg-primary/15 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+						class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-primary-light text-primary border border-primary hover:bg-primary/15 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
 					>
 						<Icon name={isLoading ? 'progress_activity' : chip.kind === 'zefix' ? 'business' : 'gavel'} size={16} />
 						{chip.label}

@@ -161,7 +161,7 @@
 						{#if logo}
 							<img src={logo} alt="" class="w-12 h-12 rounded-lg object-contain bg-white border border-border flex-shrink-0" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
 						{:else}
-							<span class="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/10 text-primary font-bold text-lg flex-shrink-0">
+							<span class="flex items-center justify-center w-12 h-12 rounded-lg bg-primary-light text-primary font-bold text-lg flex-shrink-0">
 								{entreprise.raison_sociale[0].toUpperCase()}
 							</span>
 						{/if}
@@ -215,7 +215,7 @@
 				{#if logo}
 					<img src={logo} alt="" class="w-16 h-16 rounded-lg object-contain bg-white border border-border" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
 				{:else}
-					<span class="flex items-center justify-center w-16 h-16 rounded-lg bg-primary/10 text-primary font-bold text-2xl">
+					<span class="flex items-center justify-center w-16 h-16 rounded-lg bg-primary-light text-primary font-bold text-2xl">
 						{selectedEntreprise.raison_sociale[0].toUpperCase()}
 					</span>
 				{/if}
@@ -326,7 +326,7 @@
 					<button
 						type="submit"
 						disabled={enriching}
-						class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg cursor-pointer disabled:opacity-50"
+						class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-primary-light hover:bg-primary/20 rounded-lg cursor-pointer disabled:opacity-50"
 					>
 						<Icon name="auto_awesome" size={16} />
 						{enriching ? 'Enrichissement…' : 'Enrichir via Zefix'}

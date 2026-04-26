@@ -164,7 +164,7 @@
 				>
 					<Icon name="bookmarks" size={18} />
 					<span class="hidden sm:inline">Mes recherches</span>
-					<span class="ml-1 px-1.5 py-0.5 text-xs font-semibold rounded-full bg-primary/10 text-primary">{data.recherches.length}</span>
+					<span class="ml-1 px-1.5 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{data.recherches.length}</span>
 				</button>
 			{/if}
 		</div>
@@ -209,7 +209,7 @@
 				{/if}
 				<button
 					onclick={() => alerteModalOpen = true}
-					class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-primary border border-primary/30 rounded-lg box-border hover:bg-primary/5 cursor-pointer transition-colors"
+					class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-primary border border-primary rounded-lg box-border hover:bg-primary/5 cursor-pointer transition-colors"
 				>
 					<Icon name="notifications_active" size={16} />
 					Créer une alerte

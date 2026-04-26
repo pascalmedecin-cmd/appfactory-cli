@@ -209,7 +209,7 @@
 					{#if logoUrl(ent?.site_web ?? null)}
 						<img src={logoUrl(ent?.site_web ?? null)} alt="" class="w-10 h-10 rounded-md object-contain bg-white border border-border" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
 					{:else}
-						<span class="flex items-center justify-center w-10 h-10 rounded-md bg-primary/10 text-primary font-bold text-sm">
+						<span class="flex items-center justify-center w-10 h-10 rounded-md bg-primary-light text-primary font-bold text-sm">
 							{(selectedContact.entreprises?.raison_sociale ?? '?')[0].toUpperCase()}
 						</span>
 					{/if}
@@ -384,12 +384,12 @@
 							<button
 								type="button"
 								onclick={() => selectEntreprise(sug)}
-								class="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-surface cursor-pointer {entreprise_id === sug.id ? 'bg-primary/10 font-medium' : ''}"
+								class="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-surface cursor-pointer {entreprise_id === sug.id ? 'bg-primary-light font-medium' : ''}"
 							>
 								{#if logoUrl(sug.site_web)}
 									<img src={logoUrl(sug.site_web)} alt="" class="w-5 h-5 rounded object-contain" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
 								{:else}
-									<span class="flex items-center justify-center w-5 h-5 rounded bg-primary/10 text-primary text-[10px] font-bold">{sug.raison_sociale[0]}</span>
+									<span class="flex items-center justify-center w-5 h-5 rounded bg-primary-light text-primary text-[10px] font-bold">{sug.raison_sociale[0]}</span>
 								{/if}
 								{sug.raison_sociale}
 							</button>

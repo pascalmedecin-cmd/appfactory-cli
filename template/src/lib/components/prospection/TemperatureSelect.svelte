@@ -67,7 +67,7 @@
 					type="button"
 					onclick={() => select(opt.value)}
 					class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left cursor-pointer transition-colors
-						{opt.value === value ? 'bg-primary/6 text-primary font-medium' : 'text-text hover:bg-surface-alt'}"
+						{opt.value === value ? 'bg-primary-light text-primary font-medium' : 'text-text hover:bg-surface-alt'}"
 				>
 					{#if opt.dotColor}
 						<span class="w-2 h-2 rounded-full {opt.dotColor}"></span>

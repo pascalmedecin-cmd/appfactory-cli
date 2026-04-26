@@ -39,7 +39,7 @@
 		residentiel: 'bg-prosp-qualify-bg text-prosp-qualify border-prosp-qualify/30',
 		commerces: 'bg-prosp-convert-bg text-prosp-convert border-prosp-convert/30',
 		erp: 'bg-prosp-enrich-bg text-prosp-enrich border-prosp-enrich/30',
-		partenaires: 'bg-primary/10 text-primary border-primary/20'
+		partenaires: 'bg-primary-light text-primary border-primary'
 	};
 
 	function formatDateLong(iso: string): string {

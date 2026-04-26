@@ -13,8 +13,8 @@
 	);
 
 	const statCards = $derived([
-		{ label: 'Contacts', value: data.stats.contacts, icon: 'contacts', href: '/contacts', iconColor: 'text-primary', iconBg: 'bg-primary/10' },
-		{ label: 'Entreprises', value: data.stats.entreprises, icon: 'business', href: '/entreprises', iconColor: 'text-primary', iconBg: 'bg-primary/10' },
+		{ label: 'Contacts', value: data.stats.contacts, icon: 'contacts', href: '/contacts', iconColor: 'text-primary', iconBg: 'bg-primary-light' },
+		{ label: 'Entreprises', value: data.stats.entreprises, icon: 'business', href: '/entreprises', iconColor: 'text-primary', iconBg: 'bg-primary-light' },
 		{ label: 'Opportunités', value: data.stats.opportunites, icon: 'conversion_path', href: '/pipeline', iconColor: 'text-success', iconBg: 'bg-success-light' },
 		{ label: 'Signaux neufs', value: data.stats.signaux, icon: 'notifications', href: '/signaux', iconColor: 'text-warning', iconBg: 'bg-warning-light' },
 	]);
@@ -181,7 +181,7 @@
 			<h2 class="text-lg font-semibold text-text mb-4">Pour démarrer</h2>
 			<div class="space-y-3">
 				<a href="/entreprises" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-alt transition-colors group">
-					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-bold">1</span>
+					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary-light text-primary text-sm font-bold">1</span>
 					<div class="flex-1">
 						<p class="text-sm font-medium text-text group-hover:text-primary">Ajouter une entreprise</p>
 						<p class="text-xs text-text-muted">Créez la fiche de votre premier client ou prospect</p>
@@ -189,7 +189,7 @@
 					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-primary" />
 				</a>
 				<a href="/contacts" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-alt transition-colors group">
-					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-bold">2</span>
+					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary-light text-primary text-sm font-bold">2</span>
 					<div class="flex-1">
 						<p class="text-sm font-medium text-text group-hover:text-primary">Ajouter un contact</p>
 						<p class="text-xs text-text-muted">Rattachez vos interlocuteurs à leurs entreprises</p>
@@ -197,7 +197,7 @@
 					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-primary" />
 				</a>
 				<a href="/pipeline" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-alt transition-colors group">
-					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-bold">3</span>
+					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary-light text-primary text-sm font-bold">3</span>
 					<div class="flex-1">
 						<p class="text-sm font-medium text-text group-hover:text-primary">Créer une opportunité</p>
 						<p class="text-xs text-text-muted">Suivez vos affaires dans le pipeline commercial</p>

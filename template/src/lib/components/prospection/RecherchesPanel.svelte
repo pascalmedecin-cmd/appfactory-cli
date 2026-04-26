@@ -56,7 +56,7 @@
 						].filter(Boolean).join(' · ') || 'Tous les critères'}
 					</span>
 					{#if rech.alerte_active}
-						<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
+						<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary-light text-primary">
 							<Icon name="notifications" size={12} />
 							{rech.frequence_alerte === 'quotidien' ? 'Quotidienne' : 'Hebdomadaire'}
 						</span>

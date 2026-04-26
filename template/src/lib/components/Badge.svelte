@@ -10,8 +10,8 @@
 	} = $props();
 
 	const classes: Record<string, string> = {
-		default: 'bg-primary/8 text-primary border border-primary/15',
-		accent: 'bg-primary/8 text-primary border border-primary/15',
+		default: 'bg-primary-light text-primary border border-primary',
+		accent: 'bg-primary-light text-primary border border-primary',
 		success: 'bg-success-light text-success border border-success/15',
 		warning: 'bg-warning-light text-warning border border-warning/15',
 		danger: 'bg-danger-light text-danger border border-danger/15',

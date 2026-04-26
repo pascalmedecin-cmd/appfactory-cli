@@ -151,7 +151,7 @@
 	const SCORE_STYLES: Record<string, { icon: string; color: string; bg: string; label: string }> = {
 		chaud: { icon: 'local_fire_department', color: 'text-danger', bg: 'bg-danger/10', label: 'Chaud' },
 		tiede: { icon: 'thermostat', color: 'text-warning', bg: 'bg-warning/10', label: 'Tiède' },
-		froid: { icon: 'ac_unit', color: 'text-primary', bg: 'bg-primary/10', label: 'Froid' },
+		froid: { icon: 'ac_unit', color: 'text-primary', bg: 'bg-primary-light', label: 'Froid' },
 		non_qualifie: { icon: 'remove', color: 'text-text-muted', bg: 'bg-surface', label: 'Non qualifié' },
 	};
 
@@ -245,7 +245,7 @@
 		</div>
 
 		<!-- Bandeau explicatif -->
-		<div class="mt-3 flex items-start gap-3 p-4 bg-primary/5 border border-primary/15 rounded-lg">
+		<div class="mt-3 flex items-start gap-3 p-4 bg-primary-light border border-primary rounded-lg">
 			<Icon name="radar" size={22} class="text-primary mt-0.5" />
 			<div>
 				<p class="text-sm text-text">
@@ -266,7 +266,7 @@
 				{#if count > 0}
 					<button
 						onclick={() => filterStatut = filterStatut === s.key ? '' : s.key}
-						class="flex items-center gap-2 px-3 py-1 text-sm rounded-full border transition-colors cursor-pointer {filterStatut === s.key ? 'bg-primary/10 border-primary text-primary font-medium' : 'bg-white border-border text-text-muted hover:border-primary/30'}"
+						class="flex items-center gap-2 px-3 py-1 text-sm rounded-full border transition-colors cursor-pointer {filterStatut === s.key ? 'bg-primary-light border-primary text-primary font-medium' : 'bg-white border-border text-text-muted hover:border-primary/30'}"
 					>
 						<Badge label={String(count)} variant={s.variant} />
 						{s.label}
@@ -312,7 +312,7 @@
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 			<div class="bg-white rounded-lg border border-border p-6">
 				<div class="flex items-center gap-3 mb-3">
-					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
+					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-primary-light">
 						<Icon name="edit_note" size={22} class="text-primary" />
 					</span>
 					<h3 class="font-semibold text-text">Ajout manuel</h3>
@@ -412,7 +412,7 @@
 			{#each filteredSignaux as signal (signal.id)}
 				<button
 					onclick={() => selectMode ? toggleSelect(signal.id) : openDetail(signal)}
-					class="bg-white rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer text-left w-full {selectMode && selectedIds.has(signal.id) ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}"
+					class="bg-white rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer text-left w-full {selectMode && selectedIds.has(signal.id) ? 'border-primary bg-primary-light' : 'border-border hover:border-primary/30'}"
 				>
 					<div class="flex flex-wrap items-start justify-between gap-2">
 						<div class="flex items-center gap-3 min-w-0">
@@ -421,7 +421,7 @@
 									<Icon name={selectedIds.has(signal.id) ? 'check' : 'check_box_outline_blank'} size={22} />
 								</span>
 							{:else}
-								<span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/8 shrink-0">
+								<span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-light shrink-0">
 									<Icon name={typeIcon(signal.type_signal)} size={22} class="text-primary" />
 								</span>
 							{/if}
@@ -488,7 +488,7 @@
 			<!-- En-tête : type + statut + score -->
 			<div class="flex items-start justify-between gap-3">
 				<div class="flex items-center gap-3">
-					<span class="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/8">
+					<span class="flex items-center justify-center w-12 h-12 rounded-lg bg-primary-light">
 						<Icon name={typeIcon(selectedSignal.type_signal)} size={28} class="text-primary" />
 					</span>
 					<div>
@@ -601,7 +601,7 @@
 				{#if selectedSignal.statut_traitement !== 'converti' && selectedSignal.statut_traitement !== 'ecarte'}
 					<button
 						onclick={openConvertModal}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-primary bg-primary/10 hover:bg-primary/20 rounded-lg cursor-pointer"
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-primary bg-primary-light hover:bg-primary/20 rounded-lg cursor-pointer"
 					>
 						<Icon name="arrow_forward" size={16} />
 						Créer opportunité
