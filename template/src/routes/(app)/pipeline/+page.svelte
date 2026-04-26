@@ -350,7 +350,7 @@
 							type="button"
 							onclick={() => confirmArchiveOpen = true}
 							disabled={archiving}
-							class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
+							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
 						>
 							<Icon name="block" size={16} />
 							{archiving ? 'En cours…' : 'Marquer perdu'}
@@ -453,7 +453,7 @@
 			<button
 				type="button"
 				onclick={() => modalOpen = false}
-				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+				class="h-10 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
 			>
 				Annuler
 			</button>

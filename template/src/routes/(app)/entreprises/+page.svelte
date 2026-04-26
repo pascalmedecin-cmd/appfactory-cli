@@ -174,7 +174,7 @@
 						<Badge label={entreprise.statut_qualification ?? 'nouveau'} variant={statutBadgeVariant(entreprise.statut_qualification)} />
 					</div>
 
-					<div class="mt-3 space-y-1.5 text-xs text-text-muted">
+					<div class="mt-3 space-y-2 text-xs text-text-muted">
 						{#if entreprise.canton}
 							<span class="flex items-center gap-1">
 								<Icon name="location_on" size={14} />
@@ -198,7 +198,7 @@
 
 		{#if filteredEntreprises.length === 0}
 			<div class="text-center py-8">
-				<Icon name="filter_alt_off" size={48} class="text-text-muted/30" />
+				<Icon name="filter_alt_off" size={24} class="text-text-muted mx-auto" />
 				<p class="mt-2 text-sm text-text-muted">Aucune entreprise ne correspond à la recherche.</p>
 			</div>
 		{/if}
@@ -349,7 +349,7 @@
 						type="button"
 						onclick={() => confirmDeleteOpen = true}
 						disabled={deleting}
-						class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
 					>
 						<Icon name="delete" size={16} />
 						{deleting ? 'Suppression…' : 'Supprimer'}
@@ -414,7 +414,7 @@
 			<button
 				type="button"
 				onclick={() => modalOpen = false}
-				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+				class="h-10 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
 			>
 				Annuler
 			</button>

@@ -434,7 +434,7 @@
 			<button
 				type="button"
 				onclick={() => modalOpen = false}
-				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+				class="h-10 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
 			>
 				Annuler
 			</button>
