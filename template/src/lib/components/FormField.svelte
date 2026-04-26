@@ -39,7 +39,7 @@
 			bind:value
 			{placeholder}
 			{required}
-			class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+			class="w-full h-[34px] px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 		/>
 	{/if}
 </div>

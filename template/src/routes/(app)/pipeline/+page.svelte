@@ -191,12 +191,12 @@
 				aria-label="Colonne {etape.label}"
 			>
 				<!-- Column header -->
-				<div class="px-3 py-2.5 border-b border-border/50">
+				<div class="px-4 py-3 border-b border-border/50">
 					<div class="flex items-center justify-between">
 						<div class="flex items-center gap-2">
 							<Icon name={etape.icon} size={18} class="{etape.color}" />
 							<span class="text-sm font-semibold text-text">{etape.label}</span>
-							<span class="text-xs text-text-muted bg-surface-alt rounded-full px-1.5 py-0.5">{opps.length}</span>
+							<span class="text-xs text-text-muted bg-surface-alt rounded-full px-2 py-0.5">{opps.length}</span>
 						</div>
 						{#if etape.key !== 'gagne' && etape.key !== 'perdu'}
 							<button
@@ -395,7 +395,7 @@
 					<select
 						id="entreprise_id"
 						bind:value={entreprise_id}
-						class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+						class="w-full h-[34px] px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					>
 						<option value="">-- Aucune --</option>
 						{#each data.entreprises as e}
@@ -408,7 +408,7 @@
 					<select
 						id="contact_id"
 						bind:value={contact_id}
-						class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+						class="w-full h-[34px] px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					>
 						<option value="">-- Aucun --</option>
 						{#each data.contacts as c}
@@ -424,7 +424,7 @@
 					<select
 						id="etape_pipeline"
 						bind:value={etape_pipeline}
-						class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+						class="w-full h-[34px] px-3 py-1.5 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					>
 						{#each ETAPES as e}
 							<option value={e.key}>{e.label}</option>
