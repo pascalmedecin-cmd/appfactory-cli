@@ -119,9 +119,9 @@
 	</div>
 
 	<!-- Titre -->
-	<h1 class="text-2xl md:text-3xl font-bold text-text leading-tight mb-4">
+	<h2 class="text-2xl md:text-3xl font-bold text-text leading-tight mb-4">
 		{data.item.title}
-	</h1>
+	</h2>
 
 	<!-- Badges -->
 	<div class="flex flex-wrap gap-1.5 text-[11px] mb-5">
@@ -177,7 +177,7 @@
 	{/if}
 
 	<!-- Source -->
-	<section class="mb-6 p-4 rounded-xl border border-border bg-surface-alt/50">
+	<section class="mb-6 p-4 rounded-lg border border-border bg-surface-alt/50">
 		<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Source</h2>
 		<div class="flex items-center justify-between gap-3 flex-wrap">
 			<div class="flex flex-col gap-0.5">

@@ -62,16 +62,16 @@
 	};
 
 	const COMPLIANCE_STYLES: Record<string, string> = {
-		'OK FilmPro': 'bg-emerald-50 text-emerald-700 border-emerald-200',
-		'Adjacent pertinent': 'bg-sky-50 text-sky-700 border-sky-200',
-		'À surveiller': 'bg-amber-50 text-amber-700 border-amber-200',
-		'Non exploitable': 'bg-slate-50 text-slate-600 border-slate-200'
+		'OK FilmPro': 'bg-success-light text-success border-success/20',
+		'Adjacent pertinent': 'bg-info-light text-info border-info/20',
+		'À surveiller': 'bg-warning-light text-warning border-warning/20',
+		'Non exploitable': 'bg-surface-alt text-text-muted border-border'
 	};
 
 	const MATURITY_STYLES: Record<string, string> = {
-		etabli: 'bg-emerald-50 text-emerald-700',
-		emergent: 'bg-amber-50 text-amber-700',
-		speculatif: 'bg-slate-100 text-slate-600'
+		etabli: 'bg-success-light text-success',
+		emergent: 'bg-warning-light text-warning',
+		speculatif: 'bg-surface-alt text-text-muted'
 	};
 
 	function formatDate(iso: string): string {
@@ -118,7 +118,7 @@
 
 <div class="max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12">
 	<div class="mb-6">
-		<a href="/veille" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-primary">
+		<a href="/veille" class="inline-flex items-center gap-1 text-sm text-text-muted hover:text-primary">
 			<Icon name="arrow_back" class="text-base" />
 			Retour au flux
 		</a>
@@ -128,8 +128,8 @@
 	<header class="flex items-end justify-between pb-6 border-b-2 border-primary-dark gap-6 flex-wrap">
 		<div>
 			<div class="mag-kicker text-primary">Veille sectorielle FilmPro</div>
-			<h1 class="mag-display text-4xl md:text-5xl mt-2 text-primary-dark">Édition n° {editionNumber(data.report.week_label)}</h1>
-			<p class="text-sm text-slate-500 mt-2">{formatDate(data.report.generated_at)}</p>
+			<h2 class="mag-display text-4xl md:text-5xl mt-2 text-primary-dark">Édition n° {editionNumber(data.report.week_label)}</h2>
+			<p class="text-sm text-text-muted mt-2">{formatDate(data.report.generated_at)}</p>
 		</div>
 		<div class="text-right">
 			<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border {COMPLIANCE_STYLES[data.report.compliance_tag] ?? ''}">
@@ -142,14 +142,14 @@
 	<section class="mt-8 md:mt-10 grid grid-cols-12 gap-6 md:gap-8">
 		<div class="col-span-12 lg:col-span-8">
 			<div class="mag-kicker text-primary mb-3">Synthèse de la semaine</div>
-			<p class="mag-body text-slate-700">{data.report.executive_summary}</p>
+			<p class="mag-body text-text-body">{data.report.executive_summary}</p>
 		</div>
-		<div class="col-span-12 lg:col-span-4 border-l-0 lg:border-l border-slate-200 lg:pl-6">
+		<div class="col-span-12 lg:col-span-4 border-l-0 lg:border-l border-border lg:pl-6">
 			<div class="mag-kicker text-primary mb-3">En bref</div>
-			<div class="space-y-2 text-sm text-slate-600">
-				<div><span class="font-semibold text-slate-900">{items.length}</span> signaux</div>
-				<div><span class="font-semibold text-slate-900">{impacts.length}</span> impacts stratégiques</div>
-				<div><span class="font-semibold text-slate-900">{searchTerms.length}</span> termes de recherche</div>
+			<div class="space-y-2 text-sm text-text-muted">
+				<div><span class="font-semibold text-text">{items.length}</span> signaux</div>
+				<div><span class="font-semibold text-text">{impacts.length}</span> impacts stratégiques</div>
+				<div><span class="font-semibold text-text">{searchTerms.length}</span> termes de recherche</div>
 			</div>
 		</div>
 	</section>
@@ -168,7 +168,7 @@
 				{#each items as item, i}
 					<article class="grid grid-cols-12 gap-6 md:gap-8">
 						<div class="col-span-12">
-							<div class="flex items-center gap-2 text-xs text-slate-500 mb-3 flex-wrap">
+							<div class="flex items-center gap-2 text-xs text-text-muted mb-3 flex-wrap">
 								<span class="mag-kicker text-primary">#{item.rank}</span>
 								<span>·</span>
 								<span class="mag-kicker text-primary">{THEME_LABELS[item.theme] ?? item.theme}</span>
@@ -179,16 +179,16 @@
 								</span>
 							</div>
 							<h3 class="mag-display-3 text-xl md:text-[26px] mb-3 text-primary-dark">{item.title}</h3>
-							<p class="mag-body text-slate-700 mb-4">{item.summary}</p>
+							<p class="mag-body text-text-body mb-4">{item.summary}</p>
 							<div class="border-l-4 border-amber-500 bg-amber-50/50 pl-4 py-3 mb-4 rounded-r">
 								<div class="mag-kicker text-amber-700 mb-1">Pour FilmPro</div>
 								<p class="text-sm text-slate-900 leading-relaxed">{item.filmpro_relevance}</p>
 							</div>
 							{#if item.deep_dive}
-								<p class="text-sm text-slate-700 italic mb-4 leading-relaxed">{item.deep_dive}</p>
+								<p class="text-sm text-text-body italic mb-4 leading-relaxed">{item.deep_dive}</p>
 							{/if}
-							<div class="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
-								<span class="font-semibold text-slate-900">{item.source.name}</span>
+							<div class="flex items-center gap-3 text-xs text-text-muted flex-wrap">
+								<span class="font-semibold text-text">{item.source.name}</span>
 								<span>·</span>
 								<span>{formatDate(item.source.published_at)}</span>
 								<a href={item.source.url} target="_blank" rel="noopener noreferrer" class="ml-auto text-primary font-semibold hover:underline inline-flex items-center gap-1">
@@ -199,7 +199,7 @@
 						</div>
 					</article>
 					{#if i < items.length - 1}
-						<hr class="border-slate-200" />
+						<hr class="border-border" />
 					{/if}
 				{/each}
 			</div>
@@ -235,7 +235,7 @@
 				<button
 					type="button"
 					onclick={copyAllTerms}
-					class="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-slate-200 bg-white hover:border-primary hover:bg-primary-light text-sm font-semibold text-slate-700 transition-colors"
+					class="inline-flex items-center gap-2 h-10 px-4 box-border rounded-lg border border-border bg-white hover:border-primary hover:bg-surface text-sm font-semibold text-text-body transition-colors"
 				>
 					<Icon name="content_copy" class="text-base" />
 					Copier les {searchTerms.length}
@@ -244,19 +244,19 @@
 
 			<ul class="space-y-3">
 				{#each searchTerms as term}
-					<li class="bg-white border border-slate-200 rounded-lg p-4 flex items-start justify-between gap-3 hover:border-primary transition-colors">
+					<li class="bg-white border border-border rounded-lg p-4 flex items-start justify-between gap-3 hover:border-primary transition-colors">
 						<div class="flex-1 min-w-0">
 							<div class="flex items-center gap-2 flex-wrap mb-1">
 								<span class="font-semibold text-primary-dark">{term.term}</span>
 								<span class="mag-kicker text-primary">{SEGMENT_LABELS[term.segment] ?? term.segment}</span>
 							</div>
-							<p class="text-sm text-slate-600 leading-relaxed">{term.rationale}</p>
+							<p class="text-sm text-text-muted leading-relaxed">{term.rationale}</p>
 						</div>
 						<div class="flex items-center gap-1 shrink-0">
 							<button
 								type="button"
 								onclick={() => copyTerm(term.term)}
-								class="p-2 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-primary"
+								class="p-2 rounded-lg hover:bg-surface-alt text-text-muted hover:text-primary"
 								title="Copier"
 								aria-label="Copier le terme"
 							>
@@ -264,7 +264,7 @@
 							</button>
 							<a
 								href={prospectionLink(term)}
-								class="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-primary-dark text-white text-sm font-semibold hover:bg-primary transition-colors"
+								class="inline-flex items-center gap-2 h-10 px-4 box-border rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors"
 								title="Lancer cette recherche dans Prospection"
 							>
 								<Icon name="search" class="text-base" />
@@ -277,7 +277,7 @@
 		</section>
 	{/if}
 
-	<footer class="mt-16 md:mt-20 pt-8 border-t border-slate-200 text-xs text-slate-500 flex items-center justify-between">
+	<footer class="mt-16 md:mt-20 pt-8 border-t border-border text-xs text-text-muted flex items-center justify-between">
 		<div>Veille FilmPro · Édition {data.report.week_label}</div>
 		<div class="font-semibold">FilmPro</div>
 	</footer>

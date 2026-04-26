@@ -53,12 +53,12 @@
 
 <div class="max-w-[1280px] mx-auto px-4 md:px-10 py-6 md:py-10">
 	<header class="mb-8">
-		<h1 class="text-2xl md:text-3xl font-bold text-text">Veille FilmPro</h1>
+		<h2 class="text-2xl md:text-3xl font-bold text-text">Veille FilmPro</h2>
 		<p class="text-sm text-text-muted mt-1">Les 3 dernières éditions hebdomadaires</p>
 	</header>
 
 	{#if data.editions.length === 0}
-		<div class="bg-white rounded-xl border border-border p-10 text-center">
+		<div class="bg-white rounded-lg border border-border p-8 text-center">
 			<Icon name="radar" class="text-5xl text-text-muted" />
 			<h2 class="mt-4 text-lg font-semibold text-text">Aucune édition publiée</h2>
 			<p class="mt-2 text-sm text-text-muted">
@@ -69,9 +69,9 @@
 		<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 			{#each data.editions as ed (ed.id)}
 				<article
-					class="rounded-xl border border-border bg-white shadow-xs hover:shadow-md transition-shadow flex flex-col"
+					class="rounded-lg border border-border bg-white shadow-xs hover:shadow-md transition-shadow flex flex-col"
 				>
-					<header class="p-5 md:p-6 border-b border-border">
+					<header class="p-4 md:p-6 border-b border-border">
 						<div class="flex items-center gap-2 text-xs text-text-muted mb-2 flex-wrap">
 							<span class="font-semibold text-text">{ed.week_label}</span>
 							<span>·</span>
@@ -91,7 +91,7 @@
 						</p>
 					</header>
 
-					<div class="p-5 md:p-6 flex-1 flex flex-col gap-3">
+					<div class="p-4 md:p-6 flex-1 flex flex-col gap-3">
 						{#if ed.preview.length > 0}
 							<h3
 								class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-1"
@@ -100,14 +100,14 @@
 							</h3>
 							<ul class="space-y-3 flex-1">
 								{#each ed.preview as item (item.rank)}
-									<li class="flex flex-col gap-1.5">
+									<li class="flex flex-col gap-2">
 										<a
 											href={`/veille/item/${ed.id}-${item.rank}`}
 											class="text-sm font-semibold text-text hover:text-primary transition-colors leading-snug"
 										>
 											{item.title}
 										</a>
-										<div class="flex flex-wrap gap-1.5 text-[10px]">
+										<div class="flex flex-wrap gap-2 text-[10px]">
 											<span
 												class="inline-flex items-center px-1.5 py-0.5 rounded-full border font-medium {SEGMENT_STYLES[
 													item.segment
@@ -141,10 +141,10 @@
 						{/if}
 					</div>
 
-					<footer class="p-5 md:p-6 border-t border-border bg-surface-alt rounded-b-xl">
+					<footer class="p-4 md:p-6 border-t border-border bg-surface-alt rounded-b-lg">
 						<a
 							href={`/veille/${ed.id}`}
-							class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-dark"
+							class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-hover"
 						>
 							Lire l'édition complète →
 						</a>
