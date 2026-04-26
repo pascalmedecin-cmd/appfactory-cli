@@ -7,11 +7,6 @@
 	--color-primary-hover: #264C85;
 	--color-primary-dark: #0A1628;
 
-	/* Accent */
-	--color-accent: #3B6CB7;
-	--color-accent-light: #EFF6FF;
-	--color-accent-dark: #1E40AF;
-
 	/* Surfaces */
 	--color-surface: #FFFFFF;
 	--color-surface-alt: #F9FAFB;
@@ -122,7 +117,7 @@
 button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible {
-	outline: 2px solid var(--color-accent);
+	outline: 2px solid var(--color-primary);
 	outline-offset: 2px;
 	border-radius: var(--radius-sm);
 }

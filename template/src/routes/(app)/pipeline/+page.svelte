@@ -264,7 +264,7 @@
 <!-- SlideOut detail opportunite -->
 <SlideOut bind:open={slideOutOpen} title={selectedOpp?.titre ?? ''}>
 	{#if selectedOpp}
-		<div class="space-y-5">
+		<div class="space-y-6">
 			<Badge label={selectedOpp.etape_pipeline ?? 'identification'} variant={etapeBadgeVariant(selectedOpp.etape_pipeline)} />
 
 			<div class="grid grid-cols-2 gap-4 text-sm">

@@ -72,7 +72,7 @@
 			};
 		}}
 	>
-		<div class="space-y-5">
+		<div class="space-y-6">
 			<div class="flex items-start gap-3 p-3.5 rounded-xl" style="background: var(--color-prosp-qualify-bg); border: 1px solid color-mix(in srgb, var(--color-prosp-qualify-border), transparent 70%)">
 				<span class="mt-0.5" style="color: var(--color-prosp-qualify)"><Icon name="notifications_active" size={20} /></span>
 				<p class="text-sm text-text-body">Recevez une notification lorsque de nouveaux prospects correspondent à vos critères.</p>

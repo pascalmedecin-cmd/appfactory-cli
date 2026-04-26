@@ -117,7 +117,7 @@
 	}
 </script>
 
-<div class="space-y-5">
+<div class="space-y-6">
 	<div class="flex items-center justify-end">
 		<button
 			onclick={openCreate}
@@ -209,7 +209,7 @@
 <SlideOut bind:open={slideOutOpen} title={selectedEntreprise?.raison_sociale ?? ''}>
 	{#if selectedEntreprise}
 		{@const logo = logoUrl(selectedEntreprise.site_web)}
-		<div class="space-y-5">
+		<div class="space-y-6">
 			<!-- En-tête avec logo -->
 			<div class="flex items-center gap-4">
 				{#if logo}

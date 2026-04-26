@@ -194,7 +194,7 @@
 <!-- SlideOut détail contact -->
 <SlideOut bind:open={slideOutOpen} title="{selectedContact?.prenom ?? ''} {selectedContact?.nom ?? ''}">
 	{#if selectedContact}
-		<div class="space-y-5">
+		<div class="space-y-6">
 			<div class="flex items-center justify-between">
 				<Badge label={selectedContact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(selectedContact.statut_qualification)} />
 				{#if selectedContact.est_prescripteur}

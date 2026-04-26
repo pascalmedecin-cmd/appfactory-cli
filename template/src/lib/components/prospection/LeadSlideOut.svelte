@@ -112,7 +112,7 @@
 <SlideOut bind:open title={lead?.raison_sociale ?? ''}>
 	{#if lead}
 		{@const scoreDetail = getScoreDetail(lead)}
-		<div class="space-y-5">
+		<div class="space-y-6">
 			<!-- Badges statut -->
 			<div class="flex flex-wrap items-center gap-2">
 				<Badge label="{scoreLabel(lead.score_pertinence ?? 0)} ({lead.score_pertinence ?? 0}/13)" variant={scoreBadgeVariant(lead.score_pertinence ?? 0)} dot={true} />

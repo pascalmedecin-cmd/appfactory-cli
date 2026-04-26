@@ -211,7 +211,7 @@
 	}
 </script>
 
-<div class="space-y-5">
+<div class="space-y-6">
 	<!-- Header -->
 	<div>
 		<div class="flex flex-wrap items-center justify-end gap-3">
@@ -484,7 +484,7 @@
 <SlideOut bind:open={slideOutOpen} title="Signal d'affaires">
 	{#if selectedSignal}
 		{@const sStyle = scoreStyle(selectedSignal.score_pertinence)}
-		<div class="space-y-5">
+		<div class="space-y-6">
 			<!-- En-tête : type + statut + score -->
 			<div class="flex items-start justify-between gap-3">
 				<div class="flex items-center gap-3">
