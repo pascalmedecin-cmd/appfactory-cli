@@ -28,9 +28,9 @@
 	};
 </script>
 
-<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-medium {classes[variant]}">
+<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium {classes[variant]}">
 	{#if dot}
-		<span class="w-1.5 h-1.5 rounded-full {dotColors[variant]}"></span>
+		<span class="w-2 h-2 rounded-full {dotColors[variant]}"></span>
 	{/if}
 	{label}
 </span>

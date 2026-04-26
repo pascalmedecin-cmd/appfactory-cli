@@ -166,7 +166,7 @@
 						>
 							{#if col.sortable}
 								<button
-									class="flex items-center gap-1 cursor-pointer hover:text-text"
+									class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-text-muted cursor-pointer hover:text-text"
 									onclick={() => toggleSort(col.key)}
 								>
 									{col.label}
@@ -224,19 +224,21 @@
 			<span>{effectiveTotalCount} résultat{effectiveTotalCount > 1 ? 's' : ''}</span>
 			<div class="flex items-center gap-2">
 				<button
-					class="px-2 py-1 rounded hover:bg-surface-alt disabled:opacity-40 cursor-pointer"
+					class="flex items-center justify-center h-10 w-10 rounded-lg hover:bg-surface-alt disabled:opacity-40 cursor-pointer"
 					disabled={currentPage === 0}
 					onclick={() => goToPage(currentPage - 1)}
+					aria-label="Page précédente"
 				>
-					<span class="material-symbols-outlined text-[16px]">arrow_back</span>
+					<span class="material-symbols-outlined text-[18px]">arrow_back</span>
 				</button>
 				<span>{currentPage + 1} / {totalPages}</span>
 				<button
-					class="px-2 py-1 rounded hover:bg-surface-alt disabled:opacity-40 cursor-pointer"
+					class="flex items-center justify-center h-10 w-10 rounded-lg hover:bg-surface-alt disabled:opacity-40 cursor-pointer"
 					disabled={currentPage >= totalPages - 1}
 					onclick={() => goToPage(currentPage + 1)}
+					aria-label="Page suivante"
 				>
-					<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+					<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
 				</button>
 			</div>
 		</div>

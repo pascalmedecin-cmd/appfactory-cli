@@ -29,7 +29,7 @@
 			</button>
 		{/if}
 		{#if pageTitle}
-			<span class="header-title font-semibold text-text">{pageTitle}</span>
+			<h1 class="header-title font-semibold text-text">{pageTitle}</h1>
 		{/if}
 		{#if $pageSubtitle}
 			<span class="header-subtitle text-text-muted">{$pageSubtitle}</span>

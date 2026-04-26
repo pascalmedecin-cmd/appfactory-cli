@@ -122,28 +122,28 @@
 <div class="flex flex-col gap-5 h-[calc(100dvh-var(--header-height)-3rem)]">
 	<!-- Workflow 4 étapes -->
 	<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs bg-prosp-import-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 85%)">
+		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-import-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 85%)">
 			<span class="material-symbols-outlined text-[24px] mt-0.5 text-prosp-import">cloud_download</span>
 			<div>
 				<span class="text-[15px] font-semibold text-text">Importer</span>
 				<p class="text-xs font-medium mt-0.5 text-prosp-import">{data.totalLeads} prospect{data.totalLeads > 1 ? 's' : ''}</p>
 			</div>
 		</div>
-		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs bg-prosp-enrich-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-enrich-border), transparent 85%)">
+		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-enrich-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-enrich-border), transparent 85%)">
 			<span class="material-symbols-outlined text-[24px] mt-0.5 text-prosp-enrich">auto_fix_high</span>
 			<div>
 				<span class="text-[15px] font-semibold text-text">Enrichir</span>
 				<p class="text-xs font-medium mt-0.5 text-prosp-enrich">{data.enrichedCount} enrichi{data.enrichedCount > 1 ? 's' : ''}</p>
 			</div>
 		</div>
-		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs bg-prosp-qualify-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-qualify-border), transparent 85%)">
+		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-qualify-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-qualify-border), transparent 85%)">
 			<span class="material-symbols-outlined text-[24px] mt-0.5 text-prosp-qualify">filter_list</span>
 			<div>
 				<span class="text-[15px] font-semibold text-text">Qualifier</span>
 				<p class="text-xs font-medium mt-0.5 text-prosp-qualify">{data.qualifiedCount} qualifié{data.qualifiedCount > 1 ? 's' : ''}</p>
 			</div>
 		</div>
-		<div class="flex items-start gap-3 px-4 py-4 rounded-xl shadow-xs bg-prosp-convert-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-convert-border), transparent 85%)">
+		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-convert-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-convert-border), transparent 85%)">
 			<span class="material-symbols-outlined text-[24px] mt-0.5 text-prosp-convert">domain_add</span>
 			<div>
 				<span class="text-[15px] font-semibold text-text">Convertir</span>
@@ -159,7 +159,7 @@
 			{#if data.recherches.length > 0}
 				<button
 					onclick={() => recherchesOpen = !recherchesOpen}
-					class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors"
+					class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-text border border-border rounded-lg box-border hover:bg-surface-alt cursor-pointer transition-colors"
 				>
 					<span class="material-symbols-outlined text-[18px]">bookmarks</span>
 					<span class="hidden sm:inline">Mes recherches</span>
@@ -170,7 +170,7 @@
 		<div class="flex items-center gap-2">
 			<button
 				onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
-				class="flex items-center gap-2 px-3 py-2 text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich/20"
+				class="flex items-center gap-2 h-10 px-4 text-sm font-medium border rounded-lg box-border cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich/20"
 				disabled={data.leads.filter(l => l.statut !== 'transfere').length === 0}
 				title="Enrichit uniquement les {data.leads.filter(l => l.statut !== 'transfere').length} leads de cette page"
 			>
@@ -180,7 +180,7 @@
 			</button>
 			<button
 				onclick={() => importModalOpen = true}
-				class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg cursor-pointer shadow-md transition-colors"
+				class="flex items-center gap-2 h-10 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg box-border cursor-pointer shadow-md transition-colors"
 			>
 				<span class="material-symbols-outlined text-[18px]">cloud_download</span>
 				Importer des prospects
@@ -208,7 +208,7 @@
 				{/if}
 				<button
 					onclick={() => alerteModalOpen = true}
-					class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-accent border border-accent/30 rounded-lg hover:bg-accent/5 cursor-pointer transition-colors"
+					class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-accent border border-accent/30 rounded-lg box-border hover:bg-accent/5 cursor-pointer transition-colors"
 				>
 					<span class="material-symbols-outlined text-[16px]">notifications_active</span>
 					Créer une alerte

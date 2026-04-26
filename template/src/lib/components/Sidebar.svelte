@@ -42,7 +42,7 @@
 			{@const badge = item.href === '/veille' && unreadIntelligence > 0 ? unreadIntelligence : 0}
 			<a
 				href={item.href}
-				class="flex items-center gap-3 px-3 py-2 md:py-2.5 text-sm md:text-[15px] rounded-lg transition-colors relative
+				class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors relative
 					{isActive(item.href) ? 'bg-white/15 text-white font-medium shadow-xs' : 'text-white/65 hover:bg-white/8 hover:text-white'}"
 				title={collapsed ? item.label + (badge > 0 ? ` (${badge} non lus)` : '') : undefined}
 			>

@@ -64,7 +64,7 @@
 		bind:this={buttonEl}
 		type="button"
 		onclick={toggle}
-		class="flex items-center gap-2 w-full min-h-11 px-3 py-2.5 text-sm border border-border rounded-lg bg-white cursor-pointer transition-colors hover:border-accent/40"
+		class="flex items-center gap-2 w-full h-10 px-3 text-sm border border-border rounded-lg bg-white box-border cursor-pointer transition-colors hover:border-accent/40"
 		title={tooltip}
 	>
 		{#if icon}
