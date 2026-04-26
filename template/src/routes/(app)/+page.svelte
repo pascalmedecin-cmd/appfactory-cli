@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import type { PageData } from './$types';
@@ -39,7 +40,7 @@
 			class="flex items-center gap-4 p-4 bg-primary/5 border border-primary/12 rounded-xl hover:bg-primary/8 hover:shadow-sm transition-all"
 		>
 			<span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-				<span class="material-symbols-outlined text-[22px] text-primary">radar</span>
+				<Icon name="radar" size={22} class="text-primary" />
 			</span>
 			<div class="flex-1">
 				<p class="text-sm font-semibold text-text">
@@ -49,7 +50,7 @@
 					Appels d'offres, permis, créations d'entreprises : à analyser ou convertir en opportunité
 				</p>
 			</div>
-			<span class="material-symbols-outlined text-[18px] text-primary">arrow_forward</span>
+			<Icon name="arrow_forward" size={18} class="text-primary" />
 		</a>
 	{/if}
 
@@ -59,7 +60,7 @@
 			href="/prospection"
 			class="flex items-center gap-3 p-4 bg-warning-light border border-warning/30 rounded-lg hover:bg-warning-light/80 transition-colors"
 		>
-			<span class="material-symbols-outlined text-[24px] text-warning">notifications_active</span>
+			<Icon name="notifications_active" size={24} class="text-warning" />
 			<div class="flex-1">
 				<p class="text-sm font-semibold text-text">
 					Nouveaux leads détectés
@@ -70,7 +71,7 @@
 					{/each}
 				</p>
 			</div>
-			<span class="material-symbols-outlined text-[18px] text-warning">arrow_forward</span>
+			<Icon name="arrow_forward" size={18} class="text-warning" />
 		</a>
 	{/if}
 
@@ -83,9 +84,9 @@
 			>
 				<div class="flex items-center justify-between mb-3">
 					<span class="flex items-center justify-center w-10 h-10 rounded-lg {card.iconBg}">
-						<span class="material-symbols-outlined text-[22px] {card.iconColor}">{card.icon}</span>
+						<Icon name={card.icon} size={22} class="{card.iconColor}" />
 					</span>
-					<span class="material-symbols-outlined text-[16px] text-text-muted opacity-0 group-hover:opacity-100 transition-opacity">arrow_forward</span>
+					<Icon name="arrow_forward" size={16} class="text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
 				</div>
 				<p class="text-3xl font-bold text-text tracking-tight">{card.value}</p>
 				<p class="text-sm text-text-muted mt-0.5">{card.label}</p>
@@ -133,21 +134,21 @@
 					<div class="space-y-3">
 						<p class="text-sm text-text-muted">Rien pour le moment. Quelques idées pour démarrer :</p>
 						<a href="/prospection" class="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface-alt transition-colors group">
-							<span class="material-symbols-outlined text-[18px] text-accent">cloud_download</span>
+							<Icon name="cloud_download" size={18} class="text-accent" />
 							<div>
 								<p class="text-sm font-medium text-text group-hover:text-accent">Importer des leads depuis Zefix ou SIMAP</p>
 								<p class="text-xs text-text-muted">Trouvez des prospects dans le registre du commerce ou les marchés publics</p>
 							</div>
 						</a>
 						<a href="/signaux" class="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface-alt transition-colors group">
-							<span class="material-symbols-outlined text-[18px] text-warning">notifications_active</span>
+							<Icon name="notifications_active" size={18} class="text-warning" />
 							<div>
 								<p class="text-sm font-medium text-text group-hover:text-accent">Surveiller les signaux d'affaires</p>
 								<p class="text-xs text-text-muted">Appels d'offres, permis de construire, créations d'entreprises</p>
 							</div>
 						</a>
 						<a href="/prospection" class="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface-alt transition-colors group">
-							<span class="material-symbols-outlined text-[18px] text-success">bookmark_add</span>
+							<Icon name="bookmark_add" size={18} class="text-success" />
 							<div>
 								<p class="text-sm font-medium text-text group-hover:text-accent">Configurer une alerte automatique</p>
 								<p class="text-xs text-text-muted">Soyez notifié quand de nouveaux leads correspondent à vos critères</p>
@@ -158,11 +159,9 @@
 					<div class="space-y-3">
 						{#each data.activitesRecentes as activite}
 							<div class="flex items-start gap-3 p-3 rounded-lg bg-surface">
-								<span class="material-symbols-outlined text-[18px] text-text-muted mt-0.5">
-									{activite.type_activite === 'appel' ? 'call' :
+								<Icon name={activite.type_activite === 'appel' ? 'call' :
 									 activite.type_activite === 'email' ? 'mail' :
-									 activite.type_activite === 'reunion' ? 'groups' : 'note'}
-								</span>
+									 activite.type_activite === 'reunion' ? 'groups' : 'note'} size={18} class="text-text-muted mt-0.5" />
 								<div class="flex-1 min-w-0">
 									<p class="text-sm font-medium text-text truncate">
 										{activite.type_activite}
@@ -189,7 +188,7 @@
 						<p class="text-sm font-medium text-text group-hover:text-accent">Ajouter une entreprise</p>
 						<p class="text-xs text-text-muted">Créez la fiche de votre premier client ou prospect</p>
 					</div>
-					<span class="material-symbols-outlined text-[18px] text-text-muted group-hover:text-accent">arrow_forward</span>
+					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-accent" />
 				</a>
 				<a href="/contacts" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-alt transition-colors group">
 					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 text-accent text-sm font-bold">2</span>
@@ -197,7 +196,7 @@
 						<p class="text-sm font-medium text-text group-hover:text-accent">Ajouter un contact</p>
 						<p class="text-xs text-text-muted">Rattachez vos interlocuteurs à leurs entreprises</p>
 					</div>
-					<span class="material-symbols-outlined text-[18px] text-text-muted group-hover:text-accent">arrow_forward</span>
+					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-accent" />
 				</a>
 				<a href="/pipeline" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-alt transition-colors group">
 					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 text-accent text-sm font-bold">3</span>
@@ -205,26 +204,26 @@
 						<p class="text-sm font-medium text-text group-hover:text-accent">Créer une opportunité</p>
 						<p class="text-xs text-text-muted">Suivez vos affaires dans le pipeline commercial</p>
 					</div>
-					<span class="material-symbols-outlined text-[18px] text-text-muted group-hover:text-accent">arrow_forward</span>
+					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-accent" />
 				</a>
 			</div>
 		</div>
 	{:else}
 		<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
 			<a href="/contacts" class="flex items-center gap-2.5 px-4 py-3.5 bg-white rounded-xl border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
-				<span class="material-symbols-outlined text-[18px] text-accent">person_add</span>
+				<Icon name="person_add" size={18} class="text-accent" />
 				Nouveau contact
 			</a>
 			<a href="/entreprises" class="flex items-center gap-2.5 px-4 py-3.5 bg-white rounded-xl border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
-				<span class="material-symbols-outlined text-[18px] text-accent">domain_add</span>
+				<Icon name="domain_add" size={18} class="text-accent" />
 				Nouvelle entreprise
 			</a>
 			<a href="/pipeline" class="flex items-center gap-2.5 px-4 py-3.5 bg-white rounded-xl border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
-				<span class="material-symbols-outlined text-[18px] text-accent">add_circle</span>
+				<Icon name="add_circle" size={18} class="text-accent" />
 				Nouvelle opportunité
 			</a>
 			<a href="/signaux" class="flex items-center gap-2.5 px-4 py-3.5 bg-white rounded-xl border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
-				<span class="material-symbols-outlined text-[18px] text-accent">notifications</span>
+				<Icon name="notifications" size={18} class="text-accent" />
 				Voir les signaux
 			</a>
 		</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { config } from '$lib/config';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { page } from '$app/stores';
@@ -121,7 +122,7 @@
 				onclick={() => switchTab(tab.id)}
 				class="aide-tab {activeTab === tab.id ? 'aide-tab--active' : ''}"
 			>
-				<span class="material-symbols-outlined aide-tab-icon">{tab.icon}</span>
+				<Icon name={tab.icon} class="aide-tab-icon" />
 				<span class="aide-tab-label">{tab.label}</span>
 				<span class="aide-tab-desc">{tab.desc}</span>
 			</button>
@@ -130,7 +131,7 @@
 
 	<!-- Search -->
 	<div class="relative mt-6 mb-8">
-		<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-[20px]">search</span>
+		<Icon name="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted" />
 		<input
 			type="text"
 			placeholder="Rechercher dans {tabs.find(t => t.id === activeTab)?.label}..."
@@ -142,7 +143,7 @@
 				onclick={() => searchQuery = ''}
 				class="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text cursor-pointer"
 			>
-				<span class="material-symbols-outlined text-[18px]">close</span>
+				<Icon name="close" size={18} />
 			</button>
 		{/if}
 		{#if searchQuery && filteredSections.length === 0}
@@ -165,7 +166,7 @@
 					{/if}
 				{/each}
 			</select>
-			<span class="material-symbols-outlined absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-text-muted pointer-events-none">expand_more</span>
+			<Icon name="expand_more" size={18} class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
 		</div>
 	</div>
 
@@ -183,7 +184,7 @@
 									class="flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-[13px] transition-colors cursor-pointer
 										{activeSection === section.id ? 'bg-primary-light text-primary font-medium' : 'text-text-body hover:bg-surface-alt'}"
 								>
-									<span class="material-symbols-outlined text-[16px] opacity-70">{section.icon}</span>
+									<Icon name={section.icon} size={16} class="opacity-70" />
 									{section.label}
 								</button>
 							</li>
@@ -203,7 +204,7 @@
 				<section id="bienvenue" class="aide-section {searchQuery && !filteredSections.includes('bienvenue') ? 'hidden' : ''}">
 					<div class="aide-hero">
 						<div class="aide-hero-icon">
-							<span class="material-symbols-outlined text-[32px]">waving_hand</span>
+							<Icon name="waving_hand" size={32} />
 						</div>
 						<div>
 							<h2 class="aide-hero-title">Bienvenue sur {config.app.name}</h2>
@@ -213,17 +214,17 @@
 
 					<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
 						<div class="aide-card">
-							<span class="material-symbols-outlined aide-card-icon text-success">contacts</span>
+							<Icon name="contacts" class="aide-card-icon text-success" />
 							<p class="aide-card-title">Contacts & Entreprises</p>
 							<p class="aide-card-desc">Centralisez vos relations d'affaires</p>
 						</div>
 						<div class="aide-card">
-							<span class="material-symbols-outlined aide-card-icon text-primary">conversion_path</span>
+							<Icon name="conversion_path" class="aide-card-icon text-primary" />
 							<p class="aide-card-title">Pipeline commercial</p>
 							<p class="aide-card-desc">Suivez vos opportunités en kanban</p>
 						</div>
 						<div class="aide-card">
-							<span class="material-symbols-outlined aide-card-icon text-warning">search</span>
+							<Icon name="search" class="aide-card-icon text-warning" />
 							<p class="aide-card-title">Prospection automatisée</p>
 							<p class="aide-card-desc">Détectez des leads depuis les registres publics</p>
 						</div>
@@ -232,7 +233,7 @@
 
 				<!-- Connexion rapide -->
 				<section id="connexion-rapide" class="aide-section {searchQuery && !filteredSections.includes('connexion-rapide') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">login</span> Se connecter</h2>
+					<h2 class="aide-h2"><Icon name="login" class="aide-icon" /> Se connecter</h2>
 					<div class="aide-content">
 						<div class="aide-steps">
 							<div class="aide-step">
@@ -259,7 +260,7 @@
 						</div>
 
 						<div class="aide-tip">
-							<span class="material-symbols-outlined aide-tip-icon">info</span>
+							<Icon name="info" class="aide-tip-icon" />
 							<p>Seules les adresses <strong>@filmpro.ch</strong> sont autorisées. Si vous ne recevez pas le code, vérifiez vos spams ou attendez quelques instants avant de réessayer.</p>
 						</div>
 					</div>
@@ -267,21 +268,21 @@
 
 				<!-- Navigation rapide -->
 				<section id="navigation-rapide" class="aide-section {searchQuery && !filteredSections.includes('navigation-rapide') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">explore</span> Naviguer dans l'application</h2>
+					<h2 class="aide-h2"><Icon name="explore" class="aide-icon" /> Naviguer dans l'application</h2>
 					<div class="aide-content">
 						<p>L'application s'organise autour de <strong>6 sections principales</strong> accessibles depuis la barre latérale :</p>
 
 						<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 my-5">
 							{#each config.navigation.primary as nav}
 								<div class="aide-nav-card">
-									<span class="material-symbols-outlined text-primary text-[20px]">{nav.icon}</span>
+									<Icon name={nav.icon} class="text-primary" />
 									<span class="text-sm font-medium text-text">{nav.label}</span>
 								</div>
 							{/each}
 						</div>
 
 						<div class="aide-tip">
-							<span class="material-symbols-outlined aide-tip-icon">smartphone</span>
+							<Icon name="smartphone" class="aide-tip-icon" />
 							<p><strong>Sur mobile</strong> : la barre latérale est masquée. Appuyez sur l'icône menu en haut à gauche pour l'ouvrir.</p>
 						</div>
 					</div>
@@ -289,7 +290,7 @@
 
 				<!-- Premières actions -->
 				<section id="premieres-actions" class="aide-section {searchQuery && !filteredSections.includes('premieres-actions') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">play_circle</span> Premières actions</h2>
+					<h2 class="aide-h2"><Icon name="play_circle" class="aide-icon" /> Premières actions</h2>
 					<div class="aide-content">
 						<div class="space-y-4">
 							<div class="aide-action-card">
@@ -326,32 +327,32 @@
 
 				<!-- Astuces -->
 				<section id="astuces" class="aide-section {searchQuery && !filteredSections.includes('astuces') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">lightbulb</span> Astuces</h2>
+					<h2 class="aide-h2"><Icon name="lightbulb" class="aide-icon" /> Astuces</h2>
 					<div class="aide-content">
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 							<div class="aide-tip-card">
-								<span class="material-symbols-outlined text-warning text-[20px]">drag_indicator</span>
+								<Icon name="drag_indicator" class="text-warning" />
 								<div>
 									<p class="font-medium text-text text-sm">Glisser-déposer</p>
 									<p class="text-[13px] text-text-body mt-0.5">Déplacez les cartes du pipeline d'une colonne à l'autre pour changer l'étape.</p>
 								</div>
 							</div>
 							<div class="aide-tip-card">
-								<span class="material-symbols-outlined text-info text-[20px]">dock_to_right</span>
+								<Icon name="dock_to_right" class="text-info" />
 								<div>
 									<p class="font-medium text-text text-sm">Panneau latéral</p>
 									<p class="text-[13px] text-text-body mt-0.5">Cliquez sur un élément dans une liste pour ouvrir sa fiche sans quitter la page.</p>
 								</div>
 							</div>
 							<div class="aide-tip-card">
-								<span class="material-symbols-outlined text-success text-[20px]">bookmark</span>
+								<Icon name="bookmark" class="text-success" />
 								<div>
 									<p class="font-medium text-text text-sm">Recherches sauvegardées</p>
 									<p class="text-[13px] text-text-body mt-0.5">Sauvegardez vos filtres de prospection pour recevoir des alertes automatiques.</p>
 								</div>
 							</div>
 							<div class="aide-tip-card">
-								<span class="material-symbols-outlined text-danger text-[20px]">notification_important</span>
+								<Icon name="notification_important" class="text-danger" />
 								<div>
 									<p class="font-medium text-text text-sm">Relances</p>
 									<p class="text-[13px] text-text-body mt-0.5">Les opportunités en retard apparaissent en rouge et sur le tableau de bord.</p>
@@ -366,14 +367,14 @@
 
 				<!-- Connexion -->
 				<section id="connexion" class="aide-section {searchQuery && !filteredSections.includes('connexion') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">login</span> Connexion</h2>
+					<h2 class="aide-h2"><Icon name="login" class="aide-icon" /> Connexion</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Se connecter</h3>
 						<p>Sur la page de connexion, entrez votre adresse <strong>@filmpro.ch</strong> et cliquez <strong>Recevoir mon code</strong>. Un <strong>code à 6 chiffres</strong> est envoyé par email. Saisissez-le pour accéder à l'application.</p>
 						<p>Seules les adresses @filmpro.ch sont autorisées.</p>
 
 						<div class="aide-tip mt-4">
-							<span class="material-symbols-outlined aide-tip-icon">timer</span>
+							<Icon name="timer" class="aide-tip-icon" />
 							<p>Votre session reste active pendant <strong>7 jours</strong>. Passé ce délai, vous devrez vous reconnecter avec un nouveau code.</p>
 						</div>
 
@@ -384,7 +385,7 @@
 
 				<!-- Navigation -->
 				<section id="navigation" class="aide-section {searchQuery && !filteredSections.includes('navigation') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">menu</span> Navigation</h2>
+					<h2 class="aide-h2"><Icon name="menu" class="aide-icon" /> Navigation</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Barre latérale</h3>
 						<p>La barre latérale gauche donne accès aux 6 sections principales :</p>
@@ -408,15 +409,15 @@
 
 				<!-- Dashboard -->
 				<section id="dashboard" class="aide-section {searchQuery && !filteredSections.includes('dashboard') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">dashboard</span> Tableau de bord</h2>
+					<h2 class="aide-h2"><Icon name="dashboard" class="aide-icon" /> Tableau de bord</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Indicateurs</h3>
 						<p>4 cartes affichent les compteurs en temps réel :</p>
 						<div class="grid grid-cols-2 gap-3 my-4">
-							<div class="aide-stat-card"><span class="material-symbols-outlined text-primary text-[18px]">contacts</span> Nombre de contacts</div>
-							<div class="aide-stat-card"><span class="material-symbols-outlined text-primary text-[18px]">business</span> Nombre d'entreprises</div>
-							<div class="aide-stat-card"><span class="material-symbols-outlined text-warning text-[18px]">conversion_path</span> Opportunités en cours</div>
-							<div class="aide-stat-card"><span class="material-symbols-outlined text-danger text-[18px]">notifications</span> Signaux à traiter</div>
+							<div class="aide-stat-card"><Icon name="contacts" size={18} class="text-primary" /> Nombre de contacts</div>
+							<div class="aide-stat-card"><Icon name="business" size={18} class="text-primary" /> Nombre d'entreprises</div>
+							<div class="aide-stat-card"><Icon name="conversion_path" size={18} class="text-warning" /> Opportunités en cours</div>
+							<div class="aide-stat-card"><Icon name="notifications" size={18} class="text-danger" /> Signaux à traiter</div>
 						</div>
 
 						<h3 class="aide-h3">Relances du jour</h3>
@@ -432,7 +433,7 @@
 
 				<!-- Contacts -->
 				<section id="contacts" class="aide-section {searchQuery && !filteredSections.includes('contacts') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">contacts</span> Contacts</h2>
+					<h2 class="aide-h2"><Icon name="contacts" class="aide-icon" /> Contacts</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Voir la liste</h3>
 						<p>La page affiche tous les contacts dans un tableau triable. Utilisez la barre de recherche pour filtrer par nom, entreprise, email ou téléphone.</p>
@@ -456,7 +457,7 @@
 
 				<!-- Entreprises -->
 				<section id="entreprises" class="aide-section {searchQuery && !filteredSections.includes('entreprises') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">business</span> Entreprises</h2>
+					<h2 class="aide-h2"><Icon name="business" class="aide-icon" /> Entreprises</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Voir la liste</h3>
 						<p>Toutes les entreprises dans un tableau triable avec recherche. Les colonnes affichent : raison sociale, secteur, canton, taille estimée, statut.</p>
@@ -471,7 +472,7 @@
 						<p>Depuis le panneau latéral : <strong>Modifier</strong> pour éditer, <strong>Supprimer</strong> pour retirer définitivement.</p>
 
 						<div class="aide-warning mt-4">
-							<span class="material-symbols-outlined aide-warning-icon">warning</span>
+							<Icon name="warning" class="aide-warning-icon" />
 							<p>La suppression est <strong>irréversible</strong>. Les contacts rattachés ne sont pas supprimés mais perdent leur lien avec l'entreprise.</p>
 						</div>
 					</div>
@@ -479,14 +480,14 @@
 
 				<!-- Pipeline -->
 				<section id="pipeline" class="aide-section {searchQuery && !filteredSections.includes('pipeline') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">conversion_path</span> Pipeline commercial</h2>
+					<h2 class="aide-h2"><Icon name="conversion_path" class="aide-icon" /> Pipeline commercial</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Vue kanban</h3>
 						<p>Le pipeline affiche vos opportunités en 6 colonnes :</p>
 						<div class="grid grid-cols-2 sm:grid-cols-3 gap-2 my-4">
 							{#each config.pipeline.etapes as etape}
 								<div class="px-3 py-2.5 rounded-lg bg-surface-alt text-sm flex items-center gap-2 {etape.key === 'gagne' ? 'border border-success/30 bg-success-light' : etape.key === 'perdu' ? 'border border-danger/30 bg-danger-light' : ''}">
-									<span class="material-symbols-outlined text-[16px] {etape.color}">{etape.icon}</span>
+									<Icon name={etape.icon} size={16} class="{etape.color}" />
 									<strong>{etape.label}</strong>
 								</div>
 							{/each}
@@ -509,7 +510,7 @@
 
 				<!-- Prospection -->
 				<section id="prospection" class="aide-section {searchQuery && !filteredSections.includes('prospection') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">search</span> Prospection</h2>
+					<h2 class="aide-h2"><Icon name="search" class="aide-icon" /> Prospection</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Comprendre le scoring</h3>
 						<p>Chaque lead reçoit un score de pertinence automatique (0-13 points) :</p>
@@ -577,7 +578,7 @@
 
 				<!-- Signaux -->
 				<section id="signaux" class="aide-section {searchQuery && !filteredSections.includes('signaux') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">notifications</span> Signaux d'affaires</h2>
+					<h2 class="aide-h2"><Icon name="notifications" class="aide-icon" /> Signaux d'affaires</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Comprendre les signaux</h3>
 						<p>Les signaux sont des informations détectées depuis des sources publiques : appels d'offres, permis de construire, créations d'entreprise.</p>
@@ -614,7 +615,7 @@
 
 				<!-- Architecture -->
 				<section id="tech-architecture" class="aide-section {searchQuery && !filteredSections.includes('tech-architecture') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">account_tree</span> Architecture</h2>
+					<h2 class="aide-h2"><Icon name="account_tree" class="aide-icon" /> Architecture</h2>
 					<div class="aide-content">
 						<div class="aide-code-block">
 							<pre>Navigateur (SvelteKit SSR)
@@ -638,7 +639,7 @@ APIs externes (Zefix, SIMAP, search.ch)</pre>
 
 				<!-- Stack -->
 				<section id="tech-stack" class="aide-section {searchQuery && !filteredSections.includes('tech-stack') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">layers</span> Stack technique</h2>
+					<h2 class="aide-h2"><Icon name="layers" class="aide-icon" /> Stack technique</h2>
 					<div class="aide-content">
 						<div class="overflow-x-auto">
 							<table class="aide-table">
@@ -660,13 +661,13 @@ APIs externes (Zefix, SIMAP, search.ch)</pre>
 
 				<!-- BDD -->
 				<section id="tech-bdd" class="aide-section {searchQuery && !filteredSections.includes('tech-bdd') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">database</span> Base de données</h2>
+					<h2 class="aide-h2"><Icon name="database" class="aide-icon" /> Base de données</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Tables CRM</h3>
 						<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 my-3">
 							{#each ['contacts', 'entreprises', 'opportunites', 'prescripteurs', 'signaux_affaires', 'activites', 'imports_zefix', 'utilisateurs'] as table}
 								<div class="aide-table-badge">
-									<span class="material-symbols-outlined text-[14px] text-primary">table_chart</span>
+									<Icon name="table_chart" size={14} class="text-primary" />
 									{table}
 								</div>
 							{/each}
@@ -675,11 +676,11 @@ APIs externes (Zefix, SIMAP, search.ch)</pre>
 						<h3 class="aide-h3">Tables Prospection</h3>
 						<div class="grid grid-cols-2 gap-2 my-3">
 							<div class="aide-table-badge">
-								<span class="material-symbols-outlined text-[14px] text-warning">table_chart</span>
+								<Icon name="table_chart" size={14} class="text-warning" />
 								prospect_leads
 							</div>
 							<div class="aide-table-badge">
-								<span class="material-symbols-outlined text-[14px] text-warning">table_chart</span>
+								<Icon name="table_chart" size={14} class="text-warning" />
 								recherches_sauvegardees
 							</div>
 						</div>
@@ -702,10 +703,10 @@ npx supabase gen types typescript \
 
 				<!-- Auth -->
 				<section id="tech-auth" class="aide-section {searchQuery && !filteredSections.includes('tech-auth') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">lock</span> Authentification</h2>
+					<h2 class="aide-h2"><Icon name="lock" class="aide-icon" /> Authentification</h2>
 					<div class="aide-content">
 						<div class="aide-tip mb-4">
-							<span class="material-symbols-outlined aide-tip-icon">info</span>
+							<Icon name="info" class="aide-tip-icon" />
 							<p>L'authentification utilise l'<strong>OTP par email</strong> via Supabase Auth (signInWithOtp). Pas de mot de passe, pas de Google OAuth, pas de MFA TOTP.</p>
 						</div>
 
@@ -751,7 +752,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 
 				<!-- APIs externes -->
 				<section id="tech-api" class="aide-section {searchQuery && !filteredSections.includes('tech-api') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">api</span> APIs externes</h2>
+					<h2 class="aide-h2"><Icon name="api" class="aide-icon" /> APIs externes</h2>
 					<div class="aide-content">
 						<div class="overflow-x-auto">
 							<table class="aide-table">
@@ -763,7 +764,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 								</tbody>
 							</table>
 							<p class="text-xs text-text-muted mt-2">
-								<span class="material-symbols-outlined text-[14px] align-text-bottom">info</span>
+								<Icon name="info" size={14} class="align-text-bottom" />
 								search.ch est la seule API avec un quota mensuel strict. L'enrichissement batch affiche un avertissement si le nombre de prospects risque d'épuiser le quota. En cas de dépassement, l'enrichissement s'interrompt automatiquement avec un message explicatif.
 							</p>
 						</div>
@@ -786,7 +787,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 
 				<!-- Déploiement -->
 				<section id="tech-deploy" class="aide-section {searchQuery && !filteredSections.includes('tech-deploy') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">cloud_upload</span> Déploiement</h2>
+					<h2 class="aide-h2"><Icon name="cloud_upload" class="aide-icon" /> Déploiement</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Environnements</h3>
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
@@ -818,12 +819,12 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 
 				<!-- Cron -->
 				<section id="tech-cron" class="aide-section {searchQuery && !filteredSections.includes('tech-cron') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">schedule</span> Tâches planifiées</h2>
+					<h2 class="aide-h2"><Icon name="schedule" class="aide-icon" /> Tâches planifiées</h2>
 					<div class="aide-content">
 						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 my-4">
 							<div class="aide-env-card">
 								<div class="flex items-center gap-2 mb-2">
-									<span class="material-symbols-outlined text-primary text-[18px]">monitoring</span>
+									<Icon name="monitoring" size={18} class="text-primary" />
 									<span class="font-semibold text-text">Veille signaux</span>
 								</div>
 								<p class="text-[13px] text-text-body"><code>/api/cron/signaux</code></p>
@@ -831,7 +832,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 							</div>
 							<div class="aide-env-card">
 								<div class="flex items-center gap-2 mb-2">
-									<span class="material-symbols-outlined text-warning text-[18px]">notifications_active</span>
+									<Icon name="notifications_active" size={18} class="text-warning" />
 									<span class="font-semibold text-text">Alertes prospection</span>
 								</div>
 								<p class="text-[13px] text-text-body"><code>/api/cron/alertes</code></p>
@@ -840,7 +841,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 						</div>
 
 						<div class="aide-tip">
-							<span class="material-symbols-outlined aide-tip-icon">security</span>
+							<Icon name="security" class="aide-tip-icon" />
 							<p>Les crons sont sécurisés par <code>CRON_SECRET</code> (Bearer token, timing-safe). Ils utilisent le <code>service_role</code> client pour bypasser RLS.</p>
 						</div>
 					</div>
@@ -848,7 +849,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 
 				<!-- Sécurité -->
 				<section id="tech-securite" class="aide-section {searchQuery && !filteredSections.includes('tech-securite') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">shield</span> Sécurité</h2>
+					<h2 class="aide-h2"><Icon name="shield" class="aide-icon" /> Sécurité</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Mesures en place</h3>
 						<div class="space-y-2 my-4">
@@ -864,7 +865,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 								{ icon: 'check_circle', text: 'Boutons destructifs désactivés après clic (anti double soumission)' },
 							] as item}
 								<div class="flex items-start gap-2.5">
-									<span class="material-symbols-outlined text-success text-[18px] mt-0.5">{item.icon}</span>
+									<Icon name={item.icon} size={18} class="text-success mt-0.5" />
 									<p class="text-sm text-text-body">{item.text}</p>
 								</div>
 							{/each}
@@ -880,7 +881,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 
 				<!-- Procédures -->
 				<section id="tech-procedures" class="aide-section {searchQuery && !filteredSections.includes('tech-procedures') ? 'hidden' : ''}">
-					<h2 class="aide-h2"><span class="material-symbols-outlined aide-icon">checklist</span> Procédures</h2>
+					<h2 class="aide-h2"><Icon name="checklist" class="aide-icon" /> Procédures</h2>
 					<div class="aide-content">
 						<h3 class="aide-h3">Ajouter une nouvelle table</h3>
 						<div class="aide-steps">

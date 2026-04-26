@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { fade, scale } from 'svelte/transition';
 	import { trapFocus } from '$lib/actions/trapFocus';
 
@@ -60,7 +61,7 @@
 		>
 			<div class="px-6 pt-6 pb-2 text-center">
 				<div class="mx-auto w-12 h-12 rounded-full bg-surface-secondary flex items-center justify-center mb-4">
-					<span class="material-symbols-outlined text-[24px] {iconColor}">{iconName}</span>
+					<Icon name={iconName} size={24} class="{iconColor}" />
 				</div>
 				<h3 id="confirm-title" class="text-lg font-semibold text-text">{title}</h3>
 				<p id="confirm-message" class="mt-2 text-sm text-text-muted">{message}</p>

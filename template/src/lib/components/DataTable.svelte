@@ -1,4 +1,5 @@
 <script lang="ts" generics="T extends Record<string, any>">
+	import Icon from '$lib/components/Icon.svelte';
 	import type { Snippet } from 'svelte';
 
 	type Column = {
@@ -171,9 +172,7 @@
 								>
 									{col.label}
 									{#if sortKey === col.key}
-										<span class="material-symbols-outlined text-[16px]">
-											{sortAsc ? 'arrow_upward' : 'arrow_downward'}
-										</span>
+										<Icon name={sortAsc ? 'arrow_upward' : 'arrow_downward'} size={16} />
 									{/if}
 								</button>
 							{:else}
@@ -229,7 +228,7 @@
 					onclick={() => goToPage(currentPage - 1)}
 					aria-label="Page précédente"
 				>
-					<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+					<Icon name="arrow_back" size={18} />
 				</button>
 				<span>{currentPage + 1} / {totalPages}</span>
 				<button
@@ -238,7 +237,7 @@
 					onclick={() => goToPage(currentPage + 1)}
 					aria-label="Page suivante"
 				>
-					<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+					<Icon name="arrow_forward" size={18} />
 				</button>
 			</div>
 		</div>

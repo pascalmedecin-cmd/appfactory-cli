@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
@@ -171,7 +172,7 @@
 			onclick={() => openCreate()}
 			class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 		>
-			<span class="material-symbols-outlined text-[18px]">add</span>
+			<Icon name="add" size={18} />
 			Nouvelle opportunité
 		</button>
 	</div>
@@ -193,7 +194,7 @@
 				<div class="px-3 py-2.5 border-b border-border/50">
 					<div class="flex items-center justify-between">
 						<div class="flex items-center gap-2">
-							<span class="material-symbols-outlined text-[18px] {etape.color}">{etape.icon}</span>
+							<Icon name={etape.icon} size={18} class="{etape.color}" />
 							<span class="text-sm font-semibold text-text">{etape.label}</span>
 							<span class="text-xs text-text-muted bg-surface-alt rounded-full px-1.5 py-0.5">{opps.length}</span>
 						</div>
@@ -203,7 +204,7 @@
 								class="text-text-muted hover:text-accent cursor-pointer"
 								title="Ajouter dans {etape.label}"
 							>
-								<span class="material-symbols-outlined text-[18px]">add</span>
+								<Icon name="add" size={18} />
 							</button>
 						{/if}
 					</div>
@@ -329,7 +330,7 @@
 					onclick={openEdit}
 					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 				>
-					<span class="material-symbols-outlined text-[16px]">edit</span>
+					<Icon name="edit" size={16} />
 					Modifier
 				</button>
 				{#if selectedOpp.etape_pipeline !== 'perdu' && selectedOpp.etape_pipeline !== 'gagne'}
@@ -351,7 +352,7 @@
 							disabled={archiving}
 							class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
 						>
-							<span class="material-symbols-outlined text-[16px]">block</span>
+							<Icon name="block" size={16} />
 							{archiving ? 'En cours…' : 'Marquer perdu'}
 						</button>
 					</form>

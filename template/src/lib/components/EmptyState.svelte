@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	let {
 		icon = 'inbox',
 		title = 'Aucune donnée',
@@ -15,7 +16,7 @@
 </script>
 
 <div class="flex flex-col items-center justify-center py-12 text-center">
-	<span class="material-symbols-outlined text-[48px] text-text-muted/40 mb-3">{icon}</span>
+	<Icon name={icon} size={48} class="text-text-muted/40 mb-3" />
 	<h3 class="text-base font-medium text-text">{title}</h3>
 	{#if description}
 		<p class="mt-1 text-sm text-text-muted max-w-sm">{description}</p>

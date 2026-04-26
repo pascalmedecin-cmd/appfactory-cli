@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	let {
 		selected = $bindable<string[]>([]),
 		options,
@@ -68,13 +69,11 @@
 		title={tooltip}
 	>
 		{#if icon}
-			<span class="material-symbols-outlined text-[18px] text-text-muted">{icon}</span>
+			<Icon name={icon} size={18} class="text-text-muted" />
 		{/if}
 		<span class="font-medium text-text">{label}</span>
 		<span class="ml-auto text-text-muted text-xs truncate max-w-[120px]">{summary()}</span>
-		<span class="material-symbols-outlined text-[16px] text-text-muted transition-transform {open ? 'rotate-180' : ''}"
-			>expand_more</span
-		>
+		<Icon name="expand_more" size={16} class="text-text-muted transition-transform {open ? 'rotate-180' : ''}" />
 	</button>
 
 	{#if open}
@@ -89,7 +88,7 @@
 				>
 					<span class="flex items-center justify-center w-4 h-4 border rounded {selected.includes(opt.value) ? 'border-accent bg-accent' : 'border-border-strong'}">
 						{#if selected.includes(opt.value)}
-							<span class="material-symbols-outlined text-[14px] text-white">check</span>
+							<Icon name="check" size={14} class="text-white" />
 						{/if}
 					</span>
 					{#if opt.dotColor}

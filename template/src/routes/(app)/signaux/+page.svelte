@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import SlideOut from '$lib/components/SlideOut.svelte';
@@ -228,7 +229,7 @@
 							onclick={() => selectMode = true}
 							class="flex items-center gap-2 px-3 py-2 text-sm text-text-muted hover:text-text border border-border rounded-lg cursor-pointer"
 						>
-							<span class="material-symbols-outlined text-[18px]">checklist</span>
+							<Icon name="checklist" size={18} />
 							Sélectionner
 						</button>
 					{/if}
@@ -237,7 +238,7 @@
 					onclick={openCreate}
 					class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 				>
-					<span class="material-symbols-outlined text-[18px]">add</span>
+					<Icon name="add" size={18} />
 					Ajouter
 				</button>
 			</div>
@@ -245,7 +246,7 @@
 
 		<!-- Bandeau explicatif -->
 		<div class="mt-3 flex items-start gap-3 p-4 bg-primary/5 border border-primary/15 rounded-lg">
-			<span class="material-symbols-outlined text-[22px] text-primary mt-0.5">radar</span>
+			<Icon name="radar" size={22} class="text-primary mt-0.5" />
 			<div>
 				<p class="text-sm text-text">
 					Détectez les opportunités business avant vos concurrents : appels d'offres, permis de construire, créations d'entreprises.
@@ -312,7 +313,7 @@
 			<div class="bg-white rounded-lg border border-border p-6">
 				<div class="flex items-center gap-3 mb-3">
 					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-accent/10">
-						<span class="material-symbols-outlined text-[22px] text-accent">edit_note</span>
+						<Icon name="edit_note" size={22} class="text-accent" />
 					</span>
 					<h3 class="font-semibold text-text">Ajout manuel</h3>
 				</div>
@@ -323,7 +324,7 @@
 					onclick={openCreate}
 					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 				>
-					<span class="material-symbols-outlined text-[18px]">add</span>
+					<Icon name="add" size={18} />
 					Ajouter un signal
 				</button>
 			</div>
@@ -331,7 +332,7 @@
 			<div class="bg-white rounded-lg border border-border p-6">
 				<div class="flex items-center gap-3 mb-3">
 					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-warning/10">
-						<span class="material-symbols-outlined text-[22px] text-warning">notifications_active</span>
+						<Icon name="notifications_active" size={22} class="text-warning" />
 					</span>
 					<h3 class="font-semibold text-text">Veille automatique</h3>
 				</div>
@@ -340,15 +341,15 @@
 				</p>
 				<ul class="text-sm text-text-muted space-y-1.5">
 					<li class="flex items-center gap-2">
-						<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
+						<Icon name="check_circle" size={14} class="text-success" />
 						Scan quotidien des marchés publics (SIMAP)
 					</li>
 					<li class="flex items-center gap-2">
-						<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
+						<Icon name="check_circle" size={14} class="text-success" />
 						Alertes sur le Dashboard
 					</li>
 					<li class="flex items-center gap-2">
-						<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
+						<Icon name="check_circle" size={14} class="text-success" />
 						Conversion en opportunité en un clic
 					</li>
 				</ul>
@@ -362,7 +363,7 @@
 					onclick={toggleSelectAll}
 					class="flex items-center gap-2 text-sm text-accent hover:underline cursor-pointer"
 				>
-					<span class="material-symbols-outlined text-[18px]">{selectedIds.size === filteredSignaux.length ? 'deselect' : 'select_all'}</span>
+					<Icon name={selectedIds.size === filteredSignaux.length ? 'deselect' : 'select_all'} size={18} />
 					{selectedIds.size === filteredSignaux.length ? 'Tout désélectionner' : 'Tout sélectionner'}
 				</button>
 				<span class="text-sm text-text-muted">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
@@ -388,7 +389,7 @@
 							disabled={batchDeleting}
 							class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-danger hover:bg-danger/80 rounded-lg cursor-pointer disabled:opacity-50"
 						>
-							<span class="material-symbols-outlined text-[16px]">delete_forever</span>
+							<Icon name="delete_forever" size={16} />
 							{batchDeleting ? 'Suppression…' : `Confirmer (${selectedIds.size})`}
 						</button>
 					</form>
@@ -399,7 +400,7 @@
 						disabled={selectedIds.size === 0}
 						class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
 					>
-						<span class="material-symbols-outlined text-[16px]">delete</span>
+						<Icon name="delete" size={16} />
 						Supprimer ({selectedIds.size})
 					</button>
 				{/if}
@@ -417,11 +418,11 @@
 						<div class="flex items-center gap-3 min-w-0">
 							{#if selectMode}
 								<span class="flex items-center justify-center w-10 h-10 rounded-lg shrink-0 {selectedIds.has(signal.id) ? 'bg-accent text-white' : 'bg-surface border border-border'}">
-									<span class="material-symbols-outlined text-[22px]">{selectedIds.has(signal.id) ? 'check' : 'check_box_outline_blank'}</span>
+									<Icon name={selectedIds.has(signal.id) ? 'check' : 'check_box_outline_blank'} size={22} />
 								</span>
 							{:else}
 								<span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/8 shrink-0">
-									<span class="material-symbols-outlined text-[22px] text-primary">{typeIcon(signal.type_signal)}</span>
+									<Icon name={typeIcon(signal.type_signal)} size={22} class="text-primary" />
 								</span>
 							{/if}
 							<div class="min-w-0">
@@ -431,7 +432,7 @@
 						</div>
 						<div class="flex items-center gap-2">
 							<span class="flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium {scoreStyle(signal.score_pertinence).bg} {scoreStyle(signal.score_pertinence).color}" title="Score {signal.score_pertinence ?? 0}/{config.scoring.maxPoints}">
-								<span class="material-symbols-outlined text-[14px]">{scoreStyle(signal.score_pertinence).icon}</span>
+								<Icon name={scoreStyle(signal.score_pertinence).icon} size={14} />
 								{signal.score_pertinence ?? 0}
 							</span>
 							<Badge label={statutLabel(signal.statut_traitement)} variant={statutVariant(signal.statut_traitement)} />
@@ -441,20 +442,20 @@
 					<div class="mt-3 flex items-center justify-between text-xs text-text-muted">
 						{#if signal.commune}
 							<span class="flex items-center gap-1 min-w-0 truncate">
-								<span class="material-symbols-outlined text-[14px] shrink-0">location_on</span>
+								<Icon name="location_on" size={14} class="shrink-0" />
 								{signal.commune}
 							</span>
 						{/if}
 						<span class="flex items-center gap-3 shrink-0">
 							{#if signal.source_officielle}
 								<span class="flex items-center gap-1 uppercase">
-									<span class="material-symbols-outlined text-[14px]">source</span>
+									<Icon name="source" size={14} />
 									{signal.source_officielle}
 								</span>
 							{/if}
 							{#if signal.date_publication}
 								<span class="flex items-center gap-1">
-									<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+									<Icon name="calendar_today" size={14} />
 									{new Date(signal.date_publication).toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })}
 								</span>
 							{/if}
@@ -466,7 +467,7 @@
 
 		{#if filteredSignaux.length === 0}
 			<div class="text-center py-8">
-				<span class="material-symbols-outlined text-[48px] text-text-muted/30">filter_alt_off</span>
+				<Icon name="filter_alt_off" size={48} class="text-text-muted/30" />
 				<p class="mt-2 text-sm text-text-muted">Aucun signal ne correspond aux filtres.</p>
 				<button
 					onclick={() => { filterType = ''; filterCanton = ''; filterStatut = ''; }}
@@ -488,7 +489,7 @@
 			<div class="flex items-start justify-between gap-3">
 				<div class="flex items-center gap-3">
 					<span class="flex items-center justify-center w-12 h-12 rounded-lg bg-primary/8">
-						<span class="material-symbols-outlined text-[28px] text-primary">{typeIcon(selectedSignal.type_signal)}</span>
+						<Icon name={typeIcon(selectedSignal.type_signal)} size={28} class="text-primary" />
 					</span>
 					<div>
 						<p class="font-semibold text-text">{formatTypeLabel(selectedSignal.type_signal)}</p>
@@ -496,7 +497,7 @@
 					</div>
 				</div>
 				<span class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold {sStyle.bg} {sStyle.color}">
-					<span class="material-symbols-outlined text-[18px]">{sStyle.icon}</span>
+					<Icon name={sStyle.icon} size={18} />
 					{selectedSignal.score_pertinence ?? 0}/{config.scoring.maxPoints} : {sStyle.label}
 				</span>
 			</div>
@@ -593,7 +594,7 @@
 					onclick={openEdit}
 					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 				>
-					<span class="material-symbols-outlined text-[16px]">edit</span>
+					<Icon name="edit" size={16} />
 					Modifier
 				</button>
 
@@ -602,7 +603,7 @@
 						onclick={openConvertModal}
 						class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg cursor-pointer"
 					>
-						<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+						<Icon name="arrow_forward" size={16} />
 						Créer opportunité
 					</button>
 
@@ -621,7 +622,7 @@
 							type="submit"
 							class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-danger cursor-pointer"
 						>
-							<span class="material-symbols-outlined text-[16px]">close</span>
+							<Icon name="close" size={16} />
 							Écarter
 						</button>
 					</form>
@@ -644,7 +645,7 @@
 							type="submit"
 							class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-danger hover:bg-danger/80 rounded-lg cursor-pointer"
 						>
-							<span class="material-symbols-outlined text-[16px]">delete_forever</span>
+							<Icon name="delete_forever" size={16} />
 							Confirmer la suppression
 						</button>
 					</form>
@@ -659,7 +660,7 @@
 						onclick={() => deleteConfirm = selectedSignal?.id ?? null}
 						class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-danger cursor-pointer"
 					>
-						<span class="material-symbols-outlined text-[16px]">delete</span>
+						<Icon name="delete" size={16} />
 						Supprimer
 					</button>
 				{/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import { config } from '$lib/config';
 	import { invalidateAll } from '$app/navigation';
@@ -127,7 +128,7 @@
 					class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer {activeTab === tab.key ? 'border' : 'text-text-muted hover:text-text hover:bg-surface-alt border border-transparent'}"
 					style={activeTab === tab.key ? `color: var(${tc.cssVar}); background: var(${tc.bgCssVar}); border-color: color-mix(in srgb, var(${tc.borderCssVar}), transparent 60%)` : ''}
 				>
-					<span class="material-symbols-outlined text-[16px]">{tab.icon}</span>
+					<Icon name={tab.icon} size={16} />
 					<span class="hidden sm:inline">{tab.label}</span>
 					<span class="sm:hidden">{tab.desc}</span>
 				</button>
@@ -138,12 +139,12 @@
 		{#if activeTab === 'zefix'}
 			<div class="space-y-4">
 				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
-					<span class="material-symbols-outlined text-[22px] mt-0.5 shrink-0" style="color: var({activeColors.cssVar})">business</span>
+					<span class="mt-0.5 shrink-0" style="color: var({activeColors.cssVar})"><Icon name="business" size={22} /></span>
 					<div>
 						<p class="text-sm font-semibold text-text">Registre du commerce</p>
 						<p class="text-xs text-text-body mt-0.5">Entreprises suisses avec but social, capital nominal et informations légales officielles.</p>
 						<p class="text-xs text-text-muted mt-1.5">
-							<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
+							<Icon name="lightbulb" size={13} class="align-text-bottom" />
 							Un import ciblé (nom + canton) donne de meilleurs résultats qu'un import large sans filtre. Mieux vaut 50 prospects qualifiés que 500 à trier.
 						</p>
 					</div>
@@ -187,7 +188,7 @@
 					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
 					style="background-color: var({activeColors.cssVar})"
 				>
-					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
+					<Icon name="cloud_download" size={16} />
 					{importing ? 'Import en cours…' : 'Lancer l\'import'}
 				</button>
 			</div>
@@ -197,12 +198,12 @@
 		{#if activeTab === 'simap'}
 			<div class="space-y-4">
 				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
-					<span class="material-symbols-outlined text-[22px] mt-0.5 shrink-0" style="color: var({activeColors.cssVar})">gavel</span>
+					<span class="mt-0.5 shrink-0" style="color: var({activeColors.cssVar})"><Icon name="gavel" size={22} /></span>
 					<div>
 						<p class="text-sm font-semibold text-text">SIMAP - Marchés publics construction</p>
 						<p class="text-xs text-text-body mt-0.5">Appels d'offres publics avec budgets et délais. Résultats déjà filtrés par secteur construction.</p>
 						<p class="text-xs text-text-muted mt-1.5">
-							<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
+							<Icon name="lightbulb" size={13} class="align-text-bottom" />
 							Combiner canton + mots-clés précis (ex : « façade », « vitrage ») pour ne remonter que les appels d'offres pertinents.
 						</p>
 					</div>
@@ -243,7 +244,7 @@
 					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
 					style="background-color: var({activeColors.cssVar})"
 				>
-					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
+					<Icon name="cloud_download" size={16} />
 					{importing ? 'Import en cours…' : 'Lancer l\'import'}
 				</button>
 			</div>
@@ -253,12 +254,12 @@
 		{#if activeTab === 'regbl'}
 			<div class="space-y-4">
 				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
-					<span class="material-symbols-outlined text-[22px] mt-0.5 shrink-0" style="color: var({activeColors.cssVar})">apartment</span>
+					<span class="mt-0.5 shrink-0" style="color: var({activeColors.cssVar})"><Icon name="apartment" size={22} /></span>
 					<div>
 						<p class="text-sm font-semibold text-text">RegBL - Registre fédéral des bâtiments</p>
 						<p class="text-xs text-text-body mt-0.5">Bâtiments en phase de construction (autorisés ou en chantier) en Suisse romande.</p>
 						<p class="text-xs text-text-muted mt-1.5">
-							<span class="material-symbols-outlined text-[13px] align-text-bottom">lightbulb</span>
+							<Icon name="lightbulb" size={13} class="align-text-bottom" />
 							Signal chaud : un bâtiment au statut « autorisé » ou « en construction » = chantier actif. Croisez ensuite avec Zefix pour identifier le maître d'ouvrage.
 						</p>
 					</div>
@@ -295,7 +296,7 @@
 					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
 					style="background-color: var({activeColors.cssVar})"
 				>
-					<span class="material-symbols-outlined text-[16px]">cloud_download</span>
+					<Icon name="cloud_download" size={16} />
 					{importing ? 'Import en cours…' : 'Lancer l\'import'}
 				</button>
 			</div>
@@ -303,7 +304,7 @@
 
 		{#if importResult}
 			<div class="flex items-center gap-2.5 p-4 rounded-lg text-sm {importResult.type === 'success' ? 'bg-success-light text-success' : 'bg-danger-light text-danger'}">
-				<span class="material-symbols-outlined text-[20px]">{importResult.type === 'success' ? 'check_circle' : 'error'}</span>
+				<Icon name={importResult.type === 'success' ? 'check_circle' : 'error'} />
 				<span class="font-medium">{importResult.message}</span>
 			</div>
 		{/if}

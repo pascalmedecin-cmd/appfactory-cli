@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { createSupabaseBrowserClient } from '$lib/supabase';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import type { User } from '@supabase/supabase-js';
@@ -25,7 +26,7 @@
 				class="burger-btn flex items-center justify-center w-8 h-8 rounded hover:bg-surface cursor-pointer"
 				aria-label="Menu"
 			>
-				<span class="material-symbols-outlined text-[22px] text-text">menu</span>
+				<Icon name="menu" size={22} class="text-text" />
 			</button>
 		{/if}
 		{#if pageTitle}

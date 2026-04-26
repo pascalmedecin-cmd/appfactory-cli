@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import SlideOut from '$lib/components/SlideOut.svelte';
@@ -128,7 +129,7 @@
 				<div class="space-y-1.5">
 					{#each scoreDetail.criteres as critere}
 						<div class="flex items-center gap-2 text-xs">
-							<span class="material-symbols-outlined text-[14px] text-success">check_circle</span>
+							<Icon name="check_circle" size={14} class="text-success" />
 							<span class="text-text-body">{critere}</span>
 						</div>
 					{/each}
@@ -213,7 +214,7 @@
 					rel="noopener"
 					class="inline-flex items-center gap-1.5 text-sm text-accent hover:underline font-medium"
 				>
-					<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+					<Icon name="open_in_new" size={16} />
 					Voir la source originale
 				</a>
 			{/if}
@@ -225,7 +226,7 @@
 					disabled={enriching}
 					class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-warning bg-warning-light border border-warning/20 rounded-lg hover:bg-warning-light/80 disabled:opacity-50 cursor-pointer transition-colors"
 				>
-					<span class="material-symbols-outlined text-[16px]">phone_forwarded</span>
+					<Icon name="phone_forwarded" size={16} />
 					{enriching ? 'Recherche en cours…' : 'Enrichir le téléphone (search.ch)'}
 				</button>
 			{/if}
@@ -240,7 +241,7 @@
 								<input type="hidden" name="id" value={lead.id} />
 								<input type="hidden" name="statut" value="interesse" />
 								<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-accent border border-accent rounded-lg hover:bg-accent/10 cursor-pointer transition-colors">
-									<span class="material-symbols-outlined text-[16px]">thumb_up</span>
+									<Icon name="thumb_up" size={16} />
 									Marquer intéressé
 								</button>
 							</form>
@@ -250,7 +251,7 @@
 								<input type="hidden" name="id" value={lead.id} />
 								<input type="hidden" name="statut" value="ecarte" />
 								<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors">
-									<span class="material-symbols-outlined text-[16px]">block</span>
+									<Icon name="block" size={16} />
 									Écarter
 								</button>
 							</form>
@@ -265,7 +266,7 @@
 						}}>
 							<input type="hidden" name="id" value={lead.id} />
 							<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer shadow-sm transition-colors">
-								<span class="material-symbols-outlined text-[16px]">domain_add</span>
+								<Icon name="domain_add" size={16} />
 								Convertir en entreprise
 							</button>
 						</form>
@@ -273,7 +274,7 @@
 				</div>
 			{:else}
 				<div class="flex items-center gap-2 pt-4 border-t border-border text-sm text-success font-medium">
-					<span class="material-symbols-outlined text-[18px]">check_circle</span>
+					<Icon name="check_circle" size={18} />
 					Ce prospect a été converti en entreprise
 				</div>
 			{/if}

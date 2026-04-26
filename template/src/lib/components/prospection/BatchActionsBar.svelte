@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import { toasts } from '$lib/stores/toast';
 
@@ -28,7 +29,7 @@
 			<input type="hidden" name="ids" value={JSON.stringify([...selectedIds])} />
 			<input type="hidden" name="statut" value="interesse" />
 			<button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-accent border border-accent rounded-lg hover:bg-accent/10 cursor-pointer transition-colors">
-				<span class="material-symbols-outlined text-[16px]">thumb_up</span>
+				<Icon name="thumb_up" size={16} />
 				Marquer intéressé
 			</button>
 		</form>
@@ -44,7 +45,7 @@
 			<input type="hidden" name="ids" value={JSON.stringify([...selectedIds])} />
 			<input type="hidden" name="statut" value="ecarte" />
 			<button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-text-muted border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors">
-				<span class="material-symbols-outlined text-[16px]">block</span>
+				<Icon name="block" size={16} />
 				Écarter
 			</button>
 		</form>
@@ -52,7 +53,7 @@
 			onclick={() => { enrichBatchIds = [...selectedIds]; enrichBatchOpen = true; }}
 			class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich hover:bg-prosp-enrich/10"
 		>
-			<span class="material-symbols-outlined text-[16px]">auto_fix_high</span>
+			<Icon name="auto_fix_high" size={16} />
 			Enrichir
 		</button>
 		<button

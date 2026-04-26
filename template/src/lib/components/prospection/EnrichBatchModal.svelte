@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { fade, scale } from 'svelte/transition';
 	import { trapFocus } from '$lib/actions/trapFocus';
 	import { invalidateAll } from '$app/navigation';
@@ -216,12 +217,12 @@
 			<!-- Header -->
 			<div class="flex items-center justify-between px-6 py-4" style="background: linear-gradient(to right, var(--color-prosp-enrich-bg), var(--color-prosp-import-bg)); border-bottom: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 88%)">
 				<div class="flex items-center gap-2.5">
-					<span class="material-symbols-outlined text-[22px] text-prosp-enrich">auto_fix_high</span>
+					<Icon name="auto_fix_high" size={22} class="text-prosp-enrich" />
 					<h2 class="text-lg font-semibold text-text">Enrichissement batch</h2>
 				</div>
 				{#if phase !== 'running'}
 					<button onclick={close} class="text-text-muted hover:text-text cursor-pointer">
-						<span class="material-symbols-outlined text-[20px]">close</span>
+						<Icon name="close" />
 					</button>
 				{/if}
 			</div>
@@ -230,7 +231,7 @@
 				<!-- Phase config -->
 				{#if phase === 'config'}
 					<div class="flex items-start gap-3 p-3.5 rounded-lg bg-prosp-enrich-bg/10 border border-prosp-enrich-border/10">
-						<span class="material-symbols-outlined text-[20px] mt-0.5 text-prosp-enrich">info</span>
+						<Icon name="info" class="mt-0.5 text-prosp-enrich" />
 						<p class="text-sm text-text-body">
 							{leadIds.length} prospect{leadIds.length > 1 ? 's' : ''} sélectionné{leadIds.length > 1 ? 's' : ''}. Choisissez les sources d'enrichissement.
 						</p>
@@ -240,7 +241,7 @@
 						<p class="text-xs font-semibold text-text-muted uppercase tracking-wide">Sources</p>
 						<label class="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-accent/30 cursor-pointer transition-colors">
 							<input type="checkbox" bind:checked={useSearchCh} class="accent-accent" />
-							<span class="material-symbols-outlined text-[20px] text-text-muted">phone_forwarded</span>
+							<Icon name="phone_forwarded" class="text-text-muted" />
 							<div>
 								<span class="text-sm font-medium text-text">search.ch</span>
 								<p class="text-xs text-text-muted">Téléphone, adresse, NPA, localité</p>
@@ -248,7 +249,7 @@
 						</label>
 						<label class="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-accent/30 cursor-pointer transition-colors">
 							<input type="checkbox" bind:checked={useZefix} class="accent-accent" />
-							<span class="material-symbols-outlined text-[20px] text-text-muted">business</span>
+							<Icon name="business" class="text-text-muted" />
 							<div>
 								<span class="text-sm font-medium text-text">Zefix (registre du commerce)</span>
 								<p class="text-xs text-text-muted">Adresse, but social, lien source</p>
@@ -261,7 +262,7 @@
 						{@const critical = pct >= 95}
 						{@const warn = pct >= 50}
 						<div class="flex items-start gap-2.5 p-3 rounded-lg {critical ? 'bg-danger-light border border-danger/20' : warn ? 'bg-warning-light border border-warning/20' : 'bg-surface-alt border border-border'}">
-							<span class="material-symbols-outlined text-[18px] mt-0.5 {critical ? 'text-danger' : warn ? 'text-warning' : 'text-text-muted'}">{critical || warn ? 'warning' : 'info'}</span>
+							<Icon name={critical || warn ? 'warning' : 'info'} size={18} class="mt-0.5 {critical ? 'text-danger' : warn ? 'text-warning' : 'text-text-muted'}" />
 							<div>
 								<p class="text-sm font-medium {critical ? 'text-danger' : warn ? 'text-warning' : 'text-text'}">
 									{searchChEstimate.requests} requête{searchChEstimate.requests > 1 ? 's' : ''} search.ch ({pct.toFixed(1)}% du quota mensuel de 1000)
@@ -287,7 +288,7 @@
 							disabled={!useSearchCh && !useZefix}
 							class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors !bg-prosp-enrich"
 						>
-							<span class="material-symbols-outlined text-[16px]">play_arrow</span>
+							<Icon name="play_arrow" size={16} />
 							Lancer l'enrichissement
 						</button>
 					</div>
@@ -333,7 +334,7 @@
 						<div class="max-h-48 overflow-y-auto space-y-1 p-2 rounded-lg bg-surface-alt/50 border border-border/50">
 							{#each logs as log}
 								<div class="flex items-center gap-2 text-xs py-0.5">
-									<span class="material-symbols-outlined text-[14px] {statusColor(log.status)}">{statusIcon(log.status)}</span>
+									<Icon name={statusIcon(log.status)} size={14} class="{statusColor(log.status)}" />
 									<span class="font-medium text-text truncate max-w-[180px]">{log.raison_sociale}</span>
 									<span class="text-text-muted">{log.message}</span>
 								</div>
@@ -346,7 +347,7 @@
 								onclick={() => { abortController?.abort(); }}
 								class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-danger border border-danger/30 rounded-lg hover:bg-danger-light cursor-pointer transition-colors"
 							>
-								<span class="material-symbols-outlined text-[16px]">stop</span>
+								<Icon name="stop" size={16} />
 								Annuler
 							</button>
 						</div>
@@ -359,32 +360,32 @@
 						<!-- Resume -->
 						{#if quotaWarning}
 							<div class="flex items-start gap-2.5 p-3 rounded-lg bg-danger-light border border-danger/20">
-								<span class="material-symbols-outlined text-[18px] mt-0.5 text-danger">error</span>
+								<Icon name="error" size={18} class="mt-0.5 text-danger" />
 								<p class="text-sm text-danger font-medium">{quotaWarning}</p>
 							</div>
 						{/if}
 
 						<div class="p-4 rounded-xl" style="background: linear-gradient(135deg, var(--color-prosp-enrich-bg), var(--color-prosp-import-bg))">
 							<div class="flex items-center gap-2 mb-3">
-								<span class="material-symbols-outlined text-[24px] {quotaWarning ? 'text-warning' : 'text-success'}">{quotaWarning ? 'warning' : 'task_alt'}</span>
+								<Icon name={quotaWarning ? 'warning' : 'task_alt'} size={24} class="{quotaWarning ? 'text-warning' : 'text-success'}" />
 								<h3 class="text-base font-semibold text-text">{quotaWarning ? 'Enrichissement interrompu' : 'Enrichissement terminé'}</h3>
 							</div>
 							<div class="grid grid-cols-2 gap-3">
 								<div class="flex items-center gap-2">
-									<span class="material-symbols-outlined text-[16px] text-success">check_circle</span>
+									<Icon name="check_circle" size={16} class="text-success" />
 									<span class="text-sm text-text">{enrichedCount} enrichi{enrichedCount > 1 ? 's' : ''}</span>
 								</div>
 								<div class="flex items-center gap-2">
-									<span class="material-symbols-outlined text-[16px] text-text-muted">verified</span>
+									<Icon name="verified" size={16} class="text-text-muted" />
 									<span class="text-sm text-text">{alreadyCompleteCount} déjà complet{alreadyCompleteCount > 1 ? 's' : ''}</span>
 								</div>
 								<div class="flex items-center gap-2">
-									<span class="material-symbols-outlined text-[16px] text-warning">search_off</span>
+									<Icon name="search_off" size={16} class="text-warning" />
 									<span class="text-sm text-text">{notFoundCount} non trouvé{notFoundCount > 1 ? 's' : ''}</span>
 								</div>
 								{#if errorCount > 0}
 									<div class="flex items-center gap-2">
-										<span class="material-symbols-outlined text-[16px] text-danger">error</span>
+										<Icon name="error" size={16} class="text-danger" />
 										<span class="text-sm text-text">{errorCount} erreur{errorCount > 1 ? 's' : ''}</span>
 									</div>
 								{/if}
@@ -395,13 +396,13 @@
 						{#if logs.length > 0}
 							<details class="group">
 								<summary class="flex items-center gap-1.5 text-sm text-text-muted cursor-pointer hover:text-text">
-									<span class="material-symbols-outlined text-[16px] group-open:rotate-90 transition-transform">chevron_right</span>
+									<Icon name="chevron_right" size={16} class="group-open:rotate-90 transition-transform" />
 									Détail par prospect
 								</summary>
 								<div class="mt-2 max-h-48 overflow-y-auto space-y-1 p-2 rounded-lg bg-surface-alt/50 border border-border/50">
 									{#each logs as log}
 										<div class="flex items-center gap-2 text-xs py-0.5">
-											<span class="material-symbols-outlined text-[14px] {statusColor(log.status)}">{statusIcon(log.status)}</span>
+											<Icon name={statusIcon(log.status)} size={14} class="{statusColor(log.status)}" />
 											<span class="font-medium text-text truncate max-w-[180px]">{log.raison_sociale}</span>
 											<span class="text-text-muted">{log.message}</span>
 										</div>

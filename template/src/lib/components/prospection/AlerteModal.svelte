@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
@@ -73,7 +74,7 @@
 	>
 		<div class="space-y-5">
 			<div class="flex items-start gap-3 p-3.5 rounded-xl" style="background: var(--color-prosp-qualify-bg); border: 1px solid color-mix(in srgb, var(--color-prosp-qualify-border), transparent 70%)">
-				<span class="material-symbols-outlined text-[20px] mt-0.5" style="color: var(--color-prosp-qualify)">notifications_active</span>
+				<span class="mt-0.5" style="color: var(--color-prosp-qualify)"><Icon name="notifications_active" size={20} /></span>
 				<p class="text-sm text-text-body">Recevez une notification lorsque de nouveaux prospects correspondent à vos critères.</p>
 			</div>
 
@@ -91,7 +92,7 @@
 
 			<div class="p-4 rounded-xl space-y-4" style="background: var(--color-prosp-import-bg); border: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 80%)">
 				<div class="flex items-center gap-2">
-					<span class="material-symbols-outlined text-[16px]" style="color: var(--color-prosp-import)">tune</span>
+					<span style="color: var(--color-prosp-import)"><Icon name="tune" size={16} /></span>
 					<p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--color-prosp-import)">Critères de filtrage</p>
 				</div>
 				<MultiSelectDropdown
@@ -120,7 +121,7 @@
 			<div class="p-4 rounded-xl" style="background: var(--color-prosp-enrich-bg); border: 1px solid color-mix(in srgb, var(--color-prosp-enrich-border), transparent 80%)">
 				<label class="block text-sm font-medium text-text mb-1">
 					<span class="inline-flex items-center gap-1.5">
-						<span class="material-symbols-outlined text-[16px]" style="color: var(--color-prosp-enrich)">sell</span>
+						<span style="color: var(--color-prosp-enrich)"><Icon name="sell" size={16} /></span>
 						Mots-clés
 					</span>
 				</label>
@@ -149,7 +150,7 @@
 			<div>
 				<label class="block text-sm font-medium text-text mb-1.5">
 					<span class="inline-flex items-center gap-1.5">
-						<span class="material-symbols-outlined text-[16px] text-text-muted">schedule</span>
+						<Icon name="schedule" size={16} class="text-text-muted" />
 						Fréquence
 					</span>
 				</label>

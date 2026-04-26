@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	let {
 		value = $bindable(''),
 		options,
@@ -54,9 +55,7 @@
 			<span class="w-2 h-2 rounded-full {selectedOption.dotColor}"></span>
 		{/if}
 		<span>{selectedOption?.label ?? 'Toute température'}</span>
-		<span class="material-symbols-outlined text-[16px] text-text-muted transition-transform {open ? 'rotate-180' : ''}"
-			>expand_more</span
-		>
+		<Icon name="expand_more" size={16} class="text-text-muted transition-transform {open ? 'rotate-180' : ''}" />
 	</button>
 
 	{#if open}

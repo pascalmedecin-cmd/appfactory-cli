@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { goto } from '$app/navigation';
 	import type { PageData } from './$types';
@@ -104,7 +105,7 @@
 <div class="max-w-5xl mx-auto px-4 md:px-12 py-8 md:py-12">
 	<!-- Breadcrumb -->
 	<a href="/veille" class="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4">
-		<span class="material-symbols-outlined text-[18px]">arrow_back</span>
+		<Icon name="arrow_back" size={18} />
 		Retour au fil
 	</a>
 
@@ -191,7 +192,7 @@
 				rel="noopener noreferrer"
 				class="inline-flex items-center gap-1 px-3 py-1.5 text-sm font-medium text-primary border border-primary/30 rounded-lg hover:bg-primary/10"
 			>
-				<span class="material-symbols-outlined text-[16px]">open_in_new</span>
+				<Icon name="open_in_new" size={16} />
 				Ouvrir l'article
 			</a>
 		</div>
@@ -213,9 +214,7 @@
 						title="Auto-exécuter {chip.kind === 'zefix' ? 'Zefix' : 'SIMAP'} · {chip.canton} · {chip.query}"
 						class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-accent/8 text-accent border border-accent/20 hover:bg-accent/15 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
 					>
-						<span class="material-symbols-outlined text-[16px]">
-							{isLoading ? 'progress_activity' : chip.kind === 'zefix' ? 'business' : 'gavel'}
-						</span>
+						<Icon name={isLoading ? 'progress_activity' : chip.kind === 'zefix' ? 'business' : 'gavel'} size={16} />
 						{chip.label}
 					</button>
 				{/each}

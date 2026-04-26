@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import type { PageData } from './$types';
 	import type { Actionability, Segment } from '$lib/server/intelligence/schema';
@@ -58,7 +59,7 @@
 
 	{#if data.editions.length === 0}
 		<div class="bg-white rounded-xl border border-border p-10 text-center">
-			<span class="material-symbols-outlined text-5xl text-text-muted">radar</span>
+			<Icon name="radar" class="text-5xl text-text-muted" />
 			<h2 class="mt-4 text-lg font-semibold text-text">Aucune édition publiée</h2>
 			<p class="mt-2 text-sm text-text-muted">
 				La veille sectorielle est générée automatiquement chaque vendredi matin.

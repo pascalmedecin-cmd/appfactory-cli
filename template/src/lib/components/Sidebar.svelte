@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { config } from '$lib/config';
 	import { createSupabaseBrowserClient } from '$lib/supabase';
 
@@ -46,8 +47,8 @@
 					{isActive(item.href) ? 'bg-white/15 text-white font-medium shadow-xs' : 'text-white/65 hover:bg-white/8 hover:text-white'}"
 				title={collapsed ? item.label + (badge > 0 ? ` (${badge} non lus)` : '') : undefined}
 			>
-				<span class="material-symbols-outlined text-[20px] shrink-0 relative">
-					{item.icon}
+				<span class="shrink-0 relative">
+					<Icon name={item.icon} size={20} />
 					{#if collapsed && badge > 0}
 						<span class="absolute -top-1 -right-1 min-w-[16px] h-4 px-1 rounded-full bg-amber-500 text-primary-dark text-[10px] font-bold flex items-center justify-center">{badge}</span>
 					{/if}
@@ -70,7 +71,7 @@
 					{isActive(item.href) ? 'bg-white/15 text-white font-medium' : 'text-white/65 hover:bg-white/8 hover:text-white'}"
 				title={collapsed ? item.label : undefined}
 			>
-				<span class="material-symbols-outlined text-[20px] shrink-0">{item.icon}</span>
+				<Icon name={item.icon} class="shrink-0" />
 				{#if !collapsed}
 					<span>{item.label}</span>
 				{/if}
@@ -81,9 +82,7 @@
 			onclick={() => collapsed = !collapsed}
 			class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg text-white/65 hover:bg-white/8 hover:text-white transition-colors w-full cursor-pointer"
 		>
-			<span class="material-symbols-outlined text-[20px] shrink-0">
-				{collapsed ? 'chevron_right' : 'chevron_left'}
-			</span>
+			<Icon name={collapsed ? 'chevron_right' : 'chevron_left'} class="shrink-0" />
 			{#if !collapsed}
 				<span>Réduire</span>
 			{/if}
@@ -94,7 +93,7 @@
 			class="flex items-center gap-3 px-3 py-2 text-sm rounded-lg text-white/50 hover:bg-white/8 hover:text-danger transition-colors w-full cursor-pointer"
 			title={collapsed ? 'Déconnexion' : undefined}
 		>
-			<span class="material-symbols-outlined text-[20px] shrink-0">logout</span>
+			<Icon name="logout" class="shrink-0" />
 			{#if !collapsed}
 				<span>Déconnexion</span>
 			{/if}

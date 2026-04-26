@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import DataTable from '$lib/components/DataTable.svelte';
@@ -123,28 +124,28 @@
 	<!-- Workflow 4 étapes -->
 	<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
 		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-import-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 85%)">
-			<span class="material-symbols-outlined text-[24px] mt-0.5 text-prosp-import">cloud_download</span>
+			<Icon name="cloud_download" size={24} class="mt-0.5 text-prosp-import" />
 			<div>
 				<span class="text-[15px] font-semibold text-text">Importer</span>
 				<p class="text-xs font-medium mt-0.5 text-prosp-import">{data.totalLeads} prospect{data.totalLeads > 1 ? 's' : ''}</p>
 			</div>
 		</div>
 		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-enrich-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-enrich-border), transparent 85%)">
-			<span class="material-symbols-outlined text-[24px] mt-0.5 text-prosp-enrich">auto_fix_high</span>
+			<Icon name="auto_fix_high" size={24} class="mt-0.5 text-prosp-enrich" />
 			<div>
 				<span class="text-[15px] font-semibold text-text">Enrichir</span>
 				<p class="text-xs font-medium mt-0.5 text-prosp-enrich">{data.enrichedCount} enrichi{data.enrichedCount > 1 ? 's' : ''}</p>
 			</div>
 		</div>
 		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-qualify-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-qualify-border), transparent 85%)">
-			<span class="material-symbols-outlined text-[24px] mt-0.5 text-prosp-qualify">filter_list</span>
+			<Icon name="filter_list" size={24} class="mt-0.5 text-prosp-qualify" />
 			<div>
 				<span class="text-[15px] font-semibold text-text">Qualifier</span>
 				<p class="text-xs font-medium mt-0.5 text-prosp-qualify">{data.qualifiedCount} qualifié{data.qualifiedCount > 1 ? 's' : ''}</p>
 			</div>
 		</div>
 		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-convert-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-convert-border), transparent 85%)">
-			<span class="material-symbols-outlined text-[24px] mt-0.5 text-prosp-convert">domain_add</span>
+			<Icon name="domain_add" size={24} class="mt-0.5 text-prosp-convert" />
 			<div>
 				<span class="text-[15px] font-semibold text-text">Convertir</span>
 				<p class="text-xs font-medium mt-0.5 text-prosp-convert">{data.convertedCount} converti{data.convertedCount > 1 ? 's' : ''}</p>
@@ -161,7 +162,7 @@
 					onclick={() => recherchesOpen = !recherchesOpen}
 					class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-text border border-border rounded-lg box-border hover:bg-surface-alt cursor-pointer transition-colors"
 				>
-					<span class="material-symbols-outlined text-[18px]">bookmarks</span>
+					<Icon name="bookmarks" size={18} />
 					<span class="hidden sm:inline">Mes recherches</span>
 					<span class="ml-1 px-1.5 py-0.5 text-xs font-semibold rounded-full bg-accent/10 text-accent">{data.recherches.length}</span>
 				</button>
@@ -174,7 +175,7 @@
 				disabled={data.leads.filter(l => l.statut !== 'transfere').length === 0}
 				title="Enrichit uniquement les {data.leads.filter(l => l.statut !== 'transfere').length} leads de cette page"
 			>
-				<span class="material-symbols-outlined text-[18px]">auto_fix_high</span>
+				<Icon name="auto_fix_high" size={18} />
 				<span class="hidden sm:inline">Enrichir cette page</span>
 				<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich/10 text-prosp-enrich">{data.leads.filter(l => l.statut !== 'transfere').length}</span>
 			</button>
@@ -182,7 +183,7 @@
 				onclick={() => importModalOpen = true}
 				class="flex items-center gap-2 h-10 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg box-border cursor-pointer shadow-md transition-colors"
 			>
-				<span class="material-symbols-outlined text-[18px]">cloud_download</span>
+				<Icon name="cloud_download" size={18} />
 				Importer des prospects
 			</button>
 		</div>
@@ -202,7 +203,7 @@
 				{#if activeFilterCount > 0}
 					<span class="text-xs text-text-muted">{data.totalLeads} résultat{data.totalLeads > 1 ? 's' : ''}</span>
 					<button onclick={resetFilters} class="flex items-center gap-1 px-2 py-1 text-xs text-text-muted hover:text-danger cursor-pointer transition-colors">
-						<span class="material-symbols-outlined text-[14px]">close</span>
+						<Icon name="close" size={14} />
 						Réinitialiser
 					</button>
 				{/if}
@@ -210,7 +211,7 @@
 					onclick={() => alerteModalOpen = true}
 					class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-accent border border-accent/30 rounded-lg box-border hover:bg-accent/5 cursor-pointer transition-colors"
 				>
-					<span class="material-symbols-outlined text-[16px]">notifications_active</span>
+					<Icon name="notifications_active" size={16} />
 					Créer une alerte
 				</button>
 			</div>
@@ -224,7 +225,7 @@
 	{#if importResult}
 		<div class="flex items-center justify-between p-3 rounded-xl border shadow-xs {importResult.type === 'success' ? 'bg-success-light border-success/30 text-success' : 'bg-danger-light border-danger/30 text-danger'}">
 			<div class="flex items-center gap-2">
-				<span class="material-symbols-outlined text-[18px]">{importResult.type === 'success' ? 'check_circle' : 'error'}</span>
+				<Icon name={importResult.type === 'success' ? 'check_circle' : 'error'} size={18} />
 				<span class="text-sm font-medium">{importResult.message}</span>
 			</div>
 			<button onclick={() => importResult = null} class="text-sm opacity-60 hover:opacity-100 cursor-pointer">Fermer</button>
@@ -238,7 +239,7 @@
 	{#if data.totalLeads === 0 && activeFilterCount === 0}
 		<div class="flex flex-col items-center justify-center py-16 px-6">
 			<div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-5" style="background: linear-gradient(135deg, var(--color-prosp-import-bg), var(--color-prosp-enrich-bg))">
-				<span class="material-symbols-outlined text-[32px] text-prosp-import">search</span>
+				<Icon name="search" size={32} class="text-prosp-import" />
 			</div>
 			<h3 class="text-lg font-semibold text-text mb-2">Trouvez vos premiers prospects</h3>
 			<p class="text-sm text-text-muted text-center max-w-lg mb-6">
@@ -248,7 +249,7 @@
 				onclick={() => importModalOpen = true}
 				class="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg cursor-pointer shadow-md transition-colors"
 			>
-				<span class="material-symbols-outlined text-[18px]">cloud_download</span>
+				<Icon name="cloud_download" size={18} />
 				Lancer un import
 			</button>
 		</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -153,15 +154,15 @@
 
 		<div class="flex flex-wrap gap-2">
 			<a href="/api/export/contacts" class="inline-flex items-center gap-2 px-3 py-2 text-sm bg-surface hover:bg-border/40 border border-border rounded-md transition-colors">
-				<span class="material-symbols-outlined text-[18px]">download</span>
+				<Icon name="download" size={18} />
 				Contacts
 			</a>
 			<a href="/api/export/entreprises" class="inline-flex items-center gap-2 px-3 py-2 text-sm bg-surface hover:bg-border/40 border border-border rounded-md transition-colors">
-				<span class="material-symbols-outlined text-[18px]">download</span>
+				<Icon name="download" size={18} />
 				Entreprises
 			</a>
 			<a href="/api/export/leads" class="inline-flex items-center gap-2 px-3 py-2 text-sm bg-surface hover:bg-border/40 border border-border rounded-md transition-colors">
-				<span class="material-symbols-outlined text-[18px]">download</span>
+				<Icon name="download" size={18} />
 				Leads
 			</a>
 		</div>

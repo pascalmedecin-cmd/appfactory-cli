@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import type { Snippet } from 'svelte';
 	import { fly, fade } from 'svelte/transition';
 	import { trapFocus } from '$lib/actions/trapFocus';
@@ -48,7 +49,7 @@
 				class="text-text-muted hover:text-text cursor-pointer shrink-0 inline-flex items-center justify-center w-11 h-11 -mr-2 rounded-lg"
 				aria-label="Fermer"
 			>
-				<span class="material-symbols-outlined text-[20px]">close</span>
+				<Icon name="close" />
 			</button>
 		</div>
 

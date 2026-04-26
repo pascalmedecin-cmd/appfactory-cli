@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { toasts } from '$lib/stores/toast';
 	import type { PageData } from './$types';
@@ -118,7 +119,7 @@
 <div class="max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12">
 	<div class="mb-6">
 		<a href="/veille" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-primary">
-			<span class="material-symbols-outlined text-base">arrow_back</span>
+			<Icon name="arrow_back" class="text-base" />
 			Retour au flux
 		</a>
 	</div>
@@ -192,7 +193,7 @@
 								<span>{formatDate(item.source.published_at)}</span>
 								<a href={item.source.url} target="_blank" rel="noopener noreferrer" class="ml-auto text-primary font-semibold hover:underline inline-flex items-center gap-1">
 									Lire l'article
-									<span class="material-symbols-outlined text-[14px]">open_in_new</span>
+									<Icon name="open_in_new" size={14} />
 								</a>
 							</div>
 						</div>
@@ -236,7 +237,7 @@
 					onclick={copyAllTerms}
 					class="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-slate-200 bg-white hover:border-primary hover:bg-accent-light text-sm font-semibold text-slate-700 transition-colors"
 				>
-					<span class="material-symbols-outlined text-base">content_copy</span>
+					<Icon name="content_copy" class="text-base" />
 					Copier les {searchTerms.length}
 				</button>
 			</div>
@@ -259,14 +260,14 @@
 								title="Copier"
 								aria-label="Copier le terme"
 							>
-								<span class="material-symbols-outlined text-base">content_copy</span>
+								<Icon name="content_copy" class="text-base" />
 							</button>
 							<a
 								href={prospectionLink(term)}
 								class="inline-flex items-center gap-1.5 px-3 py-2 rounded-full bg-primary-dark text-white text-sm font-semibold hover:bg-primary transition-colors"
 								title="Lancer cette recherche dans Prospection"
 							>
-								<span class="material-symbols-outlined text-base">search</span>
+								<Icon name="search" class="text-base" />
 								Rechercher
 							</a>
 						</div>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import DataTable from '$lib/components/DataTable.svelte';
 	import SlideOut from '$lib/components/SlideOut.svelte';
@@ -154,7 +155,7 @@
 			onclick={openCreate}
 			class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 		>
-			<span class="material-symbols-outlined text-[18px]">add</span>
+			<Icon name="add" size={18} />
 			Ajouter
 		</button>
 	</div>
@@ -282,7 +283,7 @@
 					onclick={openEdit}
 					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 				>
-					<span class="material-symbols-outlined text-[16px]">edit</span>
+					<Icon name="edit" size={16} />
 					Modifier
 				</button>
 				<form bind:this={archiveFormEl} method="POST" action="?/delete" use:enhance={() => {
@@ -303,7 +304,7 @@
 						disabled={archiving}
 						class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
 					>
-						<span class="material-symbols-outlined text-[16px]">archive</span>
+						<Icon name="archive" size={16} />
 						{archiving ? 'Archivage…' : 'Archiver'}
 					</button>
 				</form>
@@ -373,7 +374,7 @@
 					/>
 					{#if entreprise_nom}
 						<button type="button" onclick={clearEntreprise} class="px-2 text-text-muted hover:text-text cursor-pointer">
-							<span class="material-symbols-outlined text-[18px]">close</span>
+							<Icon name="close" size={18} />
 						</button>
 					{/if}
 				</div>
@@ -395,7 +396,7 @@
 						{/each}
 						{#if entreprise_nom.length >= 2 && !entreprise_id}
 							<div class="px-3 py-2 text-xs text-text-muted border-t border-border">
-								<span class="material-symbols-outlined text-[12px] align-middle">add</span>
+								<Icon name="add" size={12} class="align-middle" />
 								« {entreprise_nom} » sera créée automatiquement
 							</div>
 						{/if}
@@ -403,7 +404,7 @@
 				{/if}
 				{#if entreprise_nom && entreprise_nom.length >= 2 && !filteredSuggestions.length && showSuggestions}
 					<p class="text-xs text-text-muted mt-1">
-						<span class="material-symbols-outlined text-[12px] align-middle">add</span>
+						<Icon name="add" size={12} class="align-middle" />
 						« {entreprise_nom} » sera créée automatiquement
 					</p>
 				{/if}

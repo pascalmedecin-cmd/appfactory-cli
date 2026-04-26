@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import type { Snippet } from 'svelte';
 	import { fade, scale } from 'svelte/transition';
 	import { trapFocus } from '$lib/actions/trapFocus';
@@ -62,12 +63,12 @@
 			<div class="flex items-center justify-between px-6 py-4 {headerVariant === 'accent' ? 'bg-primary text-white' : 'border-b border-border'}">
 				<div class="flex items-center gap-2.5">
 					{#if icon}
-						<span class="material-symbols-outlined text-[22px] {headerVariant === 'accent' ? 'text-white/80' : 'text-accent'}">{icon}</span>
+						<Icon name={icon} size={22} class="{headerVariant === 'accent' ? 'text-white/80' : 'text-accent'}" />
 					{/if}
 					<h2 class="text-lg font-semibold {headerVariant === 'accent' ? 'text-white' : 'text-text'}">{title}</h2>
 				</div>
 				<button onclick={() => open = false} class="{headerVariant === 'accent' ? 'text-white/70 hover:text-white' : 'text-text-muted hover:text-text'} cursor-pointer">
-					<span class="material-symbols-outlined text-[20px]">close</span>
+					<Icon name="close" />
 				</button>
 			</div>
 
@@ -82,9 +83,7 @@
 						class="flex items-center gap-1 text-sm text-accent hover:text-accent-dark cursor-pointer"
 						onclick={() => showExtra = !showExtra}
 					>
-						<span class="material-symbols-outlined text-[16px]">
-							{showExtra ? 'expand_less' : 'expand_more'}
-						</span>
+						<Icon name={showExtra ? 'expand_less' : 'expand_more'} size={16} />
 						{showExtra ? 'Moins de détails' : 'Plus de détails'}
 					</button>
 					{#if showExtra}

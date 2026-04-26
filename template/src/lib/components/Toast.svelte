@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { fly, fade } from 'svelte/transition';
 	import { toasts, type ToastVariant } from '$lib/stores/toast';
 
@@ -24,13 +25,13 @@
 			in:fly={{ x: 80, duration: 250 }}
 			out:fade={{ duration: 150 }}
 		>
-			<span class="material-symbols-outlined text-[20px]">{icons[toast.variant]}</span>
+			<Icon name={icons[toast.variant]} />
 			<span class="flex-1">{toast.message}</span>
 			<button
 				onclick={() => toasts.remove(toast.id)}
 				class="text-current opacity-50 hover:opacity-100 cursor-pointer"
 			>
-				<span class="material-symbols-outlined text-[16px]">close</span>
+				<Icon name="close" size={16} />
 			</button>
 		</div>
 	{/each}

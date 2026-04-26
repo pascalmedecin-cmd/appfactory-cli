@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
@@ -122,7 +123,7 @@
 			onclick={openCreate}
 			class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 		>
-			<span class="material-symbols-outlined text-[18px]">add</span>
+			<Icon name="add" size={18} />
 			Ajouter
 		</button>
 	</div>
@@ -138,7 +139,7 @@
 	{:else}
 		<!-- Recherche -->
 		<div class="relative">
-			<span class="material-symbols-outlined text-[18px] text-text-muted absolute left-3 top-1/2 -translate-y-1/2">search</span>
+			<Icon name="search" size={18} class="text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
 			<input
 				type="text"
 				bind:value={searchQuery}
@@ -176,18 +177,18 @@
 					<div class="mt-3 space-y-1.5 text-xs text-text-muted">
 						{#if entreprise.canton}
 							<span class="flex items-center gap-1">
-								<span class="material-symbols-outlined text-[14px]">location_on</span>
+								<Icon name="location_on" size={14} />
 								{entreprise.canton}{#if entreprise.adresse_siege} : {entreprise.adresse_siege}{/if}
 							</span>
 						{/if}
 						{#if entreprise.site_web}
 							<span class="flex items-center gap-1 truncate">
-								<span class="material-symbols-outlined text-[14px]">language</span>
+								<Icon name="language" size={14} />
 								{entreprise.site_web.replace(/^https?:\/\//, '').replace(/\/$/, '')}
 							</span>
 						{/if}
 						<span class="flex items-center gap-1">
-							<span class="material-symbols-outlined text-[14px]">people</span>
+							<Icon name="people" size={14} />
 							{contactCount} contact{contactCount > 1 ? 's' : ''}
 						</span>
 					</div>
@@ -197,7 +198,7 @@
 
 		{#if filteredEntreprises.length === 0}
 			<div class="text-center py-8">
-				<span class="material-symbols-outlined text-[48px] text-text-muted/30">filter_alt_off</span>
+				<Icon name="filter_alt_off" size={48} class="text-text-muted/30" />
 				<p class="mt-2 text-sm text-text-muted">Aucune entreprise ne correspond à la recherche.</p>
 			</div>
 		{/if}
@@ -250,7 +251,7 @@
 					<p class="font-medium text-text">{selectedEntreprise.adresse_siege}</p>
 					{#if maps}
 						<a href={maps} target="_blank" class="inline-flex items-center gap-1 text-xs text-accent hover:underline mt-1">
-							<span class="material-symbols-outlined text-[14px]">map</span>
+							<Icon name="map" size={14} />
 							Voir sur Google Maps
 						</a>
 					{/if}
@@ -300,7 +301,7 @@
 					onclick={openEdit}
 					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
 				>
-					<span class="material-symbols-outlined text-[16px]">edit</span>
+					<Icon name="edit" size={16} />
 					Modifier
 				</button>
 
@@ -327,7 +328,7 @@
 						disabled={enriching}
 						class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg cursor-pointer disabled:opacity-50"
 					>
-						<span class="material-symbols-outlined text-[16px]">auto_awesome</span>
+						<Icon name="auto_awesome" size={16} />
 						{enriching ? 'Enrichissement…' : 'Enrichir via Zefix'}
 					</button>
 				</form>
@@ -350,7 +351,7 @@
 						disabled={deleting}
 						class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
 					>
-						<span class="material-symbols-outlined text-[16px]">delete</span>
+						<Icon name="delete" size={16} />
 						{deleting ? 'Suppression…' : 'Supprimer'}
 					</button>
 				</form>

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
 	import { config } from '$lib/config';
@@ -102,7 +103,7 @@
 							? 'border border-white/20 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20'
 							: 'border border-primary bg-primary text-white hover:bg-primary-dark'}"
 				>
-					<span class="material-symbols-outlined text-[20px]">lock_open</span>
+					<Icon name="lock_open" />
 					{loading ? 'Vérification...' : 'Se connecter'}
 				</button>
 

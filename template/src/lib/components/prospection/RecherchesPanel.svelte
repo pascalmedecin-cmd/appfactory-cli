@@ -1,4 +1,5 @@
 <script lang="ts">
+	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import { toasts } from '$lib/stores/toast';
 	import { cantonNoms, sourceLabel } from '$lib/prospection-utils';
@@ -31,7 +32,7 @@
 	<div class="p-4 bg-white rounded-xl border border-border shadow-xs space-y-2">
 		<div class="flex items-center justify-between mb-1">
 			<div class="flex items-center gap-2">
-				<span class="material-symbols-outlined text-[18px] text-accent">bookmarks</span>
+				<Icon name="bookmarks" size={18} class="text-accent" />
 				<h3 class="text-sm font-semibold text-text">Mes recherches sauvegardées</h3>
 			</div>
 			<button onclick={() => open = false} class="text-sm text-text-muted hover:text-text cursor-pointer">Fermer</button>
@@ -56,7 +57,7 @@
 					</span>
 					{#if rech.alerte_active}
 						<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent">
-							<span class="material-symbols-outlined text-[12px]">notifications</span>
+							<Icon name="notifications" size={12} />
 							{rech.frequence_alerte === 'quotidien' ? 'Quotidienne' : 'Hebdomadaire'}
 						</span>
 					{/if}
@@ -73,7 +74,7 @@
 				}}>
 					<input type="hidden" name="id" value={rech.id} />
 					<button type="submit" class="text-text-muted hover:text-danger cursor-pointer transition-colors" title="Supprimer cette recherche">
-						<span class="material-symbols-outlined text-[16px]">delete</span>
+						<Icon name="delete" size={16} />
 					</button>
 				</form>
 			</div>
