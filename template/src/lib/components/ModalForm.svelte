@@ -63,7 +63,7 @@
 			<div class="flex items-center justify-between px-6 py-4 {headerVariant === 'accent' ? 'bg-primary text-white' : 'border-b border-border'}">
 				<div class="flex items-center gap-2.5">
 					{#if icon}
-						<Icon name={icon} size={22} class="{headerVariant === 'accent' ? 'text-white/80' : 'text-accent'}" />
+						<Icon name={icon} size={22} class="{headerVariant === 'accent' ? 'text-white/80' : 'text-primary'}" />
 					{/if}
 					<h2 class="text-lg font-semibold {headerVariant === 'accent' ? 'text-white' : 'text-text'}">{title}</h2>
 				</div>
@@ -80,7 +80,7 @@
 				{#if extra}
 					<button
 						type="button"
-						class="flex items-center gap-1 text-sm text-accent hover:text-accent-dark cursor-pointer"
+						class="flex items-center gap-1 text-sm text-primary hover:text-primary-hover cursor-pointer"
 						onclick={() => showExtra = !showExtra}
 					>
 						<Icon name={showExtra ? 'expand_less' : 'expand_more'} size={16} />
@@ -119,7 +119,7 @@
 								type="button"
 								onclick={onSave}
 								disabled={saving}
-								class="px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg shadow-sm disabled:opacity-50 cursor-pointer transition-colors"
+								class="h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg shadow-sm disabled:opacity-50 cursor-pointer transition-colors"
 							>
 								{saving ? 'Enregistrement…' : 'Enregistrer'}
 							</button>

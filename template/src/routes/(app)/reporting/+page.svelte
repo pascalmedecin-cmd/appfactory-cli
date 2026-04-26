@@ -133,7 +133,7 @@
 						y={y}
 						width={BAR_WIDTH}
 						height={h || 2}
-						class="fill-accent"
+						class="fill-primary"
 						rx="3"
 					/>
 					<text x={x + BAR_WIDTH / 2} y={y - 6} text-anchor="middle" class="text-[11px] fill-text font-medium">

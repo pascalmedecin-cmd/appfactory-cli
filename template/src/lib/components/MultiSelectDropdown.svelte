@@ -65,7 +65,7 @@
 		bind:this={buttonEl}
 		type="button"
 		onclick={toggle}
-		class="flex items-center gap-2 w-full h-10 px-3 text-sm border border-border rounded-lg bg-white box-border cursor-pointer transition-colors hover:border-accent/40"
+		class="flex items-center gap-2 w-full h-10 px-3 text-sm border border-border rounded-lg bg-white box-border cursor-pointer transition-colors hover:border-primary/40"
 		title={tooltip}
 	>
 		{#if icon}
@@ -86,7 +86,7 @@
 					onclick={() => toggleOption(opt.value)}
 					class="w-full flex items-center gap-2.5 min-h-11 px-3 py-2.5 text-sm text-left cursor-pointer transition-colors hover:bg-surface-alt"
 				>
-					<span class="flex items-center justify-center w-4 h-4 border rounded {selected.includes(opt.value) ? 'border-accent bg-accent' : 'border-border-strong'}">
+					<span class="flex items-center justify-center w-4 h-4 border rounded {selected.includes(opt.value) ? 'border-primary bg-primary' : 'border-border-strong'}">
 						{#if selected.includes(opt.value)}
 							<Icon name="check" size={14} class="text-white" />
 						{/if}

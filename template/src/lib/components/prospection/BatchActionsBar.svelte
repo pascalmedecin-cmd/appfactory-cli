@@ -28,7 +28,7 @@
 		}}>
 			<input type="hidden" name="ids" value={JSON.stringify([...selectedIds])} />
 			<input type="hidden" name="statut" value="interesse" />
-			<button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-accent border border-accent rounded-lg hover:bg-accent/10 cursor-pointer transition-colors">
+			<button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 cursor-pointer transition-colors">
 				<Icon name="thumb_up" size={16} />
 				Marquer intéressé
 			</button>

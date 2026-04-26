@@ -11,7 +11,7 @@
 
 	const classes: Record<string, string> = {
 		default: 'bg-primary/8 text-primary border border-primary/15',
-		accent: 'bg-accent/8 text-accent border border-accent/15',
+		accent: 'bg-primary/8 text-primary border border-primary/15',
 		success: 'bg-success-light text-success border border-success/15',
 		warning: 'bg-warning-light text-warning border border-warning/15',
 		danger: 'bg-danger-light text-danger border border-danger/15',
@@ -20,7 +20,7 @@
 
 	const dotColors: Record<string, string> = {
 		default: 'bg-primary',
-		accent: 'bg-accent',
+		accent: 'bg-primary',
 		success: 'bg-success',
 		warning: 'bg-warning',
 		danger: 'bg-danger',

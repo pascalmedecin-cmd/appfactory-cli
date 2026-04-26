@@ -239,7 +239,7 @@
 
 					<div class="space-y-3">
 						<p class="text-xs font-semibold text-text-muted uppercase tracking-wide">Sources</p>
-						<label class="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-accent/30 cursor-pointer transition-colors">
+						<label class="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition-colors">
 							<input type="checkbox" bind:checked={useSearchCh} class="accent-accent" />
 							<Icon name="phone_forwarded" class="text-text-muted" />
 							<div>
@@ -247,7 +247,7 @@
 								<p class="text-xs text-text-muted">Téléphone, adresse, NPA, localité</p>
 							</div>
 						</label>
-						<label class="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-accent/30 cursor-pointer transition-colors">
+						<label class="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition-colors">
 							<input type="checkbox" bind:checked={useZefix} class="accent-accent" />
 							<Icon name="business" class="text-text-muted" />
 							<div>

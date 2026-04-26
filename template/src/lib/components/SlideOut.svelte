@@ -7,7 +7,7 @@
 	let {
 		open = $bindable(false),
 		title = '',
-		width = '480px',
+		width = '560px',
 		children,
 	}: {
 		open?: boolean;
@@ -64,7 +64,7 @@
 <style>
 	@media (min-width: 768px) {
 		div[style*="--panel-width"] {
-			width: var(--panel-width, 480px);
+			width: var(--panel-width, 560px);
 		}
 	}
 </style>

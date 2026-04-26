@@ -49,7 +49,7 @@
 		bind:this={buttonEl}
 		type="button"
 		onclick={toggle}
-		class="flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-accent/40"
+		class="flex items-center gap-2 px-3 py-1.5 text-sm border border-border rounded-lg bg-surface-alt cursor-pointer transition-colors hover:border-primary/40"
 	>
 		{#if selectedOption?.dotColor}
 			<span class="w-2 h-2 rounded-full {selectedOption.dotColor}"></span>
@@ -67,7 +67,7 @@
 					type="button"
 					onclick={() => select(opt.value)}
 					class="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left cursor-pointer transition-colors
-						{opt.value === value ? 'bg-accent/6 text-accent font-medium' : 'text-text hover:bg-surface-alt'}"
+						{opt.value === value ? 'bg-primary/6 text-primary font-medium' : 'text-text hover:bg-surface-alt'}"
 				>
 					{#if opt.dotColor}
 						<span class="w-2 h-2 rounded-full {opt.dotColor}"></span>

@@ -153,7 +153,7 @@
 	<div class="flex items-center justify-end">
 		<button
 			onclick={openCreate}
-			class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+			class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 		>
 			<Icon name="add" size={18} />
 			Ajouter
@@ -176,14 +176,14 @@
 		searchPlaceholder="Rechercher un contact…"
 	>
 		{#snippet row(contact, _i)}
-			<td class="px-4 py-2.5 font-medium text-text">{contact.nom ?? '–'}</td>
-			<td class="px-4 py-2.5 text-text">{contact.prenom ?? '–'}</td>
-			<td class="px-4 py-2.5 text-text">{contact.entreprises?.raison_sociale ?? '–'}</td>
-			<td class="px-4 py-2.5 text-text">{contact.role_fonction ?? '–'}</td>
-			<td class="px-4 py-2.5 text-text">{contact.email_professionnel ?? '–'}</td>
-			<td class="px-4 py-2.5 text-text">{contact.telephone ?? '–'}</td>
-			<td class="px-4 py-2.5 text-text w-20">{contact.canton ?? '–'}</td>
-			<td class="px-4 py-2.5 w-24">
+			<td class="px-4 py-3 font-medium text-text">{contact.nom ?? '–'}</td>
+			<td class="px-4 py-3 text-text">{contact.prenom ?? '–'}</td>
+			<td class="px-4 py-3 text-text">{contact.entreprises?.raison_sociale ?? '–'}</td>
+			<td class="px-4 py-3 text-text">{contact.role_fonction ?? '–'}</td>
+			<td class="px-4 py-3 text-text">{contact.email_professionnel ?? '–'}</td>
+			<td class="px-4 py-3 text-text">{contact.telephone ?? '–'}</td>
+			<td class="px-4 py-3 text-text w-20">{contact.canton ?? '–'}</td>
+			<td class="px-4 py-3 w-24">
 				<Badge label={contact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(contact.statut_qualification)} />
 			</td>
 		{/snippet}
@@ -281,7 +281,7 @@
 			<div class="flex gap-3 pt-4 border-t border-border">
 				<button
 					onclick={openEdit}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 				>
 					<Icon name="edit" size={16} />
 					Modifier
@@ -302,7 +302,7 @@
 						type="button"
 						onclick={() => confirmArchiveOpen = true}
 						disabled={archiving}
-						class="flex items-center gap-2 px-4 py-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-danger rounded-lg hover:bg-danger/5 cursor-pointer disabled:opacity-50 transition-colors"
 					>
 						<Icon name="archive" size={16} />
 						{archiving ? 'Archivage…' : 'Archiver'}
@@ -370,7 +370,7 @@
 						oninput={() => { entreprise_id = ''; showSuggestions = true; }}
 						placeholder="Tapez pour chercher ou créer…"
 						autocomplete="off"
-						class="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+						class="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					/>
 					{#if entreprise_nom}
 						<button type="button" onclick={clearEntreprise} class="px-2 text-text-muted hover:text-text cursor-pointer">
@@ -384,7 +384,7 @@
 							<button
 								type="button"
 								onclick={() => selectEntreprise(sug)}
-								class="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-surface cursor-pointer {entreprise_id === sug.id ? 'bg-accent/10 font-medium' : ''}"
+								class="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-surface cursor-pointer {entreprise_id === sug.id ? 'bg-primary/10 font-medium' : ''}"
 							>
 								{#if logoUrl(sug.site_web)}
 									<img src={logoUrl(sug.site_web)} alt="" class="w-5 h-5 rounded object-contain" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
@@ -441,7 +441,7 @@
 			<button
 				type="submit"
 				disabled={saving}
-				class="px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
+				class="h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
 			>
 				{saving ? 'Enregistrement…' : 'Enregistrer'}
 			</button>

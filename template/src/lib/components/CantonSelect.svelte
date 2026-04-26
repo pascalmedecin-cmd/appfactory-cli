@@ -37,7 +37,7 @@
 		{id}
 		bind:value
 		{required}
-		class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+		class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 	>
 		<option value="">-- Sélectionner --</option>
 		<optgroup label="Suisse romande">

@@ -121,7 +121,7 @@
 	<div class="flex items-center justify-end">
 		<button
 			onclick={openCreate}
-			class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+			class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 		>
 			<Icon name="add" size={18} />
 			Ajouter
@@ -144,7 +144,7 @@
 				type="text"
 				bind:value={searchQuery}
 				placeholder="Rechercher une entreprise…"
-				class="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+				class="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
 			/>
 		</div>
 
@@ -155,7 +155,7 @@
 				{@const contactCount = data.contacts.filter((c: Contact) => c.entreprise_id === entreprise.id).length}
 				<button
 					onclick={() => openDetail(entreprise)}
-					class="bg-white rounded-lg border border-border p-4 hover:shadow-md hover:border-accent/30 transition-all cursor-pointer text-left w-full"
+					class="bg-white rounded-lg border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer text-left w-full"
 				>
 					<div class="flex items-start gap-3">
 						{#if logo}
@@ -250,7 +250,7 @@
 					<span class="text-text-muted">Adresse</span>
 					<p class="font-medium text-text">{selectedEntreprise.adresse_siege}</p>
 					{#if maps}
-						<a href={maps} target="_blank" class="inline-flex items-center gap-1 text-xs text-accent hover:underline mt-1">
+						<a href={maps} target="_blank" class="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
 							<Icon name="map" size={14} />
 							Voir sur Google Maps
 						</a>
@@ -261,7 +261,7 @@
 			{#if selectedEntreprise.site_web}
 				<div class="text-sm">
 					<span class="text-text-muted">Site web</span>
-					<p><a href={selectedEntreprise.site_web} target="_blank" class="text-accent hover:underline">{selectedEntreprise.site_web}</a></p>
+					<p><a href={selectedEntreprise.site_web} target="_blank" class="text-primary hover:underline">{selectedEntreprise.site_web}</a></p>
 				</div>
 			{/if}
 
@@ -287,7 +287,7 @@
 										<span class="text-text-muted"> : {contact.role_fonction}</span>
 									{/if}
 								</div>
-								<a href="/contacts" class="text-accent text-xs hover:underline">Voir</a>
+								<a href="/contacts" class="text-primary text-xs hover:underline">Voir</a>
 							</div>
 						{/each}
 					</div>
@@ -299,7 +299,7 @@
 			<div class="flex flex-wrap gap-3 pt-4 border-t border-border">
 				<button
 					onclick={openEdit}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 				>
 					<Icon name="edit" size={16} />
 					Modifier
@@ -421,7 +421,7 @@
 			<button
 				type="submit"
 				disabled={saving}
-				class="px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
+				class="h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
 			>
 				{saving ? 'Enregistrement…' : 'Enregistrer'}
 			</button>

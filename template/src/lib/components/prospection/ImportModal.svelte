@@ -174,7 +174,7 @@
 						required
 						bind:value={importZefixName}
 						placeholder="Ex : construction, rénovation, architecte…"
-						class="w-full px-3 py-1.5 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent {zefixNameInvalid ? 'border-danger' : 'border-border'}"
+						class="w-full px-3 py-1.5 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {zefixNameInvalid ? 'border-danger' : 'border-border'}"
 					/>
 					{#if zefixNameInvalid}
 						<p class="text-xs text-danger mt-1">Saisir au moins 2 caractères. L'API Zefix exige un filtre par nom.</p>
@@ -232,7 +232,7 @@
 						type="text"
 						bind:value={importSimapSearch}
 						placeholder="rénovation, façade…"
-						class="w-full px-3 py-1.5 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent {simapSearchInvalid ? 'border-danger' : 'border-border'}"
+						class="w-full px-3 py-1.5 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {simapSearchInvalid ? 'border-danger' : 'border-border'}"
 					/>
 					{#if simapSearchInvalid}
 						<p class="text-xs text-danger mt-1">Saisir au moins 3 caractères ou laisser vide.</p>

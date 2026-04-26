@@ -164,7 +164,7 @@
 				>
 					<Icon name="bookmarks" size={18} />
 					<span class="hidden sm:inline">Mes recherches</span>
-					<span class="ml-1 px-1.5 py-0.5 text-xs font-semibold rounded-full bg-accent/10 text-accent">{data.recherches.length}</span>
+					<span class="ml-1 px-1.5 py-0.5 text-xs font-semibold rounded-full bg-primary/10 text-primary">{data.recherches.length}</span>
 				</button>
 			{/if}
 		</div>
@@ -181,7 +181,7 @@
 			</button>
 			<button
 				onclick={() => importModalOpen = true}
-				class="flex items-center gap-2 h-10 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg box-border cursor-pointer shadow-md transition-colors"
+				class="flex items-center gap-2 h-10 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg box-border cursor-pointer shadow-md transition-colors"
 			>
 				<Icon name="cloud_download" size={18} />
 				Importer des prospects
@@ -209,7 +209,7 @@
 				{/if}
 				<button
 					onclick={() => alerteModalOpen = true}
-					class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-accent border border-accent/30 rounded-lg box-border hover:bg-accent/5 cursor-pointer transition-colors"
+					class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-primary border border-primary/30 rounded-lg box-border hover:bg-primary/5 cursor-pointer transition-colors"
 				>
 					<Icon name="notifications_active" size={16} />
 					Créer une alerte
@@ -247,7 +247,7 @@
 			</p>
 			<button
 				onclick={() => importModalOpen = true}
-				class="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-dark rounded-lg cursor-pointer shadow-md transition-colors"
+				class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-md transition-colors"
 			>
 				<Icon name="cloud_download" size={18} />
 				Lancer un import
@@ -274,17 +274,17 @@
 		onSearchChange={(q) => goto(buildUrl({ q, page: 0 }), { invalidateAll: true, keepFocus: true })}
 	>
 		{#snippet row(lead, _i)}
-			<td class="px-4 py-2.5 w-[9%]">
+			<td class="px-4 py-3 w-[9%]">
 				<Badge label={scoreLabel(lead.score_pertinence ?? 0)} variant={scoreBadgeVariant(lead.score_pertinence ?? 0)} dot={true} />
 			</td>
-			<td class="px-4 py-2.5 font-medium text-text w-[20%] truncate" title={lead.raison_sociale}>{lead.raison_sociale}</td>
-			<td class="px-4 py-2.5 text-text w-[8%]">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '–'}</td>
-			<td class="px-4 py-2.5 text-text w-[17%] truncate" title={lead.localite ?? ''}>{lead.localite ?? '–'}</td>
-			<td class="px-4 py-2.5 text-text-muted text-xs w-[20%] truncate">{sourceLabel(lead.source)}</td>
-			<td class="px-4 py-2.5 w-[13%]">
+			<td class="px-4 py-3 font-medium text-text w-[20%] truncate" title={lead.raison_sociale}>{lead.raison_sociale}</td>
+			<td class="px-4 py-3 text-text w-[8%]">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '–'}</td>
+			<td class="px-4 py-3 text-text w-[17%] truncate" title={lead.localite ?? ''}>{lead.localite ?? '–'}</td>
+			<td class="px-4 py-3 text-text-muted text-xs w-[20%] truncate">{sourceLabel(lead.source)}</td>
+			<td class="px-4 py-3 w-[13%]">
 				<Badge label={statutLabel(lead.statut)} variant={statutBadgeVariant(lead.statut)} dot={true} />
 			</td>
-			<td class="px-4 py-2.5 text-text-muted text-xs w-[10%]">{relativeDate(lead.date_import)}</td>
+			<td class="px-4 py-3 text-text-muted text-xs w-[10%]">{relativeDate(lead.date_import)}</td>
 		{/snippet}
 	</DataTable>
 	{/if}

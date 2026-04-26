@@ -141,7 +141,7 @@
 			{geoLabel(data.item.geo_scope)}
 		</span>
 		<span
-			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium bg-accent/8 text-accent border-accent/20"
+			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium bg-primary/8 text-primary border-primary/20"
 		>
 			{THEME_LABELS[data.item.theme]}
 		</span>
@@ -159,8 +159,8 @@
 	</section>
 
 	<!-- Pertinence FilmPro -->
-	<section class="mb-6 border-l-4 border-accent bg-accent/5 pl-4 py-3 rounded-r">
-		<h2 class="text-xs font-semibold uppercase tracking-wider text-accent mb-1">
+	<section class="mb-6 border-l-4 border-primary bg-primary/5 pl-4 py-3 rounded-r">
+		<h2 class="text-xs font-semibold uppercase tracking-wider text-primary mb-1">
 			Pertinence FilmPro
 		</h2>
 		<p class="text-sm text-text-body leading-relaxed">{data.item.filmpro_relevance}</p>
@@ -212,7 +212,7 @@
 						disabled={chipLoading !== null}
 						onclick={() => runChipSearch(chip, idx)}
 						title="Auto-exécuter {chip.kind === 'zefix' ? 'Zefix' : 'SIMAP'} · {chip.canton} · {chip.query}"
-						class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-accent/8 text-accent border border-accent/20 hover:bg-accent/15 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+						class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-primary/8 text-primary border border-primary/20 hover:bg-primary/15 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
 					>
 						<Icon name={isLoading ? 'progress_activity' : chip.kind === 'zefix' ? 'business' : 'gavel'} size={16} />
 						{chip.label}

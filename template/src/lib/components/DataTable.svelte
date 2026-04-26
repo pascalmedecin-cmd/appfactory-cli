@@ -145,7 +145,7 @@
 				value={search}
 				oninput={(e) => handleSearchInput((e.target as HTMLInputElement).value)}
 				placeholder={searchPlaceholder}
-				class="w-full max-w-sm px-3 py-1.5 text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+				class="w-full max-w-sm px-3 py-1.5 text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 			/>
 		</div>
 	{/if}
@@ -155,7 +155,7 @@
 			<thead class="sticky top-0 z-10">
 				<tr class="border-b border-border bg-surface-alt">
 					{#if selectable}
-						<th class="w-10 px-4 py-2.5">
+						<th class="w-10 px-4 py-3">
 							<label class="relative inline-flex items-center justify-center w-5 h-5 cursor-pointer before:absolute before:content-[''] before:-inset-3">
 								<input type="checkbox" class="w-4 h-4 cursor-pointer" checked={selectedIds.size === paged.length && paged.length > 0} onchange={toggleSelectAll} aria-label="Tout sélectionner" />
 							</label>
@@ -163,7 +163,7 @@
 					{/if}
 					{#each columns as col}
 						<th
-							class="px-4 py-2.5 text-left text-xs font-semibold text-text-muted uppercase tracking-wider {col.class ?? ''}"
+							class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider {col.class ?? ''}"
 						>
 							{#if col.sortable}
 								<button
@@ -196,7 +196,7 @@
 							onclick={() => onRowClick?.(row)}
 						>
 							{#if selectable}
-								<td class="w-10 px-4 py-2.5" onclick={(e) => e.stopPropagation()}>
+								<td class="w-10 px-4 py-3" onclick={(e) => e.stopPropagation()}>
 									<label class="relative inline-flex items-center justify-center w-5 h-5 cursor-pointer before:absolute before:content-[''] before:-inset-3">
 										<input type="checkbox" class="w-4 h-4 cursor-pointer" checked={selectedIds.has(row.id)} onchange={() => toggleSelect(row.id)} aria-label="Sélectionner la ligne" />
 									</label>
@@ -206,7 +206,7 @@
 								{@render rowSnippet(row, i)}
 							{:else}
 								{#each columns as col}
-									<td class="px-4 py-2.5 text-text {col.class ?? ''}">
+									<td class="px-4 py-3 text-text {col.class ?? ''}">
 										{col.render ? col.render(row) : (row[col.key] ?? '–')}
 									</td>
 								{/each}

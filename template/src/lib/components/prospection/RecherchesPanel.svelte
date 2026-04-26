@@ -32,17 +32,17 @@
 	<div class="p-4 bg-white rounded-xl border border-border shadow-xs space-y-2">
 		<div class="flex items-center justify-between mb-1">
 			<div class="flex items-center gap-2">
-				<Icon name="bookmarks" size={18} class="text-accent" />
+				<Icon name="bookmarks" size={18} class="text-primary" />
 				<h3 class="text-sm font-semibold text-text">Mes recherches sauvegardées</h3>
 			</div>
 			<button onclick={() => open = false} class="text-sm text-text-muted hover:text-text cursor-pointer">Fermer</button>
 		</div>
 		{#each recherches as rech}
-			<div class="flex items-center justify-between p-3 rounded-lg bg-surface-alt/60 border border-border/50 hover:border-accent/20 transition-colors">
+			<div class="flex items-center justify-between p-3 rounded-lg bg-surface-alt/60 border border-border/50 hover:border-primary/20 transition-colors">
 				<div class="flex items-center gap-3">
 					<button
 						onclick={() => onCharger?.(rech)}
-						class="text-sm font-semibold text-accent hover:underline cursor-pointer"
+						class="text-sm font-semibold text-primary hover:underline cursor-pointer"
 					>
 						{rech.nom}
 					</button>
@@ -56,7 +56,7 @@
 						].filter(Boolean).join(' · ') || 'Tous les critères'}
 					</span>
 					{#if rech.alerte_active}
-						<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+						<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">
 							<Icon name="notifications" size={12} />
 							{rech.frequence_alerte === 'quotidien' ? 'Quotidienne' : 'Hebdomadaire'}
 						</span>

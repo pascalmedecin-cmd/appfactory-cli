@@ -86,7 +86,7 @@
 					bind:value={nom}
 					placeholder="Ex : Construction Genève chauds"
 					required
-					class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
+					class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary"
 				/>
 			</div>
 
@@ -142,7 +142,7 @@
 					type="text"
 					bind:value={motCleInput}
 					placeholder="Taper un mot-clé puis Entrée"
-					class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-accent/30 focus:border-accent"
+					class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMotCle(); } }}
 				/>
 			</div>
@@ -179,7 +179,7 @@
 			<button
 				type="submit"
 				disabled={saving || !nom}
-				class="px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
+				class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
 			>
 				{saving ? 'Création…' : 'Créer l\'alerte'}
 			</button>

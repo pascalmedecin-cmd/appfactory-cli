@@ -170,7 +170,7 @@
 	<div class="flex items-center justify-end">
 		<button
 			onclick={() => openCreate()}
-			class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+			class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 		>
 			<Icon name="add" size={18} />
 			Nouvelle opportunité
@@ -183,7 +183,7 @@
 			{@const opps = oppsByEtape[etape.key] ?? []}
 			{@const total = totalByEtape[etape.key] ?? 0}
 			<div
-				class="flex-shrink-0 w-64 flex flex-col bg-surface-alt/30 rounded-lg border border-border/50 {dragOverEtape === etape.key ? 'ring-2 ring-accent/40 bg-accent/5' : ''}"
+				class="flex-shrink-0 w-64 flex flex-col bg-surface-alt/30 rounded-lg border border-border/50 {dragOverEtape === etape.key ? 'ring-2 ring-primary/40 bg-primary/5' : ''}"
 				ondragover={(e: DragEvent) => onDragOver(e, etape.key)}
 				ondragleave={onDragLeave}
 				ondrop={(e: DragEvent) => onDrop(e, etape.key)}
@@ -201,7 +201,7 @@
 						{#if etape.key !== 'gagne' && etape.key !== 'perdu'}
 							<button
 								onclick={() => openCreate(etape.key)}
-								class="text-text-muted hover:text-accent cursor-pointer"
+								class="text-text-muted hover:text-primary cursor-pointer"
 								title="Ajouter dans {etape.label}"
 							>
 								<Icon name="add" size={18} />
@@ -271,7 +271,7 @@
 				<div>
 					<span class="text-text-muted">Entreprise</span>
 					{#if selectedOpp.entreprises?.raison_sociale}
-						<a href="/entreprises" class="block font-medium text-accent hover:underline">{selectedOpp.entreprises.raison_sociale}</a>
+						<a href="/entreprises" class="block font-medium text-primary hover:underline">{selectedOpp.entreprises.raison_sociale}</a>
 					{:else}
 						<p class="font-medium text-text">--</p>
 					{/if}
@@ -279,7 +279,7 @@
 				<div>
 					<span class="text-text-muted">Contact</span>
 					{#if selectedOpp.contacts}
-						<a href="/contacts" class="block font-medium text-accent hover:underline">{selectedOpp.contacts.prenom ?? ''} {selectedOpp.contacts.nom ?? ''}</a>
+						<a href="/contacts" class="block font-medium text-primary hover:underline">{selectedOpp.contacts.prenom ?? ''} {selectedOpp.contacts.nom ?? ''}</a>
 					{:else}
 						<p class="font-medium text-text">--</p>
 					{/if}
@@ -328,7 +328,7 @@
 			<div class="flex gap-3 pt-4 border-t border-border">
 				<button
 					onclick={openEdit}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 				>
 					<Icon name="edit" size={16} />
 					Modifier
@@ -395,7 +395,7 @@
 					<select
 						id="entreprise_id"
 						bind:value={entreprise_id}
-						class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+						class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					>
 						<option value="">-- Aucune --</option>
 						{#each data.entreprises as e}
@@ -408,7 +408,7 @@
 					<select
 						id="contact_id"
 						bind:value={contact_id}
-						class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+						class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					>
 						<option value="">-- Aucun --</option>
 						{#each data.contacts as c}
@@ -424,7 +424,7 @@
 					<select
 						id="etape_pipeline"
 						bind:value={etape_pipeline}
-						class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+						class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					>
 						{#each ETAPES as e}
 							<option value={e.key}>{e.label}</option>
@@ -460,7 +460,7 @@
 			<button
 				type="submit"
 				disabled={saving}
-				class="px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
+				class="h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
 			>
 				{saving ? 'Enregistrement...' : 'Enregistrer'}
 			</button>

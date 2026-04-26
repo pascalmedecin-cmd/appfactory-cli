@@ -212,7 +212,7 @@
 					href={lead.source_url}
 					target="_blank"
 					rel="noopener"
-					class="inline-flex items-center gap-1.5 text-sm text-accent hover:underline font-medium"
+					class="inline-flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
 				>
 					<Icon name="open_in_new" size={16} />
 					Voir la source originale
@@ -240,7 +240,7 @@
 							<form method="POST" action="?/updateStatut" use:enhance={enhanceStatut('interesse', 'Prospect marqué intéressé')}>
 								<input type="hidden" name="id" value={lead.id} />
 								<input type="hidden" name="statut" value="interesse" />
-								<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-accent border border-accent rounded-lg hover:bg-accent/10 cursor-pointer transition-colors">
+								<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 cursor-pointer transition-colors">
 									<Icon name="thumb_up" size={16} />
 									Marquer intéressé
 								</button>
@@ -265,7 +265,7 @@
 							};
 						}}>
 							<input type="hidden" name="id" value={lead.id} />
-							<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer shadow-sm transition-colors">
+							<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-sm transition-colors">
 								<Icon name="domain_add" size={16} />
 								Convertir en entreprise
 							</button>

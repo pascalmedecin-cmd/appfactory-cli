@@ -13,7 +13,7 @@
 	);
 
 	const statCards = $derived([
-		{ label: 'Contacts', value: data.stats.contacts, icon: 'contacts', href: '/contacts', iconColor: 'text-accent', iconBg: 'bg-accent/10' },
+		{ label: 'Contacts', value: data.stats.contacts, icon: 'contacts', href: '/contacts', iconColor: 'text-primary', iconBg: 'bg-primary/10' },
 		{ label: 'Entreprises', value: data.stats.entreprises, icon: 'business', href: '/entreprises', iconColor: 'text-primary', iconBg: 'bg-primary/10' },
 		{ label: 'Opportunités', value: data.stats.opportunites, icon: 'conversion_path', href: '/pipeline', iconColor: 'text-success', iconBg: 'bg-success-light' },
 		{ label: 'Signaux neufs', value: data.stats.signaux, icon: 'notifications', href: '/signaux', iconColor: 'text-warning', iconBg: 'bg-warning-light' },
@@ -134,23 +134,23 @@
 					<div class="space-y-3">
 						<p class="text-sm text-text-muted">Rien pour le moment. Quelques idées pour démarrer :</p>
 						<a href="/prospection" class="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface-alt transition-colors group">
-							<Icon name="cloud_download" size={18} class="text-accent" />
+							<Icon name="cloud_download" size={18} class="text-primary" />
 							<div>
-								<p class="text-sm font-medium text-text group-hover:text-accent">Importer des leads depuis Zefix ou SIMAP</p>
+								<p class="text-sm font-medium text-text group-hover:text-primary">Importer des leads depuis Zefix ou SIMAP</p>
 								<p class="text-xs text-text-muted">Trouvez des prospects dans le registre du commerce ou les marchés publics</p>
 							</div>
 						</a>
 						<a href="/signaux" class="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface-alt transition-colors group">
 							<Icon name="notifications_active" size={18} class="text-warning" />
 							<div>
-								<p class="text-sm font-medium text-text group-hover:text-accent">Surveiller les signaux d'affaires</p>
+								<p class="text-sm font-medium text-text group-hover:text-primary">Surveiller les signaux d'affaires</p>
 								<p class="text-xs text-text-muted">Appels d'offres, permis de construire, créations d'entreprises</p>
 							</div>
 						</a>
 						<a href="/prospection" class="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface-alt transition-colors group">
 							<Icon name="bookmark_add" size={18} class="text-success" />
 							<div>
-								<p class="text-sm font-medium text-text group-hover:text-accent">Configurer une alerte automatique</p>
+								<p class="text-sm font-medium text-text group-hover:text-primary">Configurer une alerte automatique</p>
 								<p class="text-xs text-text-muted">Soyez notifié quand de nouveaux leads correspondent à vos critères</p>
 							</div>
 						</a>
@@ -183,47 +183,47 @@
 			<h2 class="text-lg font-semibold text-text mb-4">Pour démarrer</h2>
 			<div class="space-y-3">
 				<a href="/entreprises" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-alt transition-colors group">
-					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 text-accent text-sm font-bold">1</span>
+					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-bold">1</span>
 					<div class="flex-1">
-						<p class="text-sm font-medium text-text group-hover:text-accent">Ajouter une entreprise</p>
+						<p class="text-sm font-medium text-text group-hover:text-primary">Ajouter une entreprise</p>
 						<p class="text-xs text-text-muted">Créez la fiche de votre premier client ou prospect</p>
 					</div>
-					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-accent" />
+					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-primary" />
 				</a>
 				<a href="/contacts" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-alt transition-colors group">
-					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 text-accent text-sm font-bold">2</span>
+					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-bold">2</span>
 					<div class="flex-1">
-						<p class="text-sm font-medium text-text group-hover:text-accent">Ajouter un contact</p>
+						<p class="text-sm font-medium text-text group-hover:text-primary">Ajouter un contact</p>
 						<p class="text-xs text-text-muted">Rattachez vos interlocuteurs à leurs entreprises</p>
 					</div>
-					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-accent" />
+					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-primary" />
 				</a>
 				<a href="/pipeline" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-alt transition-colors group">
-					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-accent/10 text-accent text-sm font-bold">3</span>
+					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary text-sm font-bold">3</span>
 					<div class="flex-1">
-						<p class="text-sm font-medium text-text group-hover:text-accent">Créer une opportunité</p>
+						<p class="text-sm font-medium text-text group-hover:text-primary">Créer une opportunité</p>
 						<p class="text-xs text-text-muted">Suivez vos affaires dans le pipeline commercial</p>
 					</div>
-					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-accent" />
+					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-primary" />
 				</a>
 			</div>
 		</div>
 	{:else}
 		<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
 			<a href="/contacts" class="flex items-center gap-2 h-10 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
-				<Icon name="person_add" size={18} class="text-accent" />
+				<Icon name="person_add" size={18} class="text-primary" />
 				Nouveau contact
 			</a>
 			<a href="/entreprises" class="flex items-center gap-2 h-10 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
-				<Icon name="domain_add" size={18} class="text-accent" />
+				<Icon name="domain_add" size={18} class="text-primary" />
 				Nouvelle entreprise
 			</a>
 			<a href="/pipeline" class="flex items-center gap-2 h-10 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
-				<Icon name="add_circle" size={18} class="text-accent" />
+				<Icon name="add_circle" size={18} class="text-primary" />
 				Nouvelle opportunité
 			</a>
 			<a href="/signaux" class="flex items-center gap-2 h-10 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
-				<Icon name="notifications" size={18} class="text-accent" />
+				<Icon name="notifications" size={18} class="text-primary" />
 				Voir les signaux
 			</a>
 		</div>

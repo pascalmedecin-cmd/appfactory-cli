@@ -151,7 +151,7 @@
 	const SCORE_STYLES: Record<string, { icon: string; color: string; bg: string; label: string }> = {
 		chaud: { icon: 'local_fire_department', color: 'text-danger', bg: 'bg-danger/10', label: 'Chaud' },
 		tiede: { icon: 'thermostat', color: 'text-warning', bg: 'bg-warning/10', label: 'Tiède' },
-		froid: { icon: 'ac_unit', color: 'text-accent', bg: 'bg-accent/10', label: 'Froid' },
+		froid: { icon: 'ac_unit', color: 'text-primary', bg: 'bg-primary/10', label: 'Froid' },
 		non_qualifie: { icon: 'remove', color: 'text-text-muted', bg: 'bg-surface', label: 'Non qualifié' },
 	};
 
@@ -236,7 +236,7 @@
 				{/if}
 				<button
 					onclick={openCreate}
-					class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+					class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 				>
 					<Icon name="add" size={18} />
 					Ajouter
@@ -266,7 +266,7 @@
 				{#if count > 0}
 					<button
 						onclick={() => filterStatut = filterStatut === s.key ? '' : s.key}
-						class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border transition-colors cursor-pointer {filterStatut === s.key ? 'bg-accent/10 border-accent text-accent font-medium' : 'bg-white border-border text-text-muted hover:border-accent/30'}"
+						class="flex items-center gap-2 px-3 py-1.5 text-sm rounded-full border transition-colors cursor-pointer {filterStatut === s.key ? 'bg-primary/10 border-primary text-primary font-medium' : 'bg-white border-border text-text-muted hover:border-primary/30'}"
 					>
 						<Badge label={String(count)} variant={s.variant} />
 						{s.label}
@@ -280,7 +280,7 @@
 	<div class="flex gap-3 flex-wrap">
 		<select
 			bind:value={filterType}
-			class="px-3 py-1.5 text-sm border border-border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+			class="px-3 py-1.5 text-sm border border-border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
 		>
 			<option value="">Tous les types</option>
 			{#each config.signaux.types as t}
@@ -289,7 +289,7 @@
 		</select>
 		<select
 			bind:value={filterCanton}
-			class="px-3 py-1.5 text-sm border border-border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-accent/30"
+			class="px-3 py-1.5 text-sm border border-border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
 		>
 			<option value="">Tous les cantons</option>
 			{#each cantons as c}
@@ -312,8 +312,8 @@
 		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 			<div class="bg-white rounded-lg border border-border p-6">
 				<div class="flex items-center gap-3 mb-3">
-					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-accent/10">
-						<Icon name="edit_note" size={22} class="text-accent" />
+					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10">
+						<Icon name="edit_note" size={22} class="text-primary" />
 					</span>
 					<h3 class="font-semibold text-text">Ajout manuel</h3>
 				</div>
@@ -322,7 +322,7 @@
 				</p>
 				<button
 					onclick={openCreate}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 				>
 					<Icon name="add" size={18} />
 					Ajouter un signal
@@ -361,7 +361,7 @@
 			<div class="flex items-center gap-3 p-3 bg-surface rounded-lg border border-border">
 				<button
 					onclick={toggleSelectAll}
-					class="flex items-center gap-2 text-sm text-accent hover:underline cursor-pointer"
+					class="flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer"
 				>
 					<Icon name={selectedIds.size === filteredSignaux.length ? 'deselect' : 'select_all'} size={18} />
 					{selectedIds.size === filteredSignaux.length ? 'Tout désélectionner' : 'Tout sélectionner'}
@@ -412,12 +412,12 @@
 			{#each filteredSignaux as signal (signal.id)}
 				<button
 					onclick={() => selectMode ? toggleSelect(signal.id) : openDetail(signal)}
-					class="bg-white rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer text-left w-full {selectMode && selectedIds.has(signal.id) ? 'border-accent bg-accent/5' : 'border-border hover:border-accent/30'}"
+					class="bg-white rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer text-left w-full {selectMode && selectedIds.has(signal.id) ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/30'}"
 				>
 					<div class="flex flex-wrap items-start justify-between gap-2">
 						<div class="flex items-center gap-3 min-w-0">
 							{#if selectMode}
-								<span class="flex items-center justify-center w-10 h-10 rounded-lg shrink-0 {selectedIds.has(signal.id) ? 'bg-accent text-white' : 'bg-surface border border-border'}">
+								<span class="flex items-center justify-center w-10 h-10 rounded-lg shrink-0 {selectedIds.has(signal.id) ? 'bg-primary text-white' : 'bg-surface border border-border'}">
 									<Icon name={selectedIds.has(signal.id) ? 'check' : 'check_box_outline_blank'} size={22} />
 								</span>
 							{:else}
@@ -471,7 +471,7 @@
 				<p class="mt-2 text-sm text-text-muted">Aucun signal ne correspond aux filtres.</p>
 				<button
 					onclick={() => { filterType = ''; filterCanton = ''; filterStatut = ''; }}
-					class="mt-2 text-sm text-accent hover:underline cursor-pointer"
+					class="mt-2 text-sm text-primary hover:underline cursor-pointer"
 				>
 					Effacer les filtres
 				</button>
@@ -524,7 +524,7 @@
 					{#if selectedSignal.contacts}
 						<div>
 							<span class="text-text-muted">Contact lié</span>
-							<a href="/contacts" class="block font-medium text-accent hover:underline">
+							<a href="/contacts" class="block font-medium text-primary hover:underline">
 								{selectedSignal.contacts.prenom ?? ''} {selectedSignal.contacts.nom ?? ''}
 							</a>
 						</div>
@@ -585,14 +585,14 @@
 			{#if selectedSignal.opportunite_associee_id}
 				<div class="text-sm p-3 bg-success/10 rounded-lg">
 					<span class="text-success font-medium">Converti en opportunité</span>
-					<a href="/pipeline" class="block text-accent hover:underline text-sm mt-1">Voir dans le pipeline</a>
+					<a href="/pipeline" class="block text-primary hover:underline text-sm mt-1">Voir dans le pipeline</a>
 				</div>
 			{/if}
 
 			<div class="flex flex-wrap gap-3 pt-4 border-t border-border">
 				<button
 					onclick={openEdit}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg cursor-pointer"
+					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 				>
 					<Icon name="edit" size={16} />
 					Modifier
@@ -700,7 +700,7 @@
 				<select
 					id="type_signal"
 					bind:value={type_signal}
-					class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+					class="w-full px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 				>
 					<option value="">-- Choisir --</option>
 					{#each config.signaux.types as t}
@@ -750,7 +750,7 @@
 			<button
 				type="submit"
 				disabled={saving}
-				class="px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
+				class="h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
 			>
 				{saving ? 'Enregistrement...' : 'Enregistrer'}
 			</button>
@@ -810,7 +810,7 @@
 				<button
 					type="submit"
 					disabled={saving}
-					class="px-4 py-2 text-sm font-medium text-white bg-accent hover:bg-accent-dark rounded-lg disabled:opacity-50 cursor-pointer"
+					class="h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
 				>
 					{saving ? 'Création...' : 'Créer et aller au pipeline'}
 				</button>

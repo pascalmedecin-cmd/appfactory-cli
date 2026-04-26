@@ -235,7 +235,7 @@
 				<button
 					type="button"
 					onclick={copyAllTerms}
-					class="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-slate-200 bg-white hover:border-primary hover:bg-accent-light text-sm font-semibold text-slate-700 transition-colors"
+					class="inline-flex items-center gap-1.5 px-3 py-2 rounded-full border border-slate-200 bg-white hover:border-primary hover:bg-primary-light text-sm font-semibold text-slate-700 transition-colors"
 				>
 					<Icon name="content_copy" class="text-base" />
 					Copier les {searchTerms.length}

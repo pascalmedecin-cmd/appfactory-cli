@@ -72,7 +72,7 @@
 					type="button"
 					onclick={() => open = false}
 					disabled={loading}
-					class="flex-1 px-4 py-2.5 text-sm font-medium text-text-muted bg-surface-secondary hover:bg-surface-secondary/80 rounded-lg cursor-pointer disabled:opacity-50 transition-colors"
+					class="flex-1 px-4 py-3 text-sm font-medium text-text-muted bg-surface-secondary hover:bg-surface-secondary/80 rounded-lg cursor-pointer disabled:opacity-50 transition-colors"
 				>
 					{cancelLabel}
 				</button>
@@ -80,7 +80,7 @@
 					type="button"
 					onclick={onConfirm}
 					disabled={loading}
-					class="flex-1 px-4 py-2.5 text-sm font-medium rounded-lg cursor-pointer disabled:opacity-50 transition-colors {variantClasses}"
+					class="flex-1 px-4 py-3 text-sm font-medium rounded-lg cursor-pointer disabled:opacity-50 transition-colors {variantClasses}"
 				>
 					{loading ? 'En cours...' : confirmLabel}
 				</button>

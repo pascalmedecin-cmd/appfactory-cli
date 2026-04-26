@@ -41,7 +41,7 @@ export const config = {
 				key: 'proposition',
 				label: 'Proposition',
 				icon: 'description',
-				color: 'text-accent',
+				color: 'text-primary',
 			},
 			{
 				key: 'negociation',
