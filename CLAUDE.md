@@ -1,12 +1,12 @@
 # AppFactory : CLAUDE.md
 
-**Statut :** Phase C, Skills et templates HTML + module Veille sectorielle refondu LEAN (S112, prod) + email récap cron veille (gated, actif) + export/import CSV + page /reporting + Golden Standards CRM v3 livré + Phase 4 application `/prospection` en prod (S114) + Migration Material Symbols → Lucide complète (S115) + **Cascade golden v3 pages 1-2 livrée + sweep structurel single-blue cross-app (S116, commits `7f2dac3` + `fc0bd6c` push main)**. Formation IA est un sous-projet autonome dans `formation-ia/`, accessible directement via `cc` option 2.
-**Derniere mise a jour :** 2026-04-26 (session S116 CRM xhigh : /dashboard + /contacts livrées golden v3 + sweep structurel cross-app accent → primary 158 substitutions / 24 fichiers + SlideOut 560 + token --color-primary-hover. Vitest 344/344, svelte-check 0 régression.)
+**Statut :** Phase C, Skills et templates HTML + module Veille sectorielle refondu LEAN (S112, prod) + email récap cron veille (gated, actif) + export/import CSV + page /reporting + Golden Standards CRM v3 livré + Phase 4 application `/prospection` en prod (S114) + Migration Material Symbols → Lucide complète (S115) + **Cascade golden v3 Bloc 1a Phase 3+4 LIVRÉE INTÉGRALEMENT 6/6 pages CRM (S116-S117, 8 commits push main)**. Formation IA est un sous-projet autonome dans `formation-ia/`, accessible directement via `cc` option 2.
+**Derniere mise a jour :** 2026-04-26 (session S117 CRM xhigh : cascade Bloc 1a 4 pages restantes + sweeps cross-app inputs h-[34px] + ghost destructive/annuler + cleanup tokens accent + header 48px golden v3. 6 commits push main. Vitest 344/344, svelte-check 0 régression.)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session courante :** Session 116 (CRM, 2026-04-26, `/effort xhigh`). 2 commits majeurs. **Bloc 1a Phase 3+4 cascade page 1/6 `/dashboard`** : audit subagent ui-auditor (10 findings, 0 P0 / 7 P1 / 3 P2), 9 fixes appliqués (rounded-xl→lg sur 8 cards + alertes + raccourcis, KPI p-5→p-4, sections px-5→px-4, h2 +text-lg 18px, raccourcis h-10 box-border, gap-2.5→gap-2, KPI value text-3xl font-bold→text-2xl font-semibold, mt-0.5→mt-1). P2-02 (`bg-primary/5` opacités custom) reporté backlog. Vérification chrome MCP getComputedStyle 7/7 conforme. Commit `7f2dac3` push main. **Bloc 1a cascade page 2/6 `/contacts` + sweep structurel cross-app** : audit révèle 5 findings dont 3 STRUCTURELS (token `--color-accent: #3B6CB7` au lieu du primary, SlideOut 480px au lieu de 560, focus accent). STOP cascade demandé pour décision Pascal. Validation Pascal (single-blue + slideOut 560 + commit unifié). Sweep `bg-accent → bg-primary` via script Python ciblé sur préfixes Tailwind (158 substitutions / 24 fichiers, regex préservent variants TS Badge `'accent'`). CTA `px-4 py-2 font-medium` → `h-10 px-4 box-border font-semibold` via sed (15 occurrences / 6 fichiers). Cellules `px-4 py-2.5` → `px-4 py-3` (13 occurrences DataTable + snippets row). SlideOut défaut 480→560. Token golden ajouté `--color-primary-hover: #264C85`. `hover:bg-primary-dark` → `hover:bg-primary-hover` sur CTA login + prospection (primary-dark conservé Sidebar bg / veille éditorial / login bg). Fixes locaux /contacts F3 (cellules py-3) + F5 (Archiver ghost h-10 font-medium hover:bg-danger/5). Vérification chrome MCP 3 pages (/dashboard, /prospection, /contacts) : tous CTA bg primary h-40 fw-600, td paddingY 12px, slideOut 560, h1 22/600. Vitest 344/344, svelte-check 109 baseline = 109 (0 régression). Commit `fc0bd6c` push main 29 fichiers 207+/125-. Apprentissage clé S116 : audit Express 1 page peut masquer écarts structurels cross-app, faire émerger pattern systémique après 2-3 pages avant cascade complète (cf. mémoire `feedback_audit_uiux_cross_app_revelation`).
-**Session -1 :** Session 115 (CRM, 2026-04-26, `/effort xhigh` AUTONOME). Bloc 1b Migration Material Symbols → Lucide : 207 occurrences éliminées commit atomique `f1a54c5`, wrapper `<Icon name="...">` + `icon-map.ts` (92 mappings), font Material retirée, validation chrome MCP 8 pages. Vitest 344/344, svelte-check 0 régression.
-**Session -2 :** Session 114 (CRM, 2026-04-26, `/effort xhigh`). 3 livraisons. Bloc 1a Phase 4 `/prospection` : 12 findings P0+P1 corrigés commit `fbe1d81` push prod, 12/12 vérifiés chrome MCP getComputedStyle. Bloc 1c Golden v3 : snapshot v2 → v3 régularise règle skill « jamais d'écrasement ». Bloc 1d Investigation veille résolu : pas d'anomalie, W16 = première édition mathématiquement possible.
+**Session courante :** Session 117 (CRM, 2026-04-26, `/effort xhigh`, post-crash CLI précédent). 6 commits majeurs. **Diagnostic post-crash** : 3 vite orphelins tués + working tree analysé (commit `eddb04b` P2-02 alerte signaux dashboard livré pré-crash, modifs working-tree caractérisées). **Cleanup** commit `7671a52` : tokens --color-accent* orphelins supprimés (0 usage restant) + sweep `space-y-5 → space-y-6` SlideOuts (8 occurrences/6 fichiers). **Header golden v3** commit `3b8a735` : `--header-height: 56 → 48px`. **Page 3/6 `/entreprises`** commit `1f56416` : audit ui-auditor (3 P1 + 4 P2 + 4 STRUCTURELS dont H1 résolu cross-app via Header.svelte) + sweep cross-app ghost destructive (3 fichiers) + ghost Annuler modal (5 fichiers) + fixes locaux F2-01 space-y-2 + F2-03 EmptyState. **Page 4/6 `/pipeline`** commit `03f8815` : audit (3 P1 + 1 P2 + 1 STRUCTUREL) + sweep cross-app inputs h-[34px] golden (FormField + CantonSelect + 4 selects natifs) + fixes locaux header colonne kanban. Décision composant Select reportée backlog. **Page 5/6 `/signaux`** commit `ae8ae78` : audit (5 P1 CTA + 6 P2) + 5 CTA alignés h-10 box-border font-semibold + 2 ghost annuler oubliés du sweep précédent + 5 fixes paddings/badges/empty + bug mx-auto Lucide → inline-block (corrigé sur entreprises aussi). F5-10 variant 'info' reporté car Badge.svelte n'expose pas. **Page 6/6 `/veille`** commit `8447c05` : audit (5 P1 + 4 P2 + 2 STRUCTURELS + 6 Bloc 2 candidates) + 3 H1→H2 sémantique + ~30 mappings tokens (slate/emerald/sky/amber → text-text-muted/border-border/bg-success-light/bg-warning-light) + COMPLIANCE_STYLES + MATURITY_STYLES vers tokens + 2 CTA fonctionnels h-10 + sweep paddings/radius. Callout amber « Pour FilmPro » L183-184 préservé éditorial. Tokens primary-dark/light conservés (Sidebar/login/hero), classes mag-* éditoriales intactes. **Bilan** : ~25 candidates Bloc 2 (opacités custom primary) reportées, F5-10 (Badge variant 'info') + Composant Select partagé + Doc golden v4 (tokens éditoriaux + classes mag-*) ouverts. Vitest 344/344, svelte-check 109/37 baseline maintenue (0 régression).
+**Session -1 :** Session 116 (CRM, 2026-04-26, `/effort xhigh`). 2 commits majeurs. Bloc 1a Phase 3+4 cascade pages 1-2 (`/dashboard` + `/contacts`) + sweep structurel cross-app `bg-accent → bg-primary` 158 substitutions / 24 fichiers + SlideOut 560 + token --color-primary-hover. Apprentissage clé : audit Express 1 page peut masquer écarts structurels cross-app (cf. mémoire `feedback_audit_uiux_cross_app_revelation`).
+**Session -2 :** Session 115 (CRM, 2026-04-26, `/effort xhigh` AUTONOME). Bloc 1b Migration Material Symbols → Lucide : 207 occurrences éliminées commit atomique `f1a54c5`, wrapper `<Icon name="...">` + `icon-map.ts` (92 mappings).
 **Sessions précédentes (condensé)** - détail S78-S79 : `archive/decisions-sessions-78-79.md`. Détail S70-S77 : `archive/decisions-sessions-70-77.md`. Détail S80-S107 : `formation-ia/CLAUDE.md` (sous-projet autonome, sessions V2 formation-ia).
 
 - **S105** (formation-ia, 2026-04-20) : refonte roadmap V2 post 6 demandes Pascal → plan 9 blocs séquencés ~23h. **Bloc 0 Pipeline images Phase 1-4 livré** (migration DB + bucket Supabase + résolveur signed URL + composant apprenant + helpers + script fal.ai Flux + 12 briefs + 12 images prod scores 7-9/10). 7 commits : `edc1822`, `141cf98`, `a74eebc`, `7bb05b6`, `d56b142`, `69e2ac6`, `b77a8c5`. Gates 578/0/0, vitest 25/25.
@@ -191,9 +191,37 @@ Fichiers cles :
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 1 - Cascade 4 pages CRM restantes Phase 3+4 (delta encore réduit après sweep structurel cross-app S116 — audits Express devraient être triviaux). Alternative session courte si date ≥ 2026-05-01 : Bloc 0 (validation cron veille).
+**Prochaine attaque** : Bloc 1 - décision token unifié opacités custom primary (~25 candidates listées post-cascade S117). Court ~30 min, débloque cohérence palette + permet Bloc 2 Badge variant 'info'. Alternative session courte si date ≥ 2026-05-01 : Bloc 5 validation cron veille W18.
 
-### 0. Évaluation cron veille 01/05 + clôture S112 [SUPERVISÉ • low • ~15 min]
+### 1. Décision token unifié opacités custom primary [SUPERVISÉ • low • ~30 min]
+
+**Pourquoi** : 25+ candidates `bg-primary/{5,8,10,15,20}` + `border-primary/{12,15,20,30}` reportées par cascade Bloc 1a S116-S117. Hors palette golden v3, sémantique floue. Décision (a) nouveaux tokens `--color-primary-pale/-soft` vs (b) bascule case-by-case vers tokens existants (bg-info-light, bg-surface-alt). Reco (b) : zéro nouveau token, cohérent avec décision P2-02 alerte signaux S117 (commit `eddb04b` option b). Focus rings et hovers transients exclus du sweep (acceptable opacité numérique, pattern UA standard).
+**Prérequis** : aucun.
+
+- [ ] **[EXÉCUTABLE]** Trancher (a) ou (b) puis sweep cross-app sur ~15-20 occurrences `bg-*` et `border-*` filtrées. Liste exhaustive + mapping sémantique disponibles. → voir `memory/project_decision_opacites_primary_custom.md`
+
+### 2. Badge variant 'info' [SUPERVISÉ • low • ~15 min]
+
+**Pourquoi** : F5-10 audit /signaux S117 reporté. Badge.svelte n'expose pas variant 'info' (type accepte uniquement default | accent | success | warning | danger | muted). Tentative bascule statut « En analyse » de 'accent' (legacy alias) vers 'info' (sémantique correcte) a généré 2 erreurs svelte-check. Chantier composant + sweep usages.
+**Prérequis** : Bloc 1 décision palette tranchée (cohérence sémantique).
+
+- [ ] **[BLOQUÉ - Bloc 1 livré]** Ajouter variant 'info' à Badge.svelte (type + classes `bg-info-light text-info border-info/15` + dot `bg-info`). Sweep cross-app : variant 'accent' → 'info' sur statuts en cours d'analyse. Vérification chrome MCP /signaux. → voir `memory/project_badge_variant_info.md`
+
+### 3. Composant Select.svelte partagé [SUPERVISÉ • medium • ~1h30]
+
+**Pourquoi** : F4-S1 audit /pipeline S117. 4 selects natifs (pipeline x3 + signaux x1) + CantonSelect dupliquent inline classes. Sweep S117 a aligné inline sur golden (h-[34px] px-3 py-1.5) mais ne refactore pas. Création composant centralisé pour future maintenabilité.
+**Prérequis** : aucun.
+
+- [ ] **[EXÉCUTABLE]** Créer `template/src/lib/components/Select.svelte` (props options array, value, label, required, id, name). Migrer 4 selects natifs vers composant. CantonSelect conservé (logique métier optgroup). FormField non touché (séparation primitive). Vérification chrome MCP /pipeline + /signaux. → voir `memory/project_select_component_partage.md`
+
+### 4. Doc golden v4 : tokens éditoriaux + classes mag-* [SUPERVISÉ • low • ~30 min]
+
+**Pourquoi** : S-01 et S-02 audit /veille S117. Tokens `--color-primary-dark`, `--color-primary-light` coexistent avec `--color-primary-hover` (utilisés Sidebar bg, login bg, hero éditorial /veille). Classes `mag-display`, `mag-display-3`, `mag-kicker`, `mag-body` utilisées exclusivement /veille. Décision implicite S116 : conservés (design éditorial). Régularisation doc dans golden v4 sans modif fonctionnelle.
+**Prérequis** : aucun.
+
+- [ ] **[EXÉCUTABLE]** Créer snapshot golden v4 avec 2 sections supplémentaires : (a) `typography.editorial` (mag-* documentées avec scope /veille), (b) `palette.editorial` (primary-dark, primary-light avec scope Sidebar/login/hero éditorial). Pas de modif CSS. → voir skill `golden-standard`.
+
+### 5. Évaluation cron veille 01/05 + clôture S112 [SUPERVISÉ • low • ~15 min]
 
 **Pourquoi** : la refonte LEAN est en prod (commit `83fd7fd`) avec hot-fix bias géo SR. Aucun re-test API en S112 (volonté Pascal). Le cron normal du vendredi 01/05 ~08h CEST tournera et produira W18 ; la qualité de cet email = test gratuit du fix géo. Si OK, on archive ; si KO, on creuse autrement.
 **Prérequis** : être ≥ 2026-05-01, email cron reçu sur `pascal@filmpro.ch` ou consultation /veille.
@@ -201,36 +229,22 @@ Fichiers cles :
 - [ ] **[BLOQUÉ - date ≥ 2026-05-01]** Lire l'édition W18 reçue par email + sur /veille. Critères : (1) ≥1 item Suisse romande dans les rangs 1-3, (2) sources crédibles (pas de blog SEO bas de gamme), (3) anti-doublons W16/W17 respecté, (4) compliance_tag cohérent avec contenu, (5) volume 5-10 items. Si 4/5 critères OK → succès, archiver S112. Si < 3/5 → échec, désactiver cron + ouvrir session investigation. → voir `memory/project_veille_S112_apprentissages.md`
 - [ ] **[BLOQUÉ - validation Pascal cron 01/05]** Drop stash `stash@{0}` (`git stash drop stash@{0}`) une fois la refonte LEAN considérée stable. Le stash contenait des éléments S110 chantier B déjà intégrés ou écartés.
 
-### 1. Golden Standards Phase 3+4 sur 4 pages CRM restantes [SUPERVISÉ • xhigh • cascade 1-2 sessions]
-
-**Pourquoi** : suite Bloc 1a après pages 1-2 livrées en S116 + sweep structurel cross-app. Les CTA, tokens, SlideOut, cellules de tableau sont déjà alignés golden v3 sur tout le repo. Audit Express attendu trivial sur chaque page restante (findings très locaux uniquement).
-**Prérequis** : aucun.
-
-- [ ] **[EXÉCUTABLE]** Audit Express + application page par page, ordre `/entreprises` → `/pipeline` → `/signaux` → `/veille`. 1 commit/page. Run audit dans `notes/audit-uiux-2026-04-25/` (réutilisable, snapshot golden v3 actif). Méthodo S116 validée (subagent ui-auditor opus + chrome MCP getComputedStyle). Si finding structurel détecté en cours (token CSS / composant partagé / pattern ≥3 fichiers) → STOP cascade + décision Pascal (cf. règle `feedback_audit_uiux_cross_app_revelation`). → voir `memory/project_golden_standards_crm_v2.md` § Backlog
-
-### 2. Décision token P2-02 alerte dashboard [SUPERVISÉ • low • ~15 min]
-
-**Pourquoi** : finding P2-02 différé S116 sur l'alerte signaux du dashboard. `bg-primary/5` et `bg-primary/8` sont des opacités custom hors palette golden. Décision token sémantique requise (introduire `bg-primary-pale` ou refonte alerte avec `bg-info-bg`). Local au composant, faible impact mais incohérence palette.
-**Prérequis** : aucun.
-
-- [ ] **[EXÉCUTABLE]** Trancher entre (a) introduire token `--color-primary-pale: rgba(47,90,158,0.05)` dans `app.css` + Tailwind config, ou (b) remplacer `bg-primary/5` par `bg-info-bg` (token sémantique existant) + `border-primary/12` par `border-info/30`. Reco (b) : aucun nouveau token, sémantique cohérente avec autres alertes (warning-bg, danger-bg). → voir `notes/audit-uiux-2026-04-25/findings-dashboard.md` § P2-02
-
-### 3. Dashboard coûts CRM [BLOQUÉ • high • session dédiée]
+### 6. Dashboard coûts CRM [BLOQUÉ • high • session dédiée]
 
 - [ ] **[BLOQUÉ - session dashboard dédiée]** Dashboard coûts CRM `/dashboard/couts` : table `cost_audit_runs` + graphique 12 sem + split cron/catégorie + seuils. → voir `memory/project_dashboard_costs_crm.md`
 
-### 4. Figma API [BLOQUÉ • medium • ~1h]
+### 7. Figma API [BLOQUÉ • medium • ~1h]
 
 - [ ] **[BLOQUÉ - attente PAT Figma]** Figma API : PAT + plugin MCP figma scope projet
 
-### 5. Harmonisation PDF FilmPro [BLOQUÉ • high • ~2h]
+### 8. Harmonisation PDF FilmPro [BLOQUÉ • high • ~2h]
 
 - [ ] **[BLOQUÉ - Tâche archi FilmPro ~/.claude/CLAUDE.md Bloc 6]** Harmoniser production PDF FilmPro : aligner `playbook-pdf` (WeasyPrint) et `filmpro-pdf-lite` (reportlab). Reco option [3] coexistence + combler gaps G1-G3-G5. → voir `memory/project_filmpro_pdf_harmonization.md`
 
 ### Livré cette session (5 derniers)
 
-- [x] ~~Bloc 1a cascade page 2/6 `/contacts` + sweep structurel cross-app~~ - Fait 2026-04-26 (S116, xhigh) : audit révèle 3 findings structurels (token --color-accent, SlideOut 480, focus accent). STOP cascade pour décision Pascal validée (single-blue + slideOut 560 + commit unifié). Sweep `bg-accent → bg-primary` 158 substitutions / 24 fichiers via script Python ciblé préfixes Tailwind. CTA `px-4 py-2 font-medium` → `h-10 px-4 box-border font-semibold` 15 occurrences / 6 fichiers. Cellules `px-4 py-2.5` → `px-4 py-3` 13 occurrences. SlideOut défaut 480→560. Token `--color-primary-hover: #264C85` ajouté. `hover:bg-primary-dark` → `hover:bg-primary-hover` sur CTA login + prospection. Fixes locaux F3+F5 (cellules + Archiver ghost). Vérification chrome MCP getComputedStyle /dashboard + /prospection + /contacts. Vitest 344/344, svelte-check 0 régression. Commit `fc0bd6c` push main 29 fichiers 207+/125-.
-- [x] ~~Bloc 1a cascade page 1/6 `/dashboard`~~ - Fait 2026-04-26 (S116, xhigh) : 9 findings P1+P2 (rounded-xl→lg sur 8 cards, KPI p-5→p-4, sections px-5→px-4, h2 +text-lg, raccourcis h-10 box-border gap-2, KPI value text-3xl font-bold→text-2xl font-semibold, mt-0.5→mt-1). P2-02 (bg-primary/5 opacités custom) reporté Bloc 2. Vérification chrome MCP 7/7 conforme. Vitest 344/344, svelte-check 0 régression. Commit `7f2dac3` push main.
-- [x] ~~Bloc 1b Migration Material Symbols → Lucide (autonome)~~ - Fait 2026-04-26 (S115, xhigh AUTONOME) : 207 occurrences éliminées en commit atomique `f1a54c5` push prod. Stratégie wrapper `<Icon name="...">` + `icon-map.ts` (92 mappings, dont +2 hand-fix tune/sell). Script Python pour 200/207 cas + hand-fix 7 cas. Font Material retirée. Vitest 344/344, svelte-check 0 régression. Validation chrome MCP 8 pages.
-- [x] ~~Bloc 1a Phase 4 application `/prospection`~~ - Fait 2026-04-26 (S114, xhigh) : 12 findings P0+P1 corrigés en commit atomique `fbe1d81` (Header span→h1, DataTable header + pagination, Badge, Sidebar items, MultiSelectDropdown filtres, KPI cards, boutons). Vérification chrome MCP 12/12 conformes. Tests Vitest 344/344.
-- [x] ~~Bloc 1c Golden v3 CRM (régularisation règle skill)~~ - Fait 2026-04-26 (S114, xhigh) : snapshot v2 → v3 (`audit-uiux-golden-v3-2026-04-26.json`), symlink `audit-uiux-golden-current.json` → v3. Officialise correctifs cellPaddingY 12 + headerHeight 48 édités en S113.
+- [x] ~~Cascade Bloc 1a Phase 3+4 LIVRÉE INTÉGRALEMENT 6/6 pages CRM~~ - Fait 2026-04-26 (S117, xhigh) : 6 commits push main (`7671a52` cleanup tokens accent + sweep space-y-6, `3b8a735` --header-height 48px, `1f56416` /entreprises + sweeps ghost, `03f8815` /pipeline + sweep inputs h-[34px], `ae8ae78` /signaux 5 CTA + paddings, `8447c05` /veille mappings tokens + 2 CTA). 4 pages auditées (/entreprises, /pipeline, /signaux, /veille) en méthodo subagent ui-auditor + STOP-cascade règle S116 appliquée 2 fois (sweeps cross-app inputs + ghost). Vitest 344/344, svelte-check 109/37 baseline maintenue (0 régression).
+- [x] ~~P2-02 alerte signaux dashboard option (b) bg-info-light~~ - Fait 2026-04-26 (S117 pré-crash, xhigh) : commit `eddb04b` aligne alerte signaux dashboard sur pattern alerte prospection (warning-light → info-light), retire opacités custom bg-primary/5+/8+/10. Pattern future-proof pour décision token unifiée Bloc 1.
+- [x] ~~Bloc 1a cascade page 2/6 `/contacts` + sweep structurel cross-app~~ - Fait 2026-04-26 (S116, xhigh) : audit révèle 3 findings structurels (token --color-accent, SlideOut 480, focus accent). STOP cascade pour décision Pascal validée. Sweep `bg-accent → bg-primary` 158 substitutions / 24 fichiers. CTA + cellules + SlideOut + token primary-hover ajouté. Commit `fc0bd6c` push main 29 fichiers.
+- [x] ~~Bloc 1a cascade page 1/6 `/dashboard`~~ - Fait 2026-04-26 (S116, xhigh) : 9 findings P1+P2 corrigés. P2-02 reporté Bloc 2. Commit `7f2dac3` push main.
+- [x] ~~Bloc 1b Migration Material Symbols → Lucide (autonome)~~ - Fait 2026-04-26 (S115, xhigh AUTONOME) : 207 occurrences éliminées commit atomique `f1a54c5`. Wrapper Icon + icon-map.ts 92 mappings. Validation chrome MCP 8 pages.
