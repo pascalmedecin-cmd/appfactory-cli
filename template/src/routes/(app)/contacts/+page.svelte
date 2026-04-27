@@ -91,12 +91,12 @@
 
 	const columns = [
 		{ key: 'nom', label: 'Nom', sortable: true, class: 'w-[12%]' },
-		{ key: 'prenom', label: 'Prénom', sortable: true, class: 'w-[10%]' },
+		{ key: 'prenom', label: 'Prénom', sortable: true, class: 'w-[10%] hidden md:table-cell' },
 		{ key: 'entreprise', label: 'Entreprise', sortable: true, class: 'w-[15%]', render: (r: Contact) => r.entreprises?.raison_sociale ?? '–' },
-		{ key: 'role_fonction', label: 'Fonction', sortable: true, class: 'w-[12%]' },
-		{ key: 'email_professionnel', label: 'Email', class: 'w-[20%]' },
-		{ key: 'telephone', label: 'Téléphone', class: 'w-[15%] whitespace-nowrap' },
-		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[6%]' },
+		{ key: 'role_fonction', label: 'Fonction', sortable: true, class: 'w-[12%] hidden lg:table-cell' },
+		{ key: 'email_professionnel', label: 'Email', class: 'w-[20%] hidden lg:table-cell' },
+		{ key: 'telephone', label: 'Téléphone', class: 'w-[15%] whitespace-nowrap hidden lg:table-cell' },
+		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[6%] hidden md:table-cell' },
 		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-[10%]' },
 	];
 
@@ -177,12 +177,12 @@
 	>
 		{#snippet row(contact, _i)}
 			<td class="px-4 py-3 font-medium text-text">{contact.nom ?? '–'}</td>
-			<td class="px-4 py-3 text-text">{contact.prenom ?? '–'}</td>
+			<td class="px-4 py-3 text-text hidden md:table-cell">{contact.prenom ?? '–'}</td>
 			<td class="px-4 py-3 text-text">{contact.entreprises?.raison_sociale ?? '–'}</td>
-			<td class="px-4 py-3 text-text">{contact.role_fonction ?? '–'}</td>
-			<td class="px-4 py-3 text-text">{contact.email_professionnel ?? '–'}</td>
-			<td class="px-4 py-3 text-text">{contact.telephone ?? '–'}</td>
-			<td class="px-4 py-3 text-text w-20">{contact.canton ?? '–'}</td>
+			<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.role_fonction ?? '–'}</td>
+			<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.email_professionnel ?? '–'}</td>
+			<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.telephone ?? '–'}</td>
+			<td class="px-4 py-3 text-text w-20 hidden md:table-cell">{contact.canton ?? '–'}</td>
 			<td class="px-4 py-3 w-24">
 				<Badge label={contact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(contact.statut_qualification)} />
 			</td>
