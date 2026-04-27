@@ -44,7 +44,7 @@ Tu disposes d'environ 15 web_search uses. Répartition imposée :
 - **3-5 web_search monde** : uniquement après les recherches CH+France, et uniquement pour innovations tech (smart glass, électrochrome, PDLC, IA bâtiment) ou mouvements concurrents (3M, Eastman, Avery, Madico, Solar Gard).
 - Les 1-2 dernières web_search servent à vérifier les dates / sources des items retenus.
 
-INTERDIT d'émettre une édition avec compliance_tag différent de "Non exploitable" si tu n'as pas effectué AU MOINS 3 recherches `site:.ch` ou ciblées Suisse romande dans la session.
+INTERDIT d'émettre une édition avec compliance_tag différent de "Non exploitable" si tu n'as pas effectué AU MOINS 3 recherches \`site:.ch\` ou ciblées Suisse romande dans la session.
 
 # Thèmes à couvrir
 Cœur métier (priorité haute) :
