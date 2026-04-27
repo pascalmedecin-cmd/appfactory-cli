@@ -37,6 +37,13 @@
 	$effect(() => {
 		if (!open) showExtra = false;
 	});
+
+	$effect(() => {
+		if (!open) return;
+		const prev = document.body.style.overflow;
+		document.body.style.overflow = 'hidden';
+		return () => { document.body.style.overflow = prev; };
+	});
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -67,7 +74,7 @@
 					{/if}
 					<h2 class="text-lg font-semibold {headerVariant === 'accent' ? 'text-white' : 'text-text'}">{title}</h2>
 				</div>
-				<button onclick={() => open = false} class="{headerVariant === 'accent' ? 'text-white/70 hover:text-white' : 'text-text-muted hover:text-text'} cursor-pointer">
+				<button type="button" aria-label="Fermer" onclick={() => open = false} class="{headerVariant === 'accent' ? 'text-white/70 hover:text-white' : 'text-text-muted hover:text-text'} cursor-pointer">
 					<Icon name="close" />
 				</button>
 			</div>

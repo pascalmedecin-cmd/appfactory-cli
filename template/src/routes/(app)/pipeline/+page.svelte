@@ -182,12 +182,12 @@
 	</div>
 
 	<!-- Kanban board -->
-	<div class="flex gap-3 overflow-x-auto pb-4" style="min-height: calc(100vh - 200px);">
+	<div class="flex flex-col gap-3 md:flex-row md:overflow-x-auto pb-4 md:min-h-[calc(100vh-200px)]">
 		{#each ETAPES as etape}
 			{@const opps = oppsByEtape[etape.key] ?? []}
 			{@const total = totalByEtape[etape.key] ?? 0}
 			<div
-				class="flex-shrink-0 w-64 flex flex-col bg-surface-alt/30 rounded-lg border border-border/50 {dragOverEtape === etape.key ? 'ring-2 ring-primary/40 bg-primary/5' : ''}"
+				class="w-full md:w-64 md:flex-shrink-0 flex flex-col bg-surface-alt/30 rounded-lg border border-border/50 {dragOverEtape === etape.key ? 'ring-2 ring-primary/40 bg-primary/5' : ''}"
 				ondragover={(e: DragEvent) => onDragOver(e, etape.key)}
 				ondragleave={onDragLeave}
 				ondrop={(e: DragEvent) => onDrop(e, etape.key)}

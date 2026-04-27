@@ -23,7 +23,7 @@
 		{#if onMenuToggle}
 			<button
 				onclick={onMenuToggle}
-				class="burger-btn flex items-center justify-center w-8 h-8 rounded hover:bg-surface cursor-pointer"
+				class="burger-btn flex items-center justify-center w-11 h-11 rounded hover:bg-surface cursor-pointer"
 				aria-label="Menu"
 			>
 				<Icon name="menu" size={22} class="text-text" />
