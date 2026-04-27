@@ -79,8 +79,8 @@
 		{#if data.pipelineEtape.length === 0}
 			<div class="text-sm text-text-muted py-8 text-center">Aucune opportunité enregistrée.</div>
 		{:else}
-			<div class="overflow-x-auto">
-				<svg width={pipelineWidth} height={CHART_HEIGHT + 50} aria-label="Graphique pipeline par étape">
+			<div class="w-full">
+				<svg width="100%" viewBox="0 0 {pipelineWidth} {CHART_HEIGHT + 50}" preserveAspectRatio="xMinYMid meet" aria-label="Graphique pipeline par étape">
 					{#each data.pipelineEtape as stat, i}
 						{@const h = (stat.count / pipelineMax) * CHART_HEIGHT}
 						{@const x = i * (BAR_WIDTH + BAR_GAP)}
@@ -122,8 +122,8 @@
 		<h2 class="text-sm font-semibold text-text mb-1">Opportunités créées : 12 derniers mois</h2>
 		<p class="text-xs text-text-muted mb-4">Nombre d'opportunités ouvertes par mois.</p>
 
-		<div class="overflow-x-auto">
-			<svg width={monthlyWidth} height={CHART_HEIGHT + 50} aria-label="Graphique opportunités par mois">
+		<div class="w-full">
+			<svg width="100%" viewBox="0 0 {monthlyWidth} {CHART_HEIGHT + 50}" preserveAspectRatio="xMinYMid meet" aria-label="Graphique opportunités par mois">
 				{#each data.monthlyPipeline as stat, i}
 					{@const h = (stat.count / monthlyMax) * CHART_HEIGHT}
 					{@const x = i * (BAR_WIDTH + BAR_GAP)}

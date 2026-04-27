@@ -88,12 +88,12 @@
 	});
 
 	const columns = [
-		{ key: 'score_pertinence', label: 'Température', sortable: true, class: 'w-[9%]' },
-		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true, class: 'w-[20%]' },
+		{ key: 'score_pertinence', label: 'Température', sortable: true, class: 'w-[18%] md:w-[9%]' },
+		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true, class: 'w-[50%] md:w-[20%]' },
 		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[8%] hidden md:table-cell' },
 		{ key: 'localite', label: 'Localité', sortable: true, class: 'w-[17%] hidden lg:table-cell' },
 		{ key: 'source', label: 'Source', sortable: true, class: 'w-[20%] hidden lg:table-cell' },
-		{ key: 'statut', label: 'Statut', sortable: true, class: 'w-[13%]' },
+		{ key: 'statut', label: 'Statut', sortable: true, class: 'w-[32%] md:w-[13%]' },
 		{ key: 'date_import', label: 'Ajouté', sortable: true, class: 'w-[10%] hidden lg:table-cell' },
 	];
 
@@ -274,14 +274,14 @@
 		onSearchChange={(q) => goto(buildUrl({ q, page: 0 }), { invalidateAll: true, keepFocus: true })}
 	>
 		{#snippet row(lead, _i)}
-			<td class="px-4 py-3 w-[9%]">
+			<td class="px-4 py-3 w-[18%] md:w-[9%]">
 				<Badge label={scoreLabel(lead.score_pertinence ?? 0)} variant={scoreBadgeVariant(lead.score_pertinence ?? 0)} dot={true} />
 			</td>
-			<td class="px-4 py-3 font-medium text-text w-[20%] truncate" title={lead.raison_sociale}>{lead.raison_sociale}</td>
+			<td class="px-4 py-3 font-medium text-text w-[50%] md:w-[20%] truncate" title={lead.raison_sociale}>{lead.raison_sociale}</td>
 			<td class="px-4 py-3 text-text w-[8%] hidden md:table-cell">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '–'}</td>
 			<td class="px-4 py-3 text-text w-[17%] truncate hidden lg:table-cell" title={lead.localite ?? ''}>{lead.localite ?? '–'}</td>
 			<td class="px-4 py-3 text-text-muted text-xs w-[20%] truncate hidden lg:table-cell">{sourceLabel(lead.source)}</td>
-			<td class="px-4 py-3 w-[13%]">
+			<td class="px-4 py-3 w-[32%] md:w-[13%]">
 				<Badge label={statutLabel(lead.statut)} variant={statutBadgeVariant(lead.statut)} dot={true} />
 			</td>
 			<td class="px-4 py-3 text-text-muted text-xs w-[10%] hidden lg:table-cell">{relativeDate(lead.date_import)}</td>
