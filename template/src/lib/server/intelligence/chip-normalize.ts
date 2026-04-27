@@ -1,8 +1,12 @@
 // Bloc 4 : Normalisation search_terms legacy (string) → chip structuré {kind, canton, query, label}.
 // Objectif : rendre tous les items rétro-compat cliquables pour auto-exécution prospection.
 // Heuristique volontairement conservative : SIMAP par défaut (seul API acceptant du texte libre).
+//
+// Phase F (Veille→Prospection) : RegBL ajouté pour permettre des chips ciblant des
+// chantiers (permis de construire). Détecté uniquement sur indices forts (chantier,
+// permis de construire, RegBL, EGID). Sinon SIMAP/Zefix par défaut, comportement legacy.
 
-export type ChipKind = 'simap' | 'zefix';
+export type ChipKind = 'simap' | 'zefix' | 'regbl';
 export type ChipCanton = 'GE' | 'VD' | 'VS' | 'NE' | 'FR' | 'JU';
 
 export interface SearchChip {
@@ -23,6 +27,7 @@ const CANTON_PATTERNS: Array<{ canton: ChipCanton; re: RegExp }> = [
 
 const SIMAP_HINT = /\b(SIMAP|appel[s]?\s+d['’]?offres?|AO|march[eé]\s+public|adjudication|soumission)\b/i;
 const ZEFIX_HINT = /\b(SA|S\.A\.|Sàrl|SARL|GmbH|AG|entreprise|raison\s+sociale|Zefix)\b/i;
+const REGBL_HINT = /\b(RegBL|EGID|permis\s+de\s+construire|chantier|b[aâ]timent|construction\s+neuve|GWR)\b/i;
 
 /**
  * Détecte le canton explicite dans une chaîne. Retourne null si aucun match.
@@ -35,10 +40,13 @@ export function detectCanton(text: string): ChipCanton | null {
 }
 
 /**
- * Devine le kind SIMAP/Zefix. SIMAP par défaut (seul API texte libre).
+ * Devine le kind SIMAP/Zefix/RegBL. SIMAP par défaut (seul API texte libre historique).
  * Zefix seulement si indices forts (SA/Sàrl/GmbH/AG...).
+ * RegBL seulement si indices forts (chantier, permis de construire, EGID).
  */
 export function detectKind(text: string): ChipKind {
+	// RegBL prioritaire car ses indices sont les plus spécifiques (peu de faux positifs).
+	if (REGBL_HINT.test(text)) return 'regbl';
 	// Si SIMAP explicite ou indices d'appel d'offres → simap
 	if (SIMAP_HINT.test(text)) return 'simap';
 	// Si indices raison sociale entreprise → zefix
@@ -64,7 +72,7 @@ export function normalizeStringToChip(text: string, fallbackCanton: ChipCanton =
  * Libellé affiché sur le chip UI : "SIMAP · VD · école rénovation vitrage".
  */
 export function buildChipLabel(kind: ChipKind, canton: ChipCanton, query: string): string {
-	const kindLabel = kind === 'simap' ? 'SIMAP' : 'Zefix';
+	const kindLabel = kind === 'simap' ? 'SIMAP' : kind === 'zefix' ? 'Zefix' : 'RegBL';
 	const clipped = query.length > 80 ? query.slice(0, 77) + '…' : query;
 	return `${kindLabel} · ${canton} · ${clipped}`;
 }

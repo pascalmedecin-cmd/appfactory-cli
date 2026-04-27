@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { calculerScore } from '$lib/scoring';
-import { fetchIntelligenceSignal } from '$lib/server/intelligence/signal-lookup';
+import { fetchIntelligenceSignalLookup } from '$lib/server/intelligence/signal-lookup';
+import { linkImportSignals } from '$lib/server/intelligence/link-import-signal';
 import { randomUUID } from 'crypto';
 import { translate, cantonToLead, CANTON_MAP, type Translation } from './helpers';
 
@@ -116,10 +117,11 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const skipReasons = { missingId: 0, existing: 0, dismissed: 0, unknownCanton: 0 };
 	const inserts = [];
 
-	// Bloc 3 : fetch signal Veille source pour bonus scoring.
-	const intelligenceSignal = fromIntelligence
-		? await fetchIntelligenceSignal(locals.supabase, fromIntelligence, fromItemRank)
+	// Bloc 3 : fetch signal Veille source pour bonus scoring + snapshot DB.
+	const signalLookup = fromIntelligence
+		? await fetchIntelligenceSignalLookup(locals.supabase, fromIntelligence, fromItemRank)
 		: null;
+	const intelligenceSignal = signalLookup?.forScoring ?? null;
 
 	for (const project of projects) {
 		if (!project.id || !project.title) { skipReasons.missingId++; continue; }
@@ -191,6 +193,19 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			}
 			imported += batch.length;
 		}
+	}
+
+	// Phase C : lier les leads importés au signal Veille source (pour re-scoring + agrégation).
+	if (signalLookup && fromIntelligence && fromItemRank && inserts.length > 0) {
+		await linkImportSignals(locals.supabase, {
+			leadIds: inserts.map((i) => i.id),
+			reportId: fromIntelligence,
+			itemRank: fromItemRank,
+			fromTerm,
+			maturity: signalLookup.snapshot.maturity,
+			complianceTag: signalLookup.snapshot.complianceTag,
+			signalGeneratedAt: signalLookup.snapshot.generatedAt
+		});
 	}
 
 	const skipDetails: string[] = [];

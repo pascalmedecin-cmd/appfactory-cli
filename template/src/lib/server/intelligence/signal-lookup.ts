@@ -17,6 +17,19 @@ interface IntelligenceItemShape {
 }
 
 /**
+ * Phase C+D : couple le signal pour le scoring (weeksSince calculé) et le
+ * snapshot DB (generated_at brut) qui sert à insérer dans prospect_lead_signals.
+ */
+export interface IntelligenceSignalLookup {
+	forScoring: IntelligenceSignalInput;
+	snapshot: {
+		maturity: 'emergent' | 'etabli' | 'speculatif';
+		complianceTag: string;
+		generatedAt: string;
+	};
+}
+
+/**
  * Calcule le nombre de semaines entières écoulées depuis une date ISO.
  * Retourne 0 si date future ou invalide.
  */
@@ -29,15 +42,14 @@ function weeksSinceIso(iso: string): number {
 }
 
 /**
- * Retourne les données du signal Veille source si trouvé, null sinon.
- * Se comporte défensivement : si n'importe quelle étape échoue, retourne null
- * (pas de bonus = fallback sûr, le scoring classique reste correct).
+ * Retourne le signal Veille source (forScoring + snapshot) si trouvé, null sinon.
+ * Défensif : tout échec → null = pas de bonus, scoring classique reste correct.
  */
-export async function fetchIntelligenceSignal(
+export async function fetchIntelligenceSignalLookup(
 	supabase: Pick<SupabaseClient, 'from'>,
 	reportId: string,
 	itemRank: number | null | undefined
-): Promise<IntelligenceSignalInput | null> {
+): Promise<IntelligenceSignalLookup | null> {
 	if (!reportId || !itemRank || itemRank < 1) return null;
 
 	try {
@@ -55,11 +67,31 @@ export async function fetchIntelligenceSignal(
 		if (!item || !item.maturity) return null;
 
 		return {
-			maturity: item.maturity,
-			complianceTag: row.compliance_tag ?? null,
-			weeksSince: weeksSinceIso(row.generated_at)
+			forScoring: {
+				maturity: item.maturity,
+				complianceTag: row.compliance_tag ?? null,
+				weeksSince: weeksSinceIso(row.generated_at)
+			},
+			snapshot: {
+				maturity: item.maturity,
+				complianceTag: row.compliance_tag,
+				generatedAt: row.generated_at
+			}
 		};
 	} catch {
 		return null;
 	}
+}
+
+/**
+ * Wrapper rétro-compat : seuls les champs scoring sont retournés.
+ * Conservé pour ne pas casser les tests existants Bloc 3.
+ */
+export async function fetchIntelligenceSignal(
+	supabase: Pick<SupabaseClient, 'from'>,
+	reportId: string,
+	itemRank: number | null | undefined
+): Promise<IntelligenceSignalInput | null> {
+	const lookup = await fetchIntelligenceSignalLookup(supabase, reportId, itemRank);
+	return lookup?.forScoring ?? null;
 }

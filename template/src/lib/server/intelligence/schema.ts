@@ -3,7 +3,10 @@ import { normalizeStringToChip } from './chip-normalize';
 
 export const CantonEnum = z.enum(['GE', 'VD', 'VS', 'NE', 'FR', 'JU']);
 
-export const ChipKindEnum = z.enum(['simap', 'zefix']);
+// Phase F : étendu à regbl. search_ch n'est pas un import (enrichissement par lead_id),
+// donc absent du pont Veille auto-exécuté. Les 3 imports prospection auto-exécutables
+// depuis Veille : simap (appels d'offres), zefix (entreprises), regbl (chantiers).
+export const ChipKindEnum = z.enum(['simap', 'zefix', 'regbl']);
 
 // Chip structuré auto-exécutable (Bloc 4).
 // Un chip = une recherche prospection qui peut partir immédiatement au clic.

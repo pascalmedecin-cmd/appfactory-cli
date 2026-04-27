@@ -1,7 +1,8 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { calculerScore } from '$lib/scoring';
-import { fetchIntelligenceSignal } from '$lib/server/intelligence/signal-lookup';
+import { fetchIntelligenceSignalLookup } from '$lib/server/intelligence/signal-lookup';
+import { linkImportSignals } from '$lib/server/intelligence/link-import-signal';
 import { randomUUID } from 'crypto';
 
 const ZEFIX_BASE = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
@@ -153,9 +154,10 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	// Bloc 3 : fetch du signal Veille source (si from_intelligence + from_item_rank fournis).
 	// Un seul lookup pour toute la batch = pas d'impact perf.
-	const intelligenceSignal = fromIntelligence
-		? await fetchIntelligenceSignal(locals.supabase, fromIntelligence, fromItemRank)
+	const signalLookup = fromIntelligence
+		? await fetchIntelligenceSignalLookup(locals.supabase, fromIntelligence, fromItemRank)
 		: null;
+	const intelligenceSignal = signalLookup?.forScoring ?? null;
 
 	for (const company of companies) {
 		if (!company.name || !company.uid) { skipped++; continue; }
@@ -217,6 +219,19 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			}
 			imported += batch.length;
 		}
+	}
+
+	// Phase C : lier les leads importés au signal Veille source.
+	if (signalLookup && fromIntelligence && fromItemRank && inserts.length > 0) {
+		await linkImportSignals(locals.supabase, {
+			leadIds: inserts.map((i) => i.id),
+			reportId: fromIntelligence,
+			itemRank: fromItemRank,
+			fromTerm,
+			maturity: signalLookup.snapshot.maturity,
+			complianceTag: signalLookup.snapshot.complianceTag,
+			signalGeneratedAt: signalLookup.snapshot.generatedAt
+		});
 	}
 
 	return json({

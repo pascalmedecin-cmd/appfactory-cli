@@ -5,6 +5,7 @@ import { currentWeekRange, extendedWindowStart } from './week-utils';
 import type { IntelligenceReport } from './schema';
 import type { PreviousItem } from './prompt';
 import { sendRecapEmail } from './email-recap';
+import { applySignalsFromReport } from './apply-signals';
 
 export interface RunResult {
 	ok: boolean;
@@ -173,6 +174,17 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 			weekLabel: week.weekLabel,
 			error: `Insert DB échoué : ${insertError?.message ?? 'inconnu'}`
 		};
+	}
+
+	// Phase C+D : propager les signaux Veille aux leads existants (re-scoring continu
+	// + agrégation cross-signaux). Best-effort : un échec ici ne bloque pas l'edition.
+	try {
+		const applied = await applySignalsFromReport(supabase, inserted.id, report);
+		console.log(
+			`[veille→prospection] report ${week.weekLabel} : ${applied.insertedSignals} signal(s) lié(s), ${applied.recomputedLeads} lead(s) recalculé(s), ${applied.failedLeads} échec(s).`
+		);
+	} catch (e) {
+		console.error('[veille→prospection] échec apply-signals (non-bloquant)', e);
 	}
 
 	// Email récap (best-effort, n'influence pas le retour). Mode `sparse` si édition

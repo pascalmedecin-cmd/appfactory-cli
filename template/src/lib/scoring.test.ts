@@ -278,6 +278,89 @@ describe('calculerScore avec intelligenceSignal (Bloc 3)', () => {
 		});
 		expect(result.total).toBe(2); // juste signal simap
 	});
+});
+
+describe('calculerScore avec intelligenceSignals (Phase C+D : agrégation cross-signaux)', () => {
+	it('cumule plusieurs signaux dans la fenêtre', () => {
+		const baseline = calculerScore({
+			canton: 'VD',
+			source: 'simap'
+		});
+		// 2 signaux : etabli OK FilmPro (+2) + emergent (+1) = +3
+		const withTwo = calculerScore({
+			canton: 'VD',
+			source: 'simap',
+			intelligenceSignals: [
+				{ maturity: 'etabli', complianceTag: 'OK FilmPro', weeksSince: 0 },
+				{ maturity: 'emergent', complianceTag: 'Adjacent pertinent', weeksSince: 2 }
+			]
+		});
+		expect(withTwo.total).toBe(baseline.total + 3);
+		const cumulCritere = withTwo.criteres.find((c) => c.startsWith('Veille cumul'));
+		expect(cumulCritere).toBeDefined();
+		expect(cumulCritere).toContain('2 signaux');
+	});
+
+	it('plafonne à maxBonus (4) quand le cumul brut dépasse', () => {
+		// 3 signaux etabli OK FilmPro = +6 brut → plafonné à 4
+		const result = calculerScore({
+			source: 'simap',
+			intelligenceSignals: [
+				{ maturity: 'etabli', complianceTag: 'OK FilmPro', weeksSince: 0 },
+				{ maturity: 'etabli', complianceTag: 'OK FilmPro', weeksSince: 1 },
+				{ maturity: 'etabli', complianceTag: 'OK FilmPro', weeksSince: 2 }
+			]
+		});
+		// baseline simap (+2) + plafond cumul Veille (+4) = 6
+		expect(result.total).toBe(6);
+		expect(result.criteres.some((c) => c.includes('plafonné'))).toBe(true);
+		expect(result.criteres.some((c) => c.includes('+4/6'))).toBe(true);
+	});
+
+	it('ignore les signaux hors fenêtre dans le cumul', () => {
+		const result = calculerScore({
+			source: 'simap',
+			intelligenceSignals: [
+				{ maturity: 'etabli', complianceTag: 'OK FilmPro', weeksSince: 0 }, // +2
+				{ maturity: 'etabli', complianceTag: 'OK FilmPro', weeksSince: 10 } // 0 (hors fenêtre)
+			]
+		});
+		expect(result.total).toBe(2 + 2); // simap + 1 signal valide
+		expect(result.criteres.some((c) => c.includes('Veille cumul 1 signal'))).toBe(true);
+	});
+
+	it('intelligenceSignals (array) prend le pas sur intelligenceSignal (legacy)', () => {
+		// Si les deux sont fournis, l'array gagne (évite double-comptage).
+		const result = calculerScore({
+			source: 'simap',
+			intelligenceSignal: { maturity: 'etabli', complianceTag: 'OK FilmPro', weeksSince: 0 },
+			intelligenceSignals: [
+				{ maturity: 'emergent', complianceTag: 'Adjacent pertinent', weeksSince: 0 }
+			]
+		});
+		// simap (+2) + array seul (emergent +1) = 3
+		expect(result.total).toBe(3);
+	});
+
+	it('array vide → fallback sur signal legacy si présent', () => {
+		const result = calculerScore({
+			source: 'simap',
+			intelligenceSignal: { maturity: 'etabli', complianceTag: 'OK FilmPro', weeksSince: 0 },
+			intelligenceSignals: []
+		});
+		// L'array vide active le bloc agrégation mais sans signal → 0 bonus.
+		// Fallback sur intelligenceSignal n'a PAS lieu (cohérent : si caller passe array vide, c'est qu'il a interrogé la table de jointure et n'a rien trouvé).
+		expect(result.total).toBe(2); // juste simap
+	});
+
+	it('array null → fallback sur signal legacy', () => {
+		const result = calculerScore({
+			source: 'simap',
+			intelligenceSignal: { maturity: 'etabli', complianceTag: 'OK FilmPro', weeksSince: 0 },
+			intelligenceSignals: null
+		});
+		expect(result.total).toBe(2 + 2); // simap + bonus legacy
+	});
 
 	it('speculatif ne modifie pas le score', () => {
 		const baseline = calculerScore({ source: 'simap' });

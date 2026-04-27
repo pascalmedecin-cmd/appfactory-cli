@@ -19,7 +19,11 @@ export const SIGNAL_VEILLE_SCORING = {
 		speculatif: 0        // maturity=speculatif → pas de bonus, on attend validation
 	},
 	// Décroissance temporelle : bonus conservé <= 4 semaines, perdu au-delà.
-	decayWeeks: 4
+	decayWeeks: 4,
+	// Plafond cumulé sur N signaux Veille distincts touchant le même lead.
+	// Empêche un lead de devenir « ultra-chaud » uniquement par accumulation Veille
+	// sans fondamentaux (canton, secteur, source SIMAP, etc.).
+	maxBonus: 4
 } as const;
 
 export interface IntelligenceSignalInput {
@@ -36,9 +40,13 @@ interface LeadScoring {
 	date_publication?: string | Date | null;
 	telephone?: string | null;
 	montant?: number | null;
-	// Bloc 3 : signal Veille source (optionnel). Si fourni et dans la fenêtre de 4 semaines,
-	// apporte un bonus selon maturity + compliance_tag.
+	// Bloc 3 : signal Veille unique (rétro-compat, import direct depuis chip Veille).
+	// À l'import, un seul signal est connu (celui du chip cliqué). Pour le re-scoring
+	// continu et l'agrégation cross-signaux, utiliser intelligenceSignals (array) ci-dessous.
 	intelligenceSignal?: IntelligenceSignalInput | null;
+	// Phase C+D : plusieurs signaux Veille peuvent toucher un même lead au fil des semaines.
+	// Si fourni, prend le pas sur intelligenceSignal (qui reste pour rétro-compat tests).
+	intelligenceSignals?: IntelligenceSignalInput[] | null;
 }
 
 export interface ScoreDetail {
@@ -149,8 +157,34 @@ export function calculerScore(lead: LeadScoring): ScoreDetail {
 		criteres.push(`Montant > ${scoring.montantMinimum.seuil / 1000}k (+${scoring.montantMinimum.points})`);
 	}
 
-	// Bloc 3 : bonus signal Veille (si lead issu d'un chip Veille dans la fenêtre de 4 semaines)
-	if (lead.intelligenceSignal) {
+	// Phase C+D : agrégation cross-signaux Veille (array). Si fourni (même vide),
+	// ignore le champ legacy intelligenceSignal pour éviter le double-comptage et
+	// respecter la sémantique « caller a interrogé la table de jointure ».
+	// Pour conserver la rétro-compat tests Bloc 3, le legacy reste actif quand
+	// intelligenceSignals est null/undefined.
+	if (lead.intelligenceSignals != null) {
+		let cumul = 0;
+		const detail: string[] = [];
+		for (const sig of lead.intelligenceSignals) {
+			const bonus = calculerBonusVeille(sig);
+			if (bonus) {
+				cumul += bonus.points;
+				detail.push(bonus.critere);
+			}
+		}
+		// Plafond explicite (cf. SIGNAL_VEILLE_SCORING.maxBonus).
+		const applied = Math.min(cumul, SIGNAL_VEILLE_SCORING.maxBonus);
+		if (applied > 0) {
+			total += applied;
+			const motSignal = detail.length > 1 ? 'signaux' : 'signal';
+			if (cumul <= SIGNAL_VEILLE_SCORING.maxBonus) {
+				criteres.push(`Veille cumul ${detail.length} ${motSignal} (+${applied})`);
+			} else {
+				criteres.push(`Veille cumul ${detail.length} ${motSignal} plafonné (+${applied}/${cumul})`);
+			}
+		}
+	} else if (lead.intelligenceSignal) {
+		// Bloc 3 legacy : signal unique (import direct depuis chip Veille).
 		const bonus = calculerBonusVeille(lead.intelligenceSignal);
 		if (bonus) {
 			total += bonus.points;

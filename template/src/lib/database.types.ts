@@ -508,6 +508,57 @@ export type Database = {
           },
         ]
       }
+      prospect_lead_signals: {
+        Row: {
+          applied_at: string
+          compliance_tag: string
+          item_rank: number
+          lead_id: string
+          match_kind: string
+          match_term: string | null
+          maturity: string
+          report_id: string
+          signal_generated_at: string
+        }
+        Insert: {
+          applied_at?: string
+          compliance_tag: string
+          item_rank: number
+          lead_id: string
+          match_kind: string
+          match_term?: string | null
+          maturity: string
+          report_id: string
+          signal_generated_at: string
+        }
+        Update: {
+          applied_at?: string
+          compliance_tag?: string
+          item_rank?: number
+          lead_id?: string
+          match_kind?: string
+          match_term?: string | null
+          maturity?: string
+          report_id?: string
+          signal_generated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_lead_signals_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_lead_signals_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "intelligence_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_leads: {
         Row: {
           adresse: string | null

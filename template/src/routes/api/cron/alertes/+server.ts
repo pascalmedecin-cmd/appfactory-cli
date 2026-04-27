@@ -2,7 +2,15 @@ import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { matchMotsCles } from '$lib/text-utils';
+import { config } from '$lib/config';
 import { timingSafeEqual } from 'crypto';
+
+// Seuils de température : source unique config.scoring.labels.
+// chaud >= CHAUD_MIN, tiede dans [TIEDE_MIN, CHAUD_MIN-1], froid < TIEDE_MIN.
+const CHAUD_MIN = config.scoring.labels.chaud;
+const TIEDE_MIN = config.scoring.labels.tiede;
+const FROID_MAX = TIEDE_MIN - 1;
+const TIEDE_MAX = CHAUD_MIN - 1;
 
 function verifyCronSecret(authHeader: string | null): boolean {
 	const secret = env.CRON_SECRET;
@@ -72,13 +80,13 @@ export async function GET(event: RequestEvent) {
 			if (rech.score_minimum) query = query.gte('score_pertinence', rech.score_minimum);
 			if (rech.temperatures && rech.temperatures.length > 0 && rech.temperatures.length < 3) {
 				const ranges: string[] = [];
-				if (rech.temperatures.includes('chaud')) ranges.push('score_pertinence.gte.8');
-				if (rech.temperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.5,score_pertinence.lte.7)');
-				if (rech.temperatures.includes('froid')) ranges.push('score_pertinence.lte.4');
+				if (rech.temperatures.includes('chaud')) ranges.push(`score_pertinence.gte.${CHAUD_MIN}`);
+				if (rech.temperatures.includes('tiede')) ranges.push(`and(score_pertinence.gte.${TIEDE_MIN},score_pertinence.lte.${TIEDE_MAX})`);
+				if (rech.temperatures.includes('froid')) ranges.push(`score_pertinence.lte.${FROID_MAX}`);
 				if (ranges.length === 1) {
-					if (rech.temperatures.includes('chaud')) query = query.gte('score_pertinence', 8);
-					else if (rech.temperatures.includes('tiede')) query = query.gte('score_pertinence', 5).lte('score_pertinence', 7);
-					else if (rech.temperatures.includes('froid')) query = query.lte('score_pertinence', 4);
+					if (rech.temperatures.includes('chaud')) query = query.gte('score_pertinence', CHAUD_MIN);
+					else if (rech.temperatures.includes('tiede')) query = query.gte('score_pertinence', TIEDE_MIN).lte('score_pertinence', TIEDE_MAX);
+					else if (rech.temperatures.includes('froid')) query = query.lte('score_pertinence', FROID_MAX);
 				} else {
 					query = query.or(ranges.join(','));
 				}
@@ -101,13 +109,13 @@ export async function GET(event: RequestEvent) {
 			if (rech.score_minimum) query = query.gte('score_pertinence', rech.score_minimum);
 			if (rech.temperatures && rech.temperatures.length > 0 && rech.temperatures.length < 3) {
 				const ranges: string[] = [];
-				if (rech.temperatures.includes('chaud')) ranges.push('score_pertinence.gte.8');
-				if (rech.temperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.5,score_pertinence.lte.7)');
-				if (rech.temperatures.includes('froid')) ranges.push('score_pertinence.lte.4');
+				if (rech.temperatures.includes('chaud')) ranges.push(`score_pertinence.gte.${CHAUD_MIN}`);
+				if (rech.temperatures.includes('tiede')) ranges.push(`and(score_pertinence.gte.${TIEDE_MIN},score_pertinence.lte.${TIEDE_MAX})`);
+				if (rech.temperatures.includes('froid')) ranges.push(`score_pertinence.lte.${FROID_MAX}`);
 				if (ranges.length === 1) {
-					if (rech.temperatures.includes('chaud')) query = query.gte('score_pertinence', 8);
-					else if (rech.temperatures.includes('tiede')) query = query.gte('score_pertinence', 5).lte('score_pertinence', 7);
-					else if (rech.temperatures.includes('froid')) query = query.lte('score_pertinence', 4);
+					if (rech.temperatures.includes('chaud')) query = query.gte('score_pertinence', CHAUD_MIN);
+					else if (rech.temperatures.includes('tiede')) query = query.gte('score_pertinence', TIEDE_MIN).lte('score_pertinence', TIEDE_MAX);
+					else if (rech.temperatures.includes('froid')) query = query.lte('score_pertinence', FROID_MAX);
 				} else {
 					query = query.or(ranges.join(','));
 				}
