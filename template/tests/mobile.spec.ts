@@ -2,7 +2,7 @@ import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync } from 'fs';
 import { dirname } from 'path';
 
-const SCREENSHOTS_DIR = 'docs/golden/v5/mobile';
+const SCREENSHOTS_DIR = 'docs/golden/v6/mobile';
 
 const PAGES_TO_AUDIT = [
 	{ path: '/', label: 'Dashboard' },
@@ -129,7 +129,7 @@ test.describe('CRM mobile V1 — audits objectifs', () => {
 		}
 	});
 
-	test('Annexe golden v5 mobile : screenshots full-page 8 routes', async ({ page }) => {
+	test('Annexe golden v6 mobile : screenshots full-page 8 routes', async ({ page }) => {
 		mkdirSync(SCREENSHOTS_DIR, { recursive: true });
 		for (const { path, label } of PAGES_TO_AUDIT) {
 			await page.goto(path, { waitUntil: 'networkidle' });
