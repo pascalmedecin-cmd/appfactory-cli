@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@import '@fontsource-variable/dm-sans';
+@import '@fontsource-variable/dm-sans/wght-italic.css';
 
 @theme {
 	/* Primary (Bleu FilmPro) */

@@ -1,7 +1,7 @@
 import type { Component } from 'svelte';
 import {
 	Activity, Archive, ArrowLeft, ArrowRight,
-	BadgeCheck, Ban, Bell, BellDot, BellRing, BookOpen, Bookmark, BookmarkPlus, Building, Building2,
+	BadgeCheck, Ban, BarChart3, Bell, BellDot, BellRing, BookOpen, Bookmark, BookmarkPlus, Building, Building2,
 	Calendar, Check, ChevronDown, ChevronRight, Circle, CircleAlert, CircleCheck, CircleCheckBig, CircleHelp, CirclePlay, CirclePlus, ClipboardCheck, Clock, CloudDownload, CloudUpload, Code, Compass, Construction, Contact, Copy,
 	Database, Download,
 	ExternalLink,
@@ -28,6 +28,7 @@ export const ICON_MAP: Record<string, Component> = {
 	api: Code,
 	apartment: Building,
 	archive: Archive,
+	bar_chart: BarChart3,
 	arrow_back: ArrowLeft,
 	arrow_forward: ArrowRight,
 	auto_awesome: Sparkles,

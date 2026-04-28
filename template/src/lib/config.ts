@@ -214,6 +214,11 @@ export const config = {
 		],
 		secondary: [
 			{
+				href: '/reporting',
+				label: 'Reporting',
+				icon: 'bar_chart',
+			},
+			{
 				href: '/aide',
 				label: 'Aide',
 				icon: 'help_outline',

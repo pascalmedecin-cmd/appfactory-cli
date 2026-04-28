@@ -189,7 +189,13 @@ navigation:
     - href: /signaux
       label: Signaux
       icon: notifications
+    - href: /veille
+      label: Veille Sectorielle
+      icon: radar
   secondary:
+    - href: /reporting
+      label: Reporting
+      icon: bar_chart
     - href: /aide
       label: Aide
       icon: help_outline
