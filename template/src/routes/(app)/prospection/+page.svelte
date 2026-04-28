@@ -34,6 +34,22 @@
 	let enrichBatchIds = $state<string[]>([]);
 	let alerteModalOpen = $state(false);
 	let recherchesOpen = $state(false);
+	let mobileFiltersOpen = $state(false);
+	let mobileMenuOpen = $state(false);
+	let mobileMenuRef = $state<HTMLDivElement | null>(null);
+
+	function closeMobileMenuOnOutside(event: MouseEvent) {
+		if (mobileMenuRef && !mobileMenuRef.contains(event.target as Node)) {
+			mobileMenuOpen = false;
+		}
+	}
+
+	$effect(() => {
+		if (mobileMenuOpen) {
+			document.addEventListener('click', closeMobileMenuOnOutside);
+			return () => document.removeEventListener('click', closeMobileMenuOnOutside);
+		}
+	});
 
 	// Filtres synchronisés avec les URL params du serveur
 	let filterSources = $state<string[]>(data.filters.sources);
@@ -120,9 +136,18 @@
 	}
 </script>
 
-<div class="flex flex-col gap-5 h-[calc(100dvh-var(--header-height)-3rem)]">
-	<!-- Workflow 4 étapes -->
-	<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+<div class="flex flex-col gap-3 md:gap-5 h-[calc(100dvh-var(--header-height)-3rem)]">
+	<!-- Workflow 4 étapes : compteurs inline mobile, cartes desktop -->
+	<div class="md:hidden flex items-center gap-2 text-xs leading-tight" aria-label="Compteurs prospection">
+		<span class="font-semibold text-text">{data.totalLeads} prospect{data.totalLeads > 1 ? 's' : ''}</span>
+		<span class="text-border">·</span>
+		<span class="text-prosp-enrich">{data.enrichedCount} enrichi{data.enrichedCount > 1 ? 's' : ''}</span>
+		<span class="text-border">·</span>
+		<span class="text-prosp-qualify">{data.qualifiedCount} qualifié{data.qualifiedCount > 1 ? 's' : ''}</span>
+		<span class="text-border">·</span>
+		<span class="text-prosp-convert">{data.convertedCount} converti{data.convertedCount > 1 ? 's' : ''}</span>
+	</div>
+	<div class="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-3">
 		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-import-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 85%)">
 			<Icon name="cloud_download" size={24} class="mt-0.5 text-prosp-import" />
 			<div>
@@ -155,43 +180,123 @@
 
 	<!-- Actions principales -->
 	{#if data.totalLeads > 0}
+	{@const enrichablesCount = data.leads.filter(l => l.statut !== 'transfere').length}
 	<div class="flex flex-wrap items-center justify-between gap-3">
-		<div class="flex items-center gap-3">
+		<div class="hidden md:flex items-center gap-3">
 			{#if data.recherches.length > 0}
 				<button
 					onclick={() => recherchesOpen = !recherchesOpen}
 					class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-text border border-border rounded-lg box-border hover:bg-surface-alt cursor-pointer transition-colors"
 				>
 					<Icon name="bookmarks" size={18} />
-					<span class="hidden sm:inline">Mes recherches</span>
+					<span>Mes recherches</span>
 					<span class="ml-1 px-1.5 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{data.recherches.length}</span>
 				</button>
 			{/if}
 		</div>
-		<div class="flex items-center gap-2">
+		<div class="flex items-center gap-2 ml-auto">
 			<button
 				onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
-				class="flex items-center gap-2 h-10 px-4 text-sm font-medium border rounded-lg box-border cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich/20"
-				disabled={data.leads.filter(l => l.statut !== 'transfere').length === 0}
-				title="Enrichit uniquement les {data.leads.filter(l => l.statut !== 'transfere').length} leads de cette page"
+				class="hidden md:flex items-center gap-2 h-10 px-4 text-sm font-medium border rounded-lg box-border cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich/20"
+				disabled={enrichablesCount === 0}
+				title="Enrichit uniquement les {enrichablesCount} leads de cette page"
 			>
 				<Icon name="auto_fix_high" size={18} />
-				<span class="hidden sm:inline">Enrichir cette page</span>
-				<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich/10 text-prosp-enrich">{data.leads.filter(l => l.statut !== 'transfere').length}</span>
+				<span>Enrichir cette page</span>
+				<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich/10 text-prosp-enrich">{enrichablesCount}</span>
 			</button>
 			<button
 				onclick={() => importModalOpen = true}
-				class="flex items-center gap-2 h-10 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg box-border cursor-pointer shadow-md transition-colors"
+				class="flex items-center gap-2 h-11 md:h-10 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg box-border cursor-pointer shadow-md transition-colors"
 			>
 				<Icon name="cloud_download" size={18} />
-				Importer des prospects
+				<span>Importer<span class="hidden sm:inline"> des prospects</span></span>
 			</button>
+			<!-- Kebab mobile : actions secondaires -->
+			<div class="md:hidden relative" bind:this={mobileMenuRef}>
+				<button
+					onclick={(e) => { e.stopPropagation(); mobileMenuOpen = !mobileMenuOpen; }}
+					class="flex items-center justify-center h-11 w-11 rounded-lg border border-border bg-white hover:bg-surface-alt cursor-pointer transition-colors"
+					aria-label="Plus d'actions"
+					aria-haspopup="menu"
+					aria-expanded={mobileMenuOpen}
+				>
+					<Icon name="more_vert" size={20} />
+				</button>
+				{#if mobileMenuOpen}
+					<div role="menu" class="absolute right-0 top-full mt-1 w-60 rounded-lg border border-border bg-white shadow-lg z-30 overflow-hidden">
+						{#if data.recherches.length > 0}
+							<button
+								role="menuitem"
+								onclick={() => { recherchesOpen = true; mobileMenuOpen = false; }}
+								class="w-full flex items-center gap-3 px-4 py-3 text-sm text-text hover:bg-surface-alt cursor-pointer text-left"
+							>
+								<Icon name="bookmarks" size={18} class="text-text-muted" />
+								<span class="flex-1">Mes recherches</span>
+								<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{data.recherches.length}</span>
+							</button>
+						{/if}
+						<button
+							role="menuitem"
+							onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; mobileMenuOpen = false; }}
+							class="w-full flex items-center gap-3 px-4 py-3 text-sm text-text hover:bg-surface-alt cursor-pointer text-left disabled:opacity-50 disabled:cursor-not-allowed"
+							disabled={enrichablesCount === 0}
+						>
+							<Icon name="auto_fix_high" size={18} class="text-prosp-enrich" />
+							<span class="flex-1">Enrichir cette page</span>
+							<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich/10 text-prosp-enrich">{enrichablesCount}</span>
+						</button>
+						<button
+							role="menuitem"
+							onclick={() => { alerteModalOpen = true; mobileMenuOpen = false; }}
+							class="w-full flex items-center gap-3 px-4 py-3 text-sm text-text hover:bg-surface-alt cursor-pointer text-left"
+						>
+							<Icon name="notifications_active" size={18} class="text-primary" />
+							<span class="flex-1">Créer une alerte</span>
+						</button>
+					</div>
+				{/if}
+			</div>
 		</div>
 	</div>
 	{/if}
 
-	<!-- Filtres -->
-	<div class="rounded-xl border border-border bg-white shadow-xs">
+	<!-- Filtres : drawer mobile collapsible, grid permanent desktop -->
+	<!-- Bouton mobile "Filtres" -->
+	<div class="md:hidden flex items-center gap-2">
+		<button
+			onclick={() => mobileFiltersOpen = !mobileFiltersOpen}
+			class="flex items-center gap-2 h-11 px-3 text-sm font-medium text-text border border-border rounded-lg box-border bg-white hover:bg-surface-alt cursor-pointer transition-colors"
+			aria-expanded={mobileFiltersOpen}
+			aria-controls="filtres-mobile-panel"
+		>
+			<Icon name="filter_list" size={18} />
+			<span>Filtres</span>
+			{#if activeFilterCount > 0}
+				<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{activeFilterCount}</span>
+			{/if}
+			<Icon name={mobileFiltersOpen ? 'expand_less' : 'expand_more'} size={18} class="text-text-muted" />
+		</button>
+		{#if activeFilterCount > 0}
+			<span class="text-xs text-text-muted">{data.totalLeads} résultat{data.totalLeads > 1 ? 's' : ''}</span>
+			<button onclick={resetFilters} class="flex items-center gap-1 ml-auto px-2 py-2 text-xs text-text-muted hover:text-danger cursor-pointer transition-colors">
+				<Icon name="close" size={14} />
+				Réinitialiser
+			</button>
+		{/if}
+	</div>
+	{#if mobileFiltersOpen}
+		<div id="filtres-mobile-panel" class="md:hidden rounded-xl border border-border bg-white shadow-xs">
+			<div class="grid grid-cols-2 gap-3 p-3">
+				<MultiSelectDropdown bind:selected={filterStatuts} options={statutOptions} icon="checklist" label="Statut" tooltip="Filtrer par statut de traitement" />
+				<MultiSelectDropdown bind:selected={filterTemperatures} options={temperatureOptions} icon="thermostat" label="Température" tooltip="Niveau d'intérêt estimé du prospect" />
+				<MultiSelectDropdown bind:selected={filterCantons} options={cantonOptions} icon="location_on" label="Canton" tooltip="Zones géographiques" />
+				<MultiSelectDropdown bind:selected={filterSources} options={sourceOptions} icon="database" label="Source" tooltip="Registres et bases de données" />
+			</div>
+		</div>
+	{/if}
+	<!-- Bloc filtres desktop -->
+	<div class="hidden md:block rounded-xl border border-border bg-white shadow-xs">
 		<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 p-3">
 			<MultiSelectDropdown bind:selected={filterStatuts} options={statutOptions} icon="checklist" label="Statut" tooltip="Filtrer par statut de traitement" />
 			<MultiSelectDropdown bind:selected={filterTemperatures} options={temperatureOptions} icon="thermostat" label="Température" tooltip="Niveau d'intérêt estimé du prospect" />

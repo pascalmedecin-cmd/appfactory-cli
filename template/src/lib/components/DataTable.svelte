@@ -140,13 +140,13 @@
 
 <div class="bg-white rounded-xl border border-border shadow-sm flex flex-col min-h-0">
 	{#if searchable}
-		<div class="px-4 py-3 border-b border-border">
+		<div class="sticky top-0 z-20 px-4 py-3 border-b border-border bg-white rounded-t-xl">
 			<input
 				type="text"
 				value={search}
 				oninput={(e) => handleSearchInput((e.target as HTMLInputElement).value)}
 				placeholder={searchPlaceholder}
-				class="w-full max-w-sm px-3 py-1.5 text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+				class="w-full md:max-w-sm px-3 py-2 md:py-1.5 text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 			/>
 		</div>
 	{/if}

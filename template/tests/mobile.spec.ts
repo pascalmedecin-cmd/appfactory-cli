@@ -60,6 +60,19 @@ test.describe('CRM mobile V1 — audits objectifs', () => {
 		}
 	});
 
+	test('Prospection densité mobile : 1re ligne table à moins de 400px du top', async ({ page }) => {
+		await page.goto('/prospection', { waitUntil: 'networkidle' });
+		await page.waitForTimeout(500);
+		const offsetTop = await page.evaluate(() => {
+			const firstRow = document.querySelector('main tbody tr');
+			if (!firstRow) return -1;
+			const rect = firstRow.getBoundingClientRect();
+			return rect.top + window.scrollY;
+		});
+		expect.soft(offsetTop, `1re ligne table à ${offsetTop}px du top, cible <400px`).toBeLessThan(400);
+		expect.soft(offsetTop, `1re ligne table introuvable (selector main tbody tr)`).toBeGreaterThan(0);
+	});
+
 	test('Prospection : table width ≤ wrapper, "Temp." abrégé sous md', async ({ page }) => {
 		await page.goto('/prospection', { waitUntil: 'networkidle' });
 		const table = page.locator('table').first();
