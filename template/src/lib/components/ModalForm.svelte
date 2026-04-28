@@ -107,7 +107,7 @@
 								type="button"
 								onclick={onDelete}
 								disabled={saving}
-								class="text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
+								class="min-h-11 inline-flex items-center px-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
 							>
 								Supprimer
 							</button>
@@ -118,7 +118,7 @@
 							<button
 								type="button"
 								onclick={() => open = false}
-								class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+								class="min-h-11 inline-flex items-center px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
 							>
 								Annuler
 							</button>
@@ -126,7 +126,7 @@
 								type="button"
 								onclick={onSave}
 								disabled={saving}
-								class="h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg shadow-sm disabled:opacity-50 cursor-pointer transition-colors"
+								class="h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg shadow-sm disabled:opacity-50 cursor-pointer transition-colors"
 							>
 								{saving ? 'Enregistrement…' : 'Enregistrer'}
 							</button>

@@ -5,6 +5,7 @@
 	type Column = {
 		key: string;
 		label: string;
+		shortLabel?: string;
 		sortable?: boolean;
 		class?: string;
 		render?: (row: T) => string;
@@ -170,11 +171,19 @@
 									class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-text-muted cursor-pointer hover:text-text"
 									onclick={() => toggleSort(col.key)}
 								>
-									{col.label}
+									{#if col.shortLabel}
+										<span class="md:hidden">{col.shortLabel}</span>
+										<span class="hidden md:inline">{col.label}</span>
+									{:else}
+										{col.label}
+									{/if}
 									{#if sortKey === col.key}
 										<Icon name={sortAsc ? 'arrow_upward' : 'arrow_downward'} size={16} />
 									{/if}
 								</button>
+							{:else if col.shortLabel}
+								<span class="md:hidden">{col.shortLabel}</span>
+								<span class="hidden md:inline">{col.label}</span>
 							{:else}
 								{col.label}
 							{/if}

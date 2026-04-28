@@ -208,19 +208,19 @@
 		</div>
 	{:else}
 		<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-			<a href="/contacts" class="flex items-center gap-2 h-10 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
+			<a href="/contacts" class="flex items-center gap-2 h-11 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
 				<Icon name="person_add" size={18} class="text-primary" />
 				Nouveau contact
 			</a>
-			<a href="/entreprises" class="flex items-center gap-2 h-10 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
+			<a href="/entreprises" class="flex items-center gap-2 h-11 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
 				<Icon name="domain_add" size={18} class="text-primary" />
 				Nouvelle entreprise
 			</a>
-			<a href="/pipeline" class="flex items-center gap-2 h-10 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
+			<a href="/pipeline" class="flex items-center gap-2 h-11 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
 				<Icon name="add_circle" size={18} class="text-primary" />
 				Nouvelle opportunité
 			</a>
-			<a href="/signaux" class="flex items-center gap-2 h-10 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
+			<a href="/signaux" class="flex items-center gap-2 h-11 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
 				<Icon name="notifications" size={18} class="text-primary" />
 				Voir les signaux
 			</a>

@@ -88,7 +88,7 @@
 	});
 
 	const columns = [
-		{ key: 'score_pertinence', label: 'Température', sortable: true, class: 'w-[18%] md:w-[9%]' },
+		{ key: 'score_pertinence', label: 'Température', shortLabel: 'Temp.', sortable: true, class: 'w-[18%] md:w-[9%]' },
 		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true, class: 'w-[50%] md:w-[20%]' },
 		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[8%] hidden md:table-cell' },
 		{ key: 'localite', label: 'Localité', sortable: true, class: 'w-[17%] hidden lg:table-cell' },
