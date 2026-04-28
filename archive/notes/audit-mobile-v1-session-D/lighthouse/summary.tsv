@@ -1,0 +1,11 @@
+page	perf	lcp_ms	tbt_ms	cls	tti_ms	fcp_ms	speed_index_ms	notes
+login	0.82	3604	0	0	3604	3028	–	public, slow 4G simulé CLI
+dashboard	0.97	2043	0	0.001	2043	2043	2068	mobile DevTools Pascal
+prospection	0.82	2822	0	0	2822	2822	2822	mobile DevTools Pascal | LCP=FCP (placeholder input "Rechercher un prospect…") | render-blocking Google Fonts -1100ms LCP | unused JS 71KiB (vkJhLX8M.js 33KiB)
+pipeline	0.96	2253	0	0	2253	2253	2507	mobile DevTools Pascal | LCP=bouton "Nouvelle opportunité" h-10 (40px) | render-blocking Google Fonts -600ms LCP
+contacts	0.89	2984	0	0	2984	2984	2984	mobile DevTools Pascal | LCP=placeholder input "Rechercher un contact…" | render-blocking Google Fonts -1250ms LCP | unused JS 84KiB (vkJhLX8M.js 45KiB) | LCP juste sous seuil 3000ms
+entreprises	0.97	2163	0	0	2163	2163	2163	mobile DevTools Pascal | LCP=placeholder input "Rechercher une entreprise…" | render-blocking Google Fonts -600ms LCP
+signaux	0.89	2988	0	0	2988	2988	2988	mobile DevTools Pascal | LCP=p text-sm "Détectez les opportunités business..." | render-blocking Google Fonts -1070ms LCP | unused JS 81KiB (vkJhLX8M.js 41KiB) | 5 long tasks | DOM 5724 elements (max children 160 cards grid)
+veille	0.97	2062	0	0	2062	2062	2234	mobile DevTools Pascal | LCP=p article édition magazine "Édition W17 dominée par un signal direct..." | render-blocking Google Fonts -789ms LCP/FCP | DOM 158 elements (page la plus légère mesurée) | TTFB 32ms excellent
+reporting	0.97	2044	0	0	2044	2044	2290	mobile DevTools Pascal | LCP=h2 "Opportunités créées : 12 derniers mois" | render-blocking Google Fonts -793ms LCP | unused JS 102KiB (vkJhLX8M.js 45KiB + vendor 59KiB) -200ms LCP | DOM 183 elements (max children 36 SVG chart) | TTFB 120ms | NOTE: page non accessible depuis sidebar = à corriger
+aide	0.96	2163	0	0	2163	2163	2472	mobile DevTools Pascal | LCP=p hero "Votre outil de gestion commerciale..." | render-blocking Google Fonts -790ms LCP | unused JS 83KiB (vkJhLX8M.js 45KiB + content_script 39KiB) -300ms LCP | DOM 382 elements (page la plus chargée DOM) | TTFB 31ms excellent | LCP score le plus bas (0.95)
