@@ -653,7 +653,7 @@
 					</form>
 					<button
 						onclick={() => deleteConfirm = null}
-						class="h-10 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
+						class="h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
 					>
 						Annuler
 					</button>
@@ -747,7 +747,7 @@
 			<button
 				type="submit"
 				disabled={saving}
-				class="h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
+				class="h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
 			>
 				{saving ? 'Enregistrement...' : 'Enregistrer'}
 			</button>
@@ -800,14 +800,14 @@
 				<button
 					type="button"
 					onclick={() => convertModalOpen = false}
-					class="h-10 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
+					class="h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
 				>
 					Annuler
 				</button>
 				<button
 					type="submit"
 					disabled={saving}
-					class="h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
+					class="h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
 				>
 					{saving ? 'Création...' : 'Créer et aller au pipeline'}
 				</button>
