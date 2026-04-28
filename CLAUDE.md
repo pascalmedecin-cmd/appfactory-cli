@@ -193,7 +193,7 @@ Fichiers cles :
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 1 Évaluation cron veille 01/05 (BLOQUÉ jusqu'au 01/05) ou nouveau chantier libre. Refonte densité /prospection mobile livrée S126 commit `958f58c`. Harmonisation PDF FilmPro livrée S126 (skill `filmpro-pdf` créé, `pdf-shared` lib, `filmpro-pdf-lite` déprécié). Bloc 2 Dashboard coûts CRM reste bloqué session dédiée.
+**Prochaine attaque** : Bloc 2 Fix bandeau navy WeasyPrint dernière page courte (~30 min, EXÉCUTABLE). Bug post-V1 isolable identifié S126 lors livraison skill `filmpro-pdf`. Bloc 1 cron veille BLOQUÉ ≥01/05, Bloc 3 dashboard coûts BLOQUÉ session dédiée. Refonte densité /prospection mobile livrée S126 commit `958f58c`. Harmonisation PDF FilmPro livrée S126 (skill `filmpro-pdf` créé, `pdf-shared` lib, `filmpro-pdf-lite` déprécié).
 
 ### 1. Évaluation cron veille 01/05 + validation pipeline Veille→Prospection [SUPERVISÉ • low • ~15 min]
 
@@ -203,7 +203,14 @@ Fichiers cles :
 - [ ] **[BLOQUÉ - date ≥ 2026-05-01]** Lire l'édition W18 reçue par email + sur /veille. Critères veille : (1) ≥1 item Suisse romande rangs 1-3, (2) sources crédibles, (3) anti-doublons W16/W17, (4) compliance_tag cohérent, (5) volume 5-10 items. Critères Veille→Prospection (S120) : (a) hook `applySignalsFromReport` dans logs Vercel sans exception, (b) éventuels leads existants matchés voient `score_pertinence` mis à jour. → voir `memory/project_veille_S112_apprentissages.md` et `memory/project_veille_prospection_integration_s120.md`
 - [ ] **[BLOQUÉ - validation Pascal cron 01/05]** Drop stash `stash@{0}` (`git stash drop stash@{0}`) une fois la refonte LEAN considérée stable. Le stash contenait des éléments S110 chantier B déjà intégrés ou écartés.
 
-### 2. Dashboard coûts CRM [BLOQUÉ • high • session dédiée]
+### 2. Fix bandeau navy WeasyPrint dernière page courte [EXÉCUTABLE • medium • ~30 min]
+
+**Pourquoi** : bug détecté S126 lors validation du nouveau skill `filmpro-pdf` sur la fixture `crm-point-etape-2026-04-23.json` : le bandeau navy bas (`@bottom-left` + `@bottom-right` 50%/50%) ne s'affiche pas sur la dernière page si elle a peu de contenu. Cause : WeasyPrint ne rend pas les `@bottom-*` margin-boxes quand le contenu n'atteint pas la zone bottom de la page. Reporté post-V1 du chantier B (Harmonisation PDF FilmPro).
+**Prérequis** : aucun.
+
+- [ ] **[EXÉCUTABLE]** Investiguer 2 pistes : (a) forcer `min-height: 100vh` sur `.doc-page` pour garantir que la page atteint la zone bottom, (b) utiliser `position: running(name)` + `@bottom-center { content: element(name) }` pour un bandeau natif WeasyPrint indépendant du contenu. Tester sur la fixture `~/.claude/skills-library/filmpro-pdf/fixtures/crm-point-etape-2026-04-23.json` avec dernière page courte. Validation : bandeau navy visible sur 100% des pages content. Re-générer baseline `fixtures/baseline/`. → voir `memory/project_filmpro_pdf_harmonization.md` § « Bug post-V1 connu ».
+
+### 3. Dashboard coûts CRM [BLOQUÉ • high • session dédiée]
 
 - [ ] **[BLOQUÉ - session dashboard dédiée]** Dashboard coûts CRM `/dashboard/couts` : table `cost_audit_runs` + graphique 12 sem + split cron/catégorie + seuils. → voir `memory/project_dashboard_costs_crm.md`
 
