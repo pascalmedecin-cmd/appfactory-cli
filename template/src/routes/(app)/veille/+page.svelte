@@ -231,88 +231,90 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{#each archives as ed (ed.id)}
 						<article
-							class="mag-archive-card bg-white rounded-xl border border-border shadow-xs hover:shadow-md hover:border-primary/40 transition-all flex flex-col group"
+							class="mag-archive-card bg-white rounded-xl border border-border shadow-xs hover:shadow-md hover:border-primary/40 transition-all overflow-hidden grid grid-cols-[112px_1fr] sm:grid-cols-[128px_1fr] group"
 						>
-							<header
-								class="p-6 border-b border-border flex items-start gap-4"
+							<!-- Mini-couverture navy : numéro édition -->
+							<aside
+								class="bg-primary-dark text-white p-4 sm:p-5 flex flex-col justify-between gap-3 relative overflow-hidden"
 							>
 								<div
-									class="text-center shrink-0 px-3 py-2 bg-primary-light rounded-lg min-w-[58px]"
-								>
+									class="absolute -top-6 -right-6 w-24 h-24 rounded-full bg-white/[0.04] pointer-events-none"
+								></div>
+								<div class="relative">
+									<div class="mag-kicker text-white/55 text-[9px]">N°</div>
 									<div
-										class="mag-kicker text-primary text-[9px] leading-none"
-									>
-										N°
-									</div>
-									<div
-										class="mag-display text-[26px] text-primary-dark leading-none tabular-nums mt-1"
+										class="mag-display text-[44px] sm:text-[52px] text-white leading-[0.85] tabular-nums mt-1"
 									>
 										{editionNumber(ed.week_label)}
 									</div>
 								</div>
-								<div class="flex-1 min-w-0">
-									<div class="flex items-center gap-2 flex-wrap">
-										<span class="mag-archive-title text-sm font-semibold text-text transition-colors"
-											>{ed.week_label}</span
+								<div class="relative space-y-1">
+									{#if ed.is_unread}
+										<span
+											class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-warning text-white text-[9px] font-bold uppercase tracking-wider"
 										>
-										{#if ed.is_unread}
-											<span
-												class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-warning text-white text-[9px] font-bold uppercase tracking-wider"
-											>
-												Nouveau
-											</span>
-										{/if}
+											Nouveau
+										</span>
+									{/if}
+									<div class="text-[11px] text-white/65 font-medium">
+										{ed.items_total} signal{ed.items_total > 1 ? 's' : ''}
+									</div>
+								</div>
+							</aside>
+
+							<!-- Corps blanc : meta + summary + 3 puces + CTA -->
+							<div class="flex flex-col">
+								<header class="px-5 sm:px-6 pt-5 sm:pt-6 pb-3">
+									<div class="mag-archive-title text-sm font-semibold text-text transition-colors">
+										{ed.week_label}
 									</div>
 									<div class="text-xs text-text-muted mt-1">
 										{formatDateLong(ed.generated_at)}
 									</div>
-									<div class="text-xs text-text-muted mt-1">
-										{ed.items_total} signal{ed.items_total > 1 ? 's' : ''}
-									</div>
-								</div>
-							</header>
-							<div class="p-6 flex-1 flex flex-col gap-4">
-								<p
-									class="text-sm text-text-body leading-relaxed line-clamp-3"
-								>
-									{ed.executive_summary}
-								</p>
-								{#if ed.preview.length > 0}
-									<div>
-										<div class="mag-kicker text-primary text-[9px] mb-2">
-											À retenir
-										</div>
-										<ul class="space-y-2">
-											{#each ed.preview as item (item.rank)}
-												<li
-													class="flex items-start gap-2 text-sm text-text leading-snug"
-												>
-													<span
-														class="text-primary-dark/40 font-semibold shrink-0 mt-px"
-														aria-hidden="true">·</span
+								</header>
+								<div class="px-5 sm:px-6 flex-1 flex flex-col gap-3 pb-4">
+									<p
+										class="text-sm text-text-body leading-relaxed line-clamp-3"
+									>
+										{ed.executive_summary}
+									</p>
+									{#if ed.preview.length > 0}
+										<div>
+											<div class="mag-kicker text-primary text-[9px] mb-2">
+												À retenir
+											</div>
+											<ul class="space-y-2">
+												{#each ed.preview as item (item.rank)}
+													<li
+														class="flex items-start gap-2 text-sm text-text leading-snug"
 													>
-													<span class="line-clamp-2">{item.title}</span>
-												</li>
-											{/each}
-										</ul>
-									</div>
-								{/if}
-							</div>
-							<footer
-								class="px-6 py-4 border-t border-border bg-surface-alt rounded-b-xl"
-							>
-								<a
-									href={`/veille/${ed.id}`}
-									class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary group-hover:text-primary-hover transition-colors"
+														<span
+															class="text-primary-dark/40 font-semibold shrink-0 mt-px"
+															aria-hidden="true">·</span
+														>
+														<span class="line-clamp-2">{item.title}</span>
+													</li>
+												{/each}
+											</ul>
+										</div>
+									{/if}
+								</div>
+								<footer
+									class="px-5 sm:px-6 py-4 border-t border-border bg-surface-alt"
 								>
-									Lire cette édition
-									<Icon
-										name="arrow_forward"
-										size={14}
-										class="transition-transform group-hover:translate-x-0.5"
-									/>
-								</a>
-							</footer>
+									<a
+										href={`/veille/${ed.id}`}
+										class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary group-hover:text-primary-hover transition-colors"
+									>
+										Lire cette édition
+										<Icon
+											name="arrow_forward"
+											size={14}
+											class="transition-transform group-hover:translate-x-0.5"
+										/>
+									</a>
+								</footer>
+							</div>
 						</article>
 					{/each}
 				</div>
