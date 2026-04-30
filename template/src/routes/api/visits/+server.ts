@@ -139,14 +139,30 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 	const owner = parseOwner(url);
 	if (!owner) return json({ error: 'lead_id ou entreprise_id requis (UUID)' }, { status: 400 });
 
-	const parentTable = owner.kind === 'lead' ? 'prospect_leads' : 'entreprises';
-	const { data: parent, error: parentErr } = await locals.supabase
-		.from(parentTable)
-		.select('id')
-		.eq('id', owner.id)
-		.maybeSingle();
-	if (parentErr) return genericError(parentErr, 'Erreur recherche parent');
-	if (!parent) return json({ error: 'Parent introuvable' }, { status: 404 });
+	let parent_address_raw: string | null = null;
+	if (owner.kind === 'lead') {
+		const { data, error: parentErr } = await locals.supabase
+			.from('prospect_leads')
+			.select('id, adresse, npa, localite, canton')
+			.eq('id', owner.id)
+			.maybeSingle();
+		if (parentErr) return genericError(parentErr, 'Erreur recherche parent');
+		if (!data) return json({ error: 'Parent introuvable' }, { status: 404 });
+		const fragments = [data.adresse, [data.npa, data.localite].filter(Boolean).join(' ').trim() || null, data.canton]
+			.filter((s): s is string => !!s && s.trim() !== '');
+		parent_address_raw = fragments.length > 0 ? fragments.join(', ') : null;
+	} else {
+		const { data, error: parentErr } = await locals.supabase
+			.from('entreprises')
+			.select('id, adresse_siege, canton')
+			.eq('id', owner.id)
+			.maybeSingle();
+		if (parentErr) return genericError(parentErr, 'Erreur recherche parent');
+		if (!data) return json({ error: 'Parent introuvable' }, { status: 404 });
+		const fragments = [data.adresse_siege, data.canton]
+			.filter((s): s is string => !!s && s.trim() !== '');
+		parent_address_raw = fragments.length > 0 ? fragments.join(', ') : null;
+	}
 
 	const col = owner.kind === 'lead' ? 'prospect_lead_id' : 'entreprise_id';
 	const { data: rows, error } = await locals.supabase
@@ -157,7 +173,7 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 
 	if (error) return genericError(error, 'Erreur lecture visites');
 
-	return json({ visits: rows ?? [] });
+	return json({ visits: rows ?? [], parent_address_raw });
 };
 
 export const POST = async ({ request, locals }: RequestEvent) => {

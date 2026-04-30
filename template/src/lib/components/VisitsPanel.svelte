@@ -25,6 +25,7 @@
 	const DISTANCE_FLAG_THRESHOLD_M = 100;
 
 	let visits = $state<Visit[]>([]);
+	let parentAddressRaw = $state<string | null>(null);
 	let loading = $state(true);
 	let capturing = $state(false);
 	let confirmOpen = $state(false);
@@ -59,6 +60,7 @@
 			}
 			const data = await resp.json();
 			visits = data.visits ?? [];
+			parentAddressRaw = data.parent_address_raw ?? null;
 		} catch (err) {
 			toasts.error(`Erreur chargement visites : ${String(err)}`);
 		} finally {
@@ -206,6 +208,16 @@
 		{capturing ? 'Localisation en cours…' : 'Check-in visite'}
 	</button>
 	<p class="text-[11px] text-text-muted">Géocodage adresses suisses uniquement (swisstopo).</p>
+
+	{#if parentAddressRaw}
+		<p class="text-xs text-text-muted">
+			<span class="font-medium">Adresse de référence :</span> {parentAddressRaw}
+		</p>
+	{:else if !loading}
+		<p class="text-xs text-warning">
+			Adresse de référence absente en base. La distance ne pourra pas être calculée tant que la fiche n'est pas enrichie.
+		</p>
+	{/if}
 
 	{#if loading}
 		<p class="text-sm text-text-muted">Chargement de l'historique…</p>
