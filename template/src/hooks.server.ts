@@ -34,10 +34,11 @@ setInterval(() => {
 }, 60_000);
 
 export const handle: Handle = async ({ event, resolve }) => {
-	// Rate limiting sur /api/prospection/* et /api/photos*
+	// Rate limiting sur /api/prospection/*, /api/photos* et /api/visits*
 	if (
 		event.url.pathname.startsWith('/api/prospection/') ||
-		event.url.pathname.startsWith('/api/photos')
+		event.url.pathname.startsWith('/api/photos') ||
+		event.url.pathname.startsWith('/api/visits')
 	) {
 		const ip = event.getClientAddress();
 		if (!checkRateLimit(ip)) {
@@ -114,7 +115,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	response.headers.set('X-Frame-Options', 'DENY');
 	response.headers.set('X-Content-Type-Options', 'nosniff');
 	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
 	response.headers.set(
 		'Content-Security-Policy',
 		"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'"

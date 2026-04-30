@@ -5,6 +5,7 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import PhotoGallery from '$lib/components/PhotoGallery.svelte';
+	import VisitsPanel from '$lib/components/VisitsPanel.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { calculerScore } from '$lib/scoring';
 	import {
@@ -223,6 +224,11 @@
 			<!-- Photos chantier (V2 mobile F1) -->
 			<div class="pt-4 border-t border-border">
 				<PhotoGallery leadId={lead.id} />
+			</div>
+
+			<!-- Visites terrain (V2 mobile F2) -->
+			<div class="pt-4 border-t border-border">
+				<VisitsPanel leadId={lead.id} />
 			</div>
 
 			<!-- Enrichissement -->

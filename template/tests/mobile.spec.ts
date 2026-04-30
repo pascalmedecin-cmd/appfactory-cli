@@ -298,4 +298,93 @@ test.describe('CRM mobile V1 — audits objectifs', () => {
 		});
 		expect([400, 403, 404]).toContain(resp.status());
 	});
+
+	// === V2 mobile F2 : géoloc visite RDV ===
+
+	test('VisitsPanel présent dans LeadSlideOut /prospection', async ({ page }) => {
+		await page.goto('/prospection', { waitUntil: 'networkidle' });
+		await page.waitForTimeout(500);
+
+		const firstRow = page.locator('main tbody tr').first();
+		const hasRows = await firstRow.isVisible().catch(() => false);
+		if (!hasRows) {
+			test.skip(true, 'Aucun lead en prod, test ignoré');
+			return;
+		}
+
+		await firstRow.click();
+		await page.waitForTimeout(800);
+
+		const visitsSection = page.locator('text=/visites terrain/i').first();
+		await expect.soft(visitsSection, 'Section "Visites terrain" absente du SlideOut').toBeVisible();
+
+		const checkInBtn = page.locator('button:has-text("Check-in visite")').first();
+		await expect.soft(checkInBtn, 'Bouton "Check-in visite" absent').toBeVisible();
+		const box = await checkInBtn.boundingBox().catch(() => null);
+		if (box) {
+			expect.soft(box.height, `Bouton "Check-in visite" hauteur ${box.height}px < 44`).toBeGreaterThanOrEqual(44);
+		}
+	});
+
+	test('VisitsPanel présent dans EntrepriseSlideOut /entreprises', async ({ page }) => {
+		await page.goto('/entreprises', { waitUntil: 'networkidle' });
+		await page.waitForTimeout(500);
+
+		const firstRow = page.locator('main tbody tr').first();
+		const hasRows = await firstRow.isVisible().catch(() => false);
+		if (!hasRows) {
+			test.skip(true, 'Aucune entreprise en prod, test ignoré');
+			return;
+		}
+
+		await firstRow.click();
+		await page.waitForTimeout(800);
+
+		const visitsSection = page.locator('text=/visites terrain/i').first();
+		await expect.soft(visitsSection, 'Section "Visites terrain" absente du SlideOut entreprise').toBeVisible();
+
+		const checkInBtn = page.locator('button:has-text("Check-in visite")').first();
+		await expect.soft(checkInBtn, 'Bouton "Check-in visite" absent').toBeVisible();
+	});
+
+	test('API /api/visits sans owner → 400', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const resp = await page.request.get('/api/visits');
+		expect(resp.status()).toBe(400);
+		const body = await resp.json();
+		expect(body.error).toBeTruthy();
+	});
+
+	test('API /api/visits avec UUID inexistant → 404', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const fakeId = '00000000-0000-0000-0000-000000000000';
+		const resp = await page.request.get(`/api/visits?lead_id=${fakeId}`);
+		expect(resp.status()).toBe(404);
+	});
+
+	test('API /api/visits POST sans body valide → rejet (400/403/404)', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const resp = await page.request.post('/api/visits', {
+			data: {},
+			headers: { 'Content-Type': 'application/json' },
+		});
+		// 400 lead_id manquant, 403 CSRF SvelteKit cross-origin.
+		expect([400, 403]).toContain(resp.status());
+	});
+
+	test('API /api/visits POST avec lat hors range → rejet (400/403)', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const fakeId = '00000000-0000-0000-0000-000000000000';
+		const resp = await page.request.post('/api/visits', {
+			data: { lead_id: fakeId, lat: 999, lng: 999 },
+			headers: { 'Content-Type': 'application/json' },
+		});
+		expect([400, 403]).toContain(resp.status());
+	});
+
+	test('API DELETE /api/visits/[id] avec UUID invalide → rejet (400/403)', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const resp = await page.request.delete('/api/visits/not-a-uuid');
+		expect([400, 403]).toContain(resp.status());
+	});
 });
