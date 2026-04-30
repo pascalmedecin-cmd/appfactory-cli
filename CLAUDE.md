@@ -1,12 +1,13 @@
 # AppFactory : CLAUDE.md
 
-**Statut :** Phase C, V2 mobile terrain Session α LIVRÉE (S127) - F1 photos chantier sur leads + entreprises en prod. Bloc 4 quick wins UX livré (S128). V1 MOBILE CLOS (S125), refonte densité /prospection (S126), skill `filmpro-pdf` (S126). Formation IA = sous-projet autonome dans `formation-ia/`, `cc` option 2.
-**Derniere mise a jour :** 2026-04-30 (S128 CRM high : Bloc 4 quick wins UX prospection + aide. /aide ouvre nouvel onglet, fix racine "?" header tableaux (mappings arrow_upward/arrow_downward/chevron_left absents → fallback CircleHelp), sélection globale /prospection pattern Gmail/Notion + endpoint /api/prospection/all-ids. Commit `49345c4`. vitest 365/365, build OK, security-auditor 0 H/C, 3 Low corrigés en place).
+**Statut :** Phase C, V2 mobile terrain Sessions α + β LIVRÉES (S127 + S129) - F1 photos chantier + F2 géoloc visite RDV en prod. Bloc 4 quick wins UX livré (S128). V1 MOBILE CLOS (S125), refonte densité /prospection (S126), skill `filmpro-pdf` (S126). Formation IA = sous-projet autonome dans `formation-ia/`, `cc` option 2.
+**Derniere mise a jour :** 2026-04-30 (S129 CRM xhigh : V2 mobile Session β F2 géoloc visite RDV livré + 5 commits extensions UX. VisitsPanel + /api/visits + migration géocodeur Nominatim → swisstopo (CH cadastre), lien Google Maps cliquable, surface adresse de référence parent, audit modaux/sidebars CRM (clic extérieur ne ferme plus 4 composants). 6 commits : `680c94a` + `7362c5e` + `efac782` + `1624713` + `898ff87` + `38026af`. vitest 365/365, build prod, security-auditor 0 H/C).
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session courante :** Session 128 (CRM, 2026-04-30, `/effort high`).
+**Session courante :** Session 129 (CRM, 2026-04-30, `/effort xhigh`).
 **Sessions précédentes (condensé)** - détail S122-S125 : `archive/2026-04-28-sessions.md`. Détail S78-S79 : `archive/decisions-sessions-78-79.md`. Détail S70-S77 : `archive/decisions-sessions-70-77.md`. Détail S80-S107 : `formation-ia/CLAUDE.md` (sous-projet autonome).
 
+- **S129** (CRM, 2026-04-30) : V2 mobile Session β F2 géoloc visite RDV livrée + extensions UX. 6 commits `680c94a` + `7362c5e` + `efac782` + `1624713` + `898ff87` + `38026af`. VisitsPanel + API /api/visits + géocodeur swisstopo + lien Google Maps + surface adresse parent + audit modaux/sidebars CRM (4 composants fixés clic extérieur). 0 H/C.
 - **S128** (CRM, 2026-04-30) : Bloc 4 quick wins UX livré. 2 commits `49345c4` + `4671e35`. /aide nouvel onglet, fix racine "?" header tableaux (3 mappings icon-map manquants), sélection globale /prospection pattern Gmail/Notion + endpoint all-ids.
 - **S127** (CRM, 2026-04-30) : V2 mobile Session α F1 photos chantier livrée. 3 commits `e3e2022` + `c5614c0` + `b02d108`. Migration 2 tables + bucket Private + PhotoGallery + intégrations 2 SlideOuts. 0 H/C.
 - **S125** (CRM, 2026-04-28) : V1 MOBILE CLOS. 3 commits `d2fa0fb` + `eee53f7` + `71f7378`. Font DM Sans self-hosted, infra Playwright mobile contre prod (17/17 verts), fix overlap badge /prospection.
@@ -196,12 +197,12 @@ Fichiers cles :
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 1 V2 mobile Session β - F2 géoloc visite RDV (~1.5h, EXÉCUTABLE, momentum F1 fort). Reprend cadrage S127 verrouillé (Option A PWA poussée, principe Linear V1 préservé). Bloc 2 fix bandeau navy WeasyPrint reste EXÉCUTABLE 30 min mais hors momentum V2. Bloc B1 cron veille BLOQUÉ ≥01/05. Bloc 4 quick wins UX livré S128 (commit `49345c4`).
+**Prochaine attaque** : Bloc 1 V2 mobile Session γ - F3 LeadExpress + F4 PipelineQuickAdvance (~2h, EXÉCUTABLE, débloqué par F2 livré S129, clôt V2 mobile terrain). Bloc 2 fix bandeau navy WeasyPrint reste EXÉCUTABLE 30 min mais hors momentum V2. Bloc B1 cron veille BLOQUÉ ≥01/05.
 
 
 <!-- BEGIN CONSOLIDATION (auto-géré par cockpit, ne pas éditer) -->
 
-### Consolidation cockpit (maj 2026-04-30T06:40:42)
+### Consolidation cockpit (maj 2026-04-30T10:57:57)
 
 **Blocs actionnables** (ordre d'attaque) :
 
@@ -213,9 +214,15 @@ Fichiers cles :
   - Objectif : Bandeau navy visible sur 100% des pages content, y compris dernière page courte
   - Investiguer 2 pistes : (a) forcer min-height: 100vh sur .doc-page pour garantir que la page atteint la zone bottom, (b) utiliser position: running(name) + @bottom-center { content: element(name) } pou
 
-- **Bloc #5** - Refonte aide + layout Veille (contenu + UI) (5h, confiance Moyen)
-  - Objectif : Audit 360 + refonte rubrique aide CRM et refonte layout page Veille sectorielle
-  - Mise à jour rubrique aide CRM FilmPro
+- **Bloc #4** - Quick wins UX /prospection + /aide (2h, confiance Élevé)
+  - Objectif : 3 fixes UX rapides : retirer ? cassés, sélection globale, ouvrir aide nouvel onglet
+  - Ouvrir la page aide dans un nouvel onglet
+  - Retirer les "?" dans l'en-tête du tableau /prospection
+  - Sélection globale prospection
+
+- **Bloc #5** - V2 mobile terrain F2 géoloc + refonte Veille (3.5h, confiance Moyen)
+  - Objectif : Livrer F2 check-in GPS visite RDV puis refondre layout page Veille sectorielle
+  - Composant CheckInButton.svelte avec permission navigator.geolocation + insertion prospect_visits (lat/lng/visited_at/user_id) + calcul distance Haversine vs adresse Zefix entreprise (flag info si écar
   - Refonte layout page Veille sectorielle CRM FilmPro
 
 **Blocs bloqués** :
@@ -227,14 +234,20 @@ Fichiers cles :
   - Lire l'édition W18 reçue par email + sur /veille. Critères veille : (1) ≥1 item Suisse romande rangs 1-3, (2) sources crédibles, (3) anti-doublons W16/W17, (4) compliance_tag cohérent, (5) volume 5-10
   - Drop stash stash@{0} (git stash drop stash@{0}) une fois la refonte LEAN considérée stable. Le stash contenait des éléments S110 chantier B déjà intégrés ou écartés.
 
+- **Bloc B2** [BLOQUÉ] - V2 mobile terrain F3 lead express + F4 pipeline (2h)
+  - Objectif : Modale LeadExpress + PipelineQuickAdvance + tests Playwright + golden v7 mobile
+  - Blocage : Dépend de la livraison F2 géoloc (mêmes intégrations LeadSlideOut/EntrepriseSlideOut)
+  - Débloque si : Livraison F2 géoloc dans Bloc #5
+  - Modale LeadExpress.svelte (nom + tel + entreprise + note) + bouton sticky dashboard et /prospection mobile. Composant PipelineQuickAdvance.svelte (étape suivante + mini-modale next action, optimistic
+
 <!-- END CONSOLIDATION -->
 
-### 1. V2 mobile terrain Session β - F2 géoloc visite RDV [EXÉCUTABLE • xhigh • ~1.5h]
+### 1. V2 mobile terrain Session γ - F3 LeadExpress + F4 PipelineQuickAdvance + tests + golden v7 [EXÉCUTABLE • xhigh • ~2h]
 
-**Pourquoi** : suite Session α F1 livrée S127 (photos chantier). F2 géoloc visite = capture GPS au check-in RDV avec écart vs adresse Zefix (info, pas blocage). Cadrage figé dans `docs/SPECS_CRM_MOBILE_V2.md` (verrouillé S127 Option A PWA poussée, principe Linear V1 préservé). Migration DB déjà appliquée prod (table `prospect_visits` créée S127 même migration que `prospect_photos`).
-**Prérequis** : aucun (DB et bucket Storage déjà en place depuis Session α).
+**Pourquoi** : derniers 2 features V2 mobile terrain. F3 = modale 4 champs <30 sec post-RDV. F4 = bouton « étape suivante » sur fiche entreprise/lead (2 taps max). Clôture V2 mobile. Débloqué par F2 livré S129.
+**Prérequis** : aucun (Session β F2 livrée S129).
 
-- [ ] **[EXÉCUTABLE]** Composant `CheckInButton.svelte` avec permission `navigator.geolocation` + insertion `prospect_visits` (lat/lng/visited_at/user_id) + calcul distance Haversine vs adresse Zefix entreprise (flag info si écart > 100m, pas blocage workflow) + affichage historique visites dans la fiche (LeadSlideOut + EntrepriseSlideOut). Fallback adresse manuelle si user refuse permission. Tests Playwright mobile (mock `navigator.geolocation`). RISQUE OUVERT à propager : RLS GPS visites permissive identique F1. → voir `docs/SPECS_CRM_MOBILE_V2.md` § F2 + `memory/project_v2_mobile_terrain_session_alpha.md` § Décisions design.
+- [ ] **[EXÉCUTABLE]** Modale `LeadExpress.svelte` (nom + tel + entreprise + note) + bouton sticky dashboard et /prospection mobile. Composant `PipelineQuickAdvance.svelte` (étape suivante + mini-modale next action, optimistic UI avec rollback Supabase). Tests Playwright mobile pour F3+F4. Golden v7 mobile screenshots (430×932 iPhone 14 Pro Max). → voir `docs/SPECS_CRM_MOBILE_V2.md` § F3 + F4.
 
 ### 2. Fix bandeau navy WeasyPrint dernière page courte [EXÉCUTABLE • medium • ~30 min]
 
@@ -242,13 +255,6 @@ Fichiers cles :
 **Prérequis** : aucun.
 
 - [x] **[EXÉCUTABLE]** Investiguer 2 pistes : (a) forcer `min-height: 100vh` sur `.doc-page` pour garantir que la page atteint la zone bottom, (b) utiliser `position: running(name)` + `@bottom-center { content: element(name) }` pour un bandeau natif WeasyPrint indépendant du contenu. Tester sur la fixture `~/.claude/skills-library/filmpro-pdf/fixtures/crm-point-etape-2026-04-23.json` avec dernière page courte. Validation : bandeau navy visible sur 100% des pages content. Re-générer baseline `fixtures/baseline/`. → voir `memory/project_filmpro_pdf_harmonization.md` § « Bug post-V1 connu ».
-### 3. V2 mobile terrain Session γ - F3 lead express + F4 pipeline rapide + tests + golden v7 [EXÉCUTABLE • xhigh • ~2h]
-
-**Pourquoi** : derniers 2 features V2 mobile terrain. F3 = modale 4 champs <30 sec post-RDV. F4 = bouton « étape suivante » sur fiche entreprise/lead (2 taps max). Clôture V2.
-**Prérequis** : Session β F2 livrée (mêmes intégrations LeadSlideOut/EntrepriseSlideOut).
-
-- [ ] **[BLOQUÉ - Session β F2 livrée]** Modale `LeadExpress.svelte` (nom + tel + entreprise + note) + bouton sticky dashboard et /prospection mobile. Composant `PipelineQuickAdvance.svelte` (étape suivante + mini-modale next action, optimistic UI avec rollback Supabase). Tests Playwright mobile pour F3+F4. Golden v7 mobile screenshots (430×932 iPhone 14 Pro Max). → voir `docs/SPECS_CRM_MOBILE_V2.md` § F3 + F4.
-
 ### B1. Évaluation cron veille 01/05 + validation pipeline Veille→Prospection [SUPERVISÉ • low • ~15 min]
 
 **Pourquoi** : double validation gratuite. (1) La refonte LEAN S112 (commit `83fd7fd`) avec hot-fix bias géo SR n'a jamais été re-testée API. (2) L'intégration Veille→Prospection livrée S120 (commit `9df286e`) sera exercée pour la 1re fois en prod par ce cron : surveiller logs Vercel ligne `[veille→prospection] report 2026-W18 : N signal(s) lié(s), M lead(s) recalculé(s)`.
@@ -262,8 +268,7 @@ Fichiers cles :
 
 ### Livré cette session (5 derniers)
 
+- [x] ~~V2 mobile terrain Session β - F2 géoloc visite RDV + extensions UX + audit modaux~~ - Fait 2026-04-30 (S129, xhigh) 6 commits push origin/main : `680c94a` (F2 base) + `7362c5e` (cascade géocodage + lien Google Maps) + `efac782` (toast diag visible) + `1624713` (migration Nominatim → swisstopo CH cadastre) + `898ff87` (surface adresse parent dans VisitsPanel) + `38026af` (audit modaux/sidebars : ConfirmModal, ModalForm, SlideOut, EnrichBatchModal ne ferment plus au clic extérieur). (1) **Composant VisitsPanel** monolithique (check-in + historique + ConfirmModal suppression). Intégré LeadSlideOut + entreprises page. (2) **API REST** GET (retourne aussi parent_address_raw) / POST (cascade swisstopo 3 tentatives, distance Haversine, flag >100m sans blocage) / DELETE (RISQUE OUVERT propagé F1). (3) **Fix critique** : Permissions-Policy `geolocation=()` bloquait complètement navigator.geolocation, passé à `geolocation=(self)`. (4) **Migration géocodeur** : Nominatim retournait NPA faux sur Carouge GE → bascule swisstopo (cadastre fédéral CH, gratuit, sans clé). Décision /dig verrou best-in-class long terme. (5) **UX** : commentaire « Géocodage adresses suisses uniquement », warning conditionnel adresse parent absente, lien Google Maps cliquable sur coords GPS. (6) **Audit modaux/sidebars CRM** sur demande Pascal : 4 composants passent button onclick → div neutre. PhotoGallery lightbox volontairement non touché (pattern viewer). AlerteModal/ImportModal héritent via wrap ModalForm. (7) Tests Playwright F2 (6 nouveaux). (8) Sécurité : security-auditor 0 H/C confirmé. (9) QA : vitest 365/365 vert sur tous les commits, build prod OK. Mémoire `project_v2_mobile_terrain_session_alpha.md` mise à jour avec Session β LIVRÉ.
 - [x] ~~Bloc 4 quick wins UX prospection + aide~~ - Fait 2026-04-30 (S128, high) commit `49345c4` push origin/main : (1) `/aide` ouvre dans un nouvel onglet (flag `external: true` sur item nav `config.ts`, support `target="_blank" rel="noopener noreferrer"` + icône externe dans `Sidebar.svelte`). (2) **Fix racine "?" en-tête tableaux** : les noms d'icônes `arrow_upward` / `arrow_downward` (indicateur de tri `DataTable.svelte`) et `chevron_left` (bouton "Réduire" `Sidebar.svelte`) étaient absents de `ICON_MAP` → fallback `CircleHelp` se déclenchait → "?" visible. Ajout des 3 mappings dans `icon-map.ts`. (3) **Sélection globale /prospection pattern Gmail/Notion** : bannière "Les N prospects de cette page sont sélectionnés. Sélectionner les Y prospects qui correspondent aux filtres" + endpoint `/api/prospection/all-ids` (cap MAX_IDS=5000, cap MAX_FILTER_VALUES=50, dual ilike + dédup Set pattern S120, rate limit 10/min via hooks.server.ts). QA : vitest 365/365, build OK, security-auditor 0 H/C (3 Low corrigés en place : cap cardinalité filtres, logging Postgres, recalcul `capped` post-dedup). Diff 5 fichiers / +153 −4.
 - [x] ~~V2 mobile terrain Session α - F1 photos chantier sur leads + entreprises~~ - Fait 2026-04-30 (S127, xhigh) : 3 commits push origin/main `e3e2022` + `c5614c0` + `b02d108`. **Migration prod** (psql via libpq, password DB Pascal one-shot) : 2 tables `prospect_photos` + `prospect_visits` (FK XOR lead/entreprise, types ajustés `entreprise_id TEXT` car schéma legacy) + 4 storage policies bucket Private `prospect_photos` (créé par Pascal UI Dashboard). **API REST** : `GET /api/photos?lead_id|entreprise_id=X` (liste + signed URLs 1h), `POST` (multipart, magic bytes anti MIME spoofing JPEG/PNG/WebP/HEIC, validation existence parent, whitelist ext stricte basée magic bytes, rate limit 10/min via hooks.server.ts), `DELETE /api/photos/[id]` (RISQUE OUVERT documenté : tout fondateur peut supprimer, validé Pascal Q2 « tous voient tout »). **Composant** `PhotoGallery.svelte` réutilisable : capture iOS native (sans `capture` attribute pour proposer galerie + appareil photo), compression canvas si > 2 Mo (max 1920px), galerie 3 cols + lightbox + ConfirmModal suppression, corbeille toujours visible (pas hover-only). **Intégrations** : LeadSlideOut (/prospection) + entreprises +page.svelte. **Icônes Lucide** ajoutées (camera, image, image_plus, images). **6 tests Playwright mobile** (PhotoGallery présence dans 2 SlideOuts + 4 tests API endpoints). **Sécurité** : security-auditor 0 High/Critical après fixes (4 High résolus + 5 Medium + 3 Low corrigés ; 2 RISQUE OUVERT documentés pour 3 fondateurs symétriques). **Specs** : `docs/SPECS_CRM_MOBILE_V2.md` + `.html` + `_MOCKUPS.html` (4 features F1-F4 maquettées). **Cadrage S127** : Option A retenue (PWA poussée principe Linear V1 préservé), note vocale + offline queue retirées définitivement (pas même V3+). Vitest 365/365, Playwright mobile 23/23 (1 skip = pas d'entreprise prod), build OK. QA terrain Pascal validée iPhone réel (capture + galerie + lightbox + suppression). Mémoire `project_v2_mobile_terrain_session_alpha.md` créée.
 - [x] ~~Harmonisation PDF FilmPro - migration WeasyPrint + consolidation pdf-shared (Bloc 1 ex)~~ - Fait 2026-04-28 (S126, xhigh) : nouvelle lib `~/.claude/skills-library/pdf-shared/` (i18n FR + engine WeasyPrint partagés), nouveau skill `~/.claude/skills-library/filmpro-pdf/` (FilmProDoc API : cover, section avec icône Lucide, kpi_grid, bullets, callout, quote barre accent, table), nouvelle charte autonome `~/.claude/design-system/charte-pdf-filmpro/` (tokens.css palette + components.css), `playbook-pdf` migré sur pdf_shared (régression 0 : example commandes_customs identique). `filmpro-pdf-lite` (reportlab) déprécié avec `disable-model-invocation: true` + header DEPRECATED 2026-04-28, conservé pour rollback. Fixture `crm-point-etape-2026-04-23.json` reproduit le PDF de référence (`/Users/pascal/Desktop/CRM_FilmPro_Point_etape_2026-04-23.pdf`) avec rendu pixel-proche. Tests pytest 5/5 verts. Baseline PDF générée. Bug post-V1 connu : bandeau navy absent sur dernière page courte, reporté. Mémoire `project_filmpro_pdf_harmonization.md` passée en LIVRÉ.
-- [x] ~~Refonte densité /prospection mobile (post-V1) - 4 questions cadrage tranchées + implémentation~~ - Fait 2026-04-28 (S126, high) commit `958f58c` : Q1 compteurs inline mobile + cartes desktop, Q2 filtres collapsibles drawer + badge compteur mobile / grid permanent desktop, Q3 kebab menu mobile / boutons standalone desktop, Q4 sticky search DataTable garde-fou. Test:mobile étendu. Golden v6 mobile généré (8 routes). 18/18 verts Playwright iPhone 14 Pro Max contre prod. Vitest 365/365.
-- [x] ~~V1 MOBILE CLOS — quick wins perf + infra Playwright mobile + fix overlap badge + golden v5 mobile (Bloc 1)~~ - Fait 2026-04-28 (S125, xhigh) : 3 commits `d2fa0fb` + `eee53f7` + `71f7378`. Font DM Sans self-hosted (élimine render-blocking Google Fonts), infra Playwright mobile contre prod (17/17 verts), fix overlap badge /prospection. Décision /dig [B] hybride pragmatique : Playwright `devices` preset autorisé pour findings OBJECTIFS, DevTools manuel pour QUALITATIFS.
