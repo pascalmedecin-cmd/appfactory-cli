@@ -65,15 +65,21 @@
 
 	<div class="border-t border-white/8 px-3 py-2 space-y-0.5">
 		{#each secondaryItems as item}
+			{@const external = 'external' in item && item.external}
 			<a
 				href={item.href}
+				target={external ? '_blank' : undefined}
+				rel={external ? 'noopener noreferrer' : undefined}
 				class="flex items-center gap-3 px-3 py-2 min-h-11 md:min-h-0 text-sm rounded-lg transition-colors
-					{isActive(item.href) ? 'bg-white/15 text-white font-medium' : 'text-white/65 hover:bg-white/8 hover:text-white'}"
+					{!external && isActive(item.href) ? 'bg-white/15 text-white font-medium' : 'text-white/65 hover:bg-white/8 hover:text-white'}"
 				title={collapsed ? item.label : undefined}
 			>
 				<Icon name={item.icon} class="shrink-0" />
 				{#if !collapsed}
-					<span>{item.label}</span>
+					<span class="flex-1">{item.label}</span>
+					{#if external}
+						<Icon name="open_in_new" size={14} class="shrink-0 opacity-60" />
+					{/if}
 				{/if}
 			</a>
 		{/each}

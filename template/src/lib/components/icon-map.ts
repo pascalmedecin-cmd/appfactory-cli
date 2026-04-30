@@ -1,8 +1,8 @@
 import type { Component } from 'svelte';
 import {
-	Activity, Archive, ArrowLeft, ArrowRight,
+	Activity, Archive, ArrowDown, ArrowLeft, ArrowRight, ArrowUp,
 	BadgeCheck, Ban, BarChart3, Bell, BellDot, BellRing, BookOpen, Bookmark, BookmarkPlus, Building, Building2,
-	Calendar, Camera, Check, ChevronDown, ChevronRight, ChevronUp, Circle, CircleAlert, CircleCheck, CircleCheckBig, CircleHelp, CirclePlay, CirclePlus, ClipboardCheck, Clock, CloudDownload, CloudUpload, Code, Compass, Construction, Contact, Copy,
+	Calendar, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, CircleAlert, CircleCheck, CircleCheckBig, CircleHelp, CirclePlay, CirclePlus, ClipboardCheck, Clock, CloudDownload, CloudUpload, Code, Compass, Construction, Contact, Copy,
 	Database, Download,
 	ExternalLink,
 	FilePen, FileText, FilterX, Flame,
@@ -30,7 +30,9 @@ export const ICON_MAP: Record<string, Component> = {
 	archive: Archive,
 	bar_chart: BarChart3,
 	arrow_back: ArrowLeft,
+	arrow_downward: ArrowDown,
 	arrow_forward: ArrowRight,
+	arrow_upward: ArrowUp,
 	auto_awesome: Sparkles,
 	auto_fix_high: Wand2,
 	block: Ban,
@@ -44,6 +46,7 @@ export const ICON_MAP: Record<string, Component> = {
 	check_box_outline_blank: Square,
 	check_circle: CircleCheck,
 	checklist: ListChecks,
+	chevron_left: ChevronLeft,
 	chevron_right: ChevronRight,
 	circle: Circle,
 	close: X,

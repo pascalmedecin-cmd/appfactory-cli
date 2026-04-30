@@ -222,6 +222,7 @@ export const config = {
 				href: '/aide',
 				label: 'Aide',
 				icon: 'help_outline',
+				external: true,
 			},
 		],
 	},

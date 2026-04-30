@@ -30,6 +30,8 @@
 	let importModalOpen = $state(false);
 	let importResult = $state<{ message: string; type: 'success' | 'error' } | null>(null);
 	let selectedIds = $state<Set<string>>(new Set());
+	let selectAllLoading = $state(false);
+	let selectAllNotice = $state<{ message: string; type: 'info' | 'error' } | null>(null);
 	let enrichBatchOpen = $state(false);
 	let enrichBatchIds = $state<string[]>([]);
 	let alerteModalOpen = $state(false);
@@ -37,6 +39,44 @@
 	let mobileFiltersOpen = $state(false);
 	let mobileMenuOpen = $state(false);
 	let mobileMenuRef = $state<HTMLDivElement | null>(null);
+
+	const showSelectAllBanner = $derived(
+		selectedIds.size > 0
+		&& selectedIds.size === data.leads.length
+		&& data.leads.length > 0
+		&& data.totalLeads > data.leads.length
+		&& selectedIds.size < data.totalLeads
+	);
+
+	// Reset notice quand la sélection retombe à zéro
+	$effect(() => {
+		if (selectedIds.size === 0 && selectAllNotice) selectAllNotice = null;
+	});
+
+	async function selectAllMatching() {
+		selectAllLoading = true;
+		try {
+			const res = await fetch(`/api/prospection/all-ids${$page.url.search}`);
+			if (!res.ok) {
+				selectAllNotice = { message: 'Impossible de récupérer la sélection complète.', type: 'error' };
+				return;
+			}
+			const payload = await res.json() as { ids: string[]; total: number; capped: boolean };
+			selectedIds = new Set(payload.ids);
+			if (payload.capped) {
+				selectAllNotice = {
+					message: `Sélection limitée à ${payload.ids.length} prospects (cap technique). Affinez les filtres pour traiter le reste.`,
+					type: 'info',
+				};
+			} else {
+				selectAllNotice = null;
+			}
+		} catch {
+			selectAllNotice = { message: 'Erreur réseau. Réessayez.', type: 'error' };
+		} finally {
+			selectAllLoading = false;
+		}
+	}
 
 	function closeMobileMenuOnOutside(event: MouseEvent) {
 		if (mobileMenuRef && !mobileMenuRef.contains(event.target as Node)) {
@@ -334,6 +374,32 @@
 				<span class="text-sm font-medium">{importResult.message}</span>
 			</div>
 			<button onclick={() => importResult = null} class="text-sm opacity-60 hover:opacity-100 cursor-pointer">Fermer</button>
+		</div>
+	{/if}
+
+	<!-- Bannière sélection globale (Gmail/Notion pattern) -->
+	{#if showSelectAllBanner}
+		<div class="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg border border-primary/20 bg-primary-light text-sm">
+			<Icon name="checklist" size={16} class="text-primary shrink-0" />
+			<span class="text-text">
+				Les <strong>{selectedIds.size}</strong> prospects de cette page sont sélectionnés.
+			</span>
+			<button
+				onclick={selectAllMatching}
+				disabled={selectAllLoading}
+				class="font-semibold text-primary hover:text-primary-hover underline cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+			>
+				{selectAllLoading ? 'Chargement…' : `Sélectionner les ${data.totalLeads} prospects qui correspondent aux filtres`}
+			</button>
+		</div>
+	{/if}
+	{#if selectAllNotice}
+		<div class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-sm {selectAllNotice.type === 'error' ? 'border-danger/30 bg-danger-light text-danger' : 'border-primary/20 bg-primary-light text-text'}">
+			<div class="flex items-center gap-2">
+				<Icon name={selectAllNotice.type === 'error' ? 'error' : 'info'} size={16} class="shrink-0" />
+				<span>{selectAllNotice.message}</span>
+			</div>
+			<button onclick={() => (selectAllNotice = null)} class="text-xs opacity-60 hover:opacity-100 cursor-pointer">Fermer</button>
 		</div>
 	{/if}
 
