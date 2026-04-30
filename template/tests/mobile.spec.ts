@@ -206,4 +206,94 @@ test.describe('CRM mobile V1 — audits objectifs', () => {
 		await page.goto('/', { waitUntil: 'networkidle' });
 		expect(externalFontRequests, `Requêtes Google Fonts détectées : ${externalFontRequests.join(', ')}`).toHaveLength(0);
 	});
+
+	// === V2 mobile F1 : photo bâtiment ===
+
+	test('PhotoGallery présente dans LeadSlideOut /prospection', async ({ page }) => {
+		await page.goto('/prospection', { waitUntil: 'networkidle' });
+		await page.waitForTimeout(500);
+
+		const firstRow = page.locator('main tbody tr').first();
+		const hasRows = await firstRow.isVisible().catch(() => false);
+		if (!hasRows) {
+			test.skip(true, 'Aucun lead en prod, test ignoré');
+			return;
+		}
+
+		await firstRow.click();
+		await page.waitForTimeout(800);
+
+		// Section photos chantier visible
+		const photoSection = page.locator('text=/photos chantier/i').first();
+		await expect.soft(photoSection, 'Section "Photos chantier" absente du SlideOut').toBeVisible();
+
+		// Bouton "Ajouter photo" visible et tap target ≥ 44px
+		const addBtn = page.locator('button:has-text("Ajouter photo")').first();
+		await expect.soft(addBtn, 'Bouton "Ajouter photo" absent').toBeVisible();
+		const box = await addBtn.boundingBox().catch(() => null);
+		if (box) {
+			expect.soft(box.height, `Bouton "Ajouter photo" hauteur ${box.height}px < 44`).toBeGreaterThanOrEqual(44);
+		}
+	});
+
+	test('PhotoGallery présente dans EntrepriseSlideOut /entreprises', async ({ page }) => {
+		await page.goto('/entreprises', { waitUntil: 'networkidle' });
+		await page.waitForTimeout(500);
+
+		const firstRow = page.locator('main tbody tr').first();
+		const hasRows = await firstRow.isVisible().catch(() => false);
+		if (!hasRows) {
+			test.skip(true, 'Aucune entreprise en prod, test ignoré');
+			return;
+		}
+
+		await firstRow.click();
+		await page.waitForTimeout(800);
+
+		const photoSection = page.locator('text=/photos chantier/i').first();
+		await expect.soft(photoSection, 'Section "Photos chantier" absente du SlideOut entreprise').toBeVisible();
+
+		const addBtn = page.locator('button:has-text("Ajouter photo")').first();
+		await expect.soft(addBtn, 'Bouton "Ajouter photo" absent').toBeVisible();
+	});
+
+	test('API /api/photos sans owner → 400', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const resp = await page.request.get('/api/photos');
+		expect(resp.status()).toBe(400);
+		const body = await resp.json();
+		expect(body.error).toBeTruthy();
+	});
+
+	test('API /api/photos avec UUID inexistant → 404', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const fakeId = '00000000-0000-0000-0000-000000000000';
+		const resp = await page.request.get(`/api/photos?lead_id=${fakeId}`);
+		expect(resp.status()).toBe(404);
+	});
+
+	test('API /api/photos POST sans fichier → 400 ou 404', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const fakeId = '00000000-0000-0000-0000-000000000000';
+		const resp = await page.request.post(`/api/photos?lead_id=${fakeId}`, {
+			multipart: {},
+		});
+		expect([400, 404]).toContain(resp.status());
+	});
+
+	test('API /api/photos POST avec fichier non-image → rejet 400 ou 404', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const fakeId = '00000000-0000-0000-0000-000000000000';
+		const fakeJpeg = Buffer.from('Hello world, je ne suis pas une image');
+		const resp = await page.request.post(`/api/photos?lead_id=${fakeId}`, {
+			multipart: {
+				file: {
+					name: 'fake.jpg',
+					mimeType: 'image/jpeg',
+					buffer: fakeJpeg,
+				},
+			},
+		});
+		expect([400, 404]).toContain(resp.status());
+	});
 });

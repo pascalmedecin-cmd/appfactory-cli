@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spécifications - CRM FilmPro mobile V2</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #2F5A9E;
+    --primary-light: #F0F4F8;
+    --primary-dark: #0A1628;
+    --info: #5A7190;
+    --info-light: #EDF1F5;
+    --text: #111827;
+    --text-body: #374151;
+    --text-muted: #6B7280;
+    --border: #E5E7EB;
+    --surface: #FAFBFC;
+    --bg: #FFFFFF;
+    --success: #16A34A;
+    --warning: #D97706;
+    --danger: #DC2626;
+    --radius: 8px;
+    --max-width: 880px;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    color: var(--text-body);
+    background: var(--surface);
+    line-height: 1.65;
+    margin: 0;
+    padding: 0;
+    font-size: 16px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+
+  aside.toc {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 32px 24px;
+    border-right: 1px solid var(--border);
+    background: var(--bg);
+    font-size: 14px;
+  }
+
+  aside.toc h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin: 0 0 12px 0;
+    font-weight: 600;
+  }
+
+  aside.toc ol { list-style: none; padding: 0; margin: 0; counter-reset: toc; }
+  aside.toc li { counter-increment: toc; margin: 0; }
+
+  aside.toc a {
+    display: block;
+    padding: 6px 0;
+    color: var(--text-body);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    padding-left: 12px;
+    margin-left: -12px;
+    transition: color 0.15s, border-color 0.15s;
+  }
+
+  aside.toc a:hover { color: var(--primary); border-left-color: var(--primary); }
+  aside.toc a::before { content: counter(toc) ". "; color: var(--text-muted); margin-right: 4px; }
+
+  main {
+    padding: 48px 56px;
+    max-width: var(--max-width);
+    background: var(--bg);
+  }
+
+  header.doc-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 28px;
+    margin-bottom: 40px;
+  }
+
+  header.doc-header .eyebrow {
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+
+  header.doc-header h1 {
+    font-size: 32px;
+    line-height: 1.2;
+    color: var(--text);
+    margin: 0 0 16px 0;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  header.doc-header .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  header.doc-header .meta strong { color: var(--text-body); font-weight: 500; }
+
+  section { margin-bottom: 48px; scroll-margin-top: 24px; }
+
+  h2 {
+    font-size: 22px;
+    color: var(--text);
+    font-weight: 600;
+    margin: 0 0 20px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+    letter-spacing: -0.01em;
+  }
+
+  h2 .num { color: var(--primary); margin-right: 8px; font-weight: 500; }
+
+  h3 {
+    font-size: 17px;
+    color: var(--text);
+    font-weight: 600;
+    margin: 28px 0 12px 0;
+  }
+
+  p { margin: 0 0 14px 0; }
+  ul, ol { padding-left: 22px; margin: 0 0 16px 0; }
+  li { margin-bottom: 6px; }
+  strong { color: var(--text); font-weight: 600; }
+
+  code {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    background: var(--info-light);
+    color: var(--primary-dark);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+
+  pre {
+    background: var(--primary-dark);
+    color: #E5E7EB;
+    padding: 16px 20px;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    font-size: 13px;
+    margin: 16px 0 24px 0;
+  }
+  pre code { background: transparent; color: inherit; padding: 0; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px 0;
+    font-size: 14px;
+    background: var(--bg);
+  }
+
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  th {
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  td.check { text-align: center; color: var(--success); font-weight: 600; }
+  td.dash  { text-align: center; color: var(--text-muted); }
+
+  .callout {
+    background: var(--primary-light);
+    border-left: 3px solid var(--primary);
+    padding: 16px 20px;
+    margin: 16px 0 24px 0;
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+
+  .callout.info { background: var(--info-light); border-left-color: var(--info); }
+  .callout.warn { background: #FEF3C7; border-left-color: var(--warning); }
+  .callout.danger { background: #FEE2E2; border-left-color: var(--danger); }
+  .callout.success { background: #DCFCE7; border-left-color: var(--success); }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout strong:first-child { display: inline-block; margin-bottom: 4px; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    background: var(--info-light);
+    color: var(--info);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .badge.success { background: #DCFCE7; color: var(--success); }
+  .badge.warning { background: #FEF3C7; color: var(--warning); }
+  .badge.danger  { background: #FEE2E2; color: var(--danger); }
+
+  ul.checklist { list-style: none; padding-left: 0; }
+  ul.checklist li { padding-left: 28px; position: relative; margin-bottom: 8px; }
+  ul.checklist li.yes::before {
+    content: "✓"; position: absolute; left: 8px; color: var(--success); font-weight: 700;
+  }
+  ul.checklist li.no::before {
+    content: "✗"; position: absolute; left: 8px; color: var(--danger); font-weight: 700;
+  }
+  ul.checklist li.todo::before {
+    content: "○"; position: absolute; left: 8px; color: var(--info); font-weight: 700;
+  }
+
+  .feature-card {
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 24px 28px;
+    margin: 20px 0;
+    background: var(--bg);
+  }
+
+  .feature-card h3 {
+    margin-top: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .feature-card h3 .feature-id {
+    background: var(--primary);
+    color: white;
+    font-size: 12px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  .session-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    margin: 16px 0;
+    background: var(--bg);
+  }
+
+  .session-card h3 {
+    margin-top: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .session-card .effort {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  @media (max-width: 1023px) {
+    .layout { grid-template-columns: 1fr; }
+    aside.toc {
+      position: static;
+      height: auto;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+      padding: 24px;
+    }
+    main { padding: 32px 24px; }
+    header.doc-header h1 { font-size: 26px; }
+    h2 { font-size: 20px; }
+  }
+
+  @media print {
+    aside.toc { display: none; }
+    main { padding: 0; max-width: none; }
+    .layout { display: block; }
+    body { background: white; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+<aside class="toc">
+  <h2>Sommaire V2</h2>
+  <ol>
+    <li><a href="#s1">Vision et principe directeur</a></li>
+    <li><a href="#s2">Périmètre V2 (4 features)</a></li>
+    <li><a href="#s3">Stack technique</a></li>
+    <li><a href="#s4">Modèle de données</a></li>
+    <li><a href="#s5">Plan livraison V2</a></li>
+    <li><a href="#s6">Tests</a></li>
+    <li><a href="#s7">Hors scope V2</a></li>
+    <li><a href="#s8">Performance budgets</a></li>
+    <li><a href="#s9">Risques V2</a></li>
+    <li><a href="#s10">Métriques succès V2</a></li>
+    <li><a href="#s11">Décisions tranchées</a></li>
+  </ol>
+</aside>
+
+<main>
+
+<header class="doc-header">
+  <div class="eyebrow">Spécifications · CRM FilmPro mobile · V2</div>
+  <h1>CRM FilmPro mobile V2 - features terrain</h1>
+  <div class="meta">
+    <span><strong>Version :</strong> 2.0</span>
+    <span><strong>Date :</strong> 2026-04-30</span>
+    <span><strong>Statut :</strong> Cadrage validé · implémentation à venir</span>
+    <span><strong>Précédent :</strong> <a href="SPECS_CRM_MOBILE.html">V1 - cadrage S121</a></span>
+  </div>
+</header>
+
+<section id="s1">
+  <h2><span class="num">1.</span>Vision et principe directeur V2</h2>
+
+  <p>V1 a livré un mobile lisible (responsive sweep + PWA légère). V2 ajoute la <strong>valeur terrain</strong> : capacités qu'un commercial utilise réellement en visite chantier ou en RDV bâtiment.</p>
+
+  <div class="callout">
+    <strong>Principe directeur (inchangé V1) :</strong>
+    <p>Pas d'UX mobile fondamentalement différente. V2 ajoute des features sans casser le pattern Linear/Notion/Stripe. Les 4 features V2 s'intègrent dans les écrans existants (formulaire création lead, fiche entreprise, fiche RDV) sans bottom sheet, sans FAB, sans rupture de paradigme.</p>
+  </div>
+
+  <h3>Cas d'usage cibles</h3>
+  <ul>
+    <li>Photographier la façade d'un bâtiment vitrage juste avant de quitter le chantier, l'attacher à l'entreprise prospect.</li>
+    <li>Créer un lead en moins de 30 secondes en sortant d'un RDV impromptu.</li>
+    <li>Marquer une étape pipeline « faite » d'un tap depuis la fiche entreprise sur le trottoir.</li>
+    <li>Capturer la position GPS au check-in d'une visite pour valider la traçabilité.</li>
+  </ul>
+</section>
+
+<section id="s2">
+  <h2><span class="num">2.</span>Périmètre V2 (4 features)</h2>
+
+  <div class="feature-card">
+    <h3><span class="feature-id">F1</span>Photo bâtiment intégrée à un lead</h3>
+    <p><strong>Comportement :</strong></p>
+    <ul>
+      <li>Bouton « Ajouter photo » sur la fiche entreprise et sur la modale création lead.</li>
+      <li>Sur mobile : ouvre l'appareil photo natif via <code>&lt;input type="file" accept="image/*" capture="environment"&gt;</code>.</li>
+      <li>Upload vers Supabase Storage bucket dédié <code>prospect_photos/</code>, lien stocké dans table <code>prospect_photos</code>.</li>
+      <li>Affichage thumbnail dans la fiche, tap = visualisation pleine taille.</li>
+      <li>Limite : 10 photos par lead, 5 Mo par photo (compression côté client si dépassement).</li>
+    </ul>
+    <p><strong>Pages concernées :</strong> /prospection, /contacts, /entreprises (fiche détail).</p>
+    <p><strong>Critères acceptation :</strong> upload iOS Safari + desktop Chrome, photo affichée &lt;2s, RLS scope user_id, 0 régression desktop.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3><span class="feature-id">F2</span>Géoloc visite RDV</h3>
+    <p><strong>Comportement :</strong></p>
+    <ul>
+      <li>Bouton « Check-in visite » sur la fiche RDV (ou fiche entreprise).</li>
+      <li>Au tap : capture <code>navigator.geolocation.getCurrentPosition()</code>, stockage lat/lng.</li>
+      <li>Comparaison automatique avec adresse Zefix/search.ch : si écart &gt; 100m, flag info (pas blocage).</li>
+      <li>Affichage discret « visite confirmée à [adresse retro-géocodée] le [date] » dans l'historique fiche.</li>
+    </ul>
+    <p><strong>Pages concernées :</strong> fiche entreprise, fiche RDV.</p>
+    <p><strong>Critères acceptation :</strong> permission geoloc demandée proprement, fallback manuel si refus, RLS correct, distance Haversine fonctionnelle.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3><span class="feature-id">F3</span>Création lead express mobile</h3>
+    <p><strong>Comportement :</strong></p>
+    <ul>
+      <li>Bouton « Lead express » accessible depuis le dashboard / et /prospection (sticky search bar mobile).</li>
+      <li>Modale 4 champs : nom contact + téléphone + nom entreprise + note libre.</li>
+      <li>Auto-complétion contact iOS native (<code>autocomplete="name"</code>, <code>autocomplete="tel"</code>).</li>
+      <li>Submit : crée prospect_lead minimal + contact minimal, redirige vers fiche pour enrichissement ultérieur (Zefix, signaux, scoring) en mode différé.</li>
+      <li>Cible : saisie complète en moins de 30 secondes.</li>
+    </ul>
+    <p><strong>Pages concernées :</strong> / (dashboard), /prospection (sticky bar).</p>
+    <p><strong>Critères acceptation :</strong> 4 champs sans scroll iPhone 14 Pro Max, submit crée bien lead+contact, 0 régression création lead desktop, tap target ≥ 44px.</p>
+  </div>
+
+  <div class="feature-card">
+    <h3><span class="feature-id">F4</span>Mise à jour pipeline rapide</h3>
+    <p><strong>Comportement :</strong></p>
+    <ul>
+      <li>Sur fiche entreprise, bouton « Étape suivante » avec étape pipeline courante affichée + étape suivante prévue.</li>
+      <li>Tap : avance l'étape pipeline + ouvre une mini-modale « prochaine action ? » (date + texte court).</li>
+      <li>Pattern : 2 taps maximum pour avancer un lead post-RDV.</li>
+    </ul>
+    <p><strong>Pages concernées :</strong> fiche entreprise, fiche lead.</p>
+    <p><strong>Critères acceptation :</strong> avance pipeline sans rechargement, optimistic UI avec rollback, toast confirmation discret, 0 régression desktop.</p>
+  </div>
+</section>
+
+<section id="s3">
+  <h2><span class="num">3.</span>Stack technique</h2>
+
+  <table>
+    <thead>
+      <tr><th>Capacité</th><th>API web</th><th>iOS Safari</th><th>Fallback</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>Photo capture</td><td><code>&lt;input capture="environment"&gt;</code></td><td class="check">✓</td><td>Sélection fichier classique</td></tr>
+      <tr><td>Géoloc</td><td><code>navigator.geolocation</code></td><td class="check">✓ HTTPS only</td><td>Adresse manuelle</td></tr>
+      <tr><td>Storage photos</td><td>Supabase Storage</td><td>N/A</td><td>-</td></tr>
+      <tr><td>Compression photo</td><td><code>canvas.toBlob()</code></td><td class="check">✓</td><td>-</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout info">
+    <strong>Pas de :</strong>
+    <p>service worker queue, IndexedDB, WebRTC, Web Speech API. Conformément aux décisions tranchées section 11.</p>
+  </div>
+</section>
+
+<section id="s4">
+  <h2><span class="num">4.</span>Modèle de données (additions)</h2>
+
+  <pre><code>-- Photos prospects
+CREATE TABLE prospect_photos (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  prospect_lead_id uuid REFERENCES prospect_leads(id) ON DELETE CASCADE,
+  storage_path text NOT NULL,
+  uploaded_by uuid REFERENCES auth.users(id),
+  uploaded_at timestamptz DEFAULT now(),
+  caption text
+);
+ALTER TABLE prospect_photos ENABLE ROW LEVEL SECURITY;
+
+-- Visites avec géoloc
+CREATE TABLE prospect_visits (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  prospect_lead_id uuid REFERENCES prospect_leads(id) ON DELETE CASCADE,
+  user_id uuid REFERENCES auth.users(id),
+  visited_at timestamptz DEFAULT now(),
+  lat numeric(10, 7),
+  lng numeric(10, 7),
+  address_resolved text,
+  distance_from_zefix_m numeric(8, 1)
+);
+ALTER TABLE prospect_visits ENABLE ROW LEVEL SECURITY;</code></pre>
+
+  <p>Bucket Supabase Storage <code>prospect_photos</code> à créer avec policy RLS scope user_id.</p>
+</section>
+
+<section id="s5">
+  <h2><span class="num">5.</span>Plan livraison V2 (3 sessions)</h2>
+
+  <div class="session-card">
+    <h3>Session α - Migration DB + F1 photo <span class="effort">~2h · EXÉCUTABLE</span></h3>
+    <ul class="checklist">
+      <li class="todo">Migration SQL : tables prospect_photos + prospect_visits + RLS policies</li>
+      <li class="todo">Bucket Supabase Storage prospect_photos + policy</li>
+      <li class="todo">Composant PhotoCapture.svelte (input file + preview + upload)</li>
+      <li class="todo">Compression côté client si > 2 Mo (canvas.toBlob)</li>
+      <li class="todo">Affichage galerie thumbnails sur fiche entreprise + lightbox tap</li>
+      <li class="todo">Critères : upload mobile + desktop, RLS scope, 0 régression</li>
+    </ul>
+  </div>
+
+  <div class="session-card">
+    <h3>Session β - F2 géoloc visite <span class="effort">~1.5h · EXÉCUTABLE</span></h3>
+    <ul class="checklist">
+      <li class="todo">Composant CheckInButton.svelte avec permission flow</li>
+      <li class="todo">Insertion prospect_visits avec lat/lng/timestamp</li>
+      <li class="todo">Calcul distance Haversine vs adresse Zefix entreprise</li>
+      <li class="todo">Affichage historique visites dans la fiche</li>
+      <li class="todo">Critères : permission proprement gérée, fallback refus, RLS</li>
+    </ul>
+  </div>
+
+  <div class="session-card">
+    <h3>Session γ - F3 lead express + F4 pipeline rapide + tests + golden v7 <span class="effort">~2h · EXÉCUTABLE</span></h3>
+    <ul class="checklist">
+      <li class="todo">Modale LeadExpress.svelte (4 champs) + submit + redirect fiche</li>
+      <li class="todo">Bouton sticky « Lead express » sur dashboard + /prospection mobile</li>
+      <li class="todo">Composant PipelineQuickAdvance.svelte (étape suivante + mini-modale next action)</li>
+      <li class="todo">Optimistic UI avec rollback Supabase erreur</li>
+      <li class="todo">Tests Playwright mobile : F1 + F2 + F3 + F4</li>
+      <li class="todo">Golden v7 mobile screenshots</li>
+      <li class="todo">Critères : tous critères F3+F4 acceptation, 18+ tests verts</li>
+    </ul>
+  </div>
+
+  <p><strong>Total :</strong> ~5.5h cumulées. Estimation cockpit initiale 6h confiance Faible → confiance Élevé après cadrage.</p>
+</section>
+
+<section id="s6">
+  <h2><span class="num">6.</span>Tests</h2>
+
+  <h3>6.1 Playwright mobile</h3>
+  <p>Étendre <code>template/tests/mobile.spec.ts</code> avec :</p>
+  <ul>
+    <li>Upload photo (mock fichier, vérifier appel Supabase Storage).</li>
+    <li>Géoloc (mock <code>navigator.geolocation</code>, vérifier insertion DB).</li>
+    <li>Création lead express (4 champs, submit, vérifier redirection fiche).</li>
+    <li>Pipeline rapide (tap étape suivante, vérifier optimistic UI + DB update).</li>
+  </ul>
+
+  <h3>6.2 Audit chrome MCP visuel</h3>
+  <p>Screenshots iPhone 14 Pro Max (430×932) sur fiche entreprise, dashboard, prospection, avant/après chaque session.</p>
+
+  <h3>6.3 DevTools manuel Pascal</h3>
+  <p>Validation finale qualitative sur iPhone Pascal réel : capture photo terrain, géoloc en mobilité, création lead en sortie de RDV simulé.</p>
+</section>
+
+<section id="s7">
+  <h2><span class="num">7.</span>Hors scope V2 (verrouillé)</h2>
+
+  <table>
+    <thead><tr><th>Feature</th><th>Statut</th></tr></thead>
+    <tbody>
+      <tr><td>Note vocale → texte (Web Speech API)</td><td><span class="badge danger">Retirée définitivement</span> pas même V3+</td></tr>
+      <tr><td>Offline queue création lead</td><td><span class="badge danger">Retirée définitivement</span> pas même V3+</td></tr>
+      <tr><td>Push notifications signaux/veille</td><td><span class="badge warning">Hors V2</span> ouvert V3 si données d'usage</td></tr>
+      <tr><td>Recherche entreprise par proximité (&lt;5km)</td><td><span class="badge warning">Hors V2</span> ouvert V3 si densité base</td></tr>
+      <tr><td>Bottom sheets / FAB</td><td><span class="badge warning">Hors V2</span> principe directeur conservé</td></tr>
+      <tr><td>Pivot natif Expo / React Native</td><td><span class="badge warning">Hors V2</span> à reconsidérer si adoption mobile &gt; 50%</td></tr>
+      <tr><td>Caller ID intégré</td><td><span class="badge warning">Hors V2</span> pattern natif</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="s8">
+  <h2><span class="num">8.</span>Performance budgets V2</h2>
+
+  <p>Mêmes budgets que V1. Vérification spécifique post-V2 :</p>
+  <table>
+    <thead><tr><th>Métrique</th><th>Cible</th><th>Sensibilité V2</th></tr></thead>
+    <tbody>
+      <tr><td>LCP</td><td>&lt; 2.5s 4G</td><td>Image upload async, pas dans LCP</td></tr>
+      <tr><td>INP</td><td>&lt; 200ms</td><td>Capture photo + géoloc ne doivent pas dégrader INP</td></tr>
+      <tr><td>CLS</td><td>&lt; 0.1</td><td>Modale lead express ne doit pas provoquer layout shift</td></tr>
+      <tr><td>Bundle JS / route</td><td>&lt; 200kb gzipped</td><td>Compression image client-side ne doit pas alourdir route</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="s9">
+  <h2><span class="num">9.</span>Risques V2</h2>
+
+  <table>
+    <thead><tr><th>Risque</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr><td>Permission géoloc refusée</td><td>Message clair, fallback adresse manuelle, pas de blocage workflow</td></tr>
+      <tr><td>Upload photo échoue zone faible réseau</td><td>Retry 3 fois + toast erreur explicite + photo conservée localement le temps de l'upload</td></tr>
+      <tr><td>iOS Safari refuse capture="environment"</td><td>Fallback automatique vers sélection fichier classique</td></tr>
+      <tr><td>Régression desktop pendant ajout features mobile</td><td>Tests Playwright desktop maintenus + audit chrome MCP desktop avant chaque commit</td></tr>
+      <tr><td>Compression photo trop lente sur vieux iPhone</td><td>Skipper compression si fichier &lt; 2 Mo, compresser uniquement si &gt; 2 Mo</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section id="s10">
+  <h2><span class="num">10.</span>Métriques succès V2</h2>
+
+  <p>À mesurer post-déploiement S+8 :</p>
+  <ul>
+    <li><strong>Adoption photo</strong> : ≥ 30% des leads créés mobile ont au moins 1 photo.</li>
+    <li><strong>Adoption géoloc</strong> : ≥ 50% des visites confirmées ont une position GPS.</li>
+    <li><strong>Adoption lead express</strong> : ≥ 40% des créations lead mobile passent par la modale express.</li>
+    <li><strong>Adoption pipeline rapide</strong> : ≥ 25% des avancements pipeline sur mobile.</li>
+    <li><strong>0 bug bloquant</strong> sur les 4 features pendant les 8 premières semaines.</li>
+  </ul>
+  <p>Si un seuil n'est pas atteint S+8 → cadrage V3 ciblé sur le pain point.</p>
+</section>
+
+<section id="s11">
+  <h2><span class="num">11.</span>Décisions structurelles tranchées (S127)</h2>
+
+  <ul class="checklist">
+    <li class="yes"><strong>Option A validée</strong> : PWA poussée sur 4 features terrain ciblées, principe Linear V1 préservé.</li>
+    <li class="no"><strong>Note vocale retirée définitivement</strong> (pas même V3+).</li>
+    <li class="no"><strong>Offline queue retirée définitivement</strong> (pas même V3+).</li>
+    <li class="yes"><strong>Stack inchangée</strong> : SvelteKit + Supabase + Vercel, pas de pivot natif.</li>
+    <li class="yes"><strong>Cycle V2 propre</strong> dans SPECS_CRM_MOBILE_V2.md, V1 figé dans SPECS_CRM_MOBILE.md comme référence historique.</li>
+  </ul>
+
+  <div class="callout success">
+    <strong>Cadrage validé pour exécution :</strong>
+    <p>Plan livraison 3 sessions séquencées (α, β, γ) pour ~5.5h cumulées. Prêt à attaquer Session α.</p>
+  </div>
+</section>
+
+</main>
+</div>
+
+</body>
+</html>

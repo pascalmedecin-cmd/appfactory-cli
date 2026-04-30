@@ -2,6 +2,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import SlideOut from '$lib/components/SlideOut.svelte';
+	import PhotoGallery from '$lib/components/PhotoGallery.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
@@ -271,6 +272,11 @@
 					<p class="text-text whitespace-pre-wrap">{selectedEntreprise.notes_libres}</p>
 				</div>
 			{/if}
+
+			<!-- Photos chantier (V2 mobile F1) -->
+			<div class="border-t border-border pt-4">
+				<PhotoGallery entrepriseId={selectedEntreprise.id} />
+			</div>
 
 			<!-- Contacts rattachés -->
 			<div class="border-t border-border pt-4">

@@ -4,6 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import PhotoGallery from '$lib/components/PhotoGallery.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { calculerScore } from '$lib/scoring';
 	import {
@@ -218,6 +219,11 @@
 					Voir la source originale
 				</a>
 			{/if}
+
+			<!-- Photos chantier (V2 mobile F1) -->
+			<div class="pt-4 border-t border-border">
+				<PhotoGallery leadId={lead.id} />
+			</div>
 
 			<!-- Enrichissement -->
 			{#if !lead.telephone && lead.statut !== 'transfere'}

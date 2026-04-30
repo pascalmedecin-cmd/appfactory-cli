@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maquettes - CRM FilmPro mobile V2</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #2F5A9E;
+    --primary-light: #F0F4F8;
+    --primary-dark: #0A1628;
+    --info: #5A7190;
+    --info-light: #EDF1F5;
+    --text: #111827;
+    --text-body: #374151;
+    --text-muted: #6B7280;
+    --border: #E5E7EB;
+    --surface: #FAFBFC;
+    --bg: #FFFFFF;
+    --success: #16A34A;
+    --warning: #D97706;
+    --danger: #DC2626;
+    --radius: 8px;
+    --filmpro-navy: #00003B;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    color: var(--text-body);
+    background: linear-gradient(180deg, #F4F6F9 0%, #E8ECF2 100%);
+    margin: 0;
+    padding: 40px 20px;
+    font-size: 16px;
+    min-height: 100vh;
+  }
+
+  .page-header {
+    max-width: 1400px;
+    margin: 0 auto 48px auto;
+    padding: 0 20px;
+  }
+
+  .page-header .eyebrow {
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+
+  .page-header h1 {
+    font-size: 32px;
+    color: var(--text);
+    margin: 0 0 12px 0;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  .page-header p {
+    color: var(--text-muted);
+    font-size: 15px;
+    margin: 0;
+    max-width: 720px;
+  }
+
+  .page-header .links {
+    margin-top: 16px;
+    display: flex;
+    gap: 16px;
+    font-size: 14px;
+  }
+
+  .page-header .links a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  .page-header .links a:hover { text-decoration: underline; }
+
+  .grid {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 40px 32px;
+    padding: 0 20px;
+  }
+
+  .mockup-frame {
+    background: var(--bg);
+    border-radius: 16px;
+    padding: 24px 24px 32px 24px;
+    box-shadow: 0 4px 24px rgba(0, 0, 59, 0.08);
+  }
+
+  .mockup-frame h2 {
+    font-size: 18px;
+    color: var(--text);
+    margin: 0 0 4px 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .mockup-frame h2 .feature-id {
+    background: var(--primary);
+    color: white;
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+
+  .mockup-frame .desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0 0 20px 0;
+  }
+
+  /* Phone frame */
+  .phone {
+    width: 320px;
+    height: 680px;
+    background: #1a1a1a;
+    border-radius: 36px;
+    padding: 12px;
+    margin: 0 auto;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18), inset 0 0 0 2px #2a2a2a;
+    position: relative;
+  }
+
+  .phone::before {
+    content: "";
+    position: absolute;
+    top: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 88px;
+    height: 22px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    z-index: 10;
+  }
+
+  .phone-screen {
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    border-radius: 28px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Status bar */
+  .status-bar {
+    height: 44px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px 0 28px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  .status-bar .right {
+    display: flex;
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  /* App header */
+  .app-header {
+    height: 52px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .app-header .burger {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .app-header .burger span {
+    height: 2px;
+    background: var(--text);
+    border-radius: 1px;
+  }
+
+  .app-header .title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .app-header .title small {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 400;
+  }
+
+  .app-header .icon {
+    width: 24px;
+    height: 24px;
+    color: var(--text-muted);
+  }
+
+  /* Body */
+  .app-body {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--surface);
+    padding: 16px;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .card .label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .card .value {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .card .value.lg {
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    width: 100%;
+    height: 48px;
+  }
+
+  .btn-secondary {
+    background: var(--bg);
+    color: var(--primary);
+    border: 1px solid var(--primary);
+    width: 100%;
+    height: 48px;
+  }
+
+  .btn-ghost {
+    background: var(--info-light);
+    color: var(--info);
+    height: 36px;
+    font-size: 13px;
+    padding: 0 12px;
+  }
+
+  /* Modal */
+  .modal-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 100;
+  }
+
+  .modal {
+    background: var(--bg);
+    width: 100%;
+    border-radius: 16px 16px 0 0;
+    padding: 20px 16px 24px 16px;
+    animation: slideUp 0.2s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal h3 {
+    margin: 0 0 4px 0;
+    font-size: 17px;
+    color: var(--text);
+    font-weight: 600;
+  }
+
+  .modal .modal-sub {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0 0 18px 0;
+  }
+
+  .modal .modal-grip {
+    width: 36px;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 14px auto;
+  }
+
+  /* Form fields */
+  .field {
+    margin-bottom: 12px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .field input, .field textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    background: var(--bg);
+  }
+
+  .field input:focus {
+    outline: 2px solid var(--primary);
+    outline-offset: -2px;
+    border-color: var(--primary);
+  }
+
+  /* Photo gallery */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .photo-thumb {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #C8D2E0 0%, #8FA3BF 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+  }
+
+  .photo-thumb.empty {
+    background: var(--info-light);
+    border: 1.5px dashed var(--info);
+    color: var(--info);
+    font-size: 22px;
+  }
+
+  /* Pipeline stepper */
+  .stepper {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: 14px;
+  }
+
+  .stepper .step {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+
+  .stepper .step.done { background: var(--success); }
+  .stepper .step.current { background: var(--primary); }
+
+  .stage-display {
+    background: var(--primary-light);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .stage-display .stage-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--primary);
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .stage-display .stage-name {
+    font-size: 16px;
+    color: var(--primary-dark);
+    font-weight: 700;
+  }
+
+  .stage-display .stage-next {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  /* Visit history */
+  .visit-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+
+  .visit-row:last-child { border-bottom: none; }
+
+  .visit-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--success);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .visit-content {
+    flex: 1;
+  }
+
+  .visit-content .when {
+    color: var(--text);
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .visit-content .where {
+    color: var(--text-muted);
+    font-size: 11px;
+  }
+
+  .visit-content .gap-warn {
+    color: var(--warning);
+    font-size: 10px;
+    margin-top: 2px;
+  }
+
+  /* Section title */
+  .section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin: 14px 0 8px 0;
+  }
+
+  /* Sticky bar */
+  .sticky-bar {
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    padding: 12px 14px;
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .sticky-bar input {
+    flex: 1;
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 13px;
+  }
+
+  .sticky-bar .add-btn {
+    width: 44px;
+    height: 44px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 22px;
+    font-weight: 300;
+    flex-shrink: 0;
+  }
+
+  /* Toast (success) */
+  .toast {
+    position: absolute;
+    bottom: 80px;
+    left: 16px;
+    right: 16px;
+    background: var(--filmpro-navy);
+    color: white;
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 50;
+  }
+
+  .toast .check {
+    background: var(--success);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* Permission prompt simulation */
+  .perm-prompt {
+    position: absolute;
+    top: 80px;
+    left: 16px;
+    right: 16px;
+    background: var(--bg);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    z-index: 60;
+    text-align: center;
+  }
+
+  .perm-prompt .perm-title {
+    font-size: 14px;
+    color: var(--text);
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .perm-prompt .perm-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .perm-prompt .perm-actions {
+    display: flex;
+    gap: 6px;
+  }
+
+  .perm-prompt .perm-actions button {
+    flex: 1;
+    padding: 10px;
+    font-size: 12px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .perm-prompt .perm-actions .deny {
+    background: var(--surface);
+    color: var(--text-body);
+  }
+
+  .perm-prompt .perm-actions .allow {
+    background: var(--primary);
+    color: white;
+  }
+
+  /* Annotations (callout below mockup) */
+  .annotations {
+    margin-top: 24px;
+    padding: 14px 16px;
+    background: var(--info-light);
+    border-left: 3px solid var(--info);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .annotations strong { color: var(--text); }
+
+  .annotations ul {
+    margin: 6px 0 0 0;
+    padding-left: 18px;
+  }
+
+  .annotations li { margin-bottom: 3px; }
+
+  /* Responsive */
+  @media (max-width: 800px) {
+    body { padding: 24px 12px; }
+    .page-header h1 { font-size: 24px; }
+    .grid { grid-template-columns: 1fr; gap: 32px; }
+    .mockup-frame { padding: 16px 16px 24px 16px; }
+    .phone { width: 280px; height: 600px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div class="eyebrow">Maquettes · CRM FilmPro mobile · V2</div>
+  <h1>Cadrage visuel des 4 features terrain V2</h1>
+  <p>Maquettes statiques de référence pour validation avant implémentation. Viewport simulé iPhone 14 Pro Max (430×932 ramené à 320px d'affichage). Branding FilmPro DM Sans, palette CRM existante.</p>
+  <div class="links">
+    <a href="SPECS_CRM_MOBILE_V2.html">→ SPEC V2 complète</a>
+    <a href="SPECS_CRM_MOBILE.html">→ SPEC V1 (référence)</a>
+  </div>
+</div>
+
+<div class="grid">
+
+  <!-- F1 - Photo bâtiment -->
+  <div class="mockup-frame">
+    <h2><span class="feature-id">F1</span>Photo bâtiment intégrée</h2>
+    <p class="desc">Fiche entreprise avec galerie photos + bouton « Ajouter photo » qui ouvre l'appareil photo natif.</p>
+
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">5G ●●●● 100%</span>
+        </div>
+        <div class="app-header">
+          <div class="burger"><span></span><span></span><span></span></div>
+          <div class="title">
+            Vitrerie Müller SA
+            <small>Lausanne · 1003</small>
+          </div>
+        </div>
+        <div class="app-body">
+          <div class="card">
+            <div class="label">Statut</div>
+            <div class="value">Prospect chaud · Score 11/13</div>
+          </div>
+
+          <div class="section-title">Photos chantier (4)</div>
+          <div class="photo-grid">
+            <div class="photo-thumb">façade</div>
+            <div class="photo-thumb">vitrage</div>
+            <div class="photo-thumb">détail</div>
+            <div class="photo-thumb">entrée</div>
+            <div class="photo-thumb empty">+</div>
+            <div class="photo-thumb empty">+</div>
+          </div>
+
+          <button class="btn btn-primary">
+            <span style="font-size: 18px;">📷</span> Ajouter photo
+          </button>
+
+          <div style="height: 12px;"></div>
+
+          <div class="section-title">Notes</div>
+          <div class="card">
+            <div class="value" style="font-size: 13px; line-height: 1.5;">Vitrage SE exposé soleil direct, demande devis film solaire 80m². RDV pris 5 mai.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="annotations">
+      <strong>Points clés :</strong>
+      <ul>
+        <li>Bouton primary full-width sous la galerie, tap target 48px.</li>
+        <li>Grille 3 colonnes, thumbnails carrés, slots vides matérialisés en pointillé.</li>
+        <li>Sur tap photo : lightbox plein écran (non maquetté).</li>
+        <li>Limite 10 photos affichée discrètement en compteur titre section.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- F2 - Géoloc visite -->
+  <div class="mockup-frame">
+    <h2><span class="feature-id">F2</span>Géoloc visite RDV</h2>
+    <p class="desc">Bouton « Check-in visite » avec demande permission iOS au tap, historique visites avec adresse retro-géocodée.</p>
+
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">5G ●●●● 100%</span>
+        </div>
+        <div class="app-header">
+          <div class="burger"><span></span><span></span><span></span></div>
+          <div class="title">
+            Vitrerie Müller SA
+            <small>RDV en cours</small>
+          </div>
+        </div>
+
+        <div class="perm-prompt">
+          <div class="perm-title">Géolocalisation</div>
+          <div class="perm-desc">Confirmer la position de la visite à l'adresse Zefix. Aucune donnée partagée hors FilmPro.</div>
+          <div class="perm-actions">
+            <button class="deny">Refuser</button>
+            <button class="allow">Autoriser</button>
+          </div>
+        </div>
+
+        <div class="app-body">
+          <div class="card">
+            <div class="label">Adresse Zefix</div>
+            <div class="value">Rue du Bugnon 12, 1011 Lausanne</div>
+          </div>
+
+          <button class="btn btn-primary" style="margin-bottom: 14px;">
+            <span style="font-size: 16px;">📍</span> Check-in visite
+          </button>
+
+          <div class="section-title">Visites passées (2)</div>
+
+          <div class="visit-row">
+            <div class="visit-icon">✓</div>
+            <div class="visit-content">
+              <div class="when">23 avr. 2026 · 14:30</div>
+              <div class="where">Rue du Bugnon 12, Lausanne</div>
+            </div>
+          </div>
+
+          <div class="visit-row">
+            <div class="visit-icon" style="background: var(--warning);">!</div>
+            <div class="visit-content">
+              <div class="when">15 avr. 2026 · 10:15</div>
+              <div class="where">Av. de Cour 8, Lausanne</div>
+              <div class="gap-warn">⚠ écart 220m vs adresse Zefix</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="annotations">
+      <strong>Points clés :</strong>
+      <ul>
+        <li>Permission prompt simulé (iOS gère le vrai dialogue), avec rationale clair.</li>
+        <li>Si refus : bouton check-in reste visible, fallback adresse manuelle.</li>
+        <li>Écart &gt; 100m flagué orange (info, pas blocage workflow).</li>
+        <li>Historique listé en ordre antichronologique sur la fiche.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- F3 - Lead express -->
+  <div class="mockup-frame">
+    <h2><span class="feature-id">F3</span>Création lead express</h2>
+    <p class="desc">Modale 4 champs accessible depuis sticky bar dashboard ou /prospection. Cible &lt;30 secondes.</p>
+
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">5G ●●●● 100%</span>
+        </div>
+        <div class="app-header">
+          <div class="burger"><span></span><span></span><span></span></div>
+          <div class="title">
+            Prospection
+            <small>247 leads actifs</small>
+          </div>
+        </div>
+
+        <div class="modal-overlay">
+          <div class="modal">
+            <div class="modal-grip"></div>
+            <h3>Nouveau lead express</h3>
+            <p class="modal-sub">Saisie rapide post-RDV. Enrichissement Zefix automatique ensuite.</p>
+
+            <div class="field">
+              <label>Contact</label>
+              <input type="text" placeholder="Marc Dubois" value="Marc Dubois">
+            </div>
+
+            <div class="field">
+              <label>Téléphone</label>
+              <input type="tel" placeholder="+41 79 ..." value="+41 79 234 56 78">
+            </div>
+
+            <div class="field">
+              <label>Entreprise</label>
+              <input type="text" placeholder="Vitrerie Dupond Sàrl" value="Vitrerie Dupond Sàrl">
+            </div>
+
+            <div class="field">
+              <label>Note</label>
+              <input type="text" placeholder="RDV 5 mai vitrage SE" value="RDV 5 mai vitrage SE">
+            </div>
+
+            <button class="btn btn-primary" style="margin-top: 8px;">Créer le lead</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="annotations">
+      <strong>Points clés :</strong>
+      <ul>
+        <li>Modale full-width (pas bottom sheet), s'ouvre depuis le bas en slide.</li>
+        <li>4 champs visibles sans scroll iPhone 14 Pro Max.</li>
+        <li>Auto-complétion contact iOS native (autocomplete="name", "tel").</li>
+        <li>Submit : redirige vers fiche pour enrichissement (Zefix, scoring) en mode différé.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- F4 - Pipeline rapide -->
+  <div class="mockup-frame">
+    <h2><span class="feature-id">F4</span>Mise à jour pipeline rapide</h2>
+    <p class="desc">Bouton « Étape suivante » sur fiche entreprise + mini-modale prochaine action. 2 taps max.</p>
+
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="status-bar">
+          <span>9:41</span>
+          <span class="right">5G ●●●● 100%</span>
+        </div>
+        <div class="app-header">
+          <div class="burger"><span></span><span></span><span></span></div>
+          <div class="title">
+            Vitrerie Müller SA
+            <small>Pipeline avancé</small>
+          </div>
+        </div>
+
+        <div class="toast">
+          <div class="check">✓</div>
+          <span>Pipeline avancé à <strong>RDV qualifié</strong></span>
+        </div>
+
+        <div class="app-body">
+          <div class="section-title">Étape pipeline</div>
+
+          <div class="stepper">
+            <div class="step done"></div>
+            <div class="step done"></div>
+            <div class="step current"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+          </div>
+
+          <div class="stage-display">
+            <div class="stage-label">Étape actuelle</div>
+            <div class="stage-name">RDV qualifié</div>
+            <div class="stage-next">Suivante : Devis envoyé</div>
+          </div>
+
+          <button class="btn btn-primary">
+            Étape suivante <span style="font-size: 16px;">→</span>
+          </button>
+
+          <div style="height: 14px;"></div>
+
+          <button class="btn btn-secondary">
+            Programmer prochaine action
+          </button>
+
+          <div class="section-title">Prochaine action prévue</div>
+          <div class="card">
+            <div class="label">5 mai 2026</div>
+            <div class="value" style="font-size: 13px;">Envoi devis film solaire 80m²</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="annotations">
+      <strong>Points clés :</strong>
+      <ul>
+        <li>Stepper visuel 5 étapes, courante en bleu primary, faites en vert.</li>
+        <li>Tap « Étape suivante » : optimistic UI bascule immédiat + toast confirmation.</li>
+        <li>Si erreur Supabase : rollback + toast erreur (non maquetté).</li>
+        <li>Tap suivant : mini-modale « prochaine action ? » (date + texte court).</li>
+      </ul>
+    </div>
+  </div>
+
+</div>
+
+<div class="page-header" style="margin-top: 56px; margin-bottom: 0;">
+  <div class="eyebrow">Validation cadrage</div>
+  <p style="margin-top: 12px;">Ces maquettes statiques figent l'intention UX V2 avant implémentation. Toute écart en code doit être justifié dans le commit. Prochaine étape : Session α (migration DB + F1 photo) ou ajustements maquettes selon retour Pascal.</p>
+</div>
+
+</body>
+</html>

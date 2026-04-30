@@ -34,8 +34,11 @@ setInterval(() => {
 }, 60_000);
 
 export const handle: Handle = async ({ event, resolve }) => {
-	// Rate limiting sur /api/prospection/*
-	if (event.url.pathname.startsWith('/api/prospection/')) {
+	// Rate limiting sur /api/prospection/* et /api/photos*
+	if (
+		event.url.pathname.startsWith('/api/prospection/') ||
+		event.url.pathname.startsWith('/api/photos')
+	) {
 		const ip = event.getClientAddress();
 		if (!checkRateLimit(ip)) {
 			return json(
