@@ -21,15 +21,30 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	if (error) {
 		console.error('Erreur chargement entreprises:', error.message);
-		return { entreprises: [], contacts: [] };
+		return { entreprises: [], contacts: [], opportunites: [] };
 	}
 
-	const { data: contacts } = await locals.supabase
-		.from('contacts')
-		.select('id, nom, prenom, role_fonction, entreprise_id, email_professionnel, telephone')
-		.eq('statut_archive', false);
+	const [contactsRes, oppsRes] = await Promise.all([
+		locals.supabase
+			.from('contacts')
+			.select('id, nom, prenom, role_fonction, entreprise_id, email_professionnel, telephone')
+			.eq('statut_archive', false),
+		// On ne charge que les opportunités non terminées : F4 PipelineQuickAdvance opère
+		// uniquement sur les pipelines actifs. Borne de sécurité contre la croissance linéaire
+		// du payload côté SlideOut entreprise.
+		locals.supabase
+			.from('opportunites')
+			.select('id, titre, entreprise_id, etape_pipeline, montant_estime, date_relance_prevue, notes_libres, date_derniere_modification')
+			.not('etape_pipeline', 'in', '(gagne,perdu)')
+			.order('date_derniere_modification', { ascending: false })
+			.limit(500),
+	]);
 
-	return { entreprises: entreprises ?? [], contacts: contacts ?? [] };
+	return {
+		entreprises: entreprises ?? [],
+		contacts: contactsRes.data ?? [],
+		opportunites: oppsRes.data ?? [],
+	};
 };
 
 export const actions: Actions = {

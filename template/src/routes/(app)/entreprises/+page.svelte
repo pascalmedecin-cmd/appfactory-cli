@@ -4,6 +4,7 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import PhotoGallery from '$lib/components/PhotoGallery.svelte';
 	import VisitsPanel from '$lib/components/VisitsPanel.svelte';
+	import PipelineQuickAdvance from '$lib/components/PipelineQuickAdvance.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
@@ -60,6 +61,16 @@
 			? data.contacts.filter((c: Contact) => c.entreprise_id === selectedEntreprise!.id)
 			: []
 	);
+
+	type Opp = (typeof data.opportunites)[number];
+	// Pipeline F4 : data.opportunites est déjà filtré côté serveur (non-terminales),
+	// on prend la plus récente liée à l'entreprise sélectionnée.
+	const linkedOpportunites = $derived(
+		selectedEntreprise
+			? data.opportunites.filter((o: Opp) => o.entreprise_id === selectedEntreprise!.id)
+			: []
+	);
+	const activeOpportunite = $derived<Opp | null>(linkedOpportunites[0] ?? null);
 
 	function logoUrl(siteWeb: string | null): string | null {
 		if (!siteWeb) return null;
@@ -273,6 +284,27 @@
 					<p class="text-text whitespace-pre-wrap">{selectedEntreprise.notes_libres}</p>
 				</div>
 			{/if}
+
+			<!-- Pipeline rapide (V2 mobile F4) - opportunité la plus récente non terminée -->
+			<div class="border-t border-border pt-4">
+				{#if activeOpportunite}
+					<PipelineQuickAdvance opp={activeOpportunite} />
+				{:else}
+					<div class="rounded-xl border border-border bg-white p-4 flex items-center justify-between gap-3">
+						<div>
+							<p class="text-xs uppercase tracking-wide text-text-muted font-semibold">Pipeline</p>
+							<p class="text-sm text-text-muted mt-0.5">Aucune opportunité pour cette entreprise.</p>
+						</div>
+						<a
+							href="/pipeline"
+							class="h-10 inline-flex items-center gap-2 px-3 box-border text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary-light transition-colors whitespace-nowrap"
+						>
+							<Icon name="add_circle" size={16} />
+							<span>Créer</span>
+						</a>
+					</div>
+				{/if}
+			</div>
 
 			<!-- Photos chantier (V2 mobile F1) -->
 			<div class="border-t border-border pt-4">

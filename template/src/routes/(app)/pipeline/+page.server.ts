@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { OpportuniteCreateSchema, OpportuniteUpdateSchema, OpportuniteMoveSchema, OpportuniteArchiveSchema, OPP_FIELDS, extractForm, validate } from '$lib/schemas';
+import { OpportuniteCreateSchema, OpportuniteUpdateSchema, OpportuniteMoveSchema, OpportuniteArchiveSchema, OpportuniteNextActionSchema, OPP_FIELDS, extractForm, validate } from '$lib/schemas';
 import { dbFail, newId, now } from '$lib/server/db-helpers';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -107,6 +107,23 @@ export const actions: Actions = {
 				motif_perte: parsed.data.motif_perte || null,
 				date_cloture_effective: ts,
 				date_derniere_modification: ts,
+			})
+			.eq('id', parsed.data.id);
+
+		return dbFail(error) ?? { success: true };
+	},
+
+	updateNextAction: async ({ request, locals }) => {
+		const form = await request.formData();
+		const parsed = validate(OpportuniteNextActionSchema, extractForm(form, ['id', 'date_relance_prevue', 'notes_libres']));
+		if (!parsed.success) return fail(400, { error: parsed.error });
+
+		const { error } = await locals.supabase
+			.from('opportunites')
+			.update({
+				date_relance_prevue: parsed.data.date_relance_prevue || null,
+				notes_libres: parsed.data.notes_libres || null,
+				date_derniere_modification: now(),
 			})
 			.eq('id', parsed.data.id);
 
