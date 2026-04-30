@@ -214,11 +214,11 @@
 					{/if}
 					<button
 						type="button"
-						onclick={() => askDelete(photo)}
-						class="absolute top-1 right-1 w-7 h-7 rounded-full bg-black/60 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-danger transition cursor-pointer"
+						onclick={(e) => { e.stopPropagation(); askDelete(photo); }}
+						class="absolute top-1 right-1 w-8 h-8 rounded-full bg-black/65 text-white flex items-center justify-center hover:bg-danger active:bg-danger transition cursor-pointer shadow-md"
 						aria-label="Supprimer la photo"
 					>
-						<Icon name="delete" size={14} />
+						<Icon name="delete" size={16} />
 					</button>
 				</div>
 			{/each}
@@ -229,7 +229,6 @@
 		bind:this={inputEl}
 		type="file"
 		accept="image/jpeg,image/png,image/webp,image/heic"
-		capture="environment"
 		onchange={handleFileChange}
 		class="hidden"
 	/>
