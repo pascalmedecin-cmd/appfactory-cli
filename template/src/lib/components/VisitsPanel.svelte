@@ -126,8 +126,8 @@
 				toasts.success(`Visite confirmée (écart ${Math.round(distance)} m vs adresse)`);
 			} else if (distance == null && diag === 'no_address_in_db') {
 				toasts.success('Visite confirmée. Adresse de l\'entreprise vide en base, pas de comparaison possible.');
-			} else if (distance == null && diag === 'nominatim_no_match') {
-				toasts.success('Visite confirmée. Adresse non reconnue par Nominatim, pas de comparaison.');
+			} else if (distance == null && diag === 'geocoder_no_match') {
+				toasts.success('Visite confirmée. Adresse non reconnue par le géocodeur, pas de comparaison.');
 			} else {
 				toasts.success('Visite confirmée');
 			}
@@ -205,6 +205,7 @@
 		/>
 		{capturing ? 'Localisation en cours…' : 'Check-in visite'}
 	</button>
+	<p class="text-[11px] text-text-muted">Géocodage adresses suisses uniquement (swisstopo).</p>
 
 	{#if loading}
 		<p class="text-sm text-text-muted">Chargement de l'historique…</p>

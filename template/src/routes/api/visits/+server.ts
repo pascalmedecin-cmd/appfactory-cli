@@ -40,16 +40,18 @@ function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number)
 	return R * c;
 }
 
-// Géocode une string via Nominatim. Helper interne, timeout 2.5s, null si échec.
-async function nominatimQuery(query: string): Promise<{ lat: number; lng: number; resolved: string } | null> {
+// Géocode une string via swisstopo geo.admin.ch SearchServer (CH-only, source cadastre fédéral).
+// API officielle suisse, gratuite, sans clé, fair-use. Timeout 2.5s, null si échec.
+// Doc : https://api3.geo.admin.ch/services/sdiservices.html#search
+async function swisstopoQuery(query: string): Promise<{ lat: number; lng: number; resolved: string } | null> {
 	const controller = new AbortController();
 	const timeout = setTimeout(() => controller.abort(), 2500);
 	try {
-		const url = new URL('https://nominatim.openstreetmap.org/search');
-		url.searchParams.set('q', query);
-		url.searchParams.set('format', 'json');
+		const url = new URL('https://api3.geo.admin.ch/rest/services/api/SearchServer');
+		url.searchParams.set('searchText', query);
+		url.searchParams.set('type', 'locations');
 		url.searchParams.set('limit', '1');
-		url.searchParams.set('countrycodes', 'ch');
+		url.searchParams.set('lang', 'fr');
 		const resp = await fetch(url, {
 			headers: {
 				'User-Agent': 'FilmPro-CRM/1.0 (contact@filmpro.ch)',
@@ -58,12 +60,14 @@ async function nominatimQuery(query: string): Promise<{ lat: number; lng: number
 			signal: controller.signal,
 		});
 		if (!resp.ok) return null;
-		const data = (await resp.json()) as Array<{ lat: string; lon: string; display_name: string }>;
-		if (!data || data.length === 0) return null;
-		const lat = Number(data[0].lat);
-		const lng = Number(data[0].lon);
-		if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
-		return { lat, lng, resolved: data[0].display_name };
+		const data = (await resp.json()) as {
+			results?: Array<{ attrs?: { lat?: number; lon?: number; label?: string } }>;
+		};
+		const first = data.results?.[0]?.attrs;
+		if (!first || typeof first.lat !== 'number' || typeof first.lon !== 'number') return null;
+		// Le label swisstopo embarque des balises <b>...</b> de mise en évidence, on les retire.
+		const resolved = (first.label ?? '').replace(/<\/?b>/g, '').trim();
+		return { lat: first.lat, lng: first.lon, resolved: resolved || query };
 	} catch {
 		return null;
 	} finally {
@@ -71,7 +75,7 @@ async function nominatimQuery(query: string): Promise<{ lat: number; lng: number
 	}
 }
 
-// Géocode l'adresse parent via Nominatim (OSM, gratuit, pas de clé).
+// Géocode l'adresse parent via swisstopo (CH-only, cadastre officiel).
 // Stratégie cascade : adresse complète → fallback NPA+localité+canton → fallback localité+canton.
 // Total timeout max ≈ 7.5s (3 tentatives × 2.5s), graceful degradation : null si tout échoue.
 async function geocodeAddress(parts: {
@@ -89,22 +93,22 @@ async function geocodeAddress(parts: {
 	if (adresse) {
 		const fragments = [adresse, [npa, localite].filter(Boolean).join(' ').trim() || null, canton]
 			.filter((s): s is string => !!s);
-		const query = `${fragments.join(', ')}, Switzerland`;
-		const result = await nominatimQuery(query);
+		const query = fragments.join(' ');
+		const result = await swisstopoQuery(query);
 		if (result) return result;
 	}
 
 	// Tentative 2 : NPA + localité + canton (sans rue précise).
 	if (npa && localite) {
-		const query = `${npa} ${localite}${canton ? ', ' + canton : ''}, Switzerland`;
-		const result = await nominatimQuery(query);
+		const query = `${npa} ${localite}${canton ? ' ' + canton : ''}`;
+		const result = await swisstopoQuery(query);
 		if (result) return result;
 	}
 
 	// Tentative 3 : localité + canton (point d'ancrage approximatif au niveau ville).
 	if (localite) {
-		const query = `${localite}${canton ? ', ' + canton : ''}, Switzerland`;
-		const result = await nominatimQuery(query);
+		const query = `${localite}${canton ? ' ' + canton : ''}`;
+		const result = await swisstopoQuery(query);
 		if (result) return result;
 	}
 
@@ -224,7 +228,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			? 'ok'
 			: !hasAnyAddress
 				? 'no_address_in_db'
-				: 'nominatim_no_match';
+				: 'geocoder_no_match';
 
 	const col = owner.kind === 'lead' ? 'prospect_lead_id' : 'entreprise_id';
 	const insertRow = {
