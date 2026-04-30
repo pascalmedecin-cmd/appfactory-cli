@@ -2,11 +2,11 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { toasts } from '$lib/stores/toast';
+	import { goto } from '$app/navigation';
 	import type { PageData } from './$types';
 	import type {
 		IntelligenceItem,
-		ImpactFilmpro,
-		SearchTerm
+		ImpactFilmpro
 	} from '$lib/server/intelligence/schema';
 
 	let { data }: { data: PageData } = $props();
@@ -17,7 +17,21 @@
 
 	const items = $derived(data.report.items as IntelligenceItem[]);
 	const impacts = $derived(data.report.impacts_filmpro as ImpactFilmpro[]);
-	const searchTerms = $derived(data.report.search_terms as SearchTerm[]);
+	const aggregatedChips = $derived(data.aggregatedChips ?? []);
+
+	let chipLoading = $state<number | null>(null);
+
+	const KIND_LABELS: Record<string, string> = {
+		simap: 'SIMAP',
+		zefix: 'Zefix',
+		regbl: 'RegBL'
+	};
+
+	const KIND_ICONS: Record<string, string> = {
+		simap: 'gavel',
+		zefix: 'business',
+		regbl: 'construction'
+	};
 
 	const THEME_LABELS: Record<string, string> = {
 		films_solaires: 'Films solaires',
@@ -87,15 +101,6 @@
 		return match ? match[1] : weekLabel;
 	}
 
-	function prospectionLink(term: SearchTerm): string {
-		const params = new URLSearchParams({
-			q: term.term,
-			from_intelligence: data.report.id,
-			from_term: term.term
-		});
-		return `/prospection?${params.toString()}`;
-	}
-
 	async function copyTerm(term: string) {
 		try {
 			await navigator.clipboard.writeText(term);
@@ -106,12 +111,40 @@
 	}
 
 	async function copyAllTerms() {
-		const text = searchTerms.map((t) => t.term).join('\n');
+		const text = aggregatedChips.map((a) => a.chip.query).join('\n');
 		try {
 			await navigator.clipboard.writeText(text);
-			toasts.success(`${searchTerms.length} termes copiés`);
+			toasts.success(`${aggregatedChips.length} termes copiés`);
 		} catch {
 			toasts.error('Copie impossible');
+		}
+	}
+
+	async function runChipSearch(idx: number) {
+		if (chipLoading !== null) return;
+		const entry = aggregatedChips[idx];
+		if (!entry) return;
+		chipLoading = idx;
+		try {
+			const resp = await fetch('/api/prospection/from-intelligence', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					chip: entry.chip,
+					report_id: data.report.id,
+					item_rank: entry.item_rank
+				})
+			});
+			const result = await resp.json();
+			if (!resp.ok) {
+				toasts.error(`Échec import : ${result?.error ?? resp.statusText}`);
+				return;
+			}
+			goto(result.redirect, { invalidateAll: true });
+		} catch (err) {
+			toasts.error(`Erreur réseau : ${String(err)}`);
+		} finally {
+			chipLoading = null;
 		}
 	}
 </script>
@@ -205,7 +238,7 @@
 						<div>
 							<dt class="mag-kicker text-white/55 text-[9px]">Termes</dt>
 							<dd class="mag-display text-2xl tabular-nums leading-none mt-1">
-								{searchTerms.length}
+								{aggregatedChips.length}
 							</dd>
 						</div>
 					</dl>
@@ -325,7 +358,7 @@
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
 				{#each impacts as impact}
 					<div
-						class="bg-white border border-border border-l-4 border-l-primary rounded-r-xl rounded-lg shadow-xs hover:shadow-md transition-shadow px-6 md:px-8 py-6 md:py-8"
+						class="bg-white border border-border border-l-4 border-l-primary rounded-lg shadow-xs hover:shadow-md transition-shadow px-6 md:px-8 py-6 md:py-8"
 					>
 						<div class="mag-kicker text-primary mb-3">
 							Axe {IMPACT_LABELS[impact.axis] ?? impact.axis}
@@ -342,7 +375,7 @@
 	{/if}
 
 	<!-- TERMES DE RECHERCHE -->
-	{#if searchTerms.length > 0}
+	{#if aggregatedChips.length > 0}
 		<section class="mb-14 md:mb-20">
 			<div class="flex items-end gap-3 mb-8 md:mb-10 flex-wrap">
 				<div>
@@ -358,31 +391,37 @@
 					class="inline-flex items-center gap-2 h-10 px-4 box-border rounded-lg border border-border bg-white hover:border-primary hover:bg-surface-alt text-sm font-semibold text-text-body transition-colors"
 				>
 					<Icon name="content_copy" size={16} />
-					Copier les {searchTerms.length}
+					Copier les {aggregatedChips.length}
 				</button>
 			</div>
 
 			<ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				{#each searchTerms as term}
+				{#each aggregatedChips as entry, idx (entry.chip.label)}
+					{@const chip = entry.chip}
+					{@const isLoading = chipLoading === idx}
 					<li
 						class="bg-white border border-border rounded-xl p-5 flex flex-col gap-3 hover:border-primary/40 hover:shadow-md transition-all"
 					>
 						<div class="flex items-start justify-between gap-3">
 							<div class="flex-1 min-w-0">
 								<div class="flex items-center gap-2 flex-wrap mb-2">
-									<span class="font-semibold text-primary-dark text-base">{term.term}</span>
-									<span
-										class="mag-kicker text-primary text-[9px]"
-										>{SEGMENT_LABELS[term.segment] ?? term.segment}</span
-									>
+									<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-light text-primary text-[10px] font-bold uppercase tracking-wider">
+										{KIND_LABELS[chip.kind] ?? chip.kind}
+									</span>
+									<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-alt text-text-muted text-[10px] font-semibold uppercase tracking-wider border border-border">
+										{chip.canton}
+									</span>
+									<span class="text-[10px] text-text-muted">
+										depuis signal #{entry.item_rank}
+									</span>
 								</div>
-								<p class="text-sm text-text-muted leading-relaxed">
-									{term.rationale}
+								<p class="text-sm font-semibold text-primary-dark leading-snug break-words">
+									{chip.query}
 								</p>
 							</div>
 							<button
 								type="button"
-								onclick={() => copyTerm(term.term)}
+								onclick={() => copyTerm(chip.query)}
 								class="shrink-0 p-2 rounded-lg hover:bg-surface-alt text-text-muted hover:text-primary transition-colors"
 								title="Copier le terme"
 								aria-label="Copier le terme"
@@ -390,19 +429,27 @@
 								<Icon name="content_copy" size={16} />
 							</button>
 						</div>
-						<a
-							href={prospectionLink(term)}
-							class="self-start inline-flex items-center gap-2 h-10 px-4 box-border rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors group"
-							title="Lancer cette recherche dans Prospection"
+						<button
+							type="button"
+							disabled={chipLoading !== null}
+							onclick={() => runChipSearch(idx)}
+							class="self-start inline-flex items-center gap-2 h-10 px-4 box-border rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors group cursor-pointer"
+							title="Auto-exécuter la recherche dans Prospection"
 						>
-							<Icon name="search" size={16} />
-							Rechercher
 							<Icon
-								name="arrow_forward"
-								size={14}
-								class="transition-transform group-hover:translate-x-0.5"
+								name={isLoading ? 'progress_activity' : KIND_ICONS[chip.kind] ?? 'search'}
+								size={16}
+								class={isLoading ? 'animate-spin' : ''}
 							/>
-						</a>
+							{isLoading ? 'Lancement…' : 'Lancer la recherche'}
+							{#if !isLoading}
+								<Icon
+									name="arrow_forward"
+									size={14}
+									class="transition-transform group-hover:translate-x-0.5"
+								/>
+							{/if}
+						</button>
 					</li>
 				{/each}
 			</ul>
