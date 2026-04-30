@@ -118,11 +118,16 @@
 			}
 			const data = await resp.json();
 			const newVisit = data.visit as Visit;
+			const diag = data.geocode_diag as string | undefined;
 			visits = [newVisit, ...visits];
 
 			const distance = newVisit.distance_from_zefix_m;
 			if (distance != null && distance > DISTANCE_FLAG_THRESHOLD_M) {
 				toasts.success(`Visite confirmée (écart ${Math.round(distance)} m vs adresse)`);
+			} else if (distance == null && diag === 'no_address_in_db') {
+				toasts.success('Visite confirmée. Adresse de l\'entreprise vide en base, pas de comparaison possible.');
+			} else if (distance == null && diag === 'nominatim_no_match') {
+				toasts.success('Visite confirmée. Adresse non reconnue par Nominatim, pas de comparaison.');
 			} else {
 				toasts.success('Visite confirmée');
 			}

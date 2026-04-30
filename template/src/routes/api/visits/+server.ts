@@ -217,6 +217,15 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		geocoded != null ? Math.round(haversineMeters(lat, lng, geocoded.lat, geocoded.lng) * 10) / 10 : null;
 	const address_resolved = geocoded?.resolved ?? null;
 
+	// Diagnostic non-sensible : permet de comprendre pourquoi address_resolved est null.
+	const hasAnyAddress = !!(parent.adresse || parent.npa || parent.localite);
+	const geocode_diag: string =
+		geocoded != null
+			? 'ok'
+			: !hasAnyAddress
+				? 'no_address_in_db'
+				: 'nominatim_no_match';
+
 	const col = owner.kind === 'lead' ? 'prospect_lead_id' : 'entreprise_id';
 	const insertRow = {
 		[col]: owner.id,
@@ -236,5 +245,5 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	if (insErr || !row) return genericError(insErr ?? new Error('Insert null'), 'Erreur enregistrement visite');
 
-	return json({ visit: row }, { status: 201 });
+	return json({ visit: row, geocode_diag }, { status: 201 });
 };
