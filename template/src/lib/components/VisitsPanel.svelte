@@ -222,12 +222,18 @@
 								{visit.address_resolved}
 							</p>
 						{/if}
-						<p class="text-xs text-text-muted mt-1">
+						<a
+							href={`https://www.google.com/maps?q=${visit.lat},${visit.lng}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+						>
+							<Icon name="map" size={12} />
 							{visit.lat.toFixed(5)}, {visit.lng.toFixed(5)}
 							{#if visit.accuracy_m != null}
-								<span class="ml-1">(±{Math.round(visit.accuracy_m)} m)</span>
+								<span class="text-text-muted">(±{Math.round(visit.accuracy_m)} m)</span>
 							{/if}
-						</p>
+						</a>
 					</div>
 					<button
 						type="button"

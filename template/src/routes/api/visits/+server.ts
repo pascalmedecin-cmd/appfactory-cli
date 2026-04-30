@@ -40,27 +40,16 @@ function haversineMeters(lat1: number, lng1: number, lat2: number, lng2: number)
 	return R * c;
 }
 
-// Géocode l'adresse parent via Nominatim (OSM, gratuit, pas de clé).
-// Timeout 3s, graceful degradation : retourne null si échec.
-async function geocodeAddress(parts: {
-	adresse?: string | null;
-	npa?: string | null;
-	localite?: string | null;
-}): Promise<{ lat: number; lng: number; resolved: string } | null> {
-	const fragments = [parts.adresse, parts.npa, parts.localite].filter((s): s is string => !!s && s.trim() !== '');
-	if (fragments.length === 0) return null;
-	const query = `${fragments.join(', ')}, Switzerland`;
-
+// Géocode une string via Nominatim. Helper interne, timeout 2.5s, null si échec.
+async function nominatimQuery(query: string): Promise<{ lat: number; lng: number; resolved: string } | null> {
 	const controller = new AbortController();
-	const timeout = setTimeout(() => controller.abort(), 3000);
-
+	const timeout = setTimeout(() => controller.abort(), 2500);
 	try {
 		const url = new URL('https://nominatim.openstreetmap.org/search');
 		url.searchParams.set('q', query);
 		url.searchParams.set('format', 'json');
 		url.searchParams.set('limit', '1');
 		url.searchParams.set('countrycodes', 'ch');
-
 		const resp = await fetch(url, {
 			headers: {
 				'User-Agent': 'FilmPro-CRM/1.0 (contact@filmpro.ch)',
@@ -80,6 +69,63 @@ async function geocodeAddress(parts: {
 	} finally {
 		clearTimeout(timeout);
 	}
+}
+
+// Géocode l'adresse parent via Nominatim (OSM, gratuit, pas de clé).
+// Stratégie cascade : adresse complète → fallback NPA+localité+canton → fallback localité+canton.
+// Total timeout max ≈ 7.5s (3 tentatives × 2.5s), graceful degradation : null si tout échoue.
+async function geocodeAddress(parts: {
+	adresse?: string | null;
+	npa?: string | null;
+	localite?: string | null;
+	canton?: string | null;
+}): Promise<{ lat: number; lng: number; resolved: string } | null> {
+	const adresse = parts.adresse?.trim() || null;
+	const npa = parts.npa?.trim() || null;
+	const localite = parts.localite?.trim() || null;
+	const canton = parts.canton?.trim() || null;
+
+	// Tentative 1 : adresse complète (si présente).
+	if (adresse) {
+		const fragments = [adresse, [npa, localite].filter(Boolean).join(' ').trim() || null, canton]
+			.filter((s): s is string => !!s);
+		const query = `${fragments.join(', ')}, Switzerland`;
+		const result = await nominatimQuery(query);
+		if (result) return result;
+	}
+
+	// Tentative 2 : NPA + localité + canton (sans rue précise).
+	if (npa && localite) {
+		const query = `${npa} ${localite}${canton ? ', ' + canton : ''}, Switzerland`;
+		const result = await nominatimQuery(query);
+		if (result) return result;
+	}
+
+	// Tentative 3 : localité + canton (point d'ancrage approximatif au niveau ville).
+	if (localite) {
+		const query = `${localite}${canton ? ', ' + canton : ''}, Switzerland`;
+		const result = await nominatimQuery(query);
+		if (result) return result;
+	}
+
+	return null;
+}
+
+// Parse "Rue X 42, 1000 Lausanne" → { street, npa, locality }. Best-effort.
+function parseSwissAddress(raw: string | null): { adresse: string | null; npa: string | null; localite: string | null } {
+	if (!raw) return { adresse: null, npa: null, localite: null };
+	const cleaned = raw.replace(/\s+/g, ' ').trim();
+	// Pattern : "..., 4digits Localité" ou "... 4digits Localité"
+	const match = cleaned.match(/^(.+?)[,\s]+(\d{4})\s+([^\d].+)$/);
+	if (match) {
+		return {
+			adresse: match[1].trim().replace(/[,\s]+$/, '') || null,
+			npa: match[2],
+			localite: match[3].trim(),
+		};
+	}
+	// Pas de pattern NPA détecté : tout en adresse.
+	return { adresse: cleaned, npa: null, localite: null };
 }
 
 export const GET = async ({ url, locals }: RequestEvent) => {
@@ -136,31 +182,36 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const accuracy_m = Number.isFinite(accuracyRaw) && accuracyRaw >= 0 && accuracyRaw < 100000 ? accuracyRaw : null;
 
 	// Vérifier l'existence du parent + récupérer adresse pour géocodage.
-	let parent: { id: string; adresse: string | null; npa: string | null; localite: string | null } | null = null;
+	let parent: { id: string; adresse: string | null; npa: string | null; localite: string | null; canton: string | null } | null = null;
 	if (owner.kind === 'lead') {
 		const { data, error } = await locals.supabase
 			.from('prospect_leads')
-			.select('id, adresse, npa, localite')
+			.select('id, adresse, npa, localite, canton')
 			.eq('id', owner.id)
 			.maybeSingle();
 		if (error) return genericError(error, 'Erreur recherche lead');
-		if (data) parent = { id: data.id, adresse: data.adresse, npa: data.npa, localite: data.localite };
+		if (data) parent = { id: data.id, adresse: data.adresse, npa: data.npa, localite: data.localite, canton: data.canton };
 	} else {
 		const { data, error } = await locals.supabase
 			.from('entreprises')
-			.select('id, adresse_siege')
+			.select('id, adresse_siege, canton')
 			.eq('id', owner.id)
 			.maybeSingle();
 		if (error) return genericError(error, 'Erreur recherche entreprise');
-		if (data) parent = { id: data.id, adresse: data.adresse_siege, npa: null, localite: null };
+		if (data) {
+			// adresse_siege legacy : champ unique style "Rue X 42, 1000 Lausanne". On parse.
+			const parsed = parseSwissAddress(data.adresse_siege);
+			parent = { id: data.id, adresse: parsed.adresse, npa: parsed.npa, localite: parsed.localite, canton: data.canton };
+		}
 	}
 	if (!parent) return json({ error: 'Parent introuvable' }, { status: 404 });
 
-	// Géocodage best-effort (Nominatim, 3s timeout, échec → null silencieux).
+	// Géocodage best-effort cascade (3 tentatives, 2.5s chacune, null si tout échoue).
 	const geocoded = await geocodeAddress({
 		adresse: parent.adresse,
 		npa: parent.npa,
 		localite: parent.localite,
+		canton: parent.canton,
 	});
 	const distance_from_zefix_m =
 		geocoded != null ? Math.round(haversineMeters(lat, lng, geocoded.lat, geocoded.lng) * 10) / 10 : null;
