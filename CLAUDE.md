@@ -203,43 +203,16 @@ Fichiers cles :
 
 <!-- BEGIN CONSOLIDATION (auto-géré par cockpit, ne pas éditer) -->
 
-### Consolidation cockpit (maj 2026-04-30T10:57:57)
-
-**Blocs actionnables** (ordre d'attaque) :
-
-- **Bloc #2** - CRM mobile terrain (refonte structurelle) (6h, confiance Faible)
-  - Objectif : Concevoir et implémenter CRM mobile comme outil terrain, au-delà du responsive
-  - CRM mobile : vraie version terrain
-
-- **Bloc #3** - Fix bandeau navy WeasyPrint dernière page (0.5h, confiance Élevé)
-  - Objectif : Bandeau navy visible sur 100% des pages content, y compris dernière page courte
-  - Investiguer 2 pistes : (a) forcer min-height: 100vh sur .doc-page pour garantir que la page atteint la zone bottom, (b) utiliser position: running(name) + @bottom-center { content: element(name) } pou
-
-- **Bloc #4** - Quick wins UX /prospection + /aide (2h, confiance Élevé)
-  - Objectif : 3 fixes UX rapides : retirer ? cassés, sélection globale, ouvrir aide nouvel onglet
-  - Ouvrir la page aide dans un nouvel onglet
-  - Retirer les "?" dans l'en-tête du tableau /prospection
-  - Sélection globale prospection
-
-- **Bloc #5** - V2 mobile terrain F2 géoloc + refonte Veille (3.5h, confiance Moyen)
-  - Objectif : Livrer F2 check-in GPS visite RDV puis refondre layout page Veille sectorielle
-  - Composant CheckInButton.svelte avec permission navigator.geolocation + insertion prospect_visits (lat/lng/visited_at/user_id) + calcul distance Haversine vs adresse Zefix entreprise (flag info si écar
-  - Refonte layout page Veille sectorielle CRM FilmPro
+### Consolidation cockpit (maj 2026-04-30T18:39:56)
 
 **Blocs bloqués** :
 
 - **Bloc B1** [BLOQUÉ] - Validation cron veille W18 + cleanup stash (0.5h)
   - Objectif : Valider édition veille W18 + pipeline Veille→Prospection puis drop stash devenu obsolète
-  - Blocage : Dépend de l'envoi du cron veille programmé ≥ 2026-05-01 (date ultérieure fixée)
-  - Débloque si : Réception email cron W18 le 2026-05-01 + validation pipeline OK
+  - Blocage : Date ultérieure fixée ≥ 2026-05-01 (envoi cron veille programmé)
+  - Débloque si : Réception email cron W18 le 2026-05-01 + validation pipeline
   - Lire l'édition W18 reçue par email + sur /veille. Critères veille : (1) ≥1 item Suisse romande rangs 1-3, (2) sources crédibles, (3) anti-doublons W16/W17, (4) compliance_tag cohérent, (5) volume 5-10
   - Drop stash stash@{0} (git stash drop stash@{0}) une fois la refonte LEAN considérée stable. Le stash contenait des éléments S110 chantier B déjà intégrés ou écartés.
-
-- **Bloc B2** [BLOQUÉ] - V2 mobile terrain F3 lead express + F4 pipeline (2h)
-  - Objectif : Modale LeadExpress + PipelineQuickAdvance + tests Playwright + golden v7 mobile
-  - Blocage : Dépend de la livraison F2 géoloc (mêmes intégrations LeadSlideOut/EntrepriseSlideOut)
-  - Débloque si : Livraison F2 géoloc dans Bloc #5
-  - Modale LeadExpress.svelte (nom + tel + entreprise + note) + bouton sticky dashboard et /prospection mobile. Composant PipelineQuickAdvance.svelte (étape suivante + mini-modale next action, optimistic
 
 <!-- END CONSOLIDATION -->
 
