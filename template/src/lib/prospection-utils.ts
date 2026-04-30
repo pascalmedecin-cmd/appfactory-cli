@@ -67,6 +67,7 @@ export function sourceLabel(s: string): string {
 		simap: 'Marchés publics',
 		regbl: 'Registre des bâtiments',
 		search_ch: 'Annuaire',
+		lead_express: 'Saisie terrain',
 	};
 	return labels[s] ?? s;
 }
@@ -78,6 +79,7 @@ export const sourceOptions = [
 	{ value: 'simap', label: 'SIMAP (marchés publics)' },
 	{ value: 'regbl', label: 'RegBL (registre des bâtiments)' },
 	{ value: 'search_ch', label: 'search.ch (annuaire)' },
+	{ value: 'lead_express', label: 'Saisie terrain (mobile)' },
 ];
 
 const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];

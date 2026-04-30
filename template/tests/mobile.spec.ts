@@ -387,4 +387,123 @@ test.describe('CRM mobile V1 — audits objectifs', () => {
 		const resp = await page.request.delete('/api/visits/not-a-uuid');
 		expect([400, 403]).toContain(resp.status());
 	});
+
+	// === V2 mobile F3 : création lead express ===
+
+	test('Dashboard mobile : bouton "Nouveau lead express" visible et tap target ≥ 44px', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const btn = page.locator('button:has-text("Nouveau lead express")').first();
+		await expect.soft(btn, 'Bouton dashboard "Nouveau lead express" absent').toBeVisible();
+		const box = await btn.boundingBox().catch(() => null);
+		if (box) {
+			expect.soft(box.height, `Bouton dashboard hauteur ${box.height}px < 44`).toBeGreaterThanOrEqual(44);
+		}
+	});
+
+	test('Prospection mobile : bouton "Lead express" inline dans actions, tap target ≥ 44px', async ({ page }) => {
+		await page.goto('/prospection', { waitUntil: 'networkidle' });
+		const btn = page.locator('button:has-text("Lead express")').first();
+		await expect.soft(btn, 'Bouton prospection "Lead express" absent').toBeVisible();
+		const box = await btn.boundingBox().catch(() => null);
+		if (box) {
+			expect.soft(box.height, `Bouton prospection hauteur ${box.height}px < 44`).toBeGreaterThanOrEqual(44);
+		}
+	});
+
+	test('LeadExpress modale : 4 champs visibles sans scroll iPhone 14 Pro Max', async ({ page }) => {
+		await page.goto('/prospection', { waitUntil: 'networkidle' });
+		const trigger = page.locator('button:has-text("Lead express")').first();
+		await trigger.click();
+		await page.waitForTimeout(400);
+
+		// 4 champs : raison_sociale, nom_contact, telephone, notes
+		await expect.soft(page.locator('input[name="raison_sociale"]')).toBeVisible();
+		await expect.soft(page.locator('input[name="nom_contact"]')).toBeVisible();
+		await expect.soft(page.locator('input[name="telephone"]')).toBeVisible();
+		await expect.soft(page.locator('input[name="notes"]')).toBeVisible();
+
+		// Submit button visible sans scroll
+		const submitBtn = page.locator('button:has-text("Créer le lead")').first();
+		const box = await submitBtn.boundingBox().catch(() => null);
+		if (box) {
+			expect.soft(box.y + box.height, 'Bouton Créer doit être visible dans le viewport 932px').toBeLessThan(932);
+			expect.soft(box.height, `Bouton Créer hauteur ${box.height}px < 44`).toBeGreaterThanOrEqual(44);
+		}
+	});
+
+	test('LeadExpress submit sans entreprise → bouton désactivé', async ({ page }) => {
+		await page.goto('/prospection', { waitUntil: 'networkidle' });
+		const trigger = page.locator('button:has-text("Lead express")').first();
+		await trigger.click();
+		await page.waitForTimeout(400);
+		const submitBtn = page.locator('button:has-text("Créer le lead")').first();
+		await expect.soft(submitBtn).toBeDisabled();
+	});
+
+	test('LeadExpress action serveur ?/createExpress refuse payload vide (400)', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const fd = new FormData();
+		const resp = await page.request.post('/prospection?/createExpress', { multipart: { _empty: 'x' } });
+		// SvelteKit form action retourne 400 avec ActionResult failure (raison_sociale manquante).
+		expect([400, 403]).toContain(resp.status());
+	});
+
+	// === V2 mobile F4 : pipeline rapide sur fiche entreprise ===
+
+	test('PipelineQuickAdvance présent dans EntrepriseSlideOut', async ({ page }) => {
+		await page.goto('/entreprises', { waitUntil: 'networkidle' });
+		await page.waitForTimeout(500);
+
+		const firstRow = page.locator('main tbody tr').first();
+		const hasRows = await firstRow.isVisible().catch(() => false);
+		if (!hasRows) {
+			test.skip(true, 'Aucune entreprise en prod, test ignoré');
+			return;
+		}
+
+		await firstRow.click();
+		await page.waitForTimeout(800);
+
+		// Section pipeline présente : soit avec opp (label "Étape suivante"), soit fallback CTA "Créer".
+		const pipelineSection = page.locator('text=/pipeline/i').first();
+		await expect.soft(pipelineSection, 'Section "Pipeline" absente du SlideOut entreprise').toBeVisible();
+	});
+
+	test('PipelineQuickAdvance bouton "Étape suivante" tap target ≥ 44px si présent', async ({ page }) => {
+		await page.goto('/entreprises', { waitUntil: 'networkidle' });
+		await page.waitForTimeout(500);
+
+		const firstRow = page.locator('main tbody tr').first();
+		const hasRows = await firstRow.isVisible().catch(() => false);
+		if (!hasRows) {
+			test.skip(true, 'Aucune entreprise en prod, test ignoré');
+			return;
+		}
+
+		await firstRow.click();
+		await page.waitForTimeout(800);
+
+		const advanceBtn = page.locator('button:has-text("Étape suivante")').first();
+		const visible = await advanceBtn.isVisible().catch(() => false);
+		if (!visible) {
+			test.skip(true, 'Pas d\'opportunité active sur cette entreprise, test ignoré');
+			return;
+		}
+		const box = await advanceBtn.boundingBox().catch(() => null);
+		if (box) {
+			expect.soft(box.height, `Bouton "Étape suivante" hauteur ${box.height}px < 44`).toBeGreaterThanOrEqual(44);
+		}
+	});
+
+	test('API /pipeline?/move refuse payload sans id (400/403)', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const resp = await page.request.post('/pipeline?/move', { multipart: { _empty: 'x' } });
+		expect([400, 403]).toContain(resp.status());
+	});
+
+	test('API /pipeline?/updateNextAction refuse payload sans id (400/403)', async ({ page }) => {
+		await page.goto('/', { waitUntil: 'networkidle' });
+		const resp = await page.request.post('/pipeline?/updateNextAction', { multipart: { _empty: 'x' } });
+		expect([400, 403]).toContain(resp.status());
+	});
 });

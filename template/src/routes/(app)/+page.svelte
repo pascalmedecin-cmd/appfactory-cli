@@ -1,12 +1,14 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import LeadExpress from '$lib/components/prospection/LeadExpress.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import type { PageData } from './$types';
 
 	$pageSubtitle = 'Vue d\'ensemble';
 
 	let { data }: { data: PageData } = $props();
+	let leadExpressOpen = $state(false);
 
 	const isEmpty = $derived(
 		data.stats.contacts === 0 && data.stats.entreprises === 0 && data.stats.opportunites === 0
@@ -72,6 +74,21 @@
 			<Icon name="arrow_forward" size={18} class="text-warning" />
 		</a>
 	{/if}
+
+	<!-- Lead express (F3 V2 mobile terrain) : carte primary visible mobile + tablette,
+	     masquée desktop (≥ lg) où la prospection est accessible directement. -->
+	<button
+		type="button"
+		onclick={() => leadExpressOpen = true}
+		class="lg:hidden w-full flex items-center gap-3 p-4 rounded-lg bg-primary text-white hover:bg-primary-hover shadow-md transition-colors cursor-pointer"
+	>
+		<Icon name="bolt" size={24} class="text-white" />
+		<div class="flex-1 text-left">
+			<p class="text-sm font-semibold">Nouveau lead express</p>
+			<p class="text-xs text-white/80 mt-0.5">Saisie rapide post-RDV : entreprise + contact + tél + note</p>
+		</div>
+		<Icon name="arrow_forward" size={18} class="text-white/80" />
+	</button>
 
 	<!-- Stats cards -->
 	<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -227,4 +244,7 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Lead express modale (F3 V2 mobile terrain) - redirect vers fiche pour enrichissement Zefix -->
+<LeadExpress bind:open={leadExpressOpen} redirectAfterCreate={true} />
 

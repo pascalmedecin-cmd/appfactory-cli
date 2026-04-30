@@ -14,3 +14,10 @@ export function newId() {
 export function now() {
 	return new Date().toISOString();
 }
+
+// PostgREST .ilike()/.like() interprète % et _ comme wildcards SQL. Sans échappement,
+// une saisie utilisateur contenant ces caractères provoque des faux positifs (ex: dedup
+// qui retourne un mauvais lead). Cf mémoire feedback_postgrest_or_filter_injection.md.
+export function escapeIlike(s: string): string {
+	return s.replace(/[\\%_]/g, c => '\\' + c);
+}

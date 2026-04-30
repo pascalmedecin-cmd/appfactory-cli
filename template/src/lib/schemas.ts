@@ -115,6 +115,16 @@ export const OpportuniteArchiveSchema = z.object({
 	motif_perte: optionalString,
 });
 
+// F4 V2 mobile : update minimal de la prochaine action sur une opportunité
+// (date relance + notes libres). Utilisé par PipelineQuickAdvance.svelte.
+// Format date strict YYYY-MM-DD pour éviter qu'une saisie libre ("avant juin")
+// remonte une erreur Postgres opaque.
+export const OpportuniteNextActionSchema = z.object({
+	id: requiredUUID,
+	date_relance_prevue: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide').optional().or(z.literal('')),
+	notes_libres: optionalText,
+});
+
 // -- Signaux d'affaires --
 
 export const SignalCreateSchema = z.object({
@@ -157,7 +167,7 @@ export const SignalCreateOpportuniteSchema = z.object({
 // -- Prospect Leads --
 
 export const SOURCES_LEAD = [
-	'zefix', 'simap', 'search_ch', 'regbl',
+	'zefix', 'simap', 'search_ch', 'regbl', 'lead_express',
 ] as const;
 
 export const STATUTS_LEAD = [
@@ -190,6 +200,20 @@ export const LeadCreateSchema = z.object({
 export const LeadUpdateSchema = LeadCreateSchema.extend({
 	id: z.string().uuid(),
 });
+
+// F3 lead express mobile : saisie rapide post-RDV.
+// 4 champs minimaux, source forcée 'lead_express' côté serveur, canton optionnel
+// (sera enrichi via Zefix plus tard). Score pertinence reste à 0 jusqu'à enrichissement.
+export const LeadExpressCreateSchema = z.object({
+	raison_sociale: z.string().min(1, 'L\'entreprise est requise').max(500),
+	nom_contact: z.string().max(200).optional().or(z.literal('')),
+	telephone: z.string().max(30).optional().or(z.literal('')),
+	notes: z.string().max(1000).optional().or(z.literal('')),
+});
+
+export const LEAD_EXPRESS_FIELDS = [
+	'raison_sociale', 'nom_contact', 'telephone', 'notes',
+] as const;
 
 export const LeadUpdateStatutSchema = z.object({
 	id: z.string().uuid(),

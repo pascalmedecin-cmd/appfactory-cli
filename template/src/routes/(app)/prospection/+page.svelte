@@ -7,6 +7,7 @@
 	import Badge from '$lib/components/Badge.svelte';
 	import ImportModal from '$lib/components/prospection/ImportModal.svelte';
 	import LeadSlideOut from '$lib/components/prospection/LeadSlideOut.svelte';
+	import LeadExpress from '$lib/components/prospection/LeadExpress.svelte';
 	import EnrichBatchModal from '$lib/components/prospection/EnrichBatchModal.svelte';
 	import AlerteModal from '$lib/components/prospection/AlerteModal.svelte';
 	import BatchActionsBar from '$lib/components/prospection/BatchActionsBar.svelte';
@@ -39,6 +40,7 @@
 	let mobileFiltersOpen = $state(false);
 	let mobileMenuOpen = $state(false);
 	let mobileMenuRef = $state<HTMLDivElement | null>(null);
+	let leadExpressOpen = $state(false);
 
 	const showSelectAllBanner = $derived(
 		selectedIds.size > 0
@@ -158,6 +160,23 @@
 		slideOutOpen = true;
 	}
 
+	// Ouverture auto du SlideOut quand on arrive depuis dashboard avec ?slideOut=<id>
+	// (workflow F3 lead express : redirect post-création vers fiche pour enrichissement).
+	// On nettoie l'URL même si le lead n'est pas (encore) trouvé pour éviter une réouverture
+	// post-fermeture rapide ou au reload navigateur.
+	$effect(() => {
+		const targetId = $page.url.searchParams.get('slideOut');
+		if (!targetId || slideOutOpen) return;
+		const lead = data.leads.find(l => l.id === targetId);
+		const url = new URL($page.url);
+		url.searchParams.delete('slideOut');
+		goto(url.pathname + url.search, { replaceState: true, noScroll: true, keepFocus: true });
+		if (lead) {
+			selectedLead = lead;
+			slideOutOpen = true;
+		}
+	});
+
 	type Recherche = (typeof data.recherches)[number];
 
 	function chargerRecherche(r: Recherche) {
@@ -244,6 +263,15 @@
 				<Icon name="auto_fix_high" size={18} />
 				<span>Enrichir cette page</span>
 				<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich/10 text-prosp-enrich">{enrichablesCount}</span>
+			</button>
+			<button
+				type="button"
+				onclick={() => leadExpressOpen = true}
+				class="md:hidden flex items-center gap-2 h-11 px-3 text-sm font-semibold text-primary border border-primary rounded-lg box-border bg-white hover:bg-primary-light cursor-pointer transition-colors"
+				aria-label="Créer un lead express"
+			>
+				<Icon name="bolt" size={18} />
+				<span>Lead express</span>
 			</button>
 			<button
 				onclick={() => importModalOpen = true}
@@ -464,6 +492,9 @@
 
 <!-- Lead detail slide-out -->
 <LeadSlideOut bind:open={slideOutOpen} bind:lead={selectedLead} bind:importResult leads={data.leads} />
+
+<!-- Lead express modale (F3 V2 mobile terrain) -->
+<LeadExpress bind:open={leadExpressOpen} redirectAfterCreate={false} />
 
 <!-- Modal création alerte -->
 <AlerteModal bind:open={alerteModalOpen} />

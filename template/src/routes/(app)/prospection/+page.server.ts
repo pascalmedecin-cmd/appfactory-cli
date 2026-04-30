@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { LeadCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema, RechercheCreateSchema, RechercheDeleteSchema, LEAD_FIELDS, extractForm, validate } from '$lib/schemas';
+import { LeadCreateSchema, LeadExpressCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema, RechercheCreateSchema, RechercheDeleteSchema, LEAD_FIELDS, LEAD_EXPRESS_FIELDS, extractForm, validate } from '$lib/schemas';
 import { calculerScore } from '$lib/scoring';
-import { dbFail, newId, now } from '$lib/server/db-helpers';
+import { dbFail, escapeIlike, newId, now } from '$lib/server/db-helpers';
 
 const PAGE_SIZE = 25;
 const VALID_SORT_KEYS = ['score_pertinence', 'raison_sociale', 'canton', 'localite', 'source', 'statut', 'date_import'];
@@ -343,5 +343,60 @@ export const actions: Actions = {
 			.eq('id', parsed.data.id);
 
 		return dbFail(error) ?? { success: true };
+	},
+
+	createExpress: async ({ request, locals }) => {
+		const form = await request.formData();
+		const raw = extractForm(form, [...LEAD_EXPRESS_FIELDS]);
+		const parsed = validate(LeadExpressCreateSchema, raw);
+		if (!parsed.success) return fail(400, { error: parsed.error });
+
+		const d = parsed.data;
+		const raison = d.raison_sociale.trim();
+		const tel = (d.telephone || '').trim();
+		const contact = (d.nom_contact || '').trim();
+		const notes = (d.notes || '').trim();
+
+		// Dedup multi-passes : raison_sociale (égalité case-insensitive échappée), confronté
+		// au telephone normalisé en mémoire si présent. Sans téléphone, raison sociale seule
+		// suffit à signaler un doublon probable post-RDV.
+		const telNorm = tel.replace(/[^\d]/g, '');
+		const { data: candidates } = await locals.supabase
+			.from('prospect_leads')
+			.select('id, telephone')
+			.ilike('raison_sociale', escapeIlike(raison))
+			.limit(5);
+		if (candidates && candidates.length > 0) {
+			let match: { id: string } | null = null;
+			if (telNorm.length >= 6) {
+				match = candidates.find(c => {
+					const dbTel = (c.telephone || '').replace(/[^\d]/g, '');
+					return dbTel.length >= 6 && (dbTel.includes(telNorm) || telNorm.includes(dbTel));
+				}) ?? null;
+			}
+			// Fallback : tel manquant ou aucun match tel → raison sociale seule.
+			if (!match) match = candidates[0];
+			return { success: true, id: match.id, duplicate: true };
+		}
+
+		const ts = now();
+		const id = newId();
+		const { error } = await locals.supabase.from('prospect_leads').insert({
+			id,
+			source: 'lead_express',
+			raison_sociale: raison,
+			nom_contact: contact || null,
+			telephone: tel || null,
+			description: notes || null,
+			canton: null,
+			// score_pertinence reste null jusqu'à enrichissement Zefix : évite que les
+			// leads terrain soient filtrés "froid" par le filtre température (seuil ≤ 3).
+			score_pertinence: null,
+			statut: 'nouveau',
+			date_import: ts,
+			date_modification: ts,
+		});
+
+		return dbFail(error) ?? { success: true, id, duplicate: false };
 	},
 };
