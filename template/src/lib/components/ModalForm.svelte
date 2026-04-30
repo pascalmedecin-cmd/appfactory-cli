@@ -49,14 +49,11 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if open}
-	<!-- Backdrop -->
-	<button
-		class="fixed inset-0 bg-black/30 z-50 cursor-default"
-		onclick={() => open = false}
-		tabindex="-1"
-		aria-label="Fermer"
+	<!-- Backdrop (clic extérieur désactivé pour éviter perte de saisie) -->
+	<div
+		class="fixed inset-0 bg-black/30 z-50"
 		transition:fade={{ duration: 150 }}
-	></button>
+	></div>
 
 	<!-- Modal -->
 	<div class="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 pointer-events-none">

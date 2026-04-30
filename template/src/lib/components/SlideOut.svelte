@@ -24,14 +24,11 @@
 <svelte:window onkeydown={handleKeydown} />
 
 {#if open}
-	<!-- Backdrop -->
-	<button
-		class="fixed inset-0 bg-black/20 z-40 cursor-default"
-		onclick={() => open = false}
-		tabindex="-1"
-		aria-label="Fermer le panneau"
+	<!-- Backdrop (clic extérieur désactivé pour éviter perte de saisie en édition) -->
+	<div
+		class="fixed inset-0 bg-black/20 z-40"
 		transition:fade={{ duration: 150 }}
-	></button>
+	></div>
 
 	<!-- Panel -->
 	<div

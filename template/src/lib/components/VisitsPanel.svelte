@@ -209,13 +209,13 @@
 	</button>
 	<p class="text-[11px] text-text-muted">Géocodage adresses suisses uniquement (swisstopo).</p>
 
-	{#if parentAddressRaw}
+	{#if parentAddressRaw && visits.length > 0}
 		<p class="text-xs text-text-muted">
 			<span class="font-medium">Adresse de référence :</span> {parentAddressRaw}
 		</p>
-	{:else if !loading}
+	{:else if !parentAddressRaw && visits.length > 0 && !loading}
 		<p class="text-xs text-warning">
-			Adresse de référence absente en base. La distance ne pourra pas être calculée tant que la fiche n'est pas enrichie.
+			Adresse de référence absente en base. La distance ne peut pas être calculée tant que la fiche n'est pas enrichie.
 		</p>
 	{/if}
 
