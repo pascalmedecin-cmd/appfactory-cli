@@ -91,7 +91,13 @@ scoring:
 
   sources_chaudes:
     points: 2
-    values: [simap, sitg]
+    values: [simap]
+
+  # Phase 1 2026-05-01 : sources d'intervention indirectes (RegBL = bâtiment autorisé,
+  # signal vitrage probable mais moins immédiat que SIMAP appel d'offres explicite).
+  sources_intervention:
+    points: 1
+    values: [regbl]
 
   recence:
     - max_jours: 30
@@ -110,6 +116,13 @@ scoring:
     chaud: 7
     tiede: 4
     # en dessous de tiede = froid (3 niveaux stricts)
+
+  # Phase 1 2026-05-01 : widget triage matin sur dashboard
+  triage:
+    score_min: 5      # score_pertinence minimum pour entrer dans la queue
+    snooze_days: 7    # durée du snooze "Plus tard"
+    queue_cap: 25     # cap serveur (top N renvoyé au composant)
+    visible_limit: 12 # top affiché en UI, le reste = "+N en file"
 
 # Sources de prospection activees
 prospection:

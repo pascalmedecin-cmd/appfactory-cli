@@ -166,6 +166,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			canton: cantonCode,
 			description,
 			raison_sociale: `Chantier ${commune} (EGID ${egid})`,
+			secteur_detecte: 'construction',
 			source: 'regbl',
 			date_publication: null,
 			telephone: null,

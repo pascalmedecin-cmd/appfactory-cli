@@ -103,6 +103,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			canton: lead.canton,
 			description: lead.description,
 			raison_sociale: lead.raison_sociale,
+			secteur_detecte: lead.secteur_detecte,
 			source: lead.source,
 			date_publication: lead.date_publication,
 			telephone: telephone || lead.telephone,

@@ -165,6 +165,78 @@ describe('calculerScore', () => {
 	});
 });
 
+describe('calculerScore : fixes bimodalité scoring (audit 2026-05-01)', () => {
+	// Bug 1 historique : "Bâtiment".toLowerCase() = "bâtiment" qui ne matchait jamais
+	// le keyword "batiment" sans normalisation NFD. 50 leads RegBL ratent +3 secteur.
+	it('matche les keywords secteur sur description avec accents (NFD strip)', () => {
+		const result = calculerScore({
+			source: 'regbl',
+			description: 'Bâtiment autorisé - 4 étages - 237 m² au sol',
+		});
+		// regbl source intervention (+1) + secteur "batiment" matché via normalize (+3) = 4
+		expect(result.total).toBe(4);
+		expect(result.criteres.some((c) => c.includes('Secteur'))).toBe(true);
+	});
+
+	it('matche les keywords secteur via raison_sociale avec accents', () => {
+		const result = calculerScore({
+			source: 'search_ch',
+			raison_sociale: 'Bureau d\'Architecture Genève SA',
+		});
+		// search_ch ne donne aucune source → secteur "architecture" via normalize (+3)
+		expect(result.total).toBe(3);
+		expect(result.criteres.some((c) => c.includes('Secteur'))).toBe(true);
+	});
+
+	// Bug 2 historique : RegBL n'était pondéré nulle part comme source signal.
+	it('pondère regbl comme source intervention (+1)', () => {
+		const result = calculerScore({
+			source: 'regbl',
+		});
+		expect(result.total).toBe(1);
+		expect(result.criteres.some((c) => c.includes('REGBL'))).toBe(true);
+	});
+
+	// Bug 3 historique : la colonne secteur_detecte calculée à l'import était ignorée.
+	it('lit secteur_detecte en priorité sur description', () => {
+		const result = calculerScore({
+			source: 'search_ch',
+			secteur_detecte: 'construction',
+			// description vide ou non parsable : secteur_detecte doit suffire
+			description: 'XYZ123',
+			raison_sociale: 'XYZ Holding',
+		});
+		expect(result.total).toBe(3);
+		expect(result.criteres.some((c) => c.includes('construction'))).toBe(true);
+	});
+
+	it('fallback sur description si secteur_detecte ne matche pas un keyword', () => {
+		const result = calculerScore({
+			source: 'search_ch',
+			secteur_detecte: 'autre',
+			description: 'Renovation de facade',
+		});
+		// "autre" ne matche aucun keyword secteur → fallback description "renovation"
+		expect(result.total).toBe(3);
+	});
+
+	// Cas réel observé en prod : RegBL canton GE avec description "Bâtiment autorisé".
+	// Avant fix : score = 2 (canton GE) + 0 (secteur raté accent) + 0 (regbl pas pondéré) = 2-3.
+	// Après fix : score = 2 + 3 + 1 = 6 (sans récence).
+	it('lead RegBL canton GE avec description accentuée scoré correctement (cas prod)', () => {
+		const result = calculerScore({
+			canton: 'GE',
+			source: 'regbl',
+			secteur_detecte: 'construction',
+			description: 'Bâtiment autorisé - 4 étages - 237 m² au sol',
+			raison_sociale: 'Chantier Genève (EGID 12345)',
+		});
+		// canton GE (+2) + secteur (+3) + regbl intervention (+1) = 6
+		expect(result.total).toBe(6);
+		expect(result.label).toBe('tiede');
+	});
+});
+
 describe('calculerBonusVeille (Bloc 3)', () => {
 	it('retourne +2 pour etabli + OK FilmPro dans la fenêtre', () => {
 		const bonus = calculerBonusVeille({

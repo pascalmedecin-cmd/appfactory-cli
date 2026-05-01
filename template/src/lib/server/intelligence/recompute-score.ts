@@ -10,6 +10,7 @@ interface LeadRow {
 	canton: string | null;
 	description: string | null;
 	raison_sociale: string;
+	secteur_detecte: string | null;
 	source: string;
 	date_publication: string | null;
 	telephone: string | null;
@@ -45,7 +46,7 @@ export async function recomputeLeadScore(
 ): Promise<number | null> {
 	const { data: lead, error: leadErr } = await supabase
 		.from('prospect_leads')
-		.select('id, canton, description, raison_sociale, source, date_publication, telephone, montant')
+		.select('id, canton, description, raison_sociale, secteur_detecte, source, date_publication, telephone, montant')
 		.eq('id', leadId)
 		.maybeSingle();
 
@@ -69,6 +70,7 @@ export async function recomputeLeadScore(
 		canton: leadRow.canton,
 		description: leadRow.description,
 		raison_sociale: leadRow.raison_sociale,
+		secteur_detecte: leadRow.secteur_detecte,
 		source: leadRow.source,
 		date_publication: leadRow.date_publication,
 		telephone: leadRow.telephone,

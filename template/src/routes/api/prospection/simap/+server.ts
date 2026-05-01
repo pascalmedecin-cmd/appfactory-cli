@@ -146,6 +146,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			canton: cantonCode,
 			description,
 			raison_sociale: procOffice || title,
+			secteur_detecte: 'construction',
 			source: 'simap',
 			date_publication: project.publicationDate,
 			telephone: null,

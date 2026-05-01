@@ -206,6 +206,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 							canton: merged.canton as string | null,
 							description: merged.description as string | null,
 							raison_sociale: merged.raison_sociale as string,
+							secteur_detecte: (merged.secteur_detecte as string | null) ?? null,
 							source: merged.source as string,
 							date_publication: merged.date_publication as string | null,
 							telephone: (merged.telephone as string | null) ?? null,

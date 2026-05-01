@@ -36,6 +36,7 @@ interface LeadScoring {
 	canton?: string | null;
 	description?: string | null;
 	raison_sociale?: string | null;
+	secteur_detecte?: string | null;
 	source: string;
 	date_publication?: string | Date | null;
 	telephone?: string | null;
@@ -47,6 +48,13 @@ interface LeadScoring {
 	// Phase C+D : plusieurs signaux Veille peuvent toucher un même lead au fil des semaines.
 	// Si fourni, prend le pas sur intelligenceSignal (qui reste pour rétro-compat tests).
 	intelligenceSignals?: IntelligenceSignalInput[] | null;
+}
+
+// Normalise un texte pour le matching keyword : retire les accents (NFD strip) + lowercase.
+// Sans ça, "Bâtiment".toLowerCase() = "bâtiment" qui ne matche jamais le keyword "batiment".
+// Range ̀-ͯ = Combining Diacritical Marks Unicode (escape explicite pour lisibilité).
+function normalize(s: string): string {
+	return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 }
 
 export interface ScoreDetail {
@@ -105,18 +113,30 @@ export function calculerScore(lead: LeadScoring): ScoreDetail {
 		criteres.push(`Canton ${lead.canton} (+${scoring.cantonsSecondaires.points})`);
 	}
 
-	// Secteur
-	const texte = `${lead.description || ''} ${lead.raison_sociale || ''}`.toLowerCase();
-	const secteurMatch = scoring.secteursCibles.keywords.find((s) => texte.includes(s));
+	// Secteur : on regarde 3 sources, dans l'ordre de fiabilité.
+	// 1. secteur_detecte (calculé à l'import, normalisé) → matching direct sur les keywords.
+	// 2. fallback sur description + raison_sociale via normalize() pour gérer les accents
+	//    ("Bâtiment".toLowerCase() = "bâtiment" qui ne matche jamais le keyword "batiment" sans NFD strip).
+	const secteurDetecteNorm = lead.secteur_detecte ? normalize(lead.secteur_detecte) : '';
+	const texte = normalize(`${lead.description || ''} ${lead.raison_sociale || ''}`);
+	const secteurMatch =
+		scoring.secteursCibles.keywords.find((s) => secteurDetecteNorm.includes(s)) ||
+		scoring.secteursCibles.keywords.find((s) => texte.includes(s));
 	if (secteurMatch) {
 		total += scoring.secteursCibles.points;
 		criteres.push(`Secteur "${secteurMatch}" (+${scoring.secteursCibles.points})`);
 	}
 
-	// Signal chaud
+	// Signal chaud (appel d'offres explicite, budgété)
 	if (scoring.sourcesChaudes.values.includes(lead.source as typeof scoring.sourcesChaudes.values[number])) {
 		total += scoring.sourcesChaudes.points;
 		criteres.push(`Signal ${lead.source.toUpperCase()} (+${scoring.sourcesChaudes.points})`);
+	}
+
+	// Source intervention (signal indirect d'opportunité vitrage : permis bâtiment, autorisation construire)
+	if (scoring.sourcesIntervention.values.includes(lead.source as typeof scoring.sourcesIntervention.values[number])) {
+		total += scoring.sourcesIntervention.points;
+		criteres.push(`Source ${lead.source.toUpperCase()} (+${scoring.sourcesIntervention.points})`);
 	}
 
 	// Entreprise identifiee (Zefix = inscription RC avec UID)

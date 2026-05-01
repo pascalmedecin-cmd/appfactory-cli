@@ -170,6 +170,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			canton: cantonCode,
 			description: '',
 			raison_sociale: company.name,
+			secteur_detecte: secteur,
 			source: 'zefix',
 			date_publication: company.sogcDate ?? null,
 			telephone: null,
