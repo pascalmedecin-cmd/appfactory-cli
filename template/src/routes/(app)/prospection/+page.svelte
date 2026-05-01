@@ -14,10 +14,12 @@
 	import RecherchesPanel from '$lib/components/prospection/RecherchesPanel.svelte';
 	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
 	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
+	import ProspectionTabs from '$lib/components/prospection/ProspectionTabs.svelte';
 	import {
 		cantonNoms,
 		statutLabel, statutBadgeVariant, sourceLabel, relativeDate,
 		sourceOptions, cantonOptions, temperatureOptions, statutOptions,
+		SORT_FIELDS, type ProspectionTabKey,
 	} from '$lib/prospection-utils';
 	import type { PageData } from './$types';
 
@@ -120,11 +122,15 @@
 		const sort = (overrides.sort as string) ?? data.sort;
 		const dir = overrides.dir !== undefined ? overrides.dir as string : (data.sortAsc ? 'asc' : 'desc');
 		const q = overrides.q !== undefined ? overrides.q as string : data.search;
+		const tab = (overrides.tab as string) ?? data.tab;
+		const perPage = overrides.perPage !== undefined ? Number(overrides.perPage) : data.pageSize;
 
+		if (tab && tab !== 'simap') params.set('tab', tab);
 		if (pg > 0) params.set('page', String(pg));
 		if (sort !== 'score_pertinence') params.set('sort', sort);
 		if (dir === 'asc') params.set('dir', 'asc');
 		if (q) params.set('q', q);
+		if (perPage !== 25) params.set('perPage', String(perPage));
 		sources.forEach(s => params.append('source', s));
 		cantons.forEach(c => params.append('canton', c));
 		statuts.forEach(s => params.append('statut', s));
@@ -150,17 +156,102 @@
 		filterDebounce = setTimeout(() => applyFilters(), 200);
 	});
 
-	const columns = [
-		// Phase 0 : "Température" → "Priorité" (terme commercial direct, cohérent pill sémantique).
-		{ key: 'score_pertinence', label: 'Priorité', shortLabel: 'Prio.', sortable: true, class: 'w-[28%] md:w-[10%]' },
-		// Phase 0 : header vide pour la 1re colonne contenu (pattern Linear / Stripe Dashboard).
-		{ key: 'raison_sociale', label: '', sortable: true, class: 'w-[42%] md:w-[20%]' },
-		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[8%] hidden md:table-cell' },
-		{ key: 'localite', label: 'Localité', sortable: true, class: 'w-[17%] hidden lg:table-cell' },
-		{ key: 'source', label: 'Source', sortable: true, class: 'w-[19%] hidden lg:table-cell' },
-		{ key: 'statut', label: 'Statut', sortable: true, class: 'w-[30%] md:w-[13%]' },
-		{ key: 'date_import', label: 'Ajouté', sortable: true, class: 'w-[10%] hidden lg:table-cell' },
+	// Phase 2 2026-05-01 : columns par onglet (colonne signature distincte par nature de signal).
+	const PRIORITY_TOOLTIP = 'Score 0-12 calculé automatiquement à partir du canton, du secteur, de la source, de la récence et du montant. ≥ 7 = prioritaire · 4-6 = à qualifier · ≤ 3 = faible signal.';
+
+	const baseColumns = [
+		{ key: 'score_pertinence', label: 'Priorité', shortLabel: 'Prio.', sortable: true, infoTooltip: PRIORITY_TOOLTIP, defaultWidth: 130, minWidth: 110 },
+		{ key: 'raison_sociale', label: 'Entreprise', sortable: true, defaultWidth: 240, minWidth: 160 },
 	];
+
+	const columnsByTab: Record<ProspectionTabKey, Array<{ key: string; label: string; shortLabel?: string; sortable: boolean; class?: string; infoTooltip?: string; defaultWidth?: number; minWidth?: number }>> = {
+		simap: [
+			...baseColumns,
+			{ key: 'montant', label: 'Montant estimé', sortable: true, defaultWidth: 140, minWidth: 110 },
+			{ key: 'canton', label: 'Canton', sortable: true, defaultWidth: 80, minWidth: 70, class: 'hidden md:table-cell' },
+			{ key: 'date_publication', label: 'Publié le', sortable: true, defaultWidth: 110, minWidth: 100, class: 'hidden lg:table-cell' },
+			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 120, minWidth: 100 },
+			{ key: 'date_import', label: 'Ajouté', sortable: true, defaultWidth: 100, minWidth: 90, class: 'hidden lg:table-cell' },
+		],
+		regbl: [
+			...baseColumns,
+			{ key: 'description', label: 'Type de travaux', sortable: false, defaultWidth: 220, minWidth: 160 },
+			{ key: 'localite', label: 'Adresse', sortable: true, defaultWidth: 200, minWidth: 140, class: 'hidden md:table-cell' },
+			{ key: 'canton', label: 'Canton', sortable: true, defaultWidth: 80, minWidth: 70 },
+			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 120, minWidth: 100 },
+			{ key: 'date_import', label: 'Ajouté', sortable: true, defaultWidth: 100, minWidth: 90, class: 'hidden lg:table-cell' },
+		],
+		entreprises: [
+			...baseColumns,
+			{ key: 'localite', label: 'Localité', sortable: true, defaultWidth: 160, minWidth: 120, class: 'hidden md:table-cell' },
+			{ key: 'canton', label: 'Canton', sortable: true, defaultWidth: 80, minWidth: 70 },
+			{ key: 'source', label: 'Source', sortable: true, defaultWidth: 140, minWidth: 110, class: 'hidden lg:table-cell' },
+			{ key: 'date_publication', label: 'Inscription', sortable: true, defaultWidth: 110, minWidth: 100, class: 'hidden lg:table-cell' },
+			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 120, minWidth: 100 },
+		],
+		terrain: [
+			...baseColumns,
+			{ key: 'description', label: 'Note terrain', sortable: false, defaultWidth: 240, minWidth: 160 },
+			{ key: 'telephone', label: 'Téléphone', sortable: false, defaultWidth: 140, minWidth: 110, class: 'hidden md:table-cell' },
+			{ key: 'canton', label: 'Canton', sortable: true, defaultWidth: 80, minWidth: 70 },
+			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 120, minWidth: 100 },
+			{ key: 'date_import', label: 'Ajouté', sortable: true, defaultWidth: 100, minWidth: 90, class: 'hidden lg:table-cell' },
+		],
+	};
+
+	const columns = $derived(columnsByTab[data.tab as ProspectionTabKey] ?? columnsByTab.simap);
+
+	// Configuration des onglets (icônes Lucide via icon-map, tooltips pédagogiques)
+	const tabsConfig = $derived([
+		{
+			key: 'simap' as ProspectionTabKey,
+			label: 'Marchés publics',
+			icon: 'landmark',
+			count: data.tabCounts.simap,
+			tooltip: "Appels d'offres SIMAP publiés par les collectivités publiques (cantons, communes, hôpitaux). Signal d'achat explicite avec montant estimé et date de clôture.",
+			colorVar: 'simap',
+		},
+		{
+			key: 'regbl' as ProspectionTabKey,
+			label: 'Chantiers RegBL',
+			icon: 'construction',
+			count: data.tabCounts.regbl,
+			tooltip: 'Permis de construire et autorisations bâtiment du registre fédéral. Signal indirect de besoin vitrage (transformation, rénovation, neuf).',
+			colorVar: 'regbl',
+		},
+		{
+			key: 'entreprises' as ProspectionTabKey,
+			label: 'Entreprises',
+			icon: 'business',
+			count: data.tabCounts.entreprises,
+			tooltip: "Inscriptions du registre du commerce (Zefix) et fiches search.ch. Pour prospection à froid ciblée par canton et secteur.",
+			colorVar: 'entreprises',
+		},
+		{
+			key: 'terrain' as ProspectionTabKey,
+			label: 'Terrain',
+			icon: 'smartphone',
+			count: data.tabCounts.terrain,
+			tooltip: 'Saisies rapides en RDV chantier (lead express) et signaux issus de la veille sectorielle. Vos opportunités captées sur le terrain.',
+			colorVar: 'terrain',
+		},
+	]);
+
+	function selectTab(tab: ProspectionTabKey) {
+		goto(buildUrl({ tab, page: 0 }), { invalidateAll: true, keepFocus: true });
+	}
+
+	// Phase 2 : tri exposé dans la barre filtres + bidirectionnel avec colonnes <th>.
+	// Source unique : SORT_FIELDS importé de prospection-utils, identique server (VALID_SORT_KEYS dérivé).
+	const sortFieldOptions = SORT_FIELDS;
+
+	function changeSortField(e: Event) {
+		const v = (e.currentTarget as HTMLSelectElement).value;
+		goto(buildUrl({ sort: v, page: 0 }), { invalidateAll: true, keepFocus: true });
+	}
+	function toggleSortDir() {
+		goto(buildUrl({ dir: data.sortAsc ? 'desc' : 'asc', page: 0 }), { invalidateAll: true, keepFocus: true });
+	}
 
 	function openDetail(lead: Lead) {
 		selectedLead = lead;
@@ -284,7 +375,9 @@
 				class="flex items-center gap-2 h-11 md:h-10 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg box-border cursor-pointer shadow-md transition-colors"
 			>
 				<Icon name="cloud_download" size={18} />
-				<span>Importer<span class="hidden sm:inline"> des prospects</span></span>
+				<!-- Phase 2 fix typo : NBSP en début du span étendu pour éviter
+				     une concaténation "Importerdes prospects" en zone responsive intermédiaire. -->
+				<span>Importer</span><span class="hidden sm:inline">&nbsp;des prospects</span>
 			</button>
 			<!-- Kebab mobile : actions secondaires -->
 			<div class="md:hidden relative" bind:this={mobileMenuRef}>
@@ -387,6 +480,29 @@
 				/>
 				<span>Afficher aussi les leads transférés</span>
 			</label>
+			<!-- Phase 2 : sélecteur tri intégré dans la barre filtres (bidirectionnel avec colonnes <th>). -->
+			<label class="flex items-center gap-2 text-xs text-text-muted ml-4">
+				<span>Trier par</span>
+				<select
+					value={data.sort}
+					onchange={changeSortField}
+					class="h-8 px-2 border border-border rounded-md bg-white text-text text-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+					aria-label="Champ de tri"
+				>
+					{#each sortFieldOptions as opt}
+						<option value={opt.value}>{opt.label}</option>
+					{/each}
+				</select>
+				<button
+					type="button"
+					onclick={toggleSortDir}
+					class="h-8 px-2 flex items-center justify-center border border-border rounded-md bg-white text-text-muted hover:text-primary hover:border-primary/40 cursor-pointer transition-colors"
+					aria-label={data.sortAsc ? 'Tri ascendant, cliquer pour descendant' : 'Tri descendant, cliquer pour ascendant'}
+					title={data.sortAsc ? 'Croissant' : 'Décroissant'}
+				>
+					<Icon name={data.sortAsc ? 'arrow_upward' : 'arrow_downward'} size={14} />
+				</button>
+			</label>
 			<div class="flex items-center gap-2 ml-auto">
 				{#if activeFilterCount > 0}
 					<span class="text-xs text-text-muted">{data.totalLeads} résultat{data.totalLeads > 1 ? 's' : ''}</span>
@@ -468,9 +584,30 @@
 			</button>
 		</div>
 	{:else}
+	<!-- Phase 2 : onglets par nature de signal collés au DataTable (1 shell visuel cohérent) -->
+	<div class="bg-white rounded-xl border border-border shadow-sm flex flex-col min-h-0 overflow-visible">
+		<ProspectionTabs tabs={tabsConfig} active={data.tab as ProspectionTabKey} onSelect={selectTab} />
+		{#if data.sourceFilterIncompatible}
+			<div class="flex items-start gap-2 px-4 py-3 border-b border-warning/30 bg-warning-light text-warning text-sm" role="status">
+				<Icon name="info" size={18} class="shrink-0 mt-0.5" />
+				<div class="flex-1">
+					<strong class="font-semibold">Filtre source incompatible avec l'onglet actif.</strong>
+					Le filtre Source actuel ne contient aucune source liée à <em>{tabsConfig.find(t => t.key === data.tab)?.label}</em>. Aucun résultat à afficher.
+				</div>
+				<button
+					onclick={() => { filterSources = []; }}
+					class="font-semibold underline hover:no-underline cursor-pointer"
+				>Retirer le filtre Source</button>
+			</div>
+		{/if}
 	<DataTable
 		data={data.leads}
 		{columns}
+		dense={true}
+		resizable={true}
+		storageKey="prospection-{data.tab}"
+		pageSizeOptions={[25, 50, 100]}
+		onPageSizeChange={(s) => goto(buildUrl({ perPage: s, page: 0 }), { invalidateAll: true, keepFocus: true })}
 		selectable={true}
 		bind:selectedIds
 		onRowClick={openDetail}
@@ -488,19 +625,36 @@
 		onSearchChange={(q) => goto(buildUrl({ q, page: 0 }), { invalidateAll: true, keepFocus: true })}
 	>
 		{#snippet row(lead, _i)}
-			<td class="px-4 py-3 w-[28%] md:w-[10%] overflow-hidden">
-				<ScorePill score={lead.score_pertinence} compact />
-			</td>
-			<td class="px-4 py-3 font-medium text-text w-[42%] md:w-[20%] truncate" title={lead.raison_sociale}>{lead.raison_sociale}</td>
-			<td class="px-4 py-3 text-text w-[8%] hidden md:table-cell">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '–'}</td>
-			<td class="px-4 py-3 text-text w-[17%] truncate hidden lg:table-cell" title={lead.localite ?? ''}>{lead.localite ?? '–'}</td>
-			<td class="px-4 py-3 text-text-muted text-xs w-[19%] truncate hidden lg:table-cell">{sourceLabel(lead.source)}</td>
-			<td class="px-4 py-3 w-[30%] md:w-[13%] overflow-hidden">
-				<Badge label={statutLabel(lead.statut)} variant={statutBadgeVariant(lead.statut)} dot={true} />
-			</td>
-			<td class="px-4 py-3 text-text-muted text-xs w-[10%] hidden lg:table-cell">{relativeDate(lead.date_import)}</td>
+			{#each columns as col}
+				<td class="dt-td {col.class ?? ''}">
+					{#if col.key === 'score_pertinence'}
+						<ScorePill score={lead.score_pertinence} compact />
+					{:else if col.key === 'raison_sociale'}
+						<span class="font-medium text-text truncate block" title={lead.raison_sociale}>{lead.raison_sociale}</span>
+					{:else if col.key === 'canton'}
+						<span class="text-text">{lead.canton ? (cantonNoms[lead.canton] ?? lead.canton) : '–'}</span>
+					{:else if col.key === 'localite'}
+						<span class="text-text truncate block" title={lead.localite ?? ''}>{lead.localite ?? '–'}</span>
+					{:else if col.key === 'source'}
+						<span class="text-text-muted text-xs">{sourceLabel(lead.source)}</span>
+					{:else if col.key === 'statut'}
+						<Badge label={statutLabel(lead.statut)} variant={statutBadgeVariant(lead.statut)} dot={true} />
+					{:else if col.key === 'date_import' || col.key === 'date_publication'}
+						<span class="text-text-muted text-xs">{relativeDate(lead[col.key as 'date_import' | 'date_publication'])}</span>
+					{:else if col.key === 'montant'}
+						<span class="text-text tabular-nums">{lead.montant != null && lead.montant > 0 ? `${(lead.montant / 1000).toFixed(0)} k CHF` : '—'}</span>
+					{:else if col.key === 'description'}
+						<span class="text-text-body truncate block" title={lead.description ?? ''}>{lead.description ?? '—'}</span>
+					{:else if col.key === 'telephone'}
+						<span class="text-text">{lead.telephone ?? '—'}</span>
+					{:else}
+						<span class="text-text">{lead[col.key as keyof typeof lead] ?? '—'}</span>
+					{/if}
+				</td>
+			{/each}
 		{/snippet}
 	</DataTable>
+	</div>
 	{/if}
 	</div>
 </div>

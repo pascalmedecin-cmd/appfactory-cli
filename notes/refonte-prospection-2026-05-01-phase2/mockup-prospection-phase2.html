@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mockup Prospection Phase 2 - 4 onglets</title>
+<style>
+  :root {
+    --color-primary: #2F5A9E;
+    --color-primary-hover: #244878;
+    --color-primary-light: #F0F4F8;
+    --color-primary-dark: #0A1628;
+    --color-accent: #3B6CB7;
+    --color-text: #0F1729;
+    --color-text-body: #344054;
+    --color-text-muted: #667085;
+    --color-border: #E4E7EC;
+    --color-surface-alt: #F8FAFC;
+    --color-warning: #F79009;
+    --color-warning-light: #FFFAEB;
+    --color-success: #12B76A;
+    --color-success-light: #ECFDF3;
+    --color-danger: #D92D20;
+    --color-danger-light: #FEF3F2;
+    --color-info: #5A7190;
+    --color-info-light: #EDF1F5;
+    --color-prosp-import: #5B6BBA;
+    --color-prosp-import-bg: #EEF0FB;
+    --color-prosp-enrich: #7A5BBA;
+    --color-prosp-enrich-bg: #F2EEF9;
+    --color-prosp-qualif: #BA8C5B;
+    --color-prosp-qualif-bg: #FAF4EB;
+    --color-prosp-convert: #5BA887;
+    --color-prosp-convert-bg: #ECF7F0;
+
+    /* Tokens onglets prospection (palette segmentation subtile premium) */
+    /* SIMAP marchés publics : bleu pétrole institutionnel (autorité publique) */
+    --color-tab-simap: #3D6B8A;
+    --color-tab-simap-bg: #ECF1F5;
+    /* RegBL chantiers : terracotta atténué (terre, bâti) */
+    --color-tab-regbl: #B07A5A;
+    --color-tab-regbl-bg: #F7EFE8;
+    /* Entreprises Zefix+search.ch : sauge profond (institution, registre) */
+    --color-tab-entreprises: #4F7252;
+    --color-tab-entreprises-bg: #EEF3EE;
+    /* Terrain lead express + veille : prune sourde (humain, mobile) */
+    --color-tab-terrain: #6F4F6E;
+    --color-tab-terrain-bg: #F2ECF1;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #FAFBFC;
+    color: var(--color-text);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px 40px;
+  }
+
+  /* Indicateurs flat (rappel charte v7) */
+  .indicators {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    margin-bottom: 20px;
+  }
+  .indicator {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px 28px;
+  }
+  .indicator + .indicator {
+    border-left: 1px solid var(--color-border);
+  }
+  .indicator-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-info);
+    flex-shrink: 0;
+  }
+  .indicator-value {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-primary-dark);
+    letter-spacing: -0.02em;
+  }
+  .indicator-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    margin-top: 4px;
+  }
+
+  /* Toolbar : actions principales */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    height: 36px;
+    padding: 0 14px;
+    font-size: 13px;
+    font-weight: 500;
+    border: 1px solid var(--color-border);
+    background: white;
+    color: var(--color-text);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 150ms ease, border-color 150ms ease;
+    box-sizing: border-box;
+    text-decoration: none;
+  }
+  .btn:hover { background: var(--color-surface-alt); }
+  .btn-primary {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+    font-weight: 600;
+    box-shadow: 0 1px 2px rgba(15, 23, 41, 0.08);
+  }
+  .btn-primary:hover { background: var(--color-primary-hover); }
+  .btn-ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--color-text-muted);
+  }
+  .btn-ghost:hover { background: var(--color-surface-alt); color: var(--color-text); }
+  .btn-enrich {
+    color: var(--color-prosp-enrich);
+    border-color: color-mix(in srgb, var(--color-prosp-enrich) 22%, transparent);
+  }
+  .btn-counter {
+    margin-left: 4px;
+    padding: 2px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--color-prosp-enrich) 12%, transparent);
+    color: var(--color-prosp-enrich);
+  }
+  .btn-counter-primary {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+  }
+
+  /* Filtres */
+  .filters {
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 2px rgba(15, 23, 41, 0.04);
+  }
+  .filters-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+  .filter-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: white;
+    font-size: 13px;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+  .filter-trigger:hover { background: var(--color-surface-alt); }
+  .filter-trigger-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-text-muted);
+  }
+  .filter-trigger-label.active { color: var(--color-text); font-weight: 500; }
+  .filter-extra {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  .filter-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+    cursor: pointer;
+  }
+  .filter-toggle input { accent-color: var(--color-primary); }
+
+  /* === ONGLETS (cœur Phase 2) === */
+  .tabs-shell {
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgba(15, 23, 41, 0.04);
+    margin-bottom: 24px;
+    /* overflow visible pour laisser passer les tooltips d'onglets ; le table-wrap
+       a son propre overflow-x auto qui clippe les colonnes débordantes. */
+  }
+  .tabs-bar {
+    border-radius: 12px 12px 0 0;
+    overflow: visible;
+  }
+  .tabs-bar {
+    display: flex;
+    border-bottom: 1px solid var(--color-border);
+    background: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .tab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 150ms ease, border-color 150ms ease;
+    position: relative;
+    white-space: nowrap;
+  }
+  .tab:hover { color: var(--color-text); }
+  .tab.active {
+    color: var(--color-primary-dark);
+    border-bottom-color: var(--color-primary);
+    font-weight: 600;
+  }
+  .tab-icon-wrap {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 150ms ease;
+  }
+  .tab-icon-wrap svg {
+    width: 15px;
+    height: 15px;
+  }
+  .tab.active .tab-icon-wrap {
+    transform: scale(1.02);
+  }
+  /* Onglet vide : on garde l'icône lisible (couleur du trait préservée),
+     seul le compteur signale le 0. */
+  .tab-empty .tab-icon-wrap svg {
+    stroke-width: 2.2;
+  }
+  /* Couleurs par nature d'onglet (subtiles, premium) */
+  .tab-icon-simap        { background: var(--color-tab-simap-bg);        color: var(--color-tab-simap); }
+  .tab-icon-regbl        { background: var(--color-tab-regbl-bg);        color: var(--color-tab-regbl); }
+  .tab-icon-entreprises  { background: var(--color-tab-entreprises-bg);  color: var(--color-tab-entreprises); }
+  .tab-icon-terrain      { background: var(--color-tab-terrain-bg);      color: var(--color-tab-terrain); }
+  .tab-count {
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    background: var(--color-surface-alt);
+    color: var(--color-text-muted);
+  }
+  .tab.active .tab-count {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+  }
+  .tab-empty .tab-count {
+    background: transparent;
+    color: var(--color-border);
+  }
+
+  /* Mobile : tabs deviennent dropdown */
+  .tabs-mobile {
+    display: none;
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .tabs-mobile select {
+    width: 100%;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: inherit;
+    background: white;
+  }
+
+  /* Search bar dans le shell */
+  .table-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-alt);
+  }
+  .search-box {
+    flex: 1;
+    max-width: 320px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 32px;
+    padding: 0 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: white;
+    font-size: 13px;
+  }
+  .search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    font-size: 13px;
+    color: var(--color-text);
+    background: transparent;
+  }
+  .search-box svg { color: var(--color-text-muted); }
+  .table-toolbar-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* === Tableau densifié === */
+  .table-wrap {
+    overflow-x: auto;
+    position: relative;
+  }
+  table.dense {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: fixed;
+  }
+  table.dense thead {
+    background: white;
+    border-bottom: 1px solid var(--color-border);
+  }
+  table.dense th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    user-select: none;
+    position: relative;
+    border-bottom: 1px solid var(--color-border);
+  }
+  table.dense th.sortable { cursor: pointer; }
+  table.dense th.sortable:hover { color: var(--color-text); }
+  table.dense th.sorted { color: var(--color-primary); }
+  /* Tri subtil bidirectionnel : 2 chevrons empilés, état actif coloré */
+  .sort-stack {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-left: 4px;
+    line-height: 0;
+    vertical-align: middle;
+    height: 12px;
+  }
+  .sort-stack svg {
+    display: block;
+    width: 9px;
+    height: 5px;
+    color: var(--color-text-muted);
+    opacity: 0.35;
+    transition: opacity 120ms ease, color 120ms ease;
+  }
+  table.dense th.sortable:hover .sort-stack svg { opacity: 0.7; }
+  table.dense th.sorted-asc .sort-stack svg.up,
+  table.dense th.sorted-desc .sort-stack svg.down {
+    color: var(--color-primary);
+    opacity: 1;
+  }
+  table.dense th.sorted-asc .sort-stack svg.down,
+  table.dense th.sorted-desc .sort-stack svg.up {
+    opacity: 0.25;
+  }
+
+  /* Tooltip header (subtil premium, hover-only) */
+  .th-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    cursor: help;
+    position: relative;
+  }
+  .th-info-mark {
+    width: 13px;
+    height: 13px;
+    border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--color-text-muted) 40%, transparent);
+    color: var(--color-text-muted);
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: lowercase;
+    letter-spacing: 0;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .th-info:hover .th-info-mark {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+  /* Tooltip subtle premium (fond blanc, ombre douce) */
+  .tip {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 50%;
+    transform: translate(-50%, -4px);
+    width: 280px;
+    padding: 10px 14px;
+    background: white;
+    color: var(--color-text-body);
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.5;
+    text-transform: none;
+    letter-spacing: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    box-shadow: 0 6px 20px rgba(15, 23, 41, 0.10), 0 1px 3px rgba(15, 23, 41, 0.05);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+    z-index: 30;
+    pointer-events: none;
+    text-align: left;
+  }
+  .tip::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    margin-left: -5px;
+    width: 9px;
+    height: 9px;
+    background: white;
+    border-top: 1px solid var(--color-border);
+    border-left: 1px solid var(--color-border);
+    transform: rotate(45deg);
+  }
+  .tip strong { color: var(--color-primary-dark); font-weight: 600; }
+  /* Variante header de tableau : ancre à gauche (label court) */
+  .tip-th {
+    left: 0;
+    transform: translate(-12px, -4px);
+  }
+  .tip-th::before {
+    left: 22px;
+    margin-left: 0;
+  }
+  .th-info:hover .tip,
+  .tab:hover .tip {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0);
+  }
+  .th-info:hover .tip-th {
+    transform: translate(-12px, 0);
+  }
+
+  /* Resize handle (cœur livrable 1) */
+  .col-resizer {
+    position: absolute;
+    right: -3px;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    cursor: col-resize;
+    z-index: 2;
+    background: transparent;
+    transition: background 100ms ease;
+  }
+  .col-resizer:hover, .col-resizer.active {
+    background: color-mix(in srgb, var(--color-primary) 30%, transparent);
+  }
+  .col-resizer::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 1px;
+    height: 16px;
+    background: var(--color-border);
+  }
+
+  table.dense tbody tr {
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: background 100ms ease;
+  }
+  table.dense tbody tr:hover { background: var(--color-surface-alt); }
+  table.dense td {
+    padding: 7px 12px;
+    color: var(--color-text-body);
+    font-variant-numeric: tabular-nums;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  table.dense .raison-sociale {
+    font-weight: 500;
+    color: var(--color-text);
+  }
+  table.dense .col-checkbox { width: 36px; padding: 7px 8px; }
+  table.dense .col-checkbox input { accent-color: var(--color-primary); }
+
+  /* ScorePill (rappel charte v7) */
+  .score-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .score-chaud {
+    background: color-mix(in srgb, #C0391A 9%, transparent);
+    color: #C0391A;
+  }
+  .score-tiede {
+    background: color-mix(in srgb, var(--color-warning) 12%, transparent);
+    color: var(--color-warning);
+  }
+  .score-froid {
+    background: color-mix(in srgb, var(--color-info) 11%, transparent);
+    color: var(--color-info);
+  }
+  .score-pill svg {
+    width: 11px;
+    height: 11px;
+  }
+
+  /* Badge */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 500;
+  }
+  .badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .badge-success { background: var(--color-success-light); color: var(--color-success); }
+  .badge-info { background: var(--color-info-light); color: var(--color-info); }
+  .badge-warning { background: var(--color-warning-light); color: var(--color-warning); }
+
+  /* Footer pagination */
+  .table-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    border-top: 1px solid var(--color-border);
+    background: white;
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+  .pagination {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .pagination button {
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    background: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    color: var(--color-text-body);
+  }
+  .pagination button:hover { background: var(--color-surface-alt); }
+  .pagination button.active {
+    background: var(--color-primary);
+    color: white;
+    border-color: var(--color-primary);
+    font-weight: 600;
+  }
+  .pagination button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* Sélecteur entrées par page (livrable 4) */
+  .perpage-select {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .perpage-select select {
+    height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: inherit;
+    background: white;
+    color: var(--color-text);
+    cursor: pointer;
+  }
+
+  /* === Modal filtres avec tri (livrable 2) === */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 41, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 16px 48px rgba(15, 23, 41, 0.18);
+    width: min(560px, calc(100vw - 32px));
+    max-height: calc(100vh - 64px);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .modal-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    margin: 0;
+  }
+  .modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--color-surface-alt);
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--color-text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-body {
+    padding: 20px 24px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+  .modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .modal-section-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+  }
+  .sort-row {
+    display: grid;
+    grid-template-columns: 1fr 140px;
+    gap: 8px;
+  }
+  .field-select {
+    display: flex;
+    align-items: center;
+    height: 36px;
+    padding: 0 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: white;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .modal-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--color-border);
+    background: var(--color-surface-alt);
+  }
+
+  /* === Empty state onglet vide === */
+  .empty-tab {
+    padding: 60px 24px;
+    text-align: center;
+  }
+  .empty-tab-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+    border-radius: 14px;
+    background: var(--color-surface-alt);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-muted);
+  }
+  .empty-tab-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0 0 6px;
+  }
+  .empty-tab-desc {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    margin: 0 auto 16px;
+    max-width: 380px;
+    line-height: 1.5;
+  }
+
+  /* Annotations pédagogiques jaunes */
+  .annotation {
+    background: var(--color-warning-light);
+    border-left: 3px solid var(--color-warning);
+    padding: 10px 14px;
+    margin: 16px 0;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--color-text-body);
+    line-height: 1.5;
+  }
+  .annotation strong { color: var(--color-warning); font-weight: 600; }
+
+  /* Header demo */
+  .demo-header {
+    background: var(--color-primary-dark);
+    color: white;
+    padding: 16px 40px;
+    margin-bottom: 24px;
+  }
+  .demo-header h1 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .demo-header p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    opacity: 0.7;
+  }
+
+  @media (max-width: 768px) {
+    .container { padding: 16px; }
+    .indicators { grid-template-columns: 1fr 1fr 1fr; }
+    .indicator { padding: 16px 12px; gap: 8px; }
+    .indicator-icon { width: 36px; height: 36px; }
+    .indicator-value { font-size: 22px; }
+    .indicator-label { font-size: 11px; }
+    .filters-grid { grid-template-columns: 1fr 1fr; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .tabs-bar { display: none; }
+    .tabs-mobile { display: block; }
+    table.dense th:nth-child(n+5),
+    table.dense td:nth-child(n+5) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="demo-header">
+  <h1>Mockup Phase 2 - Refonte /prospection avec onglets par nature de signal</h1>
+  <p>4 onglets · Colonnes redimensionnables · Tableau densifié · Tri dans modal · Sélecteur pagination · Fix typo</p>
+</div>
+
+<div class="container">
+
+  <!-- 3 indicateurs flat (rappel charte v7, inchangé) -->
+  <div class="indicators">
+    <div class="indicator">
+      <div class="indicator-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="4"/><path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><circle cx="17" cy="7" r="4"/></svg></div>
+      <div>
+        <div class="indicator-value">66</div>
+        <div class="indicator-label">Leads actifs</div>
+      </div>
+    </div>
+    <div class="indicator">
+      <div class="indicator-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 22h18M6 18V11M10 18V11M14 18V11M18 18V11M2 11h20L12 3z"/></svg></div>
+      <div>
+        <div class="indicator-value">16</div>
+        <div class="indicator-label">Marchés publics ouverts</div>
+      </div>
+    </div>
+    <div class="indicator">
+      <div class="indicator-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 23l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
+      <div>
+        <div class="indicator-value">3</div>
+        <div class="indicator-label">Transférés ce mois</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toolbar : actions principales (avec fix typo livrable 3) -->
+  <div class="toolbar">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <button class="btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+        Mes recherches
+        <span class="btn-counter btn-counter-primary">3</span>
+      </button>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button class="btn btn-enrich">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.5 2L11 5.5L14.5 7L11 8.5L9.5 12L8 8.5L4.5 7L8 5.5z"/><path d="M19 11L20 13L22 14L20 15L19 17L18 15L16 14L18 13z"/></svg>
+        Enrichir cette page
+        <span class="btn-counter">25</span>
+      </button>
+      <button class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Importer des prospects
+      </button>
+    </div>
+  </div>
+
+  <div class="annotation">
+    <strong>Livrable 3 (typo corrigée)</strong> : « Importer des prospects » avec espace garanti. Le fragment HTML actuel <code>Importer&lt;span class="hidden sm:inline"&gt; des prospects&lt;/span&gt;</code> peut concaténer l'espace dans certains breakpoints intermédiaires. Refactorer en <code>{showFull ? 'Importer des prospects' : 'Importer'}</code> via Svelte ou en plaçant l'espace insécable hors du span conditionnel.
+  </div>
+
+  <!-- Filtres globaux (au-dessus des onglets, décision Q4) -->
+  <div class="filters">
+    <div class="filters-grid">
+      <button class="filter-trigger">
+        <span class="filter-trigger-label active">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Statut · 2
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="filter-trigger">
+        <span class="filter-trigger-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/></svg>
+          Priorité
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="filter-trigger">
+        <span class="filter-trigger-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Canton
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <button class="filter-trigger" onclick="document.getElementById('filterModal').classList.add('open')">
+        <span class="filter-trigger-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          Plus de filtres + tri
+        </span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+    </div>
+    <div class="filter-extra">
+      <label class="filter-toggle">
+        <input type="checkbox">
+        Afficher aussi les leads transférés
+      </label>
+    </div>
+  </div>
+
+  <!-- === Shell des onglets === -->
+  <div class="tabs-shell">
+
+    <!-- Tabs sticky desktop (livrable A) -->
+    <div class="tabs-bar" role="tablist">
+      <button class="tab active" role="tab" aria-selected="true">
+        <span class="tab-icon-wrap tab-icon-simap" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 22h18M6 18V11M10 18V11M14 18V11M18 18V11M2 11h20L12 3z"/></svg>
+        </span>
+        Marchés publics
+        <span class="tab-count">16</span>
+        <span class="tip" role="tooltip">
+          <strong>Appels d'offres SIMAP</strong> publiés par les collectivités publiques (cantons, communes, hôpitaux, écoles). Signal d'achat explicite avec montant estimé et date de clôture.
+        </span>
+      </button>
+      <button class="tab" role="tab">
+        <span class="tab-icon-wrap tab-icon-regbl" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V7l8-4 8 4v14M9 9h0M15 9h0M9 13h0M15 13h0M9 17h0M15 17h0"/></svg>
+        </span>
+        Chantiers RegBL
+        <span class="tab-count">50</span>
+        <span class="tip" role="tooltip">
+          <strong>Permis de construire et autorisations</strong> du registre fédéral des bâtiments. Signal indirect de besoin vitrage (transformation, rénovation, neuf).
+        </span>
+      </button>
+      <button class="tab tab-empty" role="tab">
+        <span class="tab-icon-wrap tab-icon-entreprises" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-4 7 4v13M10 21v-7h4v7"/></svg>
+        </span>
+        Entreprises
+        <span class="tab-count">0</span>
+        <span class="tip" role="tooltip">
+          <strong>Registre du commerce (Zefix)</strong> et fiches search.ch. Entreprises pour prospection à froid ciblée par canton et secteur.
+        </span>
+      </button>
+      <button class="tab tab-empty" role="tab">
+        <span class="tab-icon-wrap tab-icon-terrain" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20"/></svg>
+        </span>
+        Terrain
+        <span class="tab-count">0</span>
+        <span class="tip" role="tooltip">
+          <strong>Saisies rapides en RDV chantier</strong> (lead express) et signaux issus de la veille sectorielle. Vos opportunités captées sur le terrain.
+        </span>
+      </button>
+    </div>
+
+    <!-- Tabs dropdown mobile -->
+    <div class="tabs-mobile">
+      <select aria-label="Onglet actif">
+        <option>Marchés publics (16)</option>
+        <option>Chantiers RegBL (50)</option>
+        <option>Entreprises (0)</option>
+        <option>Terrain (0)</option>
+      </select>
+    </div>
+
+    <!-- Toolbar interne tableau : recherche + densité + colonnes -->
+    <div class="table-toolbar">
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" placeholder="Rechercher dans les marchés publics…">
+      </div>
+      <div class="table-toolbar-right">
+        <button class="btn btn-ghost" title="Réinitialiser largeurs colonnes">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          Réinitialiser
+        </button>
+      </div>
+    </div>
+
+    <!-- Tableau densifié avec resizers (livrables 1 + 4) -->
+    <div class="table-wrap">
+      <table class="dense">
+        <colgroup>
+          <col style="width: 36px">
+          <col style="width: 90px">
+          <col style="width: 240px">
+          <col style="width: 140px">
+          <col style="width: 70px">
+          <col style="width: 100px">
+          <col style="width: 100px">
+          <col style="width: 100px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="col-checkbox"><input type="checkbox" aria-label="Tout sélectionner"></th>
+            <th class="sortable sorted sorted-desc">
+              <span class="th-info">
+                Priorité
+                <span class="th-info-mark" aria-hidden="true">i</span>
+                <span class="tip tip-th" role="tooltip">
+                  <strong>Score 0-12 calculé automatiquement</strong> à partir du canton, du secteur, de la source, de la récence et du montant. ≥ 7 = prioritaire · 4-6 = à qualifier · ≤ 3 = faible signal.
+                </span>
+              </span>
+              <span class="sort-stack" aria-hidden="true">
+                <svg class="up" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 4.25 4.5 0.75 8.25 4.25"/></svg>
+                <svg class="down" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 0.75 4.5 4.25 8.25 0.75"/></svg>
+              </span>
+              <span class="col-resizer"></span>
+            </th>
+            <th class="sortable">
+              Entreprise
+              <span class="sort-stack" aria-hidden="true">
+                <svg class="up" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 4.25 4.5 0.75 8.25 4.25"/></svg>
+                <svg class="down" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 0.75 4.5 4.25 8.25 0.75"/></svg>
+              </span>
+              <span class="col-resizer"></span>
+            </th>
+            <th class="sortable">
+              Montant estimé
+              <span class="sort-stack" aria-hidden="true">
+                <svg class="up" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 4.25 4.5 0.75 8.25 4.25"/></svg>
+                <svg class="down" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 0.75 4.5 4.25 8.25 0.75"/></svg>
+              </span>
+              <span class="col-resizer"></span>
+            </th>
+            <th class="sortable">
+              Canton
+              <span class="sort-stack" aria-hidden="true">
+                <svg class="up" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 4.25 4.5 0.75 8.25 4.25"/></svg>
+                <svg class="down" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 0.75 4.5 4.25 8.25 0.75"/></svg>
+              </span>
+              <span class="col-resizer"></span>
+            </th>
+            <th class="sortable">
+              Clôture
+              <span class="sort-stack" aria-hidden="true">
+                <svg class="up" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 4.25 4.5 0.75 8.25 4.25"/></svg>
+                <svg class="down" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 0.75 4.5 4.25 8.25 0.75"/></svg>
+              </span>
+              <span class="col-resizer"></span>
+            </th>
+            <th class="sortable">
+              Statut
+              <span class="sort-stack" aria-hidden="true">
+                <svg class="up" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 4.25 4.5 0.75 8.25 4.25"/></svg>
+                <svg class="down" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 0.75 4.5 4.25 8.25 0.75"/></svg>
+              </span>
+              <span class="col-resizer"></span>
+            </th>
+            <th class="sortable">
+              Ajouté
+              <span class="sort-stack" aria-hidden="true">
+                <svg class="up" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 4.25 4.5 0.75 8.25 4.25"/></svg>
+                <svg class="down" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 0.75 4.5 4.25 8.25 0.75"/></svg>
+              </span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-chaud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 17a2.5 2.5 0 0 0 5 0c0-2-3-4-3-9 0 0-1 1-2 5-1-1-3-2-4-1 1 1 1 3 1.5 4.5"/></svg>9</span></td>
+            <td class="raison-sociale">Commune de Carouge</td>
+            <td>487 200 CHF</td>
+            <td>GE</td>
+            <td>18 mai 2026</td>
+            <td><span class="badge badge-info">Nouveau</span></td>
+            <td>il y a 2j</td>
+          </tr>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-chaud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 17a2.5 2.5 0 0 0 5 0c0-2-3-4-3-9 0 0-1 1-2 5-1-1-3-2-4-1 1 1 1 3 1.5 4.5"/></svg>9</span></td>
+            <td class="raison-sociale">Hôpital cantonal Vaud</td>
+            <td>1 250 000 CHF</td>
+            <td>VD</td>
+            <td>2 juin 2026</td>
+            <td><span class="badge badge-info">Nouveau</span></td>
+            <td>il y a 3j</td>
+          </tr>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-tiede"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>7</span></td>
+            <td class="raison-sociale">Ville de Genève - Service immeubles</td>
+            <td>320 000 CHF</td>
+            <td>GE</td>
+            <td>22 mai 2026</td>
+            <td><span class="badge badge-success">Intéressé</span></td>
+            <td>il y a 5j</td>
+          </tr>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-tiede"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>7</span></td>
+            <td class="raison-sociale">Commune de Nyon</td>
+            <td>180 500 CHF</td>
+            <td>VD</td>
+            <td>28 mai 2026</td>
+            <td><span class="badge badge-info">Nouveau</span></td>
+            <td>il y a 5j</td>
+          </tr>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-tiede"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>6</span></td>
+            <td class="raison-sociale">État du Valais - DTEE</td>
+            <td>95 000 CHF</td>
+            <td>VS</td>
+            <td>15 mai 2026</td>
+            <td><span class="badge badge-warning">À qualifier</span></td>
+            <td>il y a 6j</td>
+          </tr>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-tiede"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>6</span></td>
+            <td class="raison-sociale">Hospice général Genève</td>
+            <td>240 000 CHF</td>
+            <td>GE</td>
+            <td>30 mai 2026</td>
+            <td><span class="badge badge-info">Nouveau</span></td>
+            <td>il y a 7j</td>
+          </tr>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-froid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="8" r="2"/><path d="M12 14v6"/></svg>4</span></td>
+            <td class="raison-sociale">SUVA Lausanne</td>
+            <td>62 000 CHF</td>
+            <td>VD</td>
+            <td>8 juin 2026</td>
+            <td><span class="badge badge-info">Nouveau</span></td>
+            <td>il y a 9j</td>
+          </tr>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-froid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="8" r="2"/><path d="M12 14v6"/></svg>4</span></td>
+            <td class="raison-sociale">Ville de Fribourg - SBAT</td>
+            <td>45 000 CHF</td>
+            <td>FR</td>
+            <td>12 juin 2026</td>
+            <td><span class="badge badge-info">Nouveau</span></td>
+            <td>il y a 11j</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer pagination + sélecteur entrées (livrable 4) -->
+    <div class="table-footer">
+      <div class="perpage-select">
+        <span>Afficher</span>
+        <select>
+          <option>25</option>
+          <option selected>50</option>
+          <option>100</option>
+        </select>
+        <span>par page</span>
+      </div>
+      <div>1-8 sur 16 marchés publics</div>
+      <div class="pagination">
+        <button disabled>‹</button>
+        <button class="active">1</button>
+        <button>›</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Onglet "Chantiers RegBL" - aperçu colonne signature distincte -->
+  <h3 style="margin: 32px 0 12px; color: var(--color-primary-dark); font-size: 15px;">→ Aperçu onglet « Chantiers RegBL » (colonne signature : type travaux + adresse)</h3>
+  <div class="tabs-shell">
+    <div class="table-wrap">
+      <table class="dense">
+        <colgroup>
+          <col style="width: 36px">
+          <col style="width: 90px">
+          <col style="width: 200px">
+          <col style="width: 180px">
+          <col style="width: 220px">
+          <col style="width: 70px">
+          <col style="width: 100px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="col-checkbox"><input type="checkbox"></th>
+            <th class="sortable sorted">Priorité <span class="sort-arrow">↓</span><span class="col-resizer"></span></th>
+            <th class="sortable">Maître d'ouvrage<span class="col-resizer"></span></th>
+            <th class="sortable">Type de travaux<span class="col-resizer"></span></th>
+            <th class="sortable">Adresse<span class="col-resizer"></span></th>
+            <th class="sortable">Canton<span class="col-resizer"></span></th>
+            <th class="sortable">Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-tiede"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>8</span></td>
+            <td class="raison-sociale">Régie Bersier SA</td>
+            <td>Transformation immeuble 6 niveaux</td>
+            <td>Rue de la Servette 22, Genève</td>
+            <td>GE</td>
+            <td><span class="badge badge-info">Nouveau</span></td>
+          </tr>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-tiede"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>8</span></td>
+            <td class="raison-sociale">Foncia Genève</td>
+            <td>Rénovation façade vitrée</td>
+            <td>Av. Krieg 4, Champel</td>
+            <td>GE</td>
+            <td><span class="badge badge-info">Nouveau</span></td>
+          </tr>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-tiede"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>7</span></td>
+            <td class="raison-sociale">SI Beau-Site</td>
+            <td>Construction immeuble logements</td>
+            <td>Ch. des Vergers, Plan-les-Ouates</td>
+            <td>GE</td>
+            <td><span class="badge badge-info">Nouveau</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <div class="perpage-select"><span>Afficher</span><select><option>25</option><option selected>50</option><option>100</option></select><span>par page</span></div>
+      <div>1-3 sur 50 chantiers RegBL</div>
+      <div class="pagination">
+        <button disabled>‹</button>
+        <button class="active">1</button>
+        <button>2</button>
+        <button>›</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Onglet vide « Entreprises » : empty state explicite -->
+  <h3 style="margin: 32px 0 12px; color: var(--color-primary-dark); font-size: 15px;">→ Aperçu onglet « Entreprises » (Zefix + search.ch, actuellement à 0)</h3>
+  <div class="tabs-shell">
+    <div class="empty-tab">
+      <div class="empty-tab-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21h18M5 21V8l7-4 7 4v13M10 21v-7h4v7"/></svg>
+      </div>
+      <h3 class="empty-tab-title">Aucune entreprise importée pour l'instant</h3>
+      <p class="empty-tab-desc">
+        Cet onglet rassemblera les entreprises issues du registre du commerce (Zefix) et de l'annuaire search.ch. Lancez un import depuis le bouton ci-dessus pour commencer.
+      </p>
+      <button class="btn btn-primary" style="margin: 0 auto;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+        Importer des entreprises
+      </button>
+    </div>
+  </div>
+
+  <!-- Onglet « Terrain » : colonne signature photos+visites + signaux veille -->
+  <h3 style="margin: 32px 0 12px; color: var(--color-primary-dark); font-size: 15px;">→ Aperçu onglet « Terrain » (lead express + signaux veille, colonnes photos & dernière visite)</h3>
+  <div class="tabs-shell">
+    <div class="table-wrap">
+      <table class="dense">
+        <colgroup>
+          <col style="width: 36px">
+          <col style="width: 90px">
+          <col style="width: 220px">
+          <col style="width: 110px">
+          <col style="width: 80px">
+          <col style="width: 130px">
+          <col style="width: 70px">
+          <col style="width: 100px">
+        </colgroup>
+        <thead>
+          <tr>
+            <th class="col-checkbox"><input type="checkbox"></th>
+            <th class="sortable sorted">Priorité <span class="sort-arrow">↓</span><span class="col-resizer"></span></th>
+            <th class="sortable">Entreprise<span class="col-resizer"></span></th>
+            <th class="sortable">Origine<span class="col-resizer"></span></th>
+            <th class="sortable">Photos<span class="col-resizer"></span></th>
+            <th class="sortable">Dernière visite<span class="col-resizer"></span></th>
+            <th class="sortable">Canton<span class="col-resizer"></span></th>
+            <th class="sortable">Statut</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-tiede"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>7</span></td>
+            <td class="raison-sociale">Bureau Délice Architectes</td>
+            <td>
+              <span class="badge" style="background: color-mix(in srgb, #5BA887 12%, transparent); color: #5BA887;">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 1px;"><path d="M13 2l-2 13M11 22l2-13"/><path d="M3 8l18 8M21 8L3 16"/></svg>
+                Saisie terrain
+              </span>
+            </td>
+            <td>
+              <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--color-text-muted);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                3
+              </span>
+            </td>
+            <td>il y a 4j (RDV chantier)</td>
+            <td>GE</td>
+            <td><span class="badge badge-success">Intéressé</span></td>
+          </tr>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-tiede"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>6</span></td>
+            <td class="raison-sociale">Régie de la Vallée SA</td>
+            <td>
+              <span class="badge" style="background: color-mix(in srgb, var(--color-warning) 14%, transparent); color: var(--color-warning);">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 1px;"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                Veille SIA 380/1
+              </span>
+            </td>
+            <td>
+              <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--color-text-muted);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                0
+              </span>
+            </td>
+            <td><span style="color: var(--color-text-muted);">jamais visité</span></td>
+            <td>VD</td>
+            <td><span class="badge badge-info">Nouveau</span></td>
+          </tr>
+          <tr>
+            <td class="col-checkbox"><input type="checkbox"></td>
+            <td><span class="score-pill score-froid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="8" r="2"/><path d="M12 14v6"/></svg>4</span></td>
+            <td class="raison-sociale">Pharma Vitrages SA</td>
+            <td>
+              <span class="badge" style="background: color-mix(in srgb, #5BA887 12%, transparent); color: #5BA887;">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-right: 1px;"><path d="M13 2l-2 13M11 22l2-13"/><path d="M3 8l18 8M21 8L3 16"/></svg>
+                Saisie terrain
+              </span>
+            </td>
+            <td>
+              <span style="display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--color-text-muted);">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                7
+              </span>
+            </td>
+            <td>il y a 12j</td>
+            <td>VS</td>
+            <td><span class="badge badge-warning">À qualifier</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-footer">
+      <div class="perpage-select"><span>Afficher</span><select><option>25</option><option selected>50</option><option>100</option></select><span>par page</span></div>
+      <div>1-3 sur 3 leads terrain</div>
+      <div class="pagination">
+        <button disabled>‹</button>
+        <button class="active">1</button>
+        <button disabled>›</button>
+      </div>
+    </div>
+  </div>
+
+  <p style="font-size: 12px; color: var(--color-text-muted); margin: 8px 0 24px; max-width: 720px;">
+    Note : l'onglet Terrain est aujourd'hui à 0 en prod (aucun lead express ou signal veille rattaché). L'aperçu ci-dessus simule la cible une fois la saisie terrain (V2 mobile S130) et le pipeline veille→prospection (S120) montés en charge. Empty state similaire à Entreprises tant que le compteur reste à 0.
+  </p>
+
+  <div class="annotation">
+    <strong>Décisions de cadrage matérialisées</strong> :
+    <ul style="margin: 6px 0 0; padding-left: 18px;">
+      <li><strong>Q1</strong> : 4 onglets (SIMAP / RegBL / Entreprises / Terrain) avec tab-count tabular-nums + count badge atténué pour onglets vides.</li>
+      <li><strong>Q2</strong> : sticky tabs desktop (sous le header), dropdown mobile <768px (gain vertical).</li>
+      <li><strong>Q3</strong> : colonne signature distincte par onglet — Montant + Clôture pour SIMAP, Type travaux + Adresse pour RegBL, Origine + Photos + Dernière visite pour Terrain, Date inscription pour Entreprises.</li>
+      <li><strong>Q4</strong> : filtres globaux au-dessus des onglets, persistent quand on switch d'onglet.</li>
+      <li><strong>Q5</strong> : SIMAP par défaut (signal d'achat explicite, plus actionnable que les 50 RegBL).</li>
+      <li><strong>Q6</strong> : URL <code>?tab=simap&perPage=50&sort=score_pertinence&dir=desc</code> partageable.</li>
+    </ul>
+  </div>
+
+  <div class="annotation">
+    <strong>Livrables additionnels matérialisés</strong> :
+    <ul style="margin: 6px 0 0; padding-left: 18px;">
+      <li><strong>1. Colonnes redimensionnables</strong> : drag handle 6px sur séparateur d'en-tête (visible au hover en bleu, traits gris au repos), largeur persistée localStorage par onglet.</li>
+      <li><strong>2. Tri visible dans modal filtres</strong> : modal "Plus de filtres + tri" ci-dessous (cliquer pour ouvrir) avec section Tri (champ + ordre asc/desc) reflétée dans les ↓ du tableau.</li>
+      <li><strong>3. Fix typo « Importer des prospects »</strong> : espace garanti via refacto Svelte.</li>
+      <li><strong>4. Densification + sélecteur entrées/page</strong> : padding cellules réduit 7px (vs 12 actuels), texte 13px desktop, sélecteur 25/50/100 dans le footer.</li>
+    </ul>
+  </div>
+
+  <p style="text-align: center; margin: 32px 0 16px;">
+    <button class="btn btn-primary" onclick="document.getElementById('filterModal').classList.add('open')">Voir le modal filtres + tri</button>
+  </p>
+
+</div>
+
+<!-- === Modal filtres avec section tri (livrable 2) === -->
+<div class="modal-overlay" id="filterModal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title">Filtres et tri</h2>
+      <button class="modal-close" onclick="document.getElementById('filterModal').classList.remove('open')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Section Tri (livrable 2) -->
+      <div class="modal-section">
+        <span class="modal-section-label">Tri</span>
+        <div class="sort-row">
+          <div class="field-select">
+            <span style="flex: 1;">Priorité (score)</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+          <div class="field-select">
+            <span style="flex: 1;">Décroissant ↓</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+          </div>
+        </div>
+        <p style="margin: 4px 0 0; font-size: 11px; color: var(--color-text-muted);">
+          Le tri appliqué ici se reflète dans la flèche ↓ de la colonne du tableau et inversement.
+        </p>
+      </div>
+
+      <div class="modal-section">
+        <span class="modal-section-label">Statut</span>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <label style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; cursor: pointer;">
+            <input type="checkbox" checked accent-color="primary"> Nouveau
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; cursor: pointer;">
+            <input type="checkbox" checked> Intéressé
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; cursor: pointer;">
+            <input type="checkbox"> À qualifier
+          </label>
+          <label style="display: flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 6px; font-size: 13px; cursor: pointer;">
+            <input type="checkbox"> Écarté
+          </label>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <span class="modal-section-label">Priorité (température)</span>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <span class="score-pill score-chaud" style="cursor: pointer;">Prioritaire (≥ 7)</span>
+          <span class="score-pill score-tiede" style="cursor: pointer;">À qualifier (4-6)</span>
+          <span class="score-pill score-froid" style="cursor: pointer;">Faible signal (≤ 3)</span>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <span class="modal-section-label">Canton</span>
+        <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <span class="badge" style="cursor: pointer; padding: 4px 10px; background: var(--color-surface-alt); color: var(--color-text);">GE</span>
+          <span class="badge" style="cursor: pointer; padding: 4px 10px; background: var(--color-primary-light); color: var(--color-primary);">VD ✓</span>
+          <span class="badge" style="cursor: pointer; padding: 4px 10px; background: var(--color-surface-alt); color: var(--color-text);">VS</span>
+          <span class="badge" style="cursor: pointer; padding: 4px 10px; background: var(--color-surface-alt); color: var(--color-text);">FR</span>
+          <span class="badge" style="cursor: pointer; padding: 4px 10px; background: var(--color-surface-alt); color: var(--color-text);">NE</span>
+          <span class="badge" style="cursor: pointer; padding: 4px 10px; background: var(--color-surface-alt); color: var(--color-text);">JU</span>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost">Réinitialiser</button>
+      <button class="btn btn-primary" onclick="document.getElementById('filterModal').classList.remove('open')">Appliquer</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Resizer interactif (démo)
+  document.querySelectorAll('.col-resizer').forEach(handle => {
+    let startX, startWidth, th;
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      handle.classList.add('active');
+      th = handle.parentElement;
+      startX = e.pageX;
+      startWidth = th.offsetWidth;
+      document.body.style.cursor = 'col-resize';
+      const move = ev => {
+        const w = Math.max(60, startWidth + ev.pageX - startX);
+        const idx = Array.from(th.parentElement.children).indexOf(th);
+        const cols = th.closest('table').querySelector('colgroup').children;
+        if (cols[idx]) cols[idx].style.width = w + 'px';
+      };
+      const up = () => {
+        handle.classList.remove('active');
+        document.body.style.cursor = '';
+        document.removeEventListener('mousemove', move);
+        document.removeEventListener('mouseup', up);
+      };
+      document.addEventListener('mousemove', move);
+      document.addEventListener('mouseup', up);
+    });
+  });
+
+  // Tabs interactifs (démo)
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+    });
+  });
+
+  // Fermer modal sur click outside
+  document.getElementById('filterModal').addEventListener('click', e => {
+    if (e.target.id === 'filterModal') e.target.classList.remove('open');
+  });
+</script>
+
+</body>
+</html>

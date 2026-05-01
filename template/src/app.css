@@ -49,6 +49,21 @@
 	--color-prosp-convert-bg: #EBF3EF;
 	--color-prosp-convert-border: #7BAA8E;
 
+	/* Phase 2 2026-05-01 : tokens onglets prospection (palette segmentation subtile premium).
+	   4 natures de signal cartographiées, fond pastel + trait coloré pour distinction visuelle. */
+	/* SIMAP marchés publics : bleu pétrole institutionnel (autorité publique) */
+	--color-tab-simap: #3D6B8A;
+	--color-tab-simap-bg: #ECF1F5;
+	/* RegBL chantiers : terracotta atténué (terre, bâti) */
+	--color-tab-regbl: #B07A5A;
+	--color-tab-regbl-bg: #F7EFE8;
+	/* Entreprises Zefix+search.ch : sauge profond (institution, registre) */
+	--color-tab-entreprises: #4F7252;
+	--color-tab-entreprises-bg: #EEF3EE;
+	/* Terrain lead express + veille : prune sourde (humain, mobile) */
+	--color-tab-terrain: #6F4F6E;
+	--color-tab-terrain-bg: #F2ECF1;
+
 	/* Logo */
 	--color-logo: #00003B;
 

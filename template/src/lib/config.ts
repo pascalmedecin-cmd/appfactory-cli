@@ -138,6 +138,14 @@ export const config = {
 				label: 'RegBL (registre des bâtiments)',
 				enabled: true,
 			},
+			lead_express: {
+				label: 'Saisie terrain (mobile)',
+				enabled: true,
+			},
+			veille: {
+				label: 'Veille sectorielle',
+				enabled: true,
+			},
 		},
 		secteurKeywords: {
 			construction: ['construction', 'batiment', 'bau', 'genie civil'],

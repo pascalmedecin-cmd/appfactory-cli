@@ -3,14 +3,25 @@ import { fail } from '@sveltejs/kit';
 import { LeadCreateSchema, LeadExpressCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema, RechercheCreateSchema, RechercheDeleteSchema, LEAD_FIELDS, LEAD_EXPRESS_FIELDS, extractForm, validate } from '$lib/schemas';
 import { calculerScore } from '$lib/scoring';
 import { dbFail, escapeIlike, newId, now } from '$lib/server/db-helpers';
+import { PROSPECTION_TABS, TAB_SOURCE_MAP, VALID_SORT_KEYS, type ProspectionTabKey } from '$lib/prospection-utils';
 
-const PAGE_SIZE = 25;
-const VALID_SORT_KEYS = ['score_pertinence', 'raison_sociale', 'canton', 'localite', 'source', 'statut', 'date_import'];
+const DEFAULT_PAGE_SIZE = 25;
+const ALLOWED_PAGE_SIZES = new Set([25, 50, 100]);
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const page = Math.max(0, parseInt(url.searchParams.get('page') ?? '0', 10) || 0);
 	const sortKey = VALID_SORT_KEYS.includes(url.searchParams.get('sort') ?? '') ? url.searchParams.get('sort')! : 'score_pertinence';
 	const sortAsc = url.searchParams.get('dir') === 'asc';
+
+	// Phase 2 2026-05-01 : onglet actif (par défaut SIMAP, signal le plus actionnable).
+	const rawTab = url.searchParams.get('tab') ?? 'simap';
+	const tab: ProspectionTabKey = (PROSPECTION_TABS as readonly string[]).includes(rawTab)
+		? (rawTab as ProspectionTabKey)
+		: 'simap';
+
+	// Phase 2 : entrées par page configurable, whitelist stricte (anti-DOS via URL).
+	const rawPerPage = parseInt(url.searchParams.get('perPage') ?? '', 10);
+	const pageSize = ALLOWED_PAGE_SIZES.has(rawPerPage) ? rawPerPage : DEFAULT_PAGE_SIZE;
 
 	// Filtres depuis URL params
 	const filterSources = url.searchParams.getAll('source');
@@ -35,8 +46,20 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.from('prospect_leads')
 		.select('*', { count: 'exact' });
 
-	// Appliquer les filtres serveur
-	if (filterSources.length > 0) query = query.in('source', filterSources);
+	// Phase 2 : filtre onglet (sources de la nature). Appliqué AVANT filterSources utilisateur :
+	// si l'utilisateur affine via le filtre source dans la barre filtres globale, son sélection
+	// doit rester dans le périmètre de l'onglet (intersection des deux ensembles).
+	// Si l'intersection est vide (filtre source incompatible avec l'onglet actif), on court-circuite
+	// la requête principale (économise 1 round-trip Postgres) et signale explicitement au client.
+	const tabSources = TAB_SOURCE_MAP[tab];
+	const effectiveSources = filterSources.length > 0
+		? filterSources.filter((s) => tabSources.includes(s))
+		: tabSources;
+	const sourceFilterIncompatible = filterSources.length > 0 && effectiveSources.length === 0;
+	if (!sourceFilterIncompatible) {
+		query = query.in('source', effectiveSources.length > 0 ? effectiveSources : tabSources);
+	}
+
 	if (filterCantons.length > 0) query = query.in('canton', filterCantons);
 	if (filterStatuts.length > 0) {
 		query = query.in('statut', filterStatuts);
@@ -58,7 +81,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	// Tri + pagination
 	query = query
 		.order(sortKey, { ascending: sortAsc })
-		.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+		.range(page * pageSize, (page + 1) * pageSize - 1);
 
 	// Indicateurs honnêtes (remplacent l'ancien funnel décoratif 4 cartes).
 	// 1. Leads actifs : statut ∈ {nouveau, interesse} = ce qui reste à traiter.
@@ -68,8 +91,46 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	monthStart.setDate(1);
 	monthStart.setHours(0, 0, 0, 0);
 
-	const [leadsRes, entreprisesRes, recherchesRes, leadsActifsRes, marchesOuvertsRes, transferresMoisRes] = await Promise.all([
-		query,
+	// Phase 2 : counts par onglet (Promise.all parallèle, 1 round-trip).
+	// Filtre identique à la requête principale (cantons + statuts + showTransferred + temperatures + search)
+	// pour que les badges des onglets reflètent le résultat actuel des filtres globaux.
+	const buildTabCount = (sources: string[]) => {
+		let q = locals.supabase
+			.from('prospect_leads')
+			.select('*', { count: 'exact', head: true })
+			.in('source', sources);
+		if (filterCantons.length > 0) q = q.in('canton', filterCantons);
+		if (filterStatuts.length > 0) q = q.in('statut', filterStatuts);
+		else if (!showTransferred) q = q.neq('statut', 'transfere');
+		if (filterTemperatures.length > 0) {
+			const ranges: string[] = [];
+			if (filterTemperatures.includes('chaud')) ranges.push('score_pertinence.gte.7');
+			if (filterTemperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.4,score_pertinence.lte.6)');
+			if (filterTemperatures.includes('froid')) ranges.push('score_pertinence.lte.3');
+			if (ranges.length > 0) q = q.or(ranges.join(','));
+		}
+		if (search) {
+			q = q.or(`raison_sociale.ilike.%${search}%,localite.ilike.%${search}%,canton.ilike.%${search}%`);
+		}
+		return q;
+	};
+
+	const [
+		leadsRes,
+		entreprisesRes,
+		recherchesRes,
+		leadsActifsRes,
+		marchesOuvertsRes,
+		transferresMoisRes,
+		tabSimapRes,
+		tabRegblRes,
+		tabEntreprisesRes,
+		tabTerrainRes,
+	] = await Promise.all([
+		// Short-circuit : si filtre source incompatible avec l'onglet, on retourne 0 sans round-trip.
+		sourceFilterIncompatible
+			? Promise.resolve({ data: [] as never[], count: 0, error: null } as const)
+			: query,
 		locals.supabase
 			.from('entreprises')
 			.select('id, raison_sociale')
@@ -92,6 +153,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			.select('*', { count: 'exact', head: true })
 			.eq('statut', 'transfere')
 			.gte('date_modification', monthStart.toISOString()),
+		buildTabCount(TAB_SOURCE_MAP.simap),
+		buildTabCount(TAB_SOURCE_MAP.regbl),
+		buildTabCount(TAB_SOURCE_MAP.entreprises),
+		buildTabCount(TAB_SOURCE_MAP.terrain),
 	]);
 
 	return {
@@ -101,11 +166,20 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		leadsActifsCount: leadsActifsRes.count ?? 0,
 		marchesOuvertsCount: marchesOuvertsRes.count ?? 0,
 		transferresMoisCount: transferresMoisRes.count ?? 0,
+		// Phase 2 : counts par onglet (filtres globaux appliqués).
+		tabCounts: {
+			simap: tabSimapRes.count ?? 0,
+			regbl: tabRegblRes.count ?? 0,
+			entreprises: tabEntreprisesRes.count ?? 0,
+			terrain: tabTerrainRes.count ?? 0,
+		},
+		tab,
 		page,
-		pageSize: PAGE_SIZE,
+		pageSize,
 		sort: sortKey,
 		sortAsc,
 		filters: { sources: filterSources, cantons: filterCantons, statuts: filterStatuts, temperatures: filterTemperatures },
+		sourceFilterIncompatible,
 		showTransferred,
 		search,
 		entreprises: entreprisesRes.data ?? [],

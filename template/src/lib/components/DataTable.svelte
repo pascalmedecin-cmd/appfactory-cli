@@ -1,5 +1,6 @@
 <script lang="ts" generics="T extends Record<string, any>">
 	import Icon from '$lib/components/Icon.svelte';
+	import Tooltip from '$lib/components/Tooltip.svelte';
 	import type { Snippet } from 'svelte';
 
 	type Column = {
@@ -9,6 +10,9 @@
 		sortable?: boolean;
 		class?: string;
 		render?: (row: T) => string;
+		infoTooltip?: string;
+		minWidth?: number;
+		defaultWidth?: number;
 	};
 
 	let {
@@ -31,6 +35,12 @@
 		onPageChange,
 		onSortChange,
 		onSearchChange,
+		// Phase 2 2026-05-01 : extensions opt-in (rétrocompat /contacts).
+		dense = false,
+		resizable = false,
+		storageKey = '',
+		pageSizeOptions = null as number[] | null,
+		onPageSizeChange = null as ((size: number) => void) | null,
 	}: {
 		data: T[];
 		columns: Column[];
@@ -51,6 +61,11 @@
 		onPageChange?: (page: number) => void;
 		onSortChange?: (key: string, asc: boolean) => void;
 		onSearchChange?: (q: string) => void;
+		dense?: boolean;
+		resizable?: boolean;
+		storageKey?: string;
+		pageSizeOptions?: number[] | null;
+		onPageSizeChange?: ((size: number) => void) | null;
 	} = $props();
 
 	let search = $state(serverMode ? serverSearch : '');
@@ -59,11 +74,82 @@
 	let currentPage = $state(serverMode ? currentServerPage : 0);
 	let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-	// Sync server props when they change (navigation/reload)
 	$effect(() => { if (serverMode) search = serverSearch; });
 	$effect(() => { if (serverMode) sortKey = serverSortKey; });
 	$effect(() => { if (serverMode) sortAsc = serverSortAsc; });
 	$effect(() => { if (serverMode) currentPage = currentServerPage; });
+
+	// Largeurs colonnes persistées par scope (resizable + storageKey requis ensemble).
+	const STORAGE_PREFIX = 'datatable.col-widths.';
+	let colWidths = $state<Record<string, number>>({});
+
+	$effect(() => {
+		if (!resizable || !storageKey || typeof window === 'undefined') return;
+		try {
+			const raw = window.localStorage.getItem(STORAGE_PREFIX + storageKey);
+			if (!raw) return;
+			const parsed = JSON.parse(raw);
+			// Garde-fou : payload doit être un objet plain (pas array, pas null), valeurs = nombres finis bornés.
+			// Anti-corruption locale (manipulation localStorage, migration ratée, valeurs hostiles).
+			if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
+			const safe: Record<string, number> = {};
+			for (const [k, v] of Object.entries(parsed as Record<string, unknown>)) {
+				if (typeof v === 'number' && Number.isFinite(v) && v >= 40 && v <= 2000) {
+					safe[k] = v;
+				}
+			}
+			colWidths = safe;
+		} catch { /* localStorage indisponible : on garde defaults */ }
+	});
+
+	function persistWidths() {
+		if (!resizable || !storageKey || typeof window === 'undefined') return;
+		try {
+			window.localStorage.setItem(STORAGE_PREFIX + storageKey, JSON.stringify(colWidths));
+		} catch { /* quota ou private mode : best-effort */ }
+	}
+
+	function resetWidths() {
+		colWidths = {};
+		persistWidths();
+	}
+
+	function startResize(e: PointerEvent, colKey: string, minW: number) {
+		e.preventDefault();
+		e.stopPropagation();
+		const target = e.currentTarget as HTMLElement;
+		target.classList.add('col-resizer--active');
+		// pointer capture local au handle : si le span est démonté (re-render colonnes au switch d'onglet,
+		// goto invalidateAll), `lostpointercapture` est émis et libère la capture proprement.
+		const pointerId = e.pointerId;
+		try { target.setPointerCapture?.(pointerId); } catch { /* navigateur ancien : fallback ok */ }
+		const th = target.parentElement as HTMLElement;
+		const startX = e.clientX;
+		const startWidth = th.offsetWidth;
+
+		const cleanup = () => {
+			target.classList.remove('col-resizer--active');
+			try { target.releasePointerCapture?.(pointerId); } catch { /* déjà perdue */ }
+			persistWidths();
+			target.removeEventListener('pointermove', onMove);
+			target.removeEventListener('pointerup', onUp);
+			target.removeEventListener('pointercancel', onUp);
+			target.removeEventListener('lostpointercapture', onUp);
+		};
+		const onMove = (ev: PointerEvent) => {
+			// Garde anti-démontage : si le node a été détaché du DOM par un re-render concurrent,
+			// on stoppe le drag plutôt que de muter colWidths contre une colKey orpheline.
+			if (!target.isConnected) { cleanup(); return; }
+			const w = Math.max(minW, Math.min(2000, startWidth + ev.clientX - startX));
+			colWidths = { ...colWidths, [colKey]: w };
+		};
+		const onUp = () => cleanup();
+
+		target.addEventListener('pointermove', onMove);
+		target.addEventListener('pointerup', onUp);
+		target.addEventListener('pointercancel', onUp);
+		target.addEventListener('lostpointercapture', onUp);
+	}
 
 	const filtered = $derived.by(() => {
 		if (serverMode) return data;
@@ -136,27 +222,45 @@
 		currentPage = page;
 		if (serverMode) onPageChange?.(page);
 	}
+
+	function ariaSort(key: string): 'ascending' | 'descending' | 'none' {
+		if (sortKey !== key) return 'none';
+		return sortAsc ? 'ascending' : 'descending';
+	}
 </script>
 
 <div class="bg-white rounded-xl border border-border shadow-sm flex flex-col min-h-0">
-	{#if searchable}
-		<div class="sticky top-0 z-20 px-4 py-3 border-b border-border bg-white rounded-t-xl">
-			<input
-				type="text"
-				value={search}
-				oninput={(e) => handleSearchInput((e.target as HTMLInputElement).value)}
-				placeholder={searchPlaceholder}
-				class="w-full md:max-w-sm px-3 py-2 md:py-1.5 text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-			/>
+	{#if searchable || (resizable && storageKey)}
+		<div class="sticky top-0 z-20 px-4 py-3 border-b border-border bg-white rounded-t-xl flex items-center gap-3">
+			{#if searchable}
+				<input
+					type="text"
+					value={search}
+					oninput={(e) => handleSearchInput((e.target as HTMLInputElement).value)}
+					placeholder={searchPlaceholder}
+					class="w-full md:max-w-sm px-3 py-2 md:py-1.5 text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+				/>
+			{/if}
+			{#if resizable && storageKey}
+				<button
+					type="button"
+					onclick={resetWidths}
+					class="ml-auto flex items-center gap-1.5 h-9 px-3 text-xs font-medium text-text-muted border border-border rounded-md bg-white hover:bg-surface-alt cursor-pointer transition-colors shrink-0"
+					title="Réinitialiser les largeurs de colonnes"
+				>
+					<Icon name="refresh" size={14} />
+					<span class="hidden md:inline">Largeurs</span>
+				</button>
+			{/if}
 		</div>
 	{/if}
 
 	<div class="overflow-x-auto flex-1 min-h-0 overflow-y-auto">
-		<table class="w-full text-sm table-fixed">
+		<table class="w-full text-sm" class:table-fixed={!resizable} class:dt-dense={dense}>
 			<thead class="sticky top-0 z-10">
 				<tr class="border-b border-border bg-surface-alt">
 					{#if selectable}
-						<th class="w-10 px-4 py-3">
+						<th class="dt-th-checkbox">
 							<label class="relative inline-flex items-center justify-center w-5 h-5 cursor-pointer before:absolute before:content-[''] before:-inset-3">
 								<input type="checkbox" class="w-4 h-4 cursor-pointer" checked={selectedIds.size === paged.length && paged.length > 0} onchange={toggleSelectAll} aria-label="Tout sélectionner" />
 							</label>
@@ -164,28 +268,70 @@
 					{/if}
 					{#each columns as col}
 						<th
-							class="px-4 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider {col.class ?? ''}"
+							class="dt-th text-left text-xs font-semibold text-text-muted uppercase tracking-wider {col.class ?? ''}"
+							style={resizable && colWidths[col.key] ? `width: ${colWidths[col.key]}px;` : (resizable && col.defaultWidth ? `width: ${col.defaultWidth}px;` : '')}
+							class:dt-th-sorted={sortKey === col.key}
+							class:dt-th-sorted-asc={sortKey === col.key && sortAsc}
+							class:dt-th-sorted-desc={sortKey === col.key && !sortAsc}
+							aria-sort={col.sortable ? ariaSort(col.key) : undefined}
 						>
 							{#if col.sortable}
 								<button
-									class="flex items-center gap-1 text-xs font-semibold uppercase tracking-wider text-text-muted cursor-pointer hover:text-text"
+									type="button"
+									class="dt-th-button"
 									onclick={() => toggleSort(col.key)}
 								>
-									{#if col.shortLabel}
-										<span class="md:hidden">{col.shortLabel}</span>
-										<span class="hidden md:inline">{col.label}</span>
+									{#if col.infoTooltip}
+										<Tooltip content={col.infoTooltip} anchor="start" width={280}>
+											<span class="dt-th-label-with-info">
+												{#if col.shortLabel}
+													<span class="md:hidden">{col.shortLabel}</span>
+													<span class="hidden md:inline">{col.label}</span>
+												{:else}
+													{col.label}
+												{/if}
+												<span class="dt-info-mark" aria-hidden="true">i</span>
+											</span>
+										</Tooltip>
 									{:else}
-										{col.label}
+										{#if col.shortLabel}
+											<span class="md:hidden">{col.shortLabel}</span>
+											<span class="hidden md:inline">{col.label}</span>
+										{:else}
+											{col.label}
+										{/if}
 									{/if}
-									{#if sortKey === col.key}
-										<Icon name={sortAsc ? 'arrow_upward' : 'arrow_downward'} size={16} />
-									{/if}
+									<span class="dt-sort-stack" aria-hidden="true">
+										<svg class="dt-sort-up" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 4.25 4.5 0.75 8.25 4.25"/></svg>
+										<svg class="dt-sort-down" viewBox="0 0 9 5" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="0.75 0.75 4.5 4.25 8.25 0.75"/></svg>
+									</span>
 								</button>
+							{:else if col.infoTooltip}
+								<Tooltip content={col.infoTooltip} anchor="start" width={280}>
+									<span class="dt-th-label-with-info">
+										{#if col.shortLabel}
+											<span class="md:hidden">{col.shortLabel}</span>
+											<span class="hidden md:inline">{col.label}</span>
+										{:else}
+											{col.label}
+										{/if}
+										<span class="dt-info-mark" aria-hidden="true">i</span>
+									</span>
+								</Tooltip>
 							{:else if col.shortLabel}
 								<span class="md:hidden">{col.shortLabel}</span>
 								<span class="hidden md:inline">{col.label}</span>
 							{:else}
 								{col.label}
+							{/if}
+							{#if resizable}
+								<span
+									class="col-resizer"
+									role="separator"
+									aria-orientation="vertical"
+									aria-label="Redimensionner la colonne {col.label}"
+									onpointerdown={(e) => startResize(e, col.key, col.minWidth ?? 60)}
+								></span>
 							{/if}
 						</th>
 					{/each}
@@ -205,7 +351,7 @@
 							onclick={() => onRowClick?.(row)}
 						>
 							{#if selectable}
-								<td class="w-10 px-4 py-3" onclick={(e) => e.stopPropagation()}>
+								<td class="dt-td-checkbox" onclick={(e) => e.stopPropagation()}>
 									<label class="relative inline-flex items-center justify-center w-5 h-5 cursor-pointer before:absolute before:content-[''] before:-inset-3">
 										<input type="checkbox" class="w-4 h-4 cursor-pointer" checked={selectedIds.has(row.id)} onchange={() => toggleSelect(row.id)} aria-label="Sélectionner la ligne" />
 									</label>
@@ -215,7 +361,7 @@
 								{@render rowSnippet(row, i)}
 							{:else}
 								{#each columns as col}
-									<td class="px-4 py-3 text-text {col.class ?? ''}">
+									<td class="dt-td text-text {col.class ?? ''}">
 										{col.render ? col.render(row) : (row[col.key] ?? '–')}
 									</td>
 								{/each}
@@ -227,28 +373,166 @@
 		</table>
 	</div>
 
-	{#if totalPages > 1}
-		<div class="px-4 py-3 border-t border-border flex items-center justify-between text-sm text-text-muted shrink-0">
-			<span>{effectiveTotalCount} résultat{effectiveTotalCount > 1 ? 's' : ''}</span>
-			<div class="flex items-center gap-2">
-				<button
-					class="flex items-center justify-center h-10 w-10 rounded-lg hover:bg-surface-alt disabled:opacity-40 cursor-pointer"
-					disabled={currentPage === 0}
-					onclick={() => goToPage(currentPage - 1)}
-					aria-label="Page précédente"
-				>
-					<Icon name="arrow_back" size={18} />
-				</button>
-				<span>{currentPage + 1} / {totalPages}</span>
-				<button
-					class="flex items-center justify-center h-10 w-10 rounded-lg hover:bg-surface-alt disabled:opacity-40 cursor-pointer"
-					disabled={currentPage >= totalPages - 1}
-					onclick={() => goToPage(currentPage + 1)}
-					aria-label="Page suivante"
-				>
-					<Icon name="arrow_forward" size={18} />
-				</button>
+	{#if totalPages > 1 || (pageSizeOptions && pageSizeOptions.length > 0)}
+		<div class="px-4 py-3 border-t border-border flex items-center justify-between text-sm text-text-muted shrink-0 gap-2 flex-wrap">
+			<div class="flex items-center gap-3">
+				<span>{effectiveTotalCount} résultat{effectiveTotalCount > 1 ? 's' : ''}</span>
+				{#if pageSizeOptions && pageSizeOptions.length > 0}
+					<label class="flex items-center gap-2 text-xs">
+						<span class="hidden md:inline">Afficher</span>
+						<select
+							class="h-8 px-2 border border-border rounded-md bg-white text-text cursor-pointer text-xs"
+							value={pageSize}
+							onchange={(e) => onPageSizeChange?.(Number((e.target as HTMLSelectElement).value))}
+							aria-label="Nombre d'entrées par page"
+						>
+							{#each pageSizeOptions as opt}
+								<option value={opt}>{opt}</option>
+							{/each}
+						</select>
+						<span class="hidden md:inline">par page</span>
+					</label>
+				{/if}
 			</div>
+			{#if totalPages > 1}
+				<div class="flex items-center gap-2">
+					<button
+						class="flex items-center justify-center h-10 w-10 rounded-lg hover:bg-surface-alt disabled:opacity-40 cursor-pointer"
+						disabled={currentPage === 0}
+						onclick={() => goToPage(currentPage - 1)}
+						aria-label="Page précédente"
+					>
+						<Icon name="arrow_back" size={18} />
+					</button>
+					<span>{currentPage + 1} / {totalPages}</span>
+					<button
+						class="flex items-center justify-center h-10 w-10 rounded-lg hover:bg-surface-alt disabled:opacity-40 cursor-pointer"
+						disabled={currentPage >= totalPages - 1}
+						onclick={() => goToPage(currentPage + 1)}
+						aria-label="Page suivante"
+					>
+						<Icon name="arrow_forward" size={18} />
+					</button>
+				</div>
+			{/if}
 		</div>
 	{/if}
 </div>
+
+<style>
+	/* Padding par défaut, repris du baseline /contacts non-dense */
+	.dt-th { padding: 12px 16px; position: relative; }
+	.dt-td { padding: 12px 16px; }
+	.dt-th-checkbox { width: 40px; padding: 12px 16px; }
+	.dt-td-checkbox { width: 40px; padding: 12px 16px; }
+
+	/* Densité opt-in (Phase 2 prospection) : padding réduit, 13px police */
+	:global(table.dt-dense) .dt-th { padding: 8px 12px; font-size: 11px; }
+	:global(table.dt-dense) .dt-td { padding: 7px 12px; font-size: 13px; }
+	:global(table.dt-dense) .dt-th-checkbox,
+	:global(table.dt-dense) .dt-td-checkbox { padding: 7px 8px; }
+
+	.dt-th-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		font-size: inherit;
+		font-weight: 600;
+		text-transform: inherit;
+		letter-spacing: inherit;
+		color: inherit;
+		background: none;
+		border: none;
+		padding: 0;
+		cursor: pointer;
+	}
+	.dt-th-button:hover { color: var(--color-text); }
+	.dt-th-sorted .dt-th-button { color: var(--color-primary); }
+
+	.dt-th-label-with-info {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
+		cursor: help;
+	}
+	.dt-info-mark {
+		width: 13px;
+		height: 13px;
+		border-radius: 50%;
+		border: 1px solid color-mix(in srgb, var(--color-text-muted) 40%, transparent);
+		color: var(--color-text-muted);
+		font-size: 9px;
+		font-weight: 600;
+		font-family: serif;
+		font-style: italic;
+		line-height: 1;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		text-transform: lowercase;
+		letter-spacing: 0;
+		transition: color 120ms ease, border-color 120ms ease;
+	}
+	.dt-th-label-with-info:hover .dt-info-mark {
+		color: var(--color-primary);
+		border-color: var(--color-primary);
+	}
+
+	/* Tri stack bidirectionnel (Linear/Stripe pattern) */
+	.dt-sort-stack {
+		display: inline-flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		margin-left: 4px;
+		line-height: 0;
+		vertical-align: middle;
+		height: 12px;
+	}
+	.dt-sort-stack svg {
+		display: block;
+		width: 9px;
+		height: 5px;
+		color: var(--color-text-muted);
+		opacity: 0.35;
+		transition: opacity 120ms ease, color 120ms ease;
+	}
+	.dt-th-button:hover .dt-sort-stack svg { opacity: 0.7; }
+	.dt-th-sorted-asc .dt-sort-up,
+	.dt-th-sorted-desc .dt-sort-down {
+		color: var(--color-primary);
+		opacity: 1;
+	}
+	.dt-th-sorted-asc .dt-sort-down,
+	.dt-th-sorted-desc .dt-sort-up {
+		opacity: 0.25;
+	}
+
+	/* Resize handle (drag horizontal sur séparateur de colonne) */
+	.col-resizer {
+		position: absolute;
+		right: -3px;
+		top: 0;
+		bottom: 0;
+		width: 6px;
+		cursor: col-resize;
+		z-index: 2;
+		background: transparent;
+		transition: background 100ms ease;
+		touch-action: none;
+	}
+	.col-resizer:hover,
+	.col-resizer:global(.col-resizer--active) {
+		background: color-mix(in srgb, var(--color-primary) 30%, transparent);
+	}
+	.col-resizer::before {
+		content: '';
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		width: 1px;
+		height: 16px;
+		background: var(--color-border);
+	}
+</style>

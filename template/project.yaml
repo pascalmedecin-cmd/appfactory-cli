@@ -150,6 +150,16 @@ prospection:
       enabled: true
       type: rest
 
+    lead_express:
+      label: Saisie terrain (mobile)
+      enabled: true
+      type: manual
+
+    veille:
+      label: Veille sectorielle
+      enabled: true
+      type: pipeline
+
   # Detection de secteur a l'import
   secteur_keywords:
     construction: [construction, batiment, bau, genie civil]

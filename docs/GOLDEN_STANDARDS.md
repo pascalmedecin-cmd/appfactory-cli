@@ -275,6 +275,51 @@ Inbox du matin : leads chauds non touchés, queue partagée multi-fondateurs, 4 
 - **Actions** : 4 ActionButton (cf. 3.7c) : Intéressant / Écarter / Snooze 7 j / Détails
 - **Empty state** : si `leads.length === 0`, message "Rien à trier ce matin. Votre fond de pipe travaille pour vous. Les nouveaux leads chauds atterriront ici dès le prochain import."
 
+### 3.7f Onglets prospection (v8 2026-05-01)
+
+Pattern segmentation par nature de signal pour les pages liste data-rich. Cas pilote : `/prospection` Phase 2 (4 onglets).
+
+- **Composant** : `src/lib/components/prospection/ProspectionTabs.svelte` + tokens `--color-tab-{simap,regbl,entreprises,terrain}` dans `app.css`
+- **Surface** : sticky tabs desktop sous le header, `<select>` dropdown plein-largeur sur mobile (<768px)
+- **Layout onglet** : icône puce 26x26 rounded-md (fond pastel + trait coloré) + label + count tabular-nums dans badge `bg-surface-alt`
+- **Couleurs segmentation premium subtile** :
+  - SIMAP marchés publics : bleu pétrole `#3D6B8A` sur fond `#ECF1F5` (autorité publique)
+  - Chantiers RegBL : terracotta atténué `#B07A5A` sur fond `#F7EFE8` (terre, bâti)
+  - Entreprises (Zefix+search.ch) : sauge profond `#4F7252` sur fond `#EEF3EE` (institution)
+  - Terrain (lead_express+veille) : prune sourde `#6F4F6E` sur fond `#F2ECF1` (humain, mobile)
+- **État actif** : underline 2px primary + label primary-dark semibold + icône scale(1.02)
+- **Onglet vide (count 0)** : badge count opacity-25 + icône stroke-width 2.2 (signal "vide" sans triste)
+- **A11y** : `role="tablist"`/`tab` + `aria-selected` + `aria-label` count
+- **URL state** : `?tab=simap|regbl|entreprises|terrain` (whitelist server-side, fallback `simap`)
+
+### 3.7g Tooltip (composant réutilisable, v8 2026-05-01)
+
+Tooltip subtil premium sur hover, pour expliciter en-têtes ambigus, onglets, ou métiques.
+
+- **Composant** : `src/lib/components/Tooltip.svelte`
+- **Style** : fond blanc + `border 1px var(--color-border)` + ombre douce 2 couches `0 6px 20px rgba(15,23,41,0.10), 0 1px 3px rgba(15,23,41,0.05)`
+- **Texte** : `font-size: 12px`, `color: text-body`, line-height 1.5, mot-clé en `<strong class="text-primary-dark">` semi-bold
+- **Chevron** : 9x9 rotated 45°, `border-top + border-left` blanc pour cohérence
+- **Animation** : fade + translateY 160ms ease (zéro quand `:hover` ou `:focus-within`)
+- **Variantes** : `anchor="center"` (défaut, ancré au centre du host), `anchor="start"` (ancré à gauche, label court type en-tête de tableau)
+- **Usage**:
+  ```svelte
+  <Tooltip content="Score 0-12 calculé automatiquement..." anchor="start">
+    <span>Priorité</span>
+  </Tooltip>
+  ```
+
+### 3.7h Tableau dense + colonnes redimensionnables + tri stack (v8 2026-05-01)
+
+Extension `DataTable.svelte` opt-in via props (rétrocompat 100% : `/contacts` consomme l'ancien comportement).
+
+- **`dense={true}`** : padding cellules 7px (vs 12 baseline) + `font-size: 13px` + headers 11px uppercase
+- **`resizable={true}` + `storageKey="prospection-{tab}"`** : drag handle 6px sur séparateur d'en-tête (hover bleu, traits gris au repos), largeur persistée localStorage par scope, validation Number.isFinite + bornes [40, 2000]
+- **`pageSizeOptions={[25, 50, 100]}` + `onPageSizeChange`** : sélecteur compact dans le footer du tableau, persistant via URL `?perPage=`
+- **Tri stack bidirectionnel** : 2 chevrons up+down empilés 9x5px à droite du label, `opacity 0.35` au repos / `0.7` au hover de la colonne / chevron actif `primary` opacity 1 + autre opacity 0.25 quand sortée. Pattern Linear/Stripe Dashboard. `aria-sort="ascending|descending|none"` sur `<th>`.
+- **Tooltip header (`Column.infoTooltip`)** : petit cercle "i" 13px italic à côté du label, hover révèle le tooltip subtil (3.7g)
+- **Pattern reset** : bouton "Largeurs" en haut à droite du tableau qui efface localStorage et restaure les defaultWidths
+
 ### 3.8 Slide-out panel
 
 - Desktop : `width: 560px`, attaché à droite

@@ -4,6 +4,36 @@
  */
 import { config } from '$lib/config';
 
+// === Phase 2 2026-05-01 : 4 onglets par nature de signal — source unique ===
+
+export const PROSPECTION_TABS = ['simap', 'regbl', 'entreprises', 'terrain'] as const;
+export type ProspectionTabKey = typeof PROSPECTION_TABS[number];
+
+// Sources DB (prospect_leads.source) appartenant à chaque onglet.
+// `lead_express` = saisie terrain (cf. createExpress action).
+// `veille` = leads créés via integration Veille→Prospection (cf. project_veille_prospection_integration_s120).
+export const TAB_SOURCE_MAP: Record<ProspectionTabKey, readonly string[]> = {
+	simap: ['simap'],
+	regbl: ['regbl'],
+	entreprises: ['zefix', 'search_ch'],
+	terrain: ['lead_express', 'veille'],
+} as const;
+
+// Champs de tri exposés à l'utilisateur (cohérent avec VALID_SORT_KEYS côté serveur).
+export const SORT_FIELDS = [
+	{ value: 'score_pertinence', label: 'Priorité (score)' },
+	{ value: 'raison_sociale', label: 'Entreprise (A-Z)' },
+	{ value: 'date_import', label: 'Date ajout' },
+	{ value: 'date_publication', label: 'Date publication' },
+	{ value: 'montant', label: 'Montant' },
+	{ value: 'canton', label: 'Canton' },
+	{ value: 'statut', label: 'Statut' },
+	{ value: 'localite', label: 'Localité' },
+	{ value: 'source', label: 'Source' },
+] as const;
+export const VALID_SORT_KEYS = SORT_FIELDS.map((s) => s.value);
+
+
 const { labels: scoreLabels } = config.scoring;
 
 // --- Canton noms ---
