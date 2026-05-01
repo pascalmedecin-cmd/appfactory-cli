@@ -119,36 +119,33 @@
 		e.stopPropagation();
 		const target = e.currentTarget as HTMLElement;
 		target.classList.add('col-resizer--active');
-		// pointer capture local au handle : si le span est démonté (re-render colonnes au switch d'onglet,
-		// goto invalidateAll), `lostpointercapture` est émis et libère la capture proprement.
 		const pointerId = e.pointerId;
 		try { target.setPointerCapture?.(pointerId); } catch { /* navigateur ancien : fallback ok */ }
 		const th = target.parentElement as HTMLElement;
 		const startX = e.clientX;
 		const startWidth = th.offsetWidth;
-
+		let lastWidth = startWidth;
+		// Pendant le drag : on mute le DOM directement (style inline sur <th>) pour éviter
+		// un re-render Svelte qui détacherait le handle et casserait la capture pointer.
+		// On sync `colWidths` (state Svelte + persistance localStorage) UNE SEULE FOIS au pointerup.
 		const cleanup = () => {
 			target.classList.remove('col-resizer--active');
 			try { target.releasePointerCapture?.(pointerId); } catch { /* déjà perdue */ }
+			colWidths = { ...colWidths, [colKey]: lastWidth };
 			persistWidths();
-			target.removeEventListener('pointermove', onMove);
-			target.removeEventListener('pointerup', onUp);
-			target.removeEventListener('pointercancel', onUp);
-			target.removeEventListener('lostpointercapture', onUp);
+			document.removeEventListener('pointermove', onMove);
+			document.removeEventListener('pointerup', onUp);
+			document.removeEventListener('pointercancel', onUp);
 		};
 		const onMove = (ev: PointerEvent) => {
-			// Garde anti-démontage : si le node a été détaché du DOM par un re-render concurrent,
-			// on stoppe le drag plutôt que de muter colWidths contre une colKey orpheline.
-			if (!target.isConnected) { cleanup(); return; }
-			const w = Math.max(minW, Math.min(2000, startWidth + ev.clientX - startX));
-			colWidths = { ...colWidths, [colKey]: w };
+			lastWidth = Math.max(minW, Math.min(2000, startWidth + ev.clientX - startX));
+			th.style.width = lastWidth + 'px';
 		};
 		const onUp = () => cleanup();
 
-		target.addEventListener('pointermove', onMove);
-		target.addEventListener('pointerup', onUp);
-		target.addEventListener('pointercancel', onUp);
-		target.addEventListener('lostpointercapture', onUp);
+		document.addEventListener('pointermove', onMove);
+		document.addEventListener('pointerup', onUp);
+		document.addEventListener('pointercancel', onUp);
 	}
 
 	const filtered = $derived.by(() => {
@@ -230,33 +227,20 @@
 </script>
 
 <div class="bg-white rounded-xl border border-border shadow-sm flex flex-col min-h-0">
-	{#if searchable || (resizable && storageKey)}
+	{#if searchable}
 		<div class="sticky top-0 z-20 px-4 py-3 border-b border-border bg-white rounded-t-xl flex items-center gap-3">
-			{#if searchable}
-				<input
-					type="text"
-					value={search}
-					oninput={(e) => handleSearchInput((e.target as HTMLInputElement).value)}
-					placeholder={searchPlaceholder}
-					class="w-full md:max-w-sm px-3 py-2 md:py-1.5 text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-				/>
-			{/if}
-			{#if resizable && storageKey}
-				<button
-					type="button"
-					onclick={resetWidths}
-					class="ml-auto flex items-center gap-1.5 h-9 px-3 text-xs font-medium text-text-muted border border-border rounded-md bg-white hover:bg-surface-alt cursor-pointer transition-colors shrink-0"
-					title="Réinitialiser les largeurs de colonnes"
-				>
-					<Icon name="refresh" size={14} />
-					<span class="hidden md:inline">Largeurs</span>
-				</button>
-			{/if}
+			<input
+				type="text"
+				value={search}
+				oninput={(e) => handleSearchInput((e.target as HTMLInputElement).value)}
+				placeholder={searchPlaceholder}
+				class="w-full md:max-w-sm px-3 py-2 md:py-1.5 text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+			/>
 		</div>
 	{/if}
 
 	<div class="overflow-x-auto flex-1 min-h-0 overflow-y-auto">
-		<table class="w-full text-sm" class:table-fixed={!resizable} class:dt-dense={dense}>
+		<table class="w-full text-sm table-fixed" class:dt-dense={dense}>
 			<thead class="sticky top-0 z-10">
 				<tr class="border-b border-border bg-surface-alt">
 					{#if selectable}

@@ -19,7 +19,7 @@
 		cantonNoms,
 		statutLabel, statutBadgeVariant, sourceLabel, relativeDate,
 		sourceOptions, cantonOptions, temperatureOptions, statutOptions,
-		SORT_FIELDS, type ProspectionTabKey,
+		type ProspectionTabKey,
 	} from '$lib/prospection-utils';
 	import type { PageData } from './$types';
 
@@ -142,7 +142,7 @@
 	}
 
 	function applyFilters() {
-		goto(buildUrl({ page: 0 }), { invalidateAll: true, keepFocus: true });
+		goto(buildUrl({ page: 0 }), { keepFocus: true, noScroll: true });
 	}
 
 	// Réagir aux changements de filtres (skip le premier run au mount)
@@ -238,19 +238,9 @@
 	]);
 
 	function selectTab(tab: ProspectionTabKey) {
-		goto(buildUrl({ tab, page: 0 }), { invalidateAll: true, keepFocus: true });
-	}
-
-	// Phase 2 : tri exposé dans la barre filtres + bidirectionnel avec colonnes <th>.
-	// Source unique : SORT_FIELDS importé de prospection-utils, identique server (VALID_SORT_KEYS dérivé).
-	const sortFieldOptions = SORT_FIELDS;
-
-	function changeSortField(e: Event) {
-		const v = (e.currentTarget as HTMLSelectElement).value;
-		goto(buildUrl({ sort: v, page: 0 }), { invalidateAll: true, keepFocus: true });
-	}
-	function toggleSortDir() {
-		goto(buildUrl({ dir: data.sortAsc ? 'desc' : 'asc', page: 0 }), { invalidateAll: true, keepFocus: true });
+		// Pas besoin d'invalidateAll : changer l'URL réinvoque load() automatiquement.
+		// noScroll préserve la position de l'utilisateur (sinon scroll-to-top sur switch).
+		goto(buildUrl({ tab, page: 0 }), { keepFocus: true, noScroll: true });
 	}
 
 	function openDetail(lead: Lead) {
@@ -480,29 +470,6 @@
 				/>
 				<span>Afficher aussi les leads transférés</span>
 			</label>
-			<!-- Phase 2 : sélecteur tri intégré dans la barre filtres (bidirectionnel avec colonnes <th>). -->
-			<label class="flex items-center gap-2 text-xs text-text-muted ml-4">
-				<span>Trier par</span>
-				<select
-					value={data.sort}
-					onchange={changeSortField}
-					class="h-8 px-2 border border-border rounded-md bg-white text-text text-xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-					aria-label="Champ de tri"
-				>
-					{#each sortFieldOptions as opt}
-						<option value={opt.value}>{opt.label}</option>
-					{/each}
-				</select>
-				<button
-					type="button"
-					onclick={toggleSortDir}
-					class="h-8 px-2 flex items-center justify-center border border-border rounded-md bg-white text-text-muted hover:text-primary hover:border-primary/40 cursor-pointer transition-colors"
-					aria-label={data.sortAsc ? 'Tri ascendant, cliquer pour descendant' : 'Tri descendant, cliquer pour ascendant'}
-					title={data.sortAsc ? 'Croissant' : 'Décroissant'}
-				>
-					<Icon name={data.sortAsc ? 'arrow_upward' : 'arrow_downward'} size={14} />
-				</button>
-			</label>
 			<div class="flex items-center gap-2 ml-auto">
 				{#if activeFilterCount > 0}
 					<span class="text-xs text-text-muted">{data.totalLeads} résultat{data.totalLeads > 1 ? 's' : ''}</span>
@@ -566,7 +533,9 @@
 	<BatchActionsBar bind:selectedIds bind:enrichBatchIds bind:enrichBatchOpen />
 
 	<div class="flex-1 min-h-0 flex flex-col">
-	{#if data.totalLeads === 0 && activeFilterCount === 0}
+	<!-- Empty state global UNIQUEMENT si tous les onglets sont vides (système jamais peuplé).
+	     Sinon les onglets restent visibles (sinon impossible de revenir sur SIMAP depuis Terrain à 0). -->
+	{#if data.tabCounts.simap === 0 && data.tabCounts.regbl === 0 && data.tabCounts.entreprises === 0 && data.tabCounts.terrain === 0 && activeFilterCount === 0}
 		<div class="flex flex-col items-center justify-center py-16 px-6">
 			<div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-5" style="background: linear-gradient(135deg, var(--color-prosp-import-bg), var(--color-prosp-enrich-bg))">
 				<Icon name="search" size={32} class="text-prosp-import" />
@@ -607,7 +576,7 @@
 		resizable={true}
 		storageKey="prospection-{data.tab}"
 		pageSizeOptions={[25, 50, 100]}
-		onPageSizeChange={(s) => goto(buildUrl({ perPage: s, page: 0 }), { invalidateAll: true, keepFocus: true })}
+		onPageSizeChange={(s) => goto(buildUrl({ perPage: s, page: 0 }), { keepFocus: true, noScroll: true })}
 		selectable={true}
 		bind:selectedIds
 		onRowClick={openDetail}
@@ -620,9 +589,9 @@
 		serverSortAsc={data.sortAsc}
 		serverSearch={data.search}
 		pageSize={data.pageSize}
-		onPageChange={(p) => goto(buildUrl({ page: p }), { invalidateAll: true, keepFocus: true })}
-		onSortChange={(key, asc) => goto(buildUrl({ sort: key, dir: asc ? 'asc' : 'desc', page: 0 }), { invalidateAll: true, keepFocus: true })}
-		onSearchChange={(q) => goto(buildUrl({ q, page: 0 }), { invalidateAll: true, keepFocus: true })}
+		onPageChange={(p) => goto(buildUrl({ page: p }), { keepFocus: true, noScroll: true })}
+		onSortChange={(key, asc) => goto(buildUrl({ sort: key, dir: asc ? 'asc' : 'desc', page: 0 }), { keepFocus: true, noScroll: true })}
+		onSearchChange={(q) => goto(buildUrl({ q, page: 0 }), { keepFocus: true, noScroll: true })}
 	>
 		{#snippet row(lead, _i)}
 			{#each columns as col}

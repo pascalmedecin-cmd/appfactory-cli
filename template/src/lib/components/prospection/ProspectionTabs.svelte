@@ -62,22 +62,23 @@
 <style>
 	.tabs-bar {
 		display: flex;
+		flex-wrap: nowrap;
 		border-bottom: 1px solid var(--color-border);
 		background: white;
-		position: sticky;
-		top: var(--header-height, 0px);
-		z-index: 10;
+		position: relative;
+		z-index: 5;
 		border-radius: 12px 12px 0 0;
 		overflow-x: auto;
 		scrollbar-width: thin;
 	}
-	.tabs-bar::-webkit-scrollbar { height: 0; }
+	.tabs-bar::-webkit-scrollbar { height: 4px; }
+	.tabs-bar::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
 
 	.tab {
 		display: inline-flex;
 		align-items: stretch;
 		padding: 0;
-		font-size: 13px;
+		font-size: 15px;
 		font-weight: 500;
 		color: var(--color-text-muted);
 		border: none;
@@ -87,12 +88,13 @@
 		margin-bottom: -1px;
 		transition: color 150ms ease, border-color 150ms ease;
 		white-space: nowrap;
+		flex-shrink: 0;
 	}
 	.tab-inner {
 		display: inline-flex;
 		align-items: center;
-		gap: 8px;
-		padding: 14px 20px;
+		gap: 10px;
+		padding: 16px 22px;
 	}
 	.tab:hover { color: var(--color-text); }
 	.tab--active {
