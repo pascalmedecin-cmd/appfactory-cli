@@ -19,6 +19,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const filterTemperatures = url.searchParams.getAll('temp');
 	const search = url.searchParams.get('q') ?? '';
 
+	// Phase 0 : toggle "afficher les transférés". Off par défaut, persiste via URL.
+	// Quand off ET aucun filtre statut explicite : on cache statut=transfere de la liste.
+	// Si l'utilisateur cherche explicitement les transférés via le filtre statut, on respecte.
+	const showTransferred = url.searchParams.get('showTransferred') === '1';
+
 	// Tracabilite Veille -> Prospection : propagee depuis /veille/[id] via URL.
 	// UUID = tracable vers intelligence_reports, term = libre (max 200).
 	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -33,7 +38,12 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	// Appliquer les filtres serveur
 	if (filterSources.length > 0) query = query.in('source', filterSources);
 	if (filterCantons.length > 0) query = query.in('canton', filterCantons);
-	if (filterStatuts.length > 0) query = query.in('statut', filterStatuts);
+	if (filterStatuts.length > 0) {
+		query = query.in('statut', filterStatuts);
+	} else if (!showTransferred) {
+		// Filtre par défaut : on masque les leads transférés tant que le toggle est off.
+		query = query.neq('statut', 'transfere');
+	}
 	if (filterTemperatures.length > 0) {
 		const ranges: string[] = [];
 		if (filterTemperatures.includes('chaud')) ranges.push('score_pertinence.gte.7');
@@ -50,7 +60,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		.order(sortKey, { ascending: sortAsc })
 		.range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
 
-	const [leadsRes, entreprisesRes, recherchesRes, enrichedRes, qualifiedRes, convertedRes] = await Promise.all([
+	// Indicateurs honnêtes (remplacent l'ancien funnel décoratif 4 cartes).
+	// 1. Leads actifs : statut ∈ {nouveau, interesse} = ce qui reste à traiter.
+	// 2. Marchés publics ouverts : SIMAP non écartés.
+	// 3. Transférés ce mois : statut=transfere AND date_modification >= 1er du mois courant.
+	const monthStart = new Date();
+	monthStart.setDate(1);
+	monthStart.setHours(0, 0, 0, 0);
+
+	const [leadsRes, entreprisesRes, recherchesRes, leadsActifsRes, marchesOuvertsRes, transferresMoisRes] = await Promise.all([
 		query,
 		locals.supabase
 			.from('entreprises')
@@ -63,28 +81,32 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		locals.supabase
 			.from('prospect_leads')
 			.select('*', { count: 'exact', head: true })
-			.or('telephone.neq.,description.neq.,adresse.neq.'),
+			.in('statut', ['nouveau', 'interesse']),
 		locals.supabase
 			.from('prospect_leads')
 			.select('*', { count: 'exact', head: true })
-			.eq('statut', 'interesse'),
+			.eq('source', 'simap')
+			.neq('statut', 'ecarte'),
 		locals.supabase
 			.from('prospect_leads')
 			.select('*', { count: 'exact', head: true })
-			.eq('statut', 'transfere'),
+			.eq('statut', 'transfere')
+			.gte('date_modification', monthStart.toISOString()),
 	]);
 
 	return {
 		leads: leadsRes.data ?? [],
 		totalLeads: leadsRes.count ?? 0,
-		enrichedCount: enrichedRes.count ?? 0,
-		qualifiedCount: qualifiedRes.count ?? 0,
-		convertedCount: convertedRes.count ?? 0,
+		// Phase 0 : 3 indicateurs honnêtes (remplacent enrichedCount/qualifiedCount/convertedCount).
+		leadsActifsCount: leadsActifsRes.count ?? 0,
+		marchesOuvertsCount: marchesOuvertsRes.count ?? 0,
+		transferresMoisCount: transferresMoisRes.count ?? 0,
 		page,
 		pageSize: PAGE_SIZE,
 		sort: sortKey,
 		sortAsc,
 		filters: { sources: filterSources, cantons: filterCantons, statuts: filterStatuts, temperatures: filterTemperatures },
+		showTransferred,
 		search,
 		entreprises: entreprisesRes.data ?? [],
 		recherches: recherchesRes.data ?? [],
@@ -112,6 +134,7 @@ export const actions: Actions = {
 			canton: d.canton || null,
 			description: d.description || null,
 			raison_sociale: d.raison_sociale,
+			secteur_detecte: d.secteur_detecte || null,
 			source: d.source,
 			date_publication: d.date_publication || null,
 			telephone: d.telephone || null,

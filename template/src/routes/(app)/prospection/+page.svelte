@@ -13,8 +13,9 @@
 	import BatchActionsBar from '$lib/components/prospection/BatchActionsBar.svelte';
 	import RecherchesPanel from '$lib/components/prospection/RecherchesPanel.svelte';
 	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
+	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
 	import {
-		cantonNoms, scoreLabel, scoreBadgeVariant,
+		cantonNoms,
 		statutLabel, statutBadgeVariant, sourceLabel, relativeDate,
 		sourceOptions, cantonOptions, temperatureOptions, statutOptions,
 	} from '$lib/prospection-utils';
@@ -98,6 +99,8 @@
 	let filterCantons = $state<string[]>(data.filters.cantons);
 	let filterStatuts = $state<string[]>(data.filters.statuts);
 	let filterTemperatures = $state<string[]>(data.filters.temperatures);
+	// Phase 0 : toggle "afficher les transférés" persistant via URL ?showTransferred=1
+	let showTransferred = $state<boolean>(data.showTransferred);
 
 	const activeFilterCount = $derived(
 		(filterStatuts.length > 0 ? 1 : 0) +
@@ -106,12 +109,13 @@
 		(filterSources.length > 0 ? 1 : 0)
 	);
 
-	function buildUrl(overrides: Record<string, string | string[] | number | undefined> = {}) {
+	function buildUrl(overrides: Record<string, string | string[] | number | boolean | undefined> = {}) {
 		const params = new URLSearchParams();
 		const sources = overrides.source !== undefined ? overrides.source as string[] : filterSources;
 		const cantons = overrides.canton !== undefined ? overrides.canton as string[] : filterCantons;
 		const statuts = overrides.statut !== undefined ? overrides.statut as string[] : filterStatuts;
 		const temps = overrides.temp !== undefined ? overrides.temp as string[] : filterTemperatures;
+		const showTr = overrides.showTransferred !== undefined ? overrides.showTransferred as boolean : showTransferred;
 		const pg = overrides.page !== undefined ? overrides.page as number : data.page;
 		const sort = (overrides.sort as string) ?? data.sort;
 		const dir = overrides.dir !== undefined ? overrides.dir as string : (data.sortAsc ? 'asc' : 'desc');
@@ -125,6 +129,7 @@
 		cantons.forEach(c => params.append('canton', c));
 		statuts.forEach(s => params.append('statut', s));
 		temps.forEach(t => params.append('temp', t));
+		if (showTr) params.set('showTransferred', '1');
 
 		const qs = params.toString();
 		return qs ? `?${qs}` : $page.url.pathname;
@@ -139,18 +144,20 @@
 	let filterMounted = false;
 	$effect(() => {
 		// Tracker les valeurs
-		filterSources; filterCantons; filterStatuts; filterTemperatures;
+		filterSources; filterCantons; filterStatuts; filterTemperatures; showTransferred;
 		if (!filterMounted) { filterMounted = true; return; }
 		if (filterDebounce) clearTimeout(filterDebounce);
 		filterDebounce = setTimeout(() => applyFilters(), 200);
 	});
 
 	const columns = [
-		{ key: 'score_pertinence', label: 'Température', shortLabel: 'Temp.', sortable: true, class: 'w-[28%] md:w-[9%]' },
-		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true, class: 'w-[42%] md:w-[20%]' },
+		// Phase 0 : "Température" → "Priorité" (terme commercial direct, cohérent pill sémantique).
+		{ key: 'score_pertinence', label: 'Priorité', shortLabel: 'Prio.', sortable: true, class: 'w-[28%] md:w-[10%]' },
+		// Phase 0 : header vide pour la 1re colonne contenu (pattern Linear / Stripe Dashboard).
+		{ key: 'raison_sociale', label: '', sortable: true, class: 'w-[42%] md:w-[20%]' },
 		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[8%] hidden md:table-cell' },
 		{ key: 'localite', label: 'Localité', sortable: true, class: 'w-[17%] hidden lg:table-cell' },
-		{ key: 'source', label: 'Source', sortable: true, class: 'w-[20%] hidden lg:table-cell' },
+		{ key: 'source', label: 'Source', sortable: true, class: 'w-[19%] hidden lg:table-cell' },
 		{ key: 'statut', label: 'Statut', sortable: true, class: 'w-[30%] md:w-[13%]' },
 		{ key: 'date_import', label: 'Ajouté', sortable: true, class: 'w-[10%] hidden lg:table-cell' },
 	];
@@ -192,47 +199,46 @@
 		filterCantons = [];
 		filterStatuts = [];
 		filterTemperatures = [];
+		showTransferred = false;
 	}
 </script>
 
 <div class="flex flex-col gap-3 md:gap-5 h-[calc(100dvh-var(--header-height)-3rem)]">
-	<!-- Workflow 4 étapes : compteurs inline mobile, cartes desktop -->
-	<div class="md:hidden flex items-center gap-2 text-xs leading-tight" aria-label="Compteurs prospection">
-		<span class="font-semibold text-text">{data.totalLeads} prospect{data.totalLeads > 1 ? 's' : ''}</span>
+	<!-- Phase 0 : 3 indicateurs honnêtes (remplacent le funnel décoratif 4 cartes
+	     Importer/Enrichir/Qualifier/Convertir qui mentait + suggérait un parcours linéaire qui n'existe pas). -->
+	<div class="md:hidden flex items-center gap-2 text-xs leading-tight tabular-nums" aria-label="Indicateurs prospection">
+		<span class="font-semibold text-text">{data.leadsActifsCount} actif{data.leadsActifsCount > 1 ? 's' : ''}</span>
 		<span class="text-border">·</span>
-		<span class="text-prosp-enrich">{data.enrichedCount} enrichi{data.enrichedCount > 1 ? 's' : ''}</span>
+		<span class="text-text-muted">{data.marchesOuvertsCount} marché{data.marchesOuvertsCount > 1 ? 's' : ''}</span>
 		<span class="text-border">·</span>
-		<span class="text-prosp-qualify">{data.qualifiedCount} qualifié{data.qualifiedCount > 1 ? 's' : ''}</span>
-		<span class="text-border">·</span>
-		<span class="text-prosp-convert">{data.convertedCount} converti{data.convertedCount > 1 ? 's' : ''}</span>
+		<span class="text-text-muted">{data.transferresMoisCount} transféré{data.transferresMoisCount > 1 ? 's' : ''} ce mois</span>
 	</div>
-	<div class="hidden md:grid grid-cols-2 lg:grid-cols-4 gap-3">
-		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-import-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 85%)">
-			<Icon name="cloud_download" size={24} class="mt-0.5 text-prosp-import" />
-			<div>
-				<span class="text-[15px] font-semibold text-text">Importer</span>
-				<p class="text-xs font-medium mt-0.5 text-prosp-import">{data.totalLeads} prospect{data.totalLeads > 1 ? 's' : ''}</p>
+	<div class="hidden md:grid grid-cols-3 gap-0 border-y border-border">
+		<div class="flex items-center gap-4 px-7 py-7">
+			<div class="flex h-11 w-11 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
+				<Icon name="users" size={22} class="text-info" />
+			</div>
+			<div class="flex flex-col gap-0.5 min-w-0">
+				<span class="text-[36px] leading-none font-bold tabular-nums text-primary-dark tracking-tight">{data.leadsActifsCount}</span>
+				<span class="text-[13px] font-medium text-text-muted">Leads actifs</span>
 			</div>
 		</div>
-		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-enrich-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-enrich-border), transparent 85%)">
-			<Icon name="auto_fix_high" size={24} class="mt-0.5 text-prosp-enrich" />
-			<div>
-				<span class="text-[15px] font-semibold text-text">Enrichir</span>
-				<p class="text-xs font-medium mt-0.5 text-prosp-enrich">{data.enrichedCount} enrichi{data.enrichedCount > 1 ? 's' : ''}</p>
+		<div class="flex items-center gap-4 px-7 py-7 border-l border-border">
+			<div class="flex h-11 w-11 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
+				<Icon name="landmark" size={22} class="text-info" />
+			</div>
+			<div class="flex flex-col gap-0.5 min-w-0">
+				<span class="text-[36px] leading-none font-bold tabular-nums text-primary-dark tracking-tight">{data.marchesOuvertsCount}</span>
+				<span class="text-[13px] font-medium text-text-muted">Marchés publics ouverts</span>
 			</div>
 		</div>
-		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-qualify-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-qualify-border), transparent 85%)">
-			<Icon name="filter_list" size={24} class="mt-0.5 text-prosp-qualify" />
-			<div>
-				<span class="text-[15px] font-semibold text-text">Qualifier</span>
-				<p class="text-xs font-medium mt-0.5 text-prosp-qualify">{data.qualifiedCount} qualifié{data.qualifiedCount > 1 ? 's' : ''}</p>
+		<div class="flex items-center gap-4 px-7 py-7 border-l border-border">
+			<div class="flex h-11 w-11 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
+				<Icon name="repeat" size={22} class="text-info" />
 			</div>
-		</div>
-		<div class="flex items-start gap-3 px-4 py-4 rounded-lg shadow-xs bg-prosp-convert-bg" style="border: 1px solid color-mix(in srgb, var(--color-prosp-convert-border), transparent 85%)">
-			<Icon name="domain_add" size={24} class="mt-0.5 text-prosp-convert" />
-			<div>
-				<span class="text-[15px] font-semibold text-text">Convertir</span>
-				<p class="text-xs font-medium mt-0.5 text-prosp-convert">{data.convertedCount} converti{data.convertedCount > 1 ? 's' : ''}</p>
+			<div class="flex flex-col gap-0.5 min-w-0">
+				<span class="text-[36px] leading-none font-bold tabular-nums text-primary-dark tracking-tight">{data.transferresMoisCount}</span>
+				<span class="text-[13px] font-medium text-text-muted">Transférés ce mois</span>
 			</div>
 		</div>
 	</div>
@@ -372,6 +378,15 @@
 			<MultiSelectDropdown bind:selected={filterSources} options={sourceOptions} icon="database" label="Source" tooltip="Registres et bases de données" />
 		</div>
 		<div class="flex flex-wrap items-center gap-2 px-3 pb-3 pt-0">
+			<!-- Phase 0 : toggle "Afficher les transférés" off par défaut, persistant via URL ?showTransferred=1 -->
+			<label class="flex items-center gap-2 text-xs text-text-muted cursor-pointer select-none">
+				<input
+					type="checkbox"
+					bind:checked={showTransferred}
+					class="h-3.5 w-3.5 cursor-pointer accent-primary"
+				/>
+				<span>Afficher aussi les leads transférés</span>
+			</label>
 			<div class="flex items-center gap-2 ml-auto">
 				{#if activeFilterCount > 0}
 					<span class="text-xs text-text-muted">{data.totalLeads} résultat{data.totalLeads > 1 ? 's' : ''}</span>
@@ -473,13 +488,13 @@
 		onSearchChange={(q) => goto(buildUrl({ q, page: 0 }), { invalidateAll: true, keepFocus: true })}
 	>
 		{#snippet row(lead, _i)}
-			<td class="px-4 py-3 w-[28%] md:w-[9%] overflow-hidden">
-				<Badge label={scoreLabel(lead.score_pertinence ?? 0)} variant={scoreBadgeVariant(lead.score_pertinence ?? 0)} dot={true} />
+			<td class="px-4 py-3 w-[28%] md:w-[10%] overflow-hidden">
+				<ScorePill score={lead.score_pertinence} compact />
 			</td>
 			<td class="px-4 py-3 font-medium text-text w-[42%] md:w-[20%] truncate" title={lead.raison_sociale}>{lead.raison_sociale}</td>
 			<td class="px-4 py-3 text-text w-[8%] hidden md:table-cell">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '–'}</td>
 			<td class="px-4 py-3 text-text w-[17%] truncate hidden lg:table-cell" title={lead.localite ?? ''}>{lead.localite ?? '–'}</td>
-			<td class="px-4 py-3 text-text-muted text-xs w-[20%] truncate hidden lg:table-cell">{sourceLabel(lead.source)}</td>
+			<td class="px-4 py-3 text-text-muted text-xs w-[19%] truncate hidden lg:table-cell">{sourceLabel(lead.source)}</td>
 			<td class="px-4 py-3 w-[30%] md:w-[13%] overflow-hidden">
 				<Badge label={statutLabel(lead.statut)} variant={statutBadgeVariant(lead.statut)} dot={true} />
 			</td>

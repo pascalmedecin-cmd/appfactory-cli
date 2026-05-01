@@ -19,10 +19,12 @@ export const cantonNoms: Record<string, string> = {
 
 // --- Score ---
 
+// Phase 0 : tags métier orientés action commerciale (remplace "Chaud / Tiède / Froid"
+// jugé pas pro et pas explicite). Cohérent avec le pattern Linear Priority.
 export function scoreLabel(score: number): string {
-	if (score >= scoreLabels.chaud) return 'Chaud';
-	if (score >= scoreLabels.tiede) return 'Tiède';
-	return 'Froid';
+	if (score >= scoreLabels.chaud) return 'Prioritaire';
+	if (score >= scoreLabels.tiede) return 'À qualifier';
+	return 'Faible signal';
 }
 
 export function scoreBadgeVariant(score: number): 'danger' | 'warning' | 'muted' {
@@ -35,6 +37,14 @@ export function scoreToCategory(score: number): string {
 	if (score >= scoreLabels.chaud) return 'chaud';
 	if (score >= scoreLabels.tiede) return 'tiede';
 	return 'froid';
+}
+
+// Glyphe Lucide à associer au tag : flame (Prioritaire), target (À qualifier), eye (Faible signal).
+// Cohérent avec le mockup validé 2026-05-01.
+export function scoreIcon(score: number): 'flame' | 'target' | 'eye' {
+	if (score >= scoreLabels.chaud) return 'flame';
+	if (score >= scoreLabels.tiede) return 'target';
+	return 'eye';
 }
 
 // --- Statut ---
@@ -113,4 +123,69 @@ export function relativeDate(dateStr: string | null): string {
 	if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} sem.`;
 	if (diffDays < 365) return `Il y a ${Math.floor(diffDays / 30)} mois`;
 	return `Il y a ${Math.floor(diffDays / 365)} an${Math.floor(diffDays / 365) > 1 ? 's' : ''}`;
+}
+
+// --- Phase 1 : helper context queue triage matin ---
+// Une phrase courte qui contextualise le lead pour scan rapide dans la queue.
+// Format adapté à chaque source : montant SIMAP, taille bâtiment RegBL, ancienneté Zefix, etc.
+type LeadContextInput = {
+	source: string;
+	montant?: number | null;
+	date_publication?: string | null;
+	canton?: string | null;
+	localite?: string | null;
+	adresse?: string | null;
+	telephone?: string | null;
+	description?: string | null;
+};
+
+function formatMontantK(montant: number): string {
+	return montant >= 1000 ? `${Math.round(montant / 1000)} k CHF` : `${montant} CHF`;
+}
+function formatDateShort(dateStr: string): string {
+	const d = new Date(dateStr);
+	if (Number.isNaN(d.getTime())) return '';
+	return d.toLocaleDateString('fr-CH', { day: '2-digit', month: 'short' });
+}
+function daysSince(dateStr: string): number | null {
+	const d = new Date(dateStr).getTime();
+	if (Number.isNaN(d)) return null;
+	return Math.floor((Date.now() - d) / 86_400_000);
+}
+
+export function formatLeadContext(lead: LeadContextInput): string {
+	if (lead.source === 'simap') {
+		// Montant 0 = lot non valorisé / donnée manquante côté SIMAP : afficher "n/d", pas "0 CHF"
+		const montant = typeof lead.montant === 'number' && lead.montant > 0 ? formatMontantK(lead.montant) : 'montant n/d';
+		const cloture = lead.date_publication ? formatDateShort(lead.date_publication) : 'date n/d';
+		return `Marché public · ${montant} · publié ${cloture}`;
+	}
+	if (lead.source === 'regbl') {
+		const lieu = lead.adresse || lead.localite || lead.canton || 'Suisse romande';
+		return `Permis bâtiment · ${lieu}`;
+	}
+	if (lead.source === 'zefix') {
+		const age = lead.date_publication ? daysSince(lead.date_publication) : null;
+		const c = lead.canton ? cantonNoms[lead.canton] ?? lead.canton : '';
+		// Seuil 90 j cohérent avec config.scoring.recence (30/90), pas 60 arbitraire.
+		return age !== null && age >= 0 && age <= 90
+			? `Inscription RC · ${age} j · ${c}`.trim()
+			: `Registre du commerce · ${c}`.trim();
+	}
+	if (lead.source === 'lead_express') {
+		const tel = lead.telephone ? ` · ${lead.telephone}` : '';
+		// Squash retours ligne + truncate avec ellipsis pour layout 1 ligne dans la queue triage.
+		let note = '';
+		if (lead.description) {
+			const cleaned = lead.description.replace(/\s+/g, ' ').trim();
+			note = ` · ${cleaned.slice(0, 60)}${cleaned.length > 60 ? '…' : ''}`;
+		}
+		return `Saisie terrain${tel}${note}`;
+	}
+	if (lead.source === 'search_ch') {
+		const c = lead.canton ? cantonNoms[lead.canton] ?? lead.canton : 'CH';
+		return `Annuaire · ${c}`;
+	}
+	const c = lead.canton ?? '';
+	return `${sourceLabel(lead.source)}${c ? ` · ${c}` : ''}`;
 }

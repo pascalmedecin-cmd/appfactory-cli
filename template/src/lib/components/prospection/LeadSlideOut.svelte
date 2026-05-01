@@ -4,12 +4,13 @@
 	import { invalidateAll } from '$app/navigation';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
 	import PhotoGallery from '$lib/components/PhotoGallery.svelte';
 	import VisitsPanel from '$lib/components/VisitsPanel.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { calculerScore } from '$lib/scoring';
 	import {
-		cantonNoms, scoreLabel, scoreBadgeVariant,
+		cantonNoms, scoreBadgeVariant,
 		statutLabel, statutBadgeVariant, sourceLabel,
 	} from '$lib/prospection-utils';
 
@@ -49,6 +50,7 @@
 			canton: l.canton,
 			description: l.description,
 			raison_sociale: l.raison_sociale,
+			secteur_detecte: l.secteur_detecte,
 			source: l.source,
 			date_publication: l.date_publication,
 			telephone: l.telephone,
@@ -117,7 +119,7 @@
 		<div class="space-y-6">
 			<!-- Badges statut -->
 			<div class="flex flex-wrap items-center gap-2">
-				<Badge label="{scoreLabel(lead.score_pertinence ?? 0)} ({lead.score_pertinence ?? 0}/13)" variant={scoreBadgeVariant(lead.score_pertinence ?? 0)} dot={true} />
+				<ScorePill score={lead.score_pertinence} compact />
 				<Badge label={statutLabel(lead.statut)} variant={statutBadgeVariant(lead.statut)} dot={true} />
 				<Badge label={sourceLabel(lead.source)} variant="default" />
 			</div>
