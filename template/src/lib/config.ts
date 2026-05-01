@@ -90,12 +90,11 @@ export const config = {
 			points: 1,
 			values: ['regbl'],
 		},
-		// Queue triage matin (Phase 1 2026-05-01) : seuils + paramètres
 		triage: {
-			scoreMin: 5,         // score_pertinence minimum pour entrer dans la queue
-			snoozeDays: 7,       // durée snooze "Plus tard"
-			queueCap: 25,        // cap serveur (top N renvoyé au composant)
-			visibleLimit: 12,    // top affiché en UI, le reste = "+N en file"
+			scoreMin: 5,
+			snoozeDays: 7,
+			queueCap: 25,
+			visibleLimit: 12,
 		},
 		recence: [
 			{

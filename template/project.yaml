@@ -36,13 +36,13 @@ pipeline:
     - key: proposition
       label: Proposition
       icon: description
-      color: text-accent
+      color: text-primary
     - key: negociation
-      label: Negociation
+      label: Négociation
       icon: handshake
       color: text-warning
     - key: gagne
-      label: Gagne
+      label: Gagné
       icon: emoji_events
       color: text-success
     - key: perdu
@@ -99,6 +99,13 @@ scoring:
     points: 1
     values: [regbl]
 
+  # Phase 1 2026-05-01 : widget triage matin sur dashboard
+  triage:
+    score_min: 5      # score_pertinence minimum pour entrer dans la queue
+    snooze_days: 7    # durée du snooze "Plus tard"
+    queue_cap: 25     # cap serveur (top N renvoyé au composant)
+    visible_limit: 12 # top affiché en UI, le reste = "+N en file"
+
   recence:
     - max_jours: 30
       points: 2
@@ -117,31 +124,17 @@ scoring:
     tiede: 4
     # en dessous de tiede = froid (3 niveaux stricts)
 
-  # Phase 1 2026-05-01 : widget triage matin sur dashboard
-  triage:
-    score_min: 5      # score_pertinence minimum pour entrer dans la queue
-    snooze_days: 7    # durée du snooze "Plus tard"
-    queue_cap: 25     # cap serveur (top N renvoyé au composant)
-    visible_limit: 12 # top affiché en UI, le reste = "+N en file"
-
 # Sources de prospection activees
 prospection:
   sources:
-    lindas:
-      label: LINDAS (registre du commerce)
-      enabled: true
-      type: sparql
-      endpoint: https://lindas.admin.ch/query
-      cantons: [GE, VD, VS, NE, FR, JU]
-
     zefix:
-      label: Zefix REST (registre complet)
-      enabled: false  # En attente credentials
+      label: Registre du commerce
+      enabled: true
       type: rest
       requires_auth: true
 
     simap:
-      label: SIMAP (marches publics)
+      label: SIMAP (marchés publics)
       enabled: true
       type: scraper
       cantons: [GE, VD, VS, NE, FR, JU]
@@ -151,6 +144,11 @@ prospection:
       enabled: true
       type: enrichment
       requires_api_key: true
+
+    regbl:
+      label: RegBL (registre des bâtiments)
+      enabled: true
+      type: rest
 
   # Detection de secteur a l'import
   secteur_keywords:
@@ -171,9 +169,9 @@ signaux:
     - key: permis_construire
       label: Permis de construire
     - key: creation_entreprise
-      label: Creation d'entreprise
+      label: Création d'entreprise
     - key: demenagement
-      label: Demenagement
+      label: Déménagement
     - key: expansion
       label: Expansion
     - key: fusion_acquisition
@@ -195,7 +193,7 @@ navigation:
       icon: business
     - href: /pipeline
       label: Pipeline
-      icon: filter_list
+      icon: conversion_path
     - href: /prospection
       label: Prospection
       icon: search
@@ -212,6 +210,7 @@ navigation:
     - href: /aide
       label: Aide
       icon: help_outline
+      external: true
 
 # Cron jobs
 cron:
