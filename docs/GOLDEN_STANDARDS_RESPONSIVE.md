@@ -10,6 +10,30 @@ Ce document etablit les regles a propager sur les 5 autres pages
 
 ---
 
+## Patterns responsive Phase 0+1 (v7 2026-05-01)
+
+### TriageQueue widget dashboard
+
+- **Desktop (≥ 1024px)** : grid 2 cols `280px aside | 1fr corps`. Aside primary-dark vertical, count 88px tabular-nums.
+- **Tablette / mobile (< 1024px)** : aside passe en bandeau horizontal top, `flex-direction: row, align-items: center, flex-wrap: wrap`, count réduit à 44px.
+- **Lead item < 768px** : grid passe à 1 col (corps au-dessus, actions en dessous).
+- **Boutons action ActionButton mobile** : passent à `width: 100%`, `height: 44px` (HIG iOS), label visible via CSS `::after` (mode "lecture" justifié vs scan rapide desktop). Grid 2x2 (Intéressant + Écarter en haut, Snooze + Détails en bas).
+- **Empty state** : pleine largeur, padding 48px 32px, max-width body 420px.
+
+### ScorePill component
+
+- **Variante par défaut** : `min-width: 130px` pour alignement tabulaire en table dense.
+- **Variante `--compact`** : sans min-width, pour cellules de table où l'espace est compté.
+- **Mobile** : pas de variante spécifique, le composant est suffisamment compact (26px de hauteur) pour tous les viewports.
+
+### Indicateurs flat header de page (3 cards)
+
+- **Desktop (≥ 768px)** : grid 3 cols, séparateurs verticaux 1px, padding 28px droite + 28px gauche (sauf 1ère card padding gauche 0).
+- **Mobile (< 768px)** : empilé 1 col, padding 16px vertical, séparateurs horizontaux 1px (border-bottom). Pas de border-left sur mobile.
+- **Compteurs inline mobile alternatifs** : pour réduire encombrement vertical sur petits écrans, version inline `tabular-nums` avec séparateur middot `·` (cf. `/prospection` ligne mobile).
+
+---
+
 ## Findings par severite
 
 ### P0 - Bloquants livraison client

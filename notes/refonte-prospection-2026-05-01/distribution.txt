@@ -1,0 +1,51 @@
+TOTAL LEADS PROD: 66
+
+Distribution par source:
+  regbl               50  ( 75.8%)
+  simap               16  ( 24.2%)
+
+Distribution par statut:
+  ecarte              43  ( 65.2%)
+  nouveau             23  ( 34.8%)
+
+Cross statut x source:
+  regbl      / ecarte     : 27
+  regbl      / nouveau    : 23
+  simap      / ecarte     : 16
+
+Score pertinence: min=3, max=10, n=66
+  >=9: 16
+  7-8: 0
+  5-6: 0
+  3-4: 50
+  0-2: 0
+
+Date import distribution:
+  <=7j: 0
+  <=14j: 0
+  <=30j: 66
+  <=90j: 66
+
+Queue triage (toutes variantes critères):
+  score>=7  & nouveau   & <=7j  : 0
+  score>=7  & nouveau   & <=14j : 0
+  score>=7  & nouveau   & <=30j : 0
+  score>=5  & nouveau   & <=14j : 0
+  score>=5  & nouveau   & <=30j : 0
+  any score & nouveau   & <=30j : 23
+  score>=7  & {nouveau,intéresse} & <=30j : 0
+
+Premier lead: 2026-04-12T11:13:13.903+00:00
+Dernier lead: 2026-04-15T05:18:01.686+00:00
+
+=== APRÈS REFONTE SCORING (2026-05-01) ===
+  score=6 : 50
+  score=7 : 2
+  score=8 : 12
+  score=9 : 2
+
+Queue triage (statut=nouveau, sans filtre date) :
+  score>=5 : 23
+  score>=6 : 23
+  score>=7 : 0
+  score>=8 : 0

@@ -1,0 +1,1061 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mockup - Refonte /prospection phases 0+1 - FilmPro CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,900&display=swap" rel="stylesheet" />
+<style>
+:root {
+	--color-bg: #FAFBFC;
+	--color-surface: #FFFFFF;
+	--color-surface-alt: #F5F7FA;
+	--color-primary: #2F5A9E;
+	--color-primary-dark: #0A1628;
+	--color-primary-light: #F0F4F8;
+	--color-info: #5A7190;
+	--color-info-light: #EDF1F5;
+	--color-warning: #F79009;
+	--color-warning-light: #FFFAEB;
+	--color-success: #12B76A;
+	--color-success-light: #ECFDF3;
+	--color-danger: #D92D20;
+	--color-danger-light: #FEF3F2;
+	--color-text: #101828;
+	--color-text-body: #344054;
+	--color-text-muted: #667085;
+	--color-border: #EAECF0;
+	--color-border-strong: #D0D5DD;
+	--shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+	--shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.10), 0 1px 2px rgba(16, 24, 40, 0.06);
+	--shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.10), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
+	--font-display: 'DM Sans', system-ui, sans-serif;
+	--font-body: 'DM Sans', system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+	font-family: var(--font-body);
+	background: var(--color-bg);
+	color: var(--color-text);
+	font-size: 15px;
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+}
+
+.container { max-width: 1280px; margin: 0 auto; padding: 0 16px; }
+@media (min-width: 768px) { .container { padding: 0 40px; } }
+
+/* === MAGAZINE TYPOGRAPHIE (cohérent /veille S132) === */
+.mag-kicker {
+	font-family: var(--font-display);
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: var(--color-text-muted);
+}
+.mag-display {
+	font-family: var(--font-display);
+	font-weight: 700;
+	letter-spacing: -0.025em;
+	line-height: 1.05;
+	color: var(--color-primary-dark);
+}
+.mag-body {
+	font-family: var(--font-body);
+	font-size: 17px;
+	line-height: 1.55;
+	color: var(--color-text-body);
+}
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* === MASTHEAD === */
+.masthead { padding: 56px 0 24px; }
+.masthead h1 { font-size: clamp(40px, 6vw, 64px); margin: 12px 0 14px; }
+.masthead .subtitle {
+	font-size: 17px;
+	color: var(--color-text-body);
+	max-width: 640px;
+	line-height: 1.55;
+}
+.divider-strong {
+	height: 2px;
+	background: var(--color-primary-dark);
+	margin: 28px 0 0;
+}
+
+/* === INDICATEURS FLAT PREMIUM (remplacent le funnel décoratif) === */
+.indicators {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 0;
+	margin: 32px 0 40px;
+	border-top: 1px solid var(--color-border);
+	border-bottom: 1px solid var(--color-border);
+}
+.indicator {
+	padding: 28px 28px 28px 0;
+	display: grid;
+	grid-template-columns: 44px 1fr;
+	gap: 18px;
+	align-items: center;
+	position: relative;
+}
+.indicator + .indicator {
+	padding-left: 28px;
+	border-left: 1px solid var(--color-border);
+}
+.indicator-icon {
+	width: 44px; height: 44px;
+	border-radius: 12px;
+	background: radial-gradient(circle at 30% 30%, rgba(47, 90, 158, 0.10), rgba(47, 90, 158, 0.02));
+	display: flex; align-items: center; justify-content: center;
+	color: var(--color-info);
+	flex-shrink: 0;
+}
+.indicator-icon svg { width: 22px; height: 22px; stroke-width: 1.5; }
+.indicator-content { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.indicator-value {
+	font-family: var(--font-display);
+	font-size: 36px;
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-primary-dark);
+	letter-spacing: -0.025em;
+	line-height: 1;
+}
+.indicator-label {
+	font-size: 13px;
+	color: var(--color-text-muted);
+	font-weight: 500;
+}
+.indicator-trend {
+	font-size: 11px;
+	color: var(--color-info);
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	margin-top: 4px;
+}
+.indicator-trend.up { color: var(--color-success); }
+.indicator-trend.flat { color: var(--color-text-muted); }
+.indicator-trend svg { width: 12px; height: 12px; stroke-width: 2; }
+@media (max-width: 768px) {
+	.indicators { grid-template-columns: 1fr; }
+	.indicator { padding: 16px 0; border-bottom: 1px solid var(--color-border); }
+	.indicator + .indicator { padding-left: 0; border-left: none; }
+	.indicator:last-child { border-bottom: none; }
+}
+
+/* === FILTRES CARD === */
+.filters {
+	background: var(--color-surface);
+	border: 1px solid var(--color-border);
+	border-radius: 12px;
+	padding: 20px 24px;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 12px;
+	margin-bottom: 16px;
+	box-shadow: var(--shadow-xs);
+}
+.filter-group { display: flex; flex-direction: column; gap: 6px; }
+.filter-label {
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-text-muted);
+}
+.filter-select {
+	height: 40px;
+	padding: 0 12px;
+	border: 1px solid var(--color-border);
+	border-radius: 8px;
+	background: var(--color-surface);
+	font-family: inherit;
+	font-size: 14px;
+	color: var(--color-text);
+	cursor: pointer;
+	appearance: none;
+	background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
+	background-repeat: no-repeat;
+	background-position: right 12px center;
+	padding-right: 36px;
+}
+.filter-select:focus { outline: 2px solid var(--color-primary); outline-offset: -1px; border-color: var(--color-primary); }
+@media (max-width: 768px) {
+	.filters { grid-template-columns: 1fr 1fr; }
+}
+
+/* === TOGGLE TRANSFÉRÉS === */
+.toggle-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 4px 16px;
+	font-size: 13px;
+	color: var(--color-text-muted);
+}
+.toggle-checkbox {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	cursor: pointer;
+	user-select: none;
+}
+.toggle-checkbox input { width: 14px; height: 14px; accent-color: var(--color-primary); cursor: pointer; }
+
+/* === TABLE === */
+.data-table {
+	background: var(--color-surface);
+	border: 1px solid var(--color-border);
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: var(--shadow-xs);
+}
+.data-table table { width: 100%; border-collapse: collapse; }
+.data-table thead th {
+	background: var(--color-surface-alt);
+	border-bottom: 1px solid var(--color-border);
+	padding: 10px 16px;
+	text-align: left;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--color-text-muted);
+}
+.data-table tbody td {
+	padding: 14px 16px;
+	border-bottom: 1px solid var(--color-border);
+	font-size: 14px;
+	color: var(--color-text);
+}
+.data-table tbody tr:hover { background: var(--color-surface-alt); }
+.data-table tbody tr:last-child td { border-bottom: none; }
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	height: 22px;
+	padding: 0 9px;
+	border-radius: 6px;
+	font-size: 12px;
+	font-weight: 500;
+	letter-spacing: 0;
+}
+.badge-success { background: var(--color-success-light); color: #027A48; }
+.badge-warning { background: var(--color-warning-light); color: #B54708; }
+.badge-info { background: var(--color-info-light); color: #364A6B; }
+.badge-neutral { background: var(--color-surface-alt); color: var(--color-text-muted); }
+.badge-primary { background: var(--color-primary-light); color: var(--color-primary); }
+
+.score-cell {
+	font-variant-numeric: tabular-nums;
+	font-weight: 600;
+	font-size: 15px;
+	color: var(--color-primary);
+}
+.score-low { color: var(--color-text-muted); }
+
+/* === WIDGET TRIAGE QUEUE (Phase 1) === */
+.section-spacer { height: 56px; }
+
+.dashboard-widgets { display: flex; flex-direction: column; gap: 24px; padding-top: 16px; }
+
+.triage-card {
+	background: var(--color-surface);
+	border: 1px solid var(--color-border);
+	border-radius: 16px;
+	overflow: hidden;
+	box-shadow: var(--shadow-xs);
+	display: grid;
+	grid-template-columns: 280px 1fr;
+}
+@media (max-width: 1024px) {
+	.triage-card { grid-template-columns: 1fr; }
+}
+
+.triage-aside {
+	background: var(--color-primary-dark);
+	color: white;
+	padding: 32px 28px;
+	position: relative;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	min-height: 320px;
+}
+@media (max-width: 1024px) {
+	.triage-aside {
+		flex-direction: row;
+		align-items: center;
+		min-height: auto;
+		padding: 20px 24px;
+		gap: 16px;
+	}
+}
+.triage-aside::before {
+	content: '';
+	position: absolute;
+	top: -60px; right: -60px;
+	width: 220px; height: 220px;
+	background: rgba(255, 255, 255, 0.04);
+	border-radius: 50%;
+	pointer-events: none;
+}
+.triage-aside::after {
+	content: '';
+	position: absolute;
+	bottom: -40px; left: -40px;
+	width: 160px; height: 160px;
+	background: rgba(255, 255, 255, 0.04);
+	border-radius: 50%;
+	pointer-events: none;
+}
+
+.triage-aside-kicker {
+	font-size: 11px;
+	letter-spacing: 0.16em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.6);
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	position: relative;
+}
+.triage-aside-icon {
+	width: 16px; height: 16px;
+	display: inline-block;
+	flex-shrink: 0;
+}
+.triage-aside-count {
+	font-family: var(--font-display);
+	font-size: 88px;
+	font-weight: 700;
+	line-height: 1;
+	font-variant-numeric: tabular-nums;
+	color: white;
+	letter-spacing: -0.04em;
+	margin: 16px 0 8px;
+	position: relative;
+}
+@media (max-width: 1024px) {
+	.triage-aside-count { font-size: 44px; margin: 0; }
+}
+.triage-aside-label {
+	font-size: 14px;
+	color: rgba(255, 255, 255, 0.75);
+	line-height: 1.4;
+	position: relative;
+}
+.triage-aside-rest {
+	font-size: 12px;
+	color: rgba(255, 255, 255, 0.5);
+	margin-top: 8px;
+	position: relative;
+}
+
+.triage-list {
+	display: flex;
+	flex-direction: column;
+}
+.triage-item {
+	padding: 16px 24px;
+	border-bottom: 1px solid var(--color-border);
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 16px;
+	align-items: center;
+	transition: background 200ms ease;
+	animation: fadeUp 280ms ease both;
+	animation-delay: calc(var(--i) * 50ms);
+}
+.triage-item:hover { background: var(--color-surface-alt); }
+.triage-item:last-child { border-bottom: none; }
+
+@keyframes fadeUp {
+	from { opacity: 0; transform: translateY(6px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+.triage-item-content {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	min-width: 0;
+}
+.triage-item-line1 {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+.triage-item-name {
+	font-weight: 600;
+	font-size: 15px;
+	color: var(--color-text);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 320px;
+}
+.triage-item-score {
+	margin-left: auto;
+	display: inline-flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 4px;
+	cursor: help;
+	position: relative;
+}
+/* PILLS SÉMANTIQUES (pattern Linear Priority) */
+.score-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	min-width: 130px;
+	height: 26px;
+	padding: 0 11px;
+	border-radius: 6px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.005em;
+	white-space: nowrap;
+}
+.score-pill svg {
+	width: 14px; height: 14px;
+	stroke-width: 2;
+	flex-shrink: 0;
+}
+.score-pill.chaud { background: #FFF1EC; color: #C0391A; }
+.score-pill.chaud svg { stroke: #E04F2E; }
+.score-pill.tiede { background: #FFF7E6; color: #B54708; }
+.score-pill.tiede svg { stroke: #DC8915; }
+.score-pill.froid { background: var(--color-info-light); color: #475669; }
+.score-pill.froid svg { stroke: #5A7190; }
+.score-stepper {
+	display: inline-flex;
+	gap: 2px;
+}
+.score-stepper-seg {
+	width: 18px; height: 3px;
+	border-radius: 1.5px;
+	background: var(--color-border);
+}
+.score-stepper-seg.filled.froid { background: var(--color-info); }
+.score-stepper-seg.filled.tiede { background: var(--color-warning); }
+.score-stepper-seg.filled.chaud { background: var(--color-danger); }
+.score-tooltip {
+	position: absolute;
+	right: 0; top: calc(100% + 6px);
+	background: var(--color-primary-dark);
+	color: white;
+	padding: 10px 12px;
+	border-radius: 8px;
+	font-size: 12px;
+	font-weight: 400;
+	letter-spacing: 0;
+	white-space: nowrap;
+	opacity: 0;
+	pointer-events: none;
+	transform: translateY(-4px);
+	transition: opacity 180ms ease, transform 180ms ease;
+	z-index: 20;
+	box-shadow: 0 8px 16px rgba(10, 22, 40, 0.18);
+}
+.score-tooltip::before {
+	content: '';
+	position: absolute;
+	top: -4px; right: 18px;
+	width: 8px; height: 8px;
+	background: var(--color-primary-dark);
+	transform: rotate(45deg);
+}
+.triage-item-score:hover .score-tooltip {
+	opacity: 1;
+	transform: translateY(0);
+}
+.triage-item-context {
+	font-size: 13px;
+	color: var(--color-text-muted);
+	line-height: 1.45;
+}
+
+.triage-actions {
+	display: flex;
+	gap: 4px;
+	flex-shrink: 0;
+}
+/* BOUTONS ACTION (Notion / Stripe property buttons)
+   Repos : icône colorée sémantique 40% saturation, pas de bg/border.
+   Hover : bg tinté doux + saturation max + élévation + tinted shadow. */
+.btn-action {
+	width: 36px; height: 36px;
+	padding: 0;
+	border-radius: 8px;
+	font-family: inherit;
+	cursor: pointer;
+	border: 1px solid transparent;
+	background: transparent;
+	transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+				background 220ms cubic-bezier(0.16, 1, 0.3, 1),
+				color 180ms ease,
+				box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	will-change: transform;
+}
+.btn-action:hover { transform: translateY(-1px); }
+.btn-action:active { transform: scale(0.96) translateY(0); transition-duration: 80ms; }
+.btn-action:focus-visible {
+	outline: none;
+	box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.30);
+}
+.btn-action svg {
+	width: 17px; height: 17px;
+	stroke-width: 1.75;
+	flex-shrink: 0;
+	transition: stroke 180ms ease;
+}
+.btn-yes { color: #6E9C8F; }
+.btn-no { color: #C28A86; }
+.btn-later { color: #8A95A8; }
+.btn-view { color: #7B8FAE; }
+.btn-yes:hover { background: #ECFDF3; color: #027A48; box-shadow: 0 4px 12px -3px rgba(2, 122, 72, 0.22); }
+.btn-no:hover { background: #FFF1EC; color: #C0391A; box-shadow: 0 4px 12px -3px rgba(192, 57, 26, 0.22); }
+.btn-later:hover { background: var(--color-info-light); color: var(--color-info); box-shadow: 0 4px 12px -3px rgba(90, 113, 144, 0.20); }
+.btn-view:hover { background: var(--color-primary-light); color: var(--color-primary); box-shadow: 0 4px 12px -3px rgba(47, 90, 158, 0.22); }
+
+/* Mobile : icône + label visible (verbosité justifiée en mode lecture) */
+@media (max-width: 768px) {
+	.triage-item { grid-template-columns: 1fr; }
+	.triage-actions {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 8px;
+		width: 100%;
+	}
+	.btn-action {
+		width: 100%;
+		height: 44px;
+		gap: 8px;
+		font-size: 13px;
+		font-weight: 500;
+	}
+	.btn-action::after {
+		font-family: inherit;
+	}
+	.btn-yes::after { content: 'Intéressant'; }
+	.btn-no::after { content: 'Écarter'; }
+	.btn-later::after { content: 'Snooze 7 j'; }
+	.btn-view::after { content: 'Détails'; }
+}
+
+
+
+/* === BANDEAU PRIMARY-DARK CLIQUABLE === */
+.triage-aside {
+	cursor: pointer;
+	transition: background 180ms ease;
+}
+.triage-aside:hover {
+	background: #050C18;
+}
+/* CTA "Voir les X autres" : visible mais subtil sur primary-dark.
+   Pas de pill voyante. Texte ardoise pâle saturée + underline qui se révèle au hover. */
+.triage-aside-cta {
+	font-size: 12.5px;
+	color: rgba(190, 211, 235, 0.95);
+	font-weight: 500;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	margin-top: 16px;
+	transition: color 180ms ease;
+	position: relative;
+	letter-spacing: 0.005em;
+	width: fit-content;
+}
+.triage-aside-cta::after {
+	content: '';
+	position: absolute;
+	left: 0; right: -2px; bottom: -3px;
+	height: 1px;
+	background: rgba(190, 211, 235, 0.30);
+	transition: background 180ms ease;
+}
+.triage-aside:hover .triage-aside-cta {
+	color: #DCEAF7;
+}
+.triage-aside:hover .triage-aside-cta::after {
+	background: rgba(220, 234, 247, 0.55);
+}
+.triage-aside-cta svg {
+	width: 13px; height: 13px;
+	stroke-width: 2;
+	transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.triage-aside:hover .triage-aside-cta svg {
+	transform: translateX(3px);
+}
+
+/* Source badge */
+.src-zefix { background: #ECFDF3; color: #027A48; }
+.src-simap { background: #FFFAEB; color: #B54708; }
+.src-regbl { background: #EDF1F5; color: #364A6B; }
+.src-lead_express { background: #F0F4F8; color: #2F5A9E; }
+.src-search_ch { background: #F4F3FF; color: #5925DC; }
+.src-veille { background: var(--color-primary-light); color: var(--color-primary); }
+
+/* === SECTIONS LABELS (entre zones) === */
+.zone-marker {
+	margin: 80px 0 40px;
+	padding: 24px 0 24px;
+	border-top: 1px dashed var(--color-border-strong);
+	display: flex;
+	align-items: center;
+	gap: 16px;
+}
+.zone-marker-num {
+	width: 48px; height: 48px;
+	background: var(--color-primary-dark);
+	color: white;
+	border-radius: 12px;
+	display: flex; align-items: center; justify-content: center;
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: 22px;
+	flex-shrink: 0;
+}
+.zone-marker-text { display: flex; flex-direction: column; gap: 2px; }
+.zone-marker-title {
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: 22px;
+	color: var(--color-primary-dark);
+	letter-spacing: -0.015em;
+}
+.zone-marker-desc {
+	font-size: 14px;
+	color: var(--color-text-muted);
+}
+
+
+
+/* Empty state */
+.triage-empty {
+	padding: 48px 32px;
+	text-align: center;
+	color: var(--color-text-muted);
+}
+.triage-empty-title {
+	font-family: var(--font-display);
+	font-size: 20px;
+	font-weight: 600;
+	color: var(--color-text);
+	margin-bottom: 8px;
+}
+.triage-empty-body { font-size: 14px; max-width: 420px; margin: 0 auto; line-height: 1.55; }
+
+/* Scope tag mockup */
+.mockup-tag {
+	position: fixed;
+	top: 16px; right: 16px;
+	background: var(--color-primary-dark);
+	color: white;
+	padding: 8px 14px;
+	border-radius: 999px;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	z-index: 100;
+	box-shadow: var(--shadow-md);
+}
+</style>
+</head>
+<body>
+
+<div class="mockup-tag">Mockup - Phases 0+1</div>
+
+<div class="container">
+
+	<!-- ========== ZONE 1 : Page /prospection (Phase 0) ========== -->
+
+	<div class="zone-marker">
+		<div class="zone-marker-num">1</div>
+		<div class="zone-marker-text">
+			<div class="zone-marker-title">Page /prospection</div>
+			<div class="zone-marker-desc">Phase 0 - Liste nettoyée, 4 cartes funnel remplacées par 3 indicateurs honnêtes, toggle transférés discret</div>
+		</div>
+	</div>
+
+	<header class="masthead">
+		<div class="mag-kicker">Prospection FilmPro</div>
+		<h1 class="mag-display">Vos pistes commerciales en cours</h1>
+		<p class="subtitle">23 leads actifs sur les marchés publics et permis bâtiment de Suisse romande. Filtrez, qualifiez, transférez.</p>
+		<div class="divider-strong"></div>
+	</header>
+
+	<!-- 3 indicateurs flat premium (remplacent le funnel 4 cartes) -->
+	<section class="indicators">
+		<div class="indicator">
+			<div class="indicator-icon" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+			</div>
+			<div class="indicator-content">
+				<div class="indicator-value tabular">23</div>
+				<div class="indicator-label">Leads actifs</div>
+				<span class="indicator-trend up">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/></svg>
+					+3 cette semaine
+				</span>
+			</div>
+		</div>
+		<div class="indicator">
+			<div class="indicator-icon" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
+			</div>
+			<div class="indicator-content">
+				<div class="indicator-value tabular">16</div>
+				<div class="indicator-label">Marchés publics ouverts</div>
+				<span class="indicator-trend flat">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+					stable cette semaine
+				</span>
+			</div>
+		</div>
+		<div class="indicator">
+			<div class="indicator-icon" aria-hidden="true">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+			</div>
+			<div class="indicator-content">
+				<div class="indicator-value tabular">0</div>
+				<div class="indicator-label">Transférés ce mois</div>
+				<span class="indicator-trend">
+					<span style="opacity: 0.6;">premier transfert à venir</span>
+				</span>
+			</div>
+		</div>
+	</section>
+
+	<!-- Filtres -->
+	<section class="filters">
+		<div class="filter-group">
+			<label class="filter-label">Statut</label>
+			<select class="filter-select">
+				<option>Tous</option>
+				<option selected>Nouveau</option>
+				<option>Intéressé</option>
+				<option>Écarté</option>
+			</select>
+		</div>
+		<div class="filter-group">
+			<label class="filter-label">Source</label>
+			<select class="filter-select">
+				<option>Toutes</option>
+				<option>SIMAP (marchés publics)</option>
+				<option>RegBL (permis bâtiment)</option>
+				<option>Zefix (registre commerce)</option>
+				<option>Saisie terrain</option>
+			</select>
+		</div>
+		<div class="filter-group">
+			<label class="filter-label">Canton</label>
+			<select class="filter-select">
+				<option>Tous</option>
+				<option>Genève</option>
+				<option>Vaud</option>
+				<option>Valais</option>
+			</select>
+		</div>
+		<div class="filter-group">
+			<label class="filter-label">Score</label>
+			<select class="filter-select">
+				<option>Tous</option>
+				<option>Chaud (≥7)</option>
+				<option>Tiède (4-6)</option>
+			</select>
+		</div>
+	</section>
+
+	<!-- Toggle transférés -->
+	<div class="toggle-row">
+		<label class="toggle-checkbox">
+			<input type="checkbox" />
+			<span>Afficher aussi les leads transférés</span>
+		</label>
+		<span class="tabular">23 leads affichés</span>
+	</div>
+
+	<!-- Table simplifiée -->
+	<section class="data-table">
+		<table>
+			<thead>
+				<tr>
+					<th></th>
+					<th>Source</th>
+					<th>Canton</th>
+					<th>Priorité</th>
+					<th>Importé</th>
+					<th>Statut</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><strong>Chantier Carouge</strong> (EGID 891234)</td>
+					<td><span class="badge src-regbl">RegBL</span></td>
+					<td class="tabular">GE</td>
+					<td><span class="score-pill tiede" title="Canton GE +2 · Secteur construction +3 · RegBL +1 = 6/12"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>À qualifier</span></td>
+					<td class="tabular">15 avr.</td>
+					<td><span class="badge badge-primary">Nouveau</span></td>
+				</tr>
+				<tr>
+					<td><strong>Commune de Plan-les-Ouates</strong></td>
+					<td><span class="badge src-simap">SIMAP</span></td>
+					<td class="tabular">GE</td>
+					<td><span class="score-pill chaud" title="Canton +2 · Secteur +3 · SIMAP +2 · Récent +2 = 9/12"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Prioritaire</span></td>
+					<td class="tabular">14 avr.</td>
+					<td><span class="badge badge-neutral">Écarté</span></td>
+				</tr>
+				<tr>
+					<td><strong>Chantier Vernier</strong> (EGID 884512)</td>
+					<td><span class="badge src-regbl">RegBL</span></td>
+					<td class="tabular">GE</td>
+					<td><span class="score-pill tiede" title="Canton GE +2 · Secteur construction +3 · RegBL +1 = 6/12"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>À qualifier</span></td>
+					<td class="tabular">14 avr.</td>
+					<td><span class="badge badge-primary">Nouveau</span></td>
+				</tr>
+				<tr>
+					<td><strong>Service de la voirie - Lausanne</strong></td>
+					<td><span class="badge src-simap">SIMAP</span></td>
+					<td class="tabular">VD</td>
+					<td><span class="score-pill chaud" title="Canton VD +2 · Secteur construction +3 · SIMAP +2 · Récent +1 = 8/12"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Prioritaire</span></td>
+					<td class="tabular">13 avr.</td>
+					<td><span class="badge badge-neutral">Écarté</span></td>
+				</tr>
+				<tr>
+					<td><strong>Chantier Onex</strong> (EGID 879016)</td>
+					<td><span class="badge src-regbl">RegBL</span></td>
+					<td class="tabular">GE</td>
+					<td><span class="score-pill tiede" title="Canton GE +2 · Secteur construction +3 · RegBL +1 = 6/12"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>À qualifier</span></td>
+					<td class="tabular">13 avr.</td>
+					<td><span class="badge badge-primary">Nouveau</span></td>
+				</tr>
+				<tr>
+					<td><strong>Régie immobilière de Genève</strong></td>
+					<td><span class="badge src-simap">SIMAP</span></td>
+					<td class="tabular">GE</td>
+					<td><span class="score-pill chaud" title="Canton +2 · Secteur +3 · SIMAP +2 · Récent +2 = 9/12"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Prioritaire</span></td>
+					<td class="tabular">13 avr.</td>
+					<td><span class="badge badge-neutral">Écarté</span></td>
+				</tr>
+			</tbody>
+		</table>
+	</section>
+
+	<!-- ========== ZONE 2 : Widget triage matin sur dashboard (Phase 1) ========== -->
+
+	<div class="zone-marker">
+		<div class="zone-marker-num">2</div>
+		<div class="zone-marker-text">
+			<div class="zone-marker-title">Dashboard - Widget « À trier ce matin »</div>
+			<div class="zone-marker-desc">Phase 1 - Pattern primary-dark + ornements cercles cohérent /veille S132. 4 actions inline. Empty state soigné.</div>
+		</div>
+	</div>
+
+	<section class="dashboard-widgets">
+
+		<!-- Variante 1 : queue avec leads -->
+		<article class="triage-card">
+			<aside class="triage-aside" role="button" tabindex="0" aria-label="Voir la file complète">
+				<div class="triage-aside-kicker">
+					<svg class="triage-aside-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+					À trier ce matin
+				</div>
+				<div class="triage-aside-count tabular">7</div>
+				<div class="triage-aside-label">leads chauds non touchés</div>
+				<div class="triage-aside-cta">
+					<span class="triage-aside-cta-label">Voir les 16 autres en file</span>
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+				</div>
+			</aside>
+
+			<div class="triage-list">
+<!-- Lead 1 : SIMAP score 9 = chaud -->
+				<div class="triage-item" style="--i: 0;">
+					<div class="triage-item-content">
+						<div class="triage-item-line1">
+							<span class="badge src-simap">SIMAP</span>
+							<span class="triage-item-name">Commune de Plan-les-Ouates</span>
+							<span class="triage-item-score" tabindex="0">
+								<span class="score-pill chaud"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Prioritaire</span>
+								<span class="score-tooltip">Canton GE +2 · Secteur construction +3 · SIMAP +2 · Récent +2 = 9/12</span>
+							</span>
+						</div>
+						<div class="triage-item-context">Marché public · Réfection vitrages CO Pinchat · clôture 18 mai</div>
+					</div>
+					<div class="triage-actions">
+						<button class="btn-action btn-yes" aria-label="Intéressant" title="Intéressant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></button>
+						<button class="btn-action btn-no" aria-label="Écarter" title="Écarter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+						<button class="btn-action btn-later" aria-label="Snooze 7 jours" title="Snooze 7 j"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+						<button class="btn-action btn-view" aria-label="Détails" title="Détails"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+					</div>
+				</div>
+
+				<!-- Lead 2 : SIMAP score 8 = chaud -->
+				<div class="triage-item" style="--i: 1;">
+					<div class="triage-item-content">
+						<div class="triage-item-line1">
+							<span class="badge src-simap">SIMAP</span>
+							<span class="triage-item-name">Service immobilier · Vaud</span>
+							<span class="triage-item-score" tabindex="0">
+								<span class="score-pill chaud"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Prioritaire</span>
+								<span class="score-tooltip">Canton VD +2 · Secteur construction +3 · SIMAP +2 · Récent +1 = 8/12</span>
+							</span>
+						</div>
+						<div class="triage-item-context">Marché public · Rénovation façade gymnase Yverdon · clôture 22 mai</div>
+					</div>
+					<div class="triage-actions">
+						<button class="btn-action btn-yes" aria-label="Intéressant" title="Intéressant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></button>
+						<button class="btn-action btn-no" aria-label="Écarter" title="Écarter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+						<button class="btn-action btn-later" aria-label="Snooze 7 j" title="Snooze 7 j"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+						<button class="btn-action btn-view" aria-label="Détails" title="Détails"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+					</div>
+				</div>
+
+				<!-- Lead 3 : RegBL score 6 = tiède -->
+				<div class="triage-item" style="--i: 2;">
+					<div class="triage-item-content">
+						<div class="triage-item-line1">
+							<span class="badge src-regbl">RegBL</span>
+							<span class="triage-item-name">Chantier Carouge</span>
+							<span class="triage-item-score" tabindex="0">
+								<span class="score-pill tiede"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>À qualifier</span>
+								<span class="score-tooltip">Canton GE +2 · Secteur construction +3 · RegBL +1 = 6/12</span>
+							</span>
+						</div>
+						<div class="triage-item-context">Permis bâtiment · 4 étages, 237 m² · rue de la Filature</div>
+					</div>
+					<div class="triage-actions">
+						<button class="btn-action btn-yes" aria-label="Intéressant" title="Intéressant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></button>
+						<button class="btn-action btn-no" aria-label="Écarter" title="Écarter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+						<button class="btn-action btn-later" aria-label="Snooze 7 j" title="Snooze 7 j"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+						<button class="btn-action btn-view" aria-label="Détails" title="Détails"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+					</div>
+				</div>
+
+				<!-- Lead 4 : Saisie terrain score 7 = chaud -->
+				<div class="triage-item" style="--i: 3;">
+					<div class="triage-item-content">
+						<div class="triage-item-line1">
+							<span class="badge src-lead_express">Saisie terrain</span>
+							<span class="triage-item-name">Bureau Délice Architectes</span>
+							<span class="triage-item-score" tabindex="0">
+								<span class="score-pill chaud"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Prioritaire</span>
+								<span class="score-tooltip">Canton GE +2 · Secteur architecture +3 · Tél dispo +1 · Récent +1 = 7/12</span>
+							</span>
+						</div>
+						<div class="triage-item-context">Saisie terrain · 022 731 88 41 · à rappeler après confirmation budget juin</div>
+					</div>
+					<div class="triage-actions">
+						<button class="btn-action btn-yes" aria-label="Intéressant" title="Intéressant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></button>
+						<button class="btn-action btn-no" aria-label="Écarter" title="Écarter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+						<button class="btn-action btn-later" aria-label="Snooze 7 j" title="Snooze 7 j"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+						<button class="btn-action btn-view" aria-label="Détails" title="Détails"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+					</div>
+				</div>
+
+				<!-- Lead 5 : Zefix score 7 = chaud -->
+				<div class="triage-item" style="--i: 4;">
+					<div class="triage-item-content">
+						<div class="triage-item-line1">
+							<span class="badge src-zefix">Zefix</span>
+							<span class="triage-item-name">Atelier Renaud SA</span>
+							<span class="triage-item-score" tabindex="0">
+								<span class="score-pill chaud"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Prioritaire</span>
+								<span class="score-tooltip">Canton GE +2 · Secteur architecture +3 · Entreprise identifiée +1 · Récent +1 = 7/12</span>
+							</span>
+						</div>
+						<div class="triage-item-context">Registre commerce · Architecture · GE · inscription il y a 12 j</div>
+					</div>
+					<div class="triage-actions">
+						<button class="btn-action btn-yes" aria-label="Intéressant" title="Intéressant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></button>
+						<button class="btn-action btn-no" aria-label="Écarter" title="Écarter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+						<button class="btn-action btn-later" aria-label="Snooze 7 j" title="Snooze 7 j"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+						<button class="btn-action btn-view" aria-label="Détails" title="Détails"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+					</div>
+				</div>
+
+				<!-- Lead 6 : RegBL score 6 = tiède -->
+				<div class="triage-item" style="--i: 5;">
+					<div class="triage-item-content">
+						<div class="triage-item-line1">
+							<span class="badge src-regbl">RegBL</span>
+							<span class="triage-item-name">Chantier Vernier</span>
+							<span class="triage-item-score" tabindex="0">
+								<span class="score-pill tiede"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>À qualifier</span>
+								<span class="score-tooltip">Canton GE +2 · Secteur construction +3 · RegBL +1 = 6/12</span>
+							</span>
+						</div>
+						<div class="triage-item-context">Permis bâtiment · transformation immeuble 6 niveaux · rue de la Servette</div>
+					</div>
+					<div class="triage-actions">
+						<button class="btn-action btn-yes" aria-label="Intéressant" title="Intéressant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></button>
+						<button class="btn-action btn-no" aria-label="Écarter" title="Écarter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+						<button class="btn-action btn-later" aria-label="Snooze 7 j" title="Snooze 7 j"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+						<button class="btn-action btn-view" aria-label="Détails" title="Détails"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+					</div>
+				</div>
+
+				<!-- Lead 7 : Veille score 8 = chaud -->
+				<div class="triage-item" style="--i: 6;">
+					<div class="triage-item-content">
+						<div class="triage-item-line1">
+							<span class="badge src-veille">Veille</span>
+							<span class="triage-item-name">Régie Bersier &amp; Cie</span>
+							<span class="triage-item-score" tabindex="0">
+								<span class="score-pill chaud"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Prioritaire</span>
+								<span class="score-tooltip">Canton GE +2 · Secteur régie +3 · Entreprise identifiée +1 · Veille OK FilmPro +2 = 8/12</span>
+							</span>
+						</div>
+						<div class="triage-item-context">Signal Veille · publication SIA 380/1 révisée tertiaire · enrichi automatiquement</div>
+					</div>
+					<div class="triage-actions">
+						<button class="btn-action btn-yes" aria-label="Intéressant" title="Intéressant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></button>
+						<button class="btn-action btn-no" aria-label="Écarter" title="Écarter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></button>
+						<button class="btn-action btn-later" aria-label="Snooze 7 j" title="Snooze 7 j"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+						<button class="btn-action btn-view" aria-label="Détails" title="Détails"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+					</div>
+				</div>
+
+			</div>
+</article>
+
+		<!-- Variante 2 : empty state -->
+		<article class="triage-card" style="grid-template-columns: 1fr;">
+			<div class="triage-empty">
+				<div class="triage-empty-title">Rien à trier ce matin</div>
+				<p class="triage-empty-body">Votre fond de pipe travaille pour vous. Les nouveaux leads chauds atterriront ici dès le prochain import.</p>
+			</div>
+		</article>
+
+	</section>
+
+	<div class="section-spacer"></div>
+
+</div>
+
+</body>
+</html>
