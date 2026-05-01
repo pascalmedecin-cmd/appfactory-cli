@@ -2,6 +2,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import LeadExpress from '$lib/components/prospection/LeadExpress.svelte';
+	import TriageQueue from '$lib/components/dashboard/TriageQueue.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import type { PageData } from './$types';
 
@@ -35,6 +36,10 @@
 </script>
 
 <div class="space-y-8">
+	<!-- Phase 1 widget triage matin : leads chauds non touchés.
+	     Position prioritaire : tout en haut, avant les alertes. C'est l'inbox du matin. -->
+	<TriageQueue leads={data.triage.leads} total={data.triage.total} />
+
 	<!-- Alertes signaux neufs -->
 	{#if data.stats.signaux > 0}
 		<a

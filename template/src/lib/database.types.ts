@@ -587,6 +587,7 @@ export type Database = {
           telephone: string | null
           transfere_vers_contact_id: string | null
           transfere_vers_entreprise_id: string | null
+          triage_snoozed_until: string | null
         }
         Insert: {
           adresse?: string | null
@@ -615,6 +616,7 @@ export type Database = {
           telephone?: string | null
           transfere_vers_contact_id?: string | null
           transfere_vers_entreprise_id?: string | null
+          triage_snoozed_until?: string | null
         }
         Update: {
           adresse?: string | null
@@ -643,6 +645,7 @@ export type Database = {
           telephone?: string | null
           transfere_vers_contact_id?: string | null
           transfere_vers_entreprise_id?: string | null
+          triage_snoozed_until?: string | null
         }
         Relationships: [
           {
