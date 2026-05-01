@@ -366,12 +366,11 @@
 						<span class="hidden md:inline">Afficher</span>
 						<select
 							class="h-8 px-2 border border-border rounded-md bg-white text-text cursor-pointer text-xs"
-							value={pageSize}
 							onchange={(e) => onPageSizeChange?.(Number((e.target as HTMLSelectElement).value))}
 							aria-label="Nombre d'entrées par page"
 						>
 							{#each pageSizeOptions as opt}
-								<option value={opt}>{opt}</option>
+								<option value={opt} selected={opt === pageSize}>{opt}</option>
 							{/each}
 						</select>
 						<span class="hidden md:inline">par page</span>
