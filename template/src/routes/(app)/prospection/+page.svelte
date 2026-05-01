@@ -284,7 +284,7 @@
 	}
 </script>
 
-<div class="flex flex-col gap-3 md:gap-5 md:h-[calc(100dvh-var(--header-height)-3rem)]">
+<div class="flex flex-col gap-3 md:gap-6 md:h-[calc(100dvh-var(--header-height)-3rem)]">
 	<!-- Phase 0 : 3 indicateurs honnêtes (remplacent le funnel décoratif 4 cartes
 	     Importer/Enrichir/Qualifier/Convertir qui mentait + suggérait un parcours linéaire qui n'existe pas). -->
 	<div class="md:hidden flex items-center gap-2 text-xs leading-tight tabular-nums" aria-label="Indicateurs prospection">
@@ -343,13 +343,13 @@
 		<div class="flex items-center gap-2 ml-auto">
 			<button
 				onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
-				class="hidden md:flex items-center gap-2 h-10 px-4 text-sm font-medium border rounded-lg box-border cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich/20"
+				class="hidden md:flex items-center gap-2 h-10 px-4 text-sm font-medium border rounded-lg box-border cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich-border"
 				disabled={enrichablesCount === 0}
 				title="Enrichit uniquement les {enrichablesCount} leads de cette page"
 			>
 				<Icon name="auto_fix_high" size={18} />
 				<span>Enrichir cette page</span>
-				<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich/10 text-prosp-enrich">{enrichablesCount}</span>
+				<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
 			</button>
 			<button
 				type="button"
@@ -399,7 +399,7 @@
 						>
 							<Icon name="auto_fix_high" size={18} class="text-prosp-enrich" />
 							<span class="flex-1">Enrichir cette page</span>
-							<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich/10 text-prosp-enrich">{enrichablesCount}</span>
+							<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
 						</button>
 						<button
 							role="menuitem"
@@ -503,7 +503,7 @@
 
 	<!-- Bannière sélection globale (Gmail/Notion pattern) -->
 	{#if showSelectAllBanner}
-		<div class="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg border border-primary/20 bg-primary-light text-sm">
+		<div class="flex flex-wrap items-center gap-2 px-3 py-2 rounded-lg border border-primary bg-primary-light text-sm">
 			<Icon name="checklist" size={16} class="text-primary shrink-0" />
 			<span class="text-text">
 				Les <strong>{selectedIds.size}</strong> prospects de cette page sont sélectionnés.
@@ -518,7 +518,7 @@
 		</div>
 	{/if}
 	{#if selectAllNotice}
-		<div class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-sm {selectAllNotice.type === 'error' ? 'border-danger/30 bg-danger-light text-danger' : 'border-primary/20 bg-primary-light text-text'}">
+		<div class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-sm {selectAllNotice.type === 'error' ? 'border-danger bg-danger-light text-danger' : 'border-primary bg-primary-light text-text'}">
 			<div class="flex items-center gap-2">
 				<Icon name={selectAllNotice.type === 'error' ? 'error' : 'info'} size={16} class="shrink-0" />
 				<span>{selectAllNotice.message}</span>
@@ -535,7 +535,7 @@
 	     Sinon les onglets restent visibles (sinon impossible de revenir sur SIMAP depuis Terrain à 0). -->
 	{#if data.tabCounts.simap === 0 && data.tabCounts.regbl === 0 && data.tabCounts.entreprises === 0 && data.tabCounts.terrain === 0 && activeFilterCount === 0}
 		<div class="flex flex-col items-center justify-center py-16 px-6">
-			<div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-5" style="background: linear-gradient(135deg, var(--color-prosp-import-bg), var(--color-prosp-enrich-bg))">
+			<div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-6" style="background: linear-gradient(135deg, var(--color-prosp-import-bg), var(--color-prosp-enrich-bg))">
 				<Icon name="search" size={32} class="text-prosp-import" />
 			</div>
 			<h3 class="text-lg font-semibold text-text mb-2">Trouvez vos premiers prospects</h3>
@@ -570,6 +570,7 @@
 	<DataTable
 		data={data.leads}
 		{columns}
+		embedded={true}
 		dense={true}
 		resizable={true}
 		storageKey="prospection-{data.tab}"

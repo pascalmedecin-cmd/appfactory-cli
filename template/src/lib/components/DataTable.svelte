@@ -41,6 +41,9 @@
 		storageKey = '',
 		pageSizeOptions = null as number[] | null,
 		onPageSizeChange = null as ((size: number) => void) | null,
+		// Mode "embedded" : le parent fournit déjà le shell visuel (rounded + border + shadow + bg).
+		// Utilisé par /prospection Phase 2 où ProspectionTabs + DataTable partagent un seul wrapper.
+		embedded = false,
 	}: {
 		data: T[];
 		columns: Column[];
@@ -66,6 +69,7 @@
 		storageKey?: string;
 		pageSizeOptions?: number[] | null;
 		onPageSizeChange?: ((size: number) => void) | null;
+		embedded?: boolean;
 	} = $props();
 
 	let search = $state(serverMode ? serverSearch : '');
@@ -226,9 +230,9 @@
 	}
 </script>
 
-<div class="bg-white rounded-xl border border-border shadow-sm flex flex-1 flex-col min-h-0">
+<div class="flex flex-1 flex-col min-h-0 {embedded ? '' : 'bg-white rounded-xl border border-border shadow-sm'}">
 	{#if searchable}
-		<div class="sticky top-0 z-20 px-4 py-3 border-b border-border bg-white rounded-t-xl flex items-center gap-3">
+		<div class="sticky top-0 z-20 px-4 py-3 border-b border-border bg-white {embedded ? '' : 'rounded-t-xl'} flex items-center gap-3">
 			<input
 				type="text"
 				value={search}

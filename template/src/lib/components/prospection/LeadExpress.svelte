@@ -165,7 +165,7 @@
 			onsubmit={handleSubmit}
 		>
 			<div class="space-y-4">
-				<div class="flex items-start gap-3 p-3 rounded-xl bg-primary-light/60 border border-primary/15">
+				<div class="flex items-start gap-3 p-3 rounded-xl bg-primary-light border border-primary">
 					<Icon name="bolt" size={18} class="text-primary mt-0.5" />
 					<p class="text-sm text-text-body leading-snug">
 						Saisie rapide post-RDV. L'enrichissement (Zefix, scoring) se fera plus tard depuis la fiche.
