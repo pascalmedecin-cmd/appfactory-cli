@@ -460,20 +460,32 @@ export const actions: Actions = {
 		const telNorm = tel.replace(/[^\d]/g, '');
 		const { data: candidates } = await locals.supabase
 			.from('prospect_leads')
-			.select('id, telephone')
+			.select('id, raison_sociale, localite, telephone')
 			.ilike('raison_sociale', escapeIlike(raison))
 			.limit(5);
-		if (candidates && candidates.length > 0) {
-			let match: { id: string } | null = null;
+		const force = String(form.get('force_create') || '') === '1';
+		if (!force && candidates && candidates.length > 0) {
 			if (telNorm.length >= 6) {
-				match = candidates.find(c => {
+				const match = candidates.find(c => {
 					const dbTel = (c.telephone || '').replace(/[^\d]/g, '');
 					return dbTel.length >= 6 && (dbTel.includes(telNorm) || telNorm.includes(dbTel));
 				}) ?? null;
+				if (match) return { success: true, id: match.id, duplicate: true };
+				// Pas de match tel mais ≥1 candidat raison sociale : laisser l'utilisateur trancher.
 			}
-			// Fallback : tel manquant ou aucun match tel → raison sociale seule.
-			if (!match) match = candidates[0];
-			return { success: true, id: match.id, duplicate: true };
+			if (candidates.length === 1) {
+				// Pas de tel utilisable + 1 seul candidat : silent redirect (ambiguïté nulle).
+				return { success: true, id: candidates[0].id, duplicate: true };
+			}
+			// Multi-candidats sans tel discriminant : retourner la liste pour la modale.
+			return fail(409, {
+				ambiguous: true,
+				candidates: candidates.map(c => ({
+					id: c.id,
+					raison_sociale: c.raison_sociale,
+					localite: c.localite ?? null,
+				})),
+			});
 		}
 
 		const ts = now();
