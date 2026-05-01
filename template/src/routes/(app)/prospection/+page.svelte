@@ -365,7 +365,7 @@
 				class="flex items-center gap-2 h-11 md:h-10 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg box-border cursor-pointer shadow-md transition-colors"
 			>
 				<Icon name="cloud_download" size={18} />
-				<span>Importer<span class="hidden sm:inline"> des prospects</span></span>
+				<span>Importer<span class="hidden sm:inline">&nbsp;des prospects</span></span>
 			</button>
 			<!-- Kebab mobile : actions secondaires -->
 			<div class="md:hidden relative" bind:this={mobileMenuRef}>
