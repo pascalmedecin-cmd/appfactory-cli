@@ -284,7 +284,7 @@
 	}
 </script>
 
-<div class="flex flex-col gap-3 md:gap-5 h-[calc(100dvh-var(--header-height)-3rem)]">
+<div class="flex flex-col gap-3 md:gap-5 md:h-[calc(100dvh-var(--header-height)-3rem)]">
 	<!-- Phase 0 : 3 indicateurs honnêtes (remplacent le funnel décoratif 4 cartes
 	     Importer/Enrichir/Qualifier/Convertir qui mentait + suggérait un parcours linéaire qui n'existe pas). -->
 	<div class="md:hidden flex items-center gap-2 text-xs leading-tight tabular-nums" aria-label="Indicateurs prospection">
@@ -365,9 +365,7 @@
 				class="flex items-center gap-2 h-11 md:h-10 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg box-border cursor-pointer shadow-md transition-colors"
 			>
 				<Icon name="cloud_download" size={18} />
-				<!-- Phase 2 fix typo : NBSP en début du span étendu pour éviter
-				     une concaténation "Importerdes prospects" en zone responsive intermédiaire. -->
-				<span>Importer</span><span class="hidden sm:inline">&nbsp;des prospects</span>
+				<span>Importer<span class="hidden sm:inline"> des prospects</span></span>
 			</button>
 			<!-- Kebab mobile : actions secondaires -->
 			<div class="md:hidden relative" bind:this={mobileMenuRef}>
