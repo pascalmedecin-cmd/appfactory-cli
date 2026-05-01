@@ -552,7 +552,7 @@
 		</div>
 	{:else}
 	<!-- Phase 2 : onglets par nature de signal collés au DataTable (1 shell visuel cohérent) -->
-	<div class="bg-white rounded-xl border border-border shadow-sm flex flex-col min-h-0 overflow-visible">
+	<div class="bg-white rounded-xl border border-border shadow-sm flex flex-1 flex-col min-h-0 overflow-visible">
 		<ProspectionTabs tabs={tabsConfig} active={data.tab as ProspectionTabKey} onSelect={selectTab} />
 		{#if data.sourceFilterIncompatible}
 			<div class="flex items-start gap-2 px-4 py-3 border-b border-warning/30 bg-warning-light text-warning text-sm" role="status">

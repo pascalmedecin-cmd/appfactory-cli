@@ -226,7 +226,7 @@
 	}
 </script>
 
-<div class="bg-white rounded-xl border border-border shadow-sm flex flex-col min-h-0">
+<div class="bg-white rounded-xl border border-border shadow-sm flex flex-1 flex-col min-h-0">
 	{#if searchable}
 		<div class="sticky top-0 z-20 px-4 py-3 border-b border-border bg-white rounded-t-xl flex items-center gap-3">
 			<input
