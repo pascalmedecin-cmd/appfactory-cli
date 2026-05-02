@@ -68,7 +68,13 @@
 		position: relative;
 		z-index: 5;
 		border-radius: 12px 12px 0 0;
+		/* V1.3 audit S160 cause racine : `overflow: auto` (X et Y) + `height: 60px` figé
+		   provoquaient un scroll vertical résiduel (scrollHeight 158 > clientHeight 60).
+		   Fix : ne scroller QUE en X, laisser Y en visible, et passer en min-height pour
+		   accommoder le contenu naturel des tabs (icône + label + count). */
 		overflow-x: auto;
+		overflow-y: visible;
+		min-height: 60px;
 		scrollbar-width: thin;
 	}
 	.tabs-bar::-webkit-scrollbar { height: 4px; }

@@ -142,6 +142,11 @@
 	}
 
 	function applyFilters() {
+		// V1.5 audit S160 : reset sélection sur changement de filtres.
+		// Les ids précédemment sélectionnés peuvent disparaître du jeu de résultats →
+		// risque actions batch sur leads invisibles.
+		selectedIds = new Set();
+		selectAllNotice = null;
 		goto(buildUrl({ page: 0 }), { keepFocus: true, noScroll: true });
 	}
 
@@ -238,6 +243,10 @@
 	]);
 
 	function selectTab(tab: ProspectionTabKey) {
+		// V1.5 audit S160 : reset sélection avant switch.
+		// Sinon BatchActionsBar affiche actions sur leads invisibles (autres onglets).
+		selectedIds = new Set();
+		selectAllNotice = null;
 		// Pas besoin d'invalidateAll : changer l'URL réinvoque load() automatiquement.
 		// noScroll préserve la position de l'utilisateur (sinon scroll-to-top sur switch).
 		goto(buildUrl({ tab, page: 0 }), { keepFocus: true, noScroll: true });
@@ -276,12 +285,19 @@
 	}
 
 	function resetFilters() {
+		// V1.5 audit S160 : reset sélection en même temps que les filtres.
+		selectedIds = new Set();
+		selectAllNotice = null;
 		filterSources = [];
 		filterCantons = [];
 		filterStatuts = [];
 		filterTemperatures = [];
 		showTransferred = false;
 	}
+
+	// V1.1 audit S160 : count des leads enrichissables sur la page courante.
+	// Migré ici depuis un {@const} top-level (placement invalide en Svelte 5).
+	const enrichablesCount = $derived(data.leads.filter(l => l.statut !== 'transfere').length);
 </script>
 
 <div class="flex flex-col gap-3 md:gap-6 md:h-[calc(100dvh-var(--header-height)-3rem)]">
@@ -324,9 +340,9 @@
 		</div>
 	</div>
 
-	<!-- Actions principales -->
-	{#if data.totalLeads > 0}
-	{@const enrichablesCount = data.leads.filter(l => l.statut !== 'transfere').length}
+	<!-- Actions principales (V1.1 audit S160 : démasquées même quand totalLeads=0,
+	     sinon impossible d'amorcer un onglet vide ou un système jamais peuplé).
+	     enrichablesCount calculé en $derived dans le script (Svelte 5). -->
 	<div class="flex flex-wrap items-center justify-between gap-3">
 		<div class="hidden md:flex items-center gap-3">
 			{#if data.recherches.length > 0}
@@ -341,16 +357,17 @@
 			{/if}
 		</div>
 		<div class="flex items-center gap-2 ml-auto">
-			<button
-				onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
-				class="hidden md:flex items-center gap-2 h-10 px-4 text-sm font-medium border rounded-lg box-border cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich-border"
-				disabled={enrichablesCount === 0}
-				title="Enrichit uniquement les {enrichablesCount} leads de cette page"
-			>
-				<Icon name="auto_fix_high" size={18} />
-				<span>Enrichir cette page</span>
-				<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
-			</button>
+			{#if enrichablesCount > 0}
+				<button
+					onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
+					class="hidden md:flex items-center gap-2 h-10 px-4 text-sm font-medium border rounded-lg box-border cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich-border"
+					title="Enrichit uniquement les {enrichablesCount} leads de cette page"
+				>
+					<Icon name="auto_fix_high" size={18} />
+					<span>Enrichir cette page</span>
+					<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
+				</button>
+			{/if}
 			<button
 				type="button"
 				onclick={() => leadExpressOpen = true}
@@ -391,16 +408,17 @@
 								<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{data.recherches.length}</span>
 							</button>
 						{/if}
-						<button
-							role="menuitem"
-							onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; mobileMenuOpen = false; }}
-							class="w-full flex items-center gap-3 px-4 py-3 text-sm text-text hover:bg-surface-alt cursor-pointer text-left disabled:opacity-50 disabled:cursor-not-allowed"
-							disabled={enrichablesCount === 0}
-						>
-							<Icon name="auto_fix_high" size={18} class="text-prosp-enrich" />
-							<span class="flex-1">Enrichir cette page</span>
-							<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
-						</button>
+						{#if enrichablesCount > 0}
+							<button
+								role="menuitem"
+								onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; mobileMenuOpen = false; }}
+								class="w-full flex items-center gap-3 px-4 py-3 text-sm text-text hover:bg-surface-alt cursor-pointer text-left"
+							>
+								<Icon name="auto_fix_high" size={18} class="text-prosp-enrich" />
+								<span class="flex-1">Enrichir cette page</span>
+								<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
+							</button>
+						{/if}
 						<button
 							role="menuitem"
 							onclick={() => { alerteModalOpen = true; mobileMenuOpen = false; }}
@@ -414,7 +432,6 @@
 			</div>
 		</div>
 	</div>
-	{/if}
 
 	<!-- Filtres : drawer mobile collapsible, grid permanent desktop -->
 	<!-- Bouton mobile "Filtres" -->
@@ -566,7 +583,49 @@
 					class="font-semibold underline hover:no-underline cursor-pointer"
 				>Retirer le filtre Source</button>
 			</div>
-		{/if}
+		{:else if data.totalLeads === 0}
+			<!-- V1.1 H-18 audit S160 : empty state intermédiaire actionnable.
+			     Distingue "onglet vide à cause des filtres" de "onglet jamais peuplé". -->
+			<div class="flex flex-col items-center justify-center py-12 px-6">
+				<div class="flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-surface-alt">
+					<Icon name={activeFilterCount > 0 || data.search ? 'filter_alt_off' : 'inbox'} size={26} class="text-text-muted" />
+				</div>
+				{#if activeFilterCount > 0 || data.search}
+					<h3 class="text-base font-semibold text-text mb-1">Aucun prospect ne correspond à ces filtres</h3>
+					<p class="text-sm text-text-muted text-center max-w-md mb-5">
+						Réinitialisez les filtres pour réafficher l'onglet, changez de nature de signal, ou importez de nouveaux prospects.
+					</p>
+					<div class="flex flex-wrap items-center justify-center gap-2">
+						<button
+							onclick={() => { resetFilters(); goto(buildUrl({ q: '', source: [], canton: [], statut: [], temp: [], showTransferred: false, page: 0 }), { keepFocus: true, noScroll: true }); }}
+							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-text border border-border rounded-lg bg-white hover:bg-surface-alt cursor-pointer transition-colors"
+						>
+							<Icon name="close" size={16} />
+							Réinitialiser les filtres
+						</button>
+						<button
+							onclick={() => importModalOpen = true}
+							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-md transition-colors"
+						>
+							<Icon name="cloud_download" size={16} />
+							Importer
+						</button>
+					</div>
+				{:else}
+					<h3 class="text-base font-semibold text-text mb-1">Cet onglet est encore vide</h3>
+					<p class="text-sm text-text-muted text-center max-w-md mb-5">
+						Lancez un import depuis les sources publiques pour peupler <em>{tabsConfig.find(t => t.key === data.tab)?.label}</em>.
+					</p>
+					<button
+						onclick={() => importModalOpen = true}
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-md transition-colors"
+					>
+						<Icon name="cloud_download" size={16} />
+						Lancer un import
+					</button>
+				{/if}
+			</div>
+		{:else}
 	<DataTable
 		data={data.leads}
 		{columns}
@@ -622,6 +681,7 @@
 			{/each}
 		{/snippet}
 	</DataTable>
+		{/if}
 	</div>
 	{/if}
 	</div>

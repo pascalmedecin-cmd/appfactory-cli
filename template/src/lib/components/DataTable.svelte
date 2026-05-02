@@ -335,11 +335,20 @@
 				{:else}
 					{#each paged as row, i}
 						<tr
-							class="border-b border-border/40 hover:bg-surface-alt/50 transition-colors duration-150 {onRowClick ? 'cursor-pointer' : ''}"
+							class="border-b border-border/40 hover:bg-surface-alt/50 transition-colors duration-150 {onRowClick ? 'cursor-pointer focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]' : ''}"
+							tabindex={onRowClick ? 0 : undefined}
+							role={onRowClick ? 'button' : undefined}
 							onclick={() => onRowClick?.(row)}
+							onkeydown={(e) => {
+								if (!onRowClick) return;
+								if (e.key === 'Enter' || e.key === ' ') {
+									e.preventDefault();
+									onRowClick(row);
+								}
+							}}
 						>
 							{#if selectable}
-								<td class="dt-td-checkbox" onclick={(e) => e.stopPropagation()}>
+								<td class="dt-td-checkbox" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
 									<label class="relative inline-flex items-center justify-center w-5 h-5 cursor-pointer before:absolute before:content-[''] before:-inset-3">
 										<input type="checkbox" class="w-4 h-4 cursor-pointer" checked={selectedIds.has(row.id)} onchange={() => toggleSelect(row.id)} aria-label="Sélectionner la ligne" />
 									</label>

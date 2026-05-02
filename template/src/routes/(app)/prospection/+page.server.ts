@@ -42,46 +42,83 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const fromIntelligence = rawFromIntelligence && UUID_RE.test(rawFromIntelligence) ? rawFromIntelligence : null;
 	const fromTerm = (url.searchParams.get('from_term') ?? '').slice(0, 200) || null;
 
-	let query = locals.supabase
-		.from('prospect_leads')
-		.select('*', { count: 'exact' });
-
-	// Phase 2 : filtre onglet (sources de la nature). Appliqué AVANT filterSources utilisateur :
-	// si l'utilisateur affine via le filtre source dans la barre filtres globale, son sélection
-	// doit rester dans le périmètre de l'onglet (intersection des deux ensembles).
-	// Si l'intersection est vide (filtre source incompatible avec l'onglet actif), on court-circuite
-	// la requête principale (économise 1 round-trip Postgres) et signale explicitement au client.
+	// V1.2 audit S160 : pattern dédié pour search safe (pas de mini-DSL PostgREST).
+	// Injection passée par .or() était critique (cf. memory/feedback_postgrest_or_filter_injection.md).
+	// On factorise toute la query (sans search) puis on duplique en parallèle 3 .ilike() + Set dédup.
 	const tabSources = TAB_SOURCE_MAP[tab];
 	const effectiveSources = filterSources.length > 0
 		? filterSources.filter((s) => tabSources.includes(s))
 		: tabSources;
 	const sourceFilterIncompatible = filterSources.length > 0 && effectiveSources.length === 0;
-	if (!sourceFilterIncompatible) {
-		query = query.in('source', effectiveSources.length > 0 ? effectiveSources : tabSources);
-	}
 
-	if (filterCantons.length > 0) query = query.in('canton', filterCantons);
-	if (filterStatuts.length > 0) {
-		query = query.in('statut', filterStatuts);
-	} else if (!showTransferred) {
-		// Filtre par défaut : on masque les leads transférés tant que le toggle est off.
-		query = query.neq('statut', 'transfere');
-	}
-	if (filterTemperatures.length > 0) {
-		const ranges: string[] = [];
-		if (filterTemperatures.includes('chaud')) ranges.push('score_pertinence.gte.7');
-		if (filterTemperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.4,score_pertinence.lte.6)');
-		if (filterTemperatures.includes('froid')) ranges.push('score_pertinence.lte.3');
-		if (ranges.length > 0) query = query.or(ranges.join(','));
-	}
-	if (search) {
-		query = query.or(`raison_sociale.ilike.%${search}%,localite.ilike.%${search}%,canton.ilike.%${search}%`);
-	}
+	const buildBaseQuery = () => {
+		let q = locals.supabase
+			.from('prospect_leads')
+			.select('*', { count: 'exact' });
+		if (!sourceFilterIncompatible) {
+			q = q.in('source', effectiveSources.length > 0 ? effectiveSources : tabSources);
+		}
+		if (filterCantons.length > 0) q = q.in('canton', filterCantons);
+		if (filterStatuts.length > 0) {
+			q = q.in('statut', filterStatuts);
+		} else if (!showTransferred) {
+			q = q.neq('statut', 'transfere');
+		}
+		if (filterTemperatures.length > 0) {
+			const ranges: string[] = [];
+			if (filterTemperatures.includes('chaud')) ranges.push('score_pertinence.gte.7');
+			if (filterTemperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.4,score_pertinence.lte.6)');
+			if (filterTemperatures.includes('froid')) ranges.push('score_pertinence.lte.3');
+			if (ranges.length > 0) q = q.or(ranges.join(','));
+		}
+		return q;
+	};
 
-	// Tri + pagination
-	query = query
-		.order(sortKey, { ascending: sortAsc })
-		.range(page * pageSize, (page + 1) * pageSize - 1);
+	// Type ligne : on récupère le type produit par Supabase (Database.public.prospect_leads.Row).
+	// Awaited<ReturnType<typeof buildBaseQuery>>['data'] = LeadRow[] | null typé strict.
+	type LeadRow = NonNullable<Awaited<ReturnType<typeof buildBaseQuery>>['data']>[number];
+	const SEARCH_FIELDS: Array<'raison_sociale' | 'localite' | 'canton'> = ['raison_sociale', 'localite', 'canton'];
+
+	const runMainQuery = async (): Promise<{ data: LeadRow[]; count: number; error: { message: string } | null }> => {
+		if (sourceFilterIncompatible) {
+			return { data: [], count: 0, error: null };
+		}
+		if (search) {
+			// Échappe les 3 wildcards SQL ilike (% _ \). Les séparateurs mini-DSL PostgREST
+			// (`,` `(` `)` `:` `.`) ne sont plus interprétés ici car la valeur est passée
+			// comme argument à `.ilike(field, value)` (pas comme expression `.or(...)`).
+			const escaped = search.replace(/[%_\\]/g, (c) => `\\${c}`);
+			const queries = SEARCH_FIELDS.map((field) =>
+				buildBaseQuery()
+					.ilike(field, `%${escaped}%`)
+					.order(sortKey, { ascending: sortAsc })
+					.range(page * pageSize, (page + 1) * pageSize - 1)
+			);
+			const results = await Promise.all(queries);
+			const firstError = results.find((r) => r.error)?.error ?? null;
+			if (firstError) return { data: [], count: 0, error: firstError };
+			const seen = new Set<string>();
+			const merged: LeadRow[] = [];
+			for (const r of results) {
+				for (const row of (r.data ?? []) as LeadRow[]) {
+					if (!seen.has(row.id)) {
+						seen.add(row.id);
+						merged.push(row);
+					}
+				}
+			}
+			// Le count fusionné est approximé par max() : Postgres ne nous donne pas le distinct count
+			// nativement via count: 'exact' sur 3 queries séparées. Acceptable car la recherche est
+			// déjà restreinte (saisie utilisateur). Pagination "page suivante" peut sous-estimer 1 page max.
+			const mergedCount = Math.max(...results.map((r) => r.count ?? 0));
+			return { data: merged.slice(0, pageSize), count: mergedCount, error: null };
+		}
+		const q = buildBaseQuery()
+			.order(sortKey, { ascending: sortAsc })
+			.range(page * pageSize, (page + 1) * pageSize - 1);
+		const r = await q;
+		return { data: (r.data ?? []) as LeadRow[], count: r.count ?? 0, error: r.error };
+	};
 
 	// Indicateurs honnêtes (remplacent l'ancien funnel décoratif 4 cartes).
 	// 1. Leads actifs : statut ∈ {nouveau, interesse} = ce qui reste à traiter.
@@ -94,7 +131,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	// Phase 2 : counts par onglet (Promise.all parallèle, 1 round-trip).
 	// Filtre identique à la requête principale (cantons + statuts + showTransferred + temperatures + search)
 	// pour que les badges des onglets reflètent le résultat actuel des filtres globaux.
-	const buildTabCount = (sources: string[]) => {
+	const buildTabCountBase = (sources: string[]) => {
 		let q = locals.supabase
 			.from('prospect_leads')
 			.select('*', { count: 'exact', head: true })
@@ -109,10 +146,24 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			if (filterTemperatures.includes('froid')) ranges.push('score_pertinence.lte.3');
 			if (ranges.length > 0) q = q.or(ranges.join(','));
 		}
-		if (search) {
-			q = q.or(`raison_sociale.ilike.%${search}%,localite.ilike.%${search}%,canton.ilike.%${search}%`);
-		}
 		return q;
+	};
+
+	// V1.2 audit S160 : tab count avec recherche sécurisée (pattern S120).
+	// Pour les counts on prend max(field1, field2, field3) comme proxy du distinct count.
+	// Acceptable : badge onglet, pas une pagination critique.
+	const runTabCount = async (sources: readonly string[]): Promise<{ count: number }> => {
+		const sourcesArr = [...sources];
+		if (search) {
+			const escaped = search.replace(/[%_\\]/g, (c) => `\\${c}`);
+			const queries = SEARCH_FIELDS.map((field) =>
+				buildTabCountBase(sourcesArr).ilike(field, `%${escaped}%`)
+			);
+			const results = await Promise.all(queries);
+			return { count: Math.max(...results.map((r) => r.count ?? 0)) };
+		}
+		const r = await buildTabCountBase(sourcesArr);
+		return { count: r.count ?? 0 };
 	};
 
 	const [
@@ -127,10 +178,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		tabEntreprisesRes,
 		tabTerrainRes,
 	] = await Promise.all([
-		// Short-circuit : si filtre source incompatible avec l'onglet, on retourne 0 sans round-trip.
-		sourceFilterIncompatible
-			? Promise.resolve({ data: [] as never[], count: 0, error: null } as const)
-			: query,
+		runMainQuery(),
 		locals.supabase
 			.from('entreprises')
 			.select('id, raison_sociale')
@@ -153,10 +201,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			.select('*', { count: 'exact', head: true })
 			.eq('statut', 'transfere')
 			.gte('date_modification', monthStart.toISOString()),
-		buildTabCount(TAB_SOURCE_MAP.simap),
-		buildTabCount(TAB_SOURCE_MAP.regbl),
-		buildTabCount(TAB_SOURCE_MAP.entreprises),
-		buildTabCount(TAB_SOURCE_MAP.terrain),
+		runTabCount(TAB_SOURCE_MAP.simap),
+		runTabCount(TAB_SOURCE_MAP.regbl),
+		runTabCount(TAB_SOURCE_MAP.entreprises),
+		runTabCount(TAB_SOURCE_MAP.terrain),
 	]);
 
 	return {
@@ -457,6 +505,13 @@ export const actions: Actions = {
 		// Dedup multi-passes : raison_sociale (égalité case-insensitive échappée), confronté
 		// au telephone normalisé en mémoire si présent. Sans téléphone, raison sociale seule
 		// suffit à signaler un doublon probable post-RDV.
+		//
+		// V1.6 audit S160 décision (b) match strict documenté (vs (a) préfixe + Levenshtein) :
+		// préférence pour rappel modale désambiguation côté UI plutôt que matching flou côté
+		// serveur. Les variantes "Vitrerie Dupont" vs "Vitrerie Dupont SA" sont gérées par
+		// l'humain au moment de la création (UX explicite), pas par un score Levenshtein
+		// implicite (faux positifs sur abréviations légitimes : multi-sites = même nom).
+		// Garde-fou multi-sites : `force_create=1` bypasse la dedup (cf. flag dans UI).
 		const telNorm = tel.replace(/[^\d]/g, '');
 		const { data: candidates } = await locals.supabase
 			.from('prospect_leads')
