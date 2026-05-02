@@ -118,6 +118,26 @@
 		persistWidths();
 	}
 
+	// V2.2 audit S160 : redim colonne au clavier (WCAG 2.1.1).
+	// ArrowLeft/Right ±10px, Shift+Arrow ±50px (large step), Home reset minWidth, End cap 2000.
+	function handleResizeKeydown(e: KeyboardEvent, colKey: string, minW: number) {
+		const th = (e.currentTarget as HTMLElement).parentElement as HTMLElement | null;
+		if (!th) return;
+		const current = colWidths[colKey] ?? th.offsetWidth;
+		const step = e.shiftKey ? 50 : 10;
+		let next = current;
+		if (e.key === 'ArrowRight') next = current + step;
+		else if (e.key === 'ArrowLeft') next = current - step;
+		else if (e.key === 'Home') next = minW;
+		else if (e.key === 'End') next = 2000;
+		else return;
+		e.preventDefault();
+		next = Math.max(minW, Math.min(2000, next));
+		colWidths = { ...colWidths, [colKey]: next };
+		th.style.width = next + 'px';
+		persistWidths();
+	}
+
 	function startResize(e: PointerEvent, colKey: string, minW: number) {
 		e.preventDefault();
 		e.stopPropagation();
@@ -234,11 +254,12 @@
 	{#if searchable}
 		<div class="sticky top-0 z-20 px-4 py-3 border-b border-border bg-white {embedded ? '' : 'rounded-t-xl'} flex items-center gap-3">
 			<input
-				type="text"
+				type="search"
 				value={search}
 				oninput={(e) => handleSearchInput((e.target as HTMLInputElement).value)}
 				placeholder={searchPlaceholder}
-				class="w-full md:max-w-sm px-3 py-2 md:py-1.5 text-sm border border-border rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+				aria-label={searchPlaceholder}
+				class="w-full md:max-w-sm px-3 py-2 md:py-1.5 text-sm border border-[var(--color-border-input)] rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 			/>
 		</div>
 	{/if}
@@ -317,8 +338,13 @@
 									class="col-resizer"
 									role="separator"
 									aria-orientation="vertical"
+									tabindex="0"
 									aria-label="Redimensionner la colonne {col.label}"
+									aria-valuenow={colWidths[col.key] ?? col.defaultWidth ?? 0}
+									aria-valuemin={col.minWidth ?? 60}
+									aria-valuemax={2000}
 									onpointerdown={(e) => startResize(e, col.key, col.minWidth ?? 60)}
+									onkeydown={(e) => handleResizeKeydown(e, col.key, col.minWidth ?? 60)}
 								></span>
 							{/if}
 						</th>
@@ -378,7 +404,7 @@
 					<label class="flex items-center gap-2 text-xs">
 						<span class="hidden md:inline">Afficher</span>
 						<select
-							class="h-8 px-2 border border-border rounded-md bg-white text-text cursor-pointer text-xs"
+							class="h-8 px-2 border border-[var(--color-border-input)] rounded-md bg-white text-text cursor-pointer text-xs"
 							onchange={(e) => onPageSizeChange?.(Number((e.target as HTMLSelectElement).value))}
 							aria-label="Nombre d'entrées par page"
 						>

@@ -20,22 +20,51 @@
 
 	let { tabs, active, onSelect }: Props = $props();
 
+	let tabsBarRef = $state<HTMLDivElement | null>(null);
+
 	function handleMobileChange(e: Event) {
 		const target = e.currentTarget as HTMLSelectElement;
 		onSelect(target.value as ProspectionTabKey);
 	}
+
+	// V2.1 audit S160 : navigation clavier ARIA tablist (WAI-ARIA Authoring Practices).
+	// ArrowLeft/Right cycle les tabs avec activation immédiate (automatic activation).
+	// Home/End vont au premier/dernier. La tab active reste tabindex=0, les autres tabindex=-1
+	// (roving tabindex) pour ne pas piéger le focus sur tablist au Tab clavier.
+	function handleTabKeydown(e: KeyboardEvent, currentKey: ProspectionTabKey) {
+		const idx = tabs.findIndex(t => t.key === currentKey);
+		if (idx < 0) return;
+		let nextIdx = idx;
+		if (e.key === 'ArrowRight') nextIdx = (idx + 1) % tabs.length;
+		else if (e.key === 'ArrowLeft') nextIdx = (idx - 1 + tabs.length) % tabs.length;
+		else if (e.key === 'Home') nextIdx = 0;
+		else if (e.key === 'End') nextIdx = tabs.length - 1;
+		else return;
+		e.preventDefault();
+		const nextKey = tabs[nextIdx].key;
+		onSelect(nextKey);
+		// Focus le bouton tab cible après reactivité Svelte (next tick).
+		queueMicrotask(() => {
+			const next = tabsBarRef?.querySelector<HTMLButtonElement>(`#tab-${nextKey}`);
+			next?.focus();
+		});
+	}
 </script>
 
-<div class="tabs-bar" role="tablist" aria-label="Filtrer la prospection par nature">
+<div bind:this={tabsBarRef} class="tabs-bar" role="tablist" aria-label="Filtrer la prospection par nature">
 	{#each tabs as tab (tab.key)}
 		<button
 			type="button"
 			role="tab"
+			id="tab-{tab.key}"
 			aria-selected={active === tab.key}
+			aria-controls="tabpanel-{tab.key}"
+			tabindex={active === tab.key ? 0 : -1}
 			class="tab"
 			class:tab--active={active === tab.key}
 			class:tab--empty={tab.count === 0}
 			onclick={() => onSelect(tab.key)}
+			onkeydown={(e) => handleTabKeydown(e, tab.key)}
 		>
 			<Tooltip content={tab.tooltip} width={300}>
 				<span class="tab-inner">
@@ -51,8 +80,8 @@
 </div>
 
 <div class="tabs-mobile">
-	<label class="visually-hidden" for="tabs-mobile-select">Onglet actif</label>
-	<select id="tabs-mobile-select" value={active} onchange={handleMobileChange}>
+	<label class="visually-hidden" for="tabs-mobile-select">Filtrer par nature de signal</label>
+	<select id="tabs-mobile-select" value={active} aria-label="Filtrer par nature de signal" onchange={handleMobileChange}>
 		{#each tabs as tab (tab.key)}
 			<option value={tab.key}>{tab.label} ({tab.count})</option>
 		{/each}

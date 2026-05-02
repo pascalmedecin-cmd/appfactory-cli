@@ -70,7 +70,8 @@
 
 	.score-pill--froid {
 		background: var(--color-info-light);
-		color: #475669;
+		/* V2.6 audit S160 : passé de #475669 (4.43:1) à #3F4D5F (≈ 4.92:1) WCAG AA. */
+		color: #3F4D5F;
 	}
 	.score-pill--froid :global(svg) { stroke: #5A7190; }
 

@@ -11,9 +11,34 @@
 	let { content, anchor = 'center', width = 280, children }: Props = $props();
 
 	let id = $props.id();
+
+	// V2.8 audit S160 : Escape dismiss un tooltip ouvert (WCAG 1.4.13).
+	// On marque le host comme "dismissed" temporairement, au prochain hover/focus le state se réinitialise.
+	let hostRef = $state<HTMLSpanElement | null>(null);
+	let dismissed = $state(false);
+
+	function handleHostKeydown(e: KeyboardEvent) {
+		if (e.key === 'Escape' && hostRef?.matches(':hover, :focus-within')) {
+			e.stopPropagation();
+			dismissed = true;
+		}
+	}
+
+	function resetDismissed() {
+		dismissed = false;
+	}
 </script>
 
-<span class="tip-host">
+<svelte:window onkeydown={handleHostKeydown} />
+
+<span
+	bind:this={hostRef}
+	class="tip-host"
+	class:tip-host--dismissed={dismissed}
+	onmouseleave={resetDismissed}
+	onfocusout={resetDismissed}
+	role="presentation"
+>
 	{@render children()}
 	<span
 		class="tip"
@@ -87,5 +112,11 @@
 	.tip-host:hover .tip--start,
 	.tip-host:focus-within .tip--start {
 		transform: translate(-12px, 0);
+	}
+	/* V2.8 audit S160 : Escape force la fermeture, override hover/focus-within. */
+	.tip-host--dismissed .tip,
+	.tip-host--dismissed .tip--start {
+		opacity: 0 !important;
+		visibility: hidden !important;
 	}
 </style>

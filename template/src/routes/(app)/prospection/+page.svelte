@@ -535,12 +535,15 @@
 		</div>
 	{/if}
 	{#if selectAllNotice}
-		<div class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-sm {selectAllNotice.type === 'error' ? 'border-danger bg-danger-light text-danger' : 'border-primary bg-primary-light text-text'}">
+		<div
+			class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-sm {selectAllNotice.type === 'error' ? 'border-danger bg-danger-light text-danger' : 'border-primary bg-primary-light text-text'}"
+			role={selectAllNotice.type === 'error' ? 'alert' : 'status'}
+		>
 			<div class="flex items-center gap-2">
 				<Icon name={selectAllNotice.type === 'error' ? 'error' : 'info'} size={16} class="shrink-0" />
 				<span>{selectAllNotice.message}</span>
 			</div>
-			<button onclick={() => (selectAllNotice = null)} class="text-xs opacity-60 hover:opacity-100 cursor-pointer">Fermer</button>
+			<button onclick={() => (selectAllNotice = null)} aria-label="Fermer la notification" class="text-xs opacity-60 hover:opacity-100 cursor-pointer">Fermer</button>
 		</div>
 	{/if}
 
@@ -571,6 +574,8 @@
 	<!-- Phase 2 : onglets par nature de signal collés au DataTable (1 shell visuel cohérent) -->
 	<div class="bg-white rounded-xl border border-border shadow-sm flex flex-1 flex-col min-h-0 overflow-visible">
 		<ProspectionTabs tabs={tabsConfig} active={data.tab as ProspectionTabKey} onSelect={selectTab} />
+		<!-- V2.1 audit S160 : tabpanel ARIA wrapper. Lié à #tab-{key} via aria-labelledby. -->
+		<div role="tabpanel" id="tabpanel-{data.tab}" aria-labelledby="tab-{data.tab}" class="flex flex-1 flex-col min-h-0">
 		{#if data.sourceFilterIncompatible}
 			<div class="flex items-start gap-2 px-4 py-3 border-b border-warning/30 bg-warning-light text-warning text-sm" role="status">
 				<Icon name="info" size={18} class="shrink-0 mt-0.5" />
@@ -682,6 +687,7 @@
 		{/snippet}
 	</DataTable>
 		{/if}
+		</div><!-- /tabpanel V2.1 -->
 	</div>
 	{/if}
 	</div>

@@ -65,7 +65,10 @@
 		bind:this={buttonEl}
 		type="button"
 		onclick={toggle}
-		class="flex items-center gap-2 w-full h-10 px-3 text-sm border border-border rounded-lg bg-white box-border cursor-pointer transition-colors hover:border-primary/40"
+		aria-haspopup="listbox"
+		aria-expanded={open}
+		aria-label={tooltip ? `${label} : ${tooltip}` : label}
+		class="flex items-center gap-2 w-full h-10 px-3 text-sm border border-border rounded-lg bg-white box-border cursor-pointer transition-colors hover:border-primary/40 focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2"
 		title={tooltip}
 	>
 		{#if icon}

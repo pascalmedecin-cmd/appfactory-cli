@@ -103,6 +103,12 @@
 		event.preventDefault();
 		submitForm(false);
 	}
+
+	// V2.11 audit S160 : focus programmatique sur le bandeau désambiguation au mount.
+	// Permet aux lecteurs d'écran de lire immédiatement le warning + raison de l'apparition.
+	function focusOnMount(node: HTMLElement) {
+		queueMicrotask(() => node.focus());
+	}
 </script>
 
 <ModalForm
@@ -113,8 +119,14 @@
 	maxWidth="max-w-md"
 >
 	{#if ambiguousCandidates.length > 0}
-		<div class="space-y-4">
-			<div class="flex items-start gap-3 p-3 rounded-xl bg-warning-light border border-warning/30">
+		<!-- V2.10 + V2.11 audit S160 : step désambiguation annoncé aux lecteurs d'écran +
+		     focus programmatique sur le bandeau warning au mount + errorMsg visible. -->
+		<div class="space-y-4" role="status" aria-live="polite">
+			<div
+				class="flex items-start gap-3 p-3 rounded-xl bg-warning-light border border-warning/30"
+				tabindex="-1"
+				use:focusOnMount
+			>
 				<Icon name="warning" size={18} class="text-warning mt-0.5" />
 				<p class="text-sm text-text-body leading-snug">
 					Plusieurs prospects existent déjà sous ce nom. Choisissez le bon, ou créez quand même un nouveau lead (chaîne, multi-sites).
@@ -139,6 +151,13 @@
 					</li>
 				{/each}
 			</ul>
+
+			{#if errorMsg}
+				<div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-danger/30 bg-danger-light text-danger text-sm" role="alert">
+					<Icon name="error" size={16} class="shrink-0" />
+					<span>{errorMsg}</span>
+				</div>
+			{/if}
 
 			<div class="flex items-center justify-between gap-3 pt-2">
 				<button
@@ -186,7 +205,7 @@
 						autocapitalize="words"
 						required
 						maxlength="500"
-						class="w-full h-11 px-3.5 py-2.5 text-base border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+						class="w-full h-11 px-3.5 py-2.5 text-base border border-[var(--color-border-input)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					/>
 				</div>
 
@@ -201,7 +220,7 @@
 						autocomplete="name"
 						autocapitalize="words"
 						maxlength="200"
-						class="w-full h-11 px-3.5 py-2.5 text-base border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+						class="w-full h-11 px-3.5 py-2.5 text-base border border-[var(--color-border-input)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					/>
 				</div>
 
@@ -216,7 +235,7 @@
 						autocomplete="tel"
 						inputmode="tel"
 						maxlength="30"
-						class="w-full h-11 px-3.5 py-2.5 text-base border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+						class="w-full h-11 px-3.5 py-2.5 text-base border border-[var(--color-border-input)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					/>
 				</div>
 
@@ -229,12 +248,12 @@
 						bind:value={notes}
 						placeholder="Ex : RDV 5 mai vitrage SE"
 						maxlength="1000"
-						class="w-full h-11 px-3.5 py-2.5 text-base border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+						class="w-full h-11 px-3.5 py-2.5 text-base border border-[var(--color-border-input)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					/>
 				</div>
 
 				{#if errorMsg}
-					<div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-danger/30 bg-danger-light text-danger text-sm">
+					<div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-danger/30 bg-danger-light text-danger text-sm" role="alert">
 						<Icon name="error" size={16} class="shrink-0" />
 						<span>{errorMsg}</span>
 					</div>

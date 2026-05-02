@@ -18,6 +18,9 @@
 	/* Borders */
 	--color-border: #E5E7EB;
 	--color-border-strong: #D1D5DB;
+	/* V2.7 audit S160 : token dédié borders interactives (inputs, selects).
+	   #ADB5BD = ratio ≈ 3:1 sur fond blanc → respecte WCAG 2.2 AA 1.4.11 (composants UI). */
+	--color-border-input: #ADB5BD;
 
 	/* Text */
 	--color-text: #111827;
@@ -130,10 +133,21 @@
 	color: var(--color-primary);
 }
 
-/* Focus visible : accessibilité clavier */
+/* V2.5 audit S160 : focus-visible globaux (WCAG 2.4.7 AA).
+   Étendu à tous éléments interactifs : input/select/textarea + ARIA roles + tabindex custom.
+   Override possible localement (col-resizer offset négatif intra-cell, tr[role=button] offset
+   négatif pour ne pas casser la border-bottom). */
 button:focus-visible,
 a:focus-visible,
-[role="button"]:focus-visible {
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible,
+[role="tab"]:focus-visible,
+[role="menuitem"]:focus-visible,
+[role="separator"]:focus-visible,
+[role="option"]:focus-visible,
+[tabindex]:focus-visible {
 	outline: 2px solid var(--color-primary);
 	outline-offset: 2px;
 	border-radius: var(--radius-sm);
