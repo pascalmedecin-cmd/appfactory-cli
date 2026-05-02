@@ -1,7 +1,8 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
+	import { toasts } from '$lib/stores/toast';
 	import DataTable from '$lib/components/DataTable.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import Badge from '$lib/components/Badge.svelte';
@@ -298,6 +299,39 @@
 	// V1.1 audit S160 : count des leads enrichissables sur la page courante.
 	// Migré ici depuis un {@const} top-level (placement invalide en Svelte 5).
 	const enrichablesCount = $derived(data.leads.filter(l => l.statut !== 'transfere').length);
+
+	// V3.4 audit S160 : sauvegarder la recherche courante (filtres actifs) en 1 clic.
+	// Affordance manquante avant : "Mes recherches" en lecture seule, aucune création depuis filtres.
+	let savePanelOpen = $state(false);
+	let saveRechercheNom = $state('');
+	let saveRechercheLoading = $state(false);
+
+	async function handleSaveRecherche() {
+		const nom = saveRechercheNom.trim();
+		if (!nom) return;
+		saveRechercheLoading = true;
+		try {
+			const fd = new FormData();
+			fd.set('nom', nom);
+			fd.set('sources', JSON.stringify(filterSources));
+			fd.set('cantons', JSON.stringify(filterCantons));
+			fd.set('temperatures', JSON.stringify(filterTemperatures));
+			fd.set('alerte_active', 'false');
+			const res = await fetch('?/saveRecherche', { method: 'POST', body: fd });
+			if (res.ok) {
+				toasts.success(`Recherche « ${nom} » enregistrée`);
+				saveRechercheNom = '';
+				savePanelOpen = false;
+				await invalidateAll();
+			} else {
+				toasts.error('Enregistrement impossible');
+			}
+		} catch {
+			toasts.error('Erreur réseau');
+		} finally {
+			saveRechercheLoading = false;
+		}
+	}
 </script>
 
 <div class="flex flex-col gap-3 md:gap-6 md:h-[calc(100dvh-var(--header-height)-3rem)]">
@@ -310,14 +344,15 @@
 		<span class="text-border">·</span>
 		<span class="text-text-muted">{data.transferresMoisCount} transféré{data.transferresMoisCount > 1 ? 's' : ''} ce mois</span>
 	</div>
-	<div class="hidden md:grid grid-cols-3 gap-0 border-y border-border">
+	<!-- V3.6 audit S160 (M-29) : indicateurs flat sémantiquement listés via dl/dt/dd. -->
+	<dl class="hidden md:grid grid-cols-3 gap-0 border-y border-border m-0">
 		<div class="flex items-center gap-4 px-7 py-7">
 			<div class="flex h-11 w-11 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
 				<Icon name="users" size={22} class="text-info" />
 			</div>
 			<div class="flex flex-col gap-0.5 min-w-0">
-				<span class="text-[36px] leading-none font-bold tabular-nums text-primary-dark tracking-tight">{data.leadsActifsCount}</span>
-				<span class="text-[13px] font-medium text-text-muted">Leads actifs</span>
+				<dd class="text-[36px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.leadsActifsCount}</dd>
+				<dt class="text-[13px] font-medium text-text-muted">Leads actifs</dt>
 			</div>
 		</div>
 		<div class="flex items-center gap-4 px-7 py-7 border-l border-border">
@@ -325,8 +360,8 @@
 				<Icon name="landmark" size={22} class="text-info" />
 			</div>
 			<div class="flex flex-col gap-0.5 min-w-0">
-				<span class="text-[36px] leading-none font-bold tabular-nums text-primary-dark tracking-tight">{data.marchesOuvertsCount}</span>
-				<span class="text-[13px] font-medium text-text-muted">Marchés publics ouverts</span>
+				<dd class="text-[36px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.marchesOuvertsCount}</dd>
+				<dt class="text-[13px] font-medium text-text-muted">Marchés publics ouverts</dt>
 			</div>
 		</div>
 		<div class="flex items-center gap-4 px-7 py-7 border-l border-border">
@@ -334,11 +369,11 @@
 				<Icon name="repeat" size={22} class="text-info" />
 			</div>
 			<div class="flex flex-col gap-0.5 min-w-0">
-				<span class="text-[36px] leading-none font-bold tabular-nums text-primary-dark tracking-tight">{data.transferresMoisCount}</span>
-				<span class="text-[13px] font-medium text-text-muted">Transférés ce mois</span>
+				<dd class="text-[36px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.transferresMoisCount}</dd>
+				<dt class="text-[13px] font-medium text-text-muted">Transférés ce mois</dt>
 			</div>
 		</div>
-	</div>
+	</dl>
 
 	<!-- Actions principales (V1.1 audit S160 : démasquées même quand totalLeads=0,
 	     sinon impossible d'amorcer un onglet vide ou un système jamais peuplé).
@@ -352,7 +387,7 @@
 				>
 					<Icon name="bookmarks" size={18} />
 					<span>Mes recherches</span>
-					<span class="ml-1 px-1.5 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{data.recherches.length}</span>
+					<span class="ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{data.recherches.length}</span>
 				</button>
 			{/if}
 		</div>
@@ -365,7 +400,7 @@
 				>
 					<Icon name="auto_fix_high" size={18} />
 					<span>Enrichir cette page</span>
-					<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
+					<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
 				</button>
 			{/if}
 			<button
@@ -405,7 +440,7 @@
 							>
 								<Icon name="bookmarks" size={18} class="text-text-muted" />
 								<span class="flex-1">Mes recherches</span>
-								<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{data.recherches.length}</span>
+								<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{data.recherches.length}</span>
 							</button>
 						{/if}
 						{#if enrichablesCount > 0}
@@ -416,7 +451,7 @@
 							>
 								<Icon name="auto_fix_high" size={18} class="text-prosp-enrich" />
 								<span class="flex-1">Enrichir cette page</span>
-								<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
+								<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
 							</button>
 						{/if}
 						<button
@@ -445,7 +480,7 @@
 			<Icon name="filter_list" size={18} />
 			<span>Filtres</span>
 			{#if activeFilterCount > 0}
-				<span class="px-1.5 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{activeFilterCount}</span>
+				<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{activeFilterCount}</span>
 			{/if}
 			<Icon name={mobileFiltersOpen ? 'expand_less' : 'expand_more'} size={18} class="text-text-muted" />
 		</button>
@@ -459,29 +494,32 @@
 	</div>
 	{#if mobileFiltersOpen}
 		<div id="filtres-mobile-panel" class="md:hidden rounded-xl border border-border bg-white shadow-xs">
-			<div class="grid grid-cols-2 gap-3 p-3">
+			<!-- V3.6 audit S160 (M-30) : fieldset+legend pour grouper les filtres sémantiquement. -->
+			<fieldset class="grid grid-cols-2 gap-3 p-3">
+				<legend class="sr-only">Filtres prospection</legend>
 				<MultiSelectDropdown bind:selected={filterStatuts} options={statutOptions} icon="checklist" label="Statut" tooltip="Filtrer par statut de traitement" />
 				<MultiSelectDropdown bind:selected={filterTemperatures} options={temperatureOptions} icon="thermostat" label="Température" tooltip="Niveau d'intérêt estimé du prospect" />
 				<MultiSelectDropdown bind:selected={filterCantons} options={cantonOptions} icon="location_on" label="Canton" tooltip="Zones géographiques" />
 				<MultiSelectDropdown bind:selected={filterSources} options={sourceOptions} icon="database" label="Source" tooltip="Registres et bases de données" />
-			</div>
+			</fieldset>
 		</div>
 	{/if}
 	<!-- Bloc filtres desktop -->
 	<div class="hidden md:block rounded-xl border border-border bg-white shadow-xs">
-		<div class="grid grid-cols-2 lg:grid-cols-4 gap-3 p-3">
+		<fieldset class="grid grid-cols-2 lg:grid-cols-4 gap-3 p-3">
+			<legend class="sr-only">Filtres prospection</legend>
 			<MultiSelectDropdown bind:selected={filterStatuts} options={statutOptions} icon="checklist" label="Statut" tooltip="Filtrer par statut de traitement" />
 			<MultiSelectDropdown bind:selected={filterTemperatures} options={temperatureOptions} icon="thermostat" label="Température" tooltip="Niveau d'intérêt estimé du prospect" />
 			<MultiSelectDropdown bind:selected={filterCantons} options={cantonOptions} icon="location_on" label="Canton" tooltip="Zones géographiques" />
 			<MultiSelectDropdown bind:selected={filterSources} options={sourceOptions} icon="database" label="Source" tooltip="Registres et bases de données" />
-		</div>
+		</fieldset>
 		<div class="flex flex-wrap items-center gap-2 px-3 pb-3 pt-0">
 			<!-- Phase 0 : toggle "Afficher les transférés" off par défaut, persistant via URL ?showTransferred=1 -->
 			<label class="flex items-center gap-2 text-xs text-text-muted cursor-pointer select-none">
 				<input
 					type="checkbox"
 					bind:checked={showTransferred}
-					class="h-3.5 w-3.5 cursor-pointer accent-primary"
+					class="h-4 w-4 cursor-pointer accent-primary"
 				/>
 				<span>Afficher aussi les leads transférés</span>
 			</label>
@@ -491,6 +529,14 @@
 					<button onclick={resetFilters} class="flex items-center gap-1 px-2 py-1 text-xs text-text-muted hover:text-danger cursor-pointer transition-colors">
 						<Icon name="close" size={14} />
 						Réinitialiser
+					</button>
+					<!-- V3.4 audit S160 : sauvegarder la recherche courante en 1 clic. -->
+					<button
+						onclick={() => savePanelOpen = !savePanelOpen}
+						class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-text border border-border rounded-lg box-border bg-white hover:bg-surface-alt cursor-pointer transition-colors"
+					>
+						<Icon name="bookmark_add" size={16} />
+						Sauvegarder cette recherche
 					</button>
 				{/if}
 				<button
@@ -503,6 +549,38 @@
 			</div>
 		</div>
 	</div>
+
+	<!-- V3.4 audit S160 : panneau inline pour sauvegarder la recherche courante. -->
+	{#if savePanelOpen}
+		<div class="flex flex-wrap items-center gap-2 p-3 rounded-xl border border-primary/30 bg-primary-light/30 shadow-xs">
+			<Icon name="bookmark_add" size={18} class="text-primary shrink-0" />
+			<label for="save-recherche-nom" class="text-sm font-medium text-text shrink-0">Nom de la recherche</label>
+			<input
+				id="save-recherche-nom"
+				type="text"
+				bind:value={saveRechercheNom}
+				placeholder="Ex : SIMAP Vaud chaud"
+				maxlength="120"
+				class="flex-1 min-w-[180px] h-10 px-3 text-sm border border-[var(--color-border-input)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+				onkeydown={(e) => { if (e.key === 'Enter' && saveRechercheNom.trim()) handleSaveRecherche(); if (e.key === 'Escape') savePanelOpen = false; }}
+			/>
+			<button
+				type="button"
+				onclick={handleSaveRecherche}
+				disabled={!saveRechercheNom.trim() || saveRechercheLoading}
+				class="h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+			>
+				{saveRechercheLoading ? 'Enregistrement…' : 'Enregistrer'}
+			</button>
+			<button
+				type="button"
+				onclick={() => { savePanelOpen = false; saveRechercheNom = ''; }}
+				class="h-10 px-3 text-sm text-text-muted hover:text-text cursor-pointer"
+			>
+				Annuler
+			</button>
+		</div>
+	{/if}
 
 	<!-- Recherches sauvegardées -->
 	<RecherchesPanel bind:open={recherchesOpen} recherches={data.recherches} onCharger={chargerRecherche} />

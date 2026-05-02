@@ -113,7 +113,7 @@
 		display: inline-flex;
 		align-items: stretch;
 		padding: 0;
-		font-size: 15px;
+		font-size: 14px;
 		font-weight: 500;
 		color: var(--color-text-muted);
 		border: none;
@@ -128,8 +128,8 @@
 	.tab-inner {
 		display: inline-flex;
 		align-items: center;
-		gap: 10px;
-		padding: 16px 22px;
+		gap: 12px;
+		padding: 16px 24px;
 	}
 	.tab:hover { color: var(--color-text); }
 	.tab--active {
@@ -141,31 +141,33 @@
 	.tab-icon-wrap {
 		width: 26px;
 		height: 26px;
-		border-radius: 7px;
+		border-radius: 8px;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		transition: transform 150ms ease;
-	}
-	.tab--active .tab-icon-wrap {
-		transform: scale(1.02);
+		/* V3.2 audit S160 (H-20 + L-13) : repos en neutre, pas de transform scale.
+		   Couleurs sémantiques uniquement sur tab active = 1 actif coloré vs 3 neutres
+		   (pattern Linear/Stripe). Avant : palette terracotta/sauge/prune/pétrole simultanée. */
+		background: var(--color-surface-alt);
+		color: var(--color-text-muted);
+		transition: background 150ms ease, color 150ms ease;
 	}
 
-	/* Couleurs par nature d'onglet (subtiles, premium) */
-	.tab-icon-wrap[data-color='simap'] {
+	/* Couleurs sémantiques par nature d'onglet, appliquées UNIQUEMENT sur tab active. */
+	.tab--active .tab-icon-wrap[data-color='simap'] {
 		background: var(--color-tab-simap-bg);
 		color: var(--color-tab-simap);
 	}
-	.tab-icon-wrap[data-color='regbl'] {
+	.tab--active .tab-icon-wrap[data-color='regbl'] {
 		background: var(--color-tab-regbl-bg);
 		color: var(--color-tab-regbl);
 	}
-	.tab-icon-wrap[data-color='entreprises'] {
+	.tab--active .tab-icon-wrap[data-color='entreprises'] {
 		background: var(--color-tab-entreprises-bg);
 		color: var(--color-tab-entreprises);
 	}
-	.tab-icon-wrap[data-color='terrain'] {
+	.tab--active .tab-icon-wrap[data-color='terrain'] {
 		background: var(--color-tab-terrain-bg);
 		color: var(--color-tab-terrain);
 	}
@@ -174,7 +176,7 @@
 	}
 
 	.tab-count {
-		padding: 1px 8px;
+		padding: 2px 8px;
 		border-radius: 999px;
 		font-size: 11px;
 		font-weight: 600;
@@ -182,10 +184,9 @@
 		background: var(--color-surface-alt);
 		color: var(--color-text-muted);
 	}
-	.tab--active .tab-count {
-		background: var(--color-primary-light);
-		color: var(--color-primary);
-	}
+	/* V3.2 audit S160 (L-14) : retirer count bg primary-light sur active.
+	   Le border-bottom + font-weight + couleur primary-dark suffisent comme signaux
+	   de sélection. Évite double signal redondant + dilution palette primary. */
 	.tab--empty .tab-count {
 		background: transparent;
 		color: var(--color-border);

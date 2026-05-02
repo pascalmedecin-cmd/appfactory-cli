@@ -269,7 +269,7 @@
 			<thead class="sticky top-0 z-10">
 				<tr class="border-b border-border bg-surface-alt">
 					{#if selectable}
-						<th class="dt-th-checkbox">
+						<th class="dt-th-checkbox" scope="col">
 							<label class="relative inline-flex items-center justify-center w-5 h-5 cursor-pointer before:absolute before:content-[''] before:-inset-3">
 								<input type="checkbox" class="w-4 h-4 cursor-pointer" checked={selectedIds.size === paged.length && paged.length > 0} onchange={toggleSelectAll} aria-label="Tout sélectionner" />
 							</label>
@@ -277,6 +277,7 @@
 					{/if}
 					{#each columns as col}
 						<th
+							scope="col"
 							class="dt-th text-left text-xs font-semibold text-text-muted uppercase tracking-wider {col.class ?? ''}"
 							style={resizable && colWidths[col.key] ? `width: ${colWidths[col.key]}px;` : (resizable && col.defaultWidth ? `width: ${col.defaultWidth}px;` : '')}
 							class:dt-th-sorted={sortKey === col.key}

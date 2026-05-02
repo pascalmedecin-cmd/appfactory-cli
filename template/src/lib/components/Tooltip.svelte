@@ -59,11 +59,11 @@
 	}
 	.tip {
 		position: absolute;
-		top: calc(100% + 10px);
+		top: calc(100% + 12px);
 		left: 50%;
 		transform: translate(-50%, -4px);
 		width: var(--tip-w, 280px);
-		padding: 10px 14px;
+		padding: 12px 16px;
 		background: white;
 		color: var(--color-text-body);
 		font-size: 12px;

@@ -186,25 +186,28 @@
 	}
 	@media (max-width: 1024px) { .triage-card { grid-template-columns: 1fr; } }
 
-	/* Reset button native styles (border, font, background) puis appliquer pattern aside primary-dark. */
+	/* V3.3 audit S160 : section header sobre Linear/Stripe/Attio-style.
+	   Avant : bandeau primary-dark + ornements cercles ::before/::after + count 88px =
+	   pattern Mailchimp/HubSpot 2018-2020. Après : fond surface-alt neutre, count modéré,
+	   couleur text-primary sur fond clair, ornements retirés. */
 	.triage-aside {
-		background: var(--color-primary-dark, #0A1628);
-		color: white;
-		padding: 32px 28px;
+		background: var(--color-surface-alt, #F7F8FB);
+		color: var(--color-text);
+		padding: 28px;
 		position: relative;
-		overflow: hidden;
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
-		min-height: 320px;
+		min-height: 280px;
 		cursor: pointer;
 		transition: background 180ms ease;
 		text-align: left;
 		border: 0;
+		border-right: 1px solid var(--color-border);
 		font: inherit;
 		width: 100%;
 	}
-	.triage-aside:hover { background: #050C18; }
+	.triage-aside:hover { background: #EEF1F5; }
 	.triage-aside:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
 	@media (max-width: 1024px) {
 		.triage-aside {
@@ -214,75 +217,55 @@
 			padding: 20px 24px;
 			gap: 16px;
 			flex-wrap: wrap;
+			border-right: 0;
+			border-bottom: 1px solid var(--color-border);
 		}
-	}
-
-	.triage-aside::before {
-		content: '';
-		position: absolute;
-		top: -60px; right: -60px;
-		width: 220px; height: 220px;
-		background: rgba(255, 255, 255, 0.04);
-		border-radius: 50%;
-		pointer-events: none;
-	}
-	.triage-aside::after {
-		content: '';
-		position: absolute;
-		bottom: -40px; left: -40px;
-		width: 160px; height: 160px;
-		background: rgba(255, 255, 255, 0.04);
-		border-radius: 50%;
-		pointer-events: none;
 	}
 
 	.triage-aside-kicker {
 		font-size: 11px;
-		letter-spacing: 0.16em;
+		letter-spacing: 0.14em;
 		text-transform: uppercase;
-		color: rgba(255, 255, 255, 0.6);
+		color: var(--color-text-muted);
 		font-weight: 600;
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
-		position: relative;
 	}
 	.triage-aside-count {
-		font-size: 88px;
+		font-size: 44px;
 		font-weight: 700;
 		line-height: 1;
-		color: white;
-		letter-spacing: -0.04em;
-		margin: 16px 0 8px;
-		position: relative;
+		color: var(--color-primary-dark);
+		letter-spacing: -0.025em;
+		margin: 12px 0 6px;
+		font-variant-numeric: tabular-nums;
 	}
 	@media (max-width: 1024px) {
-		.triage-aside-count { font-size: 44px; margin: 0; }
+		.triage-aside-count { font-size: 32px; margin: 0; }
 	}
 	.triage-aside-label {
 		font-size: 14px;
-		color: rgba(255, 255, 255, 0.75);
+		color: var(--color-text-body);
 		line-height: 1.4;
-		position: relative;
 	}
 	.triage-aside-cta {
 		font-size: 12.5px;
-		color: rgba(190, 211, 235, 0.95);
+		color: var(--color-primary);
 		font-weight: 500;
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
 		margin-top: 16px;
 		transition: color 180ms ease;
-		position: relative;
 		letter-spacing: 0.005em;
 		width: fit-content;
 		padding-bottom: 4px;
-		border-bottom: 1px solid rgba(190, 211, 235, 0.30);
+		border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
 	}
 	.triage-aside:hover .triage-aside-cta {
-		color: #DCEAF7;
-		border-bottom-color: rgba(220, 234, 247, 0.55);
+		color: var(--color-primary-hover, var(--color-primary));
+		border-bottom-color: var(--color-primary);
 	}
 
 	.triage-list { display: flex; flex-direction: column; }
