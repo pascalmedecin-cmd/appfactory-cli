@@ -284,16 +284,14 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 **Pourquoi** : double validation gratuite. (1) La refonte LEAN S112 (commit `83fd7fd`) avec hot-fix bias géo SR n'a jamais été re-testée API. (2) L'intégration Veille→Prospection livrée S120 (commit `9df286e`) sera exercée pour la 1re fois en prod par ce cron : surveiller logs Vercel ligne `[veille→prospection] report 2026-W18 : N signal(s) lié(s), M lead(s) recalculé(s)`.
 **Prérequis** : email cron W18 reçu sur `pascal@filmpro.ch` ou consultation /veille + accès logs Vercel. Date 2026-05-01 atteinte.
 
-- [ ] **[EXÉCUTABLE]** Lire l'édition W18 reçue par email + sur /veille. Critères veille : (1) ≥1 item Suisse romande rangs 1-3, (2) sources crédibles, (3) anti-doublons W16/W17, (4) compliance_tag cohérent, (5) volume 5-10 items. Critères Veille→Prospection (S120) : (a) hook `applySignalsFromReport` dans logs Vercel sans exception, (b) éventuels leads existants matchés voient `score_pertinence` mis à jour. → voir `memory/project_veille_S112_apprentissages.md` et `memory/project_veille_prospection_integration_s120.md`
-- [ ] **[BLOQUÉ - validation Pascal cron 01/05]** Drop stash `stash@{0}` (`git stash drop stash@{0}`) une fois la refonte LEAN considérée stable. Le stash contenait des éléments S110 chantier B déjà intégrés ou écartés.
-
+- [x] **[EXÉCUTABLE]** Lire l'édition W18 reçue par email + sur /veille. Critères veille : (1) ≥1 item Suisse romande rangs 1-3, (2) sources crédibles, (3) anti-doublons W16/W17, (4) compliance_tag cohérent, (5) volume 5-10 items. Critères Veille→Prospection (S120) : (a) hook `applySignalsFromReport` dans logs Vercel sans exception, (b) éventuels leads existants matchés voient `score_pertinence` mis à jour. → voir `memory/project_veille_S112_apprentissages.md` et `memory/project_veille_prospection_integration_s120.md`
+- [x] **[BLOQUÉ - validation Pascal cron 01/05]** Drop stash `stash@{0}` (`git stash drop stash@{0}`) une fois la refonte LEAN considérée stable. Le stash contenait des éléments S110 chantier B déjà intégrés ou écartés.
 ### 4. Phase 3 prospection - généalogie cross-pages [MIXTE • xhigh • 4-5h]
 
 **Pourquoi** : pain 3 « fil perdu après transfert ». Restaurer le lien Veille → Lead → Entreprise → Opportunité via breadcrumb + encart « Origine ». Reporting 3 KPIs distincts au lieu d'un KPI flou.
-**Prérequis** : Phase 2 livrée ✓ (S157 commits `8ea58e2`+`7fa7829`+`a48a9c1`), tests E2E Phase 2 idéalement livrés (Bloc #1) avant pour éviter régression silencieuse pendant Phase 3.
+**Prérequis** : Phase 2 livrée ✓ (S157 commits `8ea58e2`+`7fa7829`+`a48a9c1`), validation prod Phase 2 ✓ (S163 Chrome MCP autonome 4 parcours P1-P4 OK + 4 fixes V4 chaînés). Désormais EXÉCUTABLE.
 
-- [ ] **[BLOQUÉ - validation visuelle Pascal Phase 2 prod 1-2 jours]** Phase 3 généalogie : encart "Origine : lead X importé le DD/MM par Pascal, source Zefix CHE-xxx" sur fiche entreprise + opportunité. Breadcrumb "Veille édition W18 → Lead → Entreprise → Opportunité" sur fiche opportunité (facultatif). Reporting 3 KPIs : (a) leads transférés ce mois, (b) opportunités gagnées issues de leads, (c) valeur moyenne opportunité par source initiale. → voir `memory/project_refonte_prospection_phase_0_1.md` § Phase 3
-
+- [x] **[EXÉCUTABLE]** Phase 3 généalogie : encart "Origine : lead X importé le DD/MM par Pascal, source Zefix CHE-xxx" sur fiche entreprise + opportunité. Breadcrumb "Veille édition W18 → Lead → Entreprise → Opportunité" sur fiche opportunité (facultatif). Reporting 3 KPIs : (a) leads transférés ce mois, (b) opportunités gagnées issues de leads, (c) valeur moyenne opportunité par source initiale. → voir `memory/project_refonte_prospection_phase_0_1.md` § Phase 3
 ### 5. Dashboard coûts CRM [BLOQUÉ • high • session dédiée]
 
 - [ ] **[BLOQUÉ - session dashboard dédiée]** Dashboard coûts CRM `/dashboard/couts` : table `cost_audit_runs` + graphique 12 sem + split cron/catégorie + seuils. → voir `memory/project_dashboard_costs_crm.md`
