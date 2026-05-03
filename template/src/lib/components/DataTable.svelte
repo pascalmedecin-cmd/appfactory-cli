@@ -44,6 +44,9 @@
 		// Mode "embedded" : le parent fournit déjà le shell visuel (rounded + border + shadow + bg).
 		// Utilisé par /prospection Phase 2 où ProspectionTabs + DataTable partagent un seul wrapper.
 		embedded = false,
+		// V4 audit S163 (F-V4-04) : aria-label descriptif par ligne (lecteur d'écran).
+		// Sans cette prop, role=button + tabindex=0 sont annoncés sans contexte ("bouton").
+		rowAriaLabel = null as (((row: T) => string) | null),
 	}: {
 		data: T[];
 		columns: Column[];
@@ -70,6 +73,7 @@
 		pageSizeOptions?: number[] | null;
 		onPageSizeChange?: ((size: number) => void) | null;
 		embedded?: boolean;
+		rowAriaLabel?: ((row: T) => string) | null;
 	} = $props();
 
 	let search = $state(serverMode ? serverSearch : '');
@@ -365,6 +369,7 @@
 							class="border-b border-border/40 hover:bg-surface-alt/50 transition-colors duration-150 {onRowClick ? 'cursor-pointer focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]' : ''}"
 							tabindex={onRowClick ? 0 : undefined}
 							role={onRowClick ? 'button' : undefined}
+							aria-label={onRowClick && rowAriaLabel ? rowAriaLabel(row) : undefined}
 							onclick={() => onRowClick?.(row)}
 							onkeydown={(e) => {
 								if (!onRowClick) return;

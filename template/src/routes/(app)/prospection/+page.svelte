@@ -243,6 +243,80 @@
 		},
 	]);
 
+	// V4 audit S163 (F-V4-01/02/03) : CTA + empty state contextuels par scope d'onglet.
+	// Terrain = saisie sur place (RDV chantier), pas import. Entreprises = scope sémantique.
+	type HeaderCTA = { label: string; labelMobile: string; icon: string; ariaLabel: string; action: () => void };
+	const headerCTA = $derived.by((): HeaderCTA => {
+		switch (data.tab) {
+			case 'terrain':
+				return {
+					label: 'Créer une fiche terrain',
+					labelMobile: 'Créer',
+					icon: 'bolt',
+					ariaLabel: 'Créer une fiche terrain (lead express)',
+					action: () => (leadExpressOpen = true),
+				};
+			case 'entreprises':
+				return {
+					label: 'Importer des entreprises',
+					labelMobile: 'Importer',
+					icon: 'cloud_download',
+					ariaLabel: 'Importer des entreprises depuis Zefix ou search.ch',
+					action: () => (importModalOpen = true),
+				};
+			default:
+				return {
+					label: 'Importer des prospects',
+					labelMobile: 'Importer',
+					icon: 'cloud_download',
+					ariaLabel: 'Importer des prospects depuis les sources publiques',
+					action: () => (importModalOpen = true),
+				};
+		}
+	});
+
+	type EmptyStateCopy = { icon: string; title: string; body: string; ctaLabel: string; ctaIcon: string; ctaAction: () => void };
+	const emptyStateCopy = $derived.by((): EmptyStateCopy => {
+		switch (data.tab) {
+			case 'terrain':
+				return {
+					icon: 'smartphone',
+					title: "Aucune fiche terrain pour l'instant",
+					body: "Créez votre première fiche depuis le terrain (RDV chantier, repérage de site) en quelques secondes via le lead express.",
+					ctaLabel: 'Créer une fiche',
+					ctaIcon: 'bolt',
+					ctaAction: () => (leadExpressOpen = true),
+				};
+			case 'entreprises':
+				return {
+					icon: 'business',
+					title: 'Aucune entreprise importée',
+					body: 'Importez des entreprises depuis le registre du commerce (Zefix) ou search.ch pour prospecter à froid par canton et secteur.',
+					ctaLabel: 'Importer des entreprises',
+					ctaIcon: 'cloud_download',
+					ctaAction: () => (importModalOpen = true),
+				};
+			case 'regbl':
+				return {
+					icon: 'construction',
+					title: 'Aucun chantier RegBL',
+					body: "Lancez un import du registre fédéral des bâtiments pour récupérer les permis de construire et autorisations en cours.",
+					ctaLabel: 'Lancer un import',
+					ctaIcon: 'cloud_download',
+					ctaAction: () => (importModalOpen = true),
+				};
+			default:
+				return {
+					icon: 'landmark',
+					title: 'Aucun marché public SIMAP',
+					body: "Lancez un import des appels d'offres SIMAP publiés par les collectivités publiques.",
+					ctaLabel: 'Lancer un import',
+					ctaIcon: 'cloud_download',
+					ctaAction: () => (importModalOpen = true),
+				};
+		}
+	});
+
 	function selectTab(tab: ProspectionTabKey) {
 		// V1.5 audit S160 : reset sélection avant switch.
 		// Sinon BatchActionsBar affiche actions sur leads invisibles (autres onglets).
@@ -412,12 +486,15 @@
 				<Icon name="bolt" size={18} />
 				<span>Lead express</span>
 			</button>
+			<!-- V4 audit S163 (F-V4-01) : CTA contextuel par onglet via headerCTA. -->
 			<button
-				onclick={() => importModalOpen = true}
+				onclick={headerCTA.action}
+				aria-label={headerCTA.ariaLabel}
 				class="flex items-center gap-2 h-11 md:h-10 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg box-border cursor-pointer shadow-md transition-colors"
 			>
-				<Icon name="cloud_download" size={18} />
-				<span>Importer<span class="hidden sm:inline">&nbsp;des prospects</span></span>
+				<Icon name={headerCTA.icon} size={18} />
+				<span class="sm:hidden">{headerCTA.labelMobile}</span>
+				<span class="hidden sm:inline">{headerCTA.label}</span>
 			</button>
 			<!-- Kebab mobile : actions secondaires -->
 			<div class="md:hidden relative" bind:this={mobileMenuRef}>
@@ -668,10 +745,12 @@
 			</div>
 		{:else if data.totalLeads === 0}
 			<!-- V1.1 H-18 audit S160 : empty state intermédiaire actionnable.
-			     Distingue "onglet vide à cause des filtres" de "onglet jamais peuplé". -->
+			     V4 audit S163 (F-V4-02/03) : empty state contextuel par scope d'onglet via emptyStateCopy.
+			     Distingue "onglet vide à cause des filtres" de "onglet jamais peuplé".
+			     Terrain = saisie sur place (lead express), pas import. -->
 			<div class="flex flex-col items-center justify-center py-12 px-6">
 				<div class="flex items-center justify-center w-14 h-14 rounded-2xl mb-4 bg-surface-alt">
-					<Icon name={activeFilterCount > 0 || data.search ? 'filter_alt_off' : 'inbox'} size={26} class="text-text-muted" />
+					<Icon name={activeFilterCount > 0 || data.search ? 'filter_alt_off' : emptyStateCopy.icon} size={26} class="text-text-muted" />
 				</div>
 				{#if activeFilterCount > 0 || data.search}
 					<h3 class="text-base font-semibold text-text mb-1">Aucun prospect ne correspond à ces filtres</h3>
@@ -687,24 +766,22 @@
 							Réinitialiser les filtres
 						</button>
 						<button
-							onclick={() => importModalOpen = true}
+							onclick={headerCTA.action}
 							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-md transition-colors"
 						>
-							<Icon name="cloud_download" size={16} />
-							Importer
+							<Icon name={headerCTA.icon} size={16} />
+							{headerCTA.labelMobile}
 						</button>
 					</div>
 				{:else}
-					<h3 class="text-base font-semibold text-text mb-1">Cet onglet est encore vide</h3>
-					<p class="text-sm text-text-muted text-center max-w-md mb-5">
-						Lancez un import depuis les sources publiques pour peupler <em>{tabsConfig.find(t => t.key === data.tab)?.label}</em>.
-					</p>
+					<h3 class="text-base font-semibold text-text mb-1">{emptyStateCopy.title}</h3>
+					<p class="text-sm text-text-muted text-center max-w-md mb-5">{emptyStateCopy.body}</p>
 					<button
-						onclick={() => importModalOpen = true}
+						onclick={emptyStateCopy.ctaAction}
 						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-md transition-colors"
 					>
-						<Icon name="cloud_download" size={16} />
-						Lancer un import
+						<Icon name={emptyStateCopy.ctaIcon} size={16} />
+						{emptyStateCopy.ctaLabel}
 					</button>
 				{/if}
 			</div>
@@ -721,6 +798,13 @@
 		selectable={true}
 		bind:selectedIds
 		onRowClick={openDetail}
+		rowAriaLabel={(lead) => {
+			const parts: string[] = [`Lead ${lead.raison_sociale}`];
+			if (lead.canton) parts.push(`canton ${lead.canton}`);
+			if (typeof lead.score_pertinence === 'number') parts.push(`score ${lead.score_pertinence} sur 12`);
+			if (lead.statut) parts.push(`statut ${lead.statut}`);
+			return parts.join(', ');
+		}}
 		searchPlaceholder="Rechercher un prospect…"
 		emptyMessage="Aucun prospect correspondant aux filtres."
 		serverMode={true}
