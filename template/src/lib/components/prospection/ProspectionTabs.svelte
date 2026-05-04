@@ -65,7 +65,7 @@
 				onkeydown={(e) => handleTabKeydown(e, tab.key)}
 			>
 				<span class="tab-inner">
-					<span class="tab-icon-wrap" aria-hidden="true">
+					<span class="tab-icon" aria-hidden="true">
 						<Icon name={tab.icon} size={16} />
 					</span>
 					<span class="tab-label">{tab.label}</span>
@@ -124,10 +124,10 @@
 		flex-shrink: 0;
 	}
 
-	/* TAB : design distinctif premium par source.
-	   Repos : icône colorée subtile (data-color tinted), label muted, count discret.
-	   Actif : bordure-bottom 3px source-color + bg light source-tinted + label primary-dark.
-	   Pattern Linear/Attio : 1 actif richement coloré vs 3 répos colorés (pas tout-grey-monocolor). */
+	/* TAB : design distinctif premium pattern Linear/Attio.
+	   Repos : icône colorée source-color (signal d'identité), label muted, count discret. Pas de wrap.
+	   Actif : underline 2px source-color + label primary-dark + count plus contrasté. Pas de fond cellule.
+	   L'icône colorée porte l'identité au repos comme à l'actif (cohérence). */
 	.tab {
 		display: inline-flex;
 		align-items: stretch;
@@ -138,7 +138,7 @@
 		border: none;
 		background: none;
 		cursor: pointer;
-		border-bottom: 3px solid transparent;
+		border-bottom: 2px solid transparent;
 		margin-bottom: -1px;
 		transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
 		white-space: nowrap;
@@ -147,7 +147,7 @@
 	.tab-inner {
 		display: inline-flex;
 		align-items: center;
-		gap: 12px;
+		gap: 10px;
 		padding: 14px 20px;
 	}
 	.tab-label {
@@ -161,78 +161,34 @@
 		background: color-mix(in srgb, var(--color-surface-alt) 50%, transparent);
 	}
 
-	/* Repos : icône-wrap colorée subtile par source (signal d'identité dès le repos).
-	   Couleur source à 14% saturation = tinted distinctif sans crier. */
-	.tab-icon-wrap {
-		width: 30px;
-		height: 30px;
-		border-radius: 8px;
+	/* Icône : couleur source-color au repos (identité visible immédiatement) et à l'actif.
+	   Pas de wrap coloré, pas de fond. L'icône Lucide est le seul marqueur d'identité chromatique. */
+	.tab-icon {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+		transition: color 150ms ease;
 	}
-	.tab[data-color='simap'] .tab-icon-wrap {
-		background: color-mix(in srgb, var(--color-tab-simap) 12%, transparent);
-		color: color-mix(in srgb, var(--color-tab-simap) 70%, var(--color-text-muted));
-	}
-	.tab[data-color='regbl'] .tab-icon-wrap {
-		background: color-mix(in srgb, var(--color-tab-regbl) 12%, transparent);
-		color: color-mix(in srgb, var(--color-tab-regbl) 70%, var(--color-text-muted));
-	}
-	.tab[data-color='entreprises'] .tab-icon-wrap {
-		background: color-mix(in srgb, var(--color-tab-entreprises) 12%, transparent);
-		color: color-mix(in srgb, var(--color-tab-entreprises) 70%, var(--color-text-muted));
-	}
-	.tab[data-color='terrain'] .tab-icon-wrap {
-		background: color-mix(in srgb, var(--color-tab-terrain) 12%, transparent);
-		color: color-mix(in srgb, var(--color-tab-terrain) 70%, var(--color-text-muted));
-	}
+	.tab[data-color='simap'] .tab-icon { color: var(--color-tab-simap); }
+	.tab[data-color='regbl'] .tab-icon { color: var(--color-tab-regbl); }
+	.tab[data-color='entreprises'] .tab-icon { color: var(--color-tab-entreprises); }
+	.tab[data-color='terrain'] .tab-icon { color: var(--color-tab-terrain); }
 
-	/* ACTIF : couleur source pleine + bordure 3px + bg subtle + label primary-dark. */
+	/* ACTIF : underline 2px source-color + label primary-dark. Pas de fond cellule. */
 	.tab--active {
 		font-weight: 600;
+		color: var(--color-primary-dark);
 	}
-	.tab--active[data-color='simap'] {
-		border-bottom-color: var(--color-tab-simap);
-		background: var(--color-tab-simap-bg);
-	}
-	.tab--active[data-color='regbl'] {
-		border-bottom-color: var(--color-tab-regbl);
-		background: var(--color-tab-regbl-bg);
-	}
-	.tab--active[data-color='entreprises'] {
-		border-bottom-color: var(--color-tab-entreprises);
-		background: var(--color-tab-entreprises-bg);
-	}
-	.tab--active[data-color='terrain'] {
-		border-bottom-color: var(--color-tab-terrain);
-		background: var(--color-tab-terrain-bg);
-	}
-	.tab--active[data-color='simap'] .tab-icon-wrap {
-		background: var(--color-tab-simap);
-		color: white;
-	}
-	.tab--active[data-color='regbl'] .tab-icon-wrap {
-		background: var(--color-tab-regbl);
-		color: white;
-	}
-	.tab--active[data-color='entreprises'] .tab-icon-wrap {
-		background: var(--color-tab-entreprises);
-		color: white;
-	}
-	.tab--active[data-color='terrain'] .tab-icon-wrap {
-		background: var(--color-tab-terrain);
-		color: white;
-	}
-	.tab--active[data-color='simap'] .tab-label { color: var(--color-tab-simap); }
-	.tab--active[data-color='regbl'] .tab-label { color: var(--color-tab-regbl); }
-	.tab--active[data-color='entreprises'] .tab-label { color: var(--color-tab-entreprises); }
-	.tab--active[data-color='terrain'] .tab-label { color: var(--color-tab-terrain); }
+	.tab--active[data-color='simap'] { border-bottom-color: var(--color-tab-simap); }
+	.tab--active[data-color='regbl'] { border-bottom-color: var(--color-tab-regbl); }
+	.tab--active[data-color='entreprises'] { border-bottom-color: var(--color-tab-entreprises); }
+	.tab--active[data-color='terrain'] { border-bottom-color: var(--color-tab-terrain); }
+	.tab--active .tab-label { color: var(--color-primary-dark); }
 
-	/* Empty tab : icône stroke renforcé pour différencier visuellement. */
-	.tab--empty .tab-icon-wrap :global(svg) { stroke-width: 2.2; }
+	/* Empty tab : icône en gris muted (signal "rien à voir ici"). */
+	.tab--empty .tab-icon { color: var(--color-text-muted); }
+	.tab--empty .tab-icon :global(svg) { stroke-width: 1.8; opacity: 0.6; }
 
 	.tab-count {
 		padding: 2px 8px;
@@ -244,8 +200,8 @@
 		color: var(--color-text-muted);
 	}
 	.tab--active .tab-count {
-		background: white;
-		color: inherit;
+		background: var(--color-primary-light);
+		color: var(--color-primary-dark);
 	}
 	.tab--empty .tab-count {
 		background: transparent;
