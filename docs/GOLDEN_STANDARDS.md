@@ -1,6 +1,6 @@
 # Golden Standards — CRM FilmPro
 
-**Statut** : v7 (refonte /prospection phases 0+1 + scoring 2026-05-01)
+**Statut** : v9 (décisions policy D1 spacing 28px + D2 mobile h-11 figées 2026-05-04. Rappel : v8 référencée dans CLAUDE.md S164 mais jamais formalisée en doc — v9 consolide.)
 **Source** : extraction `/prospection` chrome MCP + arbitrage 5 anomalies + mockup Phase 0+1 validé
 **Scope** : transverse à toutes les pages CRM (prospection, contacts, entreprises, pipeline, signaux, dashboard, veille). Wizards et formulaires de cadrage hors scope.
 **Référence machine** : `.claude/goldens/audit-uiux-golden-v7-2026-05-01.json` (consommé par `/audit-uiux`)
@@ -16,8 +16,8 @@
 | # | Anomalie | Décision |
 |---|---|---|
 | 1 | Hiérarchie couleur (bleu vs ambre) | **Primary = bleu `#2F5A9E`** (statu quo). Accent ambre `#F79009` réservé aux signaux d'attention (badges chauds, alertes, états exceptionnels). Aucune migration. |
-| 2 | Échelle spacing | **Tailwind canonique** : `4 / 8 / 12 / 16 / 24 / 32 / 48`. Retrait de 2, 6, 10, 20 (anomalies issues de `*-1.5`, `*-2.5`). Migration ciblée Phase 4. |
-| 3 | Hauteur boutons | **40px uniforme** (`h-10` Tailwind). `box-sizing: border-box` pour neutraliser l'effet bordure 1px (cas du bouton outline `Enrichir` qui passait à 42px). |
+| 2 | Échelle spacing | **Tailwind canonique étendu** : `4 / 8 / 12 / 16 / 24 / 28 / 32 / 48` (D1 v9, 2026-05-04). 28 ajouté pour les indicateurs flat header `/prospection` calibrés visuellement. Retrait de 2, 6, 10, 20 (anomalies issues de `*-1.5`, `*-2.5`). |
+| 3 | Hauteur boutons | **40px desktop uniforme** (`h-10` Tailwind), `box-sizing: border-box`. **Exception mobile** : `h-11` (44px) sur composants tactiles (LeadExpress mobile, menu kebab, ActionButton mobile). Conforme HIG iOS 44×44 minimum, pattern industriel standard, pas une régression (D2 v9, 2026-05-04). |
 | 4 | Sémantique titre | **`<h1>` obligatoire** en haut de chaque page CRM. Rendu Tailwind `text-[22px] font-semibold leading-none`. A11y + cohérence cross-projet (formation-ia est passé en H1 sémantique en S100). |
 | 5 | Bibliothèque icônes | **Migration vers Lucide** (`lucide-svelte`). Override de la reco statu quo (Material Symbols Outlined). Cohérence cross-projet avec formation-ia + gain perf -80kb (font Material supprimée). Migration ~120 occurrences = tâche dédiée backlog. |
 
@@ -80,7 +80,7 @@ Hors scope golden. Réservée à des pages métier explicitement scopées.
 
 ### 2.4 Spacing
 
-Échelle stricte Tailwind canonique. Tout pixel hors de cette échelle est une violation à corriger.
+Échelle stricte Tailwind canonique étendue (D1 v9, 2026-05-04). Tout pixel hors de cette échelle est une violation à corriger.
 
 | Token | Valeur | Tailwind |
 |---|---|---|
@@ -89,10 +89,13 @@ Hors scope golden. Réservée à des pages métier explicitement scopées.
 | `md` | 12px | `*-3` |
 | `lg` | 16px | `*-4` |
 | `xl` | 24px | `*-6` |
+| `xl-plus` | 28px | `*-7` |
 | `2xl` | 32px | `*-8` |
 | `3xl` | 48px | `*-12` |
 
-**Interdits** : 2, 6, 10, 20. Détection en Phase 3 via `grep -rE "[pmg]-(1\.5|2\.5|5)\b"`.
+**28px (D1 v9)** : retenu pour les indicateurs flat header `/prospection` (cf. § 3.7d, `padding: 28px 28px 28px 0`). Calibrés visuellement, retour à 32 casserait la perception premium. Usage limité aux composants header de page liste, pas en spacing générique.
+
+**Interdits** : 2, 6, 10, 20. Détection via `grep -rE "[pmg]-(1\.5|2\.5|5)\b"`.
 
 ### 2.5 Radius
 
@@ -427,8 +430,8 @@ Tout écran liste doit avoir un empty state explicite avec :
 
 ### Don't
 - Pas d'option « Autre » dans les select (règle UX session 42)
-- Pas de spacing 2/6/10/20px
-- Pas de hauteur de bouton hors 40px
+- Pas de spacing 2/6/10/20px (28px autorisé sur header indicateurs flat uniquement, cf. § 2.4 et § 3.7d)
+- Pas de hauteur de bouton hors 40px desktop / 44px (h-11) mobile (HIG iOS, cf. décision 3 v9)
 - Pas de `<div onclick>` (utiliser `<button>` ou `<a>`)
 - Pas de Material Symbols dans nouveau code (migration en cours)
 - Pas de width+height forcés sur les images sans calcul de ratio
