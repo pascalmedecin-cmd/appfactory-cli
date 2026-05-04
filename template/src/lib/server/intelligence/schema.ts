@@ -71,7 +71,7 @@ export const ImpactAxisEnum = z.enum([
 	'reglementation'
 ]);
 
-export const StatusEnum = z.enum(['published', 'draft', 'error']);
+export const StatusEnum = z.enum(['published', 'draft', 'error', 'running']);
 
 // Refuse les schemes non-HTTP(S) (protège contre javascript:, data:, etc.)
 // Limite 2000 chars (RFC max effectif) : certains CMS/CDN ont URLs longues avec
