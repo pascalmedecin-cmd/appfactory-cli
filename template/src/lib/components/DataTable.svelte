@@ -325,7 +325,7 @@
 					{#each columns as col}
 						<th
 							scope="col"
-							class="dt-th text-left text-xs font-semibold text-text-muted {col.class ?? ''}"
+							class="dt-th text-left text-xs font-semibold text-text-muted uppercase tracking-wider {col.class ?? ''}"
 							style={resizable && colWidths[col.key] ? `width: ${colWidths[col.key]}px;` : (resizable && col.defaultWidth ? `width: ${col.defaultWidth}px;` : '')}
 							class:dt-th-sorted={sortKey === col.key}
 							class:dt-th-sorted-asc={sortKey === col.key && sortAsc}
