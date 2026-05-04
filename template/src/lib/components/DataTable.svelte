@@ -494,13 +494,16 @@
 <style>
 	/* Padding par défaut, repris du baseline /contacts non-dense */
 	.dt-th { padding: 12px 16px; position: relative; }
-	.dt-td { padding: 12px 16px; }
+	/* +4px à gauche sur td vs th : décale visuellement le contenu pour camoufler les
+	   décalages de glyph bearing (uppercase header vs sentence-case cellule, badges
+	   avec padding interne, etc.). Effet : rendu plus aéré, alignement perçu propre. */
+	.dt-td { padding: 12px 16px 12px 20px; }
 	.dt-th-checkbox { width: 40px; padding: 12px 16px; }
 	.dt-td-checkbox { width: 40px; padding: 12px 16px; }
 
 	/* Densité opt-in (Phase 2 prospection) : padding réduit, 13px police */
 	:global(table.dt-dense) .dt-th { padding: 8px 12px; font-size: 11px; }
-	:global(table.dt-dense) .dt-td { padding: 7px 12px; font-size: 13px; }
+	:global(table.dt-dense) .dt-td { padding: 7px 12px 7px 16px; font-size: 13px; }
 	:global(table.dt-dense) .dt-th-checkbox,
 	:global(table.dt-dense) .dt-td-checkbox { padding: 7px 8px; }
 
