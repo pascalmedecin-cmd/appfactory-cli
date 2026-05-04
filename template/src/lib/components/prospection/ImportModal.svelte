@@ -282,7 +282,8 @@
 
 		<!-- ZEFIX parcours : SEARCH-FIRST (input nom prominent en grand, filtres secondaires en chips) -->
 		{#if activeTab === 'zefix'}
-			<div id="import-panel-zefix" role="tabpanel" aria-labelledby="tab-zefix" class="space-y-5">
+			<div id="import-panel-zefix" role="tabpanel" aria-labelledby={visibleTabs.length > 1 ? 'tab-zefix' : undefined}
+				aria-label={visibleTabs.length === 1 ? sourceMeta.zefix.title : undefined} class="space-y-5">
 				<!-- Hero pédagogique riche -->
 				<div class="p-5 rounded-2xl flex gap-4" style={`background: var(${activeMeta.bgCssVar}); border: 1px solid color-mix(in srgb, var(${activeMeta.borderCssVar}), transparent 70%);`}>
 					<div class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style={`background: color-mix(in srgb, var(${activeMeta.cssVar}), transparent 88%);`}>
@@ -357,7 +358,8 @@
 
 		<!-- SIMAP parcours : PERIOD-FIRST (chips horizontaux période, ton "veille en flux") -->
 		{#if activeTab === 'simap'}
-			<div id="import-panel-simap" role="tabpanel" aria-labelledby="tab-simap" class="space-y-5">
+			<div id="import-panel-simap" role="tabpanel" aria-labelledby={visibleTabs.length > 1 ? 'tab-simap' : undefined}
+				aria-label={visibleTabs.length === 1 ? sourceMeta.simap.title : undefined} class="space-y-5">
 				<div class="p-5 rounded-2xl flex gap-4" style={`background: var(${activeMeta.bgCssVar}); border: 1px solid color-mix(in srgb, var(${activeMeta.borderCssVar}), transparent 70%);`}>
 					<div class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style={`background: color-mix(in srgb, var(${activeMeta.cssVar}), transparent 88%);`}>
 						<span style={`color: var(${activeMeta.cssVar});`}><Icon name={activeMeta.hero.icon} size={26} /></span>
@@ -424,7 +426,8 @@
 
 		<!-- REGBL parcours : MAP-FIRST (cantons en chips XL grille, signature visuelle "carto") -->
 		{#if activeTab === 'regbl'}
-			<div id="import-panel-regbl" role="tabpanel" aria-labelledby="tab-regbl" class="space-y-5">
+			<div id="import-panel-regbl" role="tabpanel" aria-labelledby={visibleTabs.length > 1 ? 'tab-regbl' : undefined}
+				aria-label={visibleTabs.length === 1 ? sourceMeta.regbl.title : undefined} class="space-y-5">
 				<div class="p-5 rounded-2xl flex gap-4" style={`background: var(${activeMeta.bgCssVar}); border: 1px solid color-mix(in srgb, var(${activeMeta.borderCssVar}), transparent 70%);`}>
 					<div class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style={`background: color-mix(in srgb, var(${activeMeta.cssVar}), transparent 88%);`}>
 						<span style={`color: var(${activeMeta.cssVar});`}><Icon name={activeMeta.hero.icon} size={26} /></span>
