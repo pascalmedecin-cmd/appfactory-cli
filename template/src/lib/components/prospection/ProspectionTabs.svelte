@@ -1,6 +1,5 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
-	import Tooltip from '$lib/components/Tooltip.svelte';
 	import type { ProspectionTabKey } from '$lib/prospection-utils';
 	import type { Snippet } from 'svelte';
 
@@ -9,7 +8,6 @@
 		label: string;
 		icon: string;
 		count: number;
-		tooltip: string;
 		colorVar: string; // ex: 'simap' → utilise --color-tab-simap / --color-tab-simap-bg
 	};
 
@@ -66,15 +64,13 @@
 				onclick={() => onSelect(tab.key)}
 				onkeydown={(e) => handleTabKeydown(e, tab.key)}
 			>
-				<Tooltip content={tab.tooltip} width={300}>
-					<span class="tab-inner">
-						<span class="tab-icon-wrap" aria-hidden="true">
-							<Icon name={tab.icon} size={16} />
-						</span>
-						<span class="tab-label">{tab.label}</span>
-						<span class="tab-count" aria-label="{tab.count} entrées">{tab.count}</span>
+				<span class="tab-inner">
+					<span class="tab-icon-wrap" aria-hidden="true">
+						<Icon name={tab.icon} size={16} />
 					</span>
-				</Tooltip>
+					<span class="tab-label">{tab.label}</span>
+					<span class="tab-count" aria-label="{tab.count} entrées">{tab.count}</span>
+				</span>
 			</button>
 		{/each}
 	</div>
