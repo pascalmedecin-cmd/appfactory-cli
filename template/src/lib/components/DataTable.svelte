@@ -7,6 +7,10 @@
 		key: string;
 		label: string;
 		shortLabel?: string;
+		// srLabel : label texte pour lecteur d'écran/tooltip resize quand `label` est vide
+		// volontairement (ex. colonne raison sociale visuellement sans header). Évite
+		// "Redimensionner la colonne " a11y et préserve le contexte sortable.
+		srLabel?: string;
 		sortable?: boolean;
 		class?: string;
 		render?: (row: T) => string;
@@ -321,7 +325,7 @@
 					{#each columns as col}
 						<th
 							scope="col"
-							class="dt-th text-left text-xs font-semibold text-text-muted uppercase tracking-wider {col.class ?? ''}"
+							class="dt-th text-left text-xs font-semibold text-text-muted {col.class ?? ''}"
 							style={resizable && colWidths[col.key] ? `width: ${colWidths[col.key]}px;` : (resizable && col.defaultWidth ? `width: ${col.defaultWidth}px;` : '')}
 							class:dt-th-sorted={sortKey === col.key}
 							class:dt-th-sorted-asc={sortKey === col.key && sortAsc}
@@ -332,6 +336,7 @@
 								<button
 									type="button"
 									class="dt-th-button"
+									aria-label={col.label || col.srLabel || col.key}
 									onclick={() => toggleSort(col.key)}
 								>
 									{#if col.infoTooltip}
@@ -383,7 +388,7 @@
 									role="separator"
 									aria-orientation="vertical"
 									tabindex="0"
-									aria-label="Redimensionner la colonne {col.label}"
+									aria-label="Redimensionner la colonne {col.label || col.srLabel || col.key}"
 									aria-valuenow={colWidths[col.key] ?? col.defaultWidth ?? 0}
 									aria-valuemin={col.minWidth ?? 60}
 									aria-valuemax={2000}
