@@ -1,0 +1,75 @@
+# Cron veille hebdomadaire FilmPro - exécuté hors Vercel pour s'affranchir
+# du cap durée 300s (Hobby) qui a fait timeout le pipeline Anthropic streaming
+# vendredi 01/05/2026 (W18 perdue) et vendredi 02/05/2026 (rerun manuel S166
+# HTTP 504 FUNCTION_INVOCATION_TIMEOUT à 301.4s, preuve directe).
+#
+# Ce workflow remplace l'entrée /api/cron/intelligence du vercel.json (retirée
+# en S167 Bloc #2). Le handler SvelteKit reste vivant pour rétro-compat /
+# usage debug, juste plus déclenché automatiquement par Vercel.
+#
+# Cron : tous les vendredis 06:00 UTC (08:00 Suisse l'été, 07:00 l'hiver).
+# workflow_dispatch : permet à Pascal de re-lancer manuellement une semaine
+# arbitraire (rattrapage W18, force-publish W19, etc.).
+name: Cron veille hebdomadaire FilmPro
+
+on:
+  schedule:
+    - cron: '0 6 * * 5'
+  workflow_dispatch:
+    inputs:
+      week:
+        description: "Semaine ISO à rattraper (format YYYY-Www, ex: 2026-W18). Vide = semaine en cours."
+        required: false
+        default: ''
+
+# Sérialise les runs : si un run est en cours et qu'un workflow_dispatch
+# manuel est lancé, le 2e attend la fin du 1er (pas d'écrasement de la
+# ligne running concurrente, pas de double charge Anthropic).
+concurrency:
+  group: cron-veille
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  run-veille:
+    runs-on: ubuntu-latest
+    # Pipeline Anthropic streaming = 5-10 min en moyenne, jusqu'à 30 min en
+    # cas de retry interne ou semaine très chargée. 30 min de marge confortable.
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: template/package-lock.json
+
+      - name: Install dependencies
+        working-directory: template
+        run: npm ci
+
+      - name: Run veille pipeline
+        working-directory: template
+        # Defense in depth contre les injections : `inputs.week` est passé via
+        # variable d'environnement (pas via templating bash direct) puis
+        # re-validé par regex stricte côté Node (`parseArgv` dans cli-args.ts).
+        env:
+          WEEK_INPUT: ${{ inputs.week }}
+          PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          EMAIL_RECAP_ENABLED: ${{ vars.EMAIL_RECAP_ENABLED || 'true' }}
+          EMAIL_RECAP_TO: ${{ vars.EMAIL_RECAP_TO || 'pascal@filmpro.ch' }}
+          EMAIL_RECAP_FROM: ${{ vars.EMAIL_RECAP_FROM || 'FilmPro Veille <noreply@filmpro.ch>' }}
+          VEILLE_ANTI_DOUBLONS_FROM: ${{ vars.VEILLE_ANTI_DOUBLONS_FROM || '' }}
+          VEILLE_WINDOW_DAYS: ${{ vars.VEILLE_WINDOW_DAYS || '30' }}
+        run: |
+          if [ -n "$WEEK_INPUT" ]; then
+            npx tsx scripts/run-veille.ts --week "$WEEK_INPUT"
+          else
+            npx tsx scripts/run-veille.ts
+          fi

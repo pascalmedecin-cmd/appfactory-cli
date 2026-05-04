@@ -59,3 +59,38 @@ export function extendedWindowStart(range: WeekRange, days: number = 14): string
 	end.setUTCDate(end.getUTCDate() - (days - 1));
 	return toIsoDate(end);
 }
+
+/**
+ * Convertit un label ISO "YYYY-Www" en Date pivot (jeudi 12:00 UTC de la
+ * semaine ciblée). Le jeudi est volontairement choisi car c'est le jour qui
+ * caractérise une semaine ISO 8601 (la semaine 1 d'une année est celle qui
+ * contient le 4 janvier, donc le jeudi de cette semaine).
+ *
+ * Utilisée pour le rattrapage manuel (`run-veille.ts --week 2026-W18`) : on
+ * fournit cette Date à `currentWeekRange()` qui la projette correctement sur
+ * la semaine cible, peu importe la date système au moment du run.
+ *
+ * Plante explicitement si le label est mal formé (validation stricte).
+ */
+export function weekLabelToDate(label: string): Date {
+	const m = label.match(/^(\d{4})-W(\d{2})$/);
+	if (!m) {
+		throw new Error(`weekLabel invalide : "${label}". Format attendu : YYYY-Www (ex: 2026-W18)`);
+	}
+	const year = parseInt(m[1], 10);
+	const week = parseInt(m[2], 10);
+	if (week < 1 || week > 53) {
+		throw new Error(`weekLabel invalide : semaine ${week} hors plage 1-53`);
+	}
+
+	// Algorithme ISO 8601 : trouver le jeudi de la semaine 1 (= jeudi de la
+	// semaine contenant le 4 janvier), puis ajouter (week-1) * 7 jours.
+	const jan4 = new Date(Date.UTC(year, 0, 4, 12, 0, 0));
+	const jan4DayNum = jan4.getUTCDay() || 7; // 1 = lundi, 7 = dimanche
+	const w1Thursday = new Date(jan4);
+	w1Thursday.setUTCDate(jan4.getUTCDate() + (4 - jan4DayNum));
+
+	const target = new Date(w1Thursday);
+	target.setUTCDate(w1Thursday.getUTCDate() + (week - 1) * 7);
+	return target;
+}

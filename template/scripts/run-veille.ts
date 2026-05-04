@@ -7,8 +7,11 @@
  * Hobby 300 s prouvé S166 par HTTP 504 FUNCTION_INVOCATION_TIMEOUT à 301.4 s
  * → externalisation indispensable.
  *
- * Lancement :
- *   pnpm tsx template/scripts/run-veille.ts
+ * Lancement (semaine en cours) :
+ *   npx tsx template/scripts/run-veille.ts
+ *
+ * Lancement avec semaine forcée (rattrapage manuel) :
+ *   npx tsx template/scripts/run-veille.ts --week 2026-W18
  *
  * ENV vars requises (plante explicitement si manquantes) :
  *   PUBLIC_SUPABASE_URL ou SUPABASE_URL
@@ -25,26 +28,65 @@
  * Exit code :
  *   0  succès (édition publiée OU idempotent_skip si déjà publiée)
  *   1  échec attendu (status=error en DB, email d'alerte envoyé)
- *   2  erreur non capturée (env manquante, exception non gérée par runWeeklyGeneration)
+ *   2  erreur non capturée (env manquante, argv invalide, exception non gérée)
  */
 import { runWeeklyGeneration } from '../src/lib/server/intelligence/run-generation';
 import { buildVeilleDepsFromEnvObject } from '../src/lib/server/intelligence/deps';
+import { weekLabelToDate } from '../src/lib/server/intelligence/week-utils';
+import { parseArgv, HelpRequestedError } from '../src/lib/server/intelligence/cli-args';
+import { sanitizeError, sanitizeForLog } from '../src/lib/server/intelligence/sanitize';
+
+const HELP = `
+Usage: npx tsx template/scripts/run-veille.ts [--week YYYY-Www]
+
+Options:
+  --week YYYY-Www   Force la semaine cible (rattrapage manuel).
+                    Exemple : --week 2026-W18
+                    Sans ce flag : utilise la semaine ISO de la date système.
+  --help, -h        Affiche cette aide.
+
+Exit code : 0 succès, 1 échec attendu, 2 erreur non capturée.
+`.trim();
 
 async function main(): Promise<number> {
+	let opts;
+	try {
+		opts = parseArgv(process.argv.slice(2));
+	} catch (e) {
+		if (e instanceof HelpRequestedError) {
+			console.log(HELP);
+			return 0;
+		}
+		// Sanitize obligatoire : repo public S167 = logs GHA publics, toute
+		// erreur stdout doit passer par les regex redact (sk-ant, Bearer, JWT,
+		// re_, génériques api_key/token/secret).
+		console.error(`[run-veille] argv invalide: ${sanitizeError(e)}`);
+		console.error(HELP);
+		return 2;
+	}
+
 	let deps;
 	try {
 		deps = buildVeilleDepsFromEnvObject(process.env);
 	} catch (e) {
-		const msg = e instanceof Error ? e.message : String(e);
-		console.error(`[run-veille] env invalide: ${msg}`);
+		console.error(`[run-veille] env invalide: ${sanitizeError(e)}`);
 		return 2;
 	}
 
-	console.log('[run-veille] démarrage pipeline veille hebdomadaire');
+	let now: Date;
+	try {
+		now = opts.weekLabel ? weekLabelToDate(opts.weekLabel) : new Date();
+	} catch (e) {
+		console.error(`[run-veille] weekLabel invalide: ${sanitizeError(e)}`);
+		return 2;
+	}
+
+	const mode = opts.weekLabel ? `rattrapage ${opts.weekLabel}` : 'semaine en cours';
+	console.log(`[run-veille] démarrage pipeline veille (${mode})`);
 	const startedAt = Date.now();
 
 	try {
-		const result = await runWeeklyGeneration(new Date(), deps);
+		const result = await runWeeklyGeneration(now, deps);
 		const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
 
 		if (result.ok) {
@@ -61,13 +103,14 @@ async function main(): Promise<number> {
 		}
 
 		console.error(
-			`[run-veille] échec ${result.weekLabel} en ${elapsed}s: ${result.error ?? 'inconnu'}`
+			`[run-veille] échec ${result.weekLabel} en ${elapsed}s: ${sanitizeForLog(result.error ?? 'inconnu')}`
 		);
 		return 1;
 	} catch (e) {
-		const msg = e instanceof Error ? e.message : String(e);
 		const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
-		console.error(`[run-veille] exception non capturée après ${elapsed}s: ${msg}`);
+		console.error(
+			`[run-veille] exception non capturée après ${elapsed}s: ${sanitizeError(e)}`
+		);
 		return 2;
 	}
 }
@@ -77,7 +120,8 @@ main().then(
 	(e) => {
 		// Filet de sécurité ultime : main() n'est pas censé throw (try/catch global),
 		// mais si jamais une promesse non awaitée échappe, on capture ici.
-		console.error('[run-veille] panic non géré:', e);
+		// Sanitize obligatoire : repo public, logs GHA publics.
+		console.error(`[run-veille] panic non géré: ${sanitizeError(e)}`);
 		process.exit(2);
 	}
 );

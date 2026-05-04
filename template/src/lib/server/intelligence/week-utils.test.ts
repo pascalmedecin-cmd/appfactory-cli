@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { getIsoWeek, formatWeekLabel, currentWeekRange, extendedWindowStart } from './week-utils';
+import {
+	getIsoWeek,
+	formatWeekLabel,
+	currentWeekRange,
+	extendedWindowStart,
+	weekLabelToDate
+} from './week-utils';
 
 describe('getIsoWeek', () => {
 	it('renvoie W01 pour le 4 janvier 2026', () => {
@@ -57,5 +63,55 @@ describe('extendedWindowStart', () => {
 	it('défaut = 14j', () => {
 		const range = { weekLabel: '2026-W15', dateStart: '2026-04-06', dateEnd: '2026-04-12' };
 		expect(extendedWindowStart(range)).toBe('2026-03-30');
+	});
+});
+
+describe('weekLabelToDate (round-trip via currentWeekRange)', () => {
+	it('round-trip 2026-W18 → currentWeekRange retourne 2026-W18', () => {
+		const date = weekLabelToDate('2026-W18');
+		const range = currentWeekRange(date);
+		expect(range.weekLabel).toBe('2026-W18');
+	});
+
+	it('round-trip 2026-W01 (boundary début année)', () => {
+		const date = weekLabelToDate('2026-W01');
+		const range = currentWeekRange(date);
+		expect(range.weekLabel).toBe('2026-W01');
+	});
+
+	it('round-trip 2026-W52 (boundary fin année)', () => {
+		const date = weekLabelToDate('2026-W52');
+		const range = currentWeekRange(date);
+		expect(range.weekLabel).toBe('2026-W52');
+	});
+
+	it('round-trip 2026-W19 (semaine en cours S167)', () => {
+		const date = weekLabelToDate('2026-W19');
+		const range = currentWeekRange(date);
+		expect(range.weekLabel).toBe('2026-W19');
+	});
+
+	it('plante explicitement sur format invalide (pas de W)', () => {
+		expect(() => weekLabelToDate('2026-18')).toThrow(/Format attendu/);
+	});
+
+	it('plante explicitement sur format invalide (semaine 1 chiffre)', () => {
+		expect(() => weekLabelToDate('2026-W1')).toThrow(/Format attendu/);
+	});
+
+	it('plante explicitement sur année non numérique', () => {
+		expect(() => weekLabelToDate('XXXX-W18')).toThrow(/Format attendu/);
+	});
+
+	it('plante si semaine = 0 ou > 53', () => {
+		expect(() => weekLabelToDate('2026-W00')).toThrow(/hors plage/);
+		expect(() => weekLabelToDate('2026-W54')).toThrow(/hors plage/);
+	});
+
+	it('retourne une Date au jeudi de la semaine cible (pivot ISO)', () => {
+		// W18 2026 = lundi 27 avril 2026 → jeudi 30 avril 2026
+		const date = weekLabelToDate('2026-W18');
+		expect(date.getUTCDay()).toBe(4); // jeudi
+		expect(date.toISOString().slice(0, 10)).toBe('2026-04-30');
 	});
 });

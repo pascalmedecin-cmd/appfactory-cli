@@ -5,6 +5,7 @@ import type { PreviousItem } from './prompt';
 import { sendRecapEmail } from './email-recap';
 import { applySignalsFromReport } from './apply-signals';
 import type { VeilleDeps } from './deps';
+import { sanitizeForLog, sanitizeError } from './sanitize';
 
 type Supabase = VeilleDeps['supabase'];
 
@@ -72,7 +73,8 @@ async function markRunning(
 	if (error) {
 		// Ne propage PAS : on log mais on continue. Si le markRunning échoue, on
 		// veut quand même tenter la génération. La pire perte = la trace running.
-		console.error(`[veille ${weekLabel}] markRunning failed: ${error.message}`);
+		// Sanitize obligatoire : ce log atterrit dans stdout du job GHA public.
+		console.error(`[veille ${weekLabel}] markRunning failed: ${sanitizeForLog(error.message)}`);
 	} else {
 		logPhase(weekLabel, 'running_marked', { startedAt });
 	}
@@ -92,22 +94,10 @@ async function markError(
 ): Promise<string | undefined> {
 	// Défense en profondeur : tronquer + masquer tout pattern API key / Bearer
 	// résiduel avant stockage. La table intelligence_reports.error_message est
-	// lisible par tout user authentifié (RLS authenticated_full_access). Le SDK
-	// Anthropic ne leak pas l'API key dans Error.message en pratique, mais un
-	// middleware tiers ou un wrapper futur pourrait. Coût ~3 lignes, zéro régression.
-	const sanitized = errorMessage
-		.slice(0, 500)
-		.replace(/sk-ant-[a-zA-Z0-9_-]+/g, '[REDACTED_API_KEY]')
-		.replace(/Bearer\s+[a-zA-Z0-9_.-]+/gi, 'Bearer [REDACTED]')
-		// JWT (Supabase, third-party) : 3 segments base64url séparés par '.'
-		.replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[REDACTED_JWT]')
-		// Resend API key préfixe `re_`
-		.replace(/\bre_[a-zA-Z0-9]{20,}/g, '[REDACTED_RESEND_KEY]')
-		// Pattern générique key=value pour `api_key`, `token`, `secret`, `apikey`
-		.replace(
-			/(api[_-]?key|token|secret|apikey)\s*[:=]\s*[a-zA-Z0-9_\-.]+/gi,
-			'$1=[REDACTED]'
-		);
+	// lisible par tout user authentifié (RLS authenticated_full_access). Patterns
+	// centralisés dans `./sanitize` (réutilisés sur les chemins stdout aussi
+	// depuis S167 Bloc #2 = repo public, logs GHA publics).
+	const sanitized = sanitizeForLog(errorMessage);
 
 	const { data: errRow } = await supabase
 		.from('intelligence_reports')
@@ -143,10 +133,10 @@ async function markError(
 			emailConfig
 		);
 		if (!result.ok && !result.skipped) {
-			console.warn(`[email-recap] failure alert not sent: ${result.reason}`);
+			console.warn(`[email-recap] failure alert not sent: ${sanitizeForLog(result.reason ?? '')}`);
 		}
 	} catch (e) {
-		console.error('[email-recap] unexpected error', e);
+		console.error(`[email-recap] unexpected error: ${sanitizeError(e)}`);
 	}
 
 	return errRow?.id;
@@ -351,7 +341,7 @@ export async function runWeeklyGeneration(
 			`[veille→prospection] report ${week.weekLabel} : ${applied.insertedSignals} signal(s) lié(s), ${applied.recomputedLeads} lead(s) recalculé(s), ${applied.failedLeads} échec(s).`
 		);
 	} catch (e) {
-		console.error('[veille→prospection] échec apply-signals (non-bloquant)', e);
+		console.error(`[veille→prospection] échec apply-signals (non-bloquant): ${sanitizeError(e)}`);
 	}
 
 	// Email récap (best-effort, n'influence pas le retour). Mode `sparse` si édition
@@ -371,11 +361,11 @@ export async function runWeeklyGeneration(
 		);
 		if (!result.ok && !result.skipped) {
 			console.warn(
-				`[email-recap] ${isSparse ? 'sparse' : 'success'} recap not sent: ${result.reason}`
+				`[email-recap] ${isSparse ? 'sparse' : 'success'} recap not sent: ${sanitizeForLog(result.reason ?? '')}`
 			);
 		}
 	} catch (e) {
-		console.error('[email-recap] unexpected error', e);
+		console.error(`[email-recap] unexpected error: ${sanitizeError(e)}`);
 	}
 
 	return { ok: true, weekLabel: week.weekLabel, reportId: inserted.id };
