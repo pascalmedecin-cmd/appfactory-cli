@@ -213,7 +213,7 @@
 		>
 			<!-- Header -->
 			<div class="flex items-center justify-between px-6 py-4" style="background: linear-gradient(to right, var(--color-prosp-enrich-bg), var(--color-prosp-import-bg)); border-bottom: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 88%)">
-				<div class="flex items-center gap-2.5">
+				<div class="flex items-center gap-3">
 					<Icon name="auto_fix_high" size={22} class="text-prosp-enrich" />
 					<h2 class="text-lg font-semibold text-text">Enrichissement batch</h2>
 				</div>
@@ -227,7 +227,7 @@
 			<div class="flex-1 overflow-y-auto px-6 py-4 space-y-4">
 				<!-- Phase config -->
 				{#if phase === 'config'}
-					<div class="flex items-start gap-3 p-3.5 rounded-lg bg-prosp-enrich-bg/10 border border-prosp-enrich-border/10">
+					<div class="flex items-start gap-3 p-3 rounded-lg bg-prosp-enrich-bg/10 border border-prosp-enrich-border/10">
 						<Icon name="info" class="mt-0.5 text-prosp-enrich" />
 						<p class="text-sm text-text-body">
 							{leadIds.length} prospect{leadIds.length > 1 ? 's' : ''} sélectionné{leadIds.length > 1 ? 's' : ''}. Choisissez les sources d'enrichissement.
@@ -258,7 +258,7 @@
 						{@const pct = searchChEstimate.percentOfMonthly}
 						{@const critical = pct >= 95}
 						{@const warn = pct >= 50}
-						<div class="flex items-start gap-2.5 p-3 rounded-lg {critical ? 'bg-danger-light border border-danger/20' : warn ? 'bg-warning-light border border-warning/20' : 'bg-surface-alt border border-border'}">
+						<div class="flex items-start gap-3 p-3 rounded-lg {critical ? 'bg-danger-light border border-danger/20' : warn ? 'bg-warning-light border border-warning/20' : 'bg-surface-alt border border-border'}">
 							<Icon name={critical || warn ? 'warning' : 'info'} size={18} class="mt-0.5 {critical ? 'text-danger' : warn ? 'text-warning' : 'text-text-muted'}" />
 							<div>
 								<p class="text-sm font-medium {critical ? 'text-danger' : warn ? 'text-warning' : 'text-text'}">
@@ -275,7 +275,7 @@
 						<button
 							type="button"
 							onclick={close}
-							class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+							class="inline-flex items-center h-10 px-4 box-border text-sm text-text-muted hover:text-text cursor-pointer"
 						>
 							Annuler
 						</button>
@@ -283,7 +283,7 @@
 							type="button"
 							onclick={start}
 							disabled={!useSearchCh && !useZefix}
-							class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors !bg-prosp-enrich"
+							class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors !bg-prosp-enrich"
 						>
 							<Icon name="play_arrow" size={16} />
 							Lancer l'enrichissement
@@ -342,7 +342,7 @@
 							<button
 								type="button"
 								onclick={() => { abortController?.abort(); }}
-								class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-danger border border-danger/30 rounded-lg hover:bg-danger-light cursor-pointer transition-colors"
+								class="inline-flex items-center gap-1.5 h-10 px-4 box-border text-sm text-danger border border-danger/30 rounded-lg hover:bg-danger-light cursor-pointer transition-colors"
 							>
 								<Icon name="stop" size={16} />
 								Annuler
@@ -356,7 +356,7 @@
 					<div class="space-y-4">
 						<!-- Resume -->
 						{#if quotaWarning}
-							<div class="flex items-start gap-2.5 p-3 rounded-lg bg-danger-light border border-danger/20">
+							<div class="flex items-start gap-3 p-3 rounded-lg bg-danger-light border border-danger/20">
 								<Icon name="error" size={18} class="mt-0.5 text-danger" />
 								<p class="text-sm text-danger font-medium">{quotaWarning}</p>
 							</div>
@@ -412,7 +412,7 @@
 							<button
 								type="button"
 								onclick={handleDone}
-								class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg cursor-pointer shadow-sm transition-colors !bg-prosp-enrich"
+								class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg cursor-pointer shadow-sm transition-colors !bg-prosp-enrich"
 							>
 								Fermer
 							</button>

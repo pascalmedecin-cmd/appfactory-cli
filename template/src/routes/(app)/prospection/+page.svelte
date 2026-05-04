@@ -261,7 +261,23 @@
 					label: 'Importer des entreprises',
 					labelMobile: 'Importer',
 					icon: 'cloud_download',
-					ariaLabel: 'Importer des entreprises depuis Zefix ou search.ch',
+					ariaLabel: 'Importer des entreprises depuis le registre du commerce (Zefix)',
+					action: () => (importModalOpen = true),
+				};
+			case 'regbl':
+				return {
+					label: 'Importer des chantiers',
+					labelMobile: 'Importer',
+					icon: 'cloud_download',
+					ariaLabel: 'Importer des chantiers depuis le registre des bâtiments (RegBL)',
+					action: () => (importModalOpen = true),
+				};
+			case 'simap':
+				return {
+					label: 'Importer des marchés',
+					labelMobile: 'Importer',
+					icon: 'cloud_download',
+					ariaLabel: 'Importer des marchés publics depuis SIMAP',
 					action: () => (importModalOpen = true),
 				};
 			default:
@@ -272,6 +288,26 @@
 					ariaLabel: 'Importer des prospects depuis les sources publiques',
 					action: () => (importModalOpen = true),
 				};
+		}
+	});
+
+	// F-V4-05 audit S163 : périmètre des sources d'import par onglet (cohérence avec headerCTA).
+	// SIMAP → marchés publics, RegBL → registre bâtiments, Entreprises → registre commerce, Terrain → ImportModal jamais ouvert depuis cet onglet.
+	type ImportScope = {
+		allowedSources: Array<'zefix' | 'simap' | 'regbl'> | null;
+		defaultSource: 'zefix' | 'simap' | 'regbl' | null;
+		title: string | null;
+	};
+	const importScope = $derived.by((): ImportScope => {
+		switch (data.tab) {
+			case 'simap':
+				return { allowedSources: ['simap'], defaultSource: 'simap', title: 'Importer depuis les marchés publics' };
+			case 'regbl':
+				return { allowedSources: ['regbl'], defaultSource: 'regbl', title: 'Importer depuis le registre des bâtiments' };
+			case 'entreprises':
+				return { allowedSources: ['zefix'], defaultSource: 'zefix', title: 'Importer depuis le registre du commerce' };
+			default:
+				return { allowedSources: null, defaultSource: null, title: null };
 		}
 	});
 
@@ -291,7 +327,7 @@
 				return {
 					icon: 'business',
 					title: 'Aucune entreprise importée',
-					body: 'Importez des entreprises depuis le registre du commerce (Zefix) ou search.ch pour prospecter à froid par canton et secteur.',
+					body: 'Importez des entreprises depuis le registre du commerce (Zefix) pour prospecter à froid par canton et secteur d\'activité.',
 					ctaLabel: 'Importer des entreprises',
 					ctaIcon: 'cloud_download',
 					ctaAction: () => (importModalOpen = true),
@@ -792,6 +828,7 @@
 		embedded={true}
 		dense={true}
 		resizable={true}
+		stickyLeftCols={2}
 		storageKey="prospection-{data.tab}"
 		pageSizeOptions={[25, 50, 100]}
 		onPageSizeChange={(s) => goto(buildUrl({ perPage: s, page: 0 }), { keepFocus: true, noScroll: true })}
@@ -865,7 +902,15 @@
 <AlerteModal bind:open={alerteModalOpen} />
 
 <!-- Modal import sources -->
-<ImportModal bind:open={importModalOpen} bind:importResult fromIntelligence={data.fromIntelligence} fromTerm={data.fromTerm} />
+<ImportModal
+	bind:open={importModalOpen}
+	bind:importResult
+	fromIntelligence={data.fromIntelligence}
+	fromTerm={data.fromTerm}
+	allowedSources={importScope.allowedSources}
+	defaultSource={importScope.defaultSource}
+	title={importScope.title}
+/>
 
 <!-- Modal enrichissement batch -->
 <EnrichBatchModal

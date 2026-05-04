@@ -128,7 +128,7 @@
 			<div class="p-3 rounded-xl bg-gradient-to-r from-surface-alt to-surface">
 				<div class="flex items-center justify-between mb-2">
 					<span class="text-sm font-semibold text-text">Scoring détaillé</span>
-					<span class="text-xs font-medium px-2 py-0.5 rounded-full {scoreBadgeVariant(scoreDetail.total) === 'danger' ? 'bg-danger/10 text-danger' : scoreBadgeVariant(scoreDetail.total) === 'warning' ? 'bg-warning/10 text-warning' : 'bg-surface-alt text-text-muted'}">{scoreDetail.total}/13 pts</span>
+					<span class="text-xs font-medium px-2 py-1 rounded-full {scoreBadgeVariant(scoreDetail.total) === 'danger' ? 'bg-danger/10 text-danger' : scoreBadgeVariant(scoreDetail.total) === 'warning' ? 'bg-warning/10 text-warning' : 'bg-surface-alt text-text-muted'}">{scoreDetail.total}/13 pts</span>
 				</div>
 				<div class="space-y-1.5">
 					{#each scoreDetail.criteres as critere}
@@ -238,7 +238,7 @@
 				<button
 					onclick={() => enrichirTelephone(lead!.id)}
 					disabled={enriching}
-					class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-warning bg-warning-light border border-warning/20 rounded-lg hover:bg-warning-light/80 disabled:opacity-50 cursor-pointer transition-colors"
+					class="inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium text-warning bg-warning-light border border-warning/20 rounded-lg hover:bg-warning-light/80 disabled:opacity-50 cursor-pointer transition-colors"
 				>
 					<Icon name="phone_forwarded" size={16} />
 					{enriching ? 'Recherche en cours…' : 'Enrichir le téléphone (search.ch)'}
@@ -254,7 +254,7 @@
 							<form method="POST" action="?/updateStatut" use:enhance={enhanceStatut('interesse', 'Prospect marqué intéressé')}>
 								<input type="hidden" name="id" value={lead.id} />
 								<input type="hidden" name="statut" value="interesse" />
-								<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 cursor-pointer transition-colors">
+								<button type="submit" class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 cursor-pointer transition-colors">
 									<Icon name="thumb_up" size={16} />
 									Marquer intéressé
 								</button>
@@ -264,7 +264,7 @@
 							<form method="POST" action="?/updateStatut" use:enhance={enhanceStatut('ecarte', 'Prospect écarté')}>
 								<input type="hidden" name="id" value={lead.id} />
 								<input type="hidden" name="statut" value="ecarte" />
-								<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors">
+								<button type="submit" class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm text-text-muted hover:text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors">
 									<Icon name="block" size={16} />
 									Écarter
 								</button>
@@ -279,7 +279,7 @@
 							};
 						}}>
 							<input type="hidden" name="id" value={lead.id} />
-							<button type="submit" class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-sm transition-colors">
+							<button type="submit" class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-sm transition-colors">
 								<Icon name="domain_add" size={16} />
 								Convertir en entreprise
 							</button>

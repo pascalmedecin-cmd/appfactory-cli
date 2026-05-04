@@ -47,6 +47,10 @@
 		// V4 audit S163 (F-V4-04) : aria-label descriptif par ligne (lecteur d'écran).
 		// Sans cette prop, role=button + tabindex=0 sont annoncés sans contexte ("bouton").
 		rowAriaLabel = null as (((row: T) => string) | null),
+		// H-19 audit S160 : pin colonnes gauche (+ checkbox si selectable). Pattern Linear/Attio.
+		// 0 = off, 1 = pin col 0, 2 = pin col 0 + col 1 (ex. ScorePill + raison_sociale).
+		// Compatible resizable : offsets recalculés dynamiquement depuis colWidths.
+		stickyLeftCols = 0,
 	}: {
 		data: T[];
 		columns: Column[];
@@ -74,7 +78,31 @@
 		onPageSizeChange?: ((size: number) => void) | null;
 		embedded?: boolean;
 		rowAriaLabel?: ((row: T) => string) | null;
+		stickyLeftCols?: number;
 	} = $props();
+
+	// H-19 : track scroll horizontal pour afficher box-shadow conditionnel sur colonne(s) pinned.
+	// Pas de shadow quand scrollLeft = 0 (pas de visuel "flottant" gratuit en pleine vue).
+	let scrollWrapEl: HTMLDivElement | undefined = $state();
+	let scrolledX = $state(false);
+	function handleTableScroll() {
+		if (!scrollWrapEl) return;
+		scrolledX = scrollWrapEl.scrollLeft > 0;
+	}
+
+	// H-19 : offsets `left:` des colonnes pin, recalculés dès que colWidths ou columns change.
+	// Le checkbox prend 40px (constant via dt-th-checkbox / dt-td-checkbox CSS).
+	const stickyOffsets = $derived.by(() => {
+		if (stickyLeftCols <= 0) return null;
+		const checkboxW = selectable ? 40 : 0;
+		const col0Key = columns[0]?.key;
+		const col0W = (col0Key && colWidths[col0Key]) || columns[0]?.defaultWidth || 0;
+		return {
+			cb: '0px',
+			c0: checkboxW + 'px',
+			c1: checkboxW + col0W + 'px',
+		};
+	});
 
 	let search = $state(serverMode ? serverSearch : '');
 	let sortKey = $state(serverMode ? serverSortKey : '');
@@ -268,7 +296,16 @@
 		</div>
 	{/if}
 
-	<div class="overflow-x-auto flex-1 min-h-0 overflow-y-auto">
+	<div
+		class="overflow-x-auto flex-1 min-h-0 overflow-y-auto"
+		class:dt-sticky-1={stickyLeftCols >= 1}
+		class:dt-sticky-2={stickyLeftCols >= 2}
+		class:dt-no-checkbox={stickyLeftCols >= 1 && !selectable}
+		class:dt-scrolled-x={scrolledX}
+		style={stickyOffsets ? `--dt-stick-cb: ${stickyOffsets.cb}; --dt-stick-0: ${stickyOffsets.c0}; --dt-stick-1: ${stickyOffsets.c1};` : ''}
+		bind:this={scrollWrapEl}
+		onscroll={handleTableScroll}
+	>
 		<table class="w-full text-sm table-fixed" class:dt-dense={dense}>
 			<thead class="sticky top-0 z-10">
 				<tr class="border-b border-border bg-surface-alt">
@@ -534,6 +571,79 @@
 	.dt-th-sorted-asc .dt-sort-down,
 	.dt-th-sorted-desc .dt-sort-up {
 		opacity: 0.25;
+	}
+
+	/* H-19 audit S160 : pin colonnes gauche compatible resizable. Pattern Linear/Attio.
+	   Offsets `left:` injectés via CSS vars depuis JS pour suivre colWidths dynamiquement.
+	   z-index hiérarchisé : tbody sticky z=1, thead sticky-top z=10 + sticky-left = z=11,
+	   col-resizer z=2 reste opérable (pas par-dessus la colonne pin elle-même). */
+
+	/* Checkbox pinned (uniquement quand stickyLeftCols >= 1 ET selectable) */
+	:global(.dt-sticky-1:not(.dt-no-checkbox)) tbody td:first-child {
+		position: sticky;
+		left: var(--dt-stick-cb, 0);
+		z-index: 1;
+		background: var(--color-surface);
+	}
+	:global(.dt-sticky-1:not(.dt-no-checkbox)) thead th:first-child {
+		position: sticky;
+		left: var(--dt-stick-cb, 0);
+		z-index: 11;
+		background: var(--color-surface-alt);
+	}
+
+	/* Col 0 data pinned : nth-child(2) si selectable, nth-child(1) sinon */
+	:global(.dt-sticky-1:not(.dt-no-checkbox)) tbody td:nth-child(2),
+	:global(.dt-sticky-1.dt-no-checkbox) tbody td:nth-child(1) {
+		position: sticky;
+		left: var(--dt-stick-0, 0);
+		z-index: 1;
+		background: var(--color-surface);
+	}
+	:global(.dt-sticky-1:not(.dt-no-checkbox)) thead th:nth-child(2),
+	:global(.dt-sticky-1.dt-no-checkbox) thead th:nth-child(1) {
+		position: sticky;
+		left: var(--dt-stick-0, 0);
+		z-index: 11;
+		background: var(--color-surface-alt);
+	}
+
+	/* Col 1 data pinned (uniquement quand stickyLeftCols >= 2) */
+	:global(.dt-sticky-2:not(.dt-no-checkbox)) tbody td:nth-child(3),
+	:global(.dt-sticky-2.dt-no-checkbox) tbody td:nth-child(2) {
+		position: sticky;
+		left: var(--dt-stick-1, 0);
+		z-index: 1;
+		background: var(--color-surface);
+	}
+	:global(.dt-sticky-2:not(.dt-no-checkbox)) thead th:nth-child(3),
+	:global(.dt-sticky-2.dt-no-checkbox) thead th:nth-child(2) {
+		position: sticky;
+		left: var(--dt-stick-1, 0);
+		z-index: 11;
+		background: var(--color-surface-alt);
+	}
+
+	/* Hover ligne propage sur cellules pin (sinon le bg sticky écrase le hover transparent). */
+	:global(.dt-sticky-1) tbody tr:hover td:first-child,
+	:global(.dt-sticky-1:not(.dt-no-checkbox)) tbody tr:hover td:nth-child(2),
+	:global(.dt-sticky-1.dt-no-checkbox) tbody tr:hover td:nth-child(1),
+	:global(.dt-sticky-2:not(.dt-no-checkbox)) tbody tr:hover td:nth-child(3),
+	:global(.dt-sticky-2.dt-no-checkbox) tbody tr:hover td:nth-child(2) {
+		background: color-mix(in srgb, var(--color-surface-alt) 50%, var(--color-surface));
+	}
+
+	/* Box-shadow droite UNIQUEMENT sur la dernière colonne pin (séparation visuelle vers contenu scrollé).
+	   Conditionnel à dt-scrolled-x : pas de visuel flottant en état pleine vue (scrollLeft=0). */
+	:global(.dt-sticky-1.dt-scrolled-x:not(.dt-sticky-2):not(.dt-no-checkbox)) thead th:nth-child(2),
+	:global(.dt-sticky-1.dt-scrolled-x:not(.dt-sticky-2):not(.dt-no-checkbox)) tbody td:nth-child(2),
+	:global(.dt-sticky-1.dt-scrolled-x:not(.dt-sticky-2).dt-no-checkbox) thead th:nth-child(1),
+	:global(.dt-sticky-1.dt-scrolled-x:not(.dt-sticky-2).dt-no-checkbox) tbody td:nth-child(1),
+	:global(.dt-sticky-2.dt-scrolled-x:not(.dt-no-checkbox)) thead th:nth-child(3),
+	:global(.dt-sticky-2.dt-scrolled-x:not(.dt-no-checkbox)) tbody td:nth-child(3),
+	:global(.dt-sticky-2.dt-scrolled-x.dt-no-checkbox) thead th:nth-child(2),
+	:global(.dt-sticky-2.dt-scrolled-x.dt-no-checkbox) tbody td:nth-child(2) {
+		box-shadow: 4px 0 4px -4px rgba(0, 0, 0, 0.08);
 	}
 
 	/* Resize handle (drag horizontal sur séparateur de colonne) */

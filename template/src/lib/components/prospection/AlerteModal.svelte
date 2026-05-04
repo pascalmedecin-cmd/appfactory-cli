@@ -73,7 +73,7 @@
 		}}
 	>
 		<div class="space-y-6">
-			<div class="flex items-start gap-3 p-3.5 rounded-xl" style="background: var(--color-prosp-qualify-bg); border: 1px solid color-mix(in srgb, var(--color-prosp-qualify-border), transparent 70%)">
+			<div class="flex items-start gap-3 p-3 rounded-xl" style="background: var(--color-prosp-qualify-bg); border: 1px solid color-mix(in srgb, var(--color-prosp-qualify-border), transparent 70%)">
 				<span class="mt-0.5" style="color: var(--color-prosp-qualify)"><Icon name="notifications_active" size={20} /></span>
 				<p class="text-sm text-text-body">Recevez une notification lorsque de nouveaux prospects correspondent à vos critères.</p>
 			</div>
@@ -86,7 +86,7 @@
 					bind:value={nom}
 					placeholder="Ex : Construction Genève chauds"
 					required
-					class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary"
+					class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary"
 				/>
 			</div>
 
@@ -142,7 +142,7 @@
 					type="text"
 					bind:value={motCleInput}
 					placeholder="Taper un mot-clé puis Entrée"
-					class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary"
+					class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addMotCle(); } }}
 				/>
 			</div>
@@ -154,7 +154,7 @@
 						Fréquence
 					</span>
 				</label>
-				<select name="frequence_alerte" bind:value={frequence} class="w-full px-3.5 py-2.5 text-sm border border-border rounded-lg bg-white">
+				<select name="frequence_alerte" bind:value={frequence} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
 					<option value="quotidien">Quotidienne</option>
 					<option value="hebdomadaire">Hebdomadaire</option>
 				</select>
@@ -172,14 +172,14 @@
 			<button
 				type="button"
 				onclick={() => open = false}
-				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
+				class="inline-flex items-center h-10 px-4 box-border text-sm text-text-muted hover:text-text cursor-pointer"
 			>
 				Annuler
 			</button>
 			<button
 				type="submit"
 				disabled={saving || !nom}
-				class="px-4 py-2 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
+				class="inline-flex items-center h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
 			>
 				{saving ? 'Création…' : 'Créer l\'alerte'}
 			</button>

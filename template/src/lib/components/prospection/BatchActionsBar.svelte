@@ -68,7 +68,7 @@
 		}}>
 			<input type="hidden" name="ids" value={JSON.stringify([...selectedIds])} />
 			<input type="hidden" name="statut" value="interesse" />
-			<button type="submit" class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 cursor-pointer transition-colors">
+			<button type="submit" class="inline-flex items-center gap-1.5 h-10 px-4 box-border text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 cursor-pointer transition-colors">
 				<Icon name="thumb_up" size={16} />
 				Marquer intéressé
 			</button>
@@ -101,7 +101,7 @@
 			<button
 				type="submit"
 				onclick={handleEcarterClick}
-				class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-text-muted border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors"
+				class="inline-flex items-center gap-1.5 h-10 px-4 box-border text-sm text-text-muted border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors"
 			>
 				<Icon name="block" size={16} />
 				Écarter
@@ -109,7 +109,7 @@
 		</form>
 		<button
 			onclick={() => { enrichBatchIds = [...selectedIds]; enrichBatchOpen = true; }}
-			class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich hover:bg-prosp-enrich/10"
+			class="inline-flex items-center gap-1.5 h-10 px-4 box-border text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich hover:bg-prosp-enrich/10"
 		>
 			<Icon name="auto_fix_high" size={16} />
 			Enrichir

@@ -8,20 +8,46 @@
 
 	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
 
+	type ImportSourceKey = 'zefix' | 'simap' | 'regbl';
+
 	let {
 		open = $bindable(false),
 		importResult = $bindable<{ message: string; type: 'success' | 'error' } | null>(null),
 		fromIntelligence = null,
 		fromTerm = null,
+		// F-V4-05 audit S163 : import contextuel par onglet /prospection.
+		// Si null/undefined → toutes sources visibles (rétrocompat).
+		// Si liste → seules ces sources sont proposées (les autres tabs sont masqués).
+		allowedSources = null,
+		// Tab initial. Si non précisé, prend la 1re source autorisée.
+		defaultSource = null,
+		// Titre modale custom (sinon "Importer des prospects").
+		title = null,
 	}: {
 		open: boolean;
 		importResult: { message: string; type: 'success' | 'error' } | null;
 		fromIntelligence?: string | null;
 		fromTerm?: string | null;
+		allowedSources?: ImportSourceKey[] | null;
+		defaultSource?: ImportSourceKey | null;
+		title?: string | null;
 	} = $props();
 
 	let importing = $state(false);
-	let activeTab = $state<'zefix' | 'simap' | 'regbl'>('zefix');
+	const allowed = $derived.by(() => allowedSources);
+	const fallback = $derived.by(() => defaultSource);
+	// svelte-ignore state_referenced_locally
+	let activeTab = $state<ImportSourceKey>(
+		defaultSource ?? (allowedSources && allowedSources.length > 0 ? allowedSources[0] : 'zefix')
+	);
+
+	// Resync activeTab si allowedSources change (ex: utilisateur change d'onglet /prospection
+	// pendant que la modale est ouverte = edge case, mais on re-ancre proprement).
+	$effect(() => {
+		if (allowed && allowed.length > 0 && !allowed.includes(activeTab)) {
+			activeTab = fallback ?? allowed[0];
+		}
+	});
 	let importCanton = $state('GE');
 	let importLimit = $state('50');
 	let importZefixName = $state('');
@@ -43,11 +69,18 @@
 		regbl:    { cssVar: '--color-prosp-convert',  bgCssVar: '--color-prosp-convert-bg',  borderCssVar: '--color-prosp-convert-border' },
 	};
 
-	const tabs = [
+	const allTabs = [
 		{ key: 'zefix' as const, label: 'Registre du commerce', icon: 'business', desc: 'RC' },
 		{ key: 'simap' as const, label: 'Marchés publics', icon: 'gavel', desc: 'SIMAP' },
 		{ key: 'regbl' as const, label: 'Registre des bâtiments', icon: 'apartment', desc: 'RegBL' },
 	];
+
+	// Filtrage déterministe par allowedSources (préserve l'ordre de allTabs).
+	let visibleTabs = $derived(
+		allowed && allowed.length > 0
+			? allTabs.filter((t) => allowed.includes(t.key))
+			: allTabs
+	);
 
 	let activeColors = $derived(tabColorMap[activeTab]);
 
@@ -112,28 +145,30 @@
 
 <ModalForm
 	bind:open
-	title="Importer des prospects"
+	title={title ?? 'Importer des prospects'}
 	icon="cloud_download"
 	headerVariant="accent"
 	saving={importing}
 	maxWidth="max-w-2xl"
 >
 	<div class="space-y-4">
-		<!-- Tabs sources -->
-		<div class="flex flex-wrap gap-1.5">
-			{#each tabs as tab}
-				{@const tc = tabColorMap[tab.key]}
-				<button
-					onclick={() => { activeTab = tab.key; importResult = null; }}
-					class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer {activeTab === tab.key ? 'border' : 'text-text-muted hover:text-text hover:bg-surface-alt border border-transparent'}"
-					style={activeTab === tab.key ? `color: var(${tc.cssVar}); background: var(${tc.bgCssVar}); border-color: color-mix(in srgb, var(${tc.borderCssVar}), transparent 60%)` : ''}
-				>
-					<Icon name={tab.icon} size={16} />
-					<span class="hidden sm:inline">{tab.label}</span>
-					<span class="sm:hidden">{tab.desc}</span>
-				</button>
-			{/each}
-		</div>
+		<!-- Tabs sources : masqués si une seule source autorisée (parcours direct pour l'onglet courant) -->
+		{#if visibleTabs.length > 1}
+			<div class="flex flex-wrap gap-1.5">
+				{#each visibleTabs as tab}
+					{@const tc = tabColorMap[tab.key]}
+					<button
+						onclick={() => { activeTab = tab.key; importResult = null; }}
+						class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer {activeTab === tab.key ? 'border' : 'text-text-muted hover:text-text hover:bg-surface-alt border border-transparent'}"
+						style={activeTab === tab.key ? `color: var(${tc.cssVar}); background: var(${tc.bgCssVar}); border-color: color-mix(in srgb, var(${tc.borderCssVar}), transparent 60%)` : ''}
+					>
+						<Icon name={tab.icon} size={16} />
+						<span class="hidden sm:inline">{tab.label}</span>
+						<span class="sm:hidden">{tab.desc}</span>
+					</button>
+				{/each}
+			</div>
+		{/if}
 
 		<!-- Registre du commerce -->
 		{#if activeTab === 'zefix'}
@@ -152,7 +187,7 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
 						<label class="block text-sm font-medium text-text mb-1">Canton</label>
-						<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
+						<select bind:value={importCanton} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
 							{#each cantons as c}
 								<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
 							{/each}
@@ -160,7 +195,7 @@
 					</div>
 					<div>
 						<label class="block text-sm font-medium text-text mb-1">Nombre de résultats</label>
-						<select bind:value={importLimit} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
+						<select bind:value={importLimit} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
 							<option value="20">20 (ciblé)</option>
 							<option value="50">50 (recommandé)</option>
 							<option value="100">100</option>
@@ -174,7 +209,7 @@
 						required
 						bind:value={importZefixName}
 						placeholder="Ex : construction, rénovation, architecte…"
-						class="w-full px-3 py-1.5 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {zefixNameInvalid ? 'border-danger' : 'border-border'}"
+						class="w-full h-10 px-3 text-sm box-border border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {zefixNameInvalid ? 'border-danger' : 'border-border'}"
 					/>
 					{#if zefixNameInvalid}
 						<p class="text-xs text-danger mt-1">Saisir au moins 2 caractères. L'API Zefix exige un filtre par nom.</p>
@@ -185,7 +220,7 @@
 				<button
 					onclick={importZefix}
 					disabled={importing || zefixNameInvalid}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
+					class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
 					style="background-color: var({activeColors.cssVar})"
 				>
 					<Icon name="cloud_download" size={16} />
@@ -211,7 +246,7 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
 						<label class="block text-sm font-medium text-text mb-1">Canton</label>
-						<select bind:value={importCanton} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
+						<select bind:value={importCanton} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
 							{#each cantons as c}
 								<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
 							{/each}
@@ -219,7 +254,7 @@
 					</div>
 					<div>
 						<label class="block text-sm font-medium text-text mb-1">Période</label>
-						<select bind:value={importSimapDays} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
+						<select bind:value={importSimapDays} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
 							<option value="7">7 derniers jours</option>
 							<option value="30">30 derniers jours</option>
 							<option value="90">3 derniers mois</option>
@@ -232,7 +267,7 @@
 						type="text"
 						bind:value={importSimapSearch}
 						placeholder="rénovation, façade…"
-						class="w-full px-3 py-1.5 text-sm border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {simapSearchInvalid ? 'border-danger' : 'border-border'}"
+						class="w-full h-10 px-3 text-sm box-border border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {simapSearchInvalid ? 'border-danger' : 'border-border'}"
 					/>
 					{#if simapSearchInvalid}
 						<p class="text-xs text-danger mt-1">Saisir au moins 3 caractères ou laisser vide.</p>
@@ -241,7 +276,7 @@
 				<button
 					onclick={importSimap}
 					disabled={importing || simapSearchInvalid}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
+					class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
 					style="background-color: var({activeColors.cssVar})"
 				>
 					<Icon name="cloud_download" size={16} />
@@ -283,7 +318,7 @@
 					</div>
 					<div>
 						<label class="block text-sm font-medium text-text mb-1">Nombre de résultats</label>
-						<select bind:value={importLimit} class="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-white">
+						<select bind:value={importLimit} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
 							<option value="20">20 (ciblé)</option>
 							<option value="50">50 (recommandé)</option>
 							<option value="100">100</option>
@@ -293,7 +328,7 @@
 				<button
 					onclick={importRegbl}
 					disabled={importing || importRegblCantons.length === 0}
-					class="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
+					class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
 					style="background-color: var({activeColors.cssVar})"
 				>
 					<Icon name="cloud_download" size={16} />
@@ -313,7 +348,7 @@
 			<button
 				type="button"
 				onclick={() => { open = false; importResult = null; }}
-				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer transition-colors"
+				class="inline-flex items-center h-10 px-4 box-border text-sm text-text-muted hover:text-text cursor-pointer transition-colors"
 			>
 				Fermer
 			</button>
