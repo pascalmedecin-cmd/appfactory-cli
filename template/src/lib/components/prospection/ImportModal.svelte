@@ -48,6 +48,7 @@
 			activeTab = fallback ?? allowed[0];
 		}
 	});
+
 	let importCanton = $state('GE');
 	let importLimit = $state('50');
 	let importZefixName = $state('');
@@ -63,26 +64,94 @@
 
 	let zefixNameInvalid = $derived(importZefixName.trim().length < 2);
 
-	const tabColorMap: Record<string, { cssVar: string; bgCssVar: string; borderCssVar: string }> = {
-		zefix:    { cssVar: '--color-prosp-import',  bgCssVar: '--color-prosp-import-bg',  borderCssVar: '--color-prosp-import-border' },
-		simap:    { cssVar: '--color-prosp-qualify',  bgCssVar: '--color-prosp-qualify-bg',  borderCssVar: '--color-prosp-qualify-border' },
-		regbl:    { cssVar: '--color-prosp-convert',  bgCssVar: '--color-prosp-convert-bg',  borderCssVar: '--color-prosp-convert-border' },
+	// F-V4-06 audit S164 : metadata premium par source pour différenciation visuelle/UX forte.
+	// Chaque source a son propre layout (search-first / period-first / map-first), son icône
+	// d'action métier (search / pulse / construction), son verbe explicite et son footer pédagogique.
+	type SourceMeta = {
+		code: string;
+		title: string;
+		subtitle: string;
+		hero: { icon: string; kicker: string; promise: string; helper: string };
+		action: { icon: string; label: string; pendingLabel: string };
+		footer: { icon: string; text: string };
+		cssVar: string;
+		bgCssVar: string;
+		borderCssVar: string;
 	};
 
-	const allTabs = [
-		{ key: 'zefix' as const, label: 'Registre du commerce', icon: 'business', desc: 'RC' },
-		{ key: 'simap' as const, label: 'Marchés publics', icon: 'gavel', desc: 'SIMAP' },
-		{ key: 'regbl' as const, label: 'Registre des bâtiments', icon: 'apartment', desc: 'RegBL' },
-	];
+	const sourceMeta: Record<ImportSourceKey, SourceMeta> = {
+		zefix: {
+			code: 'RC',
+			title: 'Registre du commerce',
+			subtitle: 'Entreprises actives par secteur',
+			hero: {
+				icon: 'business',
+				kicker: 'Recherche par mot-clé',
+				promise: 'Trouvez des entreprises suisses actives par raison sociale ou secteur d\'activité.',
+				helper: 'Mieux vaut 50 prospects ciblés que 500 à trier - filtrez sur un terme précis (vitrerie, façade, architecte).',
+			},
+			action: { icon: 'search', label: 'Rechercher dans le registre', pendingLabel: 'Recherche en cours…' },
+			footer: { icon: 'verified', text: 'But social, capital nominal, adresse légale officielle. Dédupliqué automatiquement.' },
+			cssVar: '--color-prosp-import',
+			bgCssVar: '--color-prosp-import-bg',
+			borderCssVar: '--color-prosp-import-border',
+		},
+		simap: {
+			code: 'SIMAP',
+			title: 'Marchés publics',
+			subtitle: 'Appels d\'offres récents',
+			hero: {
+				icon: 'gavel',
+				kicker: 'Veille sur les appels d\'offres',
+				promise: 'Récupérez les marchés publics construction publiés par la Confédération, les cantons et les communes.',
+				helper: 'Filtrez par période courte si vous voulez attaquer vite, ou élargie pour reconstruire la pipeline.',
+			},
+			action: { icon: 'monitor_heart', label: 'Récupérer les marchés', pendingLabel: 'Veille en cours…' },
+			footer: { icon: 'schedule', text: 'Budget, délai, lieu d\'exécution et critères d\'attribution inclus dans chaque marché.' },
+			cssVar: '--color-prosp-qualify',
+			bgCssVar: '--color-prosp-qualify-bg',
+			borderCssVar: '--color-prosp-qualify-border',
+		},
+		regbl: {
+			code: 'RegBL',
+			title: 'Registre des bâtiments',
+			subtitle: 'Chantiers actifs en Suisse',
+			hero: {
+				icon: 'apartment',
+				kicker: 'Cartographie des chantiers',
+				promise: 'Identifiez les bâtiments autorisés ou en construction dans les cantons que vous ciblez.',
+				helper: 'Signal chaud : un permis délivré aujourd\'hui = un chantier ouvert demain. Croisez ensuite avec le registre du commerce pour le maître d\'ouvrage.',
+			},
+			action: { icon: 'construction', label: 'Importer les chantiers actifs', pendingLabel: 'Import en cours…' },
+			footer: { icon: 'place', text: 'Coordonnées GPS, statut chantier (autorisé / en construction), affectation programmée.' },
+			cssVar: '--color-prosp-convert',
+			bgCssVar: '--color-prosp-convert-bg',
+			borderCssVar: '--color-prosp-convert-border',
+		},
+	};
 
-	// Filtrage déterministe par allowedSources (préserve l'ordre de allTabs).
+	const allTabs: ImportSourceKey[] = ['zefix', 'simap', 'regbl'];
+
+	// Filtrage déterministe par allowedSources (préserve l'ordre canonique).
 	let visibleTabs = $derived(
 		allowed && allowed.length > 0
-			? allTabs.filter((t) => allowed.includes(t.key))
+			? allTabs.filter((k) => allowed.includes(k))
 			: allTabs
 	);
 
-	let activeColors = $derived(tabColorMap[activeTab]);
+	let activeMeta = $derived(sourceMeta[activeTab]);
+
+	const simapPeriods = [
+		{ value: '7', label: '7 jours', sub: 'Urgences chaudes' },
+		{ value: '30', label: '30 jours', sub: 'Pipeline du mois' },
+		{ value: '90', label: '3 mois', sub: 'Reconstruction large' },
+	];
+
+	const zefixLimits = [
+		{ value: '20', label: '20', sub: 'Très ciblé' },
+		{ value: '50', label: '50', sub: 'Recommandé' },
+		{ value: '100', label: '100', sub: 'Large balayage' },
+	];
 
 	async function importFromSource(url: string, body: Record<string, unknown>) {
 		importing = true;
@@ -149,209 +218,273 @@
 	icon="cloud_download"
 	headerVariant="accent"
 	saving={importing}
-	maxWidth="max-w-2xl"
+	maxWidth="max-w-3xl"
 >
-	<div class="space-y-4">
-		<!-- Tabs sources : masqués si une seule source autorisée (parcours direct pour l'onglet courant) -->
+	<div class="space-y-5">
+		<!-- F-V4-06 : sélecteur de source en CARDS distinctes, masqué si parcours unique (F-V4-05).
+		     Layout cards = chaque source vue d'un coup d'œil avant clic, pas un tab horizontal anonyme. -->
 		{#if visibleTabs.length > 1}
-			<div class="flex flex-wrap gap-1.5">
-				{#each visibleTabs as tab}
-					{@const tc = tabColorMap[tab.key]}
+			<div role="tablist" aria-label="Source d'import" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+				{#each visibleTabs as key}
+					{@const m = sourceMeta[key]}
+					{@const active = activeTab === key}
 					<button
-						onclick={() => { activeTab = tab.key; importResult = null; }}
-						class="flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors cursor-pointer {activeTab === tab.key ? 'border' : 'text-text-muted hover:text-text hover:bg-surface-alt border border-transparent'}"
-						style={activeTab === tab.key ? `color: var(${tc.cssVar}); background: var(${tc.bgCssVar}); border-color: color-mix(in srgb, var(${tc.borderCssVar}), transparent 60%)` : ''}
+						type="button"
+						role="tab"
+						aria-selected={active}
+						aria-controls="import-panel-{key}"
+						onclick={() => { activeTab = key; importResult = null; }}
+						class="group relative text-left p-4 rounded-xl border-2 box-border transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 {active ? 'shadow-md' : 'border-border hover:border-text-muted/40 hover:shadow-sm bg-white'}"
+						style={active
+							? `border-color: var(${m.cssVar}); background: var(${m.bgCssVar}); --tw-ring-color: var(${m.cssVar});`
+							: `--tw-ring-color: var(${m.cssVar});`}
 					>
-						<Icon name={tab.icon} size={16} />
-						<span class="hidden sm:inline">{tab.label}</span>
-						<span class="sm:hidden">{tab.desc}</span>
+						<div class="flex items-center justify-between mb-2.5">
+							<div class="w-9 h-9 rounded-lg flex items-center justify-center" style="background: {active ? 'rgba(255,255,255,0.6)' : `var(${m.bgCssVar})`};">
+								<span style={`color: var(${m.cssVar});`}><Icon name={m.hero.icon} size={20} /></span>
+							</div>
+							<span class="text-[10px] font-bold uppercase tracking-wider" style={`color: var(${m.cssVar}); opacity: ${active ? 1 : 0.7};`}>
+								{m.code}
+							</span>
+						</div>
+						<p class="text-sm font-semibold text-text leading-tight">{m.title}</p>
+						<p class="text-xs text-text-muted mt-1 leading-snug">{m.subtitle}</p>
 					</button>
 				{/each}
 			</div>
 		{/if}
 
-		<!-- Registre du commerce -->
+		<!-- ZEFIX parcours : SEARCH-FIRST (input nom prominent en grand, filtres secondaires en chips) -->
 		{#if activeTab === 'zefix'}
-			<div class="space-y-4">
-				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
-					<span class="mt-0.5 shrink-0" style="color: var({activeColors.cssVar})"><Icon name="business" size={22} /></span>
+			<div id="import-panel-zefix" role="tabpanel" aria-labelledby="tab-zefix" class="space-y-5">
+				<!-- Hero pédagogique riche -->
+				<div class="p-5 rounded-2xl flex gap-4" style={`background: var(${activeMeta.bgCssVar}); border: 1px solid color-mix(in srgb, var(${activeMeta.borderCssVar}), transparent 70%);`}>
+					<div class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style={`background: color-mix(in srgb, var(${activeMeta.cssVar}), transparent 88%);`}>
+						<span style={`color: var(${activeMeta.cssVar});`}><Icon name={activeMeta.hero.icon} size={26} /></span>
+					</div>
 					<div>
-						<p class="text-sm font-semibold text-text">Registre du commerce</p>
-						<p class="text-xs text-text-body mt-0.5">Entreprises suisses avec but social, capital nominal et informations légales officielles.</p>
-						<p class="text-xs text-text-muted mt-1.5">
-							<Icon name="lightbulb" size={13} class="align-text-bottom" />
-							Un import ciblé (nom + canton) donne de meilleurs résultats qu'un import large sans filtre. Mieux vaut 50 prospects qualifiés que 500 à trier.
-						</p>
+						<p class="text-xs font-bold uppercase tracking-wider mb-1" style={`color: var(${activeMeta.cssVar});`}>{activeMeta.hero.kicker}</p>
+						<p class="text-sm font-semibold text-text">{activeMeta.hero.promise}</p>
+						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeMeta.hero.helper}</p>
 					</div>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label class="block text-sm font-medium text-text mb-1">Canton</label>
-						<select bind:value={importCanton} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
-							{#each cantons as c}
-								<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
-							{/each}
-						</select>
-					</div>
-					<div>
-						<label class="block text-sm font-medium text-text mb-1">Nombre de résultats</label>
-						<select bind:value={importLimit} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
-							<option value="20">20 (ciblé)</option>
-							<option value="50">50 (recommandé)</option>
-							<option value="100">100</option>
-						</select>
-					</div>
-				</div>
+
+				<!-- Search input PROMINENT (h-12, icône intégrée, signature visuelle "search-first") -->
 				<div>
-					<label class="block text-sm font-medium text-text mb-1">Filtrer par nom <span class="font-normal text-danger">*</span></label>
-					<input
-						type="text"
-						required
-						bind:value={importZefixName}
-						placeholder="Ex : construction, rénovation, architecte…"
-						class="w-full h-10 px-3 text-sm box-border border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {zefixNameInvalid ? 'border-danger' : 'border-border'}"
-					/>
+					<label for="zefix-name" class="block text-sm font-semibold text-text mb-2">
+						Mot-clé secteur ou raison sociale
+						<span class="font-normal text-danger ml-0.5">*</span>
+					</label>
+					<div class="relative">
+						<Icon name="search" size={18} class="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+						<input
+							id="zefix-name"
+							type="text"
+							required
+							bind:value={importZefixName}
+							placeholder="vitrerie, façade, architecte, construction…"
+							class="w-full h-12 pl-11 pr-3 text-base box-border border-2 rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors {zefixNameInvalid ? 'border-danger' : 'border-border'}"
+						/>
+					</div>
 					{#if zefixNameInvalid}
-						<p class="text-xs text-danger mt-1">Saisir au moins 2 caractères. L'API Zefix exige un filtre par nom.</p>
+						<p class="text-xs text-danger mt-1.5 flex items-center gap-1.5">
+							<Icon name="error" size={13} />
+							Saisir au moins 2 caractères. L'API Zefix exige un filtre par nom.
+						</p>
 					{:else}
-						<p class="text-xs text-text-muted mt-1">L'API Zefix exige un filtre par nom pour éviter les requêtes trop larges.</p>
+						<p class="text-xs text-text-muted mt-1.5">Recherche insensible à la casse, max {zefixMaxResults} résultats par requête.</p>
 					{/if}
 				</div>
-				<button
-					onclick={importZefix}
-					disabled={importing || zefixNameInvalid}
-					class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
-					style="background-color: var({activeColors.cssVar})"
-				>
-					<Icon name="cloud_download" size={16} />
-					{importing ? 'Import en cours…' : 'Lancer l\'import'}
-				</button>
-			</div>
-		{/if}
 
-		<!-- SIMAP -->
-		{#if activeTab === 'simap'}
-			<div class="space-y-4">
-				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
-					<span class="mt-0.5 shrink-0" style="color: var({activeColors.cssVar})"><Icon name="gavel" size={22} /></span>
-					<div>
-						<p class="text-sm font-semibold text-text">SIMAP - Marchés publics construction</p>
-						<p class="text-xs text-text-body mt-0.5">Appels d'offres publics avec budgets et délais. Résultats déjà filtrés par secteur construction.</p>
-						<p class="text-xs text-text-muted mt-1.5">
-							<Icon name="lightbulb" size={13} class="align-text-bottom" />
-							Combiner canton + mots-clés précis (ex : « façade », « vitrage ») pour ne remonter que les appels d'offres pertinents.
-						</p>
-					</div>
-				</div>
+				<!-- Filtres canton + résultats : 2 cols, équilibre visuel -->
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 					<div>
-						<label class="block text-sm font-medium text-text mb-1">Canton</label>
-						<select bind:value={importCanton} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
+						<label for="zefix-canton" class="block text-sm font-medium text-text mb-1.5">Canton</label>
+						<select id="zefix-canton" bind:value={importCanton} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
 							{#each cantons as c}
 								<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
 							{/each}
 						</select>
 					</div>
 					<div>
-						<label class="block text-sm font-medium text-text mb-1">Période</label>
-						<select bind:value={importSimapDays} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
-							<option value="7">7 derniers jours</option>
-							<option value="30">30 derniers jours</option>
-							<option value="90">3 derniers mois</option>
-						</select>
-					</div>
-				</div>
-				<div>
-					<label class="block text-sm font-medium text-text mb-1">Mots-clés <span class="font-normal text-text-muted">(optionnel, min. 3 caractères)</span></label>
-					<input
-						type="text"
-						bind:value={importSimapSearch}
-						placeholder="rénovation, façade…"
-						class="w-full h-10 px-3 text-sm box-border border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {simapSearchInvalid ? 'border-danger' : 'border-border'}"
-					/>
-					{#if simapSearchInvalid}
-						<p class="text-xs text-danger mt-1">Saisir au moins 3 caractères ou laisser vide.</p>
-					{/if}
-				</div>
-				<button
-					onclick={importSimap}
-					disabled={importing || simapSearchInvalid}
-					class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
-					style="background-color: var({activeColors.cssVar})"
-				>
-					<Icon name="cloud_download" size={16} />
-					{importing ? 'Import en cours…' : 'Lancer l\'import'}
-				</button>
-			</div>
-		{/if}
-
-		<!-- RegBL -->
-		{#if activeTab === 'regbl'}
-			<div class="space-y-4">
-				<div class="p-4 rounded-xl flex gap-3" style="background: var({activeColors.bgCssVar}); border: 1px solid color-mix(in srgb, var({activeColors.borderCssVar}), transparent 70%)">
-					<span class="mt-0.5 shrink-0" style="color: var({activeColors.cssVar})"><Icon name="apartment" size={22} /></span>
-					<div>
-						<p class="text-sm font-semibold text-text">RegBL - Registre fédéral des bâtiments</p>
-						<p class="text-xs text-text-body mt-0.5">Bâtiments en phase de construction (autorisés ou en chantier) en Suisse romande.</p>
-						<p class="text-xs text-text-muted mt-1.5">
-							<Icon name="lightbulb" size={13} class="align-text-bottom" />
-							Signal chaud : un bâtiment au statut « autorisé » ou « en construction » = chantier actif. Croisez ensuite avec Zefix pour identifier le maître d'ouvrage.
-						</p>
-					</div>
-				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-					<div>
-						<label class="block text-sm font-medium text-text mb-1">Cantons</label>
-						<div class="flex flex-wrap gap-2">
-							{#each cantons as c}
+						<span class="block text-sm font-medium text-text mb-1.5">Volumétrie souhaitée</span>
+						<div class="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Nombre de résultats">
+							{#each zefixLimits as opt}
+								{@const sel = importLimit === opt.value}
 								<button
 									type="button"
-									aria-pressed={importRegblCantons.includes(c)}
-									onclick={() => importRegblCantons = toggleCanton(importRegblCantons, c)}
-									class="px-3 py-1 text-xs font-medium rounded-full cursor-pointer transition-colors {importRegblCantons.includes(c) ? 'text-white' : 'bg-surface-alt text-text-muted hover:text-text'}"
-									style={importRegblCantons.includes(c) ? `background-color: var(${activeColors.cssVar})` : ''}
+									role="radio"
+									aria-checked={sel}
+									onclick={() => importLimit = opt.value}
+									class="flex flex-col items-center justify-center h-10 px-2 box-border border rounded-lg cursor-pointer transition-colors {sel ? 'text-white shadow-sm' : 'border-border bg-white text-text-muted hover:border-text-muted/40 hover:text-text'}"
+									style={sel ? `background-color: var(${activeMeta.cssVar}); border-color: var(${activeMeta.cssVar});` : ''}
 								>
-									{cantonNoms[c] ?? c}
+									<span class="text-sm font-semibold leading-none">{opt.label}</span>
+									<span class="text-[10px] mt-0.5 leading-none {sel ? 'opacity-90' : ''}">{opt.sub}</span>
 								</button>
 							{/each}
 						</div>
 					</div>
-					<div>
-						<label class="block text-sm font-medium text-text mb-1">Nombre de résultats</label>
-						<select bind:value={importLimit} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
-							<option value="20">20 (ciblé)</option>
-							<option value="50">50 (recommandé)</option>
-							<option value="100">100</option>
-						</select>
-					</div>
 				</div>
-				<button
-					onclick={importRegbl}
-					disabled={importing || importRegblCantons.length === 0}
-					class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-all hover:opacity-90"
-					style="background-color: var({activeColors.cssVar})"
-				>
-					<Icon name="cloud_download" size={16} />
-					{importing ? 'Import en cours…' : 'Lancer l\'import'}
-				</button>
 			</div>
 		{/if}
 
+		<!-- SIMAP parcours : PERIOD-FIRST (chips horizontaux période, ton "veille en flux") -->
+		{#if activeTab === 'simap'}
+			<div id="import-panel-simap" role="tabpanel" aria-labelledby="tab-simap" class="space-y-5">
+				<div class="p-5 rounded-2xl flex gap-4" style={`background: var(${activeMeta.bgCssVar}); border: 1px solid color-mix(in srgb, var(${activeMeta.borderCssVar}), transparent 70%);`}>
+					<div class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style={`background: color-mix(in srgb, var(${activeMeta.cssVar}), transparent 88%);`}>
+						<span style={`color: var(${activeMeta.cssVar});`}><Icon name={activeMeta.hero.icon} size={26} /></span>
+					</div>
+					<div>
+						<p class="text-xs font-bold uppercase tracking-wider mb-1" style={`color: var(${activeMeta.cssVar});`}>{activeMeta.hero.kicker}</p>
+						<p class="text-sm font-semibold text-text">{activeMeta.hero.promise}</p>
+						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeMeta.hero.helper}</p>
+					</div>
+				</div>
+
+				<!-- Période en CHIPS XL (signature visuelle "period-first" différencie SIMAP de Zefix) -->
+				<div>
+					<span class="block text-sm font-semibold text-text mb-2">Fenêtre de veille</span>
+					<div class="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Période">
+						{#each simapPeriods as p}
+							{@const sel = importSimapDays === p.value}
+							<button
+								type="button"
+								role="radio"
+								aria-checked={sel}
+								onclick={() => importSimapDays = p.value}
+								class="flex flex-col items-center justify-center py-3 px-2 box-border border-2 rounded-xl cursor-pointer transition-all {sel ? 'shadow-md' : 'border-border bg-white text-text-muted hover:border-text-muted/40 hover:text-text'}"
+								style={sel
+									? `border-color: var(${activeMeta.cssVar}); background: var(${activeMeta.bgCssVar}); color: var(${activeMeta.cssVar});`
+									: ''}
+							>
+								<span class="text-base font-bold leading-tight">{p.label}</span>
+								<span class="text-[11px] mt-0.5 leading-tight">{p.sub}</span>
+							</button>
+						{/each}
+					</div>
+				</div>
+
+				<!-- Filtres canton + mots-clés : 2 cols -->
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div>
+						<label for="simap-canton" class="block text-sm font-medium text-text mb-1.5">Canton</label>
+						<select id="simap-canton" bind:value={importCanton} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
+							{#each cantons as c}
+								<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
+							{/each}
+						</select>
+					</div>
+					<div>
+						<label for="simap-search" class="block text-sm font-medium text-text mb-1.5">
+							Mots-clés
+							<span class="font-normal text-text-muted">(optionnel)</span>
+						</label>
+						<input
+							id="simap-search"
+							type="text"
+							bind:value={importSimapSearch}
+							placeholder="rénovation, façade…"
+							class="w-full h-10 px-3 text-sm box-border border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {simapSearchInvalid ? 'border-danger' : 'border-border'}"
+						/>
+						{#if simapSearchInvalid}
+							<p class="text-xs text-danger mt-1">Min. 3 caractères ou laisser vide.</p>
+						{/if}
+					</div>
+				</div>
+			</div>
+		{/if}
+
+		<!-- REGBL parcours : MAP-FIRST (cantons en chips XL grille, signature visuelle "carto") -->
+		{#if activeTab === 'regbl'}
+			<div id="import-panel-regbl" role="tabpanel" aria-labelledby="tab-regbl" class="space-y-5">
+				<div class="p-5 rounded-2xl flex gap-4" style={`background: var(${activeMeta.bgCssVar}); border: 1px solid color-mix(in srgb, var(${activeMeta.borderCssVar}), transparent 70%);`}>
+					<div class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style={`background: color-mix(in srgb, var(${activeMeta.cssVar}), transparent 88%);`}>
+						<span style={`color: var(${activeMeta.cssVar});`}><Icon name={activeMeta.hero.icon} size={26} /></span>
+					</div>
+					<div>
+						<p class="text-xs font-bold uppercase tracking-wider mb-1" style={`color: var(${activeMeta.cssVar});`}>{activeMeta.hero.kicker}</p>
+						<p class="text-sm font-semibold text-text">{activeMeta.hero.promise}</p>
+						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeMeta.hero.helper}</p>
+					</div>
+				</div>
+
+				<!-- Cantons en CHIPS XL (signature visuelle "map-first" : grille riche, pas un menu select) -->
+				<fieldset>
+					<legend class="block text-sm font-semibold text-text mb-2">
+						Périmètre géographique
+						<span class="font-normal text-text-muted">({importRegblCantons.length} sélectionné{importRegblCantons.length > 1 ? 's' : ''})</span>
+					</legend>
+					<div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+						{#each cantons as c}
+							{@const sel = importRegblCantons.includes(c)}
+							<button
+								type="button"
+								aria-pressed={sel}
+								onclick={() => importRegblCantons = toggleCanton(importRegblCantons, c)}
+								class="flex flex-col items-center justify-center py-3 px-2 box-border border-2 rounded-xl cursor-pointer transition-all {sel ? 'shadow-sm' : 'border-border bg-white text-text-muted hover:border-text-muted/40 hover:text-text'}"
+								style={sel
+									? `border-color: var(${activeMeta.cssVar}); background: var(${activeMeta.bgCssVar}); color: var(${activeMeta.cssVar});`
+									: ''}
+							>
+								<span class="text-base font-bold leading-none">{c}</span>
+								<span class="text-[10px] mt-1 leading-none">{cantonNoms[c] ?? c}</span>
+							</button>
+						{/each}
+					</div>
+				</fieldset>
+
+				<!-- Volumétrie : alignée pattern Zefix mais cohérent avec couleur source (convert) -->
+				<div>
+					<span class="block text-sm font-medium text-text mb-1.5">Volumétrie souhaitée</span>
+					<div class="grid grid-cols-3 gap-1.5" role="radiogroup" aria-label="Nombre de résultats">
+						{#each zefixLimits as opt}
+							{@const sel = importLimit === opt.value}
+							<button
+								type="button"
+								role="radio"
+								aria-checked={sel}
+								onclick={() => importLimit = opt.value}
+								class="flex flex-col items-center justify-center h-10 px-2 box-border border rounded-lg cursor-pointer transition-colors {sel ? 'text-white shadow-sm' : 'border-border bg-white text-text-muted hover:border-text-muted/40 hover:text-text'}"
+								style={sel ? `background-color: var(${activeMeta.cssVar}); border-color: var(${activeMeta.cssVar});` : ''}
+							>
+								<span class="text-sm font-semibold leading-none">{opt.label}</span>
+								<span class="text-[10px] mt-0.5 leading-none {sel ? 'opacity-90' : ''}">{opt.sub}</span>
+							</button>
+						{/each}
+					</div>
+				</div>
+			</div>
+		{/if}
+
+		<!-- Footer pédagogique commun (identique à toutes les sources mais texte source-specific) -->
+		<div class="flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-surface-alt border border-border/60">
+			<Icon name={activeMeta.footer.icon} size={16} class="mt-0.5 shrink-0 text-text-muted" />
+			<p class="text-xs text-text-body leading-relaxed">{activeMeta.footer.text}</p>
+		</div>
+
+		<!-- Résultat import (succès / erreur) -->
 		{#if importResult}
-			<div class="flex items-center gap-2.5 p-4 rounded-lg text-sm {importResult.type === 'success' ? 'bg-success-light text-success' : 'bg-danger-light text-danger'}">
+			<div role="alert" class="flex items-center gap-3 p-4 rounded-lg text-sm {importResult.type === 'success' ? 'bg-success-light text-success' : 'bg-danger-light text-danger'}">
 				<Icon name={importResult.type === 'success' ? 'check_circle' : 'error'} />
 				<span class="font-medium">{importResult.message}</span>
 			</div>
 		{/if}
 
-		<div class="flex justify-end pt-3 border-t border-border">
-			<button
-				type="button"
-				onclick={() => { open = false; importResult = null; }}
-				class="inline-flex items-center h-10 px-4 box-border text-sm text-text-muted hover:text-text cursor-pointer transition-colors"
-			>
-				Fermer
-			</button>
-		</div>
+		<!-- CTA pleine largeur, couleur source-specific, verbe action distinct -->
+		<button
+			type="button"
+			onclick={activeTab === 'zefix' ? importZefix : (activeTab === 'simap' ? importSimap : importRegbl)}
+			disabled={importing
+				|| (activeTab === 'zefix' && zefixNameInvalid)
+				|| (activeTab === 'simap' && simapSearchInvalid)
+				|| (activeTab === 'regbl' && importRegblCantons.length === 0)}
+			class="w-full inline-flex items-center justify-center gap-2 h-12 px-4 box-border text-base font-semibold text-white rounded-xl disabled:opacity-50 cursor-pointer shadow-md transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+			style={`background-color: var(${activeMeta.cssVar}); --tw-ring-color: var(${activeMeta.cssVar});`}
+		>
+			<Icon name={activeMeta.action.icon} size={18} />
+			{importing ? activeMeta.action.pendingLabel : activeMeta.action.label}
+		</button>
 	</div>
 </ModalForm>
