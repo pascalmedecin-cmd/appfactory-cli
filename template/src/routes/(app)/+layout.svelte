@@ -4,9 +4,6 @@
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import Toast from '$lib/components/Toast.svelte';
-	import KeyboardListener from '$lib/keyboard/KeyboardListener.svelte';
-	import CommandPalette from '$lib/keyboard/CommandPalette.svelte';
-	import Cheatsheet from '$lib/keyboard/Cheatsheet.svelte';
 	import { config } from '$lib/config';
 	import { page } from '$app/state';
 
@@ -60,10 +57,6 @@
 </main>
 
 <Toast />
-
-<KeyboardListener />
-<CommandPalette />
-<Cheatsheet />
 
 <style>
 	/* Desktop : sidebar visible en place */
