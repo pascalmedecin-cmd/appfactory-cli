@@ -229,6 +229,33 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 		expect(stored).not.toMatch(/Bearer\s+sk-ant-/);
 	});
 
+	it("masque les patterns JWT (eyJ...), Resend (re_...) et api_key=val génériques", async () => {
+		const fresh = resetState([
+			{ data: null, error: null },
+			{ data: null, error: null },
+			{ data: [], error: null },
+			{ data: { id: 'rep-leak2' }, error: null }
+		]);
+		// JWT Supabase + Resend key + api_key=value
+		generateMock.mockRejectedValue(
+			new Error(
+				'Auth failed eyJhbGciOiJIUzI1NiI.eyJzdWIiOiIxMjM0NSJ9.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c re_a1b2c3d4e5f6g7h8i9j0kkkk api_key=foo123bar456'
+			)
+		);
+
+		const result = await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'));
+
+		expect(result.ok).toBe(false);
+		const errorUpsert = fresh.upserts.find((u) => u.values.status === 'error');
+		const stored = errorUpsert!.values.error_message as string;
+		expect(stored).not.toMatch(/eyJhbGciOiJIUzI1NiI/);
+		expect(stored).toMatch(/\[REDACTED_JWT\]/);
+		expect(stored).not.toMatch(/re_a1b2c3d4e5f6g7h8i9j0/);
+		expect(stored).toMatch(/\[REDACTED_RESEND_KEY\]/);
+		expect(stored).not.toMatch(/api_key=foo123bar456/);
+		expect(stored).toMatch(/api_key=\[REDACTED\]/i);
+	});
+
 	it("convertit gen.success=false en upsert status=error sans appeler generateIntelligenceReport deux fois", async () => {
 		const fresh = resetState([
 			{ data: null, error: null }, // idempotence

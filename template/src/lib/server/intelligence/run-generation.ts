@@ -25,7 +25,16 @@ const RUNNING_PLACEHOLDER = 'Run en cours, en attente de publication.';
 
 function logPhase(weekLabel: string, phase: string, extra?: Record<string, unknown>) {
 	const ts = new Date().toISOString();
-	const ctx = extra ? ` ${JSON.stringify(extra)}` : '';
+	let ctx = '';
+	if (extra) {
+		try {
+			ctx = ` ${JSON.stringify(extra)}`;
+		} catch (e) {
+			// Garde-fou : référence circulaire ou BigInt dans extra ne doit jamais
+			// faire échouer le run. Dégrader le log plutôt que crasher le pipeline.
+			ctx = ` [stringify_failed: ${e instanceof Error ? e.message : String(e)}]`;
+		}
+	}
 	console.log(`[veille ${weekLabel}] ${ts} phase=${phase}${ctx}`);
 }
 
@@ -90,7 +99,16 @@ async function markError(
 	const sanitized = errorMessage
 		.slice(0, 500)
 		.replace(/sk-ant-[a-zA-Z0-9_-]+/g, '[REDACTED_API_KEY]')
-		.replace(/Bearer\s+[a-zA-Z0-9_.-]+/gi, 'Bearer [REDACTED]');
+		.replace(/Bearer\s+[a-zA-Z0-9_.-]+/gi, 'Bearer [REDACTED]')
+		// JWT (Supabase, third-party) : 3 segments base64url séparés par '.'
+		.replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[REDACTED_JWT]')
+		// Resend API key préfixe `re_`
+		.replace(/\bre_[a-zA-Z0-9]{20,}/g, '[REDACTED_RESEND_KEY]')
+		// Pattern générique key=value pour `api_key`, `token`, `secret`, `apikey`
+		.replace(
+			/(api[_-]?key|token|secret|apikey)\s*[:=]\s*[a-zA-Z0-9_\-.]+/gi,
+			'$1=[REDACTED]'
+		);
 
 	const { data: errRow } = await supabase
 		.from('intelligence_reports')
