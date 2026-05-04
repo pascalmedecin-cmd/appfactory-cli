@@ -1,7 +1,7 @@
 # AppFactory : CLAUDE.md
 
 **Statut :** Phase C, /prospection FIGÉE PAGE MODÈLE GOLDEN V9 (S165 2026-05-04). Cron veille hebdo OBSERVABLE et diagnostic timeout 300s Vercel Hobby PROUVÉ S166. Bloc 3 externalisation GHA prévu S167 dédiée. S164 livré (H-19 sticky 2 cols + F-V4-05/06/07). Audit UX/UI 360 LIVRÉ (S160). 3 vagues batch fixes LIVRÉES (S162). V2 mobile terrain CLOS (S127α+S129β+S130γ). V1 MOBILE CLOS (S125). Formation IA = sous-projet autonome dans `formation-ia/`, `cc` option 2.
-**Derniere mise a jour :** 2026-05-04 (S166 CRM xhigh : observability cron veille hebdo - markRunning + try/catch global + sanitize 5 patterns + diagnostic timeout 300s prouvé directement HTTP 504 à 301.4s). 3 commits push origin/main : `304147f` Bloc 1 livraison + `476242f` durcissement post bug-hunter + `c109635` doc clôture. QA : vitest 420/420 verts (+6), svelte-check 128/32 baseline S165 inchangée, build prod 11s OK. Audits Opus security-auditor + bug-hunter : 0 Critical / 0 High. W18 absente toujours, rattrapage prévu Bloc 3 via endpoint admin rerun-week. Mémoire pattern `project_veille_robustness_pattern.md`.
+**Derniere mise a jour :** 2026-05-04 (S166ter méta xhigh : fix racine bug cockpit `/fin-session` qui marquait `delivered` à tort les tâches `[x] **[BLOQUÉ - X livré]**` cochées en cascade. Vrai bug racine = `TASK_RE` matchait uniquement `[ ]` → cases cochées invisibles → branche `pivot-preserved` corrompait `delivered`. Fix code méta : 3 modifs `cli_pivot_repair.py` + `coherence.py` (regex acceptent `[ ]|x]`, `extract_tasks` expose `checked: bool`), 9 tests régression (`tests/test_parse_livre_cette_session.py`), 8 entries CRM restaurées status=transmitted, `blocks-crm.json` nettoyé (3 dups + 1 doublon strict retirés, 6 blocs delivered=False renumérotés #1-#6), CLAUDE.md AppFactory zone Prochaine session 10 cases `[x]` → `[ ]`. Suite cockpit 453/453 verts. Mémoire `feedback_finsession_x_bloque_marqueur_pas_livraison.md`. **/start CRM ré-opérationnel** : 8 entries en 8 blocs (5 cron veille + 1 cadrage cascade + 2 bloqués). Précédent header S166 valide : 3 commits push origin/main `304147f` + `476242f` + `c109635`, vitest 420/420, svelte-check 128/32, build prod 11s OK.
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
 **Session courante :** Session 166 (CRM, 2026-05-04, `/effort xhigh`, observability cron veille - status=running anti-aveugle + try/catch global + sanitize errorMessage + diagnostic timeout 300s prouvé).
@@ -231,6 +231,53 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 
 **Prochaine attaque** : Bloc #1 - Externalisation cron veille hors Vercel (S167 dédiée). Timeout 300s Vercel Hobby prouvé directement S166 (HTTP 504 FUNCTION_INVOCATION_TIMEOUT à 301.4s sur rerun manuel). Récidive certaine vendredi 08/05 si pas livré avant. Bloc 2 cascade gabarit CRM décalé.
 
+
+<!-- BEGIN CONSOLIDATION (auto-géré par cockpit, ne pas éditer) -->
+
+### Consolidation cockpit (maj 2026-05-04T21:01:06)
+
+**Blocs actionnables** (ordre d'attaque) :
+
+- **Bloc #1** - Externalisation cron veille hors Vercel - Refactor runWeeklyGeneration portable… (6.0h, confiance Moyen)
+  - Objectif : Sortir runWeeklyGeneration vers GitHub Actions cron + endpoint admin rerun-week + rattrapage W18
+  - Refactor runWeeklyGeneration portable hors SvelteKit (extraire $env/dynamic/private + $lib/server/supabase en injection de dépendances). Créer template/scripts/run-veille.ts standalone Node exécutable
+
+- **Bloc #2** - Externalisation cron veille hors Vercel - Workflow .github/workflows/cron-veille (6.0h, confiance Moyen)
+  - Objectif : Sortir runWeeklyGeneration vers GitHub Actions cron + endpoint admin rerun-week + rattrapage W18
+  - Workflow .github/workflows/cron-veille.yml cron 0 6 * * 5 qui run pnpm tsx template/scripts/run-veille.ts. Repo secrets GitHub : ANTHROPIC_API_KEY + SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (réutilise
+
+- **Bloc #3** - Externalisation cron veille hors Vercel - Endpoint admin template/src/routes/api (6.0h, confiance Moyen)
+  - Objectif : Sortir runWeeklyGeneration vers GitHub Actions cron + endpoint admin rerun-week + rattrapage W18
+  - Endpoint admin template/src/routes/api/intelligence/rerun-week/+server.ts POST avec {week: '2026-W18'} body + Authorization: Bearer ${CRON_SECRET} qui force currentWeekRange override pour rattraper W1
+
+- **Bloc #4** - Externalisation cron veille hors Vercel - Curl manuel /api/intelligence/rerun-we (6.0h, confiance Moyen)
+  - Objectif : Sortir runWeeklyGeneration vers GitHub Actions cron + endpoint admin rerun-week + rattrapage W18
+  - Curl manuel /api/intelligence/rerun-week avec {week: '2026-W18'} depuis GHA workflow_dispatch (one-shot). Vérifier W18 published en DB + email récap reçu.
+
+- **Bloc #5** - Externalisation cron veille hors Vercel - Lire l'édition produite via GHA +… (1.0h, confiance Moyen)
+  - Objectif : Sortir runWeeklyGeneration vers GitHub Actions cron + endpoint admin rerun-week + rattrapage W18
+  - Lire l'édition produite via GHA + email récap. Critères : (1) ≥1 item Suisse romande rangs 1-3, (2) sources crédibles, (3) anti-doublons, (4) compliance_tag cohérent, (5) volume 5-10 items. Vérifier h
+
+- **Bloc #6** - Cadrage cascade gabarit 6 pages CRM (6.0h, confiance Élevé)
+  - Objectif : Audit éclair 6 pages cibles vs golden v9 et proposer ordre d'attaque cascade
+  - Cadrage cascade gabarit : audit éclair des 6 pages cibles vs golden v8 (5-10 min/page). Identifier écarts critiques par page (a11y, sémantique, tokens, composants partagés). Proposer ordre d'attaque
+
+**Blocs bloqués** :
+
+- **Bloc B1** [BLOQUÉ] - Cascade gabarit pages CRM (1 puis 2-6) - Cascade page 1 : /dashboard ou… (6.0h)
+  - Objectif : Propager patterns golden v9 de /prospection sur 6 pages CRM en cascade ordonnée
+  - Blocage : Cadrage cascade (3f2a2780c6bd) doit être livré pour figer ordre d'attaque + scope par page
+  - Débloque si : Livraison Bloc 2 cadrage cascade + arbitrage Pascal page 1
+  - Cascade page 1 : /dashboard ou /pipeline (selon arbitrage Pascal sur priorité métier).
+
+- **Bloc B2** [BLOQUÉ] - Cascade gabarit pages CRM (1 puis 2-6) - Cascade pages 2-6 : /contacts… (6.0h)
+  - Objectif : Propager patterns golden v9 de /prospection sur 6 pages CRM en cascade ordonnée
+  - Blocage : Cadrage cascade (3f2a2780c6bd) doit être livré pour figer ordre d'attaque + scope par page
+  - Débloque si : Livraison Bloc 2 cadrage cascade + arbitrage Pascal page 1
+  - Cascade pages 2-6 : /contacts, /entreprises, /signaux, /veille + page restante. Audit security-auditor cumulé en fin de cascade.
+
+<!-- END CONSOLIDATION -->
+
 ### 1. Externalisation cron veille hors Vercel [SUPERVISÉ • xhigh • ~3-5h]
 
 **Pourquoi** : preuve directe S166 que le pipeline Anthropic streaming dépasse 300s (cap Vercel Hobby), donc cron `/api/cron/intelligence` récidive timeout chaque vendredi sans solution via la function HTTP. Solution structurelle = sortir le run du contexte Vercel pour qu'il tourne dans un environnement sans plafond de durée. GitHub Actions cron = durée illimitée + repo secrets pour réutiliser ANTHROPIC_API_KEY/SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY existants.
@@ -240,7 +287,6 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 - [ ] **[BLOQUÉ - refactor portable livré]** Workflow `.github/workflows/cron-veille.yml` cron `0 6 * * 5` qui run `pnpm tsx template/scripts/run-veille.ts`. Repo secrets GitHub : ANTHROPIC_API_KEY + SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY (réutilise valeurs Vercel via Pascal manual sync depuis `vercel env pull`). Désactiver cron `/api/cron/intelligence` dans `template/vercel.json`.
 - [ ] **[BLOQUÉ - workflow livré]** Endpoint admin `template/src/routes/api/intelligence/rerun-week/+server.ts` POST avec `{week: '2026-W18'}` body + `Authorization: Bearer ${CRON_SECRET}` qui force `currentWeekRange` override pour rattraper W18 manquante. Audit security-auditor + bug-hunter Opus + tests vitest.
 - [ ] **[BLOQUÉ - rattrapage W18]** Curl manuel `/api/intelligence/rerun-week` avec `{week: '2026-W18'}` depuis GHA workflow_dispatch (one-shot). Vérifier W18 published en DB + email récap reçu.
-
 ### 2. Cascade gabarit /prospection sur 6 pages CRM [MIXTE • xhigh • cascade 3-4 sessions]
 
 **Pourquoi** : /prospection figée page modèle S164+S165. Cascade ordonnée des patterns golden v9 (ARIA tabs distinctifs underline, dense table avec sticky 2 cols + alignement td +4px, ScorePill, ConfirmModal, focus-visible globaux, empty states contextuels, aria-label tr, ImportModal contextuel premium 3 parcours, header condensé avec actions descendues dans tabs-bar, type Column.srLabel pour headers vides) sur les 6 autres pages CRM. Évite la dérive de design system.
