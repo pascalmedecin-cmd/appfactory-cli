@@ -167,7 +167,7 @@
 
 	const baseColumns = [
 		{ key: 'score_pertinence', label: 'Priorité', shortLabel: 'Prio.', sortable: true, infoTooltip: PRIORITY_TOOLTIP, defaultWidth: 130, minWidth: 110 },
-		{ key: 'raison_sociale', label: 'Entreprise', sortable: true, defaultWidth: 240, minWidth: 160 },
+		{ key: 'raison_sociale', label: '', srLabel: 'Entreprise', sortable: true, defaultWidth: 240, minWidth: 160 },
 	];
 
 	const columnsByTab: Record<ProspectionTabKey, Array<{ key: string; label: string; shortLabel?: string; sortable: boolean; class?: string; infoTooltip?: string; defaultWidth?: number; minWidth?: number }>> = {
