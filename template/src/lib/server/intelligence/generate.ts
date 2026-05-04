@@ -1,5 +1,4 @@
 import Anthropic from '@anthropic-ai/sdk';
-import { env } from '$env/dynamic/private';
 import {
 	IntelligenceReportSchema,
 	type IntelligenceReport,
@@ -163,18 +162,23 @@ async function verifyItems(
 	);
 }
 
+export interface GenerateOptions {
+	/** Anthropic API key. Injectée par l'appelant (cf. deps.ts). */
+	anthropicApiKey: string;
+}
+
 export async function generateIntelligenceReport(
-	input: GenerateInput
+	input: GenerateInput,
+	opts: GenerateOptions
 ): Promise<GenerateResult> {
 	// Reset du tracker : une invocation = une collecte complète.
 	costTracker.reset();
 
-	const apiKey = env.ANTHROPIC_API_KEY;
-	if (!apiKey) {
+	if (!opts.anthropicApiKey) {
 		return { success: false, error: 'ANTHROPIC_API_KEY manquante', costs: costTracker.summary() };
 	}
 
-	const client = new Anthropic({ apiKey });
+	const client = new Anthropic({ apiKey: opts.anthropicApiKey });
 
 	const response = await callModel(client, input);
 	costTracker.addClaudeCall(MODEL, response.usage, 'Claude veille (1-phase)');

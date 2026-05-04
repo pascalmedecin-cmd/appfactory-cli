@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { VeilleDeps } from './deps';
 
 interface MockResp<T = unknown> {
 	data: T | null;
@@ -50,18 +51,9 @@ function makeCapturingSupabase(responses: MockResp[]) {
 	};
 }
 
-const fakeSupabase = makeCapturingSupabase([]);
 const generateMock = vi.fn();
 const sendRecapMock = vi.fn();
 const applySignalsMock = vi.fn();
-
-vi.mock('$lib/server/supabase', () => ({
-	createSupabaseServiceClient: () => fakeSupabase.client
-}));
-
-vi.mock('$env/dynamic/private', () => ({
-	env: { VEILLE_ANTI_DOUBLONS_FROM: '2026-W18', VEILLE_WINDOW_DAYS: '30' }
-}));
 
 vi.mock('./generate', () => ({
 	generateIntelligenceReport: (...args: unknown[]) => generateMock(...args)
@@ -77,15 +69,23 @@ vi.mock('./apply-signals', () => ({
 
 import { runWeeklyGeneration } from './run-generation';
 
-function resetState(responses: MockResp[]) {
-	(fakeSupabase as unknown as { upserts: UpsertCall[] }).upserts.length = 0;
-	const internal = fakeSupabase as unknown as { _i?: number };
-	internal._i = 0;
-	// Reconstruire le supabase factice pour ré-injecter les responses
-	const fresh = makeCapturingSupabase(responses);
-	(fakeSupabase as unknown as { client: unknown }).client = fresh.client;
-	(fakeSupabase as unknown as { upserts: UpsertCall[] }).upserts = fresh.upserts;
-	return fresh;
+/**
+ * Construit un objet `VeilleDeps` complet à partir d'un client supabase mock.
+ * Toutes les valeurs sont déterministes pour les tests (anti-doublons activé W18,
+ * window 30j, email désactivé pour ne pas hit Resend).
+ */
+function makeMockDeps(supabase: unknown): VeilleDeps {
+	return {
+		supabase: supabase as VeilleDeps['supabase'],
+		anthropicApiKey: 'sk-ant-test-fixture',
+		email: {
+			enabled: false,
+			to: 'test@filmpro.ch',
+			from: 'noreply@filmpro.ch'
+		},
+		antiDoublonsFrom: '2026-W18',
+		windowDays: 30
+	};
 }
 
 describe('runWeeklyGeneration - observability anti-aveugle', () => {
@@ -102,7 +102,7 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 	});
 
 	it('upsert status=running AU DÉMARRAGE avant tout appel à Anthropic', async () => {
-		const fresh = resetState([
+		const fresh = makeCapturingSupabase([
 			// idempotence check : pas d'édition existante
 			{ data: null, error: null },
 			// markRunning upsert : succès, retourne null (pas .select)
@@ -149,7 +149,10 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 			costs: { breakdown: [], total_usd: 1.5, total_eur: 1.4 }
 		});
 
-		const result = await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'));
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client)
+		);
 
 		expect(result.ok).toBe(true);
 		expect(result.skipped).toBeUndefined();
@@ -164,8 +167,40 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 		expect(runningIdx).toBeLessThan(publishedIdx);
 	});
 
+	it('passe deps.anthropicApiKey à generateIntelligenceReport', async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: null, error: null }, // idempotence
+			{ data: null, error: null }, // markRunning
+			{ data: [], error: null }, // previousItems
+			{ data: { id: 'rep-key' }, error: null } // publish
+		]);
+		generateMock.mockResolvedValue({
+			success: true,
+			report: {
+				meta: {
+					week_label: '2026-W18',
+					generated_at: '2026-05-01T06:00:00Z',
+					compliance_tag: 'OK FilmPro',
+					executive_summary: 'a'.repeat(100)
+				},
+				items: [],
+				impacts_filmpro: []
+			},
+			raw: null,
+			costs: { breakdown: [], total_usd: 0, total_eur: 0 }
+		});
+
+		const deps = makeMockDeps(fresh.client);
+		deps.anthropicApiKey = 'sk-ant-injected-12345';
+		await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'), deps);
+
+		expect(generateMock).toHaveBeenCalledTimes(1);
+		const opts = generateMock.mock.calls[0][1];
+		expect(opts).toEqual({ anthropicApiKey: 'sk-ant-injected-12345' });
+	});
+
 	it("convertit une exception non capturée de generateIntelligenceReport en upsert status=error + email failure", async () => {
-		const fresh = resetState([
+		const fresh = makeCapturingSupabase([
 			// idempotence check
 			{ data: null, error: null },
 			// markRunning upsert
@@ -177,7 +212,10 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 		]);
 		generateMock.mockRejectedValue(new Error('Anthropic stream timeout'));
 
-		const result = await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'));
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client)
+		);
 
 		expect(result.ok).toBe(false);
 		expect(result.error).toMatch(/Exception: Anthropic stream timeout/);
@@ -187,18 +225,23 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 		expect(statuses).toContain('running');
 		expect(statuses).toContain('error');
 
-		// Email failure déclenché
+		// Email failure déclenché (sendRecapEmail reçoit (input, emailConfig))
 		expect(sendRecapMock).toHaveBeenCalledTimes(1);
 		expect(sendRecapMock.mock.calls[0][0]).toMatchObject({ mode: 'failure' });
+		// 2e arg = emailConfig injecté (depuis deps)
+		expect(sendRecapMock.mock.calls[0][1]).toMatchObject({ enabled: false });
 	});
 
 	it('skip silencieux si édition déjà publiée (idempotence préservée)', async () => {
-		resetState([
+		const fresh = makeCapturingSupabase([
 			// idempotence check : édition published trouvée
 			{ data: { id: 'rep-existing', status: 'published' }, error: null }
 		]);
 
-		const result = await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'));
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client)
+		);
 
 		expect(result.ok).toBe(true);
 		expect(result.skipped).toBe(true);
@@ -207,7 +250,7 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 	});
 
 	it("masque les patterns sk-ant-* et Bearer * dans error_message stocké en DB", async () => {
-		const fresh = resetState([
+		const fresh = makeCapturingSupabase([
 			{ data: null, error: null }, // idempotence
 			{ data: null, error: null }, // markRunning
 			{ data: [], error: null }, // previousItems
@@ -217,7 +260,10 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 			new Error('401 Unauthorized: invalid Bearer sk-ant-api03-secretvalue123 header')
 		);
 
-		const result = await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'));
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client)
+		);
 
 		expect(result.ok).toBe(false);
 		const errorUpsert = fresh.upserts.find((u) => u.values.status === 'error');
@@ -230,7 +276,7 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 	});
 
 	it("masque les patterns JWT (eyJ...), Resend (re_...) et api_key=val génériques", async () => {
-		const fresh = resetState([
+		const fresh = makeCapturingSupabase([
 			{ data: null, error: null },
 			{ data: null, error: null },
 			{ data: [], error: null },
@@ -243,7 +289,10 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 			)
 		);
 
-		const result = await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'));
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client)
+		);
 
 		expect(result.ok).toBe(false);
 		const errorUpsert = fresh.upserts.find((u) => u.values.status === 'error');
@@ -257,7 +306,7 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 	});
 
 	it("convertit gen.success=false en upsert status=error sans appeler generateIntelligenceReport deux fois", async () => {
-		const fresh = resetState([
+		const fresh = makeCapturingSupabase([
 			{ data: null, error: null }, // idempotence
 			{ data: null, error: null }, // markRunning
 			{ data: [], error: null }, // previousItems
@@ -270,7 +319,10 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 			costs: { breakdown: [], total_usd: 0.8, total_eur: 0.7 }
 		});
 
-		const result = await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'));
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client)
+		);
 
 		expect(result.ok).toBe(false);
 		expect(result.error).toMatch(/Modèle coupé par max_tokens/);

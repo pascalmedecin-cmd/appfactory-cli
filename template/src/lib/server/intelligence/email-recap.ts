@@ -1,25 +1,25 @@
 /**
  * Email récap veille post-cron.
  *
- * Envoyé après chaque cron /api/cron/intelligence (succès ou échec),
- * via Resend API (fetch direct, pas de SDK npm).
+ * Envoyé après chaque run veille (succès, sparse, ou échec), via Resend API
+ * (fetch direct, pas de SDK npm).
  *
- * Activation :
- *  - env EMAIL_RECAP_ENABLED=true (gate obligatoire, défaut off)
- *  - env RESEND_API_KEY requis (sinon skip avec log)
- *  - env EMAIL_RECAP_TO (défaut pascal@filmpro.ch)
- *  - env EMAIL_RECAP_FROM (défaut noreply@filmpro.ch)
+ * Configuration injectée par l'appelant via `EmailRecapConfig` (cf. deps.ts) :
+ *  - enabled : gate global (défaut false côté factory)
+ *  - apiKey : Resend API key (si manquante alors que enabled=true, skip avec log)
+ *  - to / from : destinataires
  *
- * Si une env var manque → skip silencieux côté appelant via sendRecapEmail qui
- * renvoie `{ ok: false, reason }`. Jamais d'exception propagée au cron.
+ * Si la config est désactivée ou incomplète → skip silencieux via sendRecapEmail
+ * qui renvoie `{ ok: false, reason }`. Jamais d'exception propagée à l'appelant.
+ *
+ * Note S167 : retrait de l'import `$env/dynamic/private` pour rendre le module
+ * portable hors SvelteKit (cron externalisé GitHub Actions, cf. scripts/run-veille.ts).
  */
-import { env } from '$env/dynamic/private';
 import type { IntelligenceReport } from './schema';
 import type { CostSummary, CostEntry } from './cost-tracker';
+import type { EmailRecapConfig } from './deps';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
-const DEFAULT_TO = 'pascal@filmpro.ch';
-const DEFAULT_FROM = 'FilmPro Veille <noreply@filmpro.ch>';
 const CRM_URL = 'https://filmpro-crm.vercel.app';
 
 export interface SendRecapSuccess {
@@ -358,20 +358,19 @@ export function buildRecapPayload(input: SendRecapInput): {
 }
 
 /**
- * Envoi via Resend. Gate par env. Toutes les erreurs → { ok: false, reason },
+ * Envoi via Resend. Toute config injectée. Toutes les erreurs → { ok: false, reason },
  * jamais d'exception propagée.
  */
-export async function sendRecapEmail(input: SendRecapInput): Promise<SendRecapResult> {
-	const enabled = (env.EMAIL_RECAP_ENABLED ?? '').toLowerCase() === 'true';
-	if (!enabled) {
+export async function sendRecapEmail(
+	input: SendRecapInput,
+	config: EmailRecapConfig
+): Promise<SendRecapResult> {
+	if (!config.enabled) {
 		return { ok: false, skipped: true, reason: 'EMAIL_RECAP_ENABLED=false' };
 	}
-	const apiKey = env.RESEND_API_KEY;
-	if (!apiKey) {
+	if (!config.apiKey) {
 		return { ok: false, skipped: true, reason: 'RESEND_API_KEY manquante' };
 	}
-	const to = env.EMAIL_RECAP_TO || DEFAULT_TO;
-	const from = env.EMAIL_RECAP_FROM || DEFAULT_FROM;
 
 	const { subject, html, text } = buildRecapPayload(input);
 
@@ -379,10 +378,10 @@ export async function sendRecapEmail(input: SendRecapInput): Promise<SendRecapRe
 		const res = await fetch(RESEND_ENDPOINT, {
 			method: 'POST',
 			headers: {
-				Authorization: `Bearer ${apiKey}`,
+				Authorization: `Bearer ${config.apiKey}`,
 				'Content-Type': 'application/json'
 			},
-			body: JSON.stringify({ from, to, subject, html, text })
+			body: JSON.stringify({ from: config.from, to: config.to, subject, html, text })
 		});
 		if (!res.ok) {
 			const body = await res.text();

@@ -1,13 +1,12 @@
-import { env } from '$env/dynamic/private';
-import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { generateIntelligenceReport } from './generate';
 import { currentWeekRange, extendedWindowStart } from './week-utils';
 import type { IntelligenceReport } from './schema';
 import type { PreviousItem } from './prompt';
 import { sendRecapEmail } from './email-recap';
 import { applySignalsFromReport } from './apply-signals';
+import type { VeilleDeps } from './deps';
 
-type Supabase = ReturnType<typeof createSupabaseServiceClient>;
+type Supabase = VeilleDeps['supabase'];
 
 export interface RunResult {
 	ok: boolean;
@@ -17,7 +16,6 @@ export interface RunResult {
 	error?: string;
 }
 
-const DEFAULT_WINDOW_DAYS = 30;
 /** Seuil items en-dessous duquel on déclenche l'alerte « semaine creuse ». */
 const SPARSE_WEEK_THRESHOLD = 2;
 /** Texte placeholder écrit en DB lors du marquage running (évite NOT NULL sur executive_summary). */
@@ -89,7 +87,8 @@ async function markError(
 	weekLabel: string,
 	errorMessage: string,
 	rawResponse: unknown,
-	costs: Parameters<typeof sendRecapEmail>[0]['data'] extends { costs: infer C } ? C : never
+	costs: Parameters<typeof sendRecapEmail>[0]['data'] extends { costs: infer C } ? C : never,
+	emailConfig: VeilleDeps['email']
 ): Promise<string | undefined> {
 	// Défense en profondeur : tronquer + masquer tout pattern API key / Bearer
 	// résiduel avant stockage. La table intelligence_reports.error_message est
@@ -132,14 +131,17 @@ async function markError(
 	logPhase(weekLabel, 'error_marked', { errorMessage: sanitized });
 
 	try {
-		const result = await sendRecapEmail({
-			mode: 'failure',
-			data: {
-				weekLabel,
-				errorMessage: sanitized,
-				costs
-			}
-		});
+		const result = await sendRecapEmail(
+			{
+				mode: 'failure',
+				data: {
+					weekLabel,
+					errorMessage: sanitized,
+					costs
+				}
+			},
+			emailConfig
+		);
 		if (!result.ok && !result.skipped) {
 			console.warn(`[email-recap] failure alert not sent: ${result.reason}`);
 		}
@@ -153,21 +155,11 @@ async function markError(
 /**
  * Anti-doublons activé à partir d'un weekLabel seuil (format YYYY-Www).
  * Avant le seuil : skip pour permettre une « édition zéro » sans contrainte.
- * Si VEILLE_ANTI_DOUBLONS_FROM n'est pas défini, anti-doublons toujours actif.
+ * Si `seuil` est undefined, anti-doublons toujours actif.
  */
-function antiDoublonsActive(currentWeek: string): boolean {
-	const seuil = env.VEILLE_ANTI_DOUBLONS_FROM;
+function antiDoublonsActive(currentWeek: string, seuil: string | undefined): boolean {
 	if (!seuil) return true;
 	return currentWeek >= seuil;
-}
-
-/**
- * Tolérance fenêtre vérification (jours). Default 30 (refonte LEAN S112).
- * Override via env VEILLE_WINDOW_DAYS pour resserrer ou élargir.
- */
-function windowDays(): number {
-	const v = parseInt(env.VEILLE_WINDOW_DAYS ?? '', 10);
-	return Number.isFinite(v) && v > 0 ? v : DEFAULT_WINDOW_DAYS;
 }
 
 /**
@@ -175,10 +167,18 @@ function windowDays(): number {
  * (URL + titre + date) pour anti-doublons intelligent, génère l'édition via Claude
  * 1-phase, valide, insère en DB. Idempotent via contrainte UNIQUE sur week_label
  * (skip si déjà existante et status=published).
+ *
+ * Toutes les dépendances (supabase, anthropicApiKey, email config, env veille)
+ * sont injectées via `deps`. Permet à la fois l'exécution dans un handler
+ * SvelteKit (cron Vercel) et dans un script standalone (cron GitHub Actions
+ * post Bloc #2 S167).
  */
-export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunResult> {
+export async function runWeeklyGeneration(
+	now: Date = new Date(),
+	deps: VeilleDeps
+): Promise<RunResult> {
 	const week = currentWeekRange(now);
-	const supabase = createSupabaseServiceClient();
+	const { supabase } = deps;
 	const startedAt = new Date().toISOString();
 
 	logPhase(week.weekLabel, 'start', { now: startedAt });
@@ -207,7 +207,7 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 	try {
 		// Charge les 4 dernières éditions pour anti-doublons URL+date.
 		let previousItems: PreviousItem[] = [];
-		if (antiDoublonsActive(week.weekLabel)) {
+		if (antiDoublonsActive(week.weekLabel, deps.antiDoublonsFrom)) {
 			const { data: previous } = await supabase
 				.from('intelligence_reports')
 				.select('week_label, items')
@@ -236,16 +236,19 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 			});
 		}
 
-		const days = windowDays();
+		const days = deps.windowDays;
 		logPhase(week.weekLabel, 'generate_start', { windowDays: days });
-		gen = await generateIntelligenceReport({
-			weekLabel: week.weekLabel,
-			dateStart: week.dateStart,
-			dateEnd: week.dateEnd,
-			windowStart: extendedWindowStart(week, days),
-			windowDays: days,
-			previousItems
-		});
+		gen = await generateIntelligenceReport(
+			{
+				weekLabel: week.weekLabel,
+				dateStart: week.dateStart,
+				dateEnd: week.dateEnd,
+				windowStart: extendedWindowStart(week, days),
+				windowDays: days,
+				previousItems
+			},
+			{ anthropicApiKey: deps.anthropicApiKey }
+		);
 		logPhase(week.weekLabel, 'generate_done', {
 			success: gen.success,
 			items: gen.report?.items.length,
@@ -257,11 +260,18 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 		// trace + déclenche l'email d'alerte échec.
 		const message = e instanceof Error ? e.message : String(e);
 		logPhase(week.weekLabel, 'exception', { message });
-		const errId = await markError(supabase, week.weekLabel, `Exception: ${message}`, null, {
-			breakdown: [],
-			total_usd: 0,
-			total_eur: 0
-		});
+		const errId = await markError(
+			supabase,
+			week.weekLabel,
+			`Exception: ${message}`,
+			null,
+			{
+				breakdown: [],
+				total_usd: 0,
+				total_eur: 0
+			},
+			deps.email
+		);
 		return {
 			ok: false,
 			weekLabel: week.weekLabel,
@@ -276,7 +286,8 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 			week.weekLabel,
 			gen.error ?? 'Erreur inconnue',
 			gen.raw,
-			gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 }
+			gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 },
+			deps.email
 		);
 		return {
 			ok: false,
@@ -319,7 +330,8 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 			week.weekLabel,
 			errMsg,
 			gen.raw,
-			gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 }
+			gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 },
+			deps.email
 		);
 		return {
 			ok: false,
@@ -346,14 +358,17 @@ export async function runWeeklyGeneration(now: Date = new Date()): Promise<RunRe
 	// anormalement maigre (< SPARSE_WEEK_THRESHOLD items) → alerte distincte.
 	const isSparse = report.items.length < SPARSE_WEEK_THRESHOLD;
 	try {
-		const result = await sendRecapEmail({
-			mode: isSparse ? 'sparse' : 'success',
-			data: {
-				weekLabel: week.weekLabel,
-				report,
-				costs: gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 }
-			}
-		});
+		const result = await sendRecapEmail(
+			{
+				mode: isSparse ? 'sparse' : 'success',
+				data: {
+					weekLabel: week.weekLabel,
+					report,
+					costs: gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 }
+				}
+			},
+			deps.email
+		);
 		if (!result.ok && !result.skipped) {
 			console.warn(
 				`[email-recap] ${isSparse ? 'sparse' : 'success'} recap not sent: ${result.reason}`
