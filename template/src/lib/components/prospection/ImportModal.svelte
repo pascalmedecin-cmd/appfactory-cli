@@ -210,6 +210,29 @@
 	function toggleCanton(list: string[], canton: string): string[] {
 		return list.includes(canton) ? list.filter(c => c !== canton) : [...list, canton];
 	}
+
+	// Pattern ARIA tabs (cohérent avec ProspectionTabs S162 V2.1) : ArrowLeft/Right + Home/End,
+	// roving tabindex sur les cards source. Wrap circulaire pour ergonomie clavier power-user.
+	function handleSourceTabsKeydown(e: KeyboardEvent, key: ImportSourceKey) {
+		const tabs = visibleTabs;
+		if (tabs.length <= 1) return;
+		const idx = tabs.indexOf(key);
+		let next = idx;
+		if (e.key === 'ArrowRight') next = (idx + 1) % tabs.length;
+		else if (e.key === 'ArrowLeft') next = (idx - 1 + tabs.length) % tabs.length;
+		else if (e.key === 'Home') next = 0;
+		else if (e.key === 'End') next = tabs.length - 1;
+		else return;
+		e.preventDefault();
+		const targetKey = tabs[next];
+		activeTab = targetKey;
+		importResult = null;
+		// Focus la card cible (timeout 0 pour laisser Svelte appliquer tabindex=0).
+		queueMicrotask(() => {
+			const el = document.getElementById(`tab-${targetKey}`);
+			el?.focus();
+		});
+	}
 </script>
 
 <ModalForm
@@ -231,9 +254,12 @@
 					<button
 						type="button"
 						role="tab"
+						id="tab-{key}"
 						aria-selected={active}
 						aria-controls="import-panel-{key}"
+						tabindex={active ? 0 : -1}
 						onclick={() => { activeTab = key; importResult = null; }}
+						onkeydown={(e) => handleSourceTabsKeydown(e, key)}
 						class="group relative text-left p-4 rounded-xl border-2 box-border transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 {active ? 'shadow-md' : 'border-border hover:border-text-muted/40 hover:shadow-sm bg-white'}"
 						style={active
 							? `border-color: var(${m.cssVar}); background: var(${m.bgCssVar}); --tw-ring-color: var(${m.cssVar});`
