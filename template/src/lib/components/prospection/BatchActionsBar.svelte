@@ -51,10 +51,10 @@
 
 {#if selectedIds.size > 0}
 	<div
-		class="flex flex-wrap items-center gap-2 md:gap-3 p-3 rounded-xl border shadow-xs"
+		class="flex flex-wrap items-center gap-2 md:gap-3 p-3 rounded-xl border border-prosp-import-border/25 shadow-xs"
 		role="toolbar"
 		aria-label="Actions sélection"
-		style="background: linear-gradient(to right, var(--color-prosp-import-bg), var(--color-prosp-enrich-bg)); border-color: color-mix(in srgb, var(--color-prosp-import-border), transparent 75%)"
+		style="background: linear-gradient(to right, var(--color-prosp-import-bg), var(--color-prosp-enrich-bg))"
 	>
 		<span class="text-sm font-semibold text-text w-full md:w-auto">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
 		<form method="POST" action="?/batchStatut" use:enhance={() => {

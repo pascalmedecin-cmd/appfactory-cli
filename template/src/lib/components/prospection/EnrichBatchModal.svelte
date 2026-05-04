@@ -208,6 +208,7 @@
 			class="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full max-w-lg pointer-events-auto flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden"
 			role="dialog"
 			aria-modal="true"
+			aria-labelledby="enrich-modal-title"
 			use:trapFocus
 			transition:scale={{ start: 0.95, duration: 200 }}
 		>
@@ -215,10 +216,10 @@
 			<div class="flex items-center justify-between px-6 py-4" style="background: linear-gradient(to right, var(--color-prosp-enrich-bg), var(--color-prosp-import-bg)); border-bottom: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 88%)">
 				<div class="flex items-center gap-3">
 					<Icon name="auto_fix_high" size={22} class="text-prosp-enrich" />
-					<h2 class="text-lg font-semibold text-text">Enrichissement batch</h2>
+					<h2 id="enrich-modal-title" class="text-lg font-semibold text-text">Enrichissement batch</h2>
 				</div>
 				{#if phase !== 'running'}
-					<button onclick={close} class="text-text-muted hover:text-text cursor-pointer">
+					<button onclick={close} aria-label="Fermer la fenêtre" class="text-text-muted hover:text-text cursor-pointer">
 						<Icon name="close" />
 					</button>
 				{/if}

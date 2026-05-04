@@ -215,7 +215,7 @@
 				<a
 					href={lead.source_url}
 					target="_blank"
-					rel="noopener"
+					rel="noopener noreferrer"
 					class="inline-flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
 				>
 					<Icon name="open_in_new" size={16} />

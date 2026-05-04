@@ -237,7 +237,7 @@
 	.tab-count {
 		padding: 2px 8px;
 		border-radius: 999px;
-		font-size: 11px;
+		font-size: 12px;
 		font-weight: 600;
 		font-variant-numeric: tabular-nums;
 		background: var(--color-surface-alt);

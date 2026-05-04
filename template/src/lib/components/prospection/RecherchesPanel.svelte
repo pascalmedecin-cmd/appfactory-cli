@@ -37,47 +37,49 @@
 			</div>
 			<button onclick={() => open = false} class="text-sm text-text-muted hover:text-text cursor-pointer">Fermer</button>
 		</div>
-		{#each recherches as rech}
-			<div class="flex items-center justify-between p-3 rounded-lg bg-surface-alt/60 border border-border/50 hover:border-primary/20 transition-colors">
-				<div class="flex items-center gap-3">
-					<button
-						onclick={() => onCharger?.(rech)}
-						class="text-sm font-semibold text-primary hover:underline cursor-pointer"
-					>
-						{rech.nom}
-					</button>
-					<span class="text-xs text-text-muted">
-						{[
-							rech.sources?.length ? rech.sources.map((s: string) => sourceLabel(s)).join(', ') : null,
-							rech.cantons?.length ? rech.cantons.map((c: string) => cantonNoms[c] ?? c).join(', ') : null,
-							rech.temperatures?.length ? rech.temperatures.map((t: string) => t === 'chaud' ? 'Chaud' : t === 'tiede' ? 'Tiède' : 'Froid').join(', ') : null,
-							rech.mots_cles?.length ? rech.mots_cles.join(', ') : null,
-							rech.score_minimum ? `Score ${rech.score_minimum}+` : null,
-						].filter(Boolean).join(' · ') || 'Tous les critères'}
-					</span>
-					{#if rech.alerte_active}
-						<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary-light text-primary">
-							<Icon name="notifications" size={12} />
-							{rech.frequence_alerte === 'quotidien' ? 'Quotidienne' : 'Hebdomadaire'}
+		<ul class="list-none m-0 p-0 space-y-2">
+			{#each recherches as rech}
+				<li class="flex items-center justify-between p-3 rounded-lg bg-surface-alt/60 border border-border/50 hover:border-primary/20 transition-colors">
+					<div class="flex items-center gap-3">
+						<button
+							onclick={() => onCharger?.(rech)}
+							class="text-sm font-semibold text-primary hover:underline cursor-pointer"
+						>
+							{rech.nom}
+						</button>
+						<span class="text-xs text-text-muted">
+							{[
+								rech.sources?.length ? rech.sources.map((s: string) => sourceLabel(s)).join(', ') : null,
+								rech.cantons?.length ? rech.cantons.map((c: string) => cantonNoms[c] ?? c).join(', ') : null,
+								rech.temperatures?.length ? rech.temperatures.map((t: string) => t === 'chaud' ? 'Chaud' : t === 'tiede' ? 'Tiède' : 'Froid').join(', ') : null,
+								rech.mots_cles?.length ? rech.mots_cles.join(', ') : null,
+								rech.score_minimum ? `Score ${rech.score_minimum}+` : null,
+							].filter(Boolean).join(' · ') || 'Tous les critères'}
 						</span>
-					{/if}
-					{#if rech.nb_nouveaux && rech.nb_nouveaux > 0}
-						<span class="text-xs px-2 py-0.5 rounded-full bg-danger/10 text-danger font-semibold">{rech.nb_nouveaux} nouveau{rech.nb_nouveaux > 1 ? 'x' : ''}</span>
-					{/if}
-				</div>
-				<form method="POST" action="?/deleteRecherche" use:enhance={() => {
-					return async ({ result, update }) => {
-						if (result.type === 'success') toasts.success('Recherche supprimée');
-						else toasts.error('Erreur lors de la suppression');
-						await update();
-					};
-				}}>
-					<input type="hidden" name="id" value={rech.id} />
-					<button type="submit" class="text-text-muted hover:text-danger cursor-pointer transition-colors" title="Supprimer cette recherche">
-						<Icon name="delete" size={16} />
-					</button>
-				</form>
-			</div>
-		{/each}
+						{#if rech.alerte_active}
+							<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-primary-light text-primary">
+								<Icon name="notifications" size={12} />
+								{rech.frequence_alerte === 'quotidien' ? 'Quotidienne' : 'Hebdomadaire'}
+							</span>
+						{/if}
+						{#if rech.nb_nouveaux && rech.nb_nouveaux > 0}
+							<span class="text-xs px-2 py-0.5 rounded-full bg-danger/10 text-danger font-semibold">{rech.nb_nouveaux} nouveau{rech.nb_nouveaux > 1 ? 'x' : ''}</span>
+						{/if}
+					</div>
+					<form method="POST" action="?/deleteRecherche" use:enhance={() => {
+						return async ({ result, update }) => {
+							if (result.type === 'success') toasts.success('Recherche supprimée');
+							else toasts.error('Erreur lors de la suppression');
+							await update();
+						};
+					}}>
+						<input type="hidden" name="id" value={rech.id} />
+						<button type="submit" aria-label="Supprimer la recherche {rech.nom}" class="text-text-muted hover:text-danger cursor-pointer transition-colors" title="Supprimer cette recherche">
+							<Icon name="delete" size={16} />
+						</button>
+					</form>
+				</li>
+			{/each}
+		</ul>
 	</div>
 {/if}

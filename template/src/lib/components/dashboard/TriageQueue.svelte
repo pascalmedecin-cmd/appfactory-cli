@@ -142,34 +142,36 @@
 				<p class="triage-empty-body">Votre fond de pipe travaille pour vous. Les nouveaux leads chauds atterriront ici dès le prochain import.</p>
 			</div>
 		{:else}
-			{#each visible as lead, i (lead.id)}
-				<div class="triage-item" style="--i: {i}" class:is-pending={pendingIds.has(lead.id)}>
-					<div class="triage-item-content">
-						<div class="triage-item-line1">
-							<Badge label={sourceLabel(lead.source)} variant="muted" />
-							<span class="triage-item-name" title={lead.raison_sociale}>{lead.raison_sociale}</span>
-							<span class="triage-item-score-wrap">
-								<ScorePill score={lead.score_pertinence} compact />
-							</span>
+			<ul class="triage-items">
+				{#each visible as lead, i (lead.id)}
+					<li class="triage-item" style="--i: {i}" class:is-pending={pendingIds.has(lead.id)}>
+						<div class="triage-item-content">
+							<div class="triage-item-line1">
+								<Badge label={sourceLabel(lead.source)} variant="muted" />
+								<span class="triage-item-name" title={lead.raison_sociale}>{lead.raison_sociale}</span>
+								<span class="triage-item-score-wrap">
+									<ScorePill score={lead.score_pertinence} compact />
+								</span>
+							</div>
+							<div class="triage-item-context">{formatLeadContext(lead)}</div>
 						</div>
-						<div class="triage-item-context">{formatLeadContext(lead)}</div>
-					</div>
-					<div class="triage-actions">
-						<button class="btn-action btn-yes" aria-label="Intéressant - marquer + ouvrir la fiche" title="Intéressant" disabled={pendingIds.has(lead.id)} onclick={() => onYes(lead.id)}>
-							<Icon name="check_circle" size={17} />
-						</button>
-						<button class="btn-action btn-no" aria-label="Écarter ce lead" title="Écarter" disabled={pendingIds.has(lead.id)} onclick={() => onNo(lead.id)}>
-							<Icon name="circle_x" size={17} />
-						</button>
-						<button class="btn-action btn-later" aria-label="Repousser à 7 jours" title="Snooze 7 j" disabled={pendingIds.has(lead.id)} onclick={() => onLater(lead.id)}>
-							<Icon name="schedule" size={17} />
-						</button>
-						<button class="btn-action btn-view" aria-label="Voir la fiche en lecture seule" title="Détails" disabled={pendingIds.has(lead.id)} onclick={() => onView(lead.id)}>
-							<Icon name="eye" size={17} />
-						</button>
-					</div>
-				</div>
-			{/each}
+						<div class="triage-actions">
+							<button class="btn-action btn-yes" aria-label="Intéressant - marquer + ouvrir la fiche" title="Intéressant" disabled={pendingIds.has(lead.id)} onclick={() => onYes(lead.id)}>
+								<Icon name="check_circle" size={17} />
+							</button>
+							<button class="btn-action btn-no" aria-label="Écarter ce lead" title="Écarter" disabled={pendingIds.has(lead.id)} onclick={() => onNo(lead.id)}>
+								<Icon name="circle_x" size={17} />
+							</button>
+							<button class="btn-action btn-later" aria-label="Repousser à 7 jours" title="Snooze 7 j" disabled={pendingIds.has(lead.id)} onclick={() => onLater(lead.id)}>
+								<Icon name="schedule" size={17} />
+							</button>
+							<button class="btn-action btn-view" aria-label="Voir la fiche en lecture seule" title="Détails" disabled={pendingIds.has(lead.id)} onclick={() => onView(lead.id)}>
+								<Icon name="eye" size={17} />
+							</button>
+						</div>
+					</li>
+				{/each}
+			</ul>
 		{/if}
 	</div>
 </article>
@@ -250,7 +252,7 @@
 		line-height: 1.4;
 	}
 	.triage-aside-cta {
-		font-size: 12.5px;
+		font-size: 13px;
 		color: var(--color-primary);
 		font-weight: 500;
 		display: inline-flex;
@@ -269,6 +271,7 @@
 	}
 
 	.triage-list { display: flex; flex-direction: column; }
+	.triage-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 
 	.triage-empty {
 		padding: 48px 32px;
@@ -317,7 +320,7 @@
 	}
 	.triage-item-name {
 		font-weight: 600;
-		font-size: 15px;
+		font-size: 14px;
 		color: var(--color-text);
 		white-space: nowrap;
 		overflow: hidden;

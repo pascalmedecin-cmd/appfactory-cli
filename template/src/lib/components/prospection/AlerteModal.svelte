@@ -129,9 +129,9 @@
 				{#if motsCles.length > 0}
 					<div class="flex flex-wrap gap-2 mb-3">
 						{#each motsCles as mot}
-							<span class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs rounded-full font-medium" style="background: color-mix(in srgb, var(--color-prosp-enrich), transparent 88%); color: var(--color-prosp-enrich); border: 1px solid color-mix(in srgb, var(--color-prosp-enrich-border), transparent 60%)">
+							<span class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs rounded-full font-medium bg-prosp-enrich/12 text-prosp-enrich border border-prosp-enrich-border/40">
 								{mot}
-								<button type="button" onclick={() => removeMotCle(mot)} class="flex items-center justify-center w-4 h-4 rounded-full cursor-pointer transition-colors" style="color: color-mix(in srgb, var(--color-prosp-enrich), transparent 40%)" aria-label="Supprimer {mot}">
+								<button type="button" onclick={() => removeMotCle(mot)} class="flex items-center justify-center w-4 h-4 rounded-full cursor-pointer transition-colors text-prosp-enrich/60" aria-label="Supprimer {mot}">
 									<span class="text-[10px] leading-none font-bold">&times;</span>
 								</button>
 							</span>
