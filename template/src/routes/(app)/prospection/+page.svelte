@@ -212,6 +212,7 @@
 		{
 			key: 'simap' as ProspectionTabKey,
 			label: 'Marchés publics',
+			tagline: "Appels d'offres en cours",
 			icon: 'landmark',
 			count: data.tabCounts.simap,
 			tooltip: "Appels d'offres SIMAP publiés par les collectivités publiques (cantons, communes, hôpitaux). Signal d'achat explicite avec montant estimé et date de clôture.",
@@ -219,7 +220,8 @@
 		},
 		{
 			key: 'regbl' as ProspectionTabKey,
-			label: 'Chantiers RegBL',
+			label: 'Chantiers',
+			tagline: 'Permis de construire RegBL',
 			icon: 'construction',
 			count: data.tabCounts.regbl,
 			tooltip: 'Permis de construire et autorisations bâtiment du registre fédéral. Signal indirect de besoin vitrage (transformation, rénovation, neuf).',
@@ -228,6 +230,7 @@
 		{
 			key: 'entreprises' as ProspectionTabKey,
 			label: 'Entreprises',
+			tagline: 'Registre du commerce Zefix',
 			icon: 'business',
 			count: data.tabCounts.entreprises,
 			tooltip: "Inscriptions du registre du commerce (Zefix) et fiches search.ch. Pour prospection à froid ciblée par canton et secteur.",
@@ -236,6 +239,7 @@
 		{
 			key: 'terrain' as ProspectionTabKey,
 			label: 'Terrain',
+			tagline: 'Saisies sur place + veille',
 			icon: 'smartphone',
 			count: data.tabCounts.terrain,
 			tooltip: 'Saisies rapides en RDV chantier (lead express) et signaux issus de la veille sectorielle. Vos opportunités captées sur le terrain.',
@@ -266,18 +270,18 @@
 				};
 			case 'regbl':
 				return {
-					label: 'Importer des chantiers',
-					labelMobile: 'Importer',
-					icon: 'cloud_download',
-					ariaLabel: 'Importer des chantiers depuis le registre des bâtiments (RegBL)',
+					label: 'Scanner les chantiers',
+					labelMobile: 'Scanner',
+					icon: 'monitor_heart',
+					ariaLabel: 'Scanner les chantiers depuis le registre des bâtiments (RegBL)',
 					action: () => (importModalOpen = true),
 				};
 			case 'simap':
 				return {
-					label: 'Importer des marchés',
-					labelMobile: 'Importer',
-					icon: 'cloud_download',
-					ariaLabel: 'Importer des marchés publics depuis SIMAP',
+					label: 'Scanner les marchés publics',
+					labelMobile: 'Scanner',
+					icon: 'monitor_heart',
+					ariaLabel: 'Scanner les marchés publics depuis SIMAP',
 					action: () => (importModalOpen = true),
 				};
 			default:
@@ -454,85 +458,62 @@
 		<span class="text-border">·</span>
 		<span class="text-text-muted">{data.transferresMoisCount} transféré{data.transferresMoisCount > 1 ? 's' : ''} ce mois</span>
 	</div>
-	<!-- V3.6 audit S160 (M-29) : indicateurs flat sémantiquement listés via dl/dt/dd. -->
+	<!-- V3.6 audit S160 (M-29) : indicateurs flat sémantiquement listés via dl/dt/dd.
+	     F-V4-07 : compression header (px/py 7 → 5/4, icône 11 → 10, count 36px → 30px). -->
 	<dl class="hidden md:grid grid-cols-3 gap-0 border-y border-border m-0">
-		<div class="flex items-center gap-4 px-7 py-7">
-			<div class="flex h-11 w-11 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
-				<Icon name="users" size={22} class="text-info" />
+		<div class="flex items-center gap-4 px-5 py-4">
+			<div class="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
+				<Icon name="users" size={20} class="text-info" />
 			</div>
 			<div class="flex flex-col gap-0.5 min-w-0">
-				<dd class="text-[36px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.leadsActifsCount}</dd>
-				<dt class="text-[13px] font-medium text-text-muted">Leads actifs</dt>
+				<dd class="text-[30px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.leadsActifsCount}</dd>
+				<dt class="text-[12px] font-medium text-text-muted">Leads actifs</dt>
 			</div>
 		</div>
-		<div class="flex items-center gap-4 px-7 py-7 border-l border-border">
-			<div class="flex h-11 w-11 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
-				<Icon name="landmark" size={22} class="text-info" />
+		<div class="flex items-center gap-4 px-5 py-4 border-l border-border">
+			<div class="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
+				<Icon name="landmark" size={20} class="text-info" />
 			</div>
 			<div class="flex flex-col gap-0.5 min-w-0">
-				<dd class="text-[36px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.marchesOuvertsCount}</dd>
-				<dt class="text-[13px] font-medium text-text-muted">Marchés publics ouverts</dt>
+				<dd class="text-[30px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.marchesOuvertsCount}</dd>
+				<dt class="text-[12px] font-medium text-text-muted">Marchés publics ouverts</dt>
 			</div>
 		</div>
-		<div class="flex items-center gap-4 px-7 py-7 border-l border-border">
-			<div class="flex h-11 w-11 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
-				<Icon name="repeat" size={22} class="text-info" />
+		<div class="flex items-center gap-4 px-5 py-4 border-l border-border">
+			<div class="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
+				<Icon name="repeat" size={20} class="text-info" />
 			</div>
 			<div class="flex flex-col gap-0.5 min-w-0">
-				<dd class="text-[36px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.transferresMoisCount}</dd>
-				<dt class="text-[13px] font-medium text-text-muted">Transférés ce mois</dt>
+				<dd class="text-[30px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.transferresMoisCount}</dd>
+				<dt class="text-[12px] font-medium text-text-muted">Transférés ce mois</dt>
 			</div>
 		</div>
 	</dl>
 
-	<!-- Actions principales (V1.1 audit S160 : démasquées même quand totalLeads=0,
-	     sinon impossible d'amorcer un onglet vide ou un système jamais peuplé).
+	<!-- Actions principales : DESKTOP descendues dans le slot `actions` de ProspectionTabs (F-V4-07).
+	     MOBILE conservé ici en barre dédiée (kebab + leadExpress + headerCTA), au-dessus des filtres mobile.
 	     enrichablesCount calculé en $derived dans le script (Svelte 5). -->
-	<div class="flex flex-wrap items-center justify-between gap-3">
-		<div class="hidden md:flex items-center gap-3">
-			{#if data.recherches.length > 0}
-				<button
-					onclick={() => recherchesOpen = !recherchesOpen}
-					class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-text border border-border rounded-lg box-border hover:bg-surface-alt cursor-pointer transition-colors"
-				>
-					<Icon name="bookmarks" size={18} />
-					<span>Mes recherches</span>
-					<span class="ml-1 px-2 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{data.recherches.length}</span>
-				</button>
-			{/if}
-		</div>
-		<div class="flex items-center gap-2 ml-auto">
-			{#if enrichablesCount > 0}
-				<button
-					onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
-					class="hidden md:flex items-center gap-2 h-10 px-4 text-sm font-medium border rounded-lg box-border cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich-border"
-					title="Enrichit uniquement les {enrichablesCount} leads de cette page"
-				>
-					<Icon name="auto_fix_high" size={18} />
-					<span>Enrichir cette page</span>
-					<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
-				</button>
-			{/if}
-			<button
-				type="button"
-				onclick={() => leadExpressOpen = true}
-				class="md:hidden flex items-center gap-2 h-11 px-3 text-sm font-semibold text-primary border border-primary rounded-lg box-border bg-white hover:bg-primary-light cursor-pointer transition-colors"
-				aria-label="Créer un lead express"
-			>
-				<Icon name="bolt" size={18} />
-				<span>Lead express</span>
-			</button>
-			<!-- V4 audit S163 (F-V4-01) : CTA contextuel par onglet via headerCTA. -->
-			<button
-				onclick={headerCTA.action}
-				aria-label={headerCTA.ariaLabel}
-				class="flex items-center gap-2 h-11 md:h-10 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg box-border cursor-pointer shadow-md transition-colors"
-			>
-				<Icon name={headerCTA.icon} size={18} />
-				<span class="sm:hidden">{headerCTA.labelMobile}</span>
-				<span class="hidden sm:inline">{headerCTA.label}</span>
-			</button>
-			<!-- Kebab mobile : actions secondaires -->
+	<div class="flex md:hidden items-center gap-2 justify-end">
+		<button
+			type="button"
+			onclick={() => leadExpressOpen = true}
+			class="flex items-center gap-2 h-11 px-3 text-sm font-semibold text-primary border border-primary rounded-lg box-border bg-white hover:bg-primary-light cursor-pointer transition-colors"
+			aria-label="Créer un lead express"
+		>
+			<Icon name="bolt" size={18} />
+			<span>Lead express</span>
+		</button>
+		<!-- V4 audit S163 (F-V4-01) + F-V4-07 verbes : CTA contextuel par onglet via headerCTA. -->
+		<button
+			onclick={headerCTA.action}
+			aria-label={headerCTA.ariaLabel}
+			class="flex items-center gap-2 h-11 px-4 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg box-border cursor-pointer shadow-md transition-colors"
+		>
+			<Icon name={headerCTA.icon} size={18} />
+			<span class="sm:hidden">{headerCTA.labelMobile}</span>
+			<span class="hidden sm:inline">{headerCTA.label}</span>
+		</button>
+		<!-- Kebab mobile : actions secondaires -->
 			<div class="md:hidden relative" bind:this={mobileMenuRef}>
 				<button
 					onclick={(e) => { e.stopPropagation(); mobileMenuOpen = !mobileMenuOpen; }}
@@ -578,7 +559,6 @@
 					</div>
 				{/if}
 			</div>
-		</div>
 	</div>
 
 	<!-- Filtres : drawer mobile collapsible, grid permanent desktop -->
@@ -764,7 +744,47 @@
 	{:else}
 	<!-- Phase 2 : onglets par nature de signal collés au DataTable (1 shell visuel cohérent) -->
 	<div class="bg-white rounded-xl border border-border shadow-sm flex flex-1 flex-col min-h-0 overflow-visible">
-		<ProspectionTabs tabs={tabsConfig} active={data.tab as ProspectionTabKey} onSelect={selectTab} />
+		<ProspectionTabs tabs={tabsConfig} active={data.tab as ProspectionTabKey} onSelect={selectTab}>
+			{#snippet actions()}
+				<!-- F-V4-07 : actions desktop descendues sur la même ligne que les onglets.
+				     Mobile garde sa propre barre header (leadExpress + CTA + kebab) ci-dessus. -->
+				{#if data.recherches.length > 0}
+					<button
+						type="button"
+						onclick={() => recherchesOpen = !recherchesOpen}
+						class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors"
+						aria-label="Ouvrir mes recherches sauvegardées"
+					>
+						<Icon name="bookmarks" size={16} />
+						<span>Mes recherches</span>
+						<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{data.recherches.length}</span>
+					</button>
+				{/if}
+				{#if enrichablesCount > 0}
+					<button
+						type="button"
+						onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
+						class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich-border hover:bg-prosp-enrich-bg"
+						title="Enrichit uniquement les {enrichablesCount} leads de cette page"
+						aria-label="Enrichir les {enrichablesCount} leads de cette page"
+					>
+						<Icon name="auto_fix_high" size={16} />
+						<span>Enrichir cette page</span>
+						<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
+					</button>
+				{/if}
+				<!-- V4 audit S163 (F-V4-01) + F-V4-07 verbes : CTA principal contextuel par onglet. -->
+				<button
+					type="button"
+					onclick={headerCTA.action}
+					aria-label={headerCTA.ariaLabel}
+					class="hidden md:inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-sm transition-colors"
+				>
+					<Icon name={headerCTA.icon} size={16} />
+					<span>{headerCTA.label}</span>
+				</button>
+			{/snippet}
+		</ProspectionTabs>
 		<!-- V2.1 audit S160 : tabpanel ARIA wrapper. Lié à #tab-{key} via aria-labelledby. -->
 		<div role="tabpanel" id="tabpanel-{data.tab}" aria-labelledby="tab-{data.tab}" class="flex flex-1 flex-col min-h-0">
 		{#if data.sourceFilterIncompatible}
