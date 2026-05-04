@@ -212,7 +212,6 @@
 		{
 			key: 'simap' as ProspectionTabKey,
 			label: 'Marchés publics',
-			tagline: "Appels d'offres en cours",
 			icon: 'landmark',
 			count: data.tabCounts.simap,
 			tooltip: "Appels d'offres SIMAP publiés par les collectivités publiques (cantons, communes, hôpitaux). Signal d'achat explicite avec montant estimé et date de clôture.",
@@ -221,7 +220,6 @@
 		{
 			key: 'regbl' as ProspectionTabKey,
 			label: 'Chantiers',
-			tagline: 'Permis de construire RegBL',
 			icon: 'construction',
 			count: data.tabCounts.regbl,
 			tooltip: 'Permis de construire et autorisations bâtiment du registre fédéral. Signal indirect de besoin vitrage (transformation, rénovation, neuf).',
@@ -230,7 +228,6 @@
 		{
 			key: 'entreprises' as ProspectionTabKey,
 			label: 'Entreprises',
-			tagline: 'Registre du commerce Zefix',
 			icon: 'business',
 			count: data.tabCounts.entreprises,
 			tooltip: "Inscriptions du registre du commerce (Zefix) et fiches search.ch. Pour prospection à froid ciblée par canton et secteur.",
@@ -239,7 +236,6 @@
 		{
 			key: 'terrain' as ProspectionTabKey,
 			label: 'Terrain',
-			tagline: 'Saisies sur place + veille',
 			icon: 'smartphone',
 			count: data.tabCounts.terrain,
 			tooltip: 'Saisies rapides en RDV chantier (lead express) et signaux issus de la veille sectorielle. Vos opportunités captées sur le terrain.',

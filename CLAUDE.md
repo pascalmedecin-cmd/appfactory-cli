@@ -229,6 +229,46 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 
 **Prochaine attaque** : Bloc #1 - Cascade gabarit /prospection sur 6 pages CRM. /prospection PROMUE PAGE MODÈLE S164 (5 commits validés prod Chrome MCP autonome : H-19 sticky 2 cols compatible resizable + F-V4-05/06/07 ImportModal contextuel premium 3 parcours distincts + tabs distinctifs colorés + verbes scan + header condensé). Backlog Vague 4 résiduelle partie 2 (sweeps M-20..M-37 + H-21 raccourcis clavier global) reportable post-cascade ou en parallèle session courte.
 
+
+<!-- BEGIN CONSOLIDATION (auto-géré par cockpit, ne pas éditer) -->
+
+### Consolidation cockpit (maj 2026-05-04T12:38:17)
+
+**Blocs actionnables** (ordre d'attaque) :
+
+- **Bloc #1** - Décisions policy golden v9 (D1+D2) (2.0h, confiance Élevé)
+  - Objectif : Trancher D1 spacing 28px et D2 hauteur boutons mobile h-11 avant cascade gabarit
+  - D1 spacing 28px : étendre échelle (4/8/12/16/24/28/32/48) ou aligner indicateurs flat à 32 ? Reco : étendre car indicateurs flat livrés calibrés visuellement. Modifier rendu casse perception premium.
+  - D2 hauteur boutons mobile h-11 vs desktop h-10 : documenter exception HIG iOS 44px (LeadExpress, mobile menu kebab) golden v9. Pattern industriel standard, pas une régression.
+
+- **Bloc #2** - Cadrage cascade gabarit 6 pages CRM (6.0h, confiance Élevé)
+  - Objectif : Audit éclair 6 pages cibles vs golden v9 et proposer ordre d'attaque cascade
+  - Cadrage cascade gabarit : audit éclair des 6 pages cibles vs golden v8 (5-10 min/page). Identifier écarts critiques par page (a11y, sémantique, tokens, composants partagés). Proposer ordre d'attaque
+
+- **Bloc #3** - Vague 4 résiduelle (sweeps + raccourcis) - Sweeps M-20..M-37 : typo tabular-nums (4.0h, confiance Moyen)
+  - Objectif : Sweeps M-20..M-37 typo/opacités/sémantique + module raccourcis clavier global Cmd+K
+  - Sweeps M-20..M-37 : typo tabular-nums hors échelle TriageQueue, opacités custom tokenisation, sémantique aria-labelledby/aria-label/<ul>/rel=noreferrer. → voir notes/audit-uiux-prospection-2026-05-01/
+
+- **Bloc #4** - Vague 4 résiduelle (sweeps + raccourcis) - H-21 raccourcis clavier global Cmd+K… (4.0h, confiance Moyen)
+  - Objectif : Sweeps M-20..M-37 typo/opacités/sémantique + module raccourcis clavier global Cmd+K
+  - H-21 raccourcis clavier global Cmd+K palette commande + J/K nav rows + ? cheatsheet : module src/lib/keyboard/ réutilisable cross-pages CRM (chantier transverse, pas isolé /prospection).
+
+**Blocs bloqués** :
+
+- **Bloc B1** [BLOQUÉ] - Cascade gabarit pages CRM (1 puis 2-6) - Cascade page 1 : /dashboard ou… (6.0h)
+  - Objectif : Propager patterns golden v9 de /prospection sur 6 pages CRM en cascade ordonnée
+  - Blocage : Cadrage cascade (3f2a2780c6bd) doit être livré pour figer ordre d'attaque + scope par page
+  - Débloque si : Livraison Bloc 2 cadrage cascade + arbitrage Pascal page 1
+  - Cascade page 1 : /dashboard ou /pipeline (selon arbitrage Pascal sur priorité métier).
+
+- **Bloc B2** [BLOQUÉ] - Cascade gabarit pages CRM (1 puis 2-6) - Cascade pages 2-6 : /contacts… (6.0h)
+  - Objectif : Propager patterns golden v9 de /prospection sur 6 pages CRM en cascade ordonnée
+  - Blocage : Cadrage cascade (3f2a2780c6bd) doit être livré pour figer ordre d'attaque + scope par page
+  - Débloque si : Livraison Bloc 2 cadrage cascade + arbitrage Pascal page 1
+  - Cascade pages 2-6 : /contacts, /entreprises, /signaux, /veille + page restante. Audit security-auditor cumulé en fin de cascade.
+
+<!-- END CONSOLIDATION -->
+
 ### 1. Cascade gabarit /prospection sur 6 pages CRM [MIXTE • xhigh • cascade 3-4 sessions]
 
 **Pourquoi** : /prospection PROMUE PAGE MODÈLE S164. Cascade ordonnée des patterns golden v8+v9 (ARIA tabs colorés distinctifs, dense table avec sticky 2 cols, ScorePill, ConfirmModal, focus-visible globaux, empty states contextuels, aria-label tr, ImportModal contextuel premium 3 parcours, header condensé avec actions descendues dans tabs-bar) sur les 6 autres pages CRM. Évite la dérive de design system d'une page à l'autre.

@@ -11,7 +11,6 @@
 		count: number;
 		tooltip: string;
 		colorVar: string; // ex: 'simap' → utilise --color-tab-simap / --color-tab-simap-bg
-		tagline?: string; // F-V4-07 : sub-line métier visible sur tab actif (signal "vue distincte")
 	};
 
 	type Props = {
@@ -72,12 +71,7 @@
 						<span class="tab-icon-wrap" aria-hidden="true">
 							<Icon name={tab.icon} size={16} />
 						</span>
-						<span class="tab-text">
-							<span class="tab-label">{tab.label}</span>
-							{#if tab.tagline && active === tab.key}
-								<span class="tab-tagline">{tab.tagline}</span>
-							{/if}
-						</span>
+						<span class="tab-label">{tab.label}</span>
 						<span class="tab-count" aria-label="{tab.count} entrées">{tab.count}</span>
 					</span>
 				</Tooltip>
@@ -122,13 +116,9 @@
 		min-width: 0;
 		position: relative;
 		z-index: 5;
-		overflow-x: auto;
-		overflow-y: visible;
+		overflow: visible;
 		min-height: 64px;
-		scrollbar-width: thin;
 	}
-	.tabs-bar::-webkit-scrollbar { height: 4px; }
-	.tabs-bar::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 2px; }
 
 	.tabs-actions {
 		display: flex;
@@ -140,7 +130,7 @@
 
 	/* TAB : design distinctif premium par source.
 	   Repos : icône colorée subtile (data-color tinted), label muted, count discret.
-	   Actif : bordure-bottom 3px source-color + bg light source-tinted + label primary-dark + tagline visible.
+	   Actif : bordure-bottom 3px source-color + bg light source-tinted + label primary-dark.
 	   Pattern Linear/Attio : 1 actif richement coloré vs 3 répos colorés (pas tout-grey-monocolor). */
 	.tab {
 		display: inline-flex;
@@ -164,25 +154,10 @@
 		gap: 12px;
 		padding: 14px 20px;
 	}
-	.tab-text {
-		display: inline-flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 2px;
-		text-align: left;
-		line-height: 1.2;
-	}
 	.tab-label {
 		font-size: 14px;
 		font-weight: 500;
 		letter-spacing: -0.01em;
-	}
-	.tab-tagline {
-		font-size: 11px;
-		font-weight: 400;
-		color: var(--color-text-muted);
-		letter-spacing: 0;
-		font-style: normal;
 	}
 
 	.tab:hover {
@@ -219,7 +194,7 @@
 		color: color-mix(in srgb, var(--color-tab-terrain) 70%, var(--color-text-muted));
 	}
 
-	/* ACTIF : couleur source pleine + bordure 3px + bg subtle + label primary-dark + tagline. */
+	/* ACTIF : couleur source pleine + bordure 3px + bg subtle + label primary-dark. */
 	.tab--active {
 		font-weight: 600;
 	}
