@@ -90,7 +90,12 @@ export const IntelligenceItemSchema = z.object({
 	summary: z.string().min(40).max(1500),
 	filmpro_relevance: z.string().min(20).max(1200),
 	maturity: MaturityEnum,
-	theme: ThemeEnum,
+	// theme : string permissif (slug taxonomie veille_themes). La validation
+	// runtime contre la liste des slugs autorisés est faite post-Zod par
+	// run-generation.ts (lookup avec fallback gracieux sur 'autre' si inconnu).
+	// ThemeEnum reste exporté pour rétrocompat lecture éditions antérieures
+	// mais n'est plus utilisé pour valider le tool_use LLM.
+	theme: z.string().min(1).max(64),
 	geo_scope: GeoScopeEnum,
 	source: z.object({
 		name: z.string().min(2).max(120),
@@ -167,7 +172,12 @@ export const IntelligenceReportSchema = z.object({
 export type Canton = z.infer<typeof CantonEnum>;
 export type ChipKind = z.infer<typeof ChipKindEnum>;
 export type SearchChip = z.infer<typeof SearchChipSchema>;
-export type Theme = z.infer<typeof ThemeEnum>;
+/**
+ * @deprecated Le champ `theme` accepte n'importe quel slug actif de la
+ * table `veille_themes` (depuis S169). Cet alias reste exporté pour
+ * rétrocompat des éditions antérieures, mais utilisez `string` côté code.
+ */
+export type Theme = z.infer<typeof ThemeEnum> | string;
 export type Maturity = z.infer<typeof MaturityEnum>;
 export type GeoScope = z.infer<typeof GeoScopeEnum>;
 export type ComplianceTag = z.infer<typeof ComplianceTagEnum>;

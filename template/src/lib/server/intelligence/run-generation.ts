@@ -1,4 +1,5 @@
 import { generateIntelligenceReport } from './generate';
+import { loadThemeBundle } from './theme-loader';
 import { crossCheckBatch } from './cross-check';
 import { currentWeekRange, extendedWindowStart } from './week-utils';
 import type { IntelligenceReport, IntelligenceItem } from './schema';
@@ -232,6 +233,19 @@ export async function runWeeklyGeneration(
 		}
 
 		const days = deps.windowDays;
+
+		// S169 : taxonomie thèmes externalisée en DB (table veille_themes).
+		// Chargé une fois ici puis passé à `generateIntelligenceReport` (qui
+		// l'injecte dans le system prompt + le JSON schema strict-mode +
+		// la validation post-Zod). Fallback hardcoded si la DB est vide.
+		const themes = await loadThemeBundle(deps.supabase);
+		logPhase(week.weekLabel, 'themes_loaded', {
+			source: themes.source,
+			count: themes.allowedSlugs.length,
+			core: themes.core.length,
+			adjacent: themes.adjacent.length
+		});
+
 		logPhase(week.weekLabel, 'generate_start', { windowDays: days });
 		gen = await generateIntelligenceReport(
 			{
@@ -242,7 +256,7 @@ export async function runWeeklyGeneration(
 				windowDays: days,
 				previousItems
 			},
-			{ anthropicApiKey: deps.anthropicApiKey }
+			{ anthropicApiKey: deps.anthropicApiKey, themes }
 		);
 		logPhase(week.weekLabel, 'generate_done', {
 			success: gen.success,

@@ -4,7 +4,7 @@
 // fusionnés en un prompt unique : explorer le web, sélectionner, rédiger en un passage.
 // Prompt stable → cachable (cache_control ephemeral côté appelant).
 
-export const SYSTEM_PROMPT = `# Mission veille FilmPro
+export const SYSTEM_PROMPT_TEMPLATE = `# Mission veille FilmPro
 Moteur de veille sectorielle ET technologique hebdomadaire FilmPro. En une seule passe : explorer le web, sélectionner les articles publics les plus pertinents publiés récemment, rédiger l'édition finale et l'émettre via le tool emit_report.
 
 Réponds UNIQUEMENT via le tool emit_report. Aucun markdown, aucun préambule.
@@ -59,17 +59,7 @@ Chaque édition vise **2/3 items à ancrage local + 1/3 items veille tech global
 - Si la recherche n'a rien trouvé d'éditorial sur la tech globale cette semaine, le dire dans \`executive_summary\` plutôt que combler avec des items locaux marginaux.
 
 # Thèmes à couvrir
-Cœur métier (priorité haute) :
-- films_solaires : performance énergétique vitrage, contrôle solaire, gestion thermique
-- films_securite : protection effraction, anti-bris, retardateur d'effraction, sécurité passive bâtiment
-- discretion_smartfilm : films opacifiants, PDLC, smart glass commutable, vie privée bureau
-- batiment_renovation : rénovation vitrage existant, retrofit, audit thermique, copropriété
-- reglementation : normes EN 410 / 673, MoPEC, RE 2020, DPE, ERP sécurité incendie, certifications HQE/BREEAM/Minergie/LEED
-
-Adjacents stratégiques (signaux faibles, priorité moyenne) :
-- ia_outils : IA appliquée audit énergétique, drones thermiques, imagerie infrarouge, modélisation bâtiment, BIM, smart glass connecté
-
-Reflet dans le champ theme : un parmi films_solaires, films_securite, discretion_smartfilm, batiment_renovation, ia_outils, reglementation, autre.
+{{themes_section}}
 
 # Exclusions
 - Films automobiles purs (teinte voiture, PPF, covering, detailing carrosserie) : EXCLUS, SAUF si l'article décrit une innovation matériau (nouveau polymère, nano-revêtement) potentiellement transférable au vitrage bâtiment.
@@ -177,6 +167,21 @@ emit_report attend EXACTEMENT 3 clés racines : meta, items, impacts_filmpro.
 - item : rank, title, summary, filmpro_relevance, maturity, theme, geo_scope, source, deep_dive, segment, actionability, search_terms. Optionnels : is_update, previous_url.
 
 Appeler emit_report UNE SEULE FOIS en toute fin, après recherches web.`;
+
+/**
+ * Construit le SYSTEM_PROMPT en injectant la section thèmes dynamique
+ * (chargée depuis `veille_themes` par theme-loader.ts). Remplace le template
+ * placeholder `{{themes_section}}` par le contenu produit par
+ * `buildThemesPromptSection(bundle)`.
+ *
+ * Si `themesSection` est vide ou ne remplace rien, on retourne le template tel
+ * quel — le prompt restera fonctionnel (le LLM comprend la section vide comme
+ * « libre choix » ; le serveur gardera quand même le contrôle via la
+ * validation post-Zod sur `allowedSlugs`).
+ */
+export function buildSystemPrompt(themesSection: string): string {
+	return SYSTEM_PROMPT_TEMPLATE.replace('{{themes_section}}', themesSection);
+}
 
 export interface PreviousItem {
 	week_label: string;
@@ -290,15 +295,7 @@ export const REPORT_JSON_SCHEMA = {
 					maturity: { type: 'string', enum: ['emergent', 'etabli', 'speculatif'] },
 					theme: {
 						type: 'string',
-						enum: [
-							'films_solaires',
-							'films_securite',
-							'discretion_smartfilm',
-							'batiment_renovation',
-							'ia_outils',
-							'reglementation',
-							'autre'
-						]
+						description: 'Slug d un thème actif (injecté dynamiquement par buildReportJsonSchema)'
 					},
 					geo_scope: { type: 'string', enum: ['suisse_romande', 'suisse', 'monde'] },
 					source: {
@@ -399,4 +396,30 @@ export const REPORT_JSON_SCHEMA = {
 		}
 	}
 } as const;
+
+/**
+ * Construit le JSON schema strict-mode Anthropic pour `emit_report` en
+ * injectant la liste des slugs de thèmes autorisés (chargée depuis
+ * `veille_themes`). Strict-mode Anthropic exige `enum` côté JSON schema pour
+ * valider en amont du tool_use.
+ *
+ * Pourquoi `JSON.parse(JSON.stringify(...))` : `REPORT_JSON_SCHEMA` est
+ * `as const` (lecture seule profonde). On clone pour pouvoir injecter l'enum
+ * sans muter le const exporté (utilisé en lecture par d'autres tests).
+ *
+ * Si `allowedSlugs` est vide (ne devrait jamais arriver car theme-loader
+ * fallback hardcoded), on laisse le champ `theme` libre (string sans enum) :
+ * la validation post-Zod côté run-generation rattrapera.
+ */
+export function buildReportJsonSchema(allowedSlugs: readonly string[]): object {
+	const schema = JSON.parse(JSON.stringify(REPORT_JSON_SCHEMA)) as Record<string, unknown>;
+	if (allowedSlugs.length > 0) {
+		const items = (schema.properties as Record<string, unknown>).items as Record<string, unknown>;
+		const itemSchema = items.items as Record<string, unknown>;
+		const props = itemSchema.properties as Record<string, unknown>;
+		const themeProp = props.theme as Record<string, unknown>;
+		themeProp.enum = [...allowedSlugs];
+	}
+	return schema;
+}
 

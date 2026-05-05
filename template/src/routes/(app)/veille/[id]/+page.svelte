@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import ModalForm from '$lib/components/ModalForm.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { toasts } from '$lib/stores/toast';
 	import { goto } from '$app/navigation';
@@ -20,6 +21,62 @@
 	const aggregatedChips = $derived(data.aggregatedChips ?? []);
 
 	let chipLoading = $state<number | null>(null);
+
+	// Ajout manuel item
+	let addItemOpen = $state(false);
+	let addItemSaving = $state(false);
+	let addItemError = $state<string | null>(null);
+	let manualItem = $state({
+		title: '',
+		summary: '',
+		filmpro_relevance: '',
+		url: '',
+		source_name: '',
+		published_at: new Date().toISOString().slice(0, 10),
+		theme: data.activeThemes[0]?.slug ?? 'autre',
+		segment: 'tertiaire',
+		geo_scope: 'suisse_romande',
+		maturity: 'etabli',
+		actionability: 'veille_active'
+	});
+
+	async function submitAddItem() {
+		addItemSaving = true;
+		addItemError = null;
+		const fd = new FormData();
+		Object.entries(manualItem).forEach(([k, v]) => fd.append(k, String(v)));
+		try {
+			const res = await fetch('?/addItem', { method: 'POST', body: fd });
+			const text = await res.text();
+			const { deserialize, applyAction } = await import('$app/forms');
+			const result = deserialize(text);
+			if (result.type === 'success') {
+				toasts.success(
+					(result.data as { message?: string } | undefined)?.message ?? 'Item ajouté.'
+				);
+				addItemOpen = false;
+				manualItem = {
+					...manualItem,
+					title: '',
+					summary: '',
+					filmpro_relevance: '',
+					url: '',
+					source_name: ''
+				};
+				const { invalidateAll } = await import('$app/navigation');
+				await invalidateAll();
+				await applyAction(result);
+			} else if (result.type === 'failure') {
+				addItemError = (result.data as { error?: string } | undefined)?.error ?? 'Erreur';
+			} else {
+				addItemError = 'Erreur inattendue';
+			}
+		} catch (err) {
+			addItemError = err instanceof Error ? err.message : 'Erreur réseau';
+		} finally {
+			addItemSaving = false;
+		}
+	}
 
 	const KIND_LABELS: Record<string, string> = {
 		simap: 'SIMAP',
@@ -158,6 +215,14 @@
 			<Icon name="arrow_back" size={16} />
 			Retour au flux
 		</a>
+		<button
+			type="button"
+			onclick={() => (addItemOpen = true)}
+			class="ml-auto h-9 px-3 inline-flex items-center gap-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+		>
+			<Icon name="add" size={16} />
+			Ajouter un item
+		</button>
 	</div>
 
 	<!-- Masthead éditorial -->
@@ -465,3 +530,158 @@
 		<div class="font-semibold text-text">FilmPro</div>
 	</footer>
 </div>
+
+<ModalForm
+	bind:open={addItemOpen}
+	title="Ajouter un item à cette édition"
+	icon="add"
+	saving={addItemSaving}
+	maxWidth="max-w-2xl"
+	onSave={submitAddItem}
+>
+	<div class="space-y-4">
+		{#if addItemError}
+			<div class="px-3 py-2 rounded-md bg-danger-light text-danger text-sm" role="alert">
+				{addItemError}
+			</div>
+		{/if}
+		<p class="text-xs text-text-muted">
+			Ajout manuel : URL vérifiée active + denylist sources. Pas de cross-check verbatim
+			LLM (vous validez le contenu).
+		</p>
+
+		<label class="block">
+			<span class="block text-sm font-medium mb-1">Titre</span>
+			<input
+				type="text"
+				bind:value={manualItem.title}
+				required
+				minlength="10"
+				maxlength="200"
+				class="w-full h-10 px-3 rounded-md border border-border-input bg-surface focus:outline-2 focus:outline-primary"
+			/>
+		</label>
+
+		<label class="block">
+			<span class="block text-sm font-medium mb-1">URL source</span>
+			<input
+				type="url"
+				bind:value={manualItem.url}
+				required
+				placeholder="https://..."
+				class="w-full h-10 px-3 rounded-md border border-border-input bg-surface focus:outline-2 focus:outline-primary"
+			/>
+		</label>
+
+		<div class="grid grid-cols-2 gap-4">
+			<label class="block">
+				<span class="block text-sm font-medium mb-1">Nom de la source</span>
+				<input
+					type="text"
+					bind:value={manualItem.source_name}
+					required
+					minlength="2"
+					maxlength="120"
+					placeholder="ex. Le Temps"
+					class="w-full h-10 px-3 rounded-md border border-border-input bg-surface focus:outline-2 focus:outline-primary"
+				/>
+			</label>
+			<label class="block">
+				<span class="block text-sm font-medium mb-1">Date publication</span>
+				<input
+					type="date"
+					bind:value={manualItem.published_at}
+					required
+					class="w-full h-10 px-3 rounded-md border border-border-input bg-surface focus:outline-2 focus:outline-primary"
+				/>
+			</label>
+		</div>
+
+		<label class="block">
+			<span class="block text-sm font-medium mb-1">Résumé</span>
+			<textarea
+				bind:value={manualItem.summary}
+				required
+				minlength="40"
+				maxlength="1500"
+				rows="3"
+				class="w-full px-3 py-2 rounded-md border border-border-input bg-surface focus:outline-2 focus:outline-primary text-sm"
+			></textarea>
+		</label>
+
+		<label class="block">
+			<span class="block text-sm font-medium mb-1">Pertinence FilmPro</span>
+			<textarea
+				bind:value={manualItem.filmpro_relevance}
+				required
+				minlength="20"
+				maxlength="1200"
+				rows="2"
+				class="w-full px-3 py-2 rounded-md border border-border-input bg-surface focus:outline-2 focus:outline-primary text-sm"
+			></textarea>
+		</label>
+
+		<div class="grid grid-cols-2 gap-4">
+			<label class="block">
+				<span class="block text-sm font-medium mb-1">Thème</span>
+				<select
+					bind:value={manualItem.theme}
+					class="w-full h-10 px-3 rounded-md border border-border-input bg-surface focus:outline-2 focus:outline-primary"
+				>
+					{#each data.activeThemes as theme (theme.id)}
+						<option value={theme.slug}>{theme.label}</option>
+					{/each}
+				</select>
+			</label>
+			<label class="block">
+				<span class="block text-sm font-medium mb-1">Segment</span>
+				<select
+					bind:value={manualItem.segment}
+					class="w-full h-10 px-3 rounded-md border border-border-input bg-surface focus:outline-2 focus:outline-primary"
+				>
+					<option value="tertiaire">Tertiaire</option>
+					<option value="residentiel">Résidentiel</option>
+					<option value="commerces">Commerces</option>
+					<option value="erp">ERP</option>
+					<option value="partenaires">Partenaires</option>
+				</select>
+			</label>
+		</div>
+
+		<div class="grid grid-cols-3 gap-4">
+			<label class="block">
+				<span class="block text-sm font-medium mb-1">Géo</span>
+				<select
+					bind:value={manualItem.geo_scope}
+					class="w-full h-10 px-3 rounded-md border border-border-input bg-surface focus:outline-2 focus:outline-primary"
+				>
+					<option value="suisse_romande">Suisse romande</option>
+					<option value="suisse">Suisse</option>
+					<option value="monde">Monde</option>
+				</select>
+			</label>
+			<label class="block">
+				<span class="block text-sm font-medium mb-1">Maturité</span>
+				<select
+					bind:value={manualItem.maturity}
+					class="w-full h-10 px-3 rounded-md border border-border-input bg-surface focus:outline-2 focus:outline-primary"
+				>
+					<option value="emergent">Émergent</option>
+					<option value="etabli">Établi</option>
+					<option value="speculatif">Spéculatif</option>
+				</select>
+			</label>
+			<label class="block">
+				<span class="block text-sm font-medium mb-1">Actionnabilité</span>
+				<select
+					bind:value={manualItem.actionability}
+					class="w-full h-10 px-3 rounded-md border border-border-input bg-surface focus:outline-2 focus:outline-primary"
+				>
+					<option value="action_directe">Action directe</option>
+					<option value="veille_active">Veille active</option>
+					<option value="a_surveiller">À surveiller</option>
+				</select>
+			</label>
+		</div>
+	</div>
+</ModalForm>

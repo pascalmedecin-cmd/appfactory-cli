@@ -67,14 +67,22 @@
 			<h1 class="mag-display text-[40px] md:text-6xl text-primary-dark max-w-3xl">
 				Le pouls hebdomadaire des films FilmPro
 			</h1>
-			{#if featured}
-				<div class="text-right shrink-0 hidden md:block">
-					<div class="mag-kicker text-text-muted">Dernière édition</div>
-					<div class="text-sm font-semibold text-text mt-1">
-						{formatDateLong(featured.generated_at)}
+			<div class="flex items-end gap-4 shrink-0">
+				{#if featured}
+					<div class="text-right hidden md:block">
+						<div class="mag-kicker text-text-muted">Dernière édition</div>
+						<div class="text-sm font-semibold text-text mt-1">
+							{formatDateLong(featured.generated_at)}
+						</div>
 					</div>
-				</div>
-			{/if}
+				{/if}
+				<a
+					href="/veille/themes"
+					class="h-10 px-4 inline-flex items-center gap-2 rounded-lg border border-border-input text-sm font-medium text-text hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+				>
+					Gérer les thèmes
+				</a>
+			</div>
 		</div>
 		<p class="mag-body text-text-body mt-4 max-w-3xl text-base md:text-[17px]">
 			Le panorama hebdomadaire des marchés bâtiment, films solaires, vitrages et

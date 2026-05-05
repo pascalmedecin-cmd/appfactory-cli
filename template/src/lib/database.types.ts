@@ -671,6 +671,111 @@ export type Database = {
           },
         ]
       }
+      prospect_photos: {
+        Row: {
+          caption: string | null
+          entreprise_id: string | null
+          id: string
+          mime_type: string | null
+          prospect_lead_id: string | null
+          size_bytes: number | null
+          storage_path: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          caption?: string | null
+          entreprise_id?: string | null
+          id?: string
+          mime_type?: string | null
+          prospect_lead_id?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          caption?: string | null
+          entreprise_id?: string | null
+          id?: string
+          mime_type?: string | null
+          prospect_lead_id?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_photos_entreprise_id_fkey"
+            columns: ["entreprise_id"]
+            isOneToOne: false
+            referencedRelation: "entreprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_photos_prospect_lead_id_fkey"
+            columns: ["prospect_lead_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prospect_visits: {
+        Row: {
+          accuracy_m: number | null
+          address_resolved: string | null
+          distance_from_zefix_m: number | null
+          entreprise_id: string | null
+          id: string
+          lat: number
+          lng: number
+          prospect_lead_id: string | null
+          user_id: string | null
+          visited_at: string
+        }
+        Insert: {
+          accuracy_m?: number | null
+          address_resolved?: string | null
+          distance_from_zefix_m?: number | null
+          entreprise_id?: string | null
+          id?: string
+          lat: number
+          lng: number
+          prospect_lead_id?: string | null
+          user_id?: string | null
+          visited_at?: string
+        }
+        Update: {
+          accuracy_m?: number | null
+          address_resolved?: string | null
+          distance_from_zefix_m?: number | null
+          entreprise_id?: string | null
+          id?: string
+          lat?: number
+          lng?: number
+          prospect_lead_id?: string | null
+          user_id?: string | null
+          visited_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_visits_entreprise_id_fkey"
+            columns: ["entreprise_id"]
+            isOneToOne: false
+            referencedRelation: "entreprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_visits_prospect_lead_id_fkey"
+            columns: ["prospect_lead_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recherches_sauvegardees: {
         Row: {
           alerte_active: boolean | null
@@ -824,6 +929,42 @@ export type Database = {
           nom?: string
           prenom?: string
           role?: string
+        }
+        Relationships: []
+      }
+      veille_themes: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          description: string
+          id: string
+          label: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          label: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          label?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: []
       }

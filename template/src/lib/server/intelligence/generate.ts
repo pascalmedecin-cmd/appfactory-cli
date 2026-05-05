@@ -5,11 +5,16 @@ import {
 	type IntelligenceItem
 } from './schema';
 import {
-	SYSTEM_PROMPT,
+	buildSystemPrompt,
 	buildUserPrompt,
-	REPORT_JSON_SCHEMA,
+	buildReportJsonSchema,
 	type PreviousItem
 } from './prompt';
+import {
+	buildThemesPromptSection,
+	getFallbackBundle,
+	type ThemeBundle
+} from './theme-loader';
 import { verifyUrl } from './url-verify';
 import { sanitizeUrlsBatch } from './url-sanitize';
 import { isDeniedSource, getDomainTier } from './source-allowlist';
@@ -65,8 +70,12 @@ export interface GenerateResult {
 
 async function callModel(
 	client: Anthropic,
-	input: GenerateInput
+	input: GenerateInput,
+	themes: ThemeBundle
 ): Promise<Anthropic.Message> {
+	const themesSection = buildThemesPromptSection(themes);
+	const systemPrompt = buildSystemPrompt(themesSection);
+	const reportSchema = buildReportJsonSchema(themes.allowedSlugs);
 	const tools: Anthropic.Tool[] = [
 		{
 			type: 'web_search_20250305',
@@ -103,7 +112,7 @@ async function callModel(
 			name: 'emit_report',
 			description:
 				"Émettre l'édition hebdomadaire finale conforme au schéma. À appeler UNE SEULE FOIS en toute fin, après les recherches web.",
-			input_schema: REPORT_JSON_SCHEMA as unknown as Anthropic.Tool.InputSchema,
+			input_schema: reportSchema as unknown as Anthropic.Tool.InputSchema,
 			strict: true,
 			// cache_control sur le dernier tool → cache = system + tools complet.
 			cache_control: { type: 'ephemeral' }
@@ -123,7 +132,7 @@ async function callModel(
 		system: [
 			{
 				type: 'text',
-				text: SYSTEM_PROMPT,
+				text: systemPrompt,
 				cache_control: { type: 'ephemeral' }
 			}
 		],
@@ -254,6 +263,12 @@ async function filterAndAnnotateItems(
 export interface GenerateOptions {
 	/** Anthropic API key. Injectée par l'appelant (cf. deps.ts). */
 	anthropicApiKey: string;
+	/**
+	 * Bundle thèmes actifs (chargé depuis `veille_themes` par theme-loader).
+	 * Optionnel pour rétrocompat tests. Si absent, fallback hardcoded
+	 * (cf. theme-loader FALLBACK_THEMES) — le cron prod doit toujours fournir.
+	 */
+	themes?: ThemeBundle;
 }
 
 export async function generateIntelligenceReport(
@@ -269,7 +284,10 @@ export async function generateIntelligenceReport(
 
 	const client = new Anthropic({ apiKey: opts.anthropicApiKey });
 
-	const response = await callModel(client, input);
+	// Themes bundle : fourni par run-generation.ts (chargé via theme-loader).
+	// Fallback explicite vers la liste hardcoded si l'appelant l'omet (tests).
+	const themes = opts.themes ?? getFallbackBundle();
+	const response = await callModel(client, input, themes);
 	costTracker.addClaudeCall(MODEL, response.usage, 'Claude veille (1-phase)');
 
 	// Garde stop_reason : si le modèle a été coupé par max_tokens, l'éventuel
@@ -306,6 +324,21 @@ export async function generateIntelligenceReport(
 			raw: response,
 			costs: costTracker.summary()
 		};
+	}
+
+	// Theme allowlist post-Zod : Zod accepte string libre depuis S169 (theme
+	// dynamique DB). Si le modèle a sorti un thème inconnu malgré le JSON
+	// schema strict-mode, on dégrade en 'autre' avec log plutôt que rejeter
+	// l'item entier (perte d'info éditoriale > coût d'un fallback gracieux).
+	const allowed = new Set(themes.allowedSlugs);
+	const fallbackTheme = allowed.has('autre') ? 'autre' : (themes.allowedSlugs[0] ?? 'autre');
+	for (const item of parsed.data.items ?? []) {
+		if (!allowed.has(item.theme)) {
+			console.warn(
+				`[generate] theme inconnu "${item.theme}" sur item rank=${item.rank}, fallback "${fallbackTheme}"`
+			);
+			item.theme = fallbackTheme;
+		}
 	}
 
 	// Pipeline anti-hallucination (2026-05-05) :

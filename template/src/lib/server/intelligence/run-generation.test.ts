@@ -67,6 +67,18 @@ vi.mock('./apply-signals', () => ({
 	applySignalsFromReport: (...args: unknown[]) => applySignalsMock(...args)
 }));
 
+// S169 : run-generation appelle loadThemeBundle(supabase) avant generate. Pour
+// ne pas perturber la séquence du mock supabase capturant les upserts (qui est
+// purement séquentiel), on mocke theme-loader pour retourner directement le
+// bundle hardcoded fallback.
+vi.mock('./theme-loader', async () => {
+	const actual = await vi.importActual<typeof import('./theme-loader')>('./theme-loader');
+	return {
+		...actual,
+		loadThemeBundle: vi.fn(async () => actual.getFallbackBundle())
+	};
+});
+
 import { runWeeklyGeneration } from './run-generation';
 
 /**
@@ -196,7 +208,11 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 
 		expect(generateMock).toHaveBeenCalledTimes(1);
 		const opts = generateMock.mock.calls[0][1];
-		expect(opts).toEqual({ anthropicApiKey: 'sk-ant-injected-12345' });
+		// S169 : opts inclut désormais `themes` (bundle taxonomie) en plus de
+		// l'API key. On vérifie que la key est bien injectée + qu'un bundle non
+		// vide est passé.
+		expect(opts.anthropicApiKey).toBe('sk-ant-injected-12345');
+		expect(opts.themes.allowedSlugs.length).toBeGreaterThanOrEqual(7);
 	});
 
 	it("convertit une exception non capturée de generateIntelligenceReport en upsert status=error + email failure", async () => {
