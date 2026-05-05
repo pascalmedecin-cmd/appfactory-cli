@@ -67,12 +67,20 @@ describe('IntelligenceReportSchema', () => {
 		expect(r.success).toBe(false);
 	});
 
-	it('rejette plus de 10 items', () => {
+	it('rejette plus de 15 items', () => {
 		const r = IntelligenceReportSchema.safeParse({
 			...validReport,
-			items: Array.from({ length: 11 }, (_, i) => ({ ...validItem, rank: i + 1 }))
+			items: Array.from({ length: 16 }, (_, i) => ({ ...validItem, rank: i + 1 }))
 		});
 		expect(r.success).toBe(false);
+	});
+
+	it('accepte 12 items (sur-génération autorisée)', () => {
+		const r = IntelligenceReportSchema.safeParse({
+			...validReport,
+			items: Array.from({ length: 12 }, (_, i) => ({ ...validItem, rank: i + 1 }))
+		});
+		expect(r.success).toBe(true);
 	});
 
 	it('accepte 0 item (semaine Non exploitable)', () => {
@@ -111,8 +119,13 @@ describe('IntelligenceItemSchema', () => {
 		expect(IntelligenceItemSchema.safeParse(validItem).success).toBe(true);
 	});
 
-	it('rejette rank > 10', () => {
-		expect(IntelligenceItemSchema.safeParse({ ...validItem, rank: 11 }).success).toBe(false);
+	it('rejette rank > 15', () => {
+		expect(IntelligenceItemSchema.safeParse({ ...validItem, rank: 16 }).success).toBe(false);
+	});
+
+	it('accepte rank 11..15 (sur-génération autorisée)', () => {
+		expect(IntelligenceItemSchema.safeParse({ ...validItem, rank: 12 }).success).toBe(true);
+		expect(IntelligenceItemSchema.safeParse({ ...validItem, rank: 15 }).success).toBe(true);
 	});
 
 	it('rejette rank < 1', () => {

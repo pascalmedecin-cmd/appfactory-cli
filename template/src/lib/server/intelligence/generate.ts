@@ -11,6 +11,7 @@ import {
 	type PreviousItem
 } from './prompt';
 import { verifyUrl } from './url-verify';
+import { sanitizeUrlsBatch } from './url-sanitize';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
 import { costTracker, type CostSummary } from './cost-tracker';
 
@@ -34,6 +35,13 @@ export interface GenerateInput {
 	windowDays: number;
 }
 
+export interface RejectedItem {
+	url: string;
+	title: string;
+	reason: 'invalid_url' | 'http_error' | 'paywall' | 'timeout' | 'network' | 'date_out_of_window';
+	detail?: string;
+}
+
 export interface GenerateResult {
 	success: boolean;
 	report?: IntelligenceReport;
@@ -41,6 +49,10 @@ export interface GenerateResult {
 	raw?: unknown;
 	/** Coûts agrégés de l'invocation (Claude API). */
 	costs?: CostSummary;
+	/** Items rejetés par sanitize/verify pre-publish (pour relance volume + audit). */
+	rejected?: RejectedItem[];
+	/** Compteur d'URLs sanitizées (suffixes parasites strippés). */
+	sanitizedUrlsCount?: number;
 }
 
 async function callModel(
@@ -125,41 +137,75 @@ async function callModel(
 }
 
 /**
- * Vérifie chaque item en parallèle :
- * - URL parseable + HEAD 2xx (verifyUrl)
- * - Date dans fenêtre [windowStart, windowEnd] (date LLM, pas de fetch og:published_time)
+ * Filtre BLOQUANT (refonte 2026-05-05 anti-hallucination) :
+ * - URL invalide / HTTP error / timeout / network / paywall → REJETÉ
+ * - Date hors fenêtre [windowStart, windowEnd] → REJETÉ
  *
- * Renseigne `verification.url_ok` + `verification.date_ok` sur chaque item.
- * Les items hors fenêtre ou en 404 sont conservés mais leur maturity est dégradée
- * en "speculatif" pour signaler l'anomalie en aval (le badge UI a été retiré, mais
- * la traçabilité reste utile pour debug et investigation).
+ * Items publiables : URL accessible ET date dans la fenêtre.
+ * Items rejetés : retournés séparément pour relance volume + audit.
+ *
+ * Note : avant la refonte, les items KO étaient juste dégradés en
+ * `maturity=speculatif` mais publiés quand même. Conséquence : 24heures paywall
+ * et URLs corrompues `',6` arrivaient dans le CRM (audit W18 2026-05-05).
  */
-async function verifyItems(
+async function filterAndAnnotateItems(
 	items: IntelligenceItem[],
 	windowStart: string,
 	windowEnd: string
-): Promise<IntelligenceItem[]> {
-	return Promise.all(
+): Promise<{ kept: IntelligenceItem[]; rejected: RejectedItem[] }> {
+	const annotated = await Promise.all(
 		items.map(async (item) => {
 			const urlResult = await verifyUrl(item.source.url);
 			const llmDate = parseFlexibleDate(item.source.published_at);
 			const dateOk = llmDate ? isWithinWindow(llmDate, windowStart, windowEnd) : false;
 			const urlOk = urlResult.ok;
-			const needsFlag = !urlOk || !dateOk;
-
-			return {
-				...item,
-				maturity: needsFlag ? ('speculatif' as const) : item.maturity,
-				verification: {
-					url_ok: urlOk,
-					url_reason: urlResult.reason,
-					entity_ok: null,
-					unverified_entities: [],
-					date_ok: dateOk
-				}
-			};
+			return { item, urlResult, urlOk, dateOk };
 		})
 	);
+
+	const kept: IntelligenceItem[] = [];
+	const rejected: RejectedItem[] = [];
+
+	for (const { item, urlResult, urlOk, dateOk } of annotated) {
+		if (!urlOk) {
+			rejected.push({
+				url: item.source.url,
+				title: item.title,
+				reason:
+					urlResult.reason === 'paywall'
+						? 'paywall'
+						: urlResult.reason === 'invalid_url'
+							? 'invalid_url'
+							: urlResult.reason === 'timeout'
+								? 'timeout'
+								: urlResult.reason === 'network'
+									? 'network'
+									: 'http_error',
+				detail: urlResult.status ? `HTTP ${urlResult.status}` : urlResult.reason
+			});
+			continue;
+		}
+		if (!dateOk) {
+			rejected.push({
+				url: item.source.url,
+				title: item.title,
+				reason: 'date_out_of_window',
+				detail: `published_at=${item.source.published_at} hors [${windowStart}..${windowEnd}]`
+			});
+			continue;
+		}
+		kept.push({
+			...item,
+			verification: {
+				url_ok: true,
+				entity_ok: null,
+				unverified_entities: [],
+				date_ok: true
+			}
+		});
+	}
+
+	return { kept, rejected };
 }
 
 export interface GenerateOptions {
@@ -219,18 +265,31 @@ export async function generateIntelligenceReport(
 		};
 	}
 
+	// Pipeline anti-hallucination (2026-05-05) :
+	// 1. Sanitize URLs : strip suffixes parasites (`',6` etc.) avant verifyUrl.
+	// 2. Filtre bloquant URL + date : items KO rejetés (pas dégradés).
+	// La cross-check verbatim (LLM second-pass sur le contenu de la page)
+	// est appliquée en aval dans run-generation.ts.
+	const { items: sanitizedItems, sanitizedCount } = sanitizeUrlsBatch(parsed.data.items);
+
 	const windowStart = input.windowStart ?? input.dateStart;
-	const verifiedItems = await verifyItems(parsed.data.items, windowStart, input.dateEnd);
+	const { kept, rejected } = await filterAndAnnotateItems(
+		sanitizedItems,
+		windowStart,
+		input.dateEnd
+	);
 
 	const enrichedReport: IntelligenceReport = {
 		...parsed.data,
-		items: verifiedItems
+		items: kept
 	};
 
 	return {
 		success: true,
 		report: enrichedReport,
 		raw: response,
-		costs: costTracker.summary()
+		costs: costTracker.summary(),
+		rejected,
+		sanitizedUrlsCount: sanitizedCount
 	};
 }

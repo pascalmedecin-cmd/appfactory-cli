@@ -1,6 +1,7 @@
 import { generateIntelligenceReport } from './generate';
+import { crossCheckBatch } from './cross-check';
 import { currentWeekRange, extendedWindowStart } from './week-utils';
-import type { IntelligenceReport } from './schema';
+import type { IntelligenceReport, IntelligenceItem } from './schema';
 import type { PreviousItem } from './prompt';
 import { sendRecapEmail } from './email-recap';
 import { applySignalsFromReport } from './apply-signals';
@@ -19,6 +20,10 @@ export interface RunResult {
 
 /** Seuil items en-dessous duquel on déclenche l'alerte « semaine creuse ». */
 const SPARSE_WEEK_THRESHOLD = 2;
+/** Seuil items en-dessous duquel on logge un warning low-volume (sans bloquer). */
+const LOW_VOLUME_THRESHOLD = 8;
+/** Plafond items publiés par édition (anti-débordement post-filtrage). */
+const PUBLISHED_ITEMS_CAP = 10;
 /** Texte placeholder écrit en DB lors du marquage running (évite NOT NULL sur executive_summary). */
 const RUNNING_PLACEHOLDER = 'Run en cours, en attente de publication.';
 
@@ -287,8 +292,83 @@ export async function runWeeklyGeneration(
 		};
 	}
 
+	// Pipeline anti-hallucination V2 (2026-05-05) : cross-check verbatim sur le
+	// contenu réel des pages source. Items rescapés du filtre URL/date passent
+	// dans cross-check Sonnet 4.6 qui valide chiffres + citations + entités.
+	//
+	// Garantie « zéro hallucination » :
+	// - rejectUnfetchable=true : item dont la page n'est pas fetchable → rejet
+	//   (pas de publication d'un item qu'on n'a pas pu vérifier).
+	// - try/catch global : si cross-check échoue COMPLÈTEMENT (Sonnet down,
+	//   réseau, etc.) → status=error, on ne publie pas d'items non vérifiés.
+	logPhase(week.weekLabel, 'cross_check_start', {
+		candidates: gen.report.items.length,
+		rejectedPreCheck: gen.rejected?.length ?? 0,
+		sanitizedUrls: gen.sanitizedUrlsCount ?? 0
+	});
+
+	let publishableItems: IntelligenceItem[] = [];
+	try {
+		const ccResult = await crossCheckBatch(gen.report.items, {
+			anthropicApiKey: deps.anthropicApiKey,
+			rejectUnfetchable: true
+		});
+		publishableItems = ccResult.kept;
+		logPhase(week.weekLabel, 'cross_check_done', {
+			kept: ccResult.kept.length,
+			rejected: ccResult.rejected.length,
+			fatalDivergences: ccResult.rejected.flatMap((r) =>
+				r.verdict.divergences.filter((d) => d.severity === 'fatal').map((d) => ({
+					url: r.url,
+					quoted: d.quoted.slice(0, 80),
+					found: d.found?.slice(0, 80) ?? null
+				}))
+			)
+		});
+	} catch (e) {
+		// Échec global cross-check (Sonnet API down, network total, etc.) :
+		// on ne publie PAS d'items non vérifiés. Garantie zéro hallu prime sur
+		// le volume. L'humain peut relancer via workflow_dispatch quand l'API
+		// est rétablie.
+		const message = e instanceof Error ? e.message : String(e);
+		logPhase(week.weekLabel, 'cross_check_fatal', { error: sanitizeError(e) });
+		const errId = await markError(
+			supabase,
+			week.weekLabel,
+			`Cross-check global failed: ${message}. Aucun item publié pour préserver la garantie zéro hallucination.`,
+			gen.raw,
+			gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 },
+			deps.email
+		);
+		return {
+			ok: false,
+			weekLabel: week.weekLabel,
+			reportId: errId,
+			error: `Cross-check failed: ${message}`
+		};
+	}
+
+	// Cap items publiés (priorisation par rank LLM préservée).
+	const cappedItems = publishableItems
+		.slice()
+		.sort((a, b) => a.rank - b.rank)
+		.slice(0, PUBLISHED_ITEMS_CAP);
+
+	if (cappedItems.length < LOW_VOLUME_THRESHOLD) {
+		console.warn(
+			`[veille ${week.weekLabel}] low_volume: ${cappedItems.length} items publiés (cible ${LOW_VOLUME_THRESHOLD}-${PUBLISHED_ITEMS_CAP}). Vérifier qualité couverture web_search.`
+		);
+		logPhase(week.weekLabel, 'low_volume', {
+			published: cappedItems.length,
+			threshold: LOW_VOLUME_THRESHOLD
+		});
+	}
+
+	// Re-rank 1..N continu après filtrage (les rangs LLM peuvent avoir des trous).
+	const rerankedItems = cappedItems.map((item, idx) => ({ ...item, rank: idx + 1 }));
+
 	// Insertion / upsert du rapport valide.
-	const report: IntelligenceReport = gen.report;
+	const report: IntelligenceReport = { ...gen.report, items: rerankedItems };
 	const { data: inserted, error: insertError } = await supabase
 		.from('intelligence_reports')
 		.upsert(

@@ -83,7 +83,7 @@ const HttpsUrl = z
 	.refine((u) => /^https?:\/\//i.test(u), { message: 'URL doit commencer par http(s)://' });
 
 export const IntelligenceItemSchema = z.object({
-	rank: z.number().int().min(1).max(10),
+	rank: z.number().int().min(1).max(15),
 	title: z.string().min(10).max(200),
 	// Limites élargies après run prod S112 (6/7 items dépassaient 800).
 	// Le prompt continue à viser 600-900 mais Zod ne rejette plus jusqu'à 1500.
@@ -160,7 +160,7 @@ export const IntelligenceReportSchema = z.object({
 	// optional + default : Anthropic strict-mode peut omettre les clés "required"
 	// quand le modèle n'a rien à émettre (bug observé S112 : impacts_filmpro
 	// undefined dans le payload alors que listé dans required côté schema JSON).
-	items: z.array(IntelligenceItemSchema).min(0).max(10).optional().default([]),
+	items: z.array(IntelligenceItemSchema).min(0).max(15).optional().default([]),
 	impacts_filmpro: z.array(ImpactFilmproSchema).min(0).max(3).optional().default([])
 });
 

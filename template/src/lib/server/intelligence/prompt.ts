@@ -19,6 +19,9 @@ Ce bloc sert à filtrer la pertinence et à attribuer segment/actionability. INT
 - Chaque item DOIT être adossé à une URL publique précise (pas la racine d'un site, pas une page de catégorie).
 - INTERDIT d'inventer une URL, une date, un titre, une entité, un chiffre. Si l'article n'existe pas publiquement, il n'existe pas pour cette édition.
 - INTERDIT d'extrapoler. Seuls comptent les faits présents dans l'article source.
+- **CHIFFRES VERBATIM OBLIGATOIRE** : tout montant, pourcentage, CAGR, surface, volume cité dans le summary DOIT être copié verbatim depuis la source (mêmes décimales, mêmes unités). Aucune reformulation chiffrée. Un serveur cross-check verbatim chaque chiffre contre la page réelle en aval ; toute divergence chiffrée même mineure (ex: 2,88 → 2,66) entraîne le rejet de l'item entier.
+- **CITATIONS VERBATIM** : tout passage entre guillemets ou marqué \`<cite>\` doit être présent verbatim dans la page source. Pas de paraphrase enrichie sous guillemets.
+- **DATES VÉRIFIABLES** : si la page source n'affiche pas de date publique vérifiable (og:published_time, date dans le HTML), source.published_at doit être absent ou null. INTERDIT de deviner ou d'arrondir une date au jour de la semaine courante.
 - maturity = "speculatif" UNIQUEMENT pour des signaux faibles dûment sourcés (tribune, blog). JAMAIS comme excuse pour extrapoler.
 
 # Fenêtre temporelle (RÈGLE CRITIQUE)
@@ -39,12 +42,21 @@ Reflet dans le champ geo_scope : "suisse_romande" (1), "suisse" (2), "monde" (3 
 
 # Méthode de recherche obligatoire (DOIT être respectée)
 Tu disposes d'environ 15 web_search uses. Répartition imposée :
-- **Au moins 5 web_search dédiées Suisse romande** AVANT toute recherche internationale : queries de la forme \`site:.ch [thème]\`, \`Suisse romande [thème] 2026\`, \`[canton VD/GE/VS/NE/FR/JU] [thème]\`, \`MoPEC Minergie [thème]\`, \`SIA EN [thème]\`. Ces 5 recherches doivent retourner les sujets candidats locaux avant que tu envisages des sujets monde.
+- **Au moins 5 web_search dédiées Suisse romande** : queries de la forme \`site:.ch [thème]\`, \`Suisse romande [thème] 2026\`, \`[canton VD/GE/VS/NE/FR/JU] [thème]\`, \`MoPEC Minergie [thème]\`, \`SIA EN [thème]\`.
 - **2-3 web_search Suisse alémanique + France miroir** : Bauen+Wohnen, Batiactu, Le Moniteur, ADEME, RE2020 ERP.
-- **3-5 web_search monde** : uniquement après les recherches CH+France, et uniquement pour innovations tech (smart glass, électrochrome, PDLC, IA bâtiment) ou mouvements concurrents (3M, Eastman, Avery, Madico, Solar Gard).
+- **5-7 web_search VEILLE TECH GLOBALE** : innovations matériau, smart glass, électrochrome, PDLC, IA bâtiment, brevets WIPO/Espacenet, mouvements concurrents (3M, Eastman, Avery, Madico, Solar Gard, Saint-Gobain, Guardian, Eastman Saflex, View, Sage Glass, Halio, Kinestral). Ces recherches sont **PRIORITAIRES, pas conditionnelles** : elles ne sont PAS bloquées par la couverture Suisse romande.
 - Les 1-2 dernières web_search servent à vérifier les dates / sources des items retenus.
 
 INTERDIT d'émettre une édition avec compliance_tag différent de "Non exploitable" si tu n'as pas effectué AU MOINS 3 recherches \`site:.ch\` ou ciblées Suisse romande dans la session.
+
+# Mix géographique de l'édition publiée (RÈGLE STRUCTURELLE)
+Chaque édition vise **2/3 items à ancrage local + 1/3 items veille tech globale**.
+- Local = Suisse romande, Suisse alémanique/Tessin, France miroir, Belgique francophone (geo_scope "suisse_romande" ou "suisse" ou "monde" mais sujet régulation/marché EU directement applicable CH romande).
+- Tech globale = innovations matériau, smart glass, brevets, mouvements concurrents internationaux, études de marché monde. **Le filtre géographique Suisse romande NE S'APPLIQUE PAS** aux items tech globale : la pertinence d'un brevet ou d'une innovation matériau ne dépend pas de sa localisation.
+- Cible 9 items publiés : 6 locales + 3 tech globale.
+- Plancher tech globale : ≥2 items tech globale par édition (sauf semaine creuse réelle sur ce volet, alors 1 acceptable).
+- Plafond local : ≤7 items locaux par édition (préserver le mix 2/3-1/3).
+- Si la recherche n'a rien trouvé d'éditorial sur la tech globale cette semaine, le dire dans \`executive_summary\` plutôt que combler avec des items locaux marginaux.
 
 # Thèmes à couvrir
 Cœur métier (priorité haute) :
@@ -66,8 +78,9 @@ Reflet dans le champ theme : un parmi films_solaires, films_securite, discretion
 - Articles purement promotionnels / publi-rédactionnels sans contenu informatif : EXCLUS.
 
 # Volume cible
-- Émettre 5 à 10 items finaux. Mieux vaut 5 items solides bien sourcés que 10 items faibles.
-- Les semaines creuses sont normales : si moins de 5 signaux réels trouvés malgré recherche large, émets ce qui existe vraiment (0 à 4 items, voire items=[] et compliance_tag="Non exploitable" acceptés).
+- **Émettre 8 à 15 items candidats**. Le serveur applique en aval un filtrage strict (URL active + cross-check verbatim chiffres/citations contre la page réelle). Cible publiée : 8 à 10 items après filtrage.
+- Sur-générer raisonnablement (12-15) augmente la chance qu'au moins 8 passent le filtre. Mais : mieux vaut 8 items solides bien sourcés que 15 items faibles dont 10 seront rejetés.
+- Les semaines creuses restent possibles : si moins de 8 signaux réels trouvés malgré recherche large + tech globale, émets ce qui existe vraiment (0 à 7 items, voire items=[] et compliance_tag="Non exploitable" acceptés).
 - Un serveur déclenche une alerte « semaine creuse » si items.length < 2.
 
 # Anti-doublons (RÈGLE)
@@ -106,7 +119,7 @@ Classer les items par ordre DÉCROISSANT de valeur FilmPro (rank 1..N, max 10). 
 
 # Limites strictes de longueur (RESPECTER ABSOLUMENT, sinon rejet total)
 - executive_summary : 80 à 1200 caractères (vise 600-900)
-- items : 0 à 10
+- items : 0 à 15
 - item.title : 10-200 chars ; item.summary : 40-1500 chars (vise 600-900) ; item.filmpro_relevance : 20-1200 chars (vise 200-500) ; item.deep_dive : 0-800 chars
 - impacts_filmpro : 0 à 3 entrées ; note : 10 à 500 chars
 - item.search_terms : 2 à 4 chips ; par chip : query 2-120 chars, label 3-160 chars
@@ -203,7 +216,7 @@ export const REPORT_JSON_SCHEMA = {
 		},
 		items: {
 			type: 'array',
-			description: 'Entre 0 et 10 items classés par pertinence descendante',
+			description: 'Entre 0 et 15 items classés par pertinence descendante (cible 8-15 candidats, 8-10 publiés après filtrage)',
 			items: {
 				type: 'object',
 				additionalProperties: false,
@@ -224,7 +237,7 @@ export const REPORT_JSON_SCHEMA = {
 				properties: {
 					rank: {
 						type: 'integer',
-						description: 'Rang entre 1 et 10, unique, croissant depuis 1'
+						description: 'Rang entre 1 et 15, unique, croissant depuis 1'
 					},
 					title: { type: 'string', description: 'Titre de 10 à 200 caractères' },
 					summary: { type: 'string', description: 'Résumé de 40 à 800 caractères' },
