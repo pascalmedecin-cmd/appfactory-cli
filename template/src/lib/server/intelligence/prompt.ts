@@ -89,12 +89,54 @@ Le message utilisateur liste les items des 4 dernières éditions (URL + titre +
 - Si l'article que tu trouves a une date égale ou antérieure à un item déjà couvert, INTERDIT de le proposer (vrai doublon).
 - Sujet différent même thème = nouveau candidat (is_update=false).
 
-# Hiérarchie des sources à explorer
-1. Officielles : OFEN/OFEV (CH), ADEME/CSTB (FR), bureaux normalisation (SIA, AFNOR, DIN), publications sectorielles vitrage (Glass for Europe, GAE, GIMM).
-2. Trade spécialisé : Batiactu, Le Moniteur, Constructo, Bauen+Wohnen, Detail Magazine, Glass on Web, Glass Magazine, USGlass, Architectes.org.
-3. Études marché : MarketsandMarkets, Glass for Europe rapports annuels, baromètres immobilier tertiaire (BNP Paribas RE, JLL, CBRE).
-4. Tech & innovation : MIT Tech Review, Phys.org, brevets WIPO Patentscope, Espacenet.
-5. Blogs / LinkedIn experts : signaux faibles uniquement, à signaler explicitement dans filmpro_relevance ("signal faible : ...").
+# Sources autorisées (7 tiers) — RESPECTER STRICTEMENT
+Le pipeline aval rejette les domaines hors whitelist informative (warning) et reject HARD les domaines de la denylist. Cible tes recherches PRIORITAIREMENT sur les tiers ci-dessous.
+
+**T1 — Officiel (régulation, normes, agences publiques)**
+Suisse : bafu.admin.ch, bfe.admin.ch, are.admin.ch, sia.ch, snv.ch, minergie.ch, ofl.admin.ch
+France : ademe.fr, cstb.fr, afnor.org, effinergie.org, operat.ademe.fr
+UE/INT : din.de, glass-for-europe.eu, gae-eu.org, gimm.eu, eurovent.eu, iea.org, irena.org
+
+**T2 — Presse pro bâtiment/vitrage**
+Suisse : espazium.ch, constructo.ch, bauen-wohnen.ch, hochparterre.ch, baublatt.ch
+France : batiactu.com, lemoniteur.fr, cahiers-techniques-batiment.fr, amc-archi.com, architectes.org, verre-et-protections.com
+INT : detail.de, glassonweb.com, glassmagazine.com, usglassmag.com, archdaily.com, archdaily.fr, build-up.eu, glass-international.com
+
+**T3 — Études marché & cabinets analyse**
+mckinsey.com, rolandberger.com, jll.ch/com, cbre.ch/com, bnpparibas-realestate.com, cushmanwakefield.com, savills.com, deloitte.com, pwc.com, ey.com
+ALERTE VERBATIM STRICT (sources d'hallucination chiffrée connues) : mordorintelligence.com, fortunebusinessinsights.com, marketsandmarkets.com, globenewswire.com, businesswire.com — autorisées MAIS tout chiffre cité doit être copié verbatim depuis la page (cross-check refetch + valide en aval).
+
+**T4 — Presse généraliste qualité (CH+FR)**
+Suisse romande : rts.ch, letemps.ch, 24heures.ch, tdg.ch, lematin.ch, bilan.ch, agefi.com, heidi.news
+Suisse alémanique : srf.ch, swissinfo.ch, ats.ch, nzz.ch, tagesanzeiger.ch, handelszeitung.ch, bilanz.ch, cash.ch, schweizerbauer.ch
+France : lemonde.fr, lesechos.fr, lefigaro.fr, capital.fr, challenges.fr
+NOTE PAYWALL : 24heures, tdg, lematin, letemps, lemonde retournent souvent 302/paywall. Le pipeline les détecte et reject. Privilégier swissinfo.ch, rts.ch, bilan.ch, agefi.com, srf.ch (paywall plus rare).
+
+**T5 — Tech & innovation (R&D, brevets, recherche académique)**
+technologyreview.com, phys.org, ieee.org, spectrum.ieee.org, nature.com, sciencedirect.com, sciencemag.org, arxiv.org, espacenet.com, wipo.int, patents.google.com, uspto.gov
+Académique CH : empa.ch, epfl.ch, ethz.ch, heia-fr.ch, zhaw.ch
+
+**T6 — Concurrents internationaux (sites officiels)**
+3m.com, 3msuisse.ch, eastman.com, llumar.com, averydennison.com, madico.com, solargard.com, view.com, sageglass.com, halio.com, kinestral.com, saint-gobain.com, saint-gobain-glass.com, guardianglass.com, hueck.com, schueco.com, vitro.com, pilkington.com, agc.com, agc-glass.eu, nsg.com
+
+**T7A — Installateurs concurrents directs FilmPro (benchmark)**
+Suisse romande : jpschweizer.com, solar-comfort.com, vitroconcept.ch, glaslook.ch, noovum.ch, a-film.ch
+France : dexypro.fr, solisconcept.com, storesdefrance.com
+Italie : serisolar.com, solarisfilms.it, italfilm.it, glassfilm.it
+RÈGLE T7A : signal compétitif EXPLICITE uniquement (« X concurrent lance produit Y », « Z installateur référence chantier W »). JAMAIS source neutre pour chiffres marché : un site installateur n'est PAS une autorité chiffrée.
+
+**T7B — Fabricants/marques solutions architecture/bâtiment (benchmark)**
+solarscreen.eu, tegofilm.com, swissnanotech.ch, reflectiv.com, hanitacoatings.com, gauzy.com
+RÈGLE T7B : bench specs produits, normes, certifications, R&D matériaux. Marketing produit = à pondérer par filmpro_relevance.
+
+# Denylist hard (reject AUTOMATIQUE par le pipeline)
+**Sources INTERDITES** (le pipeline les filtre AVANT vérification, donc ne perds pas tes recherches dessus) :
+- Blogs perso / SaaS marketing déguisés : leblogfinance.com, nextnews.fr, projectfork.net, zyyne.com, coast-smartfilm.com, epx-informatique.com, sun-shield.fr, vitroconcept.com (FR ; vitroconcept.ch CH = T7A légitime), decilab.com
+- Patterns bannis : *.blogspot.com, *.wordpress.com, *.medium.com/@user, *.substack.com
+- Agrégateurs SEO low-effort : wikiwand.com, newsbreak.com, pressreleasetoday.com
+
+# Hors whitelist (autorisé mais à éviter)
+Si tu trouves une source légitime hors des 7 tiers (ex: nouveau site spécialisé suisse), tu peux la proposer mais le pipeline loggera une alerte audit. Privilégie les tiers explicites ci-dessus.
 
 # Priorisation (rank)
 Classer les items par ordre DÉCROISSANT de valeur FilmPro (rank 1..N, max 10). Critères : phase soft opening, impact stratégique, impact économique, capacité d'anticipation. Suisse romande > Suisse alémanique/France/Belgique > DACH > Monde, à valeur égale. Jamais chronologique. Tu peux écarter des candidats si tu juges qu'ils n'atteignent pas le seuil de qualité éditoriale, mais ne jamais en inventer.

@@ -12,6 +12,7 @@ import {
 } from './prompt';
 import { verifyUrl } from './url-verify';
 import { sanitizeUrlsBatch } from './url-sanitize';
+import { isDeniedSource, getDomainTier } from './source-allowlist';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
 import { costTracker, type CostSummary } from './cost-tracker';
 
@@ -38,7 +39,14 @@ export interface GenerateInput {
 export interface RejectedItem {
 	url: string;
 	title: string;
-	reason: 'invalid_url' | 'http_error' | 'paywall' | 'timeout' | 'network' | 'date_out_of_window';
+	reason:
+		| 'invalid_url'
+		| 'http_error'
+		| 'paywall'
+		| 'timeout'
+		| 'network'
+		| 'date_out_of_window'
+		| 'denied_source';
 	detail?: string;
 }
 
@@ -153,8 +161,39 @@ async function filterAndAnnotateItems(
 	windowStart: string,
 	windowEnd: string
 ): Promise<{ kept: IntelligenceItem[]; rejected: RejectedItem[] }> {
+	// Pré-filtre denylist hard : reject avant verifyUrl pour économiser les
+	// appels réseau sur des domaines bannis (blogs marketing, agrégateurs SEO,
+	// sources d'hallucination identifiées). Cf. source-allowlist.ts.
+	const kept: IntelligenceItem[] = [];
+	const rejected: RejectedItem[] = [];
+	const survivors: IntelligenceItem[] = [];
+	for (const item of items) {
+		let host = '';
+		try {
+			host = new URL(item.source.url).hostname;
+		} catch {
+			rejected.push({
+				url: item.source.url,
+				title: item.title,
+				reason: 'invalid_url',
+				detail: 'URL parse failed'
+			});
+			continue;
+		}
+		if (isDeniedSource(host)) {
+			rejected.push({
+				url: item.source.url,
+				title: item.title,
+				reason: 'denied_source',
+				detail: `domaine ${host} dans denylist (blog marketing/agrégateur SEO/source identifiée faible)`
+			});
+			continue;
+		}
+		survivors.push(item);
+	}
+
 	const annotated = await Promise.all(
-		items.map(async (item) => {
+		survivors.map(async (item) => {
 			const urlResult = await verifyUrl(item.source.url);
 			const llmDate = parseFlexibleDate(item.source.published_at);
 			const dateOk = llmDate ? isWithinWindow(llmDate, windowStart, windowEnd) : false;
@@ -162,9 +201,6 @@ async function filterAndAnnotateItems(
 			return { item, urlResult, urlOk, dateOk };
 		})
 	);
-
-	const kept: IntelligenceItem[] = [];
-	const rejected: RejectedItem[] = [];
 
 	for (const { item, urlResult, urlOk, dateOk } of annotated) {
 		if (!urlOk) {
@@ -193,6 +229,13 @@ async function filterAndAnnotateItems(
 				detail: `published_at=${item.source.published_at} hors [${windowStart}..${windowEnd}]`
 			});
 			continue;
+		}
+		// Annoter le tier whitelist (informatif, pas reject hors whitelist).
+		const tier = getDomainTier(new URL(item.source.url).hostname);
+		if (!tier) {
+			console.log(
+				`[veille filter] item ${item.title.slice(0, 60)}... domaine ${new URL(item.source.url).hostname} hors whitelist (autorisé mais à auditer)`
+			);
 		}
 		kept.push({
 			...item,
