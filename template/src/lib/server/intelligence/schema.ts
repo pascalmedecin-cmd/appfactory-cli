@@ -152,7 +152,7 @@ export const IntelligenceEditionSchema = z.object({
 
 	generated_at: z.string().datetime(),
 	compliance_tag: ComplianceTagEnum,
-	executive_summary: z.string().min(80).max(1200)
+	executive_summary: z.string().min(80).max(2000)
 });
 
 export const IntelligenceReportSchema = z.object({

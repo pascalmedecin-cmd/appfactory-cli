@@ -118,7 +118,7 @@ Classer les items par ordre DÉCROISSANT de valeur FilmPro (rank 1..N, max 10). 
   - label : libellé court FR pour le chip UI, format "<KIND> <CANTON> · <query>" (ex: "SIMAP VD · rénovation école vitrage").
 
 # Limites strictes de longueur (RESPECTER ABSOLUMENT, sinon rejet total)
-- executive_summary : 80 à 1200 caractères (vise 600-900)
+- executive_summary : 80 à 2000 caractères (vise 600-1200, max strict 2000)
 - items : 0 à 15
 - item.title : 10-200 chars ; item.summary : 40-1500 chars (vise 600-900) ; item.filmpro_relevance : 20-1200 chars (vise 200-500) ; item.deep_dive : 0-800 chars
 - impacts_filmpro : 0 à 3 entrées ; note : 10 à 500 chars
@@ -210,7 +210,7 @@ export const REPORT_JSON_SCHEMA = {
 				},
 				executive_summary: {
 					type: 'string',
-					description: 'Synthèse executive de 80 à 1200 caractères'
+					description: 'Synthèse executive de 80 à 2000 caractères'
 				}
 			}
 		},
