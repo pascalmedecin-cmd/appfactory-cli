@@ -26,6 +26,7 @@ export const TIER_1_OFFICIAL = new Set([
 	'bafu.admin.ch',
 	'bfe.admin.ch',
 	'are.admin.ch',
+	'fedpol.admin.ch',
 	'sia.ch',
 	'snv.ch',
 	'minergie.ch',
@@ -36,14 +37,25 @@ export const TIER_1_OFFICIAL = new Set([
 	'afnor.org',
 	'effinergie.org',
 	'operat.ademe.fr',
+	'ecologie.gouv.fr',
+	'legifrance.gouv.fr',
+	'anr.fr',
+	// Belgique / Luxembourg
+	'environnement.brussels',
+	'guichet.public.lu',
 	// UE / international
+	'commission.europa.eu',
+	'cordis.europa.eu',
 	'din.de',
 	'glass-for-europe.eu',
 	'gae-eu.org',
 	'gimm.eu',
 	'eurovent.eu',
 	'iea.org',
-	'irena.org'
+	'irena.org',
+	// Associations professionnelles dédiées films vitrage
+	'ewfa.org', // European Window Film Association
+	'iwfa.com' // International Window Film Association
 ]);
 
 /**
@@ -64,11 +76,13 @@ export const TIER_2_TRADE_PRO = new Set([
 	'amc-archi.com',
 	'architectes.org',
 	'verre-et-protections.com',
+	'verreetprotections.com',
 	// International
 	'detail.de',
 	'glassonweb.com',
 	'glassmagazine.com',
 	'usglassmag.com',
+	'windowfilmmag.com', // Window Film Magazine (seul titre dédié industrie)
 	'archdaily.com',
 	'archdaily.fr',
 	'build-up.eu',
@@ -91,14 +105,17 @@ export const TIER_3_MARKET_RESEARCH = new Set([
 	'jll.com',
 	'cbre.ch',
 	'cbre.com',
+	'mediaassets.cbre.com',
 	'bnpparibas-realestate.com',
 	'cushmanwakefield.com',
 	'savills.com',
 	'deloitte.com',
 	'pwc.com',
 	'ey.com',
+	'wbdg.org', // Whole Building Design Guide
 	'mordorintelligence.com', // alerte verbatim
-	'fortunebusinessinsights.com' // alerte verbatim
+	'fortunebusinessinsights.com', // alerte verbatim
+	'snsinsider.com' // cabinet analyse, alerte verbatim
 ]);
 
 /**
@@ -153,11 +170,15 @@ export const TIER_5_TECH_INNOVATION = new Set([
 	'wipo.int',
 	'patents.google.com',
 	'uspto.gov',
+	// Académique CH/FR
 	'empa.ch',
 	'epfl.ch',
+	'memento.epfl.ch',
 	'ethz.ch',
 	'heia-fr.ch',
-	'zhaw.ch'
+	'zhaw.ch',
+	'pagora.grenoble-inp.fr', // Grenoble INP Pagora électronique imprimée
+	'grenoble-inp.fr'
 ]);
 
 /**
@@ -170,6 +191,8 @@ export const TIER_6_COMPETITORS_INTERNATIONAL = new Set([
 	'3msuisse.ch',
 	'eastman.com',
 	'llumar.com',
+	'vista-films.com',
+	'suntek.com',
 	'averydennison.com',
 	'madico.com',
 	'solargard.com',
@@ -186,7 +209,8 @@ export const TIER_6_COMPETITORS_INTERNATIONAL = new Set([
 	'pilkington.com',
 	'agc.com',
 	'agc-glass.eu',
-	'nsg.com'
+	'nsg.com',
+	'riouglass.com' // Riou Glass FR (consolidation NSG/Apollo cf. doc deep research)
 ]);
 
 /**
@@ -203,15 +227,31 @@ export const TIER_7A_INSTALLERS_BENCHMARK = new Set([
 	'glaslook.ch',
 	'noovum.ch',
 	'a-film.ch',
+	'glas-pro-tect.ch', // Glas Pro'tect CH (deep research)
+	'seecret.ch', // Seecret Films CH (deep research)
+	'vitrocsa.com', // systèmes vitrés architecte minimaliste CH (deep research)
 	// France
 	'dexypro.fr',
 	'solisconcept.com',
 	'storesdefrance.com',
+	'protectio-france.com', // (deep research)
+	'siacofrance.com', // SIAC France réseau poseurs (deep research)
+	'le-portail-du-film-pour-vitrages.com', // portail FR films vitrages
+	// Belgique
+	'lisaenergie.be', // (deep research BE)
+	'vectura.be', // (deep research BE)
 	// Italie
 	'serisolar.com',
 	'solarisfilms.it',
 	'italfilm.it',
-	'glassfilm.it'
+	'glassfilm.it',
+	'pellicolerisparmioenergetico.it', // blog poseur IT
+	// Luxembourg
+	'solarfilmprotect.com', // (deep research LU)
+	// Multi-pays / Europe
+	'carlikefilm.com', // (deep research EU)
+	// USA (référence info industrie, peu prospectable)
+	'windowfilmdepot.com'
 ]);
 
 /**
@@ -252,7 +292,11 @@ export const DENYLIST = new Set([
 	'wikiwand.com',
 	'wikipedia-mirror.com',
 	'newsbreak.com',
-	'pressreleasetoday.com'
+	'pressreleasetoday.com',
+	// Agrégateurs PR low-quality (identifiés via deep research 2026-05-05)
+	'openpr.com',
+	'pr.com',
+	'img.pr.com'
 ]);
 
 /**
