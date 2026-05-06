@@ -56,11 +56,22 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	let xml: string;
 	try {
 		const resp = await fetch(`${SEARCH_CH_ENDPOINT}?${params}`, { signal: controller.signal });
-		if (resp.status === 403 || resp.status === 429) {
+		if (resp.status === 403) {
+			// Clé API invalide ou bloquée par search.ch (errorMessage Atom = "The submitted API-Key is invalid or blocked").
+			// Quota épuisé = 429, à différencier pour faciliter le diagnostic ops.
 			return json(
 				{
 					error:
-						'Quota search.ch épuisé ou clé API invalide. Quota mensuel = 1 000 requêtes. Réessayez le mois prochain.',
+						'Clé API search.ch invalide ou bloquée. Vérifiez SEARCH_CH_API_KEY (régénération possible sur https://tel.search.ch/api).',
+				},
+				{ status: 503 },
+			);
+		}
+		if (resp.status === 429) {
+			return json(
+				{
+					error:
+						'Quota search.ch épuisé. Quota mensuel = 1 000 requêtes. Réessayez le mois prochain.',
 				},
 				{ status: 429 },
 			);
@@ -112,8 +123,10 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		});
 	}
 
-	// 3) Construction des source_id synthétiques + dédup intra-source.
-	const sourceIds = entries.map((e) => buildSourceId({ name: e.name, npa: e.npa }));
+	// 3) Construction des source_id (tel:id stable si présent, sinon synthétique) + dédup intra-source.
+	const sourceIds = entries.map((e) =>
+		buildSourceId({ telId: e.telId, name: e.name, npa: e.npa }),
+	);
 
 	const existingIds = new Set<string>();
 	if (sourceIds.length > 0) {
@@ -165,22 +178,28 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			intelligenceSignal,
 		});
 
+		// Description riche : occupation + catégories (souvent vides individuellement, complémentaires).
+		const description = [entry.occupation, entry.categories.join(' / ')]
+			.filter((s) => s && s.length > 0)
+			.join(' — ') || null;
+
 		inserts.push({
 			id: randomUUID(),
 			source: SOURCE_KEY,
 			source_id: sourceId,
-			source_url: 'https://tel.search.ch/',
+			source_url: entry.sourceUrl ?? 'https://tel.search.ch/',
 			raison_sociale: entry.name,
 			nom_contact: null,
 			adresse: entry.adresse,
 			npa: entry.npa,
 			localite: entry.localite,
-			canton,
+			// canton officiel search.ch si présent et romand connu, sinon canton choisi par l'utilisateur.
+			canton: entry.canton && /^(GE|VD|VS|NE|FR|JU)$/.test(entry.canton) ? entry.canton : canton,
 			telephone: entry.telephone,
-			site_web: null,
-			email: null,
+			site_web: entry.website,
+			email: entry.email,
 			secteur_detecte: secteur,
-			description: entry.occupation,
+			description,
 			montant: null,
 			date_publication: null,
 			score_pertinence: scoreResult.total,

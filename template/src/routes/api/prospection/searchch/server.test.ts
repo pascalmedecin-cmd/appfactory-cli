@@ -107,23 +107,34 @@ function makeEvent(body: unknown, sessionPresent = true, behavior: Behavior = {}
 	};
 }
 
-const FEED_2_RESULTS = `<?xml version="1.0" encoding="UTF-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom" xmlns:tel="http://www.search.ch/tel/1.4">
+// Format réel API search.ch (capturé live 2026-05-06).
+const FEED_2_RESULTS = `<?xml version="1.0" encoding="utf-8" ?>
+<feed xml:lang="fr" xmlns="http://www.w3.org/2005/Atom" xmlns:tel="http://tel.search.ch/api/spec/result/1.0/">
 	<entry>
+		<title type="text">Vitrerie Dupont SA</title>
+		<link href="https://search.ch/tel/x.html" rel="alternate" type="text/html" />
+		<tel:id>aaaaaaaaaaaaaaa1</tel:id>
 		<tel:name>Vitrerie Dupont SA</tel:name>
-		<tel:phone>+41 22 123 45 67</tel:phone>
+		<tel:phone>+41221234567</tel:phone>
 		<tel:street>Rue du Lac</tel:street>
 		<tel:streetno>12</tel:streetno>
 		<tel:zip>1200</tel:zip>
 		<tel:city>Genève</tel:city>
-		<tel:occupation>Vitrerie - Miroiterie</tel:occupation>
+		<tel:canton>GE</tel:canton>
+		<tel:category>Vitrerie</tel:category>
+		<tel:category>Miroiterie</tel:category>
+		<tel:extra type="email">contact@vitreriedupont.ch</tel:extra>
+		<tel:extra type="website">https://www.vitreriedupont.ch</tel:extra>
 	</entry>
 	<entry>
+		<title type="text">Façades Martin Sàrl</title>
+		<tel:id>bbbbbbbbbbbbbbb2</tel:id>
 		<tel:name>Façades Martin Sàrl</tel:name>
-		<tel:phone>022 700 00 00</tel:phone>
+		<tel:phone>+41227000000</tel:phone>
 		<tel:zip>1227</tel:zip>
 		<tel:city>Carouge</tel:city>
-		<tel:occupation>Construction de façades</tel:occupation>
+		<tel:canton>GE</tel:canton>
+		<tel:category>Construction de façades</tel:category>
 	</entry>
 </feed>`;
 
@@ -170,7 +181,7 @@ describe('POST /api/prospection/searchch', () => {
 		expect(resp.status).toBe(400);
 	});
 
-	it('quota search.ch épuisé (429)', async () => {
+	it('quota search.ch épuisé (429) → message Quota', async () => {
 		mockFetch.mockResolvedValueOnce({
 			ok: false,
 			status: 429,
@@ -183,7 +194,7 @@ describe('POST /api/prospection/searchch', () => {
 		expect(body.error).toMatch(/Quota/);
 	});
 
-	it('clé API invalide (403 → 429 côté client)', async () => {
+	it('clé API invalide/bloquée (403) → 503 + message clé invalide', async () => {
 		mockFetch.mockResolvedValueOnce({
 			ok: false,
 			status: 403,
@@ -191,7 +202,9 @@ describe('POST /api/prospection/searchch', () => {
 		});
 		const { event } = makeEvent({ term: 'vitrerie', canton: 'GE' });
 		const resp = await POST(event as unknown as Parameters<typeof POST>[0]);
-		expect(resp.status).toBe(429);
+		expect(resp.status).toBe(503);
+		const body = await resp.json();
+		expect(body.error).toMatch(/Clé API search\.ch invalide ou bloquée/);
 	});
 
 	it('erreur serveur search.ch (502)', async () => {
@@ -285,14 +298,20 @@ describe('POST /api/prospection/searchch', () => {
 		expect(inserted).toHaveLength(2);
 		expect(inserted[0].source).toBe('searchch');
 		expect(inserted[0].raison_sociale).toBe('Vitrerie Dupont SA');
-		expect(inserted[0].telephone).toBe('+41 22 123 45 67');
+		expect(inserted[0].telephone).toBe('+41221234567');
 		expect(inserted[0].adresse).toBe('Rue du Lac 12');
 		expect(inserted[0].npa).toBe('1200');
 		expect(inserted[0].canton).toBe('GE');
 		expect(inserted[0].statut).toBe('nouveau');
 		expect(inserted[0].score_pertinence).toBeTypeOf('number');
-		expect(inserted[0].source_id).toBe('vitrerie-dupont-sa|1200');
-		expect(inserted[1].source_id).toBe('facades-martin-sarl|1227');
+		// source_id = tel:id stable préfixé id: (UID search.ch fait foi sur dédup intra-source).
+		expect(inserted[0].source_id).toBe('id:aaaaaaaaaaaaaaa1');
+		expect(inserted[1].source_id).toBe('id:bbbbbbbbbbbbbbb2');
+		// Nouvelles données enrichies extraites du flux.
+		expect(inserted[0].email).toBe('contact@vitreriedupont.ch');
+		expect(inserted[0].site_web).toBe('https://www.vitreriedupont.ch');
+		expect(inserted[0].source_url).toBe('https://search.ch/tel/x.html');
+		expect(inserted[0].secteur_detecte).toBe('menuiserie'); // détecté via tel:category
 	});
 
 	it('dédup : 2 résultats dont 1 déjà présent → 1 importé, 1 skipped', async () => {
@@ -304,7 +323,7 @@ describe('POST /api/prospection/searchch', () => {
 		const { event } = makeEvent(
 			{ term: 'vitrerie', canton: 'GE' },
 			true,
-			{ existing: [{ source_id: 'vitrerie-dupont-sa|1200' }] },
+			{ existing: [{ source_id: 'id:aaaaaaaaaaaaaaa1' }] },
 		);
 		const resp = await POST(event as unknown as Parameters<typeof POST>[0]);
 		const body = await resp.json();
@@ -321,7 +340,7 @@ describe('POST /api/prospection/searchch', () => {
 		const { event } = makeEvent(
 			{ term: 'vitrerie', canton: 'GE' },
 			true,
-			{ dismissed: [{ source_id: 'facades-martin-sarl|1227', statut: 'ecarte' }] },
+			{ dismissed: [{ source_id: 'id:bbbbbbbbbbbbbbb2', statut: 'ecarte' }] },
 		);
 		const resp = await POST(event as unknown as Parameters<typeof POST>[0]);
 		const body = await resp.json();

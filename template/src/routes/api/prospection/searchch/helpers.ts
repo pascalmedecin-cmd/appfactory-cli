@@ -153,15 +153,33 @@ export function buildSearchChQueryParams(args: {
 /**
  * Représente une entrée annuaire parsée depuis le flux Atom search.ch.
  * Tous les champs sauf `name` sont optionnels (search.ch ne garantit pas leur présence).
+ *
+ * Contrat officiel : https://search.ch/tel/api/help
+ * - `<tel:id>` : UID stable search.ch (cardinalité 1, ≠ `tel:nopromo` etc.)
+ * - `<tel:category>` : rubrique firme, cardinalité N (Vitrerie, Stores, ...)
+ * - `<tel:occupation>` : désignation additionnelle (cardinalité 1, rare en firma)
+ * - `<tel:extra type="email|website|fax">` : coordonnées additionnelles, cardinalité N
  */
 export type SearchChEntry = {
-	/** Raison sociale (depuis <title> ou <tel:name>). Obligatoire pour insertion. */
+	/** UID stable search.ch (depuis <tel:id>). Null si absent → fallback sur source_id synthétique. */
+	telId: string | null;
+	/** Raison sociale (depuis <tel:name>, fallback <title>). Obligatoire pour insertion. */
 	name: string;
 	telephone: string | null;
 	adresse: string | null;
 	npa: string | null;
 	localite: string | null;
+	canton: string | null;
+	/** Désignation additionnelle (souvent vide en firma=1). */
 	occupation: string | null;
+	/** Toutes les catégories firme (utilisée pour détection secteur). */
+	categories: string[];
+	/** Email depuis <tel:extra type="email">. Le suffixe `*` (refus publicité) est strippé. */
+	email: string | null;
+	/** Website depuis <tel:extra type="website">. Format search.ch : "domain.tld: https://...". */
+	website: string | null;
+	/** URL page publique search.ch du business. */
+	sourceUrl: string | null;
 };
 
 /**
@@ -177,11 +195,10 @@ function decodeXmlEntities(s: string): string {
 }
 
 // Tous les tags utilisés par parseSearchChImportFeed sont des littéraux internes contrôlés
-// (jamais user-controlled). Un escape regex full n'est pas nécessaire, mais on garde un
-// échappement conservateur sur le `:` du namespace tel: pour les variantes de moteur regex
-// (en pratique `:` n'est pas un méta-caractère, c'est cosmétique mais explicite).
+// (jamais user-controlled). Tolérant aux attributs sur le tag d'ouverture (ex: <title type="text">)
+// que search.ch publie sur title/link/etc.
 function extractTag(xml: string, tag: string): string | null {
-	const re = new RegExp(`<${tag}>([^<]+)<\\/${tag}>`);
+	const re = new RegExp(`<${tag}(?:\\s[^>]*)?>([^<]+)<\\/${tag}>`);
 	const m = xml.match(re);
 	return m ? decodeXmlEntities(m[1]).trim() : null;
 }
@@ -197,49 +214,122 @@ export function sanitizeApiKeyInLogs(input: string): string {
 }
 
 /**
+ * Extrait toutes les valeurs de toutes les balises de même nom dans un bloc XML.
+ * Utilisé pour les éléments cardinalité N : <tel:category>, <tel:extra>.
+ */
+function extractAllTags(xml: string, tag: string): string[] {
+	const re = new RegExp(`<${tag}(?:\\s[^>]*)?>([^<]+)<\\/${tag}>`, 'g');
+	const out: string[] = [];
+	let m: RegExpExecArray | null;
+	while ((m = re.exec(xml)) !== null) {
+		out.push(decodeXmlEntities(m[1]).trim());
+	}
+	return out;
+}
+
+/**
+ * Extrait les éléments `<tel:extra type="..."}>VALEUR</tel:extra>` filtrés par type.
+ * Retourne la 1re valeur trouvée (cas typique : 1 email, 1 website par firme).
+ */
+function extractExtra(xml: string, type: string): string | null {
+	const re = new RegExp(
+		`<tel:extra\\s+type=["']${type}["']\\s*>([^<]+)<\\/tel:extra>`,
+		'i',
+	);
+	const m = xml.match(re);
+	return m ? decodeXmlEntities(m[1]).trim() : null;
+}
+
+/**
+ * Extrait l'URL <link rel="alternate" type="text/html"> du bloc entry.
+ * search.ch publie 1 lien `alternate` text/html par entrée pointant vers la page firme.
+ */
+function extractAlternateLink(xml: string): string | null {
+	const re = /<link\s+(?=[^>]*rel=["']alternate["'])(?=[^>]*type=["']text\/html["'])[^>]*href=["']([^"']+)["'][^>]*\/?>/i;
+	const m = xml.match(re);
+	return m ? decodeXmlEntities(m[1]).trim() : null;
+}
+
+/**
+ * Nettoie un email search.ch : strip suffixe `*` (= refus publicité, pas un caractère email valide).
+ */
+function cleanEmail(raw: string | null): string | null {
+	if (!raw) return null;
+	const cleaned = raw.replace(/\*+$/, '').trim();
+	// Validation minimale : présence d'un @ entouré de caractères.
+	return /^.+@.+\..+$/.test(cleaned) ? cleaned : null;
+}
+
+/**
+ * Extrait l'URL canonique d'un champ website search.ch.
+ * Format observé : `"www.example.ch: https://www.example.ch"` ou simplement `"https://..."`.
+ */
+function cleanWebsite(raw: string | null): string | null {
+	if (!raw) return null;
+	const httpMatch = raw.match(/https?:\/\/[^\s]+/i);
+	if (httpMatch) return httpMatch[0].replace(/[*]+$/, '');
+	// Pas d'URL absolue → si on a juste un domaine "www.x.tld", on préfixe https://.
+	const domainMatch = raw.match(/(?:^|\s)((?:www\.)?[a-z0-9-]+\.[a-z.]{2,})/i);
+	return domainMatch ? `https://${domainMatch[1]}` : null;
+}
+
+/**
  * Parse le flux Atom search.ch tel et extrait toutes les entrées entreprises.
  * Robuste aux entrées partielles : skip silencieusement les entries sans `name`.
+ *
+ * Contrat search.ch : voir https://search.ch/tel/api/help
  */
 export function parseSearchChImportFeed(xml: string): SearchChEntry[] {
 	if (!xml || typeof xml !== 'string') return [];
 
 	const entries: SearchChEntry[] = [];
 
-	// Découpe par bloc <entry>...</entry>. Robust aux variantes de whitespace/attributs.
+	// Découpe par bloc <entry>...</entry>. Robuste aux variantes de whitespace/attributs.
 	const entryRe = /<entry\b[^>]*>([\s\S]*?)<\/entry>/g;
 	let match: RegExpExecArray | null;
 
 	while ((match = entryRe.exec(xml)) !== null) {
 		const block = match[1];
 
-		// Nom : <tel:name> en priorité (forme courte canonique entreprise),
-		// fallback sur <title> qui contient parfois "Name | Activité | Lieu".
+		// Nom : <tel:name> canonique, fallback <title>.
 		let name = extractTag(block, 'tel:name');
 		if (!name) {
 			const titleRaw = extractTag(block, 'title');
 			if (titleRaw) {
-				// Titre search.ch typique : "Vitrerie Dupont SA, Genève" ou "Nom | Pro | Canton".
 				name = titleRaw.split(/[|,]/)[0].trim();
 			}
 		}
 		if (!name || name.length < 2) continue;
 
+		const telId = extractTag(block, 'tel:id');
 		const telephone = extractTag(block, 'tel:phone');
 		const street = extractTag(block, 'tel:street');
 		const streetNo = extractTag(block, 'tel:streetno');
 		const npa = extractTag(block, 'tel:zip');
 		const localite = extractTag(block, 'tel:city');
+		const canton = extractTag(block, 'tel:canton');
 		const occupation = extractTag(block, 'tel:occupation');
+		const categories = extractAllTags(block, 'tel:category');
 
 		const adresse = street ? (streetNo ? `${street} ${streetNo}` : street) : null;
 
+		const email = cleanEmail(extractExtra(block, 'email'));
+		const website = cleanWebsite(extractExtra(block, 'website'));
+		const sourceUrl = extractAlternateLink(block);
+
 		entries.push({
+			telId,
 			name,
 			telephone,
 			adresse,
 			npa,
 			localite,
+			canton,
 			occupation,
+			categories,
+			email,
+			website,
+			sourceUrl,
 		});
 	}
 
@@ -248,12 +338,17 @@ export function parseSearchChImportFeed(xml: string): SearchChEntry[] {
 
 /**
  * Génère un source_id déterministe pour dédup intra-source.
- * Format : `{name_normalized}|{npa_or_unknown}` tronqué à 80 chars.
  *
- * Note : search.ch n'expose pas d'UID stable, donc cette clé synthétique est nécessaire.
- * Risque résiduel : 2 entreprises homonymes même NPA → fusionnées (acceptable, cas rare).
+ * - Si `telId` est présent (cas nominal API search.ch) → préfixé `id:` pour traçabilité.
+ *   tel:id est un UID hex 16 chars stable côté search.ch, c'est la clé canonique de dédup.
+ * - Sinon (XML legacy ou tronqué) → fallback synthétique `{name}|{npa}` (acceptable, cas rare).
+ *
+ * Tronqué à 80 chars (compat colonne source_id PostgreSQL).
  */
-export function buildSourceId(entry: { name: string; npa: string | null }): string {
+export function buildSourceId(entry: { telId?: string | null; name: string; npa: string | null }): string {
+	if (entry.telId && /^[a-f0-9]{8,}$/i.test(entry.telId)) {
+		return `id:${entry.telId}`.slice(0, 80);
+	}
 	const normName = normalizeTerm(entry.name).replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
 	const normNpa = entry.npa?.replace(/\D/g, '').slice(0, 10) || 'unknown';
 	return `${normName}|${normNpa}`.slice(0, 80);
@@ -274,8 +369,13 @@ const SECTEURS_KEYWORDS: Record<string, string[]> = {
 	regie: ['regie', 'facility', 'immobilier', 'verwaltung'],
 };
 
-export function detectSecteurFromEntry(entry: { name: string; occupation: string | null }): string | null {
-	const haystack = normalizeTerm([entry.name, entry.occupation ?? ''].join(' '));
+export function detectSecteurFromEntry(entry: {
+	name: string;
+	occupation: string | null;
+	categories?: string[];
+}): string | null {
+	const parts = [entry.name, entry.occupation ?? '', ...(entry.categories ?? [])];
+	const haystack = normalizeTerm(parts.join(' '));
 	for (const [secteur, kws] of Object.entries(SECTEURS_KEYWORDS)) {
 		if (kws.some((kw) => haystack.includes(kw))) return secteur;
 	}

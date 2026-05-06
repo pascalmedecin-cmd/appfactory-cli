@@ -182,61 +182,112 @@ describe('buildSearchChQueryParams', () => {
 
 // --- parseSearchChImportFeed ---
 describe('parseSearchChImportFeed', () => {
-	const feedFull = `<?xml version="1.0" encoding="UTF-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom" xmlns:tel="http://www.search.ch/tel/1.4">
+	// Format réel API search.ch (capturé sur appel live 2026-05-06).
+	const feedReal = `<?xml version="1.0" encoding="utf-8" ?>
+<feed xml:lang="fr" xmlns="http://www.w3.org/2005/Atom" xmlns:tel="http://tel.search.ch/api/spec/result/1.0/">
 	<entry>
-		<title>Vitrerie Dupont SA, Genève</title>
-		<tel:name>Vitrerie Dupont SA</tel:name>
-		<tel:phone>+41 22 123 45 67</tel:phone>
-		<tel:street>Rue du Lac</tel:street>
-		<tel:streetno>12</tel:streetno>
-		<tel:zip>1200</tel:zip>
+		<id>urn:uuid:cbcd31f79d0cfbd2</id>
+		<title type="text">AA A &amp; Artisans Genevois Sàrl</title>
+		<link href="https://search.ch/tel/geneve/aa-a-artisans-genevois-sarl.fr.html" title="Details" rel="alternate" type="text/html" />
+		<link href="https://search.ch/tel/tel/vcard/X.vcf?key=cbcd31f79d0cfbd2" type="text/x-vcard" rel="alternate" />
+		<tel:id>cbcd31f79d0cfbd2</tel:id>
+		<tel:type>Organisation</tel:type>
+		<tel:name>AA A &amp; Artisans Genevois Sàrl</tel:name>
+		<tel:street>Boulevard D'Yvoy</tel:street>
+		<tel:streetno>27</tel:streetno>
+		<tel:zip>1205</tel:zip>
 		<tel:city>Genève</tel:city>
-		<tel:occupation>Vitrerie - Miroiterie</tel:occupation>
+		<tel:canton>GE</tel:canton>
+		<tel:category>Dépannage</tel:category>
+		<tel:category>Vitrerie</tel:category>
+		<tel:category>Construction métallique</tel:category>
+		<tel:phone>+41224363839</tel:phone>
+		<tel:extra type="email">artisansgenevois@bluewin.ch*</tel:extra>
+		<tel:extra type="website">www.artisans.ch: https://www.artisans.ch</tel:extra>
 	</entry>
 	<entry>
-		<title>Façades Martin Sàrl | Vitrerie | Genève</title>
-		<tel:name>Façades Martin Sàrl</tel:name>
-		<tel:phone>022 700 00 00</tel:phone>
-		<tel:street>Avenue de la Praille</tel:street>
-		<tel:zip>1227</tel:zip>
-		<tel:city>Carouge</tel:city>
-		<tel:occupation>Construction de façades</tel:occupation>
+		<id>urn:uuid:4a8c1866bfbceea1</id>
+		<title type="text">BP Stores SA</title>
+		<tel:id>4a8c1866bfbceea1</tel:id>
+		<tel:name>BP Stores SA</tel:name>
+		<tel:street>Rue De-Candolle</tel:street>
+		<tel:streetno>11</tel:streetno>
+		<tel:zip>1205</tel:zip>
+		<tel:city>Genève</tel:city>
+		<tel:canton>GE</tel:canton>
+		<tel:category>Stores</tel:category>
+		<tel:phone>+41228190815</tel:phone>
 	</entry>
 </feed>`;
 
-	it('parse 2 entrées avec tous les champs', () => {
-		const entries = parseSearchChImportFeed(feedFull);
+	it('parse format API réel : tel:id, categories N, extras email/website, link alternate', () => {
+		const entries = parseSearchChImportFeed(feedReal);
 		expect(entries).toHaveLength(2);
 
-		expect(entries[0]).toEqual({
-			name: 'Vitrerie Dupont SA',
-			telephone: '+41 22 123 45 67',
-			adresse: 'Rue du Lac 12',
-			npa: '1200',
+		expect(entries[0]).toMatchObject({
+			telId: 'cbcd31f79d0cfbd2',
+			name: 'AA A & Artisans Genevois Sàrl',
+			telephone: '+41224363839',
+			adresse: "Boulevard D'Yvoy 27",
+			npa: '1205',
 			localite: 'Genève',
-			occupation: 'Vitrerie - Miroiterie',
+			canton: 'GE',
+			occupation: null,
+			categories: ['Dépannage', 'Vitrerie', 'Construction métallique'],
+			email: 'artisansgenevois@bluewin.ch',
+			website: 'https://www.artisans.ch',
+			sourceUrl: 'https://search.ch/tel/geneve/aa-a-artisans-genevois-sarl.fr.html',
 		});
 
-		expect(entries[1].name).toBe('Façades Martin Sàrl');
-		expect(entries[1].adresse).toBe('Avenue de la Praille'); // pas de streetno
+		expect(entries[1].telId).toBe('4a8c1866bfbceea1');
+		expect(entries[1].categories).toEqual(['Stores']);
+		expect(entries[1].email).toBeNull(); // pas d'extra email
+		expect(entries[1].website).toBeNull();
 	});
 
-	it('fallback sur <title> si pas de <tel:name>', () => {
-		const xml = `<entry><title>ACME SA, Genève</title><tel:phone>022 1</tel:phone></entry>`;
+	it('email avec suffixe * (refus pub) → strippé', () => {
+		const xml = `<entry><tel:name>XX</tel:name><tel:extra type="email">a@b.ch*</tel:extra></entry>`;
+		expect(parseSearchChImportFeed(xml)[0].email).toBe('a@b.ch');
+	});
+
+	it('email malformé → null (validation @)', () => {
+		const xml = `<entry><tel:name>XX</tel:name><tel:extra type="email">pasunemail</tel:extra></entry>`;
+		expect(parseSearchChImportFeed(xml)[0].email).toBeNull();
+	});
+
+	it('website format "domaine: https://..." → URL canonique', () => {
+		const xml = `<entry><tel:name>XX</tel:name><tel:extra type="website">www.foo.ch: https://www.foo.ch/path</tel:extra></entry>`;
+		expect(parseSearchChImportFeed(xml)[0].website).toBe('https://www.foo.ch/path');
+	});
+
+	it('website juste un domaine → préfixé https://', () => {
+		const xml = `<entry><tel:name>XX</tel:name><tel:extra type="website">www.foo.ch</tel:extra></entry>`;
+		expect(parseSearchChImportFeed(xml)[0].website).toBe('https://www.foo.ch');
+	});
+
+	it('plusieurs <tel:category> → toutes collectées dans l\'ordre', () => {
+		const xml = `<entry><tel:name>XX</tel:name><tel:category>A</tel:category><tel:category>B</tel:category></entry>`;
+		expect(parseSearchChImportFeed(xml)[0].categories).toEqual(['A', 'B']);
+	});
+
+	it('aucune <tel:category> → []', () => {
+		const xml = `<entry><tel:name>XX</tel:name></entry>`;
+		expect(parseSearchChImportFeed(xml)[0].categories).toEqual([]);
+	});
+
+	it('fallback <title> → name si pas de <tel:name>', () => {
+		const xml = `<entry><title type="text">ACME SA, Genève</title></entry>`;
 		const entries = parseSearchChImportFeed(xml);
 		expect(entries).toHaveLength(1);
-		expect(entries[0].name).toBe('ACME SA'); // split sur virgule
+		expect(entries[0].name).toBe('ACME SA');
 	});
 
 	it('skip entry sans nom', () => {
-		const xml = `<entry><tel:phone>022 1</tel:phone></entry>`;
-		expect(parseSearchChImportFeed(xml)).toHaveLength(0);
+		expect(parseSearchChImportFeed(`<entry><tel:phone>022 1</tel:phone></entry>`)).toHaveLength(0);
 	});
 
 	it('skip entry avec nom < 2 chars', () => {
-		const xml = `<entry><tel:name>X</tel:name></entry>`;
-		expect(parseSearchChImportFeed(xml)).toHaveLength(0);
+		expect(parseSearchChImportFeed(`<entry><tel:name>X</tel:name></entry>`)).toHaveLength(0);
 	});
 
 	it('feed vide retourne []', () => {
@@ -244,29 +295,33 @@ describe('parseSearchChImportFeed', () => {
 		expect(parseSearchChImportFeed('')).toEqual([]);
 	});
 
-	it('décode entités XML (&amp; &lt; &quot;)', () => {
+	it('décode entités XML', () => {
 		const xml = `<entry><tel:name>Smith &amp; Co</tel:name></entry>`;
-		const entries = parseSearchChImportFeed(xml);
-		expect(entries[0].name).toBe('Smith & Co');
+		expect(parseSearchChImportFeed(xml)[0].name).toBe('Smith & Co');
 	});
 
-	it('robuste aux entries sur plusieurs lignes + attributs sur <entry>', () => {
+	it('robuste aux entries multi-lignes + attributs sur <entry>', () => {
 		const xml = `<entry id="x" type="firma">
 			<tel:name>Multi-Line SA</tel:name>
 		</entry>`;
 		expect(parseSearchChImportFeed(xml)).toHaveLength(1);
 	});
 
-	it('tous les champs optionnels manquants → null sauf name', () => {
-		const xml = `<entry><tel:name>Solo SA</tel:name></entry>`;
-		const entries = parseSearchChImportFeed(xml);
+	it('tous les champs optionnels manquants → defaults null/[]', () => {
+		const entries = parseSearchChImportFeed(`<entry><tel:name>Solo SA</tel:name></entry>`);
 		expect(entries[0]).toEqual({
+			telId: null,
 			name: 'Solo SA',
 			telephone: null,
 			adresse: null,
 			npa: null,
 			localite: null,
+			canton: null,
 			occupation: null,
+			categories: [],
+			email: null,
+			website: null,
+			sourceUrl: null,
 		});
 	});
 
@@ -278,15 +333,37 @@ describe('parseSearchChImportFeed', () => {
 
 // --- buildSourceId ---
 describe('buildSourceId', () => {
-	it('génère un id stable name+npa', () => {
-		expect(buildSourceId({ name: 'Vitrerie Dupont SA', npa: '1200' })).toBe('vitrerie-dupont-sa|1200');
+	it('utilise tel:id préfixé id: si présent (cas nominal API)', () => {
+		expect(buildSourceId({ telId: 'cbcd31f79d0cfbd2', name: 'X', npa: '1200' })).toBe(
+			'id:cbcd31f79d0cfbd2',
+		);
 	});
 
-	it('strip accents', () => {
-		expect(buildSourceId({ name: 'Façades Élégantes', npa: '1227' })).toBe('facades-elegantes|1227');
+	it('rejette tel:id non-hex et fallback synthétique', () => {
+		expect(buildSourceId({ telId: 'not-hex!', name: 'Vitrerie Dupont SA', npa: '1200' })).toBe(
+			'vitrerie-dupont-sa|1200',
+		);
 	});
 
-	it('strip caractères non-ascii', () => {
+	it('telId null → fallback synthétique name+npa', () => {
+		expect(buildSourceId({ telId: null, name: 'Vitrerie Dupont SA', npa: '1200' })).toBe(
+			'vitrerie-dupont-sa|1200',
+		);
+	});
+
+	it('telId absent (undefined) → fallback synthétique', () => {
+		expect(buildSourceId({ name: 'Vitrerie Dupont SA', npa: '1200' })).toBe(
+			'vitrerie-dupont-sa|1200',
+		);
+	});
+
+	it('strip accents (fallback synthétique)', () => {
+		expect(buildSourceId({ name: 'Façades Élégantes', npa: '1227' })).toBe(
+			'facades-elegantes|1227',
+		);
+	});
+
+	it('strip caractères non-ascii (fallback synthétique)', () => {
 		expect(buildSourceId({ name: 'Smith & Co!', npa: null })).toBe('smith--co|unknown');
 	});
 
@@ -303,10 +380,12 @@ describe('buildSourceId', () => {
 		expect(id.length).toBeLessThanOrEqual(80);
 	});
 
-	it('même name+npa → même id (déterministe)', () => {
-		const a = buildSourceId({ name: 'ACME SA', npa: '1200' });
-		const b = buildSourceId({ name: 'ACME SA', npa: '1200' });
+	it('même telId hex 8+ → même id (déterministe, name/npa ignorés)', () => {
+		const a = buildSourceId({ telId: 'abc12345', name: 'X', npa: '1200' });
+		const b = buildSourceId({ telId: 'abc12345', name: 'Z', npa: '9999' });
+		// même telId = même source_id, même si name/npa diffèrent (UID search.ch fait foi)
 		expect(a).toBe(b);
+		expect(a).toBe('id:abc12345');
 	});
 });
 
@@ -349,9 +428,22 @@ describe('sanitizeApiKeyInLogs', () => {
 
 // --- detectSecteurFromEntry ---
 describe('detectSecteurFromEntry', () => {
-	it('détecte vitrerie via menuiserie keywords', () => {
+	it('détecte vitrerie via name', () => {
 		expect(detectSecteurFromEntry({ name: 'Vitrerie Dupont', occupation: null })).toBe('menuiserie');
+	});
+
+	it('détecte vitrerie via occupation', () => {
 		expect(detectSecteurFromEntry({ name: 'X', occupation: 'Vitrerie - Miroiterie' })).toBe('menuiserie');
+	});
+
+	it('détecte vitrerie via tel:category multiple', () => {
+		expect(
+			detectSecteurFromEntry({
+				name: 'AA Artisans',
+				occupation: null,
+				categories: ['Dépannage', 'Vitrerie', 'Serrurerie'],
+			}),
+		).toBe('menuiserie');
 	});
 
 	it('détecte construction', () => {
@@ -366,7 +458,13 @@ describe('detectSecteurFromEntry', () => {
 		expect(detectSecteurFromEntry({ name: 'RÉNOVATION SA', occupation: null })).toBe('renovation');
 	});
 
+	it('catégories vides → fallback name/occupation', () => {
+		expect(
+			detectSecteurFromEntry({ name: 'Vitrerie X', occupation: null, categories: [] }),
+		).toBe('menuiserie');
+	});
+
 	it('inconnu → null', () => {
-		expect(detectSecteurFromEntry({ name: 'Coiffure Léa', occupation: null })).toBeNull();
+		expect(detectSecteurFromEntry({ name: 'Coiffure Léa', occupation: null, categories: [] })).toBeNull();
 	});
 });
