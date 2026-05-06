@@ -158,6 +158,8 @@ Règles strictes :
 - Tout chiffre présent dans le résumé (montant, pourcentage, CAGR, surface, date, durée, etc.) DOIT apparaître verbatim ou avec une équivalence évidente dans la page. Une perturbation des décimales (ex: 2,66 Md vs 2,88 Md sur la page) = divergence fatale.
 - Toute citation entre guillemets ou marquée <cite> DOIT correspondre à un passage présent verbatim dans la page.
 - Tout nom d'entreprise, personne, lieu spécifique cité comme source DOIT être présent dans la page.
+- **Extension d'énumération** : si le résumé liste des éléments (« comme A, B et C », « notamment X et Y », « parmi lesquels … »), CHAQUE élément cité DOIT figurer dans la page. Un élément ajouté qui n'est pas dans la page = divergence FATALE, même si la liste de la page est sémantiquement proche. Exemple : page dit « façades, toitures et sols », résumé dit « fenêtres et toitures » → fatal (fenêtres ajoutée, façades + sols supprimés).
+- **Traduction de terme technique** : si le résumé traduit un terme technique anglais nommé sur la page (composant, brevet, modèle, technique), la traduction DOIT être fidèle à la nature du composant/concept. Exemple : page dit « Magnetic fixed-sash stop for double-sash units » (butée magnétique pour vantail fixe sur fenêtre à double vantail) ; résumé dit « fixe magnétique sur seuil affleurant » → fatal (« seuil affleurant » est un autre composant que « fixed-sash stop »). En cas de doute, signaler une divergence MINOR.
 - Une paraphrase stylistique fidèle au sens et aux faits = ACCEPTABLE (pas une divergence).
 - Une affirmation ajoutée par le résumé qui n'est pas dans la page = divergence fatale.
 

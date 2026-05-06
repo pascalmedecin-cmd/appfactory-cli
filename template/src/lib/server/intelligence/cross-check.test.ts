@@ -265,6 +265,98 @@ describe('crossCheckBatch', () => {
 		expect(global.fetch).not.toHaveBeenCalled();
 	});
 
+	// Régression W18 audit 2026-05-06 : 2 patterns de paraphrase imprécise
+	// laissés passer par le cross-check S168 (severity=minor au lieu de fatal).
+	// Ces tests valident que le LLM, instruit par les nouvelles règles du SYSTEM
+	// prompt, classe désormais ces 2 patterns comme `fatal` → item rejeté.
+	it("rejette extension d'énumération comme fatal (W18 item 1 régression)", async () => {
+		const create = __mockCreate;
+		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			text: async () =>
+				'<html><body>' +
+				'Programme Bâtiments 2026 : isolation thermique soutenue, en particulier sur les façades, toitures et sols. '.repeat(
+					3
+				) +
+				'</body></html>'
+		});
+		// Item dont le résumé étend la liste : ajoute « fenêtres » non présente
+		// + supprime « façades » et « sols » de la page → fatal selon nouvelles règles.
+		const itemEnum = {
+			...baseItem,
+			summary:
+				'Travaux d\'isolation thermique soutenus, en particulier sur les éléments les plus déperditifs comme les fenêtres et les toitures.'
+		};
+		create.mockResolvedValueOnce({
+			content: [
+				{
+					type: 'tool_use',
+					name: 'emit_verdict',
+					input: {
+						verbatim_ok: false,
+						divergences: [
+							{
+								quoted: 'fenêtres et les toitures',
+								found: 'façades, toitures et sols',
+								severity: 'fatal'
+							}
+						],
+						confidence: 'high'
+					}
+				}
+			],
+			usage: { input_tokens: 100, output_tokens: 30 }
+		});
+		const r = await crossCheckBatch([itemEnum], { anthropicApiKey: 'sk-test' });
+		expect(r.rejected).toHaveLength(1);
+		expect(r.kept).toHaveLength(0);
+		expect(r.rejected[0].verdict.divergences[0].severity).toBe('fatal');
+	});
+
+	it('rejette traduction technique imprécise comme fatal (W18 item 2 régression)', async () => {
+		const create = __mockCreate;
+		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			text: async () =>
+				'<html><body>' +
+				'Innovation Award 2026 finalists. Gretsch-Unitas presented a Magnetic fixed-sash stop for double-sash units. '.repeat(
+					3
+				) +
+				'</body></html>'
+		});
+		const itemTrad = {
+			...baseItem,
+			summary:
+				'Finalistes Innovation Award 2026 : Gretsch-Unitas (fixe magnétique sur seuil affleurant) parmi les nominés.'
+		};
+		create.mockResolvedValueOnce({
+			content: [
+				{
+					type: 'tool_use',
+					name: 'emit_verdict',
+					input: {
+						verbatim_ok: false,
+						divergences: [
+							{
+								quoted: 'fixe magnétique sur seuil affleurant',
+								found: 'Magnetic fixed-sash stop for double-sash units',
+								severity: 'fatal'
+							}
+						],
+						confidence: 'high'
+					}
+				}
+			],
+			usage: { input_tokens: 100, output_tokens: 30 }
+		});
+		const r = await crossCheckBatch([itemTrad], { anthropicApiKey: 'sk-test' });
+		expect(r.rejected).toHaveLength(1);
+		expect(r.kept).toHaveLength(0);
+		expect(r.rejected[0].verdict.divergences[0].severity).toBe('fatal');
+	});
+
 	it("rejette verdict avec severity manquant (Zod safeParse)", async () => {
 		const create = __mockCreate;
 		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
