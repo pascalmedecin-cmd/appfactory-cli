@@ -45,8 +45,8 @@ Basculer vers le `/start` standard scopé au CRM FilmPro :
 - Source idées : `/Users/pascal/Claude/Projets/AppFactory/.claude/parked.md`
 - Options projet :
   - `[3] Modifier une app` : lister entreprises + apps depuis `registry.yaml`, demander laquelle modifier
-  - `[4] Créer une app` : lister entreprises, lancer `python3 wizard/cadrage/server.py --enterprise '...'`, puis `/cadrage`
-  - `[5] Nouveau projet entreprise` : lancer `python3 wizard/cadrage/server.py --mode entreprise` (flow infos → synthèse → branding → cadrage première app)
+  - `[4] Créer une app` : lister entreprises, lancer `python3 Wizard/cadrage/server.py --enterprise '...'`, puis `/cadrage`
+  - `[5] Nouveau projet entreprise` : lancer `python3 Wizard/cadrage/server.py --mode entreprise` (flow infos → synthèse → branding → cadrage première app)
 - `[+] Nouveau` : objectif libre scopé CRM FilmPro
 
 Affichage des tâches (`[1] Reprendre`) : **linéaire** (plus de groupement, puisque scopé à un seul sous-projet). Chaque tâche conserve ses tags et son pointeur vers la spec.

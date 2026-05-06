@@ -144,8 +144,8 @@ Fichiers cles :
 - `branding/_catalogue.yaml` : 5 themes avec tokens complets
 - `branding/_default.yaml` : theme par defaut (standard)
 - `branding/[slug].yaml` : branding par entreprise
-- `wizard/cadrage/` : 5 pages HTML + server.py + shared.css/js + logo
-- `wizard/entreprise/` : wizard pre-cadrage entreprise (option 3), symlinks vers cadrage/shared.*
+- `Wizard/cadrage/` : 5 pages HTML + server.py + shared.css/js + logo
+- `Wizard/entreprise/` : wizard pre-cadrage entreprise (option 3), symlinks vers cadrage/shared.*
 - `scripts/generate-branding-preview.ts` : genere previews/branding.html
 
 ## DOCUMENTATION

@@ -13,9 +13,9 @@ Le cadrage se fait via un wizard HTML dans le navigateur (pas d'allers-retours t
 ### Phase 1 : Lancer le wizard
 
 1. Si le serveur n'est pas deja lance par `/start`, lance-le :
-   - Option 4 (entreprise existante) : `python3 wizard/cadrage/server.py --enterprise '{"name":"...","slug":"...","logo":"...","branding":"..."}'`
-   - Option 5 (nouvelle entreprise) : `python3 wizard/cadrage/server.py --mode entreprise` (flow infos entreprise, puis bascule automatique sur le wizard cadrage)
-   - Sinon : `python3 wizard/cadrage/server.py`
+   - Option 4 (entreprise existante) : `python3 Wizard/cadrage/server.py --enterprise '{"name":"...","slug":"...","logo":"...","branding":"..."}'`
+   - Option 5 (nouvelle entreprise) : `python3 Wizard/cadrage/server.py --mode entreprise` (flow infos entreprise, puis bascule automatique sur le wizard cadrage)
+   - Sinon : `python3 Wizard/cadrage/server.py`
 2. Le navigateur s'ouvre sur `http://localhost:3334/` (page Pitch)
 3. Informe l'operateur : "Le wizard de cadrage est ouvert dans le navigateur. Remplis les etapes, je t'attends."
 
