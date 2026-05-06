@@ -14,7 +14,11 @@ import {
 } from './helpers';
 
 const SEARCH_CH_ENDPOINT = 'https://search.ch/tel/api/';
-const SOURCE_KEY = 'searchch';
+// Valeur canonique imposée par la check constraint prospect_leads_source_check
+// (cf. migration 20260411_001_sources_regbl_minergie.sql : IN ('zefix', 'simap', 'sitg',
+// 'search_ch', 'fosc', 'regbl', 'minergie')). Aligné sur l'usage existant côté
+// enrichir-batch et helpers (validSources = ['search_ch', 'zefix']).
+const SOURCE_KEY = 'search_ch' as const;
 /** Timeout réseau search.ch : la doc indique réponse < 2s nominal, 10s laisse marge généreuse. */
 const SEARCH_CH_TIMEOUT_MS = 10_000;
 /** Cap dur taille XML response : protection DoS mémoire (2 Mo couvre 20 entries généreusement). */

@@ -8,7 +8,8 @@
 
 	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
 
-	type ImportSourceKey = 'zefix' | 'searchch' | 'simap' | 'regbl';
+	// Valeur 'search_ch' (avec underscore) imposée par la check constraint DB prospect_leads_source_check.
+	type ImportSourceKey = 'zefix' | 'search_ch' | 'simap' | 'regbl';
 
 	let {
 		open = $bindable(false),
@@ -120,7 +121,7 @@
 			bgCssVar: '--color-prosp-import-bg',
 			borderCssVar: '--color-prosp-import-border',
 		},
-		searchch: {
+		search_ch: {
 			code: 'TEL',
 			title: 'Annuaire pro',
 			subtitle: 'Entreprises avec téléphone direct',
@@ -170,7 +171,7 @@
 		},
 	};
 
-	const allTabs: ImportSourceKey[] = ['zefix', 'searchch', 'simap', 'regbl'];
+	const allTabs: ImportSourceKey[] = ['zefix', 'search_ch', 'simap', 'regbl'];
 
 	// Filtrage déterministe par allowedSources (préserve l'ordre canonique).
 	let visibleTabs = $derived(
@@ -406,9 +407,9 @@
 		{/if}
 
 		<!-- SEARCH.CH parcours : SEARCH-FIRST (terme métier + canton + ville). Variante annuaire pro. -->
-		{#if activeTab === 'searchch'}
-			<div id="import-panel-searchch" role="tabpanel" aria-labelledby={visibleTabs.length > 1 ? 'tab-searchch' : undefined}
-				aria-label={visibleTabs.length === 1 ? sourceMeta.searchch.title : undefined} class="space-y-5">
+		{#if activeTab === 'search_ch'}
+			<div id="import-panel-search_ch" role="tabpanel" aria-labelledby={visibleTabs.length > 1 ? 'tab-search_ch' : undefined}
+				aria-label={visibleTabs.length === 1 ? sourceMeta.search_ch.title : undefined} class="space-y-5">
 				<!-- Hero pédagogique riche, signature couleur enrich. -->
 				<div class="p-5 rounded-2xl flex gap-4" style={`background: var(${activeMeta.bgCssVar}); border: 1px solid color-mix(in srgb, var(${activeMeta.borderCssVar}), transparent 70%);`}>
 					<div class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style={`background: color-mix(in srgb, var(${activeMeta.cssVar}), transparent 88%);`}>
@@ -634,13 +635,13 @@
 			type="button"
 			onclick={
 				activeTab === 'zefix' ? importZefix
-				: activeTab === 'searchch' ? importSearchch
+				: activeTab === 'search_ch' ? importSearchch
 				: activeTab === 'simap' ? importSimap
 				: importRegbl
 			}
 			disabled={importing
 				|| (activeTab === 'zefix' && zefixNameInvalid)
-				|| (activeTab === 'searchch' && searchchTermInvalid)
+				|| (activeTab === 'search_ch' && searchchTermInvalid)
 				|| (activeTab === 'simap' && simapSearchInvalid)
 				|| (activeTab === 'regbl' && importRegblCantons.length === 0)}
 			class="w-full inline-flex items-center justify-center gap-2 h-12 px-4 box-border text-base font-semibold text-white rounded-xl disabled:opacity-50 cursor-pointer shadow-md transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"

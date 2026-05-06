@@ -296,7 +296,7 @@ describe('POST /api/prospection/searchch', () => {
 
 		const inserted = captured.current as Array<Record<string, unknown>>;
 		expect(inserted).toHaveLength(2);
-		expect(inserted[0].source).toBe('searchch');
+		expect(inserted[0].source).toBe('search_ch');
 		expect(inserted[0].raison_sociale).toBe('Vitrerie Dupont SA');
 		expect(inserted[0].telephone).toBe('+41221234567');
 		expect(inserted[0].adresse).toBe('Rue du Lac 12');
