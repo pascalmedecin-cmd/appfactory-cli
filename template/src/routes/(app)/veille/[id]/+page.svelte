@@ -215,14 +215,6 @@
 			<Icon name="arrow_back" size={16} />
 			Retour au flux
 		</a>
-		<button
-			type="button"
-			onclick={() => (addItemOpen = true)}
-			class="ml-auto h-9 px-3 inline-flex items-center gap-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-		>
-			<Icon name="add" size={16} />
-			Ajouter un item
-		</button>
 	</div>
 
 	<!-- Masthead éditorial -->
@@ -232,10 +224,20 @@
 			<h1 class="mag-display text-[40px] md:text-6xl text-primary-dark max-w-3xl">
 				Édition n° {editionNumber(data.report.week_label)}
 			</h1>
-			<div class="text-right shrink-0 hidden md:block">
-				<div class="mag-kicker text-text-muted">Publiée le</div>
-				<div class="text-sm font-semibold text-text mt-1">
-					{formatDate(data.report.generated_at)}
+			<div class="shrink-0 flex flex-col items-end gap-3">
+				<button
+					type="button"
+					onclick={() => (addItemOpen = true)}
+					class="h-9 px-3 inline-flex items-center gap-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+				>
+					<Icon name="add" size={16} />
+					Ajouter un item
+				</button>
+				<div class="text-right hidden md:block">
+					<div class="mag-kicker text-text-muted">Publiée le</div>
+					<div class="text-sm font-semibold text-text mt-1">
+						{formatDate(data.report.generated_at)}
+					</div>
 				</div>
 			</div>
 		</div>
