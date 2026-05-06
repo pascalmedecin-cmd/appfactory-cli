@@ -1,0 +1,1 @@
+<!-- Index des mémoires projet Consulting. Vide à l'initialisation 2026-05-06. Sera rempli par /fin-session au fil des sessions. Format : un puce une ligne sous ~150 chars, type `- [Titre](fichier.md) — accroche`. -->
