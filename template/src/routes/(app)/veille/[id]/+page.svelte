@@ -219,12 +219,18 @@
 
 	<!-- Masthead éditorial -->
 	<header class="pb-6 md:pb-8 mb-10 md:mb-14 border-b-2 border-primary-dark">
-		<div class="mag-kicker text-primary mb-3">Veille sectorielle FilmPro</div>
-		<div class="flex items-end justify-between gap-6 flex-wrap">
-			<h1 class="mag-display text-[40px] md:text-6xl text-primary-dark max-w-3xl">
-				Édition n° {editionNumber(data.report.week_label)}
-			</h1>
-			<div class="shrink-0 flex flex-col items-end gap-3">
+		<div class="flex items-start justify-between gap-6 flex-wrap">
+			<div class="flex-1 min-w-0 max-w-3xl">
+				<div class="mag-kicker text-primary mb-3">Veille sectorielle FilmPro</div>
+				<h1 class="mag-display text-[40px] md:text-6xl text-primary-dark">
+					Édition n° {editionNumber(data.report.week_label)}
+				</h1>
+				<p class="mag-body text-text-body mt-4 text-base md:text-[17px]">
+					{data.report.week_label} · panorama hebdomadaire des marchés bâtiment, films
+					solaires, vitrages et réglementation pour servir vos décisions commerciales.
+				</p>
+			</div>
+			<div class="shrink-0 flex flex-col items-end gap-6">
 				<button
 					type="button"
 					onclick={() => (addItemOpen = true)}
@@ -233,7 +239,7 @@
 					<Icon name="add" size={16} />
 					Ajouter un item
 				</button>
-				<div class="text-right hidden md:block">
+				<div class="text-right">
 					<div class="mag-kicker text-text-muted">Publiée le</div>
 					<div class="text-sm font-semibold text-text mt-1">
 						{formatDate(data.report.generated_at)}
@@ -241,10 +247,6 @@
 				</div>
 			</div>
 		</div>
-		<p class="mag-body text-text-body mt-4 max-w-3xl text-base md:text-[17px]">
-			{data.report.week_label} · panorama hebdomadaire des marchés bâtiment, films
-			solaires, vitrages et réglementation pour servir vos décisions commerciales.
-		</p>
 	</header>
 
 	<!-- HERO COUVERTURE : aside navy + synthèse -->
