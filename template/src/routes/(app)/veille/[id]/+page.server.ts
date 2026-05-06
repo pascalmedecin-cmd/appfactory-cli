@@ -11,6 +11,7 @@ import { verifyUrl } from '$lib/server/intelligence/url-verify';
 import { sanitizeUrl } from '$lib/server/intelligence/url-sanitize';
 import { isDeniedSource } from '$lib/server/intelligence/source-allowlist';
 import { listActiveThemes } from '$lib/server/intelligence/themes-repository';
+import { stripCitationTags } from '$lib/server/intelligence/strip-citations';
 
 /**
  * Agrégat de chips structurés à partir des items, avec rappel du signal source.
@@ -173,8 +174,8 @@ export const actions: Actions = {
 		const newItem: IntelligenceItem = {
 			rank: newRank,
 			title: parsed.data.title,
-			summary: parsed.data.summary,
-			filmpro_relevance: parsed.data.filmpro_relevance,
+			summary: stripCitationTags(parsed.data.summary),
+			filmpro_relevance: stripCitationTags(parsed.data.filmpro_relevance),
 			maturity: parsed.data.maturity,
 			theme: parsed.data.theme,
 			geo_scope: parsed.data.geo_scope,

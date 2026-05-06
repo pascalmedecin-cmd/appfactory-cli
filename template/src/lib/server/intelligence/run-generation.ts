@@ -8,6 +8,7 @@ import { sendRecapEmail } from './email-recap';
 import { applySignalsFromReport } from './apply-signals';
 import type { VeilleDeps } from './deps';
 import { sanitizeForLog, sanitizeError } from './sanitize';
+import { stripCitationsFromReport } from './strip-citations';
 
 type Supabase = VeilleDeps['supabase'];
 
@@ -382,7 +383,13 @@ export async function runWeeklyGeneration(
 	const rerankedItems = cappedItems.map((item, idx) => ({ ...item, rank: idx + 1 }));
 
 	// Insertion / upsert du rapport valide.
-	const report: IntelligenceReport = { ...gen.report, items: rerankedItems };
+	// Strip <cite>...</cite> sur tous les champs textuels avant publish DB :
+	// le SDK Anthropic web_search annote certains passages avec ces marqueurs
+	// non filtrés, qui pollueraient l'affichage CRM (rendu HTML brut).
+	const report: IntelligenceReport = stripCitationsFromReport({
+		...gen.report,
+		items: rerankedItems
+	});
 	const { data: inserted, error: insertError } = await supabase
 		.from('intelligence_reports')
 		.upsert(
