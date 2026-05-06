@@ -8,7 +8,7 @@
 
 	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
 
-	type ImportSourceKey = 'zefix' | 'simap' | 'regbl';
+	type ImportSourceKey = 'zefix' | 'searchch' | 'simap' | 'regbl';
 
 	let {
 		open = $bindable(false),
@@ -55,14 +55,38 @@
 	let importSimapSearch = $state('');
 	let importSimapDays = $state('30');
 	let importRegblCantons = $state<string[]>(['GE', 'VD']);
+	let importSearchchTerm = $state('');
+	let importSearchchVille = $state('');
 
 	const zefixMaxResults = API_LIMITS.zefix.maxResultsPerQuery;
+	const searchchMaxResults = API_LIMITS.search_ch.maxResultsPerQuery;
 
 	let simapSearchInvalid = $derived(
 		importSimapSearch.trim().length > 0 && importSimapSearch.trim().length < 3
 	);
 
 	let zefixNameInvalid = $derived(importZefixName.trim().length < 2);
+
+	// Liste des mots-vides légaux refusés côté serveur (cf. helpers.ts denylist).
+	// Garde miroir client pour feedback immédiat sans aller-retour réseau.
+	const SEARCHCH_GENERIC_TERMS = new Set([
+		'sa', 'sarl', 'sa rl', 'sasu', 'sàrl', 'srl',
+		'gmbh', 'ag', 'kg', 'ohg',
+		'ltd', 'llc', 'inc',
+		'societe', 'societé', 'company', 'compagnie',
+		'entreprise', 'firma',
+	]);
+
+	function searchchTermNormalize(s: string): string {
+		return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+	}
+
+	let searchchTermTrimmed = $derived(importSearchchTerm.trim());
+	let searchchTermTooShort = $derived(searchchTermTrimmed.length > 0 && searchchTermTrimmed.length < 3);
+	let searchchTermGeneric = $derived(
+		searchchTermTrimmed.length >= 3 && SEARCHCH_GENERIC_TERMS.has(searchchTermNormalize(searchchTermTrimmed))
+	);
+	let searchchTermInvalid = $derived(searchchTermTrimmed.length < 3 || searchchTermGeneric);
 
 	// F-V4-06 audit S164 : metadata premium par source pour différenciation visuelle/UX forte.
 	// Chaque source a son propre layout (search-first / period-first / map-first), son icône
@@ -95,6 +119,22 @@
 			cssVar: '--color-prosp-import',
 			bgCssVar: '--color-prosp-import-bg',
 			borderCssVar: '--color-prosp-import-border',
+		},
+		searchch: {
+			code: 'TEL',
+			title: 'Annuaire pro',
+			subtitle: 'Entreprises avec téléphone direct',
+			hero: {
+				icon: 'phone_forwarded',
+				kicker: 'Recherche annuaire',
+				promise: 'Trouvez des entreprises dans l\'annuaire pro suisse avec téléphone direct prêt à composer.',
+				helper: 'Quota 1 000 requêtes/mois : terme métier précis (≥ 3 caractères, formes juridiques exclues) et lieu requis pour économiser le compteur.',
+			},
+			action: { icon: 'search', label: 'Rechercher dans l\'annuaire', pendingLabel: 'Recherche en cours…' },
+			footer: { icon: 'phone_forwarded', text: 'Téléphone, adresse, ville fournis par search.ch. Max 20 résultats / requête. Dédupliqué automatiquement.' },
+			cssVar: '--color-prosp-enrich',
+			bgCssVar: '--color-prosp-enrich-bg',
+			borderCssVar: '--color-prosp-enrich-border',
 		},
 		simap: {
 			code: 'SIMAP',
@@ -130,7 +170,7 @@
 		},
 	};
 
-	const allTabs: ImportSourceKey[] = ['zefix', 'simap', 'regbl'];
+	const allTabs: ImportSourceKey[] = ['zefix', 'searchch', 'simap', 'regbl'];
 
 	// Filtrage déterministe par allowedSources (préserve l'ordre canonique).
 	let visibleTabs = $derived(
@@ -188,6 +228,15 @@
 			name: importZefixName.trim(),
 			activeOnly: true,
 			limit: Number(importLimit) || 100,
+		});
+	}
+
+	function importSearchch() {
+		if (searchchTermInvalid) return;
+		return importFromSource('/api/prospection/searchch', {
+			term: searchchTermTrimmed,
+			canton: importCanton,
+			ville: importSearchchVille.trim() || null,
 		});
 	}
 
@@ -356,6 +405,85 @@
 			</div>
 		{/if}
 
+		<!-- SEARCH.CH parcours : SEARCH-FIRST (terme métier + canton + ville). Variante annuaire pro. -->
+		{#if activeTab === 'searchch'}
+			<div id="import-panel-searchch" role="tabpanel" aria-labelledby={visibleTabs.length > 1 ? 'tab-searchch' : undefined}
+				aria-label={visibleTabs.length === 1 ? sourceMeta.searchch.title : undefined} class="space-y-5">
+				<!-- Hero pédagogique riche, signature couleur enrich. -->
+				<div class="p-5 rounded-2xl flex gap-4" style={`background: var(${activeMeta.bgCssVar}); border: 1px solid color-mix(in srgb, var(${activeMeta.borderCssVar}), transparent 70%);`}>
+					<div class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style={`background: color-mix(in srgb, var(${activeMeta.cssVar}), transparent 88%);`}>
+						<span style={`color: var(${activeMeta.cssVar});`}><Icon name={activeMeta.hero.icon} size={26} /></span>
+					</div>
+					<div>
+						<p class="text-xs font-bold uppercase tracking-wider mb-1" style={`color: var(${activeMeta.cssVar});`}>{activeMeta.hero.kicker}</p>
+						<p class="text-sm font-semibold text-text">{activeMeta.hero.promise}</p>
+						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeMeta.hero.helper}</p>
+					</div>
+				</div>
+
+				<!-- Search input PROMINENT (h-12, icône intégrée, signature visuelle "search-first") -->
+				<div>
+					<label for="searchch-term" class="block text-sm font-semibold text-text mb-2">
+						Mot-clé métier ou raison sociale
+						<span class="font-normal text-danger ml-0.5">*</span>
+					</label>
+					<div class="relative">
+						<Icon name="search" size={18} class="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+						<input
+							id="searchch-term"
+							type="text"
+							required
+							bind:value={importSearchchTerm}
+							placeholder="vitrerie, façade, miroiterie, store…"
+							class="w-full h-12 pl-11 pr-3 text-base box-border border-2 rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors {searchchTermInvalid && searchchTermTrimmed.length > 0 ? 'border-danger' : 'border-border'}"
+						/>
+					</div>
+					{#if searchchTermTooShort}
+						<p class="text-xs text-danger mt-1.5 flex items-center gap-1.5">
+							<Icon name="error" size={13} />
+							Saisir au moins 3 caractères pour économiser le quota mensuel.
+						</p>
+					{:else if searchchTermGeneric}
+						<p class="text-xs text-danger mt-1.5 flex items-center gap-1.5">
+							<Icon name="error" size={13} />
+							Terme trop générique. Préciser un secteur (vitrerie, façade, architecte, …).
+						</p>
+					{:else}
+						<p class="text-xs text-text-muted mt-1.5">Recherché dans le nom et l'activité, max {searchchMaxResults} résultats par requête.</p>
+					{/if}
+				</div>
+
+				<!-- Filtres canton + ville : 2 cols, équilibre visuel. -->
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div>
+						<label for="searchch-canton" class="block text-sm font-medium text-text mb-1.5">
+							Canton
+							<span class="font-normal text-danger ml-0.5">*</span>
+						</label>
+						<select id="searchch-canton" bind:value={importCanton} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
+							{#each cantons as c}
+								<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
+							{/each}
+						</select>
+					</div>
+					<div>
+						<label for="searchch-ville" class="block text-sm font-medium text-text mb-1.5">
+							Ville ou NPA
+							<span class="font-normal text-text-muted">(optionnel)</span>
+						</label>
+						<input
+							id="searchch-ville"
+							type="text"
+							bind:value={importSearchchVille}
+							placeholder="Lausanne, 1003, …"
+							maxlength="60"
+							class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary"
+						/>
+					</div>
+				</div>
+			</div>
+		{/if}
+
 		<!-- SIMAP parcours : PERIOD-FIRST (chips horizontaux période, ton "veille en flux") -->
 		{#if activeTab === 'simap'}
 			<div id="import-panel-simap" role="tabpanel" aria-labelledby={visibleTabs.length > 1 ? 'tab-simap' : undefined}
@@ -504,9 +632,15 @@
 		<!-- CTA pleine largeur, couleur source-specific, verbe action distinct -->
 		<button
 			type="button"
-			onclick={activeTab === 'zefix' ? importZefix : (activeTab === 'simap' ? importSimap : importRegbl)}
+			onclick={
+				activeTab === 'zefix' ? importZefix
+				: activeTab === 'searchch' ? importSearchch
+				: activeTab === 'simap' ? importSimap
+				: importRegbl
+			}
 			disabled={importing
 				|| (activeTab === 'zefix' && zefixNameInvalid)
+				|| (activeTab === 'searchch' && searchchTermInvalid)
 				|| (activeTab === 'simap' && simapSearchInvalid)
 				|| (activeTab === 'regbl' && importRegblCantons.length === 0)}
 			class="w-full inline-flex items-center justify-center gap-2 h-12 px-4 box-border text-base font-semibold text-white rounded-xl disabled:opacity-50 cursor-pointer shadow-md transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"

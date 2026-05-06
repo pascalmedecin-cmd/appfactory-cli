@@ -290,8 +290,8 @@
 	// F-V4-05 audit S163 : périmètre des sources d'import par onglet (cohérence avec headerCTA).
 	// SIMAP → marchés publics, RegBL → registre bâtiments, Entreprises → registre commerce, Terrain → ImportModal jamais ouvert depuis cet onglet.
 	type ImportScope = {
-		allowedSources: Array<'zefix' | 'simap' | 'regbl'> | null;
-		defaultSource: 'zefix' | 'simap' | 'regbl' | null;
+		allowedSources: Array<'zefix' | 'searchch' | 'simap' | 'regbl'> | null;
+		defaultSource: 'zefix' | 'searchch' | 'simap' | 'regbl' | null;
 		title: string | null;
 	};
 	const importScope = $derived.by((): ImportScope => {
@@ -301,7 +301,11 @@
 			case 'regbl':
 				return { allowedSources: ['regbl'], defaultSource: 'regbl', title: 'Importer depuis le registre des bâtiments' };
 			case 'entreprises':
-				return { allowedSources: ['zefix'], defaultSource: 'zefix', title: 'Importer depuis le registre du commerce' };
+				return {
+					allowedSources: ['zefix', 'searchch'],
+					defaultSource: 'zefix',
+					title: 'Importer des entreprises',
+				};
 			default:
 				return { allowedSources: null, defaultSource: null, title: null };
 		}
@@ -323,7 +327,7 @@
 				return {
 					icon: 'business',
 					title: 'Aucune entreprise importée',
-					body: 'Importez des entreprises depuis le registre du commerce (Zefix) pour prospecter à froid par canton et secteur d\'activité.',
+					body: 'Importez depuis le registre du commerce (Zefix) ou l\'annuaire pro (search.ch) pour prospecter à froid par canton et secteur d\'activité.',
 					ctaLabel: 'Importer des entreprises',
 					ctaIcon: 'cloud_download',
 					ctaAction: () => (importModalOpen = true),
