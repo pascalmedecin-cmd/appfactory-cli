@@ -20,7 +20,7 @@ L'arborescence d'AppFactory héberge des sous-projets autonomes (chacun a son pr
 |---------|----------|--------|----------|-----------|
 | `CRM/` (CRM FilmPro) | `pascalmedecin-cmd/appfactory-cli` (=racine actuelle) | Production | <https://filmpro-crm.vercel.app> | (ce fichier) |
 | `Formation/` | `pascalmedecin-cmd/onboarding-ia` (séparé, ignoré dans `.gitignore`) | S1→S7 livrés (12/12 modules en prod) | <https://onboarding-ia.vercel.app> | `Formation/CLAUDE.md` |
-| `Consulting/` | (interne au repo `appfactory-cli`, séparation prévue lors du restructure - voir mémoire `project_appfactory_restructure.md`) | Setup S171 2026-05-06 (Phase 1 cadrage à démarrer) | (pas encore d'URL prod, cible Cloudflare Pages) | `Consulting/CLAUDE.md` |
+| `Consulting/` | (interne au repo `appfactory-cli`, sibling de CRM/ et Formation/ depuis Voie B S174) | Setup S171 2026-05-06 (Phase 1 cadrage à démarrer) | (pas encore d'URL prod, cible Cloudflare Pages) | `Consulting/CLAUDE.md` |
 
 Pour travailler sur un sous-projet : taper `cc` au terminal et choisir `5. Formation IA` ou `4. Consulting`. Claude Code atterrit directement dans le sous-dossier, charge son `CLAUDE.md` propre (plus léger), et les tâches sont scopées. Les tâches du sous-projet sont tracées dans son CLAUDE.md, pas dans celui-ci.
 
