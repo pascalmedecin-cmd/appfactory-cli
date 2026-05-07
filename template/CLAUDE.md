@@ -2,12 +2,12 @@
 
 **Note migration restructure 2026-05-06** : ce fichier est l'ancien `AppFactory/CLAUDE.md` déplacé ici lors de la migration Voie A (split container). Le sous-projet CRM FilmPro vit physiquement dans `template/` (path Vercel inchangé : Vercel filmpro-crm continue de builder depuis `template/`). Le `AppFactory/CLAUDE.md` racine est désormais un stub container minimal qui pointe vers les 4 sous-projets. Voir `~/.claude/projects/-Users-pascal-Claude-Projets-AppFactory/memory/project_appfactory_restructure.md` pour le contexte migration complet.
 
-**Statut :** Phase C, GOLDEN STANDARD v9 LAYERED DS LIVRÉ (S172 2026-05-06) - 2 archétypes sources stricts /prospection (workspace) + /veille (editorial) + tokens/primitives universels. Mockup `/dashboard` validé, spec implémentation figée 28 AC. search.ch 2e source découverte LIVRÉ (S171). Pipeline veille ANTI-HALLUCINATION V2 LIVRÉ (S168). /prospection FIGÉE PAGE MODÈLE GOLDEN V9 (S165). Cron veille externalisée GHA (S167). Audit UX/UI 360 LIVRÉ (S160). V2 mobile terrain CLOS (S127α+S129β+S130γ). Formation IA = sous-projet autonome dans `Formation/`, `cc` option 5.
-**Derniere mise a jour :** 2026-05-06 (S172 xhigh : Golden v9 layered DS - 5 fichiers split tokens + primitives + 2 archetypes-*.json + mapping.md + visualizer.html, périmètre source strict /prospection + /veille uniquement, /dashboard et autres pages = consommatrices identité propre figée post-refonte ; mockup `/dashboard` HTML autoportant validé Pascal pattern Bento asymétrique « inbox du matin du fondateur » ; spec implémentation 28 critères acceptation figés AVANT impl Svelte session suivante). Aucun commit push (artifacts design system local), session prép pure.
+**Statut :** Phase C, MIGRATION RESTRUCTURE VOIE A LIVRÉE (S173 2026-05-06) - container CLAUDE.md splittée, sous-projets isolés. GOLDEN STANDARD v9 LAYERED DS LIVRÉ (S172). Mockup `/dashboard` validé, spec implémentation figée 28 AC. search.ch 2e source découverte LIVRÉ (S171). Pipeline veille ANTI-HALLUCINATION V2 LIVRÉ (S168). /prospection FIGÉE PAGE MODÈLE GOLDEN V9 (S165). Cron veille externalisée GHA (S167). Audit UX/UI 360 LIVRÉ (S160). V2 mobile terrain CLOS (S127α+S129β+S130γ). Formation IA = sous-projet autonome dans `Formation/`, `cc` option 5.
+**Derniere mise a jour :** 2026-05-06 (S173 xhigh : Migration AppFactory restructure Voie A. Tag `pre-restructure-2026-05-06` (b238bf2). 2 commits push origin/main : `4c47523` Phase 1 wizard→Wizard 16 files renamed + 5 refs runtime ; `23b404c` Phase 3 split CRM → template/CLAUDE.md (272L) + stub AppFactory/CLAUDE.md container (113L) + cockpit slugs/scan_paths/veille_runner/_projects paths Formation + tests cockpit ajustés + start.sh ligne 60+62 + 114 mémoires CRM copiées vers *-AppFactory-template/memory/. Tests cockpit 579/579 verts. Builds CRM template/ + Formation/ verts. Vercel CRM preview 46s + prod 41s Ready. Onboarding-ia non touché.)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session courante :** Session 172 (CRM, 2026-05-06, `/effort xhigh`, Golden v9 layered DS + mockup /dashboard validé + spec implémentation 28 AC figée).
-**Sessions précédentes (condensé)** - détail S165-S172 : `archive/2026-05-06-sessions.md`. Détail S122-S125 : `archive/2026-04-28-sessions.md`. Détail S78-S79 : `archive/decisions-sessions-78-79.md`. Détail S70-S77 : `archive/decisions-sessions-70-77.md`. Détail S80-S107 : `Formation/CLAUDE.md` (sous-projet autonome).
+**Session courante :** Session 173 (CRM, 2026-05-06, `/effort xhigh`, Migration AppFactory restructure Voie A).
+**Sessions précédentes (condensé)** - détail S165-S173 : `archive/2026-05-06-sessions.md`. Détail S122-S125 : `archive/2026-04-28-sessions.md`. Détail S78-S79 : `archive/decisions-sessions-78-79.md`. Détail S70-S77 : `archive/decisions-sessions-70-77.md`. Détail S80-S107 : `Formation/CLAUDE.md` (sous-projet autonome).
 
 
 ---
@@ -33,22 +33,16 @@ Pour travailler sur un sous-projet : taper `cc` au terminal et choisir `5. Forma
 ## QUICK START
 
 ```bash
-# Ce repo contient le workflow CLI premium AppFactory v2
-# Stack : SvelteKit + Supabase + Vercel + Claude Code skills
-
-# Structure
-# skills/ : Skills Claude Code (cadrage, generate, deploy)
-# template/ : Template SvelteKit reutilisable (scaffold pour chaque app)
-# previews/ : Templates HTML Tailwind pour previsualisation client
-# scripts/ : Scripts utilitaires (yaml-to-config, etc.)
+# Ce repo contient le code de l'app CRM FilmPro
+# Stack : SvelteKit + Supabase + Vercel
+# CLAUDE.md vit dans template/ ; le path Vercel rootDirectory est template/
 ```
 
 ---
 
 ## ROLE
 
-Product Engineer. Workflow CLI premium pour generer des apps metier de qualite production.
-Pilotage depuis le terminal via Claude Code skills.
+Product Engineer sur l'app CRM FilmPro (production, client interne FilmPro). Travail au CLI Claude Code, code-first.
 
 ---
 
@@ -56,24 +50,11 @@ Pilotage depuis le terminal via Claude Code skills.
 
 | Couche | Outil | Role |
 |--------|-------|------|
-| Design | Screenshots + kits Figma Community (inspiration) | References visuelles, pas de pipeline Figma |
-| Pilotage | Claude Code + 3 skills | Cadrage, generation, deploiement |
-| Frontend | SvelteKit + Tailwind | Apps web performantes, composants testables |
+| Frontend | SvelteKit + Tailwind | App web, composants testables |
 | Backend | Supabase (PostgreSQL) | BDD, auth, API, stockage |
-| Hebergement | Vercel | Deploy auto, previews, domaines custom, CDN |
+| Hebergement | Vercel | Deploy auto, previews, domaines, CDN |
 | Tests | Vitest + Playwright | Tests unitaires + navigation complete |
-| Cadrage visuel | Templates HTML Tailwind | Pages de presentation pour validation client |
-| Code | GitHub | 1 repo par app, versionne |
-
----
-
-## WORKFLOW 6 ETAPES
-
-1. **Cadrage** : Dialogue naturel terminal, pages HTML de validation client
-2. **Generation** : Scaffold SvelteKit complet depuis specs (project.yaml) + design system code-first
-3. **Preview et tests** : URL Vercel preview, tests automatises, client teste et donne feedback
-4. **Iteration** : Feedback client → modifications code → redeploy (minutes)
-5. **Mise en production** : Domaine personnalise, base propre, acces client
+| Code | GitHub | Versionne |
 
 ---
 
@@ -124,32 +105,6 @@ Pilotage depuis le terminal via Claude Code skills.
 
 → Détail intégral (env vars, BDD exhaustive, liste tests, liste crons, headers sécurité, pagination serveur) : `archive/infra-crm-detail.md`
 
-## WORKFLOW APPFACTORY
-
-```
-/start (terminal) : menu standard + options projet
-  ├─ [3] Modifier app existante → travail direct dans le code
-  ├─ [4] Nouvelle app (entreprise existante) → /cadrage wizard HTML
-  └─ [5] Nouvelle entreprise → wizard entreprise (navigateur) → /cadrage wizard HTML
-
-/cadrage (wizard HTML navigateur, port 3334)
-  Pitch → Entites → Pages → Regles → Recap → Valider
-  → project.yaml genere + previews dans _previews/cadrage/
-
-/generate → scaffold SvelteKit depuis project.yaml
-/deploy preview → URL Vercel preview
-/deploy prod → production + suppression _previews/
-```
-
-Fichiers cles :
-- `registry.yaml` : registre entreprises/apps (source de verite)
-- `branding/_catalogue.yaml` : 5 themes avec tokens complets
-- `branding/_default.yaml` : theme par defaut (standard)
-- `branding/[slug].yaml` : branding par entreprise
-- `Wizard/cadrage/` : 5 pages HTML + server.py + shared.css/js + logo
-- `Wizard/entreprise/` : wizard pre-cadrage entreprise (option 3), symlinks vers cadrage/shared.*
-- `scripts/generate-branding-preview.ts` : genere previews/branding.html
-
 ## DOCUMENTATION
 
 - `docs/SPECS_PROSPECTION.md` : Specs completes module prospection (sources, modele, scoring, UI, dedup)
@@ -169,19 +124,14 @@ Fichiers cles :
 
 ## NE PAS FAIRE
 
-- Generer du code sans specs validees (project.yaml)
-- Construire de l'outillage sans projet reel pour le valider
-- Utiliser l'ancien workflow AppFactory v1 pour generer du code
 - Deployer sans tests (Vitest + Playwright minimum)
-- Hardcoder des valeurs specifiques client dans le template
+- Toucher des composants partages CRM sans audit cross-app
 
 ## TOUJOURS FAIRE
 
 - Chaque etape produit un livrable concret et mesurable
 - Review humaine visible dans le terminal avant tout deploy
 - Tests automatises avant mise en preview
-- project.yaml comme source de verite des specs
-- Extraire le generique (template) du specifique (app client) en continu
 
 ## REGLES TECHNIQUES PROJET
 
@@ -222,13 +172,6 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 
 <!-- END CONSOLIDATION -->
 
-### 0. Migration AppFactory restructure (CRM descend dans CRM/, Formation IA → Formation/, Wizard → Wizard/) [HIGH • xhigh • 1 session dédiée • 2-4h]
-
-**Pourquoi** : isoler les sous-projets pour éliminer le chargement parent CLAUDE.md cross-projet. Aujourd'hui Consulting (créé S171 dans `AppFactory/Consulting/`) hérite du contenu CRM via Claude Code memory hierarchy. Migration coupe l'héritage parasite et fait d'AppFactory un container minimal (stub `CLAUDE.md`).
-**Prérequis** : fenêtre 2-4h calme (hors heures prod CRM) + build CRM vert + build Formation IA vert + WIP fermé + git status clean.
-
-- [ ] **[EXÉCUTABLE]** Migration AppFactory restructure → voir `~/.claude/projects/-Users-pascal-Claude-Projets-AppFactory/memory/project_appfactory_restructure.md` (9 étapes ordonnées : tag git pré-migration → wizard → formation-ia → CRM → stub `AppFactory/CLAUDE.md` → menu cc → mémoires Claude → tests build → push). Tag git pré-migration impératif (rollback en 1 commande si Vercel cassé). Ne pas démarrer sans validation explicite Pascal.
-
 ### 1. Cascade gabarit /prospection sur 6 pages CRM [MIXTE • xhigh • cascade 3-4 sessions]
 
 **Pourquoi** : /prospection figée page modèle S164+S165. Cascade ordonnée des patterns golden v9 (ARIA tabs distinctifs underline, dense table avec sticky 2 cols + alignement td +4px, ScorePill, ConfirmModal, focus-visible globaux, empty states contextuels, aria-label tr, ImportModal contextuel premium 3 parcours, header condensé avec actions descendues dans tabs-bar, type Column.srLabel pour headers vides) sur les 6 autres pages CRM. Évite la dérive de design system.
@@ -262,6 +205,8 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 ### Livré cette session (5 derniers)
 
 → Sessions antérieures : archive/2026-05-04-sessions.md
+
+- [x] ~~S173 - Migration AppFactory restructure (Voie A : split container CLAUDE.md + rename Wizard/Formation)~~ - Fait 2026-05-06 (xhigh, ~3h cumulé). 2 commits push origin/main : `4c47523` Phase 1 (`git mv wizard Wizard` 16 files renamed + 5 refs runtime fixes `.claude/commands/cadrage.md`/`.claude/start-menu.md`/CLAUDE.md L147-148 ; astuce macOS HFS+ case-insensitive : `git mv wizard Wizard_tmp && git mv Wizard_tmp Wizard`) ; `23b404c` Phase 3 (split CRM → `template/CLAUDE.md` 272L conserve 100% contenu CRM avec note migration en tête + stub `AppFactory/CLAUDE.md` 113L container minimal nouveau pattern monorepo : table 4 sous-projets + ROLE workflow CLI + STACK + WORKFLOW APPFACTORY + COUTS + NE PAS FAIRE/TOUJOURS FAIRE + DOCUMENTATION + pointeurs ; cockpit méta 5 fichiers : `~/.claude/cockpit/lib/slugs.py` 3 lignes paths formation-ia → Formation, `~/.claude/cockpit/lib/scan_paths.py` CLAUDE_MDS Formation + commentaire, `~/.claude/cockpit/lib/veille_runner.py` detect Formation/ + legacy formation-ia, `~/.claude/scripts/optimize/_projects.py` ACTIVE_PROJECTS path Formation + SUBPROJECT_DIRS_TO_EXCLUDE Formation, `~/.claude/cockpit/tests/test_slugs.py` + `test_hygiene_360.py` 8 assertions ajustées ; slug cockpit historique `appfactory-formation-ia` conservé pour stabilité storage entries.jsonl. start.sh `~/Claude/Projets/start.sh` ligne 60 cc 3 cd `AppFactory/template` + ligne 62 cc 5 cd `AppFactory/Formation`. 114 mémoires CRM copiées (pas mv, sources backup intactes) `~/.claude/projects/-Users-pascal-Claude-Projets-AppFactory/memory/` → `*-AppFactory-template/memory/`). **Voie A vs Voie B** : refusé Voie B `template/` → `CRM/` rename car nécessite Personal Access Token Vercel (CLI vca_* token = OAuth read-only sur API REST projects PATCH `rootDirectory`) ; Pascal pourra reprendre Voie B en session future avec PAT généré. **Garanties** : tag rollback `pre-restructure-2026-05-06` (b238bf2) en 1 commande `git reset --hard` ; tests cockpit 579/579 verts post-migration ; builds CRM `template/` 9.85s + `Formation/` 1.76s verts ; Vercel CRM preview branch `migration-restructure` Ready 46s puis prod Ready 41s zéro régression visuelle Pascal-validée ; onboarding-ia (Formation IA prod) intact (sous-repo Git séparé). **Modifs hors repo non poussées (par design)** : `~/Claude/Projets/start.sh` (hors repo, persistant local) + `Formation/CLAUDE.md` ligne 8 path mention (sous-repo onboarding-ia, dirty restant pour commit prochaine session Formation). **Clôture cleanup** : stash Phase 0 (60+ artifacts S172 untracked, .lock deleted) restauré via `git stash pop` (stash conservé en stash@{0} pour sécurité), branche temporaire `migration-restructure` supprimée côté origin (`git push origin :migration-restructure`). **Anomalie cosmétique reflog** : commit Phase 2 (`7aeaff7` annoncé localement) absorbé dans commit Phase 3 sans laisser trace dans `git log`, code final 100% correct (.gitignore + Formation/ paths bien dans HEAD). Probable cause : hook post-commit. Effet zéro fonctionnel. **Effet immédiat** : Consulting/Wizard n'héritent plus du contenu CRM dense via la hiérarchie Claude Code CLAUDE.md (problème S171 résolu) ; `cc 3` charge désormais `template/CLAUDE.md` (272L CRM contexte) en plus du stub container racine 113L ; `cc 5` cd `Formation/` + mémoire Claude renommée. **Mémoire** : `project_appfactory_restructure.md` à marquer LIVRÉ en /fin-session (était EXÉCUTABLE depuis S171). **Watchlist** : (a) si fenêtre future PAT Vercel → reprise Voie B = `git mv template CRM` + PATCH Vercel rootDirectory ~5 min ; (b) le slug cockpit `appfactory-formation-ia` reste un nom historique non aligné sur le path filesystem `Formation/` (pattern industrie : slug = identité abstraite stable, path = localisation mutable, conscient choix).
 
 - [x] ~~S172 - Golden Standard v9 layered DS (2 archétypes sources stricts /prospection + /veille) + mockup /dashboard validé + spec implémentation 28 AC figée~~ - Fait 2026-05-06 (xhigh, ~2h30 cumulé). Aucun commit (artifacts design system + spec, pure session prép). **Golden v9 livré** : 5 fichiers split dans `.claude/goldens/v9-2026-05-06/` (tokens.json palette/typo/spacing/radius/shadow/a11y, primitives.json Button/Modal/ScorePill/ActionButton/DataTable/Tabs/SlideOut/ConfirmModal/ImportModal, archetype-workspace.json source /prospection figée S164+S165, archetype-editorial.json source /veille S132/S168, mapping.md table page→rôle/archétype + cascade order, visualizer.html 74 KB autoportant 9 sections naviguables avec checklist localStorage) + bundle agrégé `.claude/goldens/audit-uiux-golden-v9-2026-05-06.json` pour compat skill audit-uiux + symlink `.claude/audit-uiux-golden-current.json` retag v5→v9. **Modèle layered DS** (pattern Linear/Stripe/Atlassian) : tokens + primitives universels héritages, 2 archétypes sources STRICTS basés sur les 2 pages CRM figées. **Périmètre source strict** corrigé en cours (initialement archetype-dashboard inclus, retiré sur arbitrage Pascal « le golden doit avoir comme base UNIQUEMENT prospection + veille ») : /dashboard et toutes les autres pages = consommatrices, identité propre figée à leur refonte. **Mockup /dashboard refonte v9** : `template/notes/refonte-dashboard-2026-05-06/mockup.html` (47 KB autoportant DM Sans + Lucide SVG inline). 6 sections Bento asymétrique avec identité éditoriale propre « inbox du matin du fondateur » : (1) hero greeting kicker pulsing + h1 « Bonjour Pascal. » + summary 1-ligne contextuelle « 3 leads, 8 marchés, 2 relances. Le reste peut attendre. », (2) KPIs Bento 12-cols 6+3+3 jamais 4-equal-cards (vedette primary-dark ornements + count 76px tabular-nums + CTA, splits trends success/warn), (3) TriageQueue raffinée vedette section-head + radius-3xl + grid 96px col fix alignement Y noms + footer dégradé, (4) duo 60/40 timeline activité + relances cards stack, (5) alertes strip 50/50 border-left coloré + icon tint, (6) quick actions 4 cards primary→white hover. **Premium signals** : spring physics cubic-bezier(0.16,1,0.3,1) partout, stagger 60ms entry, diffusion shadow `0 8px 24px -12px rgba(17,24,39,0.10)`, eyebrow tags pulsing 2.4s, gradient text uniquement sur prénom (subtil), zéro purple/lila/neon, données réelles FilmPro (Glas-Pro-Tect, Vitrerie Lausanne, Marché Champel SIMAP, Helvetia Energy), prefers-reduced-motion respecté. **Spec implémentation figée** TDD agent-driven : `template/notes/refonte-dashboard-2026-05-06/spec-implementation.md` 28 critères acceptation binaires (AC-1 à AC-28) + 6 phases impl (~3h estimé xhigh) + hors-scope explicite + Done explicite + 5 risques anticipés. **3 skills design activés** session : taste-skill (high-agency frontend, anti-slop), soft-skill (high-end agency $150K feel), redesign-skill (refonte respectant stack). Restent symlinkés `~/.claude/skills/` pour session suivante. **Conflits stack notés** (skills présupposent React/Phosphor/Geist, on reste SvelteKit/Lucide/DM Sans) : concepts transférables (Bento 2.0, Double-Bezel, spring physics, diffusion shadows, eyebrow tags), Framer Motion → svelte/transition + svelte/motion. **Watchlist** : (a) symlink `redesign-skill` était déjà actif S163 (taste-skill placé en biblio), (b) la spec implémentation reste à exécuter session suivante 3h xhigh, AC-28 audit security-auditor obligatoire fin de cascade.
 

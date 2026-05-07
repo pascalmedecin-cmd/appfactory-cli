@@ -1,6 +1,6 @@
 # AppFactory : container méta
 
-**Statut :** Container monorepo qui héberge 4 sous-projets autonomes. Le contenu CRM FilmPro (statut, infra, tâches, watch list, livré) a été déplacé dans `template/CLAUDE.md` lors de la migration restructure du 2026-05-06 (Voie A). Ce fichier est désormais un stub minimal.
+**Statut :** Container monorepo qui héberge 3 sous-projets autonomes (CRM FilmPro, Consulting, Formation IA). Chaque sous-projet a son propre `CLAUDE.md` et sa propre stack. Ce fichier est un stub minimal qui pointe vers les sous-projets.
 
 **Repo Git :** `pascalmedecin-cmd/appfactory-cli` (=racine actuelle).
 
@@ -13,17 +13,10 @@
 | `template/` | CRM FilmPro (app principale) | `pascalmedecin-cmd/appfactory-cli` (ce repo) | <https://filmpro-crm.vercel.app> | `template/CLAUDE.md` |
 | `Consulting/` | Outil structuration opérationnelle PME (Phase 1 cadrage) | (interne ce repo) | (pas encore) | `Consulting/CLAUDE.md` |
 | `Formation/` | Onboarding IA marketing (12 modules prod) | `pascalmedecin-cmd/onboarding-ia` (séparé, ignoré dans `.gitignore`) | <https://onboarding-ia.vercel.app> | `Formation/CLAUDE.md` |
-| `Wizard/` | Workflow CLI cadrage/generate/deploy (méta AppFactory) | (interne ce repo) | (n/a, CLI local) | (interne, voir commandes) |
 
 **Pour travailler sur un sous-projet** : taper `cc` au terminal et choisir l'option correspondante (3=CRM FilmPro → `template/`, 4=Consulting, 5=Formation IA). Claude Code atterrit directement dans le sous-dossier, charge le `CLAUDE.md` propre du sous-projet (et ce stub AppFactory en parent).
 
-**Rappel scope cockpit** : slug `appfactory`, subprojects `crm` / `consulting` / `formation` / `appwizard`. Slug historique cockpit `appfactory-formation-ia` conservé pour stabilité storage (pointe vers `Formation/` côté filesystem).
-
----
-
-## ROLE workflow CLI
-
-Workflow CLI premium AppFactory v2 pour générer des apps métier de qualité production. Pilotage via Claude Code skills depuis le terminal.
+**Rappel scope cockpit** : slug `appfactory`, subprojects `crm` / `consulting` / `formation`. Slug historique cockpit `appfactory-formation-ia` conservé pour stabilité storage (pointe vers `Formation/` côté filesystem). Le subproject `appwizard` reste référencé pour les entries cockpit historiques (workflow méta retiré du repo 2026-05-07, voir mémoire `project_appfactory_restructure.md`).
 
 ---
 
@@ -35,36 +28,7 @@ Workflow CLI premium AppFactory v2 pour générer des apps métier de qualité p
 | Backend | Supabase (PostgreSQL) | BDD, auth, API, stockage |
 | Hébergement | Vercel | Deploy auto, previews, domaines, CDN |
 | Tests | Vitest + Playwright | Unit + e2e |
-| Pilotage | Claude Code + skills `cadrage` / `generate` / `deploy` | Cycle complet CLI |
 | Code | GitHub | 1 repo par app, versionné |
-
----
-
-## WORKFLOW APPFACTORY CLI
-
-```
-/start (terminal) : menu standard + options projet
-  ├─ [3] Modifier app existante → travail direct dans le code
-  ├─ [4] Nouvelle app (entreprise existante) → /cadrage wizard HTML
-  └─ [5] Nouvelle entreprise → wizard entreprise (navigateur) → /cadrage wizard HTML
-
-/cadrage (wizard HTML navigateur, port 3334)
-  Pitch → Entites → Pages → Regles → Recap → Valider
-  → project.yaml généré + previews dans _previews/cadrage/
-
-/generate → scaffold SvelteKit depuis project.yaml
-/deploy preview → URL Vercel preview
-/deploy prod → production + suppression _previews/
-```
-
-Fichiers clés (workflow méta) :
-- `registry.yaml` : registre entreprises/apps (source de vérité)
-- `branding/_catalogue.yaml` : 5 thèmes avec tokens complets
-- `branding/_default.yaml` : thème par défaut
-- `branding/[slug].yaml` : branding par entreprise
-- `Wizard/cadrage/` : 5 pages HTML + server.py + shared.css/js + logo
-- `Wizard/entreprise/` : wizard pré-cadrage entreprise (option 3), symlinks vers cadrage/shared.*
-- `scripts/generate-branding-preview.ts` : génère previews/branding.html
 
 ---
 
@@ -79,21 +43,16 @@ Fichiers clés (workflow méta) :
 
 ---
 
-## NE PAS FAIRE (workflow méta)
+## NE PAS FAIRE
 
-- Générer du code sans specs validées (`project.yaml`)
-- Construire de l'outillage sans projet réel pour le valider
-- Utiliser l'ancien workflow AppFactory v1 (Apps Script, archivé)
 - Déployer sans tests (Vitest + Playwright minimum)
-- Hardcoder des valeurs spécifiques client dans le template
+- Hardcoder des valeurs cross-sous-projets dans un sous-projet (chaque sous-projet doit rester autonome)
 
-## TOUJOURS FAIRE (workflow méta)
+## TOUJOURS FAIRE
 
 - Chaque étape produit un livrable concret et mesurable
 - Review humaine visible dans le terminal avant tout deploy
 - Tests automatisés avant mise en preview
-- `project.yaml` comme source de vérité des specs
-- Extraire le générique (template) du spécifique (app client) en continu
 
 ---
 

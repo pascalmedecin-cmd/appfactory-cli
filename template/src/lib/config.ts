@@ -1,7 +1,5 @@
 /**
- * Configuration specifique client : FICHIER GENERE AUTOMATIQUEMENT.
- * Ne pas modifier a la main. Editer project.yaml puis lancer :
- *   npx tsx scripts/yaml-to-config.ts
+ * Configuration specifique CRM FilmPro. Fichier statique, edite directement.
  */
 
 export const config = {

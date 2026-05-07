@@ -1,20 +1,20 @@
 # Menu : AppFactory (dispatcher racine)
 
-AppFactory héberge plusieurs sous-projets autonomes. `/start` ici est un **dispatcher à 2 branches** qui demande d'abord quel sous-projet, puis bascule vers son `/start` complet (tâches, idées, options projet, nouveau).
+AppFactory héberge 3 sous-projets autonomes. `/start` ici est un **dispatcher** qui demande d'abord quel sous-projet, puis bascule vers son `/start` complet (tâches, idées, options projet, nouveau).
 
-Chaque sous-projet a son propre `CLAUDE.md` et son propre `.claude/start-menu.md` : source de vérité pour ses tâches et options.
+Chaque sous-projet a son propre `CLAUDE.md` et (s'il l'a) son propre `.claude/start-menu.md` : source de vérité pour ses tâches et options.
 
 ## Sous-projets
 
 | Branche | Dossier | CLAUDE.md | Menu complet |
 |---|---|---|---|
-| CRM FilmPro | `template/` (et racine actuelle pour les tâches tracées) | `/Users/pascal/Claude/Projets/AppFactory/CLAUDE.md` | (ci-dessous) |
-| Formation IA | `formation-ia/` | `/Users/pascal/Claude/Projets/AppFactory/formation-ia/CLAUDE.md` | `formation-ia/.claude/start-menu.md` |
+| CRM FilmPro | `template/` (CLAUDE.md vit dans `template/`) | `/Users/pascal/Claude/Projets/AppFactory/template/CLAUDE.md` | (template/.claude/start-menu.md si existe, sinon ci-dessous) |
+| Consulting | `Consulting/` | `/Users/pascal/Claude/Projets/AppFactory/Consulting/CLAUDE.md` | `Consulting/.claude/start-menu.md` (si existe) |
+| Formation IA | `Formation/` | `/Users/pascal/Claude/Projets/AppFactory/Formation/CLAUDE.md` | `Formation/.claude/start-menu.md` |
 
 ## Actions pré-menu
 
-1. Lire `registry.yaml` à la racine (source de vérité des entreprises et apps FilmPro).
-2. Scanner les `CLAUDE.md` des deux sous-projets pour compter leurs tâches `## Prochaine session` respectives.
+1. Scanner les `CLAUDE.md` des sous-projets pour compter leurs tâches `## Prochaine session` respectives.
 
 ## Menu racine (affichage)
 
@@ -24,14 +24,16 @@ Format exact :
 APPFACTORY
 
   [1] CRM FilmPro        {N1} tâches ({M1} bloquées)
-  [2] Formation IA       {N2} tâches ({M2} bloquées)
+  [2] Consulting         {N2} tâches ({M2} bloquées)
+  [3] Formation IA       {N3} tâches ({M3} bloquées)
 
 Ton choix ?
 ```
 
 Règles :
-- `N1` = nombre de `- [ ]` dans la section `## Prochaine session` de `/Users/pascal/Claude/Projets/AppFactory/CLAUDE.md` (CRM FilmPro).
-- `N2` = nombre de `- [ ]` dans la section `## Prochaine session` de `/Users/pascal/Claude/Projets/AppFactory/formation-ia/CLAUDE.md`.
+- `N1` = nombre de `- [ ]` dans la section `## Prochaine session` de `template/CLAUDE.md`.
+- `N2` = nombre de `- [ ]` dans la section `## Prochaine session` de `Consulting/CLAUDE.md`.
+- `N3` = nombre de `- [ ]` dans la section `## Prochaine session` de `Formation/CLAUDE.md`.
 - `M` = sous-ensemble avec tag `[BLOQUÉ]` ou `[BLOQUANT]`.
 - Pas de séparateur `───` au niveau racine.
 - `[+] Nouveau : objectif libre` **n'apparaît PAS au niveau racine** : l'utilisateur doit d'abord choisir un sous-projet pour un objectif libre scopé.
@@ -41,30 +43,32 @@ Règles :
 ### [1] CRM FilmPro
 
 Basculer vers le `/start` standard scopé au CRM FilmPro :
-- Source tâches : `/Users/pascal/Claude/Projets/AppFactory/CLAUDE.md` section `## Prochaine session`
-- Source idées : `/Users/pascal/Claude/Projets/AppFactory/.claude/parked.md`
-- Options projet :
-  - `[3] Modifier une app` : lister entreprises + apps depuis `registry.yaml`, demander laquelle modifier
-  - `[4] Créer une app` : lister entreprises, lancer `python3 Wizard/cadrage/server.py --enterprise '...'`, puis `/cadrage`
-  - `[5] Nouveau projet entreprise` : lancer `python3 Wizard/cadrage/server.py --mode entreprise` (flow infos → synthèse → branding → cadrage première app)
+- Source tâches : `template/CLAUDE.md` section `## Prochaine session`
+- Source idées : `template/.claude/parked.md` (si existe, sinon `.claude/parked.md` racine en fallback)
 - `[+] Nouveau` : objectif libre scopé CRM FilmPro
 
 Affichage des tâches (`[1] Reprendre`) : **linéaire** (plus de groupement, puisque scopé à un seul sous-projet). Chaque tâche conserve ses tags et son pointeur vers la spec.
 
-### [2] Formation IA
+### [2] Consulting
 
-Basculer vers le `/start` standard scopé à Formation IA : routage défini dans `formation-ia/.claude/start-menu.md`.
+Basculer vers le `/start` standard scopé à Consulting :
+- Source tâches : `Consulting/CLAUDE.md` section `## Prochaine session`
+- Source idées : `Consulting/.claude/parked.md` (si existe)
 
-Source tâches : `/Users/pascal/Claude/Projets/AppFactory/formation-ia/CLAUDE.md` section `## Prochaine session`.
-Source idées : `/Users/pascal/Claude/Projets/AppFactory/formation-ia/.claude/parked.md`.
+### [3] Formation IA
+
+Basculer vers le `/start` standard scopé à Formation IA : routage défini dans `Formation/.claude/start-menu.md`.
+
+Source tâches : `Formation/CLAUDE.md` section `## Prochaine session`.
+Source idées : `Formation/.claude/parked.md`.
 
 Options projet Formation IA :
-- `[3] Intégrer un parcours` : workflow conversationnel Claude Code CLI (Opus 4.6) détaillé dans `formation-ia/docs/INGESTION.md`
+- `[3] Intégrer un parcours` : workflow conversationnel Claude Code CLI (Opus 4.6) détaillé dans `Formation/docs/INGESTION.md`
 - `[4] Éditer un parcours existant` : re-ingestion ciblée
 
-Règles pédagogiques contraignantes : `formation-ia/docs/PEDAGOGIE.md` (injecté comme system prompt Opus à chaque ingestion).
+Règles pédagogiques contraignantes : `Formation/docs/PEDAGOGIE.md` (injecté comme system prompt Opus à chaque ingestion).
 
 ## Raccourcis
 
-- Pour entrer directement dans un sous-projet sans passer par le dispatcher : `cd formation-ia/ && /start` (ou rester à la racine AppFactory pour le dispatcher complet).
+- Pour entrer directement dans un sous-projet sans passer par le dispatcher : `cd template/ && /start` (CRM), `cd Consulting/ && /start`, `cd Formation/ && /start`.
 - Si un sous-projet a 0 tâche et 0 idée → l'afficher quand même dans le dispatcher (ne pas masquer), indiquer `–` en compteur.
