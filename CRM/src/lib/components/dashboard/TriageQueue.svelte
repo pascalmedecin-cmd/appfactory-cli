@@ -403,25 +403,44 @@
 		to { opacity: 1; transform: translateY(0); }
 	}
 
-	/* Mobile : 4 boutons en grid 2x2 avec label visible (mode lecture).
-	   Sous 768px, le grid 96|1fr|auto|auto se replie en 2 lignes. */
+	/* Mobile : tags ligne 1 (badge gauche, score droite),
+	   nom + contexte ligne 2 sans troncature pleine largeur,
+	   actions ligne 3 en grid 2x2 avec labels. */
 	@media (max-width: 768px) {
 		.tq-item {
-			grid-template-columns: auto 1fr auto;
+			grid-template-columns: 1fr auto;
 			grid-template-areas:
-				"badge name score"
-				"actions actions actions";
-			row-gap: 12px;
+				"badge   score"
+				"name    name"
+				"actions actions";
+			row-gap: 8px;
+			column-gap: 12px;
+			padding: 16px;
 		}
-		.tq-source-badge { grid-area: badge; }
-		.tq-name-block { grid-area: name; }
-		.tq-score-wrap { grid-area: score; }
+		.tq-source-badge { grid-area: badge; justify-self: start; }
+		.tq-name-block { grid-area: name; min-width: 0; }
+		.tq-score-wrap { grid-area: score; justify-self: end; }
+		.tq-name {
+			white-space: normal;
+			overflow: visible;
+			text-overflow: clip;
+			max-width: none;
+			line-height: 1.3;
+		}
+		.tq-context {
+			white-space: normal;
+			overflow: visible;
+			text-overflow: clip;
+			line-height: 1.4;
+			margin-top: 4px;
+		}
 		.tq-actions {
 			grid-area: actions;
 			display: grid;
 			grid-template-columns: 1fr 1fr;
 			gap: 8px;
 			width: 100%;
+			margin-top: 4px;
 		}
 		.ab {
 			width: 100%;
