@@ -48,6 +48,9 @@
 	let archiving = $state(false);
 	let confirmArchiveOpen = $state(false);
 	let archiveFormEl: HTMLFormElement | null = $state(null);
+	let moveFormEl: HTMLFormElement | null = $state(null);
+	let moveFormId = $state('');
+	let moveFormEtape = $state('');
 	let draggedId = $state<string | null>(null);
 	let dragOverEtape = $state<string | null>(null);
 
@@ -190,17 +193,13 @@
 		e.preventDefault();
 		dragOverEtape = null;
 		const id = e.dataTransfer?.getData('text/plain');
-		if (!id) return;
 		draggedId = null;
-
-		const form = document.getElementById('move-form') as HTMLFormElement | null;
-		if (!form) return;
-		const idInput = form.querySelector('[name="id"]') as HTMLInputElement | null;
-		const etapeInput = form.querySelector('[name="etape_pipeline"]') as HTMLInputElement | null;
-		if (!idInput || !etapeInput) return;
-		idInput.value = id;
-		etapeInput.value = etape;
-		form.requestSubmit();
+		if (!id) return;
+		// Defense in depth : drop externe ou id altéré → ignore silencieusement
+		if (!data.opportunites.some((o) => o.id === id)) return;
+		moveFormId = id;
+		moveFormEtape = etape;
+		moveFormEl?.requestSubmit();
 	}
 
 	function onCardDragEnd() {
@@ -209,9 +208,9 @@
 	}
 </script>
 
-<!-- Hidden form for drag & drop moves -->
+<!-- Hidden form for drag & drop moves (bind:this, no DOM lookup) -->
 <form
-	id="move-form"
+	bind:this={moveFormEl}
 	method="POST"
 	action="?/move"
 	use:enhance={() => {
@@ -223,8 +222,8 @@
 	}}
 	class="hidden"
 >
-	<input type="hidden" name="id" value="" />
-	<input type="hidden" name="etape_pipeline" value="" />
+	<input type="hidden" name="id" value={moveFormId} />
+	<input type="hidden" name="etape_pipeline" value={moveFormEtape} />
 </form>
 
 <div class="page">
