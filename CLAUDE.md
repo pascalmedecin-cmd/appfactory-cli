@@ -1,6 +1,6 @@
 # AppFactory : container méta
 
-**Statut :** Container monorepo qui héberge 3 sous-projets autonomes (CRM FilmPro, Consulting, Formation IA). Chaque sous-projet a son propre `CLAUDE.md` et sa propre stack. Ce fichier est un stub minimal qui pointe vers les sous-projets.
+**Statut :** Container monorepo qui héberge 2 sous-projets autonomes (CRM FilmPro, Formation IA). Chaque sous-projet a son propre `CLAUDE.md` et sa propre stack. Ce fichier est un stub minimal qui pointe vers les sous-projets. Consulting est sibling autonome (`~/Claude/Projets/Consulting/`, repo Git séparé) depuis 2026-05-07 (S175 Bloc 0 PLAN_ATTAQUE).
 
 **Repo Git :** `pascalmedecin-cmd/appfactory-cli` (=racine actuelle).
 
@@ -11,12 +11,11 @@
 | Dossier | Rôle | Repo Git | URL prod | CLAUDE.md propre |
 |---------|------|----------|----------|------------------|
 | `CRM/` | CRM FilmPro (app principale) | `pascalmedecin-cmd/appfactory-cli` (ce repo) | <https://filmpro-crm.vercel.app> | `CRM/CLAUDE.md` |
-| `Consulting/` | Outil structuration opérationnelle PME (Phase 1 cadrage) | (interne ce repo) | (pas encore) | `Consulting/CLAUDE.md` |
 | `Formation/` | Onboarding IA marketing (12 modules prod) | `pascalmedecin-cmd/onboarding-ia` (séparé, ignoré dans `.gitignore`) | <https://onboarding-ia.vercel.app> | `Formation/CLAUDE.md` |
 
-**Pour travailler sur un sous-projet** : taper `cc` au terminal et choisir l'option correspondante (3=CRM FilmPro → `CRM/`, 4=Consulting, 5=Formation IA). Claude Code atterrit directement dans le sous-dossier, charge le `CLAUDE.md` propre du sous-projet (et ce stub AppFactory en parent).
+**Pour travailler sur un sous-projet** : taper `cc` au terminal et choisir l'option correspondante (3=CRM FilmPro → `CRM/`, 5=Formation IA). Claude Code atterrit directement dans le sous-dossier, charge le `CLAUDE.md` propre du sous-projet (et ce stub AppFactory en parent). Pour Consulting (`cc 4`), Claude Code atterrit dans `~/Claude/Projets/Consulting/` (sibling autonome, repo Git propre).
 
-**Rappel scope cockpit** : slug `appfactory`, subprojects `crm` / `consulting` / `formation`. Slug historique cockpit `appfactory-formation-ia` conservé pour stabilité storage (pointe vers `Formation/` côté filesystem). Le subproject `appwizard` reste référencé pour les entries cockpit historiques (workflow méta retiré du repo 2026-05-07, voir mémoire `project_appfactory_restructure.md`).
+**Rappel scope cockpit** : slug `appfactory`, subprojects `crm` / `consulting` / `formation`. Le subproject `consulting` reste rattaché au slug `appfactory` côté cockpit (entries historiques, slug stable) malgré l'extraction filesystem. Slug historique cockpit `appfactory-formation-ia` conservé pour stabilité storage (pointe vers `Formation/` côté filesystem). Le subproject `appwizard` reste référencé pour les entries cockpit historiques (workflow méta retiré du repo 2026-05-07, voir mémoire `project_appfactory_restructure.md`).
 
 ---
 
@@ -67,6 +66,6 @@
 
 **Pour le contexte CRM FilmPro complet** (statut sessions, infra, tâches actives, watch list, livré) : voir `CRM/CLAUDE.md`.
 
-**Pour les autres sous-projets** : voir leur CLAUDE.md propre (Consulting/, Formation/).
+**Pour les autres sous-projets** : voir leur CLAUDE.md propre (`Formation/`, ou `~/Claude/Projets/Consulting/` sibling autonome).
 
 **Pour la méthodo globale Pascal et les règles cross-projets** : voir `~/.claude/CLAUDE.md` (rules/ + commands/).
