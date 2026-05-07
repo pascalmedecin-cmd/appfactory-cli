@@ -5,20 +5,30 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
-	import { pageSubtitle } from '$lib/stores/pageSubtitle';
-
-	$effect(() => { $pageSubtitle = `${data.contacts.length} contact${data.contacts.length > 1 ? 's' : ''}`; });
 	import FormField from '$lib/components/FormField.svelte';
 	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { toasts } from '$lib/stores/toast';
+	import {
+		contactsIndicators,
+		contactsCountsByTab,
+		filterContactsByTab,
+		normalizeCompanyName,
+		type ContactsTab,
+	} from '$lib/utils/contactsFormat';
+	import ContactsIndicators from '$lib/components/contacts/ContactsIndicators.svelte';
+	import ContactsTabs from '$lib/components/contacts/ContactsTabs.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	type Contact = (typeof data.contacts)[number];
+	type Entreprise = { id: string; raison_sociale: string; site_web: string | null };
 
+	// UI state
+	let activeTab: ContactsTab = $state('tous');
 	let slideOutOpen = $state(false);
 	let selectedContact = $state<Contact | null>(null);
 	let modalOpen = $state(false);
@@ -27,8 +37,6 @@
 	let archiving = $state(false);
 	let confirmArchiveOpen = $state(false);
 	let archiveFormEl: HTMLFormElement | null = $state(null);
-
-	type Entreprise = { id: string; raison_sociale: string; site_web: string | null };
 
 	// Form fields
 	let nom = $state('');
@@ -45,24 +53,34 @@
 	let adresse = $state('');
 	let tags = $state('');
 
-	let entrepriseSuggestions = $state<Entreprise[]>([]);
 	let showSuggestions = $state(false);
 
 	const entreprises = $derived((data as any).entreprises as Entreprise[] ?? []);
+	const indicators = $derived(contactsIndicators(data.contacts));
+	const counts = $derived(contactsCountsByTab(data.contacts));
+	const filteredContacts = $derived(filterContactsByTab(data.contacts, activeTab));
 
-	function normalizeName(name: string): string {
-		return name.toLowerCase().trim()
-			.replace(/\s+(sa|sàrl|sarl|gmbh|ag|s\.a\.|s\.à\.r\.l\.)$/i, '')
-			.replace(/[^a-zà-ü0-9]/g, '');
-	}
+	const tabsSpec = $derived([
+		{ key: 'tous' as ContactsTab, label: 'Tous', count: counts.tous },
+		{ key: 'prescripteurs' as ContactsTab, label: 'Prescripteurs', count: counts.prescripteurs },
+		{ key: 'a-qualifier' as ContactsTab, label: 'À qualifier', count: counts['a-qualifier'] },
+		{ key: 'sans-entreprise' as ContactsTab, label: 'Sans entreprise', count: counts['sans-entreprise'] },
+	]);
 
 	const filteredSuggestions = $derived.by(() => {
 		if (!entreprise_nom || entreprise_nom.length < 2) return [];
-		const qNorm = normalizeName(entreprise_nom);
-		return entreprises.filter(e => {
-			const nameNorm = normalizeName(e.raison_sociale);
-			return nameNorm.includes(qNorm) || qNorm.includes(nameNorm);
-		}).slice(0, 8);
+		const qNorm = normalizeCompanyName(entreprise_nom);
+		return entreprises
+			.filter((e) => {
+				const nameNorm = normalizeCompanyName(e.raison_sociale);
+				return nameNorm.includes(qNorm) || qNorm.includes(nameNorm);
+			})
+			.slice(0, 8);
+	});
+
+	$effect(() => {
+		const total = data.contacts.length;
+		$pageSubtitle = total === 0 ? 'Aucun contact' : `${total} contact${total > 1 ? 's' : ''}`;
 	});
 
 	function selectEntreprise(e: Entreprise) {
@@ -81,24 +99,54 @@
 		try {
 			const domain = new URL(siteWeb).hostname;
 			return `https://logo.clearbit.com/${domain}`;
-		} catch { return null; }
+		} catch {
+			return null;
+		}
 	}
 
 	function entrepriseForContact(contact: Contact): Entreprise | null {
 		if (!contact.entreprise_id) return null;
-		return entreprises.find(e => e.id === contact.entreprise_id) ?? null;
+		return entreprises.find((e) => e.id === contact.entreprise_id) ?? null;
 	}
 
 	const columns = [
 		{ key: 'nom', label: 'Nom', sortable: true, class: 'w-[12%]' },
 		{ key: 'prenom', label: 'Prénom', sortable: true, class: 'w-[10%] hidden md:table-cell' },
-		{ key: 'entreprise', label: 'Entreprise', sortable: true, class: 'w-[15%]', render: (r: Contact) => r.entreprises?.raison_sociale ?? '–' },
+		{
+			key: 'entreprise',
+			label: 'Entreprise',
+			sortable: true,
+			class: 'w-[15%]',
+			render: (r: Contact) => r.entreprises?.raison_sociale ?? '–',
+		},
 		{ key: 'role_fonction', label: 'Fonction', sortable: true, class: 'w-[12%] hidden lg:table-cell' },
 		{ key: 'email_professionnel', label: 'Email', class: 'w-[20%] hidden lg:table-cell' },
 		{ key: 'telephone', label: 'Téléphone', class: 'w-[15%] whitespace-nowrap hidden lg:table-cell' },
 		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[6%] hidden md:table-cell' },
 		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-[10%]' },
 	];
+
+	function rowAriaLabelFor(c: Contact): string {
+		const fullname = `${c.prenom ?? ''} ${c.nom ?? ''}`.trim() || 'Contact sans nom';
+		const company = c.entreprises?.raison_sociale ?? 'sans entreprise';
+		const statut = c.statut_qualification ?? 'inconnu';
+		const presc = c.est_prescripteur ? ', prescripteur' : '';
+		return `${fullname}, ${company}, statut ${statut}${presc}`;
+	}
+
+	function emptyMessageFor(tab: ContactsTab): string {
+		switch (tab) {
+			case 'prescripteurs':
+				return 'Aucun prescripteur identifié pour le moment.';
+			case 'a-qualifier':
+				return 'Aucun contact à qualifier — tout est traité.';
+			case 'sans-entreprise':
+				return 'Tous les contacts sont rattachés à une entreprise.';
+			case 'tous':
+			default:
+				return 'Aucun contact dans ce filtre.';
+		}
+	}
 
 	function openDetail(contact: Contact) {
 		selectedContact = contact;
@@ -132,64 +180,99 @@
 	}
 
 	function resetForm() {
-		nom = ''; prenom = ''; email_professionnel = ''; telephone = '';
-		role_fonction = ''; entreprise_id = ''; entreprise_nom = ''; canton = ''; segment = '';
-		source = ''; notes_libres = ''; adresse = ''; tags = '';
+		nom = '';
+		prenom = '';
+		email_professionnel = '';
+		telephone = '';
+		role_fonction = '';
+		entreprise_id = '';
+		entreprise_nom = '';
+		canton = '';
+		segment = '';
+		source = '';
+		notes_libres = '';
+		adresse = '';
+		tags = '';
 		showSuggestions = false;
 	}
 
 	function statutBadgeVariant(statut: string | null): 'default' | 'info' | 'success' | 'warning' | 'danger' | 'muted' {
 		switch (statut) {
-			case 'qualifie': return 'success';
-			case 'en_cours': return 'info';
-			case 'nouveau': return 'warning';
-			case 'archive': return 'muted';
-			default: return 'default';
+			case 'qualifie':
+				return 'success';
+			case 'en_cours':
+				return 'info';
+			case 'nouveau':
+				return 'warning';
+			case 'archive':
+				return 'muted';
+			default:
+				return 'default';
 		}
 	}
 </script>
 
-<div class="space-y-4">
-	<div class="flex items-center justify-end">
-		<button
-			onclick={openCreate}
-			class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
-		>
+<div class="page">
+	<div class="page-actions">
+		<button type="button" class="btn btn-primary" onclick={openCreate}>
 			<Icon name="add" size={18} />
 			Ajouter
 		</button>
 	</div>
 
-	{#if data.contacts.length === 0}
-		<EmptyState
-			icon="contacts"
-			title="Aucun contact"
-			description="Ajoutez votre premier contact pour commencer à construire votre réseau."
-			actionLabel="Ajouter un contact"
-			onAction={openCreate}
-		/>
-	{:else}
-	<DataTable
-		data={data.contacts}
-		{columns}
-		onRowClick={openDetail}
-		searchPlaceholder="Rechercher un contact…"
+	<ContactsIndicators values={indicators} />
+
+	<ContactsTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)} />
+
+	<div
+		class="table-wrap"
+		role="tabpanel"
+		id={`panel-${activeTab}`}
+		aria-labelledby={`tab-${activeTab}`}
 	>
-		{#snippet row(contact, _i)}
-			<td class="px-4 py-3 font-medium text-text">{contact.nom ?? '–'}</td>
-			<td class="px-4 py-3 text-text hidden md:table-cell">{contact.prenom ?? '–'}</td>
-			<td class="px-4 py-3 text-text">{contact.entreprises?.raison_sociale ?? '–'}</td>
-			<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.role_fonction ?? '–'}</td>
-			<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.email_professionnel ?? '–'}</td>
-			<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.telephone ?? '–'}</td>
-			<td class="px-4 py-3 text-text w-20 hidden md:table-cell">{contact.canton ?? '–'}</td>
-			<td class="px-4 py-3 w-24">
-				<Badge label={contact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(contact.statut_qualification)} />
-			</td>
-		{/snippet}
-	</DataTable>
-	{/if}
+		{#if data.contacts.length === 0}
+			<EmptyState
+				icon="contacts"
+				title="Aucun contact"
+				description="Ajoutez votre premier contact pour commencer à construire votre réseau."
+				actionLabel="Ajouter un contact"
+				onAction={openCreate}
+			/>
+		{:else}
+			<DataTable
+				data={filteredContacts}
+				{columns}
+				onRowClick={openDetail}
+				searchPlaceholder="Rechercher un contact…"
+				stickyLeftCols={2}
+				rowAriaLabel={rowAriaLabelFor}
+				emptyMessage={emptyMessageFor(activeTab)}
+			>
+				{#snippet row(contact, _i)}
+					<td class="px-4 py-3 font-medium text-text">{contact.nom ?? '–'}</td>
+					<td class="px-4 py-3 text-text hidden md:table-cell">{contact.prenom ?? '–'}</td>
+					<td class="px-4 py-3 text-text">{contact.entreprises?.raison_sociale ?? '–'}</td>
+					<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.role_fonction ?? '–'}</td>
+					<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.email_professionnel ?? '–'}</td>
+					<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.telephone ?? '–'}</td>
+					<td class="px-4 py-3 text-text w-20 hidden md:table-cell">{contact.canton ?? '–'}</td>
+					<td class="px-4 py-3 w-24">
+						<Badge label={contact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(contact.statut_qualification)} />
+					</td>
+				{/snippet}
+			</DataTable>
+		{/if}
+	</div>
 </div>
+
+<button
+	type="button"
+	class="fab"
+	aria-label="Ajouter un contact"
+	onclick={openCreate}
+>
+	<Icon name="add" size={20} />
+</button>
 
 <!-- SlideOut détail contact -->
 <SlideOut bind:open={slideOutOpen} title="{selectedContact?.prenom ?? ''} {selectedContact?.nom ?? ''}">
@@ -202,12 +285,18 @@
 				{/if}
 			</div>
 
-			<!-- Entreprise avec logo -->
 			{#if entrepriseForContact(selectedContact) || selectedContact.entreprises?.raison_sociale}
 				{@const ent = entrepriseForContact(selectedContact)}
 				<div class="flex items-center gap-3 p-3 bg-surface rounded-lg">
 					{#if logoUrl(ent?.site_web ?? null)}
-						<img src={logoUrl(ent?.site_web ?? null)} alt="" class="w-10 h-10 rounded-md object-contain bg-white border border-border" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
+						<img
+							src={logoUrl(ent?.site_web ?? null)}
+							alt=""
+							class="w-10 h-10 rounded-md object-contain bg-white border border-border"
+							onerror={(e) => {
+								(e.currentTarget as HTMLElement).style.display = 'none';
+							}}
+						/>
 					{:else}
 						<span class="flex items-center justify-center w-10 h-10 rounded-md bg-primary-light text-primary font-bold text-sm">
 							{(selectedContact.entreprises?.raison_sociale ?? '?')[0].toUpperCase()}
@@ -286,21 +375,26 @@
 					<Icon name="edit" size={16} />
 					Modifier
 				</button>
-				<form bind:this={archiveFormEl} method="POST" action="?/delete" use:enhance={() => {
-					archiving = true;
-					return async ({ result, update }) => {
-						archiving = false;
-						slideOutOpen = false;
-						selectedContact = null;
-						if (result.type === 'success') toasts.success('Contact archivé');
-						else toasts.error('Erreur lors de l\'archivage');
-						await update();
-					};
-				}}>
+				<form
+					bind:this={archiveFormEl}
+					method="POST"
+					action="?/delete"
+					use:enhance={() => {
+						archiving = true;
+						return async ({ result, update }) => {
+							archiving = false;
+							slideOutOpen = false;
+							selectedContact = null;
+							if (result.type === 'success') toasts.success('Contact archivé');
+							else toasts.error("Erreur lors de l'archivage");
+							await update();
+						};
+					}}
+				>
 					<input type="hidden" name="id" value={selectedContact.id} />
 					<button
 						type="button"
-						onclick={() => confirmArchiveOpen = true}
+						onclick={() => (confirmArchiveOpen = true)}
 						disabled={archiving}
 						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-danger rounded-lg hover:bg-danger/5 cursor-pointer disabled:opacity-50 transition-colors"
 					>
@@ -320,7 +414,10 @@
 	confirmLabel="Archiver"
 	variant="danger"
 	loading={archiving}
-	onConfirm={() => { confirmArchiveOpen = false; archiveFormEl?.requestSubmit(); }}
+	onConfirm={() => {
+		confirmArchiveOpen = false;
+		archiveFormEl?.requestSubmit();
+	}}
 />
 
 <!-- Modal création/édition -->
@@ -339,7 +436,7 @@
 				modalOpen = false;
 				resetForm();
 				if (result.type === 'success') toasts.success(editMode ? 'Contact modifié' : 'Contact créé');
-				else toasts.error('Erreur lors de l\'enregistrement');
+				else toasts.error("Erreur lors de l'enregistrement");
 				await update();
 			};
 		}}
@@ -358,7 +455,6 @@
 				<FormField label="Téléphone" type="tel" bind:value={telephone} />
 			</div>
 
-			<!-- Autocomplete entreprise -->
 			<div class="space-y-1 relative">
 				<label for="entreprise_nom" class="block text-sm font-medium text-text">Entreprise</label>
 				<div class="flex gap-2">
@@ -366,8 +462,11 @@
 						id="entreprise_nom"
 						type="text"
 						bind:value={entreprise_nom}
-						onfocus={() => showSuggestions = true}
-						oninput={() => { entreprise_id = ''; showSuggestions = true; }}
+						onfocus={() => (showSuggestions = true)}
+						oninput={() => {
+							entreprise_id = '';
+							showSuggestions = true;
+						}}
 						placeholder="Tapez pour chercher ou créer…"
 						autocomplete="off"
 						class="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
@@ -387,9 +486,18 @@
 								class="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-surface cursor-pointer {entreprise_id === sug.id ? 'bg-primary-light font-medium' : ''}"
 							>
 								{#if logoUrl(sug.site_web)}
-									<img src={logoUrl(sug.site_web)} alt="" class="w-5 h-5 rounded object-contain" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
+									<img
+										src={logoUrl(sug.site_web)}
+										alt=""
+										class="w-5 h-5 rounded object-contain"
+										onerror={(e) => {
+											(e.currentTarget as HTMLElement).style.display = 'none';
+										}}
+									/>
 								{:else}
-									<span class="flex items-center justify-center w-5 h-5 rounded bg-primary-light text-primary text-[10px] font-bold">{sug.raison_sociale[0]}</span>
+									<span class="flex items-center justify-center w-5 h-5 rounded bg-primary-light text-primary text-[10px] font-bold">
+										{sug.raison_sociale[0]}
+									</span>
 								{/if}
 								{sug.raison_sociale}
 							</button>
@@ -415,7 +523,6 @@
 			<CantonSelect bind:value={canton} />
 		</div>
 
-		<!-- Champs cachés pour form submission -->
 		<input type="hidden" name="nom" value={nom} />
 		<input type="hidden" name="prenom" value={prenom} />
 		<input type="hidden" name="email_professionnel" value={email_professionnel} />
@@ -433,7 +540,7 @@
 		<div class="flex justify-end gap-3 pt-4">
 			<button
 				type="button"
-				onclick={() => modalOpen = false}
+				onclick={() => (modalOpen = false)}
 				class="h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
 			>
 				Annuler
@@ -448,3 +555,96 @@
 		</div>
 	</form>
 </ModalForm>
+
+<style>
+	.page {
+		display: flex;
+		flex-direction: column;
+		min-height: calc(100vh - var(--header-height, 56px));
+	}
+	.page-actions {
+		display: flex;
+		justify-content: flex-end;
+		padding: 12px 32px;
+	}
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		height: 40px;
+		padding: 8px 16px;
+		border-radius: 10px;
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 600;
+		cursor: pointer;
+		border: none;
+		box-sizing: border-box;
+		transition: background 220ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	.btn-primary {
+		background: var(--color-primary);
+		color: white;
+	}
+	.btn-primary:hover {
+		background: var(--color-primary-hover);
+	}
+	.btn-primary:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
+	.table-wrap {
+		flex: 1;
+		padding: 20px 32px 40px;
+	}
+
+	@media (max-width: 1024px) {
+		.page-actions {
+			padding: 12px 24px;
+		}
+		.table-wrap {
+			padding: 16px 24px 32px;
+		}
+	}
+	@media (max-width: 768px) {
+		.page-actions {
+			display: none;
+		}
+		.table-wrap {
+			padding: 12px 16px 96px;
+		}
+	}
+
+	.fab {
+		display: none;
+	}
+
+	@media (max-width: 768px) {
+		.fab {
+			display: grid;
+			place-items: center;
+			position: fixed;
+			right: 20px;
+			bottom: 20px;
+			width: 56px;
+			height: 56px;
+			border-radius: 9999px;
+			background: var(--color-primary);
+			color: white;
+			border: none;
+			cursor: pointer;
+			box-shadow: 0 8px 24px -6px rgba(47, 90, 158, 0.45);
+			transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), background 220ms cubic-bezier(0.16, 1, 0.3, 1);
+			z-index: 20;
+		}
+		.fab:hover {
+			transform: translateY(-2px);
+			background: var(--color-primary-hover);
+		}
+		.fab:focus-visible {
+			outline: 2px solid var(--color-primary);
+			outline-offset: 2px;
+		}
+	}
+</style>
