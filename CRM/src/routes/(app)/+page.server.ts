@@ -1,9 +1,13 @@
 import type { PageServerLoad } from './$types';
 import { config } from '$lib/config';
+import { firstNameFromEmail } from '$lib/utils/dateFormat';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const today = new Date().toISOString().split('T')[0];
 	const nowIso = new Date().toISOString();
+
+	const { user } = await locals.safeGetSession();
+	const firstName = firstNameFromEmail(user?.email ?? null);
 
 	// Phase 1 widget triage matin : queue de leads à fort potentiel non touchés.
 	// Critères : statut=nouveau ET score>=config.scoring.triage.scoreMin (5)
@@ -53,6 +57,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const triageTotal = triageRes.error ? 0 : (triageRes.count ?? triageLeads.length);
 
 	return {
+		firstName,
 		stats: {
 			contacts: contactsRes.count ?? 0,
 			entreprises: entreprisesRes.count ?? 0,

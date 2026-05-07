@@ -1,255 +1,193 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
-	import Badge from '$lib/components/Badge.svelte';
+	/**
+	 * Dashboard CRM /  refonte v9 (S175 Bloc #1).
+	 * 6 sections Bento asymétrique : greeting hero, KPIs Bento, TriageQueue vedette,
+	 * duo activité+relances 60/40, alertes strip, quick actions footer.
+	 *
+	 * Identité éditoriale propre : « inbox du matin du fondateur ».
+	 * Spec figée : notes/refonte-dashboard-2026-05-06/spec-implementation.md
+	 */
 	import LeadExpress from '$lib/components/prospection/LeadExpress.svelte';
 	import TriageQueue from '$lib/components/dashboard/TriageQueue.svelte';
+	import SectionGreeting from '$lib/components/dashboard/SectionGreeting.svelte';
+	import KpisBento from '$lib/components/dashboard/KpisBento.svelte';
+	import ActiviteTimeline from '$lib/components/dashboard/ActiviteTimeline.svelte';
+	import RelancesList from '$lib/components/dashboard/RelancesList.svelte';
+	import AlertesStrip from '$lib/components/dashboard/AlertesStrip.svelte';
+	import QuickActionsFooter from '$lib/components/dashboard/QuickActionsFooter.svelte';
+	import Icon from '$lib/components/Icon.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import type { PageData } from './$types';
 
-	$pageSubtitle = 'Vue d\'ensemble';
+	$pageSubtitle = "Vue d'ensemble";
 
 	let { data }: { data: PageData } = $props();
 	let leadExpressOpen = $state(false);
 
-	const isEmpty = $derived(
-		data.stats.contacts === 0 && data.stats.entreprises === 0 && data.stats.opportunites === 0
+	const todayIso = $derived(new Date().toISOString().split('T')[0]);
+
+	const relancesRetard = $derived(
+		data.relances.filter((r) => {
+			if (!r.date_relance_prevue) return false;
+			return r.date_relance_prevue < todayIso;
+		}).length
 	);
 
-	const statCards = $derived([
-		{ label: 'Contacts', value: data.stats.contacts, icon: 'contacts', href: '/contacts', iconColor: 'text-primary', iconBg: 'bg-primary-light' },
-		{ label: 'Entreprises', value: data.stats.entreprises, icon: 'business', href: '/entreprises', iconColor: 'text-primary', iconBg: 'bg-primary-light' },
-		{ label: 'Opportunités', value: data.stats.opportunites, icon: 'conversion_path', href: '/pipeline', iconColor: 'text-success', iconBg: 'bg-success-light' },
-		{ label: 'Signaux neufs', value: data.stats.signaux, icon: 'notifications', href: '/signaux', iconColor: 'text-warning', iconBg: 'bg-warning-light' },
-	]);
-
-	function formatDate(dateStr: string | null): string {
-		if (!dateStr) return '–';
-		return new Date(dateStr).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit' });
-	}
-
-	function formatDateTime(dateStr: string | null): string {
-		if (!dateStr) return '–';
-		return new Date(dateStr).toLocaleDateString('fr-CH', {
-			day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
-		});
-	}
+	const relancesData = $derived({
+		total: data.relances.length,
+		retard: relancesRetard,
+	});
 </script>
 
-<div class="space-y-8">
-	<!-- Phase 1 widget triage matin : leads chauds non touchés.
-	     Position prioritaire : tout en haut, avant les alertes. C'est l'inbox du matin. -->
-	<TriageQueue leads={data.triage.leads} total={data.triage.total} />
+<div class="dash">
 
-	<!-- Alertes signaux neufs -->
-	{#if data.stats.signaux > 0}
-		<a
-			href="/signaux"
-			class="flex items-center gap-3 p-4 bg-info-light border border-info/30 rounded-lg hover:bg-info-light/80 transition-colors"
-		>
-			<Icon name="radar" size={24} class="text-info" />
-			<div class="flex-1">
-				<p class="text-sm font-semibold text-text">
-					{data.stats.signaux} {data.stats.signaux > 1 ? 'signaux' : 'signal'} d'affaires à traiter
-				</p>
-				<p class="text-xs text-text-muted mt-1">
-					Appels d'offres, permis, créations d'entreprises : à analyser ou convertir en opportunité
-				</p>
-			</div>
-			<Icon name="arrow_forward" size={18} class="text-info" />
-		</a>
-	{/if}
+	<!-- Section 1 : greeting hero -->
+	<div class="stagger" style="--i: 0;">
+		<SectionGreeting
+			firstName={data.firstName}
+			triageTotal={data.triage.total}
+			signauxCount={data.stats.signaux}
+			relancesCount={data.relances.length}
+		/>
+	</div>
 
-	<!-- Alertes prospection -->
-	{#if data.alertes.length > 0}
-		<a
-			href="/prospection"
-			class="flex items-center gap-3 p-4 bg-warning-light border border-warning/30 rounded-lg hover:bg-warning-light/80 transition-colors"
-		>
-			<Icon name="notifications_active" size={24} class="text-warning" />
-			<div class="flex-1">
-				<p class="text-sm font-semibold text-text">
-					Nouveaux leads détectés
-				</p>
-				<p class="text-xs text-text-muted">
-					{#each data.alertes as alerte, i}
-						{alerte.nom}: {alerte.nb_nouveaux} nouveau{(alerte.nb_nouveaux ?? 0) > 1 ? 'x' : ''}{i < data.alertes.length - 1 ? ' · ' : ''}
-					{/each}
-				</p>
-			</div>
-			<Icon name="arrow_forward" size={18} class="text-warning" />
-		</a>
-	{/if}
+	<!-- Section 2 : KPIs Bento asymétrique 12 cols -->
+	<div class="stagger" style="--i: 1;">
+		<KpisBento
+			triageTotal={data.triage.total}
+			triageVisible={data.triage.leads.length}
+			signauxCount={data.stats.signaux}
+			relances={relancesData}
+		/>
+	</div>
 
-	<!-- Lead express (F3 V2 mobile terrain) : carte primary visible mobile + tablette,
-	     masquée desktop (≥ lg) où la prospection est accessible directement. -->
+	<!-- Lead express (mobile + tablette uniquement) -->
 	<button
 		type="button"
-		onclick={() => leadExpressOpen = true}
-		class="lg:hidden w-full flex items-center gap-3 p-4 rounded-lg bg-primary text-white hover:bg-primary-hover shadow-md transition-colors cursor-pointer"
+		onclick={() => (leadExpressOpen = true)}
+		class="lead-express-mobile lg:hidden"
+		aria-label="Saisir un nouveau lead express depuis le terrain"
 	>
-		<Icon name="bolt" size={24} class="text-white" />
-		<div class="flex-1 text-left">
-			<p class="text-sm font-semibold">Nouveau lead express</p>
-			<p class="text-xs text-white/80 mt-0.5">Saisie rapide post-RDV : entreprise + contact + tél + note</p>
-		</div>
-		<Icon name="arrow_forward" size={18} class="text-white/80" />
+		<span class="lead-express-icon">
+			<Icon name="bolt" size={20} strokeWidth={1.75} />
+		</span>
+		<span class="lead-express-body">
+			<span class="lead-express-title">Nouveau lead express</span>
+			<span class="lead-express-sub">Saisie rapide post-RDV : entreprise + contact + tél + note</span>
+		</span>
+		<Icon name="arrow_forward" size={16} strokeWidth={2.5} />
 	</button>
 
-	<!-- Stats cards -->
-	<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-		{#each statCards as card}
-			<a
-				href={card.href}
-				class="bg-white rounded-lg border border-border p-4 hover:shadow-md hover:border-border-strong transition-all duration-200 group"
-			>
-				<div class="flex items-center justify-between mb-3">
-					<span class="flex items-center justify-center w-10 h-10 rounded-lg {card.iconBg}">
-						<Icon name={card.icon} size={22} class="{card.iconColor}" />
-					</span>
-					<Icon name="arrow_forward" size={16} class="text-text-muted opacity-0 group-hover:opacity-100 transition-opacity" />
-				</div>
-				<p class="text-2xl font-semibold text-text tracking-tight">{card.value}</p>
-				<p class="text-sm text-text-muted mt-1">{card.label}</p>
-			</a>
-		{/each}
+	<!-- Section 3 : TriageQueue vedette -->
+	<div class="stagger" style="--i: 2;">
+		<TriageQueue leads={data.triage.leads} total={data.triage.total} />
 	</div>
 
-	<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-		<!-- Relances du jour -->
-		<div class="bg-white rounded-lg border border-border">
-			<div class="px-4 py-4 border-b border-border flex items-center justify-between">
-				<h2 class="text-lg font-semibold text-text">Relances du jour</h2>
-				{#if data.relances.length > 0}
-					<Badge label={String(data.relances.length)} variant="warning" />
-				{/if}
-			</div>
-			<div class="p-4">
-				{#if data.relances.length === 0}
-					<p class="text-sm text-text-muted text-center py-4">Aucune relance prévue.</p>
-				{:else}
-					<div class="space-y-3">
-						{#each data.relances as relance}
-							<div class="flex items-center justify-between p-3 rounded-lg bg-surface">
-								<div>
-									<p class="text-sm font-medium text-text">{relance.titre}</p>
-									<p class="text-xs text-text-muted">
-										{relance.etape_pipeline ?? '–'}
-									</p>
-								</div>
-								<span class="text-xs text-text-muted">{formatDate(relance.date_relance_prevue)}</span>
-							</div>
-						{/each}
-					</div>
-				{/if}
-			</div>
-		</div>
-
-		<!-- Dernière activité -->
-		<div class="bg-white rounded-lg border border-border">
-			<div class="px-4 py-4 border-b border-border">
-				<h2 class="text-lg font-semibold text-text">Dernière activité</h2>
-			</div>
-			<div class="p-4">
-				{#if data.activitesRecentes.length === 0}
-					<div class="space-y-3">
-						<p class="text-sm text-text-muted">Rien pour le moment. Quelques idées pour démarrer :</p>
-						<a href="/prospection" class="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface-alt transition-colors group">
-							<Icon name="cloud_download" size={18} class="text-primary" />
-							<div>
-								<p class="text-sm font-medium text-text group-hover:text-primary">Importer des leads depuis Zefix ou SIMAP</p>
-								<p class="text-xs text-text-muted">Trouvez des prospects dans le registre du commerce ou les marchés publics</p>
-							</div>
-						</a>
-						<a href="/signaux" class="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface-alt transition-colors group">
-							<Icon name="notifications_active" size={18} class="text-warning" />
-							<div>
-								<p class="text-sm font-medium text-text group-hover:text-primary">Surveiller les signaux d'affaires</p>
-								<p class="text-xs text-text-muted">Appels d'offres, permis de construire, créations d'entreprises</p>
-							</div>
-						</a>
-						<a href="/prospection" class="flex items-center gap-3 p-3 rounded-lg bg-surface hover:bg-surface-alt transition-colors group">
-							<Icon name="bookmark_add" size={18} class="text-success" />
-							<div>
-								<p class="text-sm font-medium text-text group-hover:text-primary">Configurer une alerte automatique</p>
-								<p class="text-xs text-text-muted">Soyez notifié quand de nouveaux leads correspondent à vos critères</p>
-							</div>
-						</a>
-					</div>
-				{:else}
-					<div class="space-y-3">
-						{#each data.activitesRecentes as activite}
-							<div class="flex items-start gap-3 p-3 rounded-lg bg-surface">
-								<Icon name={activite.type_activite === 'appel' ? 'call' :
-									 activite.type_activite === 'email' ? 'mail' :
-									 activite.type_activite === 'reunion' ? 'groups' : 'note'} size={18} class="text-text-muted mt-0.5" />
-								<div class="flex-1 min-w-0">
-									<p class="text-sm font-medium text-text truncate">
-										{activite.type_activite}
-									</p>
-									<p class="text-xs text-text-muted truncate">{activite.resume_contenu ?? activite.type_activite}</p>
-								</div>
-								<span class="text-xs text-text-muted shrink-0">{formatDateTime(activite.date_heure)}</span>
-							</div>
-						{/each}
-					</div>
-				{/if}
-			</div>
-		</div>
+	<!-- Section 4 : duo activité + relances 60/40 -->
+	<div class="duo stagger" style="--i: 3;">
+		<ActiviteTimeline activites={data.activitesRecentes} />
+		<RelancesList relances={data.relances} />
 	</div>
 
-	<!-- Onboarding ou raccourcis -->
-	{#if isEmpty}
-		<div class="bg-white rounded-lg border border-border p-6">
-			<h2 class="text-lg font-semibold text-text mb-4">Pour démarrer</h2>
-			<div class="space-y-3">
-				<a href="/entreprises" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-alt transition-colors group">
-					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary-light text-primary text-sm font-bold">1</span>
-					<div class="flex-1">
-						<p class="text-sm font-medium text-text group-hover:text-primary">Ajouter une entreprise</p>
-						<p class="text-xs text-text-muted">Créez la fiche de votre premier client ou prospect</p>
-					</div>
-					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-primary" />
-				</a>
-				<a href="/contacts" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-alt transition-colors group">
-					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary-light text-primary text-sm font-bold">2</span>
-					<div class="flex-1">
-						<p class="text-sm font-medium text-text group-hover:text-primary">Ajouter un contact</p>
-						<p class="text-xs text-text-muted">Rattachez vos interlocuteurs à leurs entreprises</p>
-					</div>
-					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-primary" />
-				</a>
-				<a href="/pipeline" class="flex items-center gap-3 p-3 rounded-lg hover:bg-surface-alt transition-colors group">
-					<span class="flex items-center justify-center w-8 h-8 rounded-full bg-primary-light text-primary text-sm font-bold">3</span>
-					<div class="flex-1">
-						<p class="text-sm font-medium text-text group-hover:text-primary">Créer une opportunité</p>
-						<p class="text-xs text-text-muted">Suivez vos affaires dans le pipeline commercial</p>
-					</div>
-					<Icon name="arrow_forward" size={18} class="text-text-muted group-hover:text-primary" />
-				</a>
-			</div>
-		</div>
-	{:else}
-		<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-			<a href="/contacts" class="flex items-center gap-2 h-11 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
-				<Icon name="person_add" size={18} class="text-primary" />
-				Nouveau contact
-			</a>
-			<a href="/entreprises" class="flex items-center gap-2 h-11 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
-				<Icon name="domain_add" size={18} class="text-primary" />
-				Nouvelle entreprise
-			</a>
-			<a href="/pipeline" class="flex items-center gap-2 h-11 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
-				<Icon name="add_circle" size={18} class="text-primary" />
-				Nouvelle opportunité
-			</a>
-			<a href="/signaux" class="flex items-center gap-2 h-11 px-4 bg-white rounded-lg border border-border text-sm text-text hover:shadow-sm hover:border-border-strong transition-all">
-				<Icon name="notifications" size={18} class="text-primary" />
-				Voir les signaux
-			</a>
+	<!-- Section 5 : alertes strip (masqué si aucun signal) -->
+	{#if data.stats.signaux > 0 || data.alertes.length > 0}
+		<div class="stagger" style="--i: 4;">
+			<AlertesStrip signauxCount={data.stats.signaux} alertes={data.alertes} />
 		</div>
 	{/if}
+
+	<!-- Section 6 : quick actions footer -->
+	<div class="stagger" style="--i: 5;">
+		<QuickActionsFooter />
+	</div>
+
 </div>
 
-<!-- Lead express modale (F3 V2 mobile terrain) - redirect vers fiche pour enrichissement Zefix -->
 <LeadExpress bind:open={leadExpressOpen} redirectAfterCreate={true} />
 
+<style>
+	.dash {
+		display: flex;
+		flex-direction: column;
+		gap: 56px;
+	}
+	.dash > :global(*) { display: block; }
+
+	@media (max-width: 768px) {
+		.dash { gap: 32px; }
+	}
+
+	.stagger {
+		opacity: 0;
+		animation: fadeUp 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+		animation-delay: calc(var(--i, 0) * 60ms);
+	}
+	@keyframes fadeUp {
+		from { opacity: 0; transform: translateY(16px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+
+	.duo {
+		display: grid;
+		grid-template-columns: 1.5fr 1fr;
+		gap: 20px;
+	}
+	@media (max-width: 1024px) {
+		.duo { grid-template-columns: 1fr; }
+	}
+
+	.lead-express-mobile {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		padding: 14px 16px;
+		border-radius: 12px;
+		background: var(--color-primary);
+		color: white;
+		border: 0;
+		cursor: pointer;
+		font-family: inherit;
+		text-align: left;
+		box-shadow: 0 4px 12px -2px rgba(47, 90, 158, 0.30);
+		transition: background 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	.lead-express-mobile:hover {
+		background: var(--color-primary-hover);
+		transform: translateY(-1px);
+	}
+	.lead-express-mobile:focus-visible {
+		outline: 2px solid var(--color-primary-light);
+		outline-offset: 2px;
+	}
+	.lead-express-icon {
+		width: 32px;
+		height: 32px;
+		border-radius: 8px;
+		background: rgba(255, 255, 255, 0.15);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+	}
+	.lead-express-body { flex: 1; min-width: 0; }
+	.lead-express-title {
+		display: block;
+		font-size: 14px;
+		font-weight: 600;
+	}
+	.lead-express-sub {
+		display: block;
+		font-size: 12px;
+		color: rgba(255, 255, 255, 0.85);
+		margin-top: 2px;
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.stagger {
+			opacity: 1;
+			animation: none;
+		}
+		.lead-express-mobile { transition: none; }
+		.lead-express-mobile:hover { transform: none; }
+	}
+</style>

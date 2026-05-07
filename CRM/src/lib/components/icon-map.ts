@@ -1,4 +1,5 @@
-import type { Component } from 'svelte';
+// Note : ICON_MAP typé avec `any` pour absorber le mismatch types
+// Lucide-Svelte (legacy Svelte 4) vs Svelte 5 Component<>.
 import {
 	Activity, Archive, ArrowDown, ArrowLeft, ArrowRight, ArrowUp,
 	BadgeCheck, Ban, BarChart3, Bell, BellDot, BellRing, BookOpen, Bookmark, BookmarkPlus, Building, Building2,
@@ -10,17 +11,19 @@ import {
 	Hand, Handshake, HardHat,
 	Image, ImagePlus, Images, Info,
 	Landmark, Languages, Layers, LayoutDashboard, Lightbulb, ListChecks, ListFilter, ListTree, Loader2, LogIn, LogOut, Lock, LockOpen,
-	Map, MapPin, Menu, Merge, Minus, MoreVertical,
-	PanelRight, Pencil, PhoneForwarded, Play, Plus,
+	Mail, Map, MapPin, Menu, Merge, Minus, MoreVertical,
+	PanelRight, Pencil, Phone, PhoneForwarded, Play, Plus,
 	Radar, Repeat, Rocket,
-	Search, SearchX, Shield, ShieldCheck, SlidersHorizontal, Smartphone, Snowflake, Sparkles, Square, SquareCheck, SquareMinus,
+	Search, SearchX, Shield, ShieldCheck, SlidersHorizontal, Smartphone, Snowflake, Sparkles, Square, SquareCheck, SquareMinus, StickyNote,
 	Tag, Table, Target, Thermometer, ThumbsUp, Timer, Trash, Trash2, TrendingUp, TriangleAlert, Trophy, Truck,
 	UserPlus, Users,
 	Wand2, Workflow,
 	X,
+	Zap,
 } from 'lucide-svelte';
 
-export const ICON_MAP: Record<string, Component> = {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const ICON_MAP: Record<string, any> = {
 	ac_unit: Snowflake,
 	account_tree: ListTree,
 	add: Plus,
@@ -36,10 +39,12 @@ export const ICON_MAP: Record<string, Component> = {
 	auto_awesome: Sparkles,
 	auto_fix_high: Wand2,
 	block: Ban,
+	bolt: Zap,
 	bookmark: Bookmark,
 	bookmark_add: BookmarkPlus,
 	bookmarks: Bookmark,
 	business: Building2,
+	call: Phone,
 	calendar_today: Calendar,
 	camera: Camera,
 	check: Check,
@@ -78,8 +83,10 @@ export const ICON_MAP: Record<string, Component> = {
 	filter_alt_off: FilterX,
 	filter_list: ListFilter,
 	gavel: Gavel,
+	groups: Users,
 	handshake: Handshake,
 	help_outline: CircleHelp,
+	mail: Mail,
 	image: Image,
 	image_plus: ImagePlus,
 	images: Images,
@@ -103,6 +110,7 @@ export const ICON_MAP: Record<string, Component> = {
 	merge: Merge,
 	monitoring: Activity,
 	more_vert: MoreVertical,
+	note: StickyNote,
 	notification_important: BellDot,
 	notifications: Bell,
 	notifications_active: BellRing,
@@ -146,4 +154,5 @@ export const ICON_MAP: Record<string, Component> = {
 	waving_hand: Hand,
 };
 
-export const FALLBACK_ICON: Component = CircleHelp;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const FALLBACK_ICON: any = CircleHelp;

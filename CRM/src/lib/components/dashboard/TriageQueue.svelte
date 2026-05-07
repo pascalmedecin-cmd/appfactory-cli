@@ -1,10 +1,14 @@
 <script lang="ts">
 	/**
-	 * Phase 1 widget triage matin sur dashboard.
+	 * Phase 1 widget triage matin sur dashboard, refonte v9 (charte golden /prospection).
 	 * Affiche jusqu'à 12 leads à fort potentiel non touchés ; queue partagée 3 fondateurs.
 	 * 4 actions inline par lead (Intéressant / Écarter / Snooze / Détails).
 	 *
-	 * Cohérent design avec /veille S132 (bandeau primary-dark + ornements cercles + tabular-nums).
+	 * Refonte v9 (S175 Bloc #1) :
+	 * - Section-head externe (kicker pulsing + h2 + sub) au-dessus de la card.
+	 * - Card radius-3xl + diffusion shadow, plus de count aside (déplacé dans KpisBento).
+	 * - Items grid 96px 1fr auto auto pour aligner les noms sur Y indépendamment du badge source.
+	 * - Footer dégradé surface→surface-alt avec CTA « Voir tous ».
 	 */
 	import Icon from '$lib/components/Icon.svelte';
 	import Badge from '$lib/components/Badge.svelte';
@@ -13,7 +17,7 @@
 	import { toasts } from '$lib/stores/toast';
 	import { sourceLabel, formatLeadContext } from '$lib/prospection-utils';
 	import { config } from '$lib/config';
-	import { TRIAGE_ACTIONS, type TriageAction } from '$lib/api/triage-actions';
+	import type { TriageAction } from '$lib/api/triage-actions';
 
 	type Lead = {
 		id: string;
@@ -40,10 +44,8 @@
 	const visible = $derived(leads.slice(0, visibleLimit));
 	const remaining = $derived(Math.max(0, total - visible.length));
 
-	// Loading state par lead pour neutraliser action concurrente (race condition)
 	let pendingIds = $state(new Set<string>());
 
-	// Helper réactif pour mutate Set (pattern Svelte 5 : réassigner pour trigger reactivity).
 	function setPending(id: string, on: boolean) {
 		if (on) pendingIds.add(id);
 		else pendingIds.delete(id);
@@ -63,7 +65,6 @@
 			const body = await res.json().catch(() => ({}));
 			if (!res.ok) {
 				toasts.error((body as { error?: string }).error ?? 'Action impossible');
-				// Si conflit (lead traité par un autre fondateur), rafraîchir la queue
 				if (res.status === 409) await invalidateAll();
 				return false;
 			}
@@ -79,7 +80,6 @@
 	async function onYes(leadId: string) {
 		const ok = await callTriage('oui', leadId);
 		if (ok) {
-			// Redirection vers la fiche pour appel immédiat
 			goto(`/prospection?slideOut=${encodeURIComponent(leadId)}`, { invalidateAll: true, keepFocus: false });
 		}
 	}
@@ -102,315 +102,344 @@
 	}
 
 	function viewQueueAll() {
-		// Cohérent avec le critère queue côté serveur (statut=nouveau, score>=triage.scoreMin).
-		// Pas de filtre temp= pour ne pas masquer les leads tièdes haut (4-6) inclus dans la queue.
 		goto('/prospection?statut=nouveau', { invalidateAll: true });
 	}
 </script>
 
-<article class="triage-card">
-	<!-- Bouton natif (vs aside role=button) : a11y native, focus + keydown + role gérés par le navigateur -->
-	<button
-		type="button"
-		class="triage-aside"
-		aria-label="Voir la file complète sur /prospection"
-		onclick={viewQueueAll}
-	>
-		<div class="triage-aside-kicker">
-			<Icon name="bolt" size={16} />
-			<span>À trier ce matin</span>
-		</div>
-		{#if total === 0}
-			<div class="triage-aside-count tabular-nums">0</div>
-			<div class="triage-aside-label">file vide</div>
-		{:else}
-			<div class="triage-aside-count tabular-nums">{visible.length}</div>
-			<div class="triage-aside-label">leads à fort potentiel non touchés</div>
-			{#if remaining > 0}
-				<span class="triage-aside-cta">
-					Voir les {remaining} autres en file
-					<Icon name="arrow_forward" size={13} />
-				</span>
-			{/if}
-		{/if}
-	</button>
-
-	<div class="triage-list">
-		{#if leads.length === 0}
-			<div class="triage-empty">
-				<div class="triage-empty-title">Rien à trier ce matin</div>
-				<p class="triage-empty-body">Votre fond de pipe travaille pour vous. Les nouveaux leads chauds atterriront ici dès le prochain import.</p>
+<section class="tq-section" aria-label="Triage des leads à fort potentiel">
+	<div class="section-head">
+		<div class="section-title-block">
+			<div class="kicker">
+				<span class="dot" aria-hidden="true"></span>
+				Inbox du matin
 			</div>
-		{:else}
-			<ul class="triage-items">
+			<h2 class="section-h2">À traiter en premier</h2>
+			<p class="section-sub">
+				{#if total === 0}
+					Votre fond de pipe travaille pour vous. Les nouveaux leads chauds atterriront ici dès le prochain import.
+				{:else}
+					Leads chauds non touchés, triés par score puis date d'import.
+				{/if}
+			</p>
+		</div>
+	</div>
+
+	<div class="tq">
+		<div class="tq-list">
+			{#if leads.length === 0}
+				<div class="tq-empty">
+					<p class="tq-empty-title">Rien à trier ce matin</p>
+					<p class="tq-empty-body">Toutes les opportunités fraîches sont déjà passées en revue.</p>
+				</div>
+			{:else}
 				{#each visible as lead, i (lead.id)}
-					<li class="triage-item" style="--i: {i}" class:is-pending={pendingIds.has(lead.id)}>
-						<div class="triage-item-content">
-							<div class="triage-item-line1">
-								<Badge label={sourceLabel(lead.source)} variant="muted" />
-								<span class="triage-item-name" title={lead.raison_sociale}>{lead.raison_sociale}</span>
-								<span class="triage-item-score-wrap">
-									<ScorePill score={lead.score_pertinence} compact />
-								</span>
-							</div>
-							<div class="triage-item-context">{formatLeadContext(lead)}</div>
+					<article class="tq-item" style="--i: {i}" class:is-pending={pendingIds.has(lead.id)}>
+						<span class="tq-source-badge">
+							<Badge label={sourceLabel(lead.source)} variant="muted" />
+						</span>
+						<div class="tq-name-block">
+							<div class="tq-name" title={lead.raison_sociale}>{lead.raison_sociale}</div>
+							<div class="tq-context">{formatLeadContext(lead)}</div>
 						</div>
-						<div class="triage-actions">
-							<button class="btn-action btn-yes" aria-label="Intéressant - marquer + ouvrir la fiche" title="Intéressant" disabled={pendingIds.has(lead.id)} onclick={() => onYes(lead.id)}>
-								<Icon name="check_circle" size={17} />
+						<span class="tq-score-wrap">
+							<ScorePill score={lead.score_pertinence} compact />
+						</span>
+						<div class="tq-actions">
+							<button type="button" class="ab ab-yes" aria-label="Intéressant — marquer + ouvrir la fiche" title="Intéressant" disabled={pendingIds.has(lead.id)} onclick={() => onYes(lead.id)}>
+								<Icon name="check_circle" size={16} strokeWidth={1.75} />
 							</button>
-							<button class="btn-action btn-no" aria-label="Écarter ce lead" title="Écarter" disabled={pendingIds.has(lead.id)} onclick={() => onNo(lead.id)}>
-								<Icon name="circle_x" size={17} />
+							<button type="button" class="ab ab-no" aria-label="Écarter ce lead" title="Écarter" disabled={pendingIds.has(lead.id)} onclick={() => onNo(lead.id)}>
+								<Icon name="circle_x" size={16} strokeWidth={1.75} />
 							</button>
-							<button class="btn-action btn-later" aria-label="Repousser à 7 jours" title="Snooze 7 j" disabled={pendingIds.has(lead.id)} onclick={() => onLater(lead.id)}>
-								<Icon name="schedule" size={17} />
+							<button type="button" class="ab ab-later" aria-label="Repousser à 7 jours" title="Snooze 7 j" disabled={pendingIds.has(lead.id)} onclick={() => onLater(lead.id)}>
+								<Icon name="schedule" size={16} strokeWidth={1.75} />
 							</button>
-							<button class="btn-action btn-view" aria-label="Voir la fiche en lecture seule" title="Détails" disabled={pendingIds.has(lead.id)} onclick={() => onView(lead.id)}>
-								<Icon name="eye" size={17} />
+							<button type="button" class="ab ab-view" aria-label="Voir la fiche en lecture seule" title="Détails" disabled={pendingIds.has(lead.id)} onclick={() => onView(lead.id)}>
+								<Icon name="eye" size={16} strokeWidth={1.75} />
 							</button>
 						</div>
-					</li>
+					</article>
 				{/each}
-			</ul>
+			{/if}
+		</div>
+
+		{#if leads.length > 0}
+			<div class="tq-footer">
+				<span>
+					Affichage des {visible.length} {visible.length === 1 ? 'premier' : 'premiers'} · {total} {total === 1 ? 'lead en file' : 'leads en file'}
+				</span>
+				<button type="button" class="tq-footer-cta" onclick={viewQueueAll}>
+					{remaining > 0 ? `Voir les ${remaining} ${remaining === 1 ? 'autre' : 'autres'}` : 'Voir tous les leads'}
+					<Icon name="arrow_forward" size={13} strokeWidth={2.5} />
+				</button>
+			</div>
 		{/if}
 	</div>
-</article>
+</section>
 
 <style>
-	.triage-card {
-		background: var(--color-surface);
-		border: 1px solid var(--color-border);
-		border-radius: 16px;
-		overflow: hidden;
-		display: grid;
-		grid-template-columns: 280px 1fr;
-		box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
-	}
-	@media (max-width: 1024px) { .triage-card { grid-template-columns: 1fr; } }
+	.tq-section { display: block; }
 
-	/* V3.3 audit S160 : section header sobre Linear/Stripe/Attio-style.
-	   Avant : bandeau primary-dark + ornements cercles ::before/::after + count 88px =
-	   pattern Mailchimp/HubSpot 2018-2020. Après : fond surface-alt neutre, count modéré,
-	   couleur text-primary sur fond clair, ornements retirés. */
-	.triage-aside {
-		background: var(--color-surface-alt, #F7F8FB);
-		color: var(--color-text);
-		padding: 28px;
-		position: relative;
+	.section-head {
+		display: flex;
+		align-items: end;
+		justify-content: space-between;
+		margin-bottom: 20px;
+		padding-bottom: 4px;
+	}
+	.section-title-block {
 		display: flex;
 		flex-direction: column;
-		justify-content: space-between;
-		min-height: 280px;
-		cursor: pointer;
-		transition: background 180ms ease;
-		text-align: left;
-		border: 0;
-		border-right: 1px solid var(--color-border);
-		font: inherit;
-		width: 100%;
-	}
-	.triage-aside:hover { background: #EEF1F5; }
-	.triage-aside:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
-	@media (max-width: 1024px) {
-		.triage-aside {
-			flex-direction: row;
-			align-items: center;
-			min-height: auto;
-			padding: 20px 24px;
-			gap: 16px;
-			flex-wrap: wrap;
-			border-right: 0;
-			border-bottom: 1px solid var(--color-border);
-		}
-	}
-
-	.triage-aside-kicker {
-		font-size: 11px;
-		letter-spacing: 0.14em;
-		text-transform: uppercase;
-		color: var(--color-text-muted);
-		font-weight: 600;
-		display: inline-flex;
-		align-items: center;
 		gap: 8px;
 	}
-	.triage-aside-count {
-		font-size: 44px;
+	.section-h2 {
+		font-size: 22px;
 		font-weight: 700;
-		line-height: 1;
+		letter-spacing: -0.02em;
+		line-height: 1.1;
 		color: var(--color-primary-dark);
-		letter-spacing: -0.025em;
-		margin: 12px 0 6px;
-		font-variant-numeric: tabular-nums;
+		margin: 0;
 	}
-	@media (max-width: 1024px) {
-		.triage-aside-count { font-size: 32px; margin: 0; }
-	}
-	.triage-aside-label {
-		font-size: 14px;
-		color: var(--color-text-body);
-		line-height: 1.4;
-	}
-	.triage-aside-cta {
+	.section-sub {
 		font-size: 13px;
-		color: var(--color-primary);
-		font-weight: 500;
+		color: var(--color-text-muted);
+		margin: 0;
+		max-width: 720px;
+	}
+
+	.kicker {
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
-		margin-top: 16px;
-		transition: color 180ms ease;
-		letter-spacing: 0.005em;
-		width: fit-content;
-		padding-bottom: 4px;
-		border-bottom: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+		font-size: 10px;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.18em;
+		color: var(--color-text-muted);
 	}
-	.triage-aside:hover .triage-aside-cta {
-		color: var(--color-primary-hover, var(--color-primary));
-		border-bottom-color: var(--color-primary);
+	.kicker .dot {
+		width: 6px;
+		height: 6px;
+		border-radius: 9999px;
+		background: var(--color-success);
+		box-shadow: 0 0 0 4px rgba(83, 139, 107, 0.15);
+		animation: pulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+	}
+	@keyframes pulse {
+		0%, 100% { transform: scale(1); opacity: 1; }
+		50% { transform: scale(1.2); opacity: 0.8; }
 	}
 
-	.triage-list { display: flex; flex-direction: column; }
-	.triage-items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+	.tq {
+		background: var(--color-surface);
+		border-radius: 24px;
+		box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02), 0 0 0 1px rgba(17, 24, 39, 0.04), 0 8px 20px -12px rgba(17, 24, 39, 0.10);
+		overflow: hidden;
+	}
+	.tq-list {
+		padding: 4px 0;
+		display: flex;
+		flex-direction: column;
+	}
 
-	.triage-empty {
+	.tq-empty {
 		padding: 48px 32px;
 		text-align: center;
-		color: var(--color-text-muted);
 	}
-	.triage-empty-title {
-		font-size: 20px;
+	.tq-empty-title {
+		font-size: 18px;
 		font-weight: 600;
 		color: var(--color-text);
-		margin-bottom: 8px;
+		margin: 0 0 6px;
 	}
-	.triage-empty-body { font-size: 14px; max-width: 420px; margin: 0 auto; line-height: 1.55; }
+	.tq-empty-body {
+		font-size: 13.5px;
+		color: var(--color-text-muted);
+		margin: 0;
+		line-height: 1.55;
+		max-width: 420px;
+		margin-left: auto;
+		margin-right: auto;
+	}
 
-	.triage-item {
-		padding: 16px 24px;
-		border-bottom: 1px solid var(--color-border);
+	.tq-item {
 		display: grid;
-		grid-template-columns: 1fr auto;
-		gap: 16px;
+		grid-template-columns: 96px 1fr auto auto;
 		align-items: center;
-		transition: background 200ms ease, opacity 200ms ease;
+		gap: 16px;
+		padding: 16px 24px;
+		transition: background 220ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms ease;
+		position: relative;
 		animation: fadeUp 280ms ease both;
 		animation-delay: calc(var(--i, 0) * 50ms);
 	}
-	.triage-item:hover { background: var(--color-surface-alt); }
-	.triage-item:last-child { border-bottom: none; }
-	.triage-item.is-pending { opacity: 0.55; pointer-events: none; }
+	.tq-item:not(:last-child)::after {
+		content: "";
+		position: absolute;
+		bottom: 0;
+		left: 24px;
+		right: 24px;
+		height: 1px;
+		background: rgba(17, 24, 39, 0.05);
+	}
+	.tq-item:hover { background: var(--color-surface-alt); }
+	.tq-item.is-pending { opacity: 0.55; pointer-events: none; }
+
+	.tq-source-badge { justify-self: start; }
+
+	.tq-name-block { min-width: 0; }
+	.tq-name {
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--color-text);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.tq-context {
+		font-size: 12.5px;
+		color: var(--color-text-muted);
+		margin-top: 2px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.tq-score-wrap {
+		display: inline-flex;
+		align-items: center;
+	}
+
+	.tq-actions {
+		display: flex;
+		gap: 4px;
+		flex-shrink: 0;
+	}
+	.ab {
+		width: 34px;
+		height: 34px;
+		padding: 0;
+		border-radius: 8px;
+		border: 1px solid transparent;
+		background: transparent;
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+					background 220ms cubic-bezier(0.16, 1, 0.3, 1),
+					color 180ms ease,
+					box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
+		font-family: inherit;
+		will-change: transform;
+	}
+	.ab:hover:not(:disabled) { transform: translateY(-1px); }
+	.ab:active:not(:disabled) { transform: scale(0.96) translateY(0); transition-duration: 80ms; }
+	.ab:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.30);
+	}
+	.ab:disabled { cursor: wait; opacity: 0.5; transform: none !important; }
+
+	.ab-yes { color: #6E9C8F; }
+	.ab-no { color: #C28A86; }
+	.ab-later { color: #8A95A8; }
+	.ab-view { color: #7B8FAE; }
+	.ab-yes:hover:not(:disabled) {
+		background: var(--color-success-light);
+		color: #027A48;
+		box-shadow: 0 4px 12px -3px rgba(2, 122, 72, 0.20);
+	}
+	.ab-no:hover:not(:disabled) {
+		background: var(--color-danger-light);
+		color: #C0391A;
+		box-shadow: 0 4px 12px -3px rgba(192, 57, 26, 0.20);
+	}
+	.ab-later:hover:not(:disabled) {
+		background: var(--color-info-light);
+		color: var(--color-info);
+		box-shadow: 0 4px 12px -3px rgba(90, 113, 144, 0.18);
+	}
+	.ab-view:hover:not(:disabled) {
+		background: var(--color-primary-light);
+		color: var(--color-primary);
+		box-shadow: 0 4px 12px -3px rgba(47, 90, 158, 0.20);
+	}
+
+	.tq-footer {
+		padding: 14px 24px;
+		border-top: 1px solid rgba(17, 24, 39, 0.05);
+		background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-surface-alt) 100%);
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		font-size: 13px;
+		color: var(--color-text-muted);
+		gap: 12px;
+		flex-wrap: wrap;
+	}
+	.tq-footer-cta {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--color-primary);
+		font-weight: 600;
+		background: none;
+		border: 0;
+		padding: 0;
+		cursor: pointer;
+		font-family: inherit;
+		font-size: 13px;
+	}
+	.tq-footer-cta:hover { text-decoration: underline; text-underline-offset: 3px; }
+	.tq-footer-cta:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+		border-radius: 4px;
+	}
 
 	@keyframes fadeUp {
 		from { opacity: 0; transform: translateY(6px); }
 		to { opacity: 1; transform: translateY(0); }
 	}
 
-	.triage-item-content {
-		display: flex;
-		flex-direction: column;
-		gap: 6px;
-		min-width: 0;
-	}
-	.triage-item-line1 {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		flex-wrap: wrap;
-	}
-	.triage-item-name {
-		font-weight: 600;
-		font-size: 14px;
-		color: var(--color-text);
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		max-width: 320px;
-	}
-	.triage-item-score-wrap { margin-left: auto; }
-	.triage-item-context {
-		font-size: 13px;
-		color: var(--color-text-muted);
-		line-height: 1.45;
-	}
-
-	.triage-actions {
-		display: flex;
-		gap: 4px;
-		flex-shrink: 0;
-	}
-	/* Pattern Notion / Stripe property buttons.
-	   Repos : icône colorée sémantique 40% saturation, pas de bg/border.
-	   Hover : bg tinté + saturation max + élévation + tinted shadow. */
-	.btn-action {
-		width: 36px; height: 36px;
-		padding: 0;
-		border-radius: 8px;
-		font-family: inherit;
-		cursor: pointer;
-		border: 1px solid transparent;
-		background: transparent;
-		transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
-					background 220ms cubic-bezier(0.16, 1, 0.3, 1),
-					color 180ms ease,
-					box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		will-change: transform;
-	}
-	.btn-action:hover { transform: translateY(-1px); }
-	.btn-action:active { transform: scale(0.96) translateY(0); transition-duration: 80ms; }
-	.btn-action:focus-visible {
-		outline: none;
-		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.30);
-	}
-	.btn-action:disabled { cursor: wait; opacity: 0.5; transform: none !important; }
-
-	.btn-yes { color: #6E9C8F; }
-	.btn-no { color: #C28A86; }
-	.btn-later { color: #8A95A8; }
-	.btn-view { color: #7B8FAE; }
-	.btn-yes:hover:not(:disabled) {
-		background: #ECFDF3;
-		color: #027A48;
-		box-shadow: 0 4px 12px -3px rgba(2, 122, 72, 0.22);
-	}
-	.btn-no:hover:not(:disabled) {
-		background: #FFF1EC;
-		color: #C0391A;
-		box-shadow: 0 4px 12px -3px rgba(192, 57, 26, 0.22);
-	}
-	.btn-later:hover:not(:disabled) {
-		background: var(--color-info-light);
-		color: var(--color-info);
-		box-shadow: 0 4px 12px -3px rgba(90, 113, 144, 0.20);
-	}
-	.btn-view:hover:not(:disabled) {
-		background: var(--color-primary-light);
-		color: var(--color-primary);
-		box-shadow: 0 4px 12px -3px rgba(47, 90, 158, 0.22);
-	}
-
-	/* Mobile : 4 boutons en grid 2x2 avec label visible (mode lecture) */
+	/* Mobile : 4 boutons en grid 2x2 avec label visible (mode lecture).
+	   Sous 768px, le grid 96|1fr|auto|auto se replie en 2 lignes. */
 	@media (max-width: 768px) {
-		.triage-item { grid-template-columns: 1fr; }
-		.triage-actions {
+		.tq-item {
+			grid-template-columns: auto 1fr auto;
+			grid-template-areas:
+				"badge name score"
+				"actions actions actions";
+			row-gap: 12px;
+		}
+		.tq-source-badge { grid-area: badge; }
+		.tq-name-block { grid-area: name; }
+		.tq-score-wrap { grid-area: score; }
+		.tq-actions {
+			grid-area: actions;
 			display: grid;
 			grid-template-columns: 1fr 1fr;
 			gap: 8px;
 			width: 100%;
 		}
-		.btn-action {
+		.ab {
 			width: 100%;
 			height: 44px;
 			gap: 8px;
 			font-size: 13px;
 			font-weight: 500;
 		}
-		.btn-yes::after { content: 'Intéressant'; }
-		.btn-no::after { content: 'Écarter'; }
-		.btn-later::after { content: 'Snooze 7 j'; }
-		.btn-view::after { content: 'Détails'; }
+		.ab-yes::after { content: 'Intéressant'; }
+		.ab-no::after { content: 'Écarter'; }
+		.ab-later::after { content: 'Snooze 7 j'; }
+		.ab-view::after { content: 'Détails'; }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.tq-item { animation: none; }
+		.kicker .dot { animation: none; }
+		.ab, .tq-item { transition: none; }
+		.ab:hover:not(:disabled), .ab:active:not(:disabled) { transform: none; }
 	}
 </style>
