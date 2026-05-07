@@ -16,7 +16,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// La colonne triage_snoozed_until est apportée par migration 20260501_001_triage_snoozed_until.sql.
 	const triageQuery = locals.supabase
 		.from('prospect_leads')
-		.select('id, raison_sociale, score_pertinence, source, canton, localite, adresse, telephone, description, date_publication, montant', { count: 'exact' })
+		.select('id, raison_sociale, score_pertinence, statut, source, source_id, source_url, canton, localite, adresse, npa, telephone, email, nom_contact, site_web, secteur_detecte, description, date_publication, montant', { count: 'exact' })
 		.eq('statut', 'nouveau')
 		.gte('score_pertinence', config.scoring.triage.scoreMin)
 		.or(`triage_snoozed_until.is.null,triage_snoozed_until.lte.${nowIso}`)

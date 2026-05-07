@@ -8,6 +8,7 @@
 	 * Spec figée : notes/refonte-dashboard-2026-05-06/spec-implementation.md
 	 */
 	import LeadExpress from '$lib/components/prospection/LeadExpress.svelte';
+	import LeadSlideOut from '$lib/components/prospection/LeadSlideOut.svelte';
 	import TriageQueue from '$lib/components/dashboard/TriageQueue.svelte';
 	import SectionGreeting from '$lib/components/dashboard/SectionGreeting.svelte';
 	import KpisBento from '$lib/components/dashboard/KpisBento.svelte';
@@ -23,6 +24,16 @@
 
 	let { data }: { data: PageData } = $props();
 	let leadExpressOpen = $state(false);
+
+	// Slide-out détail lead : ouvert depuis TriageQueue, sans switch de page.
+	let slideOutOpen = $state(false);
+	let slideOutLead = $state<(typeof data.triage.leads)[number] | null>(null);
+	let slideOutImportResult = $state<{ message: string; type: 'success' | 'error' } | null>(null);
+
+	function handleLeadOpen(lead: (typeof data.triage.leads)[number]) {
+		slideOutLead = lead;
+		slideOutOpen = true;
+	}
 
 	const todayIso = $derived(new Date().toISOString().split('T')[0]);
 
@@ -80,7 +91,7 @@
 
 	<!-- Section 3 : TriageQueue vedette -->
 	<div class="stagger" style="--i: 2;">
-		<TriageQueue leads={data.triage.leads} total={data.triage.total} />
+		<TriageQueue leads={data.triage.leads} total={data.triage.total} onLeadOpen={handleLeadOpen} />
 	</div>
 
 	<!-- Section 4 : duo activité + relances 60/40 -->
@@ -104,6 +115,13 @@
 </div>
 
 <LeadExpress bind:open={leadExpressOpen} redirectAfterCreate={true} />
+
+<LeadSlideOut
+	bind:open={slideOutOpen}
+	bind:lead={slideOutLead}
+	bind:importResult={slideOutImportResult}
+	leads={data.triage.leads}
+/>
 
 <style>
 	.dash {

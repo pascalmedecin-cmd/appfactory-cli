@@ -23,23 +23,34 @@
 		id: string;
 		raison_sociale: string;
 		score_pertinence: number | null;
+		statut: string;
 		source: string;
+		source_id: string | null;
+		source_url: string | null;
 		canton: string | null;
 		localite: string | null;
 		adresse: string | null;
+		npa: string | null;
 		telephone: string | null;
+		email: string | null;
+		nom_contact: string | null;
+		site_web: string | null;
+		secteur_detecte: string | null;
 		description: string | null;
 		date_publication: string | null;
-		montant: number | null;
+		montant: number | string | null;
 	};
 
 	type Props = {
 		leads: Lead[];
 		total: number;
 		visibleLimit?: number;
+		/** Callback optionnel : si fourni, ouvre le lead dans un slide-out local
+		 *  au lieu de naviguer vers /prospection. */
+		onLeadOpen?: (lead: Lead) => void;
 	};
 
-	let { leads, total, visibleLimit = 12 }: Props = $props();
+	let { leads, total, visibleLimit = 12, onLeadOpen }: Props = $props();
 
 	const visible = $derived(leads.slice(0, visibleLimit));
 	const remaining = $derived(Math.max(0, total - visible.length));
@@ -77,10 +88,15 @@
 		}
 	}
 
-	async function onYes(leadId: string) {
-		const ok = await callTriage('oui', leadId);
+	async function onYes(lead: Lead) {
+		const ok = await callTriage('oui', lead.id);
 		if (ok) {
-			goto(`/prospection?slideOut=${encodeURIComponent(leadId)}`, { invalidateAll: true, keepFocus: false });
+			if (onLeadOpen) {
+				onLeadOpen(lead);
+				await invalidateAll();
+			} else {
+				goto(`/prospection?slideOut=${encodeURIComponent(lead.id)}`, { invalidateAll: true, keepFocus: false });
+			}
 		}
 	}
 
@@ -97,8 +113,12 @@
 		}
 	}
 
-	function onView(leadId: string) {
-		goto(`/prospection?slideOut=${encodeURIComponent(leadId)}`, { invalidateAll: false, keepFocus: false });
+	function onView(lead: Lead) {
+		if (onLeadOpen) {
+			onLeadOpen(lead);
+		} else {
+			goto(`/prospection?slideOut=${encodeURIComponent(lead.id)}`, { invalidateAll: false, keepFocus: false });
+		}
 	}
 
 	function viewQueueAll() {
@@ -139,13 +159,13 @@
 						</span>
 						<div class="tq-name-block">
 							<div class="tq-name" title={lead.raison_sociale}>{lead.raison_sociale}</div>
-							<div class="tq-context">{formatLeadContext(lead)}</div>
+							<div class="tq-context">{formatLeadContext({ ...lead, montant: lead.montant === null ? null : Number(lead.montant) })}</div>
 						</div>
 						<span class="tq-score-wrap">
 							<ScorePill score={lead.score_pertinence} compact />
 						</span>
 						<div class="tq-actions">
-							<button type="button" class="ab ab-yes" aria-label="Intéressant — marquer + ouvrir la fiche" title="Intéressant" disabled={pendingIds.has(lead.id)} onclick={() => onYes(lead.id)}>
+							<button type="button" class="ab ab-yes" aria-label="Intéressant — marquer + ouvrir la fiche" title="Intéressant" disabled={pendingIds.has(lead.id)} onclick={() => onYes(lead)}>
 								<Icon name="check_circle" size={16} strokeWidth={1.75} />
 							</button>
 							<button type="button" class="ab ab-no" aria-label="Écarter ce lead" title="Écarter" disabled={pendingIds.has(lead.id)} onclick={() => onNo(lead.id)}>
@@ -154,7 +174,7 @@
 							<button type="button" class="ab ab-later" aria-label="Repousser à 7 jours" title="Snooze 7 j" disabled={pendingIds.has(lead.id)} onclick={() => onLater(lead.id)}>
 								<Icon name="schedule" size={16} strokeWidth={1.75} />
 							</button>
-							<button type="button" class="ab ab-view" aria-label="Voir la fiche en lecture seule" title="Détails" disabled={pendingIds.has(lead.id)} onclick={() => onView(lead.id)}>
+							<button type="button" class="ab ab-view" aria-label="Voir la fiche en lecture seule" title="Détails" disabled={pendingIds.has(lead.id)} onclick={() => onView(lead)}>
 								<Icon name="eye" size={16} strokeWidth={1.75} />
 							</button>
 						</div>
