@@ -8,10 +8,10 @@
  * → externalisation indispensable.
  *
  * Lancement (semaine en cours) :
- *   npx tsx template/scripts/run-veille.ts
+ *   npx tsx CRM/scripts/run-veille.ts
  *
  * Lancement avec semaine forcée (rattrapage manuel) :
- *   npx tsx template/scripts/run-veille.ts --week 2026-W18
+ *   npx tsx CRM/scripts/run-veille.ts --week 2026-W18
  *
  * ENV vars requises (plante explicitement si manquantes) :
  *   PUBLIC_SUPABASE_URL ou SUPABASE_URL
@@ -37,7 +37,7 @@ import { parseArgv, HelpRequestedError } from '../src/lib/server/intelligence/cl
 import { sanitizeError, sanitizeForLog } from '../src/lib/server/intelligence/sanitize';
 
 const HELP = `
-Usage: npx tsx template/scripts/run-veille.ts [--week YYYY-Www]
+Usage: npx tsx CRM/scripts/run-veille.ts [--week YYYY-Www]
 
 Options:
   --week YYYY-Www   Force la semaine cible (rattrapage manuel).

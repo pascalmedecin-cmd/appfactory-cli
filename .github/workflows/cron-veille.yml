@@ -45,14 +45,14 @@ jobs:
         with:
           node-version: '24'
           cache: 'npm'
-          cache-dependency-path: template/package-lock.json
+          cache-dependency-path: CRM/package-lock.json
 
       - name: Install dependencies
-        working-directory: template
+        working-directory: CRM
         run: npm ci
 
       - name: Run veille pipeline
-        working-directory: template
+        working-directory: CRM
         # Defense in depth contre les injections : `inputs.week` est passé via
         # variable d'environnement (pas via templating bash direct) puis
         # re-validé par regex stricte côté Node (`parseArgv` dans cli-args.ts).

@@ -10,11 +10,11 @@
 
 | Dossier | Rôle | Repo Git | URL prod | CLAUDE.md propre |
 |---------|------|----------|----------|------------------|
-| `template/` | CRM FilmPro (app principale) | `pascalmedecin-cmd/appfactory-cli` (ce repo) | <https://filmpro-crm.vercel.app> | `template/CLAUDE.md` |
+| `CRM/` | CRM FilmPro (app principale) | `pascalmedecin-cmd/appfactory-cli` (ce repo) | <https://filmpro-crm.vercel.app> | `CRM/CLAUDE.md` |
 | `Consulting/` | Outil structuration opérationnelle PME (Phase 1 cadrage) | (interne ce repo) | (pas encore) | `Consulting/CLAUDE.md` |
 | `Formation/` | Onboarding IA marketing (12 modules prod) | `pascalmedecin-cmd/onboarding-ia` (séparé, ignoré dans `.gitignore`) | <https://onboarding-ia.vercel.app> | `Formation/CLAUDE.md` |
 
-**Pour travailler sur un sous-projet** : taper `cc` au terminal et choisir l'option correspondante (3=CRM FilmPro → `template/`, 4=Consulting, 5=Formation IA). Claude Code atterrit directement dans le sous-dossier, charge le `CLAUDE.md` propre du sous-projet (et ce stub AppFactory en parent).
+**Pour travailler sur un sous-projet** : taper `cc` au terminal et choisir l'option correspondante (3=CRM FilmPro → `CRM/`, 4=Consulting, 5=Formation IA). Claude Code atterrit directement dans le sous-dossier, charge le `CLAUDE.md` propre du sous-projet (et ce stub AppFactory en parent).
 
 **Rappel scope cockpit** : slug `appfactory`, subprojects `crm` / `consulting` / `formation`. Slug historique cockpit `appfactory-formation-ia` conservé pour stabilité storage (pointe vers `Formation/` côté filesystem). Le subproject `appwizard` reste référencé pour les entries cockpit historiques (workflow méta retiré du repo 2026-05-07, voir mémoire `project_appfactory_restructure.md`).
 
@@ -58,14 +58,14 @@
 
 ## DOCUMENTATION (cross-projets)
 
-- `template/docs/SPECS_PROSPECTION.md` : specs complètes module prospection CRM
-- `template/docs/SPECS_CRM_MOBILE*.md` : specs CRM mobile V1 + V2
-- `template/docs/GOLDEN_STANDARDS*.md` : standards visuels CRM
+- `CRM/docs/SPECS_PROSPECTION.md` : specs complètes module prospection CRM
+- `CRM/docs/SPECS_CRM_MOBILE*.md` : specs CRM mobile V1 + V2
+- `CRM/docs/GOLDEN_STANDARDS*.md` : standards visuels CRM
 - `archive/` : journaux décisions historiques cross-sessions
 
 ---
 
-**Pour le contexte CRM FilmPro complet** (statut sessions, infra, tâches actives, watch list, livré) : voir `template/CLAUDE.md`.
+**Pour le contexte CRM FilmPro complet** (statut sessions, infra, tâches actives, watch list, livré) : voir `CRM/CLAUDE.md`.
 
 **Pour les autres sous-projets** : voir leur CLAUDE.md propre (Consulting/, Formation/).
 

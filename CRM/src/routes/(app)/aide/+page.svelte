@@ -810,7 +810,7 @@ ALLOWED_EMAILS=pascal@filmpro.ch,antoine@filmpro.ch</pre>
 						</div>
 
 						<h3 class="aide-h3">Root directory</h3>
-						<p>Le projet Vercel pointe sur le dossier <code>template/</code>. Les commits hors <code>template/</code> ne déclenchent pas de build (skip deployments actif).</p>
+						<p>Le projet Vercel pointe sur le dossier <code>CRM/</code>. Les commits hors <code>CRM/</code> ne déclenchent pas de build (skip deployments actif).</p>
 
 						<h3 class="aide-h3">SMTP</h3>
 						<p>Resend (free plan permanent, 3000 emails/mois). Domaine filmpro.ch vérifié, sender <code>noreply@filmpro.ch</code>. DNS Infomaniak (DKIM + MX + SPF).</p>

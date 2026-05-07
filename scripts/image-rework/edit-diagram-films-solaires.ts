@@ -17,7 +17,7 @@ import { execSync } from 'node:child_process';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = resolve(__dirname, '../..');
-const ENV_FILE = resolve(PROJECT_ROOT, 'template/.env.local');
+const ENV_FILE = resolve(PROJECT_ROOT, 'CRM/.env.local');
 const OUTPUT_DIR = resolve(__dirname, 'output');
 const SOURCE_IMAGE = resolve(OUTPUT_DIR, 'diagram-edit-v1.png');
 
@@ -36,7 +36,7 @@ const PROMPT = [
 function loadFalKey(): string {
 	const content = readFileSync(ENV_FILE, 'utf-8');
 	const match = content.match(/^FAL_KEY="?([^"\n]+)"?/m);
-	if (!match) throw new Error('FAL_KEY introuvable dans template/.env.local');
+	if (!match) throw new Error('FAL_KEY introuvable dans CRM/.env.local');
 	return match[1].trim();
 }
 

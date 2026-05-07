@@ -8,7 +8,7 @@ Chaque sous-projet a son propre `CLAUDE.md` et (s'il l'a) son propre `.claude/st
 
 | Branche | Dossier | CLAUDE.md | Menu complet |
 |---|---|---|---|
-| CRM FilmPro | `template/` (CLAUDE.md vit dans `template/`) | `/Users/pascal/Claude/Projets/AppFactory/template/CLAUDE.md` | (template/.claude/start-menu.md si existe, sinon ci-dessous) |
+| CRM FilmPro | `CRM/` (CLAUDE.md vit dans `CRM/`) | `/Users/pascal/Claude/Projets/AppFactory/CRM/CLAUDE.md` | (CRM/.claude/start-menu.md si existe, sinon ci-dessous) |
 | Consulting | `Consulting/` | `/Users/pascal/Claude/Projets/AppFactory/Consulting/CLAUDE.md` | `Consulting/.claude/start-menu.md` (si existe) |
 | Formation IA | `Formation/` | `/Users/pascal/Claude/Projets/AppFactory/Formation/CLAUDE.md` | `Formation/.claude/start-menu.md` |
 
@@ -31,7 +31,7 @@ Ton choix ?
 ```
 
 Règles :
-- `N1` = nombre de `- [ ]` dans la section `## Prochaine session` de `template/CLAUDE.md`.
+- `N1` = nombre de `- [ ]` dans la section `## Prochaine session` de `CRM/CLAUDE.md`.
 - `N2` = nombre de `- [ ]` dans la section `## Prochaine session` de `Consulting/CLAUDE.md`.
 - `N3` = nombre de `- [ ]` dans la section `## Prochaine session` de `Formation/CLAUDE.md`.
 - `M` = sous-ensemble avec tag `[BLOQUÉ]` ou `[BLOQUANT]`.
@@ -43,8 +43,8 @@ Règles :
 ### [1] CRM FilmPro
 
 Basculer vers le `/start` standard scopé au CRM FilmPro :
-- Source tâches : `template/CLAUDE.md` section `## Prochaine session`
-- Source idées : `template/.claude/parked.md` (si existe, sinon `.claude/parked.md` racine en fallback)
+- Source tâches : `CRM/CLAUDE.md` section `## Prochaine session`
+- Source idées : `CRM/.claude/parked.md` (si existe, sinon `.claude/parked.md` racine en fallback)
 - `[+] Nouveau` : objectif libre scopé CRM FilmPro
 
 Affichage des tâches (`[1] Reprendre`) : **linéaire** (plus de groupement, puisque scopé à un seul sous-projet). Chaque tâche conserve ses tags et son pointeur vers la spec.
@@ -70,5 +70,5 @@ Règles pédagogiques contraignantes : `Formation/docs/PEDAGOGIE.md` (injecté c
 
 ## Raccourcis
 
-- Pour entrer directement dans un sous-projet sans passer par le dispatcher : `cd template/ && /start` (CRM), `cd Consulting/ && /start`, `cd Formation/ && /start`.
+- Pour entrer directement dans un sous-projet sans passer par le dispatcher : `cd CRM/ && /start` (CRM), `cd Consulting/ && /start`, `cd Formation/ && /start`.
 - Si un sous-projet a 0 tâche et 0 idée → l'afficher quand même dans le dispatcher (ne pas masquer), indiquer `–` en compteur.

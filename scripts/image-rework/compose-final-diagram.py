@@ -52,7 +52,7 @@ def load_fal_key() -> str:
     content = ENV_FILE.read_text()
     m = re.search(r'^FAL_KEY="?([^"\n]+)"?', content, re.MULTILINE)
     if not m:
-        raise SystemExit("FAL_KEY introuvable dans template/.env.local")
+        raise SystemExit("FAL_KEY introuvable dans CRM/.env.local")
     return m.group(1).strip()
 
 

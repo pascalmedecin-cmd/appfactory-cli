@@ -1,8 +1,8 @@
 # CRM FilmPro : CLAUDE.md
 
-**Note migration restructure 2026-05-06** : ce fichier est l'ancien `AppFactory/CLAUDE.md` déplacé ici lors de la migration Voie A (split container). Le sous-projet CRM FilmPro vit physiquement dans `template/` (path Vercel inchangé : Vercel filmpro-crm continue de builder depuis `template/`). Le `AppFactory/CLAUDE.md` racine est désormais un stub container minimal qui pointe vers les 4 sous-projets. Voir `~/.claude/projects/-Users-pascal-Claude-Projets-AppFactory/memory/project_appfactory_restructure.md` pour le contexte migration complet.
+**Note migration restructure** : ce fichier vit dans `CRM/CLAUDE.md`. Le sous-projet CRM FilmPro est dans `AppFactory/CRM/` (path Vercel `rootDirectory: CRM`). Voie A livrée S173 2026-05-06 (split container CLAUDE.md). Voie B livrée S174 2026-05-07 (rename `template/` → `CRM/` + retrait wizard méta + repointage Vercel). Le `AppFactory/CLAUDE.md` racine est un stub container minimal qui pointe vers les 3 sous-projets (CRM, Consulting, Formation). Voir `~/.claude/projects/-Users-pascal-Claude-Projets-AppFactory/memory/project_appfactory_restructure.md` pour le contexte migration complet.
 
-**Statut :** Phase C, MIGRATION RESTRUCTURE VOIE A LIVRÉE (S173 2026-05-06) - container CLAUDE.md splittée, sous-projets isolés. GOLDEN STANDARD v9 LAYERED DS LIVRÉ (S172). Mockup `/dashboard` validé, spec implémentation figée 28 AC. search.ch 2e source découverte LIVRÉ (S171). Pipeline veille ANTI-HALLUCINATION V2 LIVRÉ (S168). /prospection FIGÉE PAGE MODÈLE GOLDEN V9 (S165). Cron veille externalisée GHA (S167). Audit UX/UI 360 LIVRÉ (S160). V2 mobile terrain CLOS (S127α+S129β+S130γ). Formation IA = sous-projet autonome dans `Formation/`, `cc` option 5.
+**Statut :** Phase C, MIGRATION RESTRUCTURE VOIE A+B LIVRÉE (S173-S174 2026-05-06/07) - container CLAUDE.md splittée, 3 sous-projets siblings autonomes nommés par fonction (CRM/Consulting/Formation), wizard méta retiré. GOLDEN STANDARD v9 LAYERED DS LIVRÉ (S172). Mockup `/dashboard` validé, spec implémentation figée 28 AC. search.ch 2e source découverte LIVRÉ (S171). Pipeline veille ANTI-HALLUCINATION V2 LIVRÉ (S168). /prospection FIGÉE PAGE MODÈLE GOLDEN V9 (S165). Cron veille externalisée GHA (S167). Audit UX/UI 360 LIVRÉ (S160). V2 mobile terrain CLOS (S127α+S129β+S130γ). Formation IA = sous-projet autonome dans `Formation/`, `cc` option 5.
 **Derniere mise a jour :** 2026-05-06 (S173 xhigh : Migration AppFactory restructure Voie A. Tag `pre-restructure-2026-05-06` (b238bf2). 2 commits push origin/main : `4c47523` Phase 1 wizard→Wizard 16 files renamed + 5 refs runtime ; `23b404c` Phase 3 split CRM → template/CLAUDE.md (272L) + stub AppFactory/CLAUDE.md container (113L) + cockpit slugs/scan_paths/veille_runner/_projects paths Formation + tests cockpit ajustés + start.sh ligne 60+62 + 114 mémoires CRM copiées vers *-AppFactory-template/memory/. Tests cockpit 579/579 verts. Builds CRM template/ + Formation/ verts. Vercel CRM preview 46s + prod 41s Ready. Onboarding-ia non touché.)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
@@ -18,7 +18,7 @@ L'arborescence d'AppFactory héberge des sous-projets autonomes (chacun a son pr
 
 | Dossier | Repo Git | Statut | URL prod | CLAUDE.md |
 |---------|----------|--------|----------|-----------|
-| `template/` (CRM FilmPro) | `pascalmedecin-cmd/appfactory-cli` (=racine actuelle) | Production | <https://filmpro-crm.vercel.app> | (ce fichier) |
+| `CRM/` (CRM FilmPro) | `pascalmedecin-cmd/appfactory-cli` (=racine actuelle) | Production | <https://filmpro-crm.vercel.app> | (ce fichier) |
 | `Formation/` | `pascalmedecin-cmd/onboarding-ia` (séparé, ignoré dans `.gitignore`) | S1→S7 livrés (12/12 modules en prod) | <https://onboarding-ia.vercel.app> | `Formation/CLAUDE.md` |
 | `Consulting/` | (interne au repo `appfactory-cli`, séparation prévue lors du restructure - voir mémoire `project_appfactory_restructure.md`) | Setup S171 2026-05-06 (Phase 1 cadrage à démarrer) | (pas encore d'URL prod, cible Cloudflare Pages) | `Consulting/CLAUDE.md` |
 
@@ -35,7 +35,7 @@ Pour travailler sur un sous-projet : taper `cc` au terminal et choisir `5. Forma
 ```bash
 # Ce repo contient le code de l'app CRM FilmPro
 # Stack : SvelteKit + Supabase + Vercel
-# CLAUDE.md vit dans template/ ; le path Vercel rootDirectory est template/
+# CLAUDE.md vit dans CRM/ ; le path Vercel rootDirectory est CRM
 ```
 
 ---
@@ -145,7 +145,7 @@ Tout test responsive / mobile / viewport (iPhone SE, iPhone 14 Pro Max, Pixel 7,
 
 **Autorisé pour findings OBJECTIFS uniquement** (S125 dérogation /dig [B]) : Playwright avec `devices['iPhone 14 Pro Max']` preset complet (spread `...devices[...]` qui apporte userAgent Safari iOS + viewport 430×932 + deviceScaleFactor 3 + isMobile + hasTouch). Périmètre couvert : overflow horizontal, dimensions `getBoundingClientRect`, présence DOM, requêtes réseau (font self-host, etc.), boutons ≥ 44px, structure DOM, screenshots de référence.
 
-**Reste obligatoire DevTools manuel pour findings QUALITATIFS** : rendu de police, perception visuelle, animations, scroll inertiel, jugement design, validation visuelle de screenshots golden. Référence d'implémentation : `template/tests/mobile.spec.ts` + `template/playwright.mobile.config.ts` (S125, 17/17 audits objectifs verts).
+**Reste obligatoire DevTools manuel pour findings QUALITATIFS** : rendu de police, perception visuelle, animations, scroll inertiel, jugement design, validation visuelle de screenshots golden. Référence d'implémentation : `CRM/tests/mobile.spec.ts` + `CRM/playwright.mobile.config.ts` (S125, 17/17 audits objectifs verts).
 
 **Pourquoi DevTools manuel** : seule l'émulation Device Toolbar applique DPR (3 pour iPhone 14 Pro Max), UA mobile, touch émulé, viewport meta-tag, scrollbar overlay mobile → rendu fidèle au rendu réel sur device. Les media queries CSS Tailwind (`md:`, `lg:`) sont déclenchées par le viewport émulé, pas par la taille de fenêtre desktop.
 
@@ -191,7 +191,7 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 **Pourquoi** : info accepté audit S167 Bloc #2. Le handler SvelteKit `/api/cron/intelligence` reste vivant après désactivation du cron Vercel (rétrocompat / debug). Surface d'attaque mineure : un attaquant qui leak `CRON_SECRET` peut curl Vercel + timeout 504 (cost burn). À retirer après 2 runs GHA verts en prod (cron auto vendredi 08/05 + rattrapage W18 déjà OK = 1/2).
 **Prérequis** : ≥ 2 runs GHA verts en prod (S167 = 1, attendre cron auto vendredi 08/05 = 2).
 
-- [ ] **[BLOQUÉ - cron auto GHA vendredi 08/05 vert]** Supprimer `template/src/routes/api/cron/intelligence/+server.ts` + `template/src/routes/api/intelligence/trigger/+server.ts`. Vérifier qu'aucun appel externe ne dépend (grep cross-ref). Audit security-auditor sur le diff (suppression code = surface d'attaque retirée). → voir `memory/audit_secu_2026-05-04_veille_gha_externalisation.md` § Info #1
+- [ ] **[BLOQUÉ - cron auto GHA vendredi 08/05 vert]** Supprimer `CRM/src/routes/api/cron/intelligence/+server.ts` + `CRM/src/routes/api/intelligence/trigger/+server.ts`. Vérifier qu'aucun appel externe ne dépend (grep cross-ref). Audit security-auditor sur le diff (suppression code = surface d'attaque retirée). → voir `memory/audit_secu_2026-05-04_veille_gha_externalisation.md` § Info #1
 
 ### Watch list S171 (post-livraison)
 

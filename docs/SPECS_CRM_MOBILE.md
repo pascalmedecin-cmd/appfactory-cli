@@ -307,8 +307,8 @@ Si un seuil n'est pas atteint S+8 → ouvrir cadrage V2 ciblé sur le pain point
 
 ## Annexes
 
-- Branding et golden : `template/src/app.css` + `.claude/goldens/golden-v5.json`
-- Layout actuel : `template/src/routes/(app)/+layout.svelte`
-- Composants partagés : `template/src/lib/components/`
-- Tests Playwright existants : `template/tests/e2e/`
+- Branding et golden : `CRM/src/app.css` + `.claude/goldens/golden-v5.json`
+- Layout actuel : `CRM/src/routes/(app)/+layout.svelte`
+- Composants partagés : `CRM/src/lib/components/`
+- Tests Playwright existants : `CRM/tests/e2e/`
 - Specs métier prospection : `docs/SPECS_PROSPECTION.md`

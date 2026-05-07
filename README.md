@@ -1,35 +1,27 @@
 # AppFactory
 
-Workflow CLI premium pour generer des applications metier de qualite production depuis le terminal.
+Container monorepo qui héberge 3 sous-projets autonomes du workflow Pascal.
 
-## Stack
+## Sous-projets
 
-- **Pilotage** : Claude Code + skills specialises (cadrage, generate, deploy)
+- **CRM/** : CRM FilmPro (production, <https://filmpro-crm.vercel.app>)
+- **Consulting/** : outil structuration opérationnelle PME (Phase 1 cadrage)
+- **Formation/** : Onboarding IA marketing 12 modules (production, sous-repo `pascalmedecin-cmd/onboarding-ia`, <https://onboarding-ia.vercel.app>)
+
+Chaque sous-projet est autonome (sa stack, son CLAUDE.md, sa doc).
+
+## Stack (générique sous-projets)
+
 - **Frontend** : SvelteKit + Tailwind CSS
 - **Backend** : Supabase (PostgreSQL, Auth, API, Storage)
-- **Hebergement** : Vercel (deploy auto, previews, domaines custom)
-- **Design** : Figma Pro + plugin bidirectionnel (tokens exportables)
+- **Hébergement** : Vercel (deploy auto, previews, domaines)
 - **Tests** : Vitest + Playwright
 
-## Structure
+## Pour travailler sur un sous-projet
 
-```
-skills/          Skills Claude Code (cadrage, generate, deploy)
-template/        Template SvelteKit reutilisable
-previews/        Templates HTML pour previsualisation client
-scripts/         Scripts utilitaires (extraction tokens, etc.)
-```
-
-## Workflow
-
-1. **Cadrage** : Dialogue naturel, pages HTML de validation
-2. **Design Figma** : Maquettes generees, client commente
-3. **Extraction tokens** : Figma -> tailwind.config
-4. **Generation** : Scaffold SvelteKit depuis specs + tokens
-5. **Preview** : URL Vercel, tests automatises, client teste
-6. **Production** : Domaine personnalise, base propre
+Taper `cc` au terminal et choisir l'option (CRM FilmPro, Consulting, Formation IA).
 
 ## Liens
 
-- AppFactory v1 (archive) : [appfactory](https://github.com/pascalmedecin-cmd/appfactory)
-- Document strategique : `WORKFLOW_CLI_PREMIUM_2026.pdf`
+- Repo Git : `pascalmedecin-cmd/appfactory-cli`
+- Méthodo Pascal et règles cross-projets : `~/.claude/CLAUDE.md`

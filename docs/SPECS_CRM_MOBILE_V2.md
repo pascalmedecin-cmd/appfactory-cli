@@ -161,7 +161,7 @@ Total : ~5.5h cumulées (vs estimation cockpit 6h, confiance Faible → confianc
 
 ### 6.1 Playwright mobile
 
-Étendre la suite mobile existante (`template/tests/mobile.spec.ts`) avec :
+Étendre la suite mobile existante (`CRM/tests/mobile.spec.ts`) avec :
 
 - Upload photo (mock fichier, vérifier appel Supabase Storage).
 - Géoloc (mock `navigator.geolocation`, vérifier insertion DB).
@@ -242,8 +242,8 @@ Si un seuil n'est pas atteint S+8 → cadrage V3 ciblé sur le pain point.
 ## Annexes
 
 - Cadrage V1 : `SPECS_CRM_MOBILE.md`
-- Branding et golden : `template/src/app.css` + `.claude/goldens/golden-v6-mobile.json`
-- Layout : `template/src/routes/(app)/+layout.svelte`
-- Composants partagés : `template/src/lib/components/`
-- Tests Playwright mobile : `template/tests/mobile.spec.ts`
+- Branding et golden : `CRM/src/app.css` + `.claude/goldens/golden-v6-mobile.json`
+- Layout : `CRM/src/routes/(app)/+layout.svelte`
+- Composants partagés : `CRM/src/lib/components/`
+- Tests Playwright mobile : `CRM/tests/mobile.spec.ts`
 - Specs métier prospection : `SPECS_PROSPECTION.md`
