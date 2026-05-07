@@ -2,13 +2,7 @@ import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { ContactCreateSchema, ContactUpdateSchema, ContactDeleteSchema, CONTACT_FIELDS, extractForm, validate } from '$lib/schemas';
 import { dbFail, newId, now } from '$lib/server/db-helpers';
-
-/** Fuzzy match : normalise et compare les noms d'entreprise */
-function normalizeCompanyName(name: string): string {
-	return name.toLowerCase().trim()
-		.replace(/\s+(sa|sàrl|sarl|gmbh|ag|s\.a\.|s\.à\.r\.l\.)$/i, '')
-		.replace(/[^a-zà-ü0-9]/g, '');
-}
+import { normalizeCompanyName } from '$lib/utils/contactsFormat';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { data: contacts, error } = await locals.supabase
