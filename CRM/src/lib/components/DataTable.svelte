@@ -288,7 +288,7 @@
 	}
 </script>
 
-<div class="flex flex-1 flex-col min-h-0 {embedded ? '' : 'bg-white rounded-xl border border-border shadow-sm'}">
+<div class="flex flex-1 flex-col min-h-0 {embedded ? '' : 'bg-white rounded-xl border border-border shadow-sm overflow-hidden'}">
 	{#if searchable}
 		<div class="sticky top-0 z-20 px-4 py-3 border-b border-border bg-white {embedded ? '' : 'rounded-t-xl'} flex items-center gap-3">
 			<input
