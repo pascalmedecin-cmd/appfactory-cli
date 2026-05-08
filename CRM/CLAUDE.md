@@ -158,7 +158,7 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc #1 - Cascade gabarit /prospection page suivante (post /dashboard livré S175). Reco /pipeline (priorité S170 originale, drag prospects = haute fréquence usage). 5 pages restantes après dashboard : /pipeline + /contacts + /entreprises + /signaux + /veille. Vendredi 08/05 06h UTC : cron auto GHA W19 partira avec pipeline anti-hallu V2 + taxonomie DB S169 + strip cite S170 + cross-check durci S170 (audit hallu tâche #2 toujours bloquée jusqu'au run, suppression handler legacy tâche #3 idem).
+**Prochaine attaque** : Bloc #1 - Cascade gabarit /entreprises (cascade pages 4-6 post /pipeline + /contacts livrés S176bis). Pattern stable : audit éclair vs golden v9 + helpers TDD + 2 composants Indicators/Tabs ARIA + DataTable stickyLeftCols + rowAriaLabel + emptyMessage contextualisé + FAB mobile + audit Opus 0 C/H/M obligatoire + zéro dette. Reco /entreprises (probablement profil similaire /contacts, ~1h30) avant /signaux (plus complexe, fil chrono + filtres) puis /veille/themes (cascade workspace S169 déjà aligné, audit éclair seulement). Vendredi 08/05 06h UTC : cron auto GHA W19 toujours à observer en parallèle (audit hallu tâche #2 + suppression handler legacy tâche #3, blocking jusqu'au run réel).
 
 
 <!-- BEGIN CONSOLIDATION (auto-géré par cockpit, ne pas éditer) -->
