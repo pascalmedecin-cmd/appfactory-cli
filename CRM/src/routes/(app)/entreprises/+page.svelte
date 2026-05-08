@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
+	import DataTable from '$lib/components/DataTable.svelte';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import PhotoGallery from '$lib/components/PhotoGallery.svelte';
 	import VisitsPanel from '$lib/components/VisitsPanel.svelte';
@@ -8,13 +9,27 @@
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
-	import { pageSubtitle } from '$lib/stores/pageSubtitle';
-
-	$effect(() => { $pageSubtitle = `${data.entreprises.length} entreprise${data.entreprises.length > 1 ? 's' : ''}`; });
 	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { toasts } from '$lib/stores/toast';
+	import {
+		entreprisesIndicators,
+		entreprisesCountsByTab,
+		filterEntreprisesByTab,
+		emptyMessageForTab,
+		readPersistedView,
+		persistView,
+		logoUrlForSite,
+		contactCountForEntreprise,
+		type EntreprisesTab,
+		type EntreprisesView,
+	} from '$lib/utils/entreprisesFormat';
+	import EntreprisesIndicators from '$lib/components/entreprises/EntreprisesIndicators.svelte';
+	import EntreprisesTabs from '$lib/components/entreprises/EntreprisesTabs.svelte';
+	import EntreprisesViewToggle from '$lib/components/entreprises/EntreprisesViewToggle.svelte';
+	import EntreprisesCards from '$lib/components/entreprises/EntreprisesCards.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -22,6 +37,10 @@
 	type Entreprise = (typeof data.entreprises)[number];
 	type Contact = (typeof data.contacts)[number];
 
+	// UI state
+	let activeTab: EntreprisesTab = $state('toutes');
+	let view: EntreprisesView = $state('table');
+	let searchQuery = $state('');
 	let slideOutOpen = $state(false);
 	let selectedEntreprise = $state<Entreprise | null>(null);
 	let modalOpen = $state(false);
@@ -31,7 +50,6 @@
 	let confirmDeleteOpen = $state(false);
 	let deleteFormEl: HTMLFormElement | null = $state(null);
 	let enriching = $state(false);
-	let searchQuery = $state('');
 
 	// Form fields
 	let raison_sociale = $state('');
@@ -46,14 +64,40 @@
 	let notes_libres = $state('');
 	let tags = $state('');
 
+	// Persistance vue (localStorage SSR-safe via effect)
+	$effect(() => {
+		view = readPersistedView(typeof window !== 'undefined' ? window.localStorage : null);
+	});
+	function setView(v: EntreprisesView) {
+		view = v;
+		persistView(typeof window !== 'undefined' ? window.localStorage : null, v);
+	}
+
+	const indicators = $derived(entreprisesIndicators(data.entreprises, data.contacts));
+	const counts = $derived(entreprisesCountsByTab(data.entreprises, data.contacts));
+
+	const tabsSpec = $derived([
+		{ key: 'toutes' as EntreprisesTab, label: 'Toutes', count: counts.toutes },
+		{ key: 'qualifiees' as EntreprisesTab, label: 'Qualifiées', count: counts.qualifiees },
+		{ key: 'a-qualifier' as EntreprisesTab, label: 'À qualifier', count: counts['a-qualifier'] },
+		{ key: 'sans-contact' as EntreprisesTab, label: 'Sans contact', count: counts['sans-contact'] },
+	]);
+
+	const filteredByTab = $derived(filterEntreprisesByTab(data.entreprises, data.contacts, activeTab));
+
 	const filteredEntreprises = $derived.by(() => {
-		if (!searchQuery) return data.entreprises;
+		if (!searchQuery.trim()) return filteredByTab;
 		const q = searchQuery.toLowerCase();
-		return data.entreprises.filter((e: Entreprise) =>
+		return filteredByTab.filter((e: Entreprise) =>
 			e.raison_sociale.toLowerCase().includes(q) ||
 			(e.secteur_activite ?? '').toLowerCase().includes(q) ||
 			(e.canton ?? '').toLowerCase().includes(q)
 		);
+	});
+
+	$effect(() => {
+		const total = data.entreprises.length;
+		$pageSubtitle = total === 0 ? 'Aucune entreprise' : `${total} entreprise${total > 1 ? 's' : ''}`;
 	});
 
 	const linkedContacts = $derived(
@@ -63,22 +107,12 @@
 	);
 
 	type Opp = (typeof data.opportunites)[number];
-	// Pipeline F4 : data.opportunites est déjà filtré côté serveur (non-terminales),
-	// on prend la plus récente liée à l'entreprise sélectionnée.
 	const linkedOpportunites = $derived(
 		selectedEntreprise
 			? data.opportunites.filter((o: Opp) => o.entreprise_id === selectedEntreprise!.id)
 			: []
 	);
 	const activeOpportunite = $derived<Opp | null>(linkedOpportunites[0] ?? null);
-
-	function logoUrl(siteWeb: string | null): string | null {
-		if (!siteWeb) return null;
-		try {
-			const domain = new URL(siteWeb).hostname;
-			return `https://logo.clearbit.com/${domain}`;
-		} catch { return null; }
-	}
 
 	function mapsUrl(adresse: string | null): string | null {
 		if (!adresse) return null;
@@ -115,113 +149,167 @@
 	}
 
 	function resetForm() {
-		raison_sociale = ''; secteur_activite = ''; canton = ''; taille_estimee = '';
-		site_web = ''; numero_ide = ''; adresse_siege = ''; segment_cible = '';
-		source = ''; notes_libres = ''; tags = '';
+		raison_sociale = '';
+		secteur_activite = '';
+		canton = '';
+		taille_estimee = '';
+		site_web = '';
+		numero_ide = '';
+		adresse_siege = '';
+		segment_cible = '';
+		source = '';
+		notes_libres = '';
+		tags = '';
 	}
 
 	function statutBadgeVariant(statut: string | null): 'default' | 'info' | 'success' | 'warning' | 'danger' | 'muted' {
 		switch (statut) {
-			case 'qualifie': return 'success';
-			case 'en_cours': return 'info';
-			case 'nouveau': return 'warning';
-			default: return 'default';
+			case 'qualifie':
+				return 'success';
+			case 'en_cours':
+				return 'info';
+			case 'nouveau':
+				return 'warning';
+			default:
+				return 'muted';
 		}
 	}
+
+	function statutLabel(statut: string | null): string {
+		switch (statut) {
+			case 'qualifie':
+				return 'Qualifiée';
+			case 'en_cours':
+				return 'En cours';
+			case 'nouveau':
+				return 'Nouveau';
+			default:
+				return 'À qualifier';
+		}
+	}
+
+	function rowAriaLabelFor(e: Entreprise): string {
+		const cc = contactCountForEntreprise(e.id, data.contacts);
+		const sec = e.secteur_activite ?? 'secteur non renseigné';
+		const cant = e.canton ?? 'canton non renseigné';
+		return `${e.raison_sociale}, ${sec}, ${cant}, ${cc} contact${cc > 1 ? 's' : ''}, statut ${statutLabel(e.statut_qualification)}`;
+	}
+
+	const columns = [
+		{ key: 'logo', label: '', srLabel: 'Logo', class: 'w-14' },
+		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true, class: 'w-[24%]' },
+		{ key: 'secteur_activite', label: 'Secteur', sortable: true, class: 'w-[22%] hidden md:table-cell' },
+		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[8%] hidden md:table-cell' },
+		{ key: 'contacts', label: 'Contacts', class: 'w-[10%] hidden lg:table-cell' },
+		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-[12%]' },
+	];
 </script>
 
-<div class="space-y-6">
-	<div class="flex items-center justify-end">
-		<button
-			onclick={openCreate}
-			class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
-		>
+<div class="page">
+	<div class="page-actions">
+		<button type="button" class="btn btn-primary" onclick={openCreate}>
 			<Icon name="add" size={18} />
 			Ajouter
 		</button>
 	</div>
 
-	{#if data.entreprises.length === 0}
-		<EmptyState
-			icon="business"
-			title="Aucune entreprise"
-			description="Les entreprises apparaissent ici automatiquement quand vous les rattachez à un contact, ou ajoutez-en une manuellement."
-			actionLabel="Ajouter une entreprise"
-			onAction={openCreate}
-		/>
-	{:else}
-		<!-- Recherche -->
-		<div class="relative">
-			<Icon name="search" size={18} class="text-text-muted absolute left-3 top-1/2 -translate-y-1/2" />
-			<input
-				type="text"
-				bind:value={searchQuery}
-				placeholder="Rechercher une entreprise…"
-				class="w-full pl-10 pr-4 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
-			/>
-		</div>
+	<EntreprisesIndicators values={indicators} />
 
-		<!-- Cards grid -->
-		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-			{#each filteredEntreprises as entreprise (entreprise.id)}
-				{@const logo = logoUrl(entreprise.site_web)}
-				{@const contactCount = data.contacts.filter((c: Contact) => c.entreprise_id === entreprise.id).length}
-				<button
-					onclick={() => openDetail(entreprise)}
-					class="bg-white rounded-lg border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all cursor-pointer text-left w-full"
-				>
-					<div class="flex items-start gap-3">
-						{#if logo}
-							<img src={logo} alt="" class="w-12 h-12 rounded-lg object-contain bg-white border border-border flex-shrink-0" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
-						{:else}
-							<span class="flex items-center justify-center w-12 h-12 rounded-lg bg-primary-light text-primary font-bold text-lg flex-shrink-0">
-								{entreprise.raison_sociale[0].toUpperCase()}
-							</span>
-						{/if}
-						<div class="min-w-0 flex-1">
-							<p class="text-sm font-semibold text-text truncate">{entreprise.raison_sociale}</p>
-							{#if entreprise.secteur_activite}
-								<p class="text-xs text-text-muted truncate">{entreprise.secteur_activite}</p>
-							{/if}
-						</div>
-						<Badge label={entreprise.statut_qualification ?? 'nouveau'} variant={statutBadgeVariant(entreprise.statut_qualification)} />
-					</div>
-
-					<div class="mt-3 space-y-2 text-xs text-text-muted">
-						{#if entreprise.canton}
-							<span class="flex items-center gap-1">
-								<Icon name="location_on" size={14} />
-								{entreprise.canton}{#if entreprise.adresse_siege} : {entreprise.adresse_siege}{/if}
-							</span>
-						{/if}
-						{#if entreprise.site_web}
-							<span class="flex items-center gap-1 truncate">
-								<Icon name="language" size={14} />
-								{entreprise.site_web.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-							</span>
-						{/if}
-						<span class="flex items-center gap-1">
-							<Icon name="people" size={14} />
-							{contactCount} contact{contactCount > 1 ? 's' : ''}
-						</span>
-					</div>
-				</button>
-			{/each}
-		</div>
-
-		{#if filteredEntreprises.length === 0}
-			<div class="text-center py-8">
-				<Icon name="filter_alt_off" size={24} class="text-text-muted inline-block" />
-				<p class="mt-2 text-sm text-text-muted">Aucune entreprise ne correspond à la recherche.</p>
+	<EntreprisesTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)}>
+		{#snippet actions()}
+			<div class="search">
+				<Icon name="search" size={16} class="search-icon" />
+				<input
+					type="search"
+					bind:value={searchQuery}
+					placeholder="Rechercher une entreprise…"
+					aria-label="Rechercher une entreprise"
+				/>
 			</div>
+			<EntreprisesViewToggle {view} onChange={setView} />
+		{/snippet}
+	</EntreprisesTabs>
+
+	<div
+		class="content"
+		role="tabpanel"
+		id={`panel-${activeTab}`}
+		aria-labelledby={`tab-${activeTab}`}
+	>
+		{#if data.entreprises.length === 0}
+			<EmptyState
+				icon="business"
+				title="Aucune entreprise"
+				description="Les entreprises apparaissent ici automatiquement quand vous les rattachez à un contact, ou ajoutez-en une manuellement."
+				actionLabel="Ajouter une entreprise"
+				onAction={openCreate}
+			/>
+		{:else if view === 'table'}
+			<DataTable
+				data={filteredEntreprises}
+				{columns}
+				onRowClick={openDetail}
+				searchable={false}
+				stickyLeftCols={2}
+				rowAriaLabel={rowAriaLabelFor}
+				emptyMessage={emptyMessageForTab(activeTab)}
+			>
+				{#snippet row(entreprise, _i)}
+					{@const logo = logoUrlForSite(entreprise.site_web)}
+					{@const cc = contactCountForEntreprise(entreprise.id, data.contacts)}
+					<td class="px-4 py-3">
+						{#if logo}
+							<img
+								class="logo-cell"
+								src={logo}
+								alt=""
+								onerror={(e) => {
+									(e.currentTarget as HTMLElement).style.display = 'none';
+									(e.currentTarget.nextElementSibling as HTMLElement).style.display = 'grid';
+								}}
+							/>
+							<span class="logo-cell logo-cell--placeholder">
+								{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
+							</span>
+						{:else}
+							<span class="logo-cell logo-cell--placeholder">
+								{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
+							</span>
+						{/if}
+					</td>
+					<td class="px-4 py-3 font-semibold text-text">{entreprise.raison_sociale}</td>
+					<td class="px-4 py-3 text-text-muted hidden md:table-cell">{entreprise.secteur_activite ?? '–'}</td>
+					<td class="px-4 py-3 text-text hidden md:table-cell">{entreprise.canton ?? '–'}</td>
+					<td class="px-4 py-3 text-text tabular-nums hidden lg:table-cell">{cc}</td>
+					<td class="px-4 py-3">
+						<Badge label={statutLabel(entreprise.statut_qualification)} variant={statutBadgeVariant(entreprise.statut_qualification)} />
+					</td>
+				{/snippet}
+			</DataTable>
+		{:else}
+			<EntreprisesCards
+				entreprises={filteredEntreprises}
+				contacts={data.contacts}
+				onSelect={openDetail}
+				emptyMessage={emptyMessageForTab(activeTab)}
+			/>
 		{/if}
-	{/if}
+	</div>
 </div>
+
+<button
+	type="button"
+	class="fab"
+	aria-label="Ajouter une entreprise"
+	onclick={openCreate}
+>
+	<Icon name="add" size={20} />
+</button>
 
 <!-- SlideOut détail entreprise -->
 <SlideOut bind:open={slideOutOpen} title={selectedEntreprise?.raison_sociale ?? ''}>
 	{#if selectedEntreprise}
-		{@const logo = logoUrl(selectedEntreprise.site_web)}
+		{@const logo = logoUrlForSite(selectedEntreprise.site_web)}
 		<div class="space-y-6">
 			<!-- En-tête avec logo -->
 			<div class="flex items-center gap-4">
@@ -234,7 +322,7 @@
 				{/if}
 				<div>
 					<p class="font-semibold text-lg text-text">{selectedEntreprise.raison_sociale}</p>
-					<Badge label={selectedEntreprise.statut_qualification ?? 'nouveau'} variant={statutBadgeVariant(selectedEntreprise.statut_qualification)} />
+					<Badge label={statutLabel(selectedEntreprise.statut_qualification)} variant={statutBadgeVariant(selectedEntreprise.statut_qualification)} />
 				</div>
 			</div>
 
@@ -263,7 +351,7 @@
 					<span class="text-text-muted">Adresse</span>
 					<p class="font-medium text-text">{selectedEntreprise.adresse_siege}</p>
 					{#if maps}
-						<a href={maps} target="_blank" class="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+						<a href={maps} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
 							<Icon name="map" size={14} />
 							Voir sur Google Maps
 						</a>
@@ -274,7 +362,7 @@
 			{#if selectedEntreprise.site_web}
 				<div class="text-sm">
 					<span class="text-text-muted">Site web</span>
-					<p><a href={selectedEntreprise.site_web} target="_blank" class="text-primary hover:underline">{selectedEntreprise.site_web}</a></p>
+					<p><a href={selectedEntreprise.site_web} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">{selectedEntreprise.site_web}</a></p>
 				</div>
 			{/if}
 
@@ -285,7 +373,7 @@
 				</div>
 			{/if}
 
-			<!-- Pipeline rapide (V2 mobile F4) - opportunité la plus récente non terminée -->
+			<!-- Pipeline rapide (V2 mobile F4) -->
 			<div class="border-t border-border pt-4">
 				{#if activeOpportunite}
 					<PipelineQuickAdvance opp={activeOpportunite} />
@@ -370,7 +458,7 @@
 					<button
 						type="submit"
 						disabled={enriching}
-						class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary bg-primary-light hover:bg-primary/20 rounded-lg cursor-pointer disabled:opacity-50"
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-primary bg-primary-light hover:bg-primary/20 rounded-lg cursor-pointer disabled:opacity-50"
 					>
 						<Icon name="auto_awesome" size={16} />
 						{enriching ? 'Enrichissement…' : 'Enrichir via Zefix'}
@@ -482,3 +570,151 @@
 	loading={deleting}
 	onConfirm={() => { confirmDeleteOpen = false; deleteFormEl?.requestSubmit(); }}
 />
+
+<style>
+	.page {
+		display: flex;
+		flex-direction: column;
+		min-height: calc(100vh - var(--header-height, 56px));
+	}
+	.page-actions {
+		display: flex;
+		justify-content: flex-end;
+		padding: 12px 32px;
+	}
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		height: 40px;
+		padding: 8px 16px;
+		border-radius: 10px;
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 600;
+		cursor: pointer;
+		border: none;
+		box-sizing: border-box;
+		transition: background 220ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	.btn-primary {
+		background: var(--color-primary);
+		color: white;
+	}
+	.btn-primary:hover {
+		background: var(--color-primary-hover);
+	}
+	.btn-primary:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
+	.content {
+		flex: 1;
+		padding: 32px;
+	}
+
+	/* Search input dans tabs-actions */
+	.search {
+		position: relative;
+		width: 256px;
+	}
+	.search input {
+		width: 100%;
+		height: 32px;
+		padding: 0 12px 0 36px;
+		border: 1px solid var(--color-border);
+		border-radius: 8px;
+		font: 13px inherit;
+		background: var(--color-surface);
+		color: var(--color-text);
+		font-family: inherit;
+	}
+	.search input:focus-visible {
+		border-color: var(--color-primary);
+		outline: none;
+		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.3);
+	}
+	.search :global(.search-icon) {
+		position: absolute;
+		left: 12px;
+		top: 50%;
+		transform: translateY(-50%);
+		color: var(--color-text-muted);
+		pointer-events: none;
+	}
+
+	/* Logo cell dans table view */
+	:global(.logo-cell) {
+		width: 32px;
+		height: 32px;
+		border-radius: 8px;
+		overflow: hidden;
+		border: 1px solid var(--color-border);
+		display: block;
+	}
+	:global(.logo-cell--placeholder) {
+		background: var(--color-primary-light);
+		color: var(--color-primary);
+		display: grid;
+		place-items: center;
+		font-weight: 700;
+		font-size: 13px;
+	}
+
+	@media (max-width: 1024px) {
+		.page-actions {
+			padding: 12px 24px;
+		}
+		.content {
+			padding: 24px;
+		}
+		.search {
+			width: 200px;
+		}
+	}
+	@media (max-width: 768px) {
+		.page-actions {
+			display: none;
+		}
+		.content {
+			padding: 16px 16px 96px;
+		}
+		.search {
+			flex: 1;
+			width: auto;
+		}
+	}
+
+	.fab {
+		display: none;
+	}
+
+	@media (max-width: 768px) {
+		.fab {
+			display: grid;
+			place-items: center;
+			position: fixed;
+			right: 20px;
+			bottom: 20px;
+			width: 56px;
+			height: 56px;
+			border-radius: 9999px;
+			background: var(--color-primary);
+			color: white;
+			border: none;
+			cursor: pointer;
+			box-shadow: 0 8px 24px -6px rgba(47, 90, 158, 0.45);
+			transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), background 220ms cubic-bezier(0.16, 1, 0.3, 1);
+			z-index: 20;
+		}
+		.fab:hover {
+			transform: translateY(-2px);
+			background: var(--color-primary-hover);
+		}
+		.fab:focus-visible {
+			outline: 2px solid var(--color-primary);
+			outline-offset: 2px;
+		}
+	}
+</style>
