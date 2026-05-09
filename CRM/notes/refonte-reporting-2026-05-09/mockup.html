@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="fr-CH">
+<head>
+<meta charset="utf-8" />
+<title>Mockup /reporting v9 — FilmPro CRM</title>
+<style>
+  :root {
+    --color-primary: #2F5A9E;
+    --color-primary-dark: #0A1628;
+    --color-primary-light: #F0F4F8;
+    --color-success: #12B76A;
+    --color-warning: #F79009;
+    --color-danger: #F04438;
+    --color-info: #5A7190;
+    --color-text: #1F2937;
+    --color-text-muted: #6B7280;
+    --color-surface: #FFFFFF;
+    --color-surface-alt: #F8FAFC;
+    --color-border: #E5E7EB;
+    --color-border-soft: #F1F5F9;
+    --header-height: 56px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    color: var(--color-text);
+    background: var(--color-surface-alt);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+  }
+  .sidebar {
+    background: var(--color-primary-dark);
+    color: rgba(255,255,255,.78);
+    padding: 24px 12px;
+    font-size: 13.5px;
+  }
+  .sidebar-title {
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    padding: 0 12px 24px;
+  }
+  .sidebar-section {
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,.40);
+    padding: 16px 12px 8px;
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: rgba(255,255,255,.80);
+  }
+  .sidebar-item:hover { background: rgba(255,255,255,.06); }
+  .sidebar-item.active {
+    background: rgba(47, 90, 158, 0.30);
+    color: white;
+    font-weight: 600;
+  }
+  .sidebar-icon { font-size: 18px; opacity: .85; }
+  .sidebar-promoted {
+    background: rgba(255,255,255,.04);
+    border-left: 2px solid var(--color-primary);
+  }
+
+  .main { display: flex; flex-direction: column; }
+  .topbar {
+    background: white;
+    border-bottom: 1px solid var(--color-border);
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 32px;
+    gap: 16px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar h1 {
+    font-size: 16px;
+    margin: 0;
+    color: var(--color-primary-dark);
+    font-weight: 700;
+  }
+  .topbar-subtitle {
+    font-size: 13px;
+    color: var(--color-text-muted);
+  }
+
+  /* HERO HEADER */
+  .hero {
+    padding: 32px 32px 8px;
+    background: white;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .hero h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .hero p {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    margin: 8px 0 0;
+  }
+
+  /* INDICATORS */
+  .indicators {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 32px;
+    padding: 24px 32px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .indicator {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 16px;
+    align-items: center;
+  }
+  .indicator-icon {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    background: radial-gradient(circle at 30% 30%, rgba(47,90,158,0.10), rgba(47,90,158,0.02));
+    display: grid; place-items: center;
+    color: var(--color-primary);
+    font-size: 20px;
+  }
+  .indicator.success .indicator-icon {
+    background: radial-gradient(circle at 30% 30%, rgba(18,183,106,0.12), rgba(18,183,106,0.02));
+    color: var(--color-success);
+  }
+  .indicator.warning .indicator-icon {
+    background: radial-gradient(circle at 30% 30%, rgba(247,144,9,0.12), rgba(247,144,9,0.02));
+    color: var(--color-warning);
+  }
+  .indicator-value {
+    font-size: 24px; font-weight: 700;
+    color: var(--color-primary-dark);
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+  }
+  .indicator.success .indicator-value { color: var(--color-success); }
+  .indicator.warning .indicator-value { color: var(--color-warning); }
+  .indicator-label {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  .indicator-hint {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin-top: 2px;
+  }
+
+  /* TABS */
+  .tabs-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    gap: 24px;
+    position: sticky;
+    top: var(--header-height);
+    z-index: 8;
+  }
+  [role="tablist"] { display: flex; gap: 4px; }
+  .tab {
+    height: 48px;
+    padding: 0 16px;
+    border: none; background: transparent;
+    border-bottom: 2px solid transparent;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px;
+    margin-bottom: -1px;
+    transition: color 180ms ease, border-color 180ms ease;
+  }
+  .tab:hover { color: var(--color-text); }
+  .tab[aria-selected="true"] {
+    color: var(--color-primary);
+    border-bottom-color: var(--color-primary);
+    font-weight: 600;
+  }
+  .tab:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* CONTENT */
+  .content {
+    padding: 32px;
+    flex: 1;
+  }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .panel {
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .panel-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .panel-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+  }
+  .panel-header-hint {
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+
+  /* CHART (mocked SVG) */
+  .chart {
+    width: 100%;
+    height: 180px;
+    overflow: visible;
+  }
+  .chart-bar { fill: var(--color-primary); opacity: 0.92; transition: opacity 180ms ease; }
+  .chart-bar:hover { opacity: 1; }
+  .chart-label { font-size: 11px; fill: var(--color-text-muted); }
+  .chart-value { font-size: 11px; fill: var(--color-primary-dark); font-weight: 600; }
+
+  /* TABLE */
+  .data-table {
+    width: 100%;
+    margin-top: 16px;
+    font-size: 13px;
+    border-collapse: collapse;
+  }
+  .data-table thead th {
+    text-align: left;
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+    font-weight: 600;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface-alt);
+  }
+  .data-table tbody td {
+    padding: 12px;
+    border-bottom: 1px solid var(--color-border-soft);
+  }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+  /* ACTIVITY CARDS */
+  .activity-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 16px;
+  }
+  .activity-card {
+    background: var(--color-surface-alt);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .activity-card h4 {
+    margin: 0 0 4px;
+    font-size: 13px;
+    color: var(--color-text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .activity-card .big {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    margin-top: 4px;
+  }
+  .activity-card .row {
+    display: flex; justify-content: space-between;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--color-border);
+    font-size: 12px;
+  }
+  .activity-card .row .label { color: var(--color-text-muted); }
+  .activity-card .row .value { font-weight: 600; color: var(--color-text); }
+
+  /* EXPORT CARDS */
+  .export-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+  .export-card {
+    background: white;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform 200ms cubic-bezier(0.16,1,0.3,1), box-shadow 200ms ease, border-color 180ms ease;
+    text-decoration: none;
+    color: inherit;
+  }
+  .export-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+    border-color: var(--color-primary);
+  }
+  .export-card-header {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .export-card-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: radial-gradient(circle at 30% 30%, rgba(47,90,158,0.12), rgba(47,90,158,0.02));
+    color: var(--color-primary);
+    display: grid; place-items: center;
+    font-size: 22px;
+  }
+  .export-card-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+  }
+  .export-card-meta {
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+  .export-card-cta {
+    margin-top: auto;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600;
+    color: var(--color-primary);
+  }
+
+  /* MATERIAL ICONS via Unicode fallback */
+  .icon { font-family: 'Material Symbols Rounded', system-ui; }
+
+  @media (max-width: 1024px) {
+    .indicators { grid-template-columns: repeat(2,1fr); gap: 24px; padding: 16px 24px; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .activity-grid { grid-template-columns: 1fr; }
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+  }
+  @media (max-width: 640px) {
+    .hero { padding: 24px 16px 8px; }
+    .hero h2 { font-size: 20px; }
+    .indicators { grid-template-columns: 1fr; gap: 16px; padding: 16px; }
+    .tabs-bar { padding: 0 16px; }
+    .content { padding: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="layout">
+  <aside class="sidebar">
+    <div class="sidebar-title">FilmPro CRM</div>
+
+    <div class="sidebar-section">PRINCIPAL</div>
+    <div class="sidebar-item"><span class="sidebar-icon">▦</span> Dashboard</div>
+    <div class="sidebar-item"><span class="sidebar-icon">◉</span> Contacts</div>
+    <div class="sidebar-item"><span class="sidebar-icon">◫</span> Entreprises</div>
+    <div class="sidebar-item"><span class="sidebar-icon">▷</span> Pipeline</div>
+    <div class="sidebar-item"><span class="sidebar-icon">⚲</span> Prospection</div>
+    <div class="sidebar-item"><span class="sidebar-icon">🔔</span> Signaux</div>
+    <div class="sidebar-item"><span class="sidebar-icon">◎</span> Veille Sectorielle</div>
+    <div class="sidebar-item active sidebar-promoted"><span class="sidebar-icon">▤</span> Reporting <span style="margin-left:auto;font-size:10px;color:var(--color-success)">↑ promu</span></div>
+
+    <div class="sidebar-section">SECONDAIRE</div>
+    <div class="sidebar-item"><span class="sidebar-icon">?</span> Aide</div>
+    <div class="sidebar-item"><span class="sidebar-icon">€</span> Coûts API</div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <h1>Reporting</h1>
+      <span class="topbar-subtitle">Métriques d'activité et de pipeline</span>
+    </header>
+
+    <div class="hero">
+      <h2>Reporting</h2>
+      <p>Synthèse opérationnelle FilmPro — pipeline, conversion, activité.</p>
+    </div>
+
+    <section class="indicators" aria-label="Indicateurs reporting">
+      <div class="indicator">
+        <div class="indicator-icon">€</div>
+        <div>
+          <div class="indicator-value tabular-nums">CHF 1 245 000</div>
+          <div class="indicator-label">Pipeline actif</div>
+          <div class="indicator-hint">Hors gagné/perdu</div>
+        </div>
+      </div>
+      <div class="indicator success">
+        <div class="indicator-icon">↗</div>
+        <div>
+          <div class="indicator-value tabular-nums">38,2 %</div>
+          <div class="indicator-label">Conversion leads</div>
+          <div class="indicator-hint">42 / 110 transférés</div>
+        </div>
+      </div>
+      <div class="indicator">
+        <div class="indicator-icon">◉</div>
+        <div>
+          <div class="indicator-value tabular-nums">23</div>
+          <div class="indicator-label">Contacts créés 30j</div>
+          <div class="indicator-hint">71 sur 90j</div>
+        </div>
+      </div>
+      <div class="indicator">
+        <div class="indicator-icon">▷</div>
+        <div>
+          <div class="indicator-value tabular-nums">11</div>
+          <div class="indicator-label">Opportunités 30j</div>
+          <div class="indicator-hint">28 sur 90j</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="tabs-bar">
+      <div role="tablist" aria-label="Sections reporting">
+        <button role="tab" aria-selected="true" class="tab">Synthèse</button>
+        <button role="tab" aria-selected="false" class="tab">Pipeline</button>
+        <button role="tab" aria-selected="false" class="tab">Activité</button>
+        <button role="tab" aria-selected="false" class="tab">Export</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- TAB : SYNTHÈSE (default) -->
+      <div class="grid-2">
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Pipeline par étape</h3>
+            <span class="panel-header-hint">Compte d'opportunités</span>
+          </div>
+          <svg class="chart" viewBox="0 0 360 180" preserveAspectRatio="xMinYMid meet" aria-label="Pipeline par étape">
+            <!-- 6 étapes : identification, qualification, proposition, négociation, gagné, perdu -->
+            <rect class="chart-bar" x="0" y="40" width="36" height="120" rx="3"/>
+            <text class="chart-value" x="18" y="32" text-anchor="middle">12</text>
+            <text class="chart-label" x="18" y="176" text-anchor="middle">Ident.</text>
+
+            <rect class="chart-bar" x="44" y="60" width="36" height="100" rx="3"/>
+            <text class="chart-value" x="62" y="52" text-anchor="middle">10</text>
+            <text class="chart-label" x="62" y="176" text-anchor="middle">Qual.</text>
+
+            <rect class="chart-bar" x="88" y="80" width="36" height="80" rx="3"/>
+            <text class="chart-value" x="106" y="72" text-anchor="middle">8</text>
+            <text class="chart-label" x="106" y="176" text-anchor="middle">Prop.</text>
+
+            <rect class="chart-bar" x="132" y="100" width="36" height="60" rx="3"/>
+            <text class="chart-value" x="150" y="92" text-anchor="middle">6</text>
+            <text class="chart-label" x="150" y="176" text-anchor="middle">Négo.</text>
+
+            <rect class="chart-bar" x="176" y="130" width="36" height="30" rx="3" style="fill:var(--color-success)"/>
+            <text class="chart-value" x="194" y="122" text-anchor="middle">3</text>
+            <text class="chart-label" x="194" y="176" text-anchor="middle">Gagné</text>
+
+            <rect class="chart-bar" x="220" y="140" width="36" height="20" rx="3" style="fill:var(--color-danger)"/>
+            <text class="chart-value" x="238" y="132" text-anchor="middle">2</text>
+            <text class="chart-label" x="238" y="176" text-anchor="middle">Perdu</text>
+          </svg>
+        </section>
+
+        <section class="panel">
+          <div class="panel-header">
+            <h3>Évolution mensuelle</h3>
+            <span class="panel-header-hint">Opportunités créées 12 mois</span>
+          </div>
+          <svg class="chart" viewBox="0 0 528 180" preserveAspectRatio="xMinYMid meet" aria-label="Évolution mensuelle">
+            <!-- 12 barres -->
+            <g>
+              <rect class="chart-bar" x="0"   y="120" width="36" height="40" rx="3"/><text class="chart-label" x="18"  y="176" text-anchor="middle">Juin</text>
+              <rect class="chart-bar" x="44"  y="100" width="36" height="60" rx="3"/><text class="chart-label" x="62"  y="176" text-anchor="middle">Juil</text>
+              <rect class="chart-bar" x="88"  y="80"  width="36" height="80" rx="3"/><text class="chart-label" x="106" y="176" text-anchor="middle">Août</text>
+              <rect class="chart-bar" x="132" y="60"  width="36" height="100" rx="3"/><text class="chart-label" x="150" y="176" text-anchor="middle">Sep</text>
+              <rect class="chart-bar" x="176" y="50"  width="36" height="110" rx="3"/><text class="chart-label" x="194" y="176" text-anchor="middle">Oct</text>
+              <rect class="chart-bar" x="220" y="40"  width="36" height="120" rx="3"/><text class="chart-label" x="238" y="176" text-anchor="middle">Nov</text>
+              <rect class="chart-bar" x="264" y="60"  width="36" height="100" rx="3"/><text class="chart-label" x="282" y="176" text-anchor="middle">Déc</text>
+              <rect class="chart-bar" x="308" y="80"  width="36" height="80" rx="3"/><text class="chart-label" x="326" y="176" text-anchor="middle">Jan</text>
+              <rect class="chart-bar" x="352" y="70"  width="36" height="90" rx="3"/><text class="chart-label" x="370" y="176" text-anchor="middle">Fév</text>
+              <rect class="chart-bar" x="396" y="55"  width="36" height="105" rx="3"/><text class="chart-label" x="414" y="176" text-anchor="middle">Mar</text>
+              <rect class="chart-bar" x="440" y="40"  width="36" height="120" rx="3"/><text class="chart-label" x="458" y="176" text-anchor="middle">Avr</text>
+              <rect class="chart-bar" x="484" y="50"  width="36" height="110" rx="3"/><text class="chart-label" x="502" y="176" text-anchor="middle">Mai</text>
+            </g>
+          </svg>
+        </section>
+      </div>
+
+      <!-- ACTIVITÉ CARDS (panneau bas) -->
+      <section class="panel" style="margin-top: 24px;">
+        <div class="panel-header">
+          <h3>Activité</h3>
+          <span class="panel-header-hint">Création de contacts, entreprises, opportunités</span>
+        </div>
+        <div class="activity-grid">
+          <div class="activity-card">
+            <h4>Contacts</h4>
+            <div class="big tabular-nums">23</div>
+            <div class="row"><span class="label">90 derniers jours</span><span class="value">71</span></div>
+            <div class="row"><span class="label">Total</span><span class="value">412</span></div>
+          </div>
+          <div class="activity-card">
+            <h4>Entreprises</h4>
+            <div class="big tabular-nums">12</div>
+            <div class="row"><span class="label">90 derniers jours</span><span class="value">38</span></div>
+            <div class="row"><span class="label">Total</span><span class="value">187</span></div>
+          </div>
+          <div class="activity-card">
+            <h4>Opportunités</h4>
+            <div class="big tabular-nums">11</div>
+            <div class="row"><span class="label">90 derniers jours</span><span class="value">28</span></div>
+            <div class="row"><span class="label">Total</span><span class="value">142</span></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- EXPORT (panneau bas suivant) -->
+      <section class="panel" style="margin-top: 24px;">
+        <div class="panel-header">
+          <h3>Export CSV</h3>
+          <span class="panel-header-hint">Données complètes pour utilisation externe</span>
+        </div>
+        <div class="export-grid" style="margin-top:16px;">
+          <a href="/api/export/contacts" class="export-card">
+            <div class="export-card-header">
+              <div class="export-card-icon">⇩</div>
+              <div>
+                <div class="export-card-title">Contacts</div>
+                <div class="export-card-meta">412 lignes — CSV</div>
+              </div>
+            </div>
+            <div class="export-card-cta">Télécharger →</div>
+          </a>
+          <a href="/api/export/entreprises" class="export-card">
+            <div class="export-card-header">
+              <div class="export-card-icon">⇩</div>
+              <div>
+                <div class="export-card-title">Entreprises</div>
+                <div class="export-card-meta">187 lignes — CSV</div>
+              </div>
+            </div>
+            <div class="export-card-cta">Télécharger →</div>
+          </a>
+          <a href="/api/export/leads" class="export-card">
+            <div class="export-card-header">
+              <div class="export-card-icon">⇩</div>
+              <div>
+                <div class="export-card-title">Leads de prospection</div>
+                <div class="export-card-meta">110 lignes — CSV</div>
+              </div>
+            </div>
+            <div class="export-card-cta">Télécharger →</div>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+</body>
+</html>

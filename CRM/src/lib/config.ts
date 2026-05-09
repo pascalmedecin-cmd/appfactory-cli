@@ -227,13 +227,13 @@ export const config = {
 				label: 'Veille Sectorielle',
 				icon: 'radar',
 			},
-		],
-		secondary: [
 			{
 				href: '/reporting',
 				label: 'Reporting',
 				icon: 'bar_chart',
 			},
+		],
+		secondary: [
 			{
 				href: '/aide',
 				label: 'Aide',

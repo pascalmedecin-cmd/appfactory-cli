@@ -1,170 +1,221 @@
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
 	import type { PageData } from './$types';
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import {
+		reportingIndicators,
+		reportingTabs,
+		exportEntries,
+		type ReportingTab,
+		type ReportingData,
+	} from '$lib/utils/reportingFormat';
+	import ReportingIndicators from '$lib/components/reporting/ReportingIndicators.svelte';
+	import ReportingTabs from '$lib/components/reporting/ReportingTabs.svelte';
+	import ReportingChartPipeline from '$lib/components/reporting/ReportingChartPipeline.svelte';
+	import ReportingChartMonthly from '$lib/components/reporting/ReportingChartMonthly.svelte';
+	import ReportingPipelineTable from '$lib/components/reporting/ReportingPipelineTable.svelte';
+	import ReportingActivityCards from '$lib/components/reporting/ReportingActivityCards.svelte';
+	import ReportingExportCards from '$lib/components/reporting/ReportingExportCards.svelte';
 
 	let { data }: { data: PageData } = $props();
 
-	const MONTH_LABELS: Record<string, string> = {
-		'01': 'Jan', '02': 'Fév', '03': 'Mar', '04': 'Avr', '05': 'Mai', '06': 'Juin',
-		'07': 'Juil', '08': 'Août', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Déc'
-	};
+	let activeTab: ReportingTab = $state('synthese');
 
-	function formatMonth(key: string): string {
-		const [, mm] = key.split('-');
-		return MONTH_LABELS[mm] ?? key;
+	const reporting: ReportingData = $derived({
+		pipelineActifTotal: data.pipelineActifTotal,
+		conversion: data.conversion,
+		activityContacts: data.activityContacts,
+		activityEntreprises: data.activityEntreprises,
+		activityOpportunites: data.activityOpportunites,
+	});
+
+	const indicators = $derived(reportingIndicators(reporting));
+	const tabs = reportingTabs();
+	const exports = $derived(exportEntries(reporting));
+
+	$effect(() => {
+		$pageSubtitle = "Métriques d'activité et de pipeline";
+	});
+
+	function setTab(tab: ReportingTab) {
+		activeTab = tab;
 	}
-
-	function formatCHF(n: number): string {
-		return new Intl.NumberFormat('fr-CH', { style: 'currency', currency: 'CHF', maximumFractionDigits: 0 }).format(n);
-	}
-
-	function maxOf(values: number[]): number {
-		return values.length ? Math.max(...values, 1) : 1;
-	}
-
-	// Dimensions SVG
-	const BAR_WIDTH = 36;
-	const BAR_GAP = 8;
-	const CHART_HEIGHT = 140;
-	const CHART_PADDING_TOP = 20;
-
-	const monthlyMax = $derived(maxOf(data.monthlyPipeline.map((m) => m.count)));
-	const monthlyWidth = $derived(data.monthlyPipeline.length * (BAR_WIDTH + BAR_GAP));
-
-	const pipelineMax = $derived(maxOf(data.pipelineEtape.map((p) => p.count)));
-	const pipelineWidth = $derived(data.pipelineEtape.length * (BAR_WIDTH + BAR_GAP));
 </script>
 
 <svelte:head>
-	<title>Reporting - FilmPro CRM</title>
+	<title>Reporting · FilmPro CRM</title>
 </svelte:head>
 
-<div class="space-y-6">
-	<header>
-		<h1 class="text-2xl font-semibold text-text">Reporting</h1>
-		<p class="text-sm text-text-muted mt-1">Métriques d'activité et de pipeline.</p>
+<div class="page">
+	<header class="hero">
+		<h1>Reporting</h1>
+		<p>Synthèse opérationnelle FilmPro — pipeline, conversion, activité.</p>
 	</header>
 
-	<!-- KPIs -->
-	<section class="grid grid-cols-2 md:grid-cols-4 gap-4">
-		<div class="bg-white border border-border rounded-lg p-4 shadow-xs">
-			<div class="text-xs uppercase tracking-wide text-text-muted">Pipeline actif</div>
-			<div class="text-2xl font-semibold mt-1">{formatCHF(data.pipelineActifTotal)}</div>
-			<div class="text-xs text-text-muted mt-1">Montants hors gagné/perdu</div>
-		</div>
-		<div class="bg-white border border-border rounded-lg p-4 shadow-xs">
-			<div class="text-xs uppercase tracking-wide text-text-muted">Conversion leads</div>
-			<div class="text-2xl font-semibold mt-1">{data.conversion.taux_pct}%</div>
-			<div class="text-xs text-text-muted mt-1">
-				{data.conversion.opportunites_depuis_lead} / {data.conversion.total_leads} transférés
-			</div>
-		</div>
-		<div class="bg-white border border-border rounded-lg p-4 shadow-xs">
-			<div class="text-xs uppercase tracking-wide text-text-muted">Contacts créés 30j</div>
-			<div class="text-2xl font-semibold mt-1">{data.activityContacts.last_30_days}</div>
-			<div class="text-xs text-text-muted mt-1">{data.activityContacts.last_90_days} sur 90j</div>
-		</div>
-		<div class="bg-white border border-border rounded-lg p-4 shadow-xs">
-			<div class="text-xs uppercase tracking-wide text-text-muted">Opportunités 30j</div>
-			<div class="text-2xl font-semibold mt-1">{data.activityOpportunites.last_30_days}</div>
-			<div class="text-xs text-text-muted mt-1">{data.activityOpportunites.last_90_days} sur 90j</div>
-		</div>
-	</section>
+	<ReportingIndicators values={indicators} />
 
-	<!-- Pipeline actuel par étape -->
-	<section class="bg-white border border-border rounded-lg p-5 shadow-xs">
-		<h2 class="text-sm font-semibold text-text mb-1">Pipeline par étape</h2>
-		<p class="text-xs text-text-muted mb-4">Nombre d'opportunités par étape actuelle.</p>
+	<ReportingTabs active={activeTab} {tabs} onSelect={setTab} />
 
-		{#if data.pipelineEtape.length === 0}
-			<div class="text-sm text-text-muted py-8 text-center">Aucune opportunité enregistrée.</div>
-		{:else}
-			<div class="w-full">
-				<svg width="100%" viewBox="0 0 {pipelineWidth} {CHART_HEIGHT + 50}" preserveAspectRatio="xMinYMid meet" aria-label="Graphique pipeline par étape">
-					{#each data.pipelineEtape as stat, i}
-						{@const h = (stat.count / pipelineMax) * CHART_HEIGHT}
-						{@const x = i * (BAR_WIDTH + BAR_GAP)}
-						{@const y = CHART_PADDING_TOP + (CHART_HEIGHT - h)}
-						<rect x={x} y={y} width={BAR_WIDTH} height={h} class="fill-primary" rx="3" />
-						<text x={x + BAR_WIDTH / 2} y={y - 6} text-anchor="middle" class="text-[11px] fill-text font-medium">
-							{stat.count}
-						</text>
-						<text x={x + BAR_WIDTH / 2} y={CHART_HEIGHT + CHART_PADDING_TOP + 16} text-anchor="middle" class="text-[11px] fill-text-muted">
-							{stat.etape}
-						</text>
-					{/each}
-				</svg>
-			</div>
+	<div class="content">
+		{#if activeTab === 'synthese'}
+			<div role="tabpanel" id="panel-synthese" aria-labelledby="tab-synthese">
+				<div class="grid-2">
+					<section class="panel">
+						<header class="panel-header">
+							<h2>Pipeline par étape</h2>
+							<span class="panel-hint">Compte d'opportunités</span>
+						</header>
+						<ReportingChartPipeline stats={data.pipelineEtape} />
+					</section>
 
-			<table class="w-full mt-4 text-sm">
-				<thead>
-					<tr class="text-left text-xs uppercase text-text-muted border-b border-border">
-						<th class="py-2 pr-4">Étape</th>
-						<th class="py-2 pr-4 text-right">Count</th>
-						<th class="py-2 text-right">Montant total</th>
-					</tr>
-				</thead>
-				<tbody>
-					{#each data.pipelineEtape as stat}
-						<tr class="border-b border-border/50">
-							<td class="py-2 pr-4">{stat.etape}</td>
-							<td class="py-2 pr-4 text-right">{stat.count}</td>
-							<td class="py-2 text-right">{formatCHF(stat.montant_total)}</td>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-		{/if}
-	</section>
+					<section class="panel">
+						<header class="panel-header">
+							<h2>Évolution mensuelle</h2>
+							<span class="panel-hint">Opportunités créées · 12 mois</span>
+						</header>
+						<ReportingChartMonthly stats={data.monthlyPipeline} />
+					</section>
+				</div>
 
-	<!-- Évolution mensuelle -->
-	<section class="bg-white border border-border rounded-lg p-5 shadow-xs">
-		<h2 class="text-sm font-semibold text-text mb-1">Opportunités créées : 12 derniers mois</h2>
-		<p class="text-xs text-text-muted mb-4">Nombre d'opportunités ouvertes par mois.</p>
-
-		<div class="w-full">
-			<svg width="100%" viewBox="0 0 {monthlyWidth} {CHART_HEIGHT + 50}" preserveAspectRatio="xMinYMid meet" aria-label="Graphique opportunités par mois">
-				{#each data.monthlyPipeline as stat, i}
-					{@const h = (stat.count / monthlyMax) * CHART_HEIGHT}
-					{@const x = i * (BAR_WIDTH + BAR_GAP)}
-					{@const y = CHART_PADDING_TOP + (CHART_HEIGHT - h)}
-					<rect
-						x={x}
-						y={y}
-						width={BAR_WIDTH}
-						height={h || 2}
-						class="fill-primary"
-						rx="3"
+				<section class="panel mt-24">
+					<header class="panel-header">
+						<h2>Activité</h2>
+						<span class="panel-hint">Création de contacts, entreprises, opportunités</span>
+					</header>
+					<ReportingActivityCards
+						contacts={data.activityContacts}
+						entreprises={data.activityEntreprises}
+						opportunites={data.activityOpportunites}
 					/>
-					<text x={x + BAR_WIDTH / 2} y={y - 6} text-anchor="middle" class="text-[11px] fill-text font-medium">
-						{stat.count || ''}
-					</text>
-					<text x={x + BAR_WIDTH / 2} y={CHART_HEIGHT + CHART_PADDING_TOP + 16} text-anchor="middle" class="text-[11px] fill-text-muted">
-						{formatMonth(stat.month)}
-					</text>
-				{/each}
-			</svg>
-		</div>
-	</section>
+				</section>
+			</div>
+		{:else if activeTab === 'pipeline'}
+			<div role="tabpanel" id="panel-pipeline" aria-labelledby="tab-pipeline">
+				<section class="panel">
+					<header class="panel-header">
+						<h2>Pipeline détaillé par étape</h2>
+						<span class="panel-hint">Compte et montants par étape pipeline</span>
+					</header>
+					<ReportingChartPipeline stats={data.pipelineEtape} />
+					<div class="mt-24">
+						<ReportingPipelineTable stats={data.pipelineEtape} />
+					</div>
+				</section>
+			</div>
+		{:else if activeTab === 'activite'}
+			<div role="tabpanel" id="panel-activite" aria-labelledby="tab-activite">
+				<section class="panel">
+					<header class="panel-header">
+						<h2>Évolution mensuelle des opportunités</h2>
+						<span class="panel-hint">12 derniers mois</span>
+					</header>
+					<ReportingChartMonthly stats={data.monthlyPipeline} />
+				</section>
 
-	<!-- Export CSV -->
-	<section class="bg-white border border-border rounded-lg p-5 shadow-xs">
-		<h2 class="text-sm font-semibold text-text mb-1">Exporter les données</h2>
-		<p class="text-xs text-text-muted mb-4">Télécharge un CSV complet pour utilisation externe.</p>
-
-		<div class="flex flex-wrap gap-2">
-			<a href="/api/export/contacts" class="inline-flex items-center gap-2 px-3 py-2 text-sm bg-surface hover:bg-border/40 border border-border rounded-md transition-colors">
-				<Icon name="download" size={18} />
-				Contacts
-			</a>
-			<a href="/api/export/entreprises" class="inline-flex items-center gap-2 px-3 py-2 text-sm bg-surface hover:bg-border/40 border border-border rounded-md transition-colors">
-				<Icon name="download" size={18} />
-				Entreprises
-			</a>
-			<a href="/api/export/leads" class="inline-flex items-center gap-2 px-3 py-2 text-sm bg-surface hover:bg-border/40 border border-border rounded-md transition-colors">
-				<Icon name="download" size={18} />
-				Leads
-			</a>
-		</div>
-	</section>
+				<section class="panel mt-24">
+					<header class="panel-header">
+						<h2>Activité 30 / 90 jours</h2>
+						<span class="panel-hint">Création de fiches</span>
+					</header>
+					<ReportingActivityCards
+						contacts={data.activityContacts}
+						entreprises={data.activityEntreprises}
+						opportunites={data.activityOpportunites}
+					/>
+				</section>
+			</div>
+		{:else if activeTab === 'export'}
+			<div role="tabpanel" id="panel-export" aria-labelledby="tab-export">
+				<section class="panel">
+					<header class="panel-header">
+						<h2>Export CSV</h2>
+						<span class="panel-hint">Données complètes pour utilisation externe</span>
+					</header>
+					<ReportingExportCards entries={exports} />
+				</section>
+			</div>
+		{/if}
+	</div>
 </div>
+
+<style>
+	.page {
+		display: flex;
+		flex-direction: column;
+	}
+	.hero {
+		padding: 32px 32px 24px;
+		background: var(--color-surface);
+	}
+	.hero h1 {
+		font-size: 24px;
+		font-weight: 700;
+		color: var(--color-primary-dark);
+		letter-spacing: -0.01em;
+		margin: 0;
+	}
+	.hero p {
+		font-size: 13px;
+		color: var(--color-text-muted);
+		margin: 8px 0 0;
+	}
+	.content {
+		padding: 32px;
+	}
+	.grid-2 {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 24px;
+	}
+	.panel {
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: 12px;
+		padding: 24px;
+	}
+	.panel-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		margin-bottom: 16px;
+	}
+	.panel-header h2 {
+		margin: 0;
+		font-size: 14px;
+		font-weight: 700;
+		color: var(--color-primary-dark);
+	}
+	.panel-hint {
+		font-size: 12px;
+		color: var(--color-text-muted);
+	}
+	.mt-24 {
+		margin-top: 24px;
+	}
+
+	@media (max-width: 1024px) {
+		.hero {
+			padding: 24px;
+		}
+		.content {
+			padding: 24px;
+		}
+		.grid-2 {
+			grid-template-columns: 1fr;
+		}
+	}
+	@media (max-width: 640px) {
+		.hero {
+			padding: 16px;
+		}
+		.hero h1 {
+			font-size: 20px;
+		}
+		.content {
+			padding: 16px;
+		}
+		.panel {
+			padding: 16px;
+		}
+	}
+</style>
