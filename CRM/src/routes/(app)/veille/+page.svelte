@@ -209,7 +209,8 @@
 
 					<a
 						href={`/veille/${featured.id}`}
-						class="inline-flex self-start items-center gap-2 h-11 px-4 box-border rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors mt-auto group"
+						aria-label={`Lire l'édition complète n°${editionNumber(featured.week_label)} ${featured.week_label}`}
+						class="inline-flex self-start items-center gap-2 h-11 px-4 box-border rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors mt-auto group"
 					>
 						Lire l'édition complète
 						<Icon
@@ -238,8 +239,10 @@
 				</div>
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{#each archives as ed (ed.id)}
-						<article
-							class="mag-archive-card bg-white rounded-xl border border-border shadow-xs hover:shadow-md hover:border-primary/40 transition-all overflow-hidden grid grid-cols-[112px_1fr] sm:grid-cols-[128px_1fr] group"
+						<a
+							href={`/veille/${ed.id}`}
+							aria-label={`Lire l'édition n°${editionNumber(ed.week_label)} ${ed.week_label}, ${ed.items_total} signal${ed.items_total > 1 ? 's' : ''}, publiée le ${formatDateLong(ed.generated_at)}${ed.is_unread ? ', nouvelle' : ''}`}
+							class="mag-archive-card group bg-white rounded-xl border border-border shadow-xs hover:shadow-md hover:border-primary/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all overflow-hidden grid grid-cols-[112px_1fr] sm:grid-cols-[128px_1fr]"
 						>
 							<!-- Mini-couverture navy : numéro édition -->
 							<aside
@@ -273,9 +276,9 @@
 							<!-- Corps blanc : meta + summary + 3 puces + CTA -->
 							<div class="flex flex-col">
 								<header class="px-5 sm:px-6 pt-5 sm:pt-6 pb-3">
-									<div class="mag-archive-title text-sm font-semibold text-text transition-colors">
+									<h3 class="mag-archive-title text-sm font-semibold text-text transition-colors group-hover:text-primary">
 										{ed.week_label}
-									</div>
+									</h3>
 									<div class="text-xs text-text-muted mt-1">
 										{formatDateLong(ed.generated_at)}
 									</div>
@@ -310,8 +313,7 @@
 								<footer
 									class="px-5 sm:px-6 py-4 border-t border-border bg-surface-alt"
 								>
-									<a
-										href={`/veille/${ed.id}`}
+									<span
 										class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary group-hover:text-primary-hover transition-colors"
 									>
 										Lire cette édition
@@ -320,10 +322,10 @@
 											size={14}
 											class="transition-transform group-hover:translate-x-0.5"
 										/>
-									</a>
+									</span>
 								</footer>
 							</div>
-						</article>
+						</a>
 					{/each}
 				</div>
 			</section>
