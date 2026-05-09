@@ -155,7 +155,16 @@ export const SignalDeleteSchema = z.object({
 });
 
 export const SignalBatchDeleteSchema = z.object({
-	ids: z.string().min(1, 'Aucun signal sélectionné'),
+	ids: z
+		.string()
+		.min(1, 'Aucun signal sélectionné')
+		.transform((s) => s.split(',').filter(Boolean))
+		.pipe(
+			z
+				.array(z.string().uuid())
+				.min(1, 'Aucun signal sélectionné')
+				.max(500, 'Maximum 500 signaux par lot')
+		),
 });
 
 export const SignalCreateOpportuniteSchema = z.object({

@@ -4,54 +4,58 @@
 	import { goto } from '$app/navigation';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
+	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Select from '$lib/components/Select.svelte';
-	import { pageSubtitle } from '$lib/stores/pageSubtitle';
-
-	$effect(() => { $pageSubtitle = `${filteredSignaux.length} ${filteredSignaux.length > 1 ? 'signaux' : 'signal'}`; });
 	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
-	import { calculerScore } from '$lib/scoring';
+	import {
+		signauxIndicators,
+		signauxCountsByTab,
+		filterSignauxByTab,
+		emptyMessageForTab,
+		formatTypeLabel,
+		typeIcon,
+		formatDate,
+		formatRelative,
+		scoreStyle,
+		statutLabel,
+		statutVariant,
+		type SignauxTab,
+	} from '$lib/utils/signauxFormat';
+	import SignauxIndicators from '$lib/components/signaux/SignauxIndicators.svelte';
+	import SignauxTabs from '$lib/components/signaux/SignauxTabs.svelte';
+	import SignauxCards from '$lib/components/signaux/SignauxCards.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	type Signal = (typeof data.signaux)[number];
 
+	// UI state
+	let activeTab: SignauxTab = $state('tous');
 	let slideOutOpen = $state(false);
 	let selectedSignal = $state<Signal | null>(null);
 	let modalOpen = $state(false);
 	let editMode = $state(false);
 	let saving = $state(false);
 	let convertModalOpen = $state(false);
-	let deleteConfirm = $state<string | null>(null);
+	let confirmDeleteOpen = $state(false);
+	let deleting = $state(false);
+	let deleteFormEl: HTMLFormElement | null = $state(null);
 	let selectMode = $state(false);
 	let selectedIds = $state<Set<string>>(new Set());
 	let batchDeleting = $state(false);
-	let batchDeleteConfirm = $state(false);
+	let batchDeleteConfirmOpen = $state(false);
+	let batchDeleteFormEl: HTMLFormElement | null = $state(null);
 
-	function toggleSelect(id: string) {
-		const next = new Set(selectedIds);
-		if (next.has(id)) next.delete(id);
-		else next.add(id);
-		selectedIds = next;
-	}
-
-	function toggleSelectAll() {
-		if (selectedIds.size === filteredSignaux.length) {
-			selectedIds = new Set();
-		} else {
-			selectedIds = new Set(filteredSignaux.map(s => s.id));
-		}
-	}
-
-	function exitSelectMode() {
-		selectMode = false;
-		selectedIds = new Set();
-		batchDeleteConfirm = false;
-	}
+	// Filtres secondaires (type, canton)
+	let filterType = $state('');
+	let filterCanton = $state('');
 
 	// Form fields
 	let type_signal = $state('');
@@ -70,103 +74,57 @@
 	let opp_titre = $state('');
 	let opp_entreprise_id = $state('');
 
-	// Filters
-	let filterType = $state('');
-	let filterCanton = $state('');
-	let filterStatut = $state('');
+	const TYPE_SIGNAL_OPTIONS = config.signaux.types.map((t) => ({ value: t.key, label: t.label }));
 
-	const TYPES_MAP = new Map(config.signaux.types.map(t => [t.key, t.label]));
-	const TYPE_SIGNAL_OPTIONS = config.signaux.types.map(t => ({ value: t.key, label: t.label }));
+	const indicators = $derived(signauxIndicators(data.signaux));
+	const counts = $derived(signauxCountsByTab(data.signaux));
 
-	const TYPE_ICONS: Record<string, string> = {
-		appel_offres: 'gavel',
-		permis_construire: 'construction',
-		creation_entreprise: 'domain_add',
-		demenagement: 'local_shipping',
-		expansion: 'trending_up',
-		fusion_acquisition: 'merge',
-		autre: 'info',
-	};
+	const tabsSpec = $derived([
+		{ key: 'tous' as SignauxTab, label: 'Tous', count: counts.tous },
+		{ key: 'nouveau' as SignauxTab, label: 'Nouveau', count: counts.nouveau },
+		{ key: 'en_analyse' as SignauxTab, label: 'En analyse', count: counts.en_analyse },
+		{ key: 'interesse' as SignauxTab, label: 'Intéressé', count: counts.interesse },
+		{ key: 'converti' as SignauxTab, label: 'Converti', count: counts.converti },
+		{ key: 'ecarte' as SignauxTab, label: 'Écarté', count: counts.ecarte },
+	]);
 
-	const STATUTS = [
-		{ key: 'nouveau', label: 'Nouveau', variant: 'warning' as const },
-		{ key: 'en_analyse', label: 'En analyse', variant: 'info' as const },
-		{ key: 'interesse', label: 'Intéressé', variant: 'success' as const },
-		{ key: 'ecarte', label: 'Écarté', variant: 'muted' as const },
-		{ key: 'converti', label: 'Converti', variant: 'default' as const },
-	];
+	const filteredByTab = $derived(filterSignauxByTab(data.signaux, activeTab));
 
 	const filteredSignaux = $derived.by(() => {
-		let result = data.signaux;
-		if (filterType) result = result.filter(s => s.type_signal === filterType);
-		if (filterCanton) result = result.filter(s => s.canton === filterCanton);
-		if (filterStatut) result = result.filter(s => s.statut_traitement === filterStatut);
-		return result;
+		let out = filteredByTab;
+		if (filterType) out = out.filter((s: Signal) => s.type_signal === filterType);
+		if (filterCanton) out = out.filter((s: Signal) => s.canton === filterCanton);
+		return out;
 	});
 
-	const cantons = $derived([...new Set(data.signaux.map(s => s.canton).filter(Boolean))].sort());
+	const cantons = $derived(
+		[...new Set(data.signaux.map((s: Signal) => s.canton).filter(Boolean) as string[])].sort()
+	);
 
-	const countByStatut = $derived.by(() => {
-		const counts: Record<string, number> = {};
-		for (const s of data.signaux) {
-			const st = s.statut_traitement ?? 'nouveau';
-			counts[st] = (counts[st] ?? 0) + 1;
+	$effect(() => {
+		const total = filteredSignaux.length;
+		$pageSubtitle = total === 0 ? 'Aucun signal' : `${total} ${total > 1 ? 'signaux' : 'signal'}`;
+	});
+
+	function toggleSelect(id: string) {
+		const next = new Set(selectedIds);
+		if (next.has(id)) next.delete(id);
+		else next.add(id);
+		selectedIds = next;
+	}
+
+	function toggleSelectAll() {
+		if (selectedIds.size === filteredSignaux.length) {
+			selectedIds = new Set();
+		} else {
+			selectedIds = new Set(filteredSignaux.map((s: Signal) => s.id));
 		}
-		return counts;
-	});
-
-	function formatTypeLabel(type: string | null): string {
-		if (!type) return '--';
-		return TYPES_MAP.get(type as typeof config.signaux.types[number]['key']) ?? type.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
 	}
 
-	function typeIcon(type: string | null): string {
-		return TYPE_ICONS[type ?? ''] ?? 'info';
-	}
-
-	function formatDate(d: string | null): string {
-		if (!d) return '--';
-		return new Date(d).toLocaleDateString('fr-CH', { day: '2-digit', month: '2-digit', year: '2-digit' });
-	}
-
-	function formatRelative(d: string | null): string {
-		if (!d) return '--';
-		const diff = Date.now() - new Date(d).getTime();
-		const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-		if (days === 0) return "Aujourd'hui";
-		if (days === 1) return 'Hier';
-		if (days < 7) return `Il y a ${days} jours`;
-		if (days < 30) return `Il y a ${Math.floor(days / 7)} sem.`;
-		return formatDate(d);
-	}
-
-	function statutVariant(statut: string | null): 'default' | 'info' | 'success' | 'warning' | 'danger' | 'muted' {
-		const found = STATUTS.find(s => s.key === statut);
-		return found?.variant ?? 'muted';
-	}
-
-	function statutLabel(statut: string | null): string {
-		const found = STATUTS.find(s => s.key === statut);
-		return found?.label ?? statut ?? 'Nouveau';
-	}
-
-	const SCORE_STYLES: Record<string, { icon: string; color: string; bg: string; label: string }> = {
-		chaud: { icon: 'local_fire_department', color: 'text-danger', bg: 'bg-danger/10', label: 'Chaud' },
-		tiede: { icon: 'thermostat', color: 'text-warning', bg: 'bg-warning/10', label: 'Tiède' },
-		froid: { icon: 'ac_unit', color: 'text-primary', bg: 'bg-primary-light', label: 'Froid' },
-		non_qualifie: { icon: 'remove', color: 'text-text-muted', bg: 'bg-surface', label: 'Non qualifié' },
-	};
-
-	function scoreLabel(score: number | null): string {
-		if (score == null) return 'non_qualifie';
-		if (score >= config.scoring.labels.chaud) return 'chaud';
-		if (score >= config.scoring.labels.tiede) return 'tiede';
-		if (score >= config.scoring.labels.froid) return 'froid';
-		return 'non_qualifie';
-	}
-
-	function scoreStyle(score: number | null) {
-		return SCORE_STYLES[scoreLabel(score)] ?? SCORE_STYLES.non_qualifie;
+	function exitSelectMode() {
+		selectMode = false;
+		selectedIds = new Set();
+		batchDeleteConfirmOpen = false;
 	}
 
 	function openDetail(signal: Signal) {
@@ -206,283 +164,198 @@
 	}
 
 	function resetForm() {
-		type_signal = ''; description_projet = ''; maitre_ouvrage = '';
-		architecte_bureau = ''; canton = ''; commune = ''; source_officielle = '';
-		date_publication = ''; notes_libres = ''; responsable_filmpro = '';
+		type_signal = '';
+		description_projet = '';
+		maitre_ouvrage = '';
+		architecte_bureau = '';
+		canton = '';
+		commune = '';
+		source_officielle = '';
+		date_publication = '';
+		notes_libres = '';
+		responsable_filmpro = '';
 		statut_traitement = 'nouveau';
 	}
 </script>
 
-<div class="space-y-6">
-	<!-- Header -->
-	<div>
-		<div class="flex flex-wrap items-center justify-end gap-3">
-			<div class="flex items-center gap-2">
-				{#if data.signaux.length > 0}
-					{#if selectMode}
-						<button
-							onclick={exitSelectMode}
-							class="flex items-center gap-2 h-10 px-4 box-border text-sm text-text-muted hover:text-text border border-border rounded-lg cursor-pointer"
-						>
-							Annuler
-						</button>
-					{:else}
-						<button
-							onclick={() => selectMode = true}
-							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-text-muted hover:text-text border border-border rounded-lg cursor-pointer"
-						>
-							<Icon name="checklist" size={18} />
-							Sélectionner
-						</button>
-					{/if}
-				{/if}
-				<button
-					onclick={openCreate}
-					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
-				>
-					<Icon name="add" size={18} />
-					Ajouter
+<div class="page">
+	<div class="page-actions">
+		{#if data.signaux.length > 0}
+			{#if selectMode}
+				<button type="button" class="btn btn-secondary" onclick={exitSelectMode}>
+					Annuler
 				</button>
-			</div>
-		</div>
-
-		<!-- Bandeau explicatif -->
-		<div class="mt-3 flex items-start gap-3 p-4 bg-primary-light border border-primary rounded-lg">
-			<Icon name="radar" size={22} class="text-primary mt-0.5" />
-			<div>
-				<p class="text-sm text-text">
-					Détectez les opportunités business avant vos concurrents : appels d'offres, permis de construire, créations d'entreprises.
-				</p>
-				<p class="text-xs text-text-muted mt-1">
-					Ajoutez des signaux manuellement ou laissez la veille automatique vous alerter sur le dashboard.
-				</p>
-			</div>
-		</div>
-	</div>
-
-	<!-- Stats rapides -->
-	{#if data.signaux.length > 0}
-		<div class="flex gap-3 flex-wrap">
-			{#each STATUTS as s}
-				{@const count = countByStatut[s.key] ?? 0}
-				{#if count > 0}
-					<button
-						onclick={() => filterStatut = filterStatut === s.key ? '' : s.key}
-						class="flex items-center gap-2 px-3 py-1 text-sm rounded-full border transition-colors cursor-pointer {filterStatut === s.key ? 'bg-primary-light border-primary text-primary font-medium' : 'bg-white border-border text-text-muted hover:border-primary/30'}"
-					>
-						<Badge label={String(count)} variant={s.variant} />
-						{s.label}
-					</button>
-				{/if}
-			{/each}
-		</div>
-	{/if}
-
-	<!-- Filters -->
-	<div class="flex gap-3 flex-wrap">
-		<select
-			bind:value={filterType}
-			class="px-3 py-1.5 text-sm border border-border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
-		>
-			<option value="">Tous les types</option>
-			{#each config.signaux.types as t}
-				<option value={t.key}>{t.label}</option>
-			{/each}
-		</select>
-		<select
-			bind:value={filterCanton}
-			class="px-3 py-1.5 text-sm border border-border rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-primary/30"
-		>
-			<option value="">Tous les cantons</option>
-			{#each cantons as c}
-				<option value={c}>{c}</option>
-			{/each}
-		</select>
-		{#if filterType || filterCanton || filterStatut}
-			<button
-				onclick={() => { filterType = ''; filterCanton = ''; filterStatut = ''; }}
-				class="px-3 py-1.5 text-sm text-text-muted hover:text-text cursor-pointer"
-			>
-				Effacer filtres
-			</button>
+			{:else}
+				<button type="button" class="btn btn-secondary" onclick={() => (selectMode = true)}>
+					<Icon name="checklist" size={18} />
+					Sélectionner
+				</button>
+			{/if}
 		{/if}
+		<button type="button" class="btn btn-primary" onclick={openCreate}>
+			<Icon name="add" size={18} />
+			Ajouter
+		</button>
 	</div>
 
-	<!-- Contenu -->
-	{#if data.signaux.length === 0}
-		<!-- État vide -->
-		<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-			<div class="bg-white rounded-lg border border-border p-6">
-				<div class="flex items-center gap-3 mb-3">
-					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-primary-light">
-						<Icon name="edit_note" size={22} class="text-primary" />
-					</span>
-					<h3 class="font-semibold text-text">Ajout manuel</h3>
-				</div>
-				<p class="text-sm text-text-muted mb-4">
-					Vous avez repéré un appel d'offres, un permis de construire ou une opportunité ? Ajoutez-le comme signal pour le suivre.
-				</p>
-				<button
-					onclick={openCreate}
-					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
-				>
-					<Icon name="add" size={18} />
-					Ajouter un signal
-				</button>
-			</div>
+	<SignauxIndicators values={indicators} />
 
-			<div class="bg-white rounded-lg border border-border p-6">
-				<div class="flex items-center gap-3 mb-3">
-					<span class="flex items-center justify-center w-10 h-10 rounded-full bg-warning/10">
-						<Icon name="notifications_active" size={22} class="text-warning" />
-					</span>
-					<h3 class="font-semibold text-text">Veille automatique</h3>
-				</div>
-				<p class="text-sm text-text-muted mb-2">
-					Le système surveille les sources publiques et vous alerte quand de nouveaux signaux apparaissent.
-				</p>
-				<ul class="text-sm text-text-muted space-y-1.5">
-					<li class="flex items-center gap-2">
-						<Icon name="check_circle" size={14} class="text-success" />
-						Scan quotidien des marchés publics (SIMAP)
-					</li>
-					<li class="flex items-center gap-2">
-						<Icon name="check_circle" size={14} class="text-success" />
-						Alertes sur le Dashboard
-					</li>
-					<li class="flex items-center gap-2">
-						<Icon name="check_circle" size={14} class="text-success" />
-						Conversion en opportunité en un clic
-					</li>
-				</ul>
-			</div>
-		</div>
-	{:else}
-		<!-- Barre actions batch -->
-		{#if selectMode}
-			<div class="flex items-center gap-3 p-3 bg-surface rounded-lg border border-border">
+	<SignauxTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)}>
+		{#snippet actions()}
+			<select
+				bind:value={filterType}
+				class="filter-select"
+				aria-label="Filtrer par type"
+			>
+				<option value="">Tous les types</option>
+				{#each config.signaux.types as t}
+					<option value={t.key}>{t.label}</option>
+				{/each}
+			</select>
+			<select
+				bind:value={filterCanton}
+				class="filter-select"
+				aria-label="Filtrer par canton"
+			>
+				<option value="">Tous les cantons</option>
+				{#each cantons as c}
+					<option value={c}>{c}</option>
+				{/each}
+			</select>
+			{#if filterType || filterCanton}
 				<button
-					onclick={toggleSelectAll}
-					class="flex items-center gap-2 text-sm text-primary hover:underline cursor-pointer"
+					type="button"
+					class="btn-ghost"
+					onclick={() => {
+						filterType = '';
+						filterCanton = '';
+					}}
 				>
-					<Icon name={selectedIds.size === filteredSignaux.length ? 'deselect' : 'select_all'} size={18} />
-					{selectedIds.size === filteredSignaux.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+					Effacer
 				</button>
-				<span class="text-sm text-text-muted">{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}</span>
-				<div class="flex-1"></div>
-				{#if batchDeleteConfirm}
-					<form method="POST" action="?/deleteBatch" use:enhance={() => {
-						batchDeleting = true;
-						return async ({ result, update }) => {
-							batchDeleting = false;
-							batchDeleteConfirm = false;
-							if (result.type === 'success') {
-								toasts.success(`${selectedIds.size} ${selectedIds.size > 1 ? 'signaux supprimés' : 'signal supprimé'}`);
-								exitSelectMode();
-							} else {
-								toasts.error('Erreur lors de la suppression');
-							}
-							await update();
-						};
-					}}>
+			{/if}
+		{/snippet}
+	</SignauxTabs>
+
+	<div
+		class="content"
+		role="tabpanel"
+		id={`panel-${activeTab}`}
+		aria-labelledby={`tab-${activeTab}`}
+	>
+		{#if data.signaux.length === 0}
+			<div class="empty-grid">
+				<div class="empty-card">
+					<div class="empty-card-head">
+						<span class="empty-card-icon primary">
+							<Icon name="edit_note" size={22} />
+						</span>
+						<h3>Ajout manuel</h3>
+					</div>
+					<p>
+						Vous avez repéré un appel d'offres, un permis de construire ou une opportunité ? Ajoutez-le comme signal pour le suivre.
+					</p>
+					<button type="button" class="btn btn-primary" onclick={openCreate}>
+						<Icon name="add" size={18} />
+						Ajouter un signal
+					</button>
+				</div>
+				<div class="empty-card">
+					<div class="empty-card-head">
+						<span class="empty-card-icon warning">
+							<Icon name="notifications_active" size={22} />
+						</span>
+						<h3>Veille automatique</h3>
+					</div>
+					<p>
+						Le système surveille les sources publiques et vous alerte quand de nouveaux signaux apparaissent.
+					</p>
+					<ul class="empty-card-list">
+						<li>
+							<Icon name="check_circle" size={14} />
+							Scan quotidien des marchés publics (SIMAP)
+						</li>
+						<li>
+							<Icon name="check_circle" size={14} />
+							Alertes sur le Dashboard
+						</li>
+						<li>
+							<Icon name="check_circle" size={14} />
+							Conversion en opportunité en un clic
+						</li>
+					</ul>
+				</div>
+			</div>
+		{:else}
+			{#if selectMode}
+				<div class="batch-bar">
+					<button
+						type="button"
+						class="batch-link"
+						onclick={toggleSelectAll}
+					>
+						<Icon name={selectedIds.size === filteredSignaux.length ? 'deselect' : 'select_all'} size={18} />
+						{selectedIds.size === filteredSignaux.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+					</button>
+					<span class="batch-count">
+						{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}
+					</span>
+					<div class="batch-spacer"></div>
+					<form
+						bind:this={batchDeleteFormEl}
+						method="POST"
+						action="?/deleteBatch"
+						use:enhance={() => {
+							batchDeleting = true;
+							return async ({ result, update }) => {
+								batchDeleting = false;
+								batchDeleteConfirmOpen = false;
+								if (result.type === 'success') {
+									toasts.success(`${selectedIds.size} ${selectedIds.size > 1 ? 'signaux supprimés' : 'signal supprimé'}`);
+									exitSelectMode();
+								} else {
+									toasts.error('Erreur lors de la suppression');
+								}
+								await update();
+							};
+						}}
+					>
 						<input type="hidden" name="ids" value={[...selectedIds].join(',')} />
 						<button
-							type="submit"
-							disabled={batchDeleting}
-							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-danger hover:bg-danger/80 rounded-lg cursor-pointer disabled:opacity-50"
+							type="button"
+							class="btn btn-danger"
+							onclick={() => (batchDeleteConfirmOpen = true)}
+							disabled={selectedIds.size === 0 || batchDeleting}
 						>
-							<Icon name="delete_forever" size={16} />
-							{batchDeleting ? 'Suppression…' : `Confirmer (${selectedIds.size})`}
+							<Icon name="delete" size={16} />
+							{batchDeleting ? 'Suppression…' : `Supprimer (${selectedIds.size})`}
 						</button>
 					</form>
-					<button onclick={() => batchDeleteConfirm = false} class="text-sm text-text-muted hover:text-text cursor-pointer">Annuler</button>
-				{:else}
-					<button
-						onclick={() => batchDeleteConfirm = true}
-						disabled={selectedIds.size === 0}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-					>
-						<Icon name="delete" size={16} />
-						Supprimer ({selectedIds.size})
-					</button>
-				{/if}
-			</div>
+				</div>
+			{/if}
+
+			<SignauxCards
+				signaux={filteredSignaux}
+				{selectMode}
+				{selectedIds}
+				onSelect={openDetail}
+				onToggleSelect={toggleSelect}
+				emptyMessage={emptyMessageForTab(activeTab)}
+			/>
 		{/if}
-
-		<!-- Signal cards -->
-		<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-			{#each filteredSignaux as signal (signal.id)}
-				<button
-					onclick={() => selectMode ? toggleSelect(signal.id) : openDetail(signal)}
-					class="bg-white rounded-lg border p-4 hover:shadow-md transition-all cursor-pointer text-left w-full {selectMode && selectedIds.has(signal.id) ? 'border-primary bg-primary-light' : 'border-border hover:border-primary/30'}"
-				>
-					<div class="flex flex-wrap items-start justify-between gap-2">
-						<div class="flex items-center gap-3 min-w-0">
-							{#if selectMode}
-								<span class="flex items-center justify-center w-10 h-10 rounded-lg shrink-0 {selectedIds.has(signal.id) ? 'bg-primary text-white' : 'bg-surface border border-border'}">
-									<Icon name={selectedIds.has(signal.id) ? 'check' : 'check_box_outline_blank'} size={22} />
-								</span>
-							{:else}
-								<span class="flex items-center justify-center w-10 h-10 rounded-lg bg-primary-light shrink-0">
-									<Icon name={typeIcon(signal.type_signal)} size={22} class="text-primary" />
-								</span>
-							{/if}
-							<div class="min-w-0">
-								<p class="text-sm font-semibold text-text">{formatTypeLabel(signal.type_signal)}</p>
-								<p class="text-xs text-text-muted">{signal.canton ?? '--'} · {formatRelative(signal.date_detection)}</p>
-							</div>
-						</div>
-						<div class="flex items-center gap-2">
-							<span class="flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium {scoreStyle(signal.score_pertinence).bg} {scoreStyle(signal.score_pertinence).color}" title="Score {signal.score_pertinence ?? 0}/{config.scoring.maxPoints}">
-								<Icon name={scoreStyle(signal.score_pertinence).icon} size={14} />
-								{signal.score_pertinence ?? 0}
-							</span>
-							<Badge label={statutLabel(signal.statut_traitement)} variant={statutVariant(signal.statut_traitement)} />
-						</div>
-					</div>
-
-					<div class="mt-3 flex items-center justify-between text-xs text-text-muted">
-						{#if signal.commune}
-							<span class="flex items-center gap-1 min-w-0 truncate">
-								<Icon name="location_on" size={14} class="shrink-0" />
-								{signal.commune}
-							</span>
-						{/if}
-						<span class="flex items-center gap-3 shrink-0">
-							{#if signal.source_officielle}
-								<span class="flex items-center gap-1 uppercase">
-									<Icon name="source" size={14} />
-									{signal.source_officielle}
-								</span>
-							{/if}
-							{#if signal.date_publication}
-								<span class="flex items-center gap-1">
-									<Icon name="calendar_today" size={14} />
-									{new Date(signal.date_publication).toLocaleDateString('fr-CH', { day: 'numeric', month: 'short' })}
-								</span>
-							{/if}
-						</span>
-					</div>
-				</button>
-			{/each}
-		</div>
-
-		{#if filteredSignaux.length === 0}
-			<div class="text-center py-8">
-				<Icon name="filter_alt_off" size={24} class="text-text-muted inline-block" />
-				<p class="mt-2 text-sm text-text-muted">Aucun signal ne correspond aux filtres.</p>
-				<button
-					onclick={() => { filterType = ''; filterCanton = ''; filterStatut = ''; }}
-					class="mt-2 text-sm text-primary hover:underline cursor-pointer"
-				>
-					Effacer les filtres
-				</button>
-			</div>
-		{/if}
-	{/if}
+	</div>
 </div>
 
-<!-- SlideOut detail signal -->
+<button
+	type="button"
+	class="fab"
+	aria-label="Ajouter un signal"
+	onclick={openCreate}
+>
+	<Icon name="add" size={20} />
+</button>
+
+<!-- SlideOut détail signal -->
 <SlideOut bind:open={slideOutOpen} title="Signal d'affaires">
 	{#if selectedSignal}
 		{@const sStyle = scoreStyle(selectedSignal.score_pertinence)}
@@ -498,7 +371,7 @@
 						<Badge label={statutLabel(selectedSignal.statut_traitement)} variant={statutVariant(selectedSignal.statut_traitement)} />
 					</div>
 				</div>
-				<span class="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold {sStyle.bg} {sStyle.color}">
+				<span class="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold {sStyle.bgClass} {sStyle.colorClass}">
 					<Icon name={sStyle.icon} size={18} />
 					{selectedSignal.score_pertinence ?? 0}/{config.scoring.maxPoints} : {sStyle.label}
 				</span>
@@ -517,11 +390,11 @@
 				<div class="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<span class="text-text-muted">Maître d'ouvrage</span>
-						<p class="font-medium text-text">{selectedSignal.maitre_ouvrage ?? '--'}</p>
+						<p class="font-medium text-text">{selectedSignal.maitre_ouvrage ?? '–'}</p>
 					</div>
 					<div>
 						<span class="text-text-muted">Architecte / Bureau</span>
-						<p class="font-medium text-text">{selectedSignal.architecte_bureau ?? '--'}</p>
+						<p class="font-medium text-text">{selectedSignal.architecte_bureau ?? '–'}</p>
 					</div>
 					{#if selectedSignal.contacts}
 						<div>
@@ -533,7 +406,7 @@
 					{/if}
 					<div>
 						<span class="text-text-muted">Responsable</span>
-						<p class="font-medium text-text">{selectedSignal.responsable_filmpro ?? '--'}</p>
+						<p class="font-medium text-text">{selectedSignal.responsable_filmpro ?? '–'}</p>
 					</div>
 				</div>
 			</div>
@@ -544,11 +417,11 @@
 				<div class="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<span class="text-text-muted">Canton</span>
-						<p class="font-medium text-text">{selectedSignal.canton ?? '--'}</p>
+						<p class="font-medium text-text">{selectedSignal.canton ?? '–'}</p>
 					</div>
 					<div>
 						<span class="text-text-muted">Commune</span>
-						<p class="font-medium text-text">{selectedSignal.commune ?? '--'}</p>
+						<p class="font-medium text-text">{selectedSignal.commune ?? '–'}</p>
 					</div>
 				</div>
 			</div>
@@ -559,7 +432,7 @@
 				<div class="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<span class="text-text-muted">Source</span>
-						<p class="font-medium text-text uppercase">{selectedSignal.source_officielle ?? '--'}</p>
+						<p class="font-medium text-text uppercase">{selectedSignal.source_officielle ?? '–'}</p>
 					</div>
 					<div>
 						<span class="text-text-muted">Date publication</span>
@@ -572,7 +445,6 @@
 				</div>
 			</div>
 
-			<!-- Section : Scoring -->
 			{#if selectedSignal.notes_libres}
 				<div class="space-y-3">
 					<h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Scoring</h4>
@@ -593,6 +465,7 @@
 
 			<div class="flex flex-wrap gap-3 pt-4 border-t border-border">
 				<button
+					type="button"
 					onclick={openEdit}
 					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 				>
@@ -602,6 +475,7 @@
 
 				{#if selectedSignal.statut_traitement !== 'converti' && selectedSignal.statut_traitement !== 'ecarte'}
 					<button
+						type="button"
 						onclick={openConvertModal}
 						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-primary bg-primary-light hover:bg-primary/20 rounded-lg cursor-pointer"
 					>
@@ -609,15 +483,19 @@
 						Créer opportunité
 					</button>
 
-					<form method="POST" action="?/updateStatut" use:enhance={() => {
-						return async ({ result, update }) => {
-							slideOutOpen = false;
-							selectedSignal = null;
-							if (result.type === 'success') toasts.success('Signal écarté');
-							else toasts.error('Erreur lors de la mise à jour');
-							await update();
-						};
-					}}>
+					<form
+						method="POST"
+						action="?/updateStatut"
+						use:enhance={() => {
+							return async ({ result, update }) => {
+								slideOutOpen = false;
+								selectedSignal = null;
+								if (result.type === 'success') toasts.success('Signal écarté');
+								else toasts.error('Erreur lors de la mise à jour');
+								await update();
+							};
+						}}
+					>
 						<input type="hidden" name="id" value={selectedSignal.id} />
 						<input type="hidden" name="statut_traitement" value="ecarte" />
 						<button
@@ -630,48 +508,39 @@
 					</form>
 				{/if}
 
-				<!-- Supprimer -->
-				{#if deleteConfirm === selectedSignal.id}
-					<form method="POST" action="?/delete" use:enhance={() => {
+				<form
+					bind:this={deleteFormEl}
+					method="POST"
+					action="?/delete"
+					use:enhance={() => {
+						deleting = true;
 						return async ({ result, update }) => {
+							deleting = false;
 							slideOutOpen = false;
 							selectedSignal = null;
-							deleteConfirm = null;
 							if (result.type === 'success') toasts.success('Signal supprimé');
 							else toasts.error('Erreur lors de la suppression');
 							await update();
 						};
-					}}>
-						<input type="hidden" name="id" value={selectedSignal.id} />
-						<button
-							type="submit"
-							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-danger hover:bg-danger/80 rounded-lg cursor-pointer"
-						>
-							<Icon name="delete_forever" size={16} />
-							Confirmer la suppression
-						</button>
-					</form>
+					}}
+				>
+					<input type="hidden" name="id" value={selectedSignal.id} />
 					<button
-						onclick={() => deleteConfirm = null}
-						class="h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
-					>
-						Annuler
-					</button>
-				{:else}
-					<button
-						onclick={() => deleteConfirm = selectedSignal?.id ?? null}
-						class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-danger cursor-pointer"
+						type="button"
+						onclick={() => (confirmDeleteOpen = true)}
+						disabled={deleting}
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
 					>
 						<Icon name="delete" size={16} />
-						Supprimer
+						{deleting ? 'Suppression…' : 'Supprimer'}
 					</button>
-				{/if}
+				</form>
 			</div>
 		</div>
 	{/if}
 </SlideOut>
 
-<!-- Modal creation/edition signal (allégée en création) -->
+<!-- Modal création/édition signal -->
 <ModalForm
 	bind:open={modalOpen}
 	title={editMode ? 'Modifier le signal' : 'Nouveau signal'}
@@ -687,7 +556,7 @@
 				modalOpen = false;
 				resetForm();
 				if (result.type === 'success') toasts.success(editMode ? 'Signal modifié' : 'Signal créé');
-				else toasts.error('Erreur lors de l\'enregistrement');
+				else toasts.error("Erreur lors de l'enregistrement");
 				await update();
 			};
 		}}
@@ -724,7 +593,6 @@
 			{/if}
 		</div>
 
-		<!-- Hidden fields -->
 		<input type="hidden" name="type_signal" value={type_signal} />
 		<input type="hidden" name="description_projet" value={description_projet} />
 		<input type="hidden" name="maitre_ouvrage" value={maitre_ouvrage} />
@@ -739,7 +607,7 @@
 		<div class="flex justify-end gap-3 pt-4">
 			<button
 				type="button"
-				onclick={() => modalOpen = false}
+				onclick={() => (modalOpen = false)}
 				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
 			>
 				Annuler
@@ -749,13 +617,13 @@
 				disabled={saving}
 				class="h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
 			>
-				{saving ? 'Enregistrement...' : 'Enregistrer'}
+				{saving ? 'Enregistrement…' : 'Enregistrer'}
 			</button>
 		</div>
 	</form>
 </ModalForm>
 
-<!-- Modal conversion signal -> opportunite -->
+<!-- Modal conversion signal -> opportunité -->
 <ModalForm
 	bind:open={convertModalOpen}
 	title="Créer une opportunité depuis ce signal"
@@ -799,7 +667,7 @@
 			<div class="flex justify-end gap-3 pt-4">
 				<button
 					type="button"
-					onclick={() => convertModalOpen = false}
+					onclick={() => (convertModalOpen = false)}
 					class="h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
 				>
 					Annuler
@@ -809,9 +677,277 @@
 					disabled={saving}
 					class="h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
 				>
-					{saving ? 'Création...' : 'Créer et aller au pipeline'}
+					{saving ? 'Création…' : 'Créer et aller au pipeline'}
 				</button>
 			</div>
 		</form>
 	{/if}
 </ModalForm>
+
+<ConfirmModal
+	bind:open={confirmDeleteOpen}
+	title="Supprimer ce signal ?"
+	message="Cette action est irréversible. Le signal sera définitivement supprimé."
+	confirmLabel="Supprimer"
+	variant="danger"
+	loading={deleting}
+	onConfirm={() => {
+		confirmDeleteOpen = false;
+		deleteFormEl?.requestSubmit();
+	}}
+/>
+
+<ConfirmModal
+	bind:open={batchDeleteConfirmOpen}
+	title={`Supprimer ${selectedIds.size} signal${selectedIds.size > 1 ? 's' : ''} ?`}
+	message="Cette action est irréversible."
+	confirmLabel="Supprimer"
+	variant="danger"
+	loading={batchDeleting}
+	onConfirm={() => {
+		batchDeleteConfirmOpen = false;
+		batchDeleteFormEl?.requestSubmit();
+	}}
+/>
+
+<style>
+	.page {
+		display: flex;
+		flex-direction: column;
+		min-height: calc(100vh - var(--header-height, 56px));
+	}
+	.page-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: 8px;
+		padding: 12px 32px;
+	}
+	.btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		height: 40px;
+		padding: 8px 16px;
+		border-radius: 10px;
+		font-family: inherit;
+		font-size: 14px;
+		font-weight: 600;
+		cursor: pointer;
+		border: none;
+		box-sizing: border-box;
+		transition: background 220ms cubic-bezier(0.16, 1, 0.3, 1), color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	.btn-primary {
+		background: var(--color-primary);
+		color: white;
+	}
+	.btn-primary:hover {
+		background: var(--color-primary-hover);
+	}
+	.btn-secondary {
+		background: transparent;
+		color: var(--color-text-muted);
+		border: 1px solid var(--color-border);
+	}
+	.btn-secondary:hover {
+		color: var(--color-text);
+		border-color: var(--color-text-muted);
+	}
+	.btn-danger {
+		background: var(--color-danger);
+		color: white;
+	}
+	.btn-danger:hover {
+		background: rgba(239, 68, 68, 0.85);
+	}
+	.btn-danger:disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	.btn:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+	.btn-ghost {
+		background: transparent;
+		border: none;
+		color: var(--color-text-muted);
+		font-size: 13px;
+		cursor: pointer;
+		padding: 0 8px;
+		font-family: inherit;
+	}
+	.btn-ghost:hover {
+		color: var(--color-text);
+	}
+
+	.filter-select {
+		height: 32px;
+		padding: 0 8px;
+		border: 1px solid var(--color-border);
+		border-radius: 8px;
+		background: var(--color-surface);
+		font-family: inherit;
+		font-size: 13px;
+		color: var(--color-text);
+		cursor: pointer;
+	}
+	.filter-select:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+
+	.content {
+		flex: 1;
+		padding: 32px;
+	}
+
+	/* Empty state grid 2 cards */
+	.empty-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+		gap: 16px;
+	}
+	.empty-card {
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: 12px;
+		padding: 24px;
+		display: grid;
+		gap: 16px;
+	}
+	.empty-card-head {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+	.empty-card-icon {
+		width: 40px;
+		height: 40px;
+		border-radius: 10px;
+		display: grid;
+		place-items: center;
+		flex-shrink: 0;
+	}
+	.empty-card-icon.primary {
+		background: var(--color-primary-light);
+		color: var(--color-primary);
+	}
+	.empty-card-icon.warning {
+		background: rgba(247, 144, 9, 0.1);
+		color: var(--color-warning);
+	}
+	.empty-card h3 {
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--color-text);
+		margin: 0;
+	}
+	.empty-card p {
+		font-size: 13px;
+		color: var(--color-text-muted);
+		line-height: 1.5;
+		margin: 0;
+	}
+	.empty-card-list {
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		display: grid;
+		gap: 8px;
+		font-size: 13px;
+		color: var(--color-text-muted);
+	}
+	.empty-card-list li {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+	}
+	.empty-card-list li :global(svg) {
+		color: var(--color-success);
+		flex-shrink: 0;
+	}
+
+	/* Batch action bar */
+	.batch-bar {
+		display: flex;
+		align-items: center;
+		gap: 16px;
+		padding: 12px 16px;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: 12px;
+		margin-bottom: 16px;
+	}
+	.batch-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		background: transparent;
+		border: none;
+		font-family: inherit;
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--color-primary);
+		cursor: pointer;
+	}
+	.batch-link:hover {
+		text-decoration: underline;
+	}
+	.batch-count {
+		font-size: 13px;
+		color: var(--color-text-muted);
+	}
+	.batch-spacer {
+		flex: 1;
+	}
+
+	@media (max-width: 1024px) {
+		.page-actions {
+			padding: 12px 24px;
+		}
+		.content {
+			padding: 24px;
+		}
+	}
+	@media (max-width: 768px) {
+		.page-actions {
+			display: none;
+		}
+		.content {
+			padding: 16px 16px 96px;
+		}
+	}
+
+	.fab {
+		display: none;
+	}
+
+	@media (max-width: 768px) {
+		.fab {
+			display: grid;
+			place-items: center;
+			position: fixed;
+			right: 20px;
+			bottom: 20px;
+			width: 56px;
+			height: 56px;
+			border-radius: 9999px;
+			background: var(--color-primary);
+			color: white;
+			border: none;
+			cursor: pointer;
+			box-shadow: 0 8px 24px -6px rgba(47, 90, 158, 0.45);
+			transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), background 220ms cubic-bezier(0.16, 1, 0.3, 1);
+			z-index: 20;
+		}
+		.fab:hover {
+			transform: translateY(-2px);
+			background: var(--color-primary-hover);
+		}
+		.fab:focus-visible {
+			outline: 2px solid var(--color-primary);
+			outline-offset: 2px;
+		}
+	}
+</style>

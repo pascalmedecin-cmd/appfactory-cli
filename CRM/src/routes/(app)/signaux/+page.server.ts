@@ -101,8 +101,7 @@ export const actions: Actions = {
 		const parsed = validate(SignalBatchDeleteSchema, raw);
 		if (!parsed.success) return fail(400, { error: parsed.error });
 
-		const ids = parsed.data.ids.split(',').filter(Boolean);
-		if (ids.length === 0) return fail(400, { error: 'Aucun signal sélectionné' });
+		const ids = parsed.data.ids;
 
 		const { error } = await locals.supabase
 			.from('signaux_affaires')
