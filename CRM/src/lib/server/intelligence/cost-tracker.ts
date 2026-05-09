@@ -13,6 +13,7 @@
  */
 import type Anthropic from '@anthropic-ai/sdk';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { sanitizeForLog } from './sanitize';
 
 // ---------- Tarifs ----------
 
@@ -184,6 +185,13 @@ export class CostTracker {
 		const model =
 			summary.breakdown.find((e): e is ClaudeEntry => e.kind === 'claude')?.model ?? 'n/a';
 
+		// Defense-in-depth (audit S177 Info #1) : sanitize errorMessage avant
+		// persistance même si l'appelant l'a déjà fait. La colonne est RLS-lisible
+		// par tout user @filmpro.ch, donc tout API key / URL interne / token qui
+		// fuiterait dans un message d'exception serait visible côté UI dashboard.
+		// Pattern aligné sur run-generation.markError + email-recap.
+		const sanitizedError = meta.errorMessage ? sanitizeForLog(meta.errorMessage) : null;
+
 		try {
 			const { error } = await supabase.from('cost_audit_runs').upsert(
 				{
@@ -201,7 +209,7 @@ export class CostTracker {
 					total_usd: summary.total_usd,
 					total_eur: summary.total_eur,
 					breakdown: summary.breakdown,
-					error_message: meta.errorMessage ?? null
+					error_message: sanitizedError
 				},
 				{ onConflict: 'run_id' }
 			);
