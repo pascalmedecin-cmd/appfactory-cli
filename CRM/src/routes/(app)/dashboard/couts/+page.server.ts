@@ -11,7 +11,9 @@ import {
 /**
  * Charge les runs des 84 derniers jours (~12 semaines + marge) pour alimenter
  * le dashboard /dashboard/couts. Tous les calculs (KPI, agrégation hebdo) sont
- * pré-calculés côté serveur pour éviter d'envoyer des données inutiles au client.
+ * pré-calculés côté serveur ; la liste brute n'est pas retournée au client
+ * (page UI = KPI + chart uniquement, voir spec S177 simplification post-audit
+ * factuel : seule la veille hebdo consomme la clé Claude API aujourd'hui).
  *
  * Auth : route protégée par +layout.server.ts (auth gate global +
  * locals.supabase). RLS : policy `cost_audit_runs_select_authenticated` autorise
@@ -29,7 +31,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const { data, error: dbError } = await locals.supabase
 		.from('cost_audit_runs')
 		.select(
-			'id, run_id, feature, model, status, started_at, finished_at, duration_seconds, total_input_tokens, total_output_tokens, total_cache_read_tokens, total_cache_creation_tokens, total_usd, total_eur, breakdown, error_message, created_at'
+			'id, started_at, feature, status, total_eur, total_usd'
 		)
 		.gte('started_at', since.toISOString())
 		.order('started_at', { ascending: false })
@@ -46,7 +48,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const kpi: CostKpi = computeKpis(runs, now);
 
 	return {
-		runs,
 		weeks,
 		kpi
 	};
