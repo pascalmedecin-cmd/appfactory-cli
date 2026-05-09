@@ -240,6 +240,11 @@ export const config = {
 				icon: 'help_outline',
 				external: true,
 			},
+			{
+				href: '/dashboard/couts',
+				label: 'Coûts API',
+				icon: 'payments',
+			},
 		],
 	},
 } as const;
