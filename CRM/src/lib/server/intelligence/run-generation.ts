@@ -6,6 +6,7 @@ import type { IntelligenceReport, IntelligenceItem } from './schema';
 import type { PreviousItem } from './prompt';
 import { sendRecapEmail } from './email-recap';
 import { applySignalsFromReport } from './apply-signals';
+import { costTracker, type PersistMeta } from './cost-tracker';
 import type { VeilleDeps } from './deps';
 import { sanitizeForLog, sanitizeError } from './sanitize';
 import { stripCitationsFromReport } from './strip-citations';
@@ -28,6 +29,43 @@ const LOW_VOLUME_THRESHOLD = 8;
 const PUBLISHED_ITEMS_CAP = 10;
 /** Texte placeholder écrit en DB lors du marquage running (évite NOT NULL sur executive_summary). */
 const RUNNING_PLACEHOLDER = 'Run en cours, en attente de publication.';
+
+/**
+ * Construit l'identifiant naturel d'un run veille à partir du weekLabel et du
+ * startedAt ISO. Le format est stable et UPSERT-able dans `cost_audit_runs`.
+ * Exemple : weekLabel='2026-W19', startedAt='2026-05-09T08:13:42.000Z' →
+ * 'veille-2026-W19-20260509-081342'.
+ */
+function buildVeilleRunId(weekLabel: string, startedAt: string): string {
+	const compact = startedAt.replace(/[-:T.Z]/g, '').slice(0, 14);
+	return `veille-${weekLabel}-${compact.slice(0, 8)}-${compact.slice(8, 14)}`;
+}
+
+/**
+ * Persiste les coûts du run dans `cost_audit_runs`. Best-effort : un échec ici
+ * ne casse jamais la publication (logge + continue). Idempotent via runId.
+ */
+async function persistRunCosts(
+	supabase: Supabase,
+	weekLabel: string,
+	meta: PersistMeta
+): Promise<void> {
+	try {
+		const result = await costTracker.persist(supabase as never, meta);
+		if (!result.ok) {
+			console.error(
+				`[veille ${weekLabel}] cost_audit_runs persist failed: ${sanitizeForLog(result.error ?? 'unknown')}`
+			);
+		} else {
+			logPhase(weekLabel, 'costs_persisted', {
+				runId: meta.runId,
+				status: meta.status
+			});
+		}
+	} catch (e) {
+		console.error(`[veille ${weekLabel}] cost_audit_runs persist exception: ${sanitizeError(e)}`);
+	}
+}
 
 function logPhase(weekLabel: string, phase: string, extra?: Record<string, unknown>) {
 	const ts = new Date().toISOString();
@@ -282,6 +320,13 @@ export async function runWeeklyGeneration(
 			},
 			deps.email
 		);
+		await persistRunCosts(supabase, week.weekLabel, {
+			runId: buildVeilleRunId(week.weekLabel, startedAt),
+			feature: 'veille',
+			status: 'error',
+			startedAt,
+			errorMessage: `Exception: ${message}`
+		});
 		return {
 			ok: false,
 			weekLabel: week.weekLabel,
@@ -299,6 +344,13 @@ export async function runWeeklyGeneration(
 			gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 },
 			deps.email
 		);
+		await persistRunCosts(supabase, week.weekLabel, {
+			runId: buildVeilleRunId(week.weekLabel, startedAt),
+			feature: 'veille',
+			status: 'error',
+			startedAt,
+			errorMessage: gen.error ?? 'Erreur inconnue'
+		});
 		return {
 			ok: false,
 			weekLabel: week.weekLabel,
@@ -355,6 +407,13 @@ export async function runWeeklyGeneration(
 			gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 },
 			deps.email
 		);
+		await persistRunCosts(supabase, week.weekLabel, {
+			runId: buildVeilleRunId(week.weekLabel, startedAt),
+			feature: 'veille',
+			status: 'error',
+			startedAt,
+			errorMessage: `Cross-check failed: ${message}`
+		});
 		return {
 			ok: false,
 			weekLabel: week.weekLabel,
@@ -424,6 +483,13 @@ export async function runWeeklyGeneration(
 			gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 },
 			deps.email
 		);
+		await persistRunCosts(supabase, week.weekLabel, {
+			runId: buildVeilleRunId(week.weekLabel, startedAt),
+			feature: 'veille',
+			status: 'error',
+			startedAt,
+			errorMessage: errMsg
+		});
 		return {
 			ok: false,
 			weekLabel: week.weekLabel,
@@ -468,6 +534,16 @@ export async function runWeeklyGeneration(
 	} catch (e) {
 		console.error(`[email-recap] unexpected error: ${sanitizeError(e)}`);
 	}
+
+	// Persistance coûts API (best-effort, n'influence pas le retour). Status
+	// 'partial' si volume sous le seuil low_volume (édition publiée mais maigre),
+	// 'success' sinon.
+	await persistRunCosts(supabase, week.weekLabel, {
+		runId: buildVeilleRunId(week.weekLabel, startedAt),
+		feature: 'veille',
+		status: report.items.length < LOW_VOLUME_THRESHOLD ? 'partial' : 'success',
+		startedAt
+	});
 
 	return { ok: true, weekLabel: week.weekLabel, reportId: inserted.id };
 }

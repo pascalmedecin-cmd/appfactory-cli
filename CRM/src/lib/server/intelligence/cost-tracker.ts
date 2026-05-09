@@ -12,6 +12,7 @@
  * Conversion EUR : taux fixe approximatif, valeur indicative, pas comptable.
  */
 import type Anthropic from '@anthropic-ai/sdk';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 // ---------- Tarifs ----------
 
@@ -60,6 +61,27 @@ export interface CostSummary {
 	breakdown: CostEntry[];
 	total_usd: number;
 	total_eur: number;
+}
+
+/** Métadonnées d'un run pour persistance DB. */
+export interface PersistMeta {
+	/** Clé naturelle stable (ex 'veille-2026-W19-080524'). UPSERT idempotent dessus. */
+	runId: string;
+	/** Catégorie fonctionnelle pour filtrer le dashboard coûts. */
+	feature: 'veille' | 'signaux' | 'autre';
+	/** État final du run. partial = succès dégradé (low_volume, etc.). */
+	status: 'success' | 'partial' | 'error';
+	/** ISO timestamp du début du run. */
+	startedAt: string;
+	/** ISO timestamp de fin. Si absent, now() au moment de persist(). */
+	finishedAt?: string;
+	/** Message d'erreur si status='error'. */
+	errorMessage?: string;
+}
+
+export interface PersistResult {
+	ok: boolean;
+	error?: string;
 }
 
 // ---------- Class ----------
@@ -124,6 +146,72 @@ export class CostTracker {
 			total_usd,
 			total_eur: total_usd * USD_TO_EUR
 		};
+	}
+
+	/**
+	 * Persiste le snapshot courant dans la table `cost_audit_runs`.
+	 *
+	 * UPSERT idempotent sur `run_id` (re-run du même runId écrase la ligne).
+	 * Best-effort : encapsule toute exception et la retourne en `ok:false` au
+	 * lieu de propager. Le pipeline veille appelle cette méthode en fin de run
+	 * pour alimenter le dashboard /dashboard/couts.
+	 *
+	 * Le client supabase doit être un service-role client (RLS bypass) car la
+	 * table n'a aucune policy INSERT.
+	 */
+	async persist(supabase: SupabaseClient, meta: PersistMeta): Promise<PersistResult> {
+		const summary = this.summary();
+		const totals = summary.breakdown.reduce(
+			(acc, e) => ({
+				input: acc.input + (e.kind === 'claude' ? e.input_tokens : 0),
+				output: acc.output + (e.kind === 'claude' ? e.output_tokens : 0),
+				cacheRead: acc.cacheRead + (e.kind === 'claude' ? e.cache_read_tokens : 0),
+				cacheCreation: acc.cacheCreation + (e.kind === 'claude' ? e.cache_creation_tokens : 0)
+			}),
+			{ input: 0, output: 0, cacheRead: 0, cacheCreation: 0 }
+		);
+
+		const finishedAt = meta.finishedAt ?? new Date().toISOString();
+		const startedTs = Date.parse(meta.startedAt);
+		const finishedTs = Date.parse(finishedAt);
+		const durationSeconds =
+			Number.isFinite(startedTs) && Number.isFinite(finishedTs)
+				? Math.max(0, Math.round((finishedTs - startedTs) / 1000))
+				: null;
+
+		// Premier model rencontré dans breakdown comme « modèle principal » du run.
+		// Si breakdown vide (run échoué très tôt) : 'n/a' pour respecter NOT NULL.
+		const model =
+			summary.breakdown.find((e): e is ClaudeEntry => e.kind === 'claude')?.model ?? 'n/a';
+
+		try {
+			const { error } = await supabase.from('cost_audit_runs').upsert(
+				{
+					run_id: meta.runId,
+					feature: meta.feature,
+					model,
+					status: meta.status,
+					started_at: meta.startedAt,
+					finished_at: finishedAt,
+					duration_seconds: durationSeconds,
+					total_input_tokens: totals.input,
+					total_output_tokens: totals.output,
+					total_cache_read_tokens: totals.cacheRead,
+					total_cache_creation_tokens: totals.cacheCreation,
+					total_usd: summary.total_usd,
+					total_eur: summary.total_eur,
+					breakdown: summary.breakdown,
+					error_message: meta.errorMessage ?? null
+				},
+				{ onConflict: 'run_id' }
+			);
+			if (error) {
+				return { ok: false, error: error.message };
+			}
+			return { ok: true };
+		} catch (e) {
+			return { ok: false, error: e instanceof Error ? e.message : String(e) };
+		}
 	}
 }
 

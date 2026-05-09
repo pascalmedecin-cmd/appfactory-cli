@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { CostTracker } from './cost-tracker';
 import type Anthropic from '@anthropic-ai/sdk';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 /** Helper pour construire un objet Usage minimal. */
 function usage(input: number, output: number, cacheRead = 0, cacheCreation = 0): Anthropic.Usage {
@@ -97,5 +98,138 @@ describe('CostTracker - reset', () => {
 		const { breakdown, total_usd } = tracker.summary();
 		expect(breakdown).toHaveLength(0);
 		expect(total_usd).toBe(0);
+	});
+});
+
+describe('CostTracker - persist', () => {
+	let tracker: CostTracker;
+	let upsertCalls: Array<{ values: Record<string, unknown>; options?: Record<string, unknown> }>;
+	let upsertError: { message: string } | null;
+	let supabaseMock: SupabaseClient;
+
+	beforeEach(() => {
+		tracker = new CostTracker();
+		upsertCalls = [];
+		upsertError = null;
+		supabaseMock = {
+			from: vi.fn().mockImplementation((_table: string) => ({
+				upsert: vi.fn().mockImplementation(
+					(values: Record<string, unknown>, options?: Record<string, unknown>) => {
+						upsertCalls.push({ values, options });
+						return Promise.resolve({ error: upsertError });
+					}
+				)
+			}))
+		} as unknown as SupabaseClient;
+	});
+
+	it('UPSERT cost_audit_runs avec totals agrégés et breakdown JSONB', async () => {
+		tracker.addClaudeCall('claude-opus-4-7', usage(100_000, 10_000), 'Phase 1');
+		tracker.addClaudeCall('claude-opus-4-7', usage(50_000, 5_000, 200_000, 30_000), 'Phase 2');
+
+		const result = await tracker.persist(supabaseMock, {
+			runId: 'veille-2026-W19-test',
+			feature: 'veille',
+			status: 'success',
+			startedAt: '2026-05-09T10:00:00.000Z',
+			finishedAt: '2026-05-09T10:08:30.000Z'
+		});
+
+		expect(result.ok).toBe(true);
+		expect(supabaseMock.from).toHaveBeenCalledWith('cost_audit_runs');
+		expect(upsertCalls).toHaveLength(1);
+		const v = upsertCalls[0]!.values;
+		expect(v.run_id).toBe('veille-2026-W19-test');
+		expect(v.feature).toBe('veille');
+		expect(v.status).toBe('success');
+		expect(v.model).toBe('claude-opus-4-7');
+		expect(v.total_input_tokens).toBe(150_000);
+		expect(v.total_output_tokens).toBe(15_000);
+		expect(v.total_cache_read_tokens).toBe(200_000);
+		expect(v.total_cache_creation_tokens).toBe(30_000);
+		expect(v.duration_seconds).toBe(510);
+		expect(v.error_message).toBeNull();
+		expect(Array.isArray(v.breakdown)).toBe(true);
+		expect((v.breakdown as unknown[])).toHaveLength(2);
+		expect(upsertCalls[0]!.options).toEqual({ onConflict: 'run_id' });
+	});
+
+	it('persist sur tracker vide → model=n/a + totals zéro (run échoué très tôt)', async () => {
+		const result = await tracker.persist(supabaseMock, {
+			runId: 'veille-2026-W19-fail-early',
+			feature: 'veille',
+			status: 'error',
+			startedAt: '2026-05-09T10:00:00.000Z',
+			errorMessage: 'ANTHROPIC_API_KEY manquante'
+		});
+
+		expect(result.ok).toBe(true);
+		const v = upsertCalls[0]!.values;
+		expect(v.model).toBe('n/a');
+		expect(v.total_usd).toBe(0);
+		expect(v.total_eur).toBe(0);
+		expect(v.error_message).toBe('ANTHROPIC_API_KEY manquante');
+		expect(v.status).toBe('error');
+	});
+
+	it('finishedAt absent → utilise now() au moment de persist', async () => {
+		const before = Date.now();
+		await tracker.persist(supabaseMock, {
+			runId: 'veille-2026-W19-no-finish',
+			feature: 'veille',
+			status: 'success',
+			startedAt: new Date(before - 5000).toISOString()
+		});
+		const after = Date.now();
+		const finishedAt = upsertCalls[0]!.values.finished_at as string;
+		const ts = Date.parse(finishedAt);
+		expect(ts).toBeGreaterThanOrEqual(before);
+		expect(ts).toBeLessThanOrEqual(after);
+	});
+
+	it('erreur DB → retourne ok:false sans propager', async () => {
+		upsertError = { message: 'duplicate key violates unique constraint' };
+		const result = await tracker.persist(supabaseMock, {
+			runId: 'veille-2026-W19-dup',
+			feature: 'veille',
+			status: 'success',
+			startedAt: '2026-05-09T10:00:00.000Z'
+		});
+		expect(result.ok).toBe(false);
+		expect(result.error).toContain('duplicate key');
+	});
+
+	it('exception throw côté supabase → retourne ok:false sans propager', async () => {
+		const throwingSupabase = {
+			from: () => ({
+				upsert: () => {
+					throw new Error('connection lost');
+				}
+			})
+		} as unknown as SupabaseClient;
+		const result = await tracker.persist(throwingSupabase, {
+			runId: 'veille-2026-W19-net-fail',
+			feature: 'veille',
+			status: 'success',
+			startedAt: '2026-05-09T10:00:00.000Z'
+		});
+		expect(result.ok).toBe(false);
+		expect(result.error).toBe('connection lost');
+	});
+
+	it('UPSERT idempotent : 2 appels persist consécutifs avec même runId envoient même clé', async () => {
+		const meta = {
+			runId: 'veille-2026-W19-idempotent',
+			feature: 'veille' as const,
+			status: 'success' as const,
+			startedAt: '2026-05-09T10:00:00.000Z'
+		};
+		await tracker.persist(supabaseMock, meta);
+		tracker.addClaudeCall('claude-opus-4-7', usage(100, 10), 'late');
+		await tracker.persist(supabaseMock, meta);
+		expect(upsertCalls).toHaveLength(2);
+		expect(upsertCalls[0]!.values.run_id).toBe(upsertCalls[1]!.values.run_id);
+		expect(upsertCalls[0]!.options).toEqual({ onConflict: 'run_id' });
+		expect(upsertCalls[1]!.options).toEqual({ onConflict: 'run_id' });
 	});
 });

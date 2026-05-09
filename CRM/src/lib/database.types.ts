@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       activites: {
@@ -185,6 +160,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      cost_audit_runs: {
+        Row: {
+          breakdown: Json
+          created_at: string
+          duration_seconds: number | null
+          error_message: string | null
+          feature: string
+          finished_at: string | null
+          id: string
+          model: string
+          run_id: string
+          started_at: string
+          status: string
+          total_cache_creation_tokens: number
+          total_cache_read_tokens: number
+          total_eur: number
+          total_input_tokens: number
+          total_output_tokens: number
+          total_usd: number
+        }
+        Insert: {
+          breakdown?: Json
+          created_at?: string
+          duration_seconds?: number | null
+          error_message?: string | null
+          feature: string
+          finished_at?: string | null
+          id?: string
+          model: string
+          run_id: string
+          started_at: string
+          status?: string
+          total_cache_creation_tokens?: number
+          total_cache_read_tokens?: number
+          total_eur?: number
+          total_input_tokens?: number
+          total_output_tokens?: number
+          total_usd?: number
+        }
+        Update: {
+          breakdown?: Json
+          created_at?: string
+          duration_seconds?: number | null
+          error_message?: string | null
+          feature?: string
+          finished_at?: string | null
+          id?: string
+          model?: string
+          run_id?: string
+          started_at?: string
+          status?: string
+          total_cache_creation_tokens?: number
+          total_cache_read_tokens?: number
+          total_eur?: number
+          total_input_tokens?: number
+          total_output_tokens?: number
+          total_usd?: number
+        }
+        Relationships: []
       }
       entreprises: {
         Row: {
@@ -1102,9 +1137,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },
