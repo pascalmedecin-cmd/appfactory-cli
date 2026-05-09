@@ -1,10 +1,11 @@
 /**
- * Cost tracker pour le pipeline veille (cron /api/cron/intelligence).
+ * Cost tracker pour le pipeline veille (GitHub Actions workflow `cron-veille`,
+ * externalisé S167 — handler Vercel `/api/cron/intelligence` retiré S176ter).
  *
  * Agrège les coûts Claude API (tokens uncached + cache read + cache creation)
  * sur une invocation complète.
  *
- * Pattern : module-level singleton. Une invocation cron = un reset() au début,
+ * Pattern : module-level singleton. Une invocation = un reset() au début,
  * collecte progressive pendant, summary() à la fin. Pas thread-safe multi-invocation.
  *
  * Tarifs source : doc Anthropic (platform.claude.com, cache 2026-04-15).

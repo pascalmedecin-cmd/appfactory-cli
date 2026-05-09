@@ -68,8 +68,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const isAuthRoute = AUTH_EXEMPT_ROUTES.includes(event.url.pathname);
 	const isCronRoute =
 		event.url.pathname.startsWith('/api/cron/') ||
-		event.url.pathname === '/api/intelligence/recheck-historical' ||
-		event.url.pathname === '/api/intelligence/trigger';
+		event.url.pathname === '/api/intelligence/recheck-historical';
 
 	if (!session && !isAuthRoute && !isCronRoute) {
 		throw redirect(303, '/login');
