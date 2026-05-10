@@ -25,9 +25,13 @@ async function getOrCreateEntreprise(
 	const normalized = normalizeCompanyName(trimmed);
 
 	// 1. Lookup optimiste (cas commun : entreprise déjà connue).
+	// Cap à 1000 = garde-fou DOS interne ; refonte trigram + ilike bounded prévue
+	// V2b H-06 (Contact create SELECT entreprises sans LIMIT). Cap actuel safe :
+	// la table compte ~100 entreprises en prod 2026-05-10.
 	const { data: existantes } = await supabase
 		.from('entreprises')
-		.select('id, raison_sociale');
+		.select('id, raison_sociale')
+		.limit(1000);
 	const match = existantes?.find((e) => normalizeCompanyName(e.raison_sociale) === normalized);
 	if (match) return match.id;
 
@@ -49,7 +53,8 @@ async function getOrCreateEntreprise(
 	if (insertErr.code === '23505') {
 		const { data: existantes2 } = await supabase
 			.from('entreprises')
-			.select('id, raison_sociale');
+			.select('id, raison_sociale')
+			.limit(1000);
 		const match2 = existantes2?.find(
 			(e) => normalizeCompanyName(e.raison_sociale) === normalized
 		);
