@@ -5,6 +5,27 @@
  * Toutes les fonctions sont pures + déterministes pour faciliter les tests.
  */
 
+import { z } from 'zod';
+
+/**
+ * Schéma Zod pour valider une ligne `cost_audit_runs` retournée par Supabase.
+ * Aligné migration `20260509_001_cost_audit_runs.sql` (CHECK feature/status).
+ *
+ * Audit 360 H-12 : la load `+page.server.ts` SELECT ne ramène que 6 colonnes,
+ * donc on valide uniquement celles-ci. Postgres `numeric` peut transiter en
+ * string via supabase-js → `z.coerce.number()` accepte les deux.
+ */
+export const CostRunRowSchema = z.object({
+	id: z.string().uuid(),
+	started_at: z.string().min(1),
+	feature: z.enum(['veille', 'signaux', 'autre']),
+	status: z.enum(['success', 'partial', 'error']),
+	total_eur: z.coerce.number(),
+	total_usd: z.coerce.number()
+});
+
+export type CostRunRow = z.infer<typeof CostRunRowSchema>;
+
 export interface CostRun {
 	id: string;
 	run_id: string;
@@ -153,7 +174,7 @@ export interface WeekAggregate {
 	byFeature: Record<CostRun['feature'], number>;
 }
 
-export function aggregateByWeek(runs: CostRun[], weeksCount: number = 12, now: Date = new Date()): WeekAggregate[] {
+export function aggregateByWeek(runs: CostRunRow[], weeksCount: number = 12, now: Date = new Date()): WeekAggregate[] {
 	// Construire les N dernières clés semaine (ordre croissant).
 	const buckets: WeekAggregate[] = [];
 	for (let i = weeksCount - 1; i >= 0; i--) {
@@ -199,7 +220,7 @@ export interface CostKpi {
 	runs30d: number;
 }
 
-export function computeKpis(runs: CostRun[], now: Date = new Date()): CostKpi {
+export function computeKpis(runs: CostRunRow[], now: Date = new Date()): CostKpi {
 	const nowMs = now.getTime();
 	const ms30d = 30 * 86400 * 1000;
 	const ms7d = 7 * 86400 * 1000;
@@ -244,9 +265,9 @@ export function computeKpis(runs: CostRun[], now: Date = new Date()): CostKpi {
 
 /** Filtre runs par feature, conserve les runs sans feature si feature='all'. */
 export function filterRunsByFeature(
-	runs: CostRun[],
+	runs: CostRunRow[],
 	feature: 'all' | CostRun['feature']
-): CostRun[] {
+): CostRunRow[] {
 	if (feature === 'all') return runs;
 	return runs.filter((r) => r.feature === feature);
 }

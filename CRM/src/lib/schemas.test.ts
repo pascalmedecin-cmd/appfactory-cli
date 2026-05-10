@@ -81,6 +81,28 @@ describe('LeadCreateSchema', () => {
 		expect(r.success).toBe(true);
 		if (r.success) expect(r.data.montant).toBe(50000);
 	});
+
+	// Audit 360 H-07 : date_publication strict YYYY-MM-DD (ferme « not-a-date »).
+	it('rejette une date_publication non YYYY-MM-DD (audit 360 H-07)', () => {
+		const r = validate(LeadCreateSchema, {
+			source: 'zefix', raison_sociale: 'Test', canton: 'VD', date_publication: 'not-a-date'
+		});
+		expect(r.success).toBe(false);
+	});
+
+	it('accepte une date_publication YYYY-MM-DD valide (audit 360 H-07)', () => {
+		const r = validate(LeadCreateSchema, {
+			source: 'zefix', raison_sociale: 'Test', canton: 'VD', date_publication: '2026-05-10'
+		});
+		expect(r.success).toBe(true);
+	});
+
+	it('accepte une date_publication vide (audit 360 H-07)', () => {
+		const r = validate(LeadCreateSchema, {
+			source: 'zefix', raison_sociale: 'Test', canton: 'VD', date_publication: ''
+		});
+		expect(r.success).toBe(true);
+	});
 });
 
 describe('LeadBatchStatutSchema', () => {
@@ -287,6 +309,17 @@ describe('OpportuniteCreateSchema', () => {
 		const r = validate(OpportuniteCreateSchema, { titre: 'Test', etape_pipeline: 'inexistant' });
 		expect(r.success).toBe(false);
 	});
+
+	// Audit 360 H-07 : date_relance_prevue strict YYYY-MM-DD.
+	it('rejette une date_relance_prevue non YYYY-MM-DD (audit 360 H-07)', () => {
+		const r = validate(OpportuniteCreateSchema, { titre: 'Test', date_relance_prevue: 'avant juin' });
+		expect(r.success).toBe(false);
+	});
+
+	it('accepte une date_relance_prevue YYYY-MM-DD valide (audit 360 H-07)', () => {
+		const r = validate(OpportuniteCreateSchema, { titre: 'Test', date_relance_prevue: '2026-06-15' });
+		expect(r.success).toBe(true);
+	});
 });
 
 // -- OpportuniteUpdateSchema --
@@ -374,6 +407,17 @@ describe('SignalCreateSchema', () => {
 	it('rejette un canton invalide', () => {
 		const r = validate(SignalCreateSchema, { canton: 'XX' });
 		expect(r.success).toBe(false);
+	});
+
+	// Audit 360 H-07 : date_publication strict YYYY-MM-DD.
+	it('rejette une date_publication non YYYY-MM-DD (audit 360 H-07)', () => {
+		const r = validate(SignalCreateSchema, { date_publication: '15/06/2026' });
+		expect(r.success).toBe(false);
+	});
+
+	it('accepte une date_publication YYYY-MM-DD valide (audit 360 H-07)', () => {
+		const r = validate(SignalCreateSchema, { date_publication: '2026-05-08' });
+		expect(r.success).toBe(true);
 	});
 });
 

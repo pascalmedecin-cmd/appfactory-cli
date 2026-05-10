@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { calculerScore } from '$lib/scoring';
+import { sanitizeApiKeyInLogs } from '../searchch/helpers';
 
 const SEARCH_CH_ENDPOINT = 'https://search.ch/tel/api/';
 
@@ -54,12 +55,25 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	try {
 		const resp = await fetch(`${SEARCH_CH_ENDPOINT}?${params}`);
-		if (resp.status === 403 || resp.status === 429) {
-			return json({ error: 'Quota search.ch épuisé ou clé API invalide. Le quota mensuel est de 1 000 requêtes. Réessayez le mois prochain.' }, { status: 429 });
+		// Audit 360 H-32 : distinguer 403 (config admin) de 429 (quota mensuel)
+		// pour ne pas masquer une clé invalide derrière un message « quota épuisé ».
+		if (resp.status === 403) {
+			return json(
+				{ error: 'Clé API search.ch invalide ou bloquée. Contactez l\'administrateur.' },
+				{ status: 503 }
+			);
+		}
+		if (resp.status === 429) {
+			return json(
+				{ error: 'Quota mensuel search.ch atteint (1 000 requêtes). Réessayez le mois prochain.' },
+				{ status: 429 }
+			);
 		}
 		if (!resp.ok) {
 			const text = await resp.text();
-			console.error(`search.ch API error ${resp.status}: ${text.slice(0, 500)}`);
+			// Audit 360 V2a L-01 (defense-in-depth) : strip clé API si search.ch
+			// echo de la query dans le body d'erreur (pattern partagé `searchch/helpers`).
+			console.error(`search.ch API error ${resp.status}: ${sanitizeApiKeyInLogs(text.slice(0, 500))}`);
 			return json({ error: `Erreur API search.ch (${resp.status}). Réessayez plus tard.` }, { status: 502 });
 		}
 
@@ -129,6 +143,11 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 				: 'Aucun téléphone trouvé pour cette entreprise.',
 		});
 	} catch (err) {
-		return json({ error: `Erreur réseau search.ch: ${String(err)}` }, { status: 502 });
+		// Audit 360 V2a L-01 (defense-in-depth) : strip clé API si l'exception
+		// stringify l'URL fetch (cas `TypeError: fetch failed` Node 20+).
+		return json(
+			{ error: `Erreur réseau search.ch: ${sanitizeApiKeyInLogs(String(err))}` },
+			{ status: 502 }
+		);
 	}
 };

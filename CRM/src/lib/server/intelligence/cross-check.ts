@@ -329,10 +329,11 @@ export async function crossCheckBatch(
 			}
 			continue;
 		}
-		// Reject UNIQUEMENT si verbatim_ok=false ET au moins une divergence fatale.
-		// Les minor sont laissées passer (paraphrases acceptables).
-		const hasFatal = verdict.divergences.some((d) => d.severity === 'fatal');
-		if (!verdict.verbatim_ok && hasFatal) {
+		// Audit 360 H-04 (zéro hallu strict) : rejet dès que verbatim_ok=false,
+		// indépendamment des divergences (peut être [] ou minor uniquement). Le
+		// LLM cross-check signale verbatim_ok=false quand le contenu source ne
+		// confirme pas l'item, même sans divergence détaillée → brèche fermée.
+		if (!verdict.verbatim_ok) {
 			rejected.push({ url: item.source.url, title: item.title, verdict });
 		} else {
 			kept.push(item);

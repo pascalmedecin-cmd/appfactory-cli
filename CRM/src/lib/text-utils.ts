@@ -2,12 +2,13 @@
  * Utilitaires texte : normalisation accents, matching mots-clés.
  */
 
-/** Supprime les diacritiques (accents) et met en minuscules */
+// Audit 360 H-22 : normalisation NFD centralis\u00e9e dans `src/lib/utils/text-normalize.ts`.
+// `normalizeText` reste un alias public pour ne pas casser les imports existants.
+import { normalizeNFD } from './utils/text-normalize';
+
+/** Supprime les diacritiques (accents) et met en minuscules. Alias `normalizeNFD`. */
 export function normalizeText(text: string): string {
-	return text
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.toLowerCase();
+	return normalizeNFD(text);
 }
 
 /**

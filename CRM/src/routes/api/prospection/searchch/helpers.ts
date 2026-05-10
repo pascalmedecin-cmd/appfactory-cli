@@ -11,6 +11,9 @@
  * Économie quota : terme métier ≥ 3 chars + denylist mots-vides + lieu (canton ou ville) requis.
  */
 
+// Audit 360 H-22 : normalisation NFD centralisée dans `src/lib/utils/text-normalize.ts`.
+import { normalizeNFDTrim } from '$lib/utils/text-normalize';
+
 const ALLOWED_CANTONS = new Set(['GE', 'VD', 'VS', 'NE', 'FR', 'JU']);
 
 /**
@@ -29,10 +32,9 @@ const GENERIC_TERM_DENYLIST = new Set([
 
 /**
  * Normalise un terme pour matching denylist : strip accents + lowercase + trim.
+ * Alias public de `normalizeNFDTrim` (audit 360 H-22, source unique).
  */
-export function normalizeTerm(s: string): string {
-	return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-}
+export const normalizeTerm = normalizeNFDTrim;
 
 /**
  * Refuse un terme générique (mot-vide légal) qui ferait exploser le quota.

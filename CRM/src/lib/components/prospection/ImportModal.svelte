@@ -5,6 +5,8 @@
 	import { invalidateAll } from '$app/navigation';
 	import { API_LIMITS } from '$lib/api-limits';
 	import { cantonNoms } from '$lib/prospection-utils';
+	// Audit 360 H-22 : normalisation NFD centralisée dans `src/lib/utils/text-normalize.ts`.
+	import { normalizeNFDTrim as searchchTermNormalize } from '$lib/utils/text-normalize';
 
 	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
 
@@ -78,9 +80,6 @@
 		'entreprise', 'firma',
 	]);
 
-	function searchchTermNormalize(s: string): string {
-		return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-	}
 
 	let searchchTermTrimmed = $derived(importSearchchTerm.trim());
 	let searchchTermTooShort = $derived(searchchTermTrimmed.length > 0 && searchchTermTrimmed.length < 3);

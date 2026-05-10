@@ -181,8 +181,7 @@ describe('crossCheckBatch', () => {
 		expect(r.rejected).toHaveLength(0);
 	});
 
-	it("garde items avec verbatim_ok=false mais SEULEMENT divergences minor", async () => {
-		
+	it("rejette items avec verbatim_ok=false même si divergences seulement minor (audit 360 H-04)", async () => {
 		const create = __mockCreate;
 		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 			ok: true,
@@ -215,9 +214,39 @@ describe('crossCheckBatch', () => {
 			usage: { input_tokens: 100, output_tokens: 50 }
 		});
 		const r = await crossCheckBatch([baseItem], { anthropicApiKey: 'sk-test' });
-		// Pas de fatal → l'item passe quand même.
-		expect(r.kept).toHaveLength(1);
-		expect(r.rejected).toHaveLength(0);
+		expect(r.rejected).toHaveLength(1);
+		expect(r.kept).toHaveLength(0);
+	});
+
+	it("rejette items avec verbatim_ok=false ET divergences vides (audit 360 H-04 brèche zéro hallu)", async () => {
+		const create = __mockCreate;
+		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			text: async () =>
+				'<html><body>' +
+				'Article réel sans chiffres précis dont le contenu est suffisamment long pour passer le seuil minimal du cross-check. '.repeat(
+					5
+				) +
+				'</body></html>'
+		});
+		create.mockResolvedValueOnce({
+			content: [
+				{
+					type: 'tool_use',
+					name: 'emit_verdict',
+					input: {
+						verbatim_ok: false,
+						divergences: [],
+						confidence: 'low'
+					}
+				}
+			],
+			usage: { input_tokens: 100, output_tokens: 30 }
+		});
+		const r = await crossCheckBatch([baseItem], { anthropicApiKey: 'sk-test' });
+		expect(r.rejected).toHaveLength(1);
+		expect(r.kept).toHaveLength(0);
 	});
 
 	it('item dont la page ne fetch pas → unverifiable (pas rejeté par défaut)', async () => {

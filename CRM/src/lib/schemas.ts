@@ -95,7 +95,7 @@ export const OpportuniteCreateSchema = z.object({
 	entreprise_id: optionalUUID,
 	montant_estime: z.coerce.number().min(0).max(999_999_999).optional().or(z.literal('')),
 	etape_pipeline: z.enum(ETAPES_PIPELINE).optional(),
-	date_relance_prevue: z.string().max(20).optional().or(z.literal('')),
+	date_relance_prevue: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD requis').optional().or(z.literal('')),
 	notes_libres: optionalText,
 	responsable: optionalString,
 	signal_affaires_id: optionalUUID,
@@ -135,7 +135,7 @@ export const SignalCreateSchema = z.object({
 	canton: z.enum(CANTONS).optional().or(z.literal('')),
 	commune: optionalString,
 	source_officielle: optionalString,
-	date_publication: z.string().max(20).optional().or(z.literal('')),
+	date_publication: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD requis').optional().or(z.literal('')),
 	notes_libres: optionalText,
 	responsable_filmpro: optionalString,
 });
@@ -203,7 +203,7 @@ export const LeadCreateSchema = z.object({
 	secteur_detecte: optionalString,
 	description: optionalText,
 	montant: z.coerce.number().min(0).optional().or(z.literal('')),
-	date_publication: z.string().max(30).optional().or(z.literal('')),
+	date_publication: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD requis').optional().or(z.literal('')),
 });
 
 export const LeadUpdateSchema = LeadCreateSchema.extend({

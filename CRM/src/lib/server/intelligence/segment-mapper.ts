@@ -9,6 +9,9 @@
  * On retourne le segment au plus haut score, ou null si aucun match.
  */
 
+// Audit 360 H-22 : normalisation NFD centralisée dans src/lib/utils/text-normalize.ts.
+import { normalizeNFD as normalize } from '$lib/utils/text-normalize';
+
 export type LibSegment =
 	| 'securite'
 	| 'confort-thermique'
@@ -220,14 +223,6 @@ const SEGMENT_KEYWORDS: Record<LibSegment, string[]> = {
 };
 
 /**
- * Normalisation : lowercase, NFD, suppression diacritiques.
- */
-function normalize(text: string): string {
-	return text
-		.toLowerCase()
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '');
-}
 
 /**
  * Compte les occurrences de keywords (matching word-boundary friendly) dans un texte normalisé.

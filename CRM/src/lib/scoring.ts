@@ -50,12 +50,8 @@ interface LeadScoring {
 	intelligenceSignals?: IntelligenceSignalInput[] | null;
 }
 
-// Normalise un texte pour le matching keyword : retire les accents (NFD strip) + lowercase.
-// Sans ça, "Bâtiment".toLowerCase() = "bâtiment" qui ne matche jamais le keyword "batiment".
-// Range ̀-ͯ = Combining Diacritical Marks Unicode (escape explicite pour lisibilité).
-function normalize(s: string): string {
-	return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-}
+// Audit 360 H-22 : normalisation NFD centralisée dans `src/lib/utils/text-normalize.ts`.
+import { normalizeNFD as normalize } from '$lib/utils/text-normalize';
 
 export interface ScoreDetail {
 	total: number;

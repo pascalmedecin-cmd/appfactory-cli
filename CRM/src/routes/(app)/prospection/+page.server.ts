@@ -460,7 +460,8 @@ export const actions: Actions = {
 		};
 
 		const parsed = validate(RechercheCreateSchema, raw);
-		if (!parsed.success) return fail(400, { error: parsed.error });
+		// Audit 360 H-14 : ActionResult discriminated union (`success: true|false`).
+		if (!parsed.success) return fail(400, { success: false as const, error: parsed.error });
 
 		const d = parsed.data;
 		const { error } = await locals.supabase.from('recherches_sauvegardees').insert({
@@ -477,7 +478,7 @@ export const actions: Actions = {
 			date_creation: now(),
 		});
 
-		return dbFail(error) ?? { success: true };
+		return dbFail(error) ?? { success: true as const };
 	},
 
 	deleteRecherche: async ({ request, locals }) => {
@@ -493,11 +494,15 @@ export const actions: Actions = {
 		return dbFail(error) ?? { success: true };
 	},
 
+	// Audit 360 H-14 : ActionResult discriminated union (`success: true|false`).
+	// Cas spécial `{ambiguous, candidates}` (multi-candidats sans tel) reste hors
+	// ActionResult car le frontend `LeadExpressForm.svelte` consomme un 3e shape
+	// dédié pour ouvrir la modale de désambiguïsation.
 	createExpress: async ({ request, locals }) => {
 		const form = await request.formData();
 		const raw = extractForm(form, [...LEAD_EXPRESS_FIELDS]);
 		const parsed = validate(LeadExpressCreateSchema, raw);
-		if (!parsed.success) return fail(400, { error: parsed.error });
+		if (!parsed.success) return fail(400, { success: false as const, error: parsed.error });
 
 		const d = parsed.data;
 		const raison = d.raison_sociale.trim();
@@ -528,12 +533,12 @@ export const actions: Actions = {
 					const dbTel = (c.telephone || '').replace(/[^\d]/g, '');
 					return dbTel.length >= 6 && (dbTel.includes(telNorm) || telNorm.includes(dbTel));
 				}) ?? null;
-				if (match) return { success: true, id: match.id, duplicate: true };
+				if (match) return { success: true as const, id: match.id, duplicate: true };
 				// Pas de match tel mais ≥1 candidat raison sociale : laisser l'utilisateur trancher.
 			}
 			if (candidates.length === 1) {
 				// Pas de tel utilisable + 1 seul candidat : silent redirect (ambiguïté nulle).
-				return { success: true, id: candidates[0].id, duplicate: true };
+				return { success: true as const, id: candidates[0].id, duplicate: true };
 			}
 			// Multi-candidats sans tel discriminant : retourner la liste pour la modale.
 			return fail(409, {
@@ -564,6 +569,6 @@ export const actions: Actions = {
 			date_modification: ts,
 		});
 
-		return dbFail(error) ?? { success: true, id, duplicate: false };
+		return dbFail(error) ?? { success: true as const, id, duplicate: false };
 	},
 };

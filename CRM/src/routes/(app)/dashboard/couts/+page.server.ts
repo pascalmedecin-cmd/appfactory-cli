@@ -1,9 +1,11 @@
 import { error } from '@sveltejs/kit';
+import { z } from 'zod';
 import type { PageServerLoad } from './$types';
 import {
 	aggregateByWeek,
 	computeKpis,
-	type CostRun,
+	CostRunRowSchema,
+	type CostRunRow,
 	type WeekAggregate,
 	type CostKpi
 } from '$lib/utils/coutsFormat';
@@ -42,7 +44,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw error(500, 'Erreur lecture coûts API');
 	}
 
-	const runs = (data ?? []) as CostRun[];
+	// Audit 360 H-12 : valider la forme retournée par Supabase via Zod plutôt
+	// qu'un cast aveugle (le SELECT 6 colonnes peut diverger d'une future
+	// migration `cost_audit_runs`). Sur mismatch, fallback empty + log warning.
+	const parsed = z.array(CostRunRowSchema).safeParse(data ?? []);
+	let runs: CostRunRow[];
+	if (parsed.success) {
+		runs = parsed.data;
+	} else {
+		console.warn(
+			`[dashboard-couts] Zod schema mismatch (cost_audit_runs row), fallback empty: ${parsed.error.message}`
+		);
+		runs = [];
+	}
 	const now = new Date();
 	const weeks: WeekAggregate[] = aggregateByWeek(runs, 12, now);
 	const kpi: CostKpi = computeKpis(runs, now);

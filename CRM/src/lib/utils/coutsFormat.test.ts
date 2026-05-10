@@ -241,3 +241,54 @@ describe('coutsFormat - filterRunsByFeature', () => {
 		expect(filterRunsByFeature(subset, 'signaux')).toHaveLength(0);
 	});
 });
+
+// Audit 360 H-12 : validation Zod CostRunRowSchema (load `+page.server.ts` SELECT
+// 6 colonnes alignées migration `20260509_001_cost_audit_runs.sql`).
+
+import { CostRunRowSchema } from './coutsFormat';
+
+describe('coutsFormat - CostRunRowSchema (audit 360 H-12)', () => {
+	const validRow = {
+		id: '550e8400-e29b-41d4-a716-446655440000',
+		started_at: '2026-05-09T08:00:00.000Z',
+		feature: 'veille' as const,
+		status: 'success' as const,
+		total_eur: 0.69,
+		total_usd: 0.75
+	};
+
+	it('accepte une ligne valide (6 colonnes alignées migration)', () => {
+		const r = CostRunRowSchema.safeParse(validRow);
+		expect(r.success).toBe(true);
+	});
+
+	it('coerce total_eur en number depuis string (Postgres numeric via supabase-js)', () => {
+		const r = CostRunRowSchema.safeParse({ ...validRow, total_eur: '0.69', total_usd: '0.75' });
+		expect(r.success).toBe(true);
+		if (r.success) {
+			expect(r.data.total_eur).toBe(0.69);
+			expect(r.data.total_usd).toBe(0.75);
+		}
+	});
+
+	it('rejette une feature hors enum migration (CHECK contrainte)', () => {
+		const r = CostRunRowSchema.safeParse({ ...validRow, feature: 'unknown' });
+		expect(r.success).toBe(false);
+	});
+
+	it('rejette un status hors enum migration', () => {
+		const r = CostRunRowSchema.safeParse({ ...validRow, status: 'pending' });
+		expect(r.success).toBe(false);
+	});
+
+	it('rejette une ligne sans id UUID (corruption DB)', () => {
+		const r = CostRunRowSchema.safeParse({ ...validRow, id: 'not-a-uuid' });
+		expect(r.success).toBe(false);
+	});
+
+	it('rejette une ligne sans started_at', () => {
+		const { started_at: _ignored, ...withoutStartedAt } = validRow;
+		const r = CostRunRowSchema.safeParse(withoutStartedAt);
+		expect(r.success).toBe(false);
+	});
+});

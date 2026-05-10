@@ -95,11 +95,12 @@ export const actions: Actions = {
 		return dbFail(error) ?? { success: true };
 	},
 
+	// Audit 360 H-14 : ActionResult discriminated union (`success: true|false`).
 	deleteBatch: async ({ request, locals }) => {
 		const form = await request.formData();
 		const raw = extractForm(form, ['ids']);
 		const parsed = validate(SignalBatchDeleteSchema, raw);
-		if (!parsed.success) return fail(400, { error: parsed.error });
+		if (!parsed.success) return fail(400, { success: false as const, error: parsed.error });
 
 		const ids = parsed.data.ids;
 
@@ -108,13 +109,14 @@ export const actions: Actions = {
 			.delete()
 			.in('id', ids);
 
-		return dbFail(error) ?? { success: true, deleted: ids.length };
+		return dbFail(error) ?? { success: true as const, deleted: ids.length };
 	},
 
+	// Audit 360 H-14 : ActionResult discriminated union (`success: true|false`).
 	createOpportunite: async ({ request, locals }) => {
 		const form = await request.formData();
 		const parsed = validate(SignalCreateOpportuniteSchema, extractForm(form, ['signal_id', 'titre', 'entreprise_id']));
-		if (!parsed.success) return fail(400, { error: parsed.error });
+		if (!parsed.success) return fail(400, { success: false as const, error: parsed.error });
 
 		const ts = now();
 		const oppId = newId();
@@ -143,6 +145,6 @@ export const actions: Actions = {
 		const sigFail = dbFail(sigError);
 		if (sigFail) return sigFail;
 
-		return { success: true, redirectTo: '/pipeline' };
+		return { success: true as const, redirectTo: '/pipeline' };
 	},
 };
