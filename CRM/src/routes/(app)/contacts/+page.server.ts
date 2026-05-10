@@ -24,6 +24,18 @@ import { normalizeCompanyName } from '$lib/utils/contactsFormat';
  * "SA", "SàRL", "GmbH"), parce que la RPC matche le préfixe normalisé mais
  * pas les suffixes équivalents.
  */
+/**
+ * Audit 360 V2b bug-hunter N1 : escape les wildcards LIKE (`%`, `_`, `\`)
+ * dans la query passée à la RPC pour éviter qu'une saisie `Foo%` ou `Foo_`
+ * matche un préfixe non-prévu côté DB. Defense-in-depth : le filtre JS
+ * `normalizeCompanyName === normalized` rattrape la majorité des faux
+ * positifs, mais on bloque l'injection à la source pour ne pas dépendre
+ * d'un filtre client.
+ */
+function escapeLikePattern(s: string): string {
+	return s.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
 async function lookupEntrepriseByName(
 	supabase: SupabaseClient<Database>,
 	trimmed: string,
@@ -33,7 +45,7 @@ async function lookupEntrepriseByName(
 	// la connaissent pas encore (cast `as never`, tracé V3a regen).
 	const { data: candidates } = await supabase.rpc(
 		'entreprises_lookup_by_name' as never,
-		{ p_query: trimmed } as never
+		{ p_query: escapeLikePattern(trimmed) } as never
 	);
 
 	const rows = (candidates ?? []) as Array<{ id: string; raison_sociale: string }>;
