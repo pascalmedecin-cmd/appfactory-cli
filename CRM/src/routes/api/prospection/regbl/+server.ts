@@ -118,7 +118,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			.eq('source', 'regbl')
 			.in('source_id', egids);
 		if (existing) {
-			for (const e of existing) existingIds.add(e.source_id);
+			for (const e of existing) {
+				if (e.source_id) existingIds.add(e.source_id);
+			}
 		}
 	}
 

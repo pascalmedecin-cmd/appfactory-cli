@@ -7,6 +7,9 @@ import {
 	type PipelineRow,
 	type CountByDateRow
 } from '$lib/server/reporting';
+import { STATUTS_LEAD } from '$lib/schemas';
+
+const STATUT_LEAD_TRANSFERE: (typeof STATUTS_LEAD)[number] = 'transfere';
 
 /**
  * Agrégations server-side pour la page /reporting.
@@ -18,15 +21,15 @@ export const load: PageServerLoad = async ({ locals }) => {
 			locals.supabase
 				.from('opportunites')
 				.select('etape_pipeline, montant_estime, date_creation, date_cloture_effective'),
-			locals.supabase.from('contacts').select('date_creation'),
-			locals.supabase.from('entreprises').select('date_creation'),
-			locals.supabase.from('prospect_leads').select('statut, created_at')
+			locals.supabase.from('contacts').select('date_creation:date_ajout'),
+			locals.supabase.from('entreprises').select('date_creation:date_import_ajout'),
+			locals.supabase.from('prospect_leads').select('statut')
 		]);
 
 	const opportunites = (opps ?? []) as PipelineRow[];
-	const contactRows = (contacts ?? []) as CountByDateRow[];
-	const entrepriseRows = (entreprises ?? []) as CountByDateRow[];
-	const leadRows = (leads ?? []) as Array<{ statut: string | null; created_at: string | null }>;
+	const contactRows = (contacts ?? []) as unknown as CountByDateRow[];
+	const entrepriseRows = (entreprises ?? []) as unknown as CountByDateRow[];
+	const leadRows = (leads ?? []) as Array<{ statut: string | null }>;
 
 	const pipelineEtape = aggregatePipelineByEtape(opportunites);
 	const activityContacts = aggregateActivity(contactRows);
@@ -36,10 +39,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 	);
 	const monthlyPipeline = aggregateMonthlyPipeline(opportunites, 12);
 
-	// Taux de conversion : heuristique = opportunités / total leads « traités »
-	// (statut 'transfere_crm' = leads qui ont été promus dans le CRM).
+	// Taux de conversion : heuristique = leads transférés en CRM / total leads.
+	// STATUT_LEAD_TRANSFERE pointe vers l'enum source (`STATUTS_LEAD` dans schemas).
 	const totalLeads = leadRows.length;
-	const leadsTransferes = leadRows.filter((l) => l.statut === 'transfere_crm').length;
+	const leadsTransferes = leadRows.filter((l) => l.statut === STATUT_LEAD_TRANSFERE).length;
 	const conversion = computeConversionRate(totalLeads, leadsTransferes);
 
 	// Somme totale pipeline actif (exclut gagne/perdu).

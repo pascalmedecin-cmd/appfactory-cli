@@ -385,9 +385,11 @@
 		}
 	});
 
-	type Recherche = (typeof data.recherches)[number];
-
-	function chargerRecherche(r: Recherche) {
+	function chargerRecherche(r: {
+		sources: string[] | null;
+		cantons: string[] | null;
+		temperatures: string[] | null;
+	}) {
 		filterSources = r.sources ?? [];
 		filterCantons = r.cantons ?? [];
 		filterTemperatures = r.temperatures ?? [];

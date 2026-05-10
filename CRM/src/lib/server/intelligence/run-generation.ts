@@ -10,6 +10,7 @@ import { costTracker, type PersistMeta } from './cost-tracker';
 import type { VeilleDeps } from './deps';
 import { sanitizeForLog, sanitizeError } from './sanitize';
 import { stripCitationsFromReport } from './strip-citations';
+import type { Json } from '$lib/database.types';
 
 type Supabase = VeilleDeps['supabase'];
 
@@ -151,10 +152,10 @@ async function markError(
 				week_label: weekLabel,
 				compliance_tag: 'Non exploitable',
 				executive_summary: 'Génération échouée, voir error_message.',
-				items: [],
-				impacts_filmpro: [],
-				search_terms: [],
-				raw_response: rawResponse ?? null,
+				items: [] as Json,
+				impacts_filmpro: [] as Json,
+				search_terms: [] as Json,
+				raw_response: (rawResponse ?? null) as Json,
 				status: 'error',
 				error_message: sanitized
 			},
@@ -457,13 +458,16 @@ export async function runWeeklyGeneration(
 				generated_at: report.meta.generated_at,
 				compliance_tag: report.meta.compliance_tag,
 				executive_summary: report.meta.executive_summary,
-				items: report.items,
-				impacts_filmpro: report.impacts_filmpro,
+				// Cast Json : les types Zod IntelligenceItem[] et impacts sont structurellement
+				// JSON mais TypeScript ne le prouve pas (récursion limitée). V3a M-19 traitera
+				// la validation Zod côté lecture pour fermer la boucle.
+				items: report.items as unknown as Json,
+				impacts_filmpro: report.impacts_filmpro as unknown as Json,
 				// search_terms globaux supprimés depuis la refonte /veille : les termes
 				// sont désormais portés par chaque item. La colonne DB est conservée
 				// pour rétro-compat lecture des anciennes éditions, nouvelles lignes = [].
-				search_terms: [],
-				raw_response: gen.raw ?? null,
+				search_terms: [] as Json,
+				raw_response: (gen.raw ?? null) as Json,
 				status: 'published',
 				error_message: null
 			},

@@ -38,7 +38,7 @@
 		secteur_detecte: string | null;
 		description: string | null;
 		date_publication: string | null;
-		montant: number | string | null;
+		montant: number | null;
 	};
 
 	type Props = {

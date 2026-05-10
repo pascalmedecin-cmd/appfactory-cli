@@ -10,7 +10,10 @@ const ALLOWED_PAGE_SIZES = new Set([25, 50, 100]);
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const page = Math.max(0, parseInt(url.searchParams.get('page') ?? '0', 10) || 0);
-	const sortKey = VALID_SORT_KEYS.includes(url.searchParams.get('sort') ?? '') ? url.searchParams.get('sort')! : 'score_pertinence';
+	const rawSort = url.searchParams.get('sort') ?? '';
+	const sortKey = (VALID_SORT_KEYS as readonly string[]).includes(rawSort)
+		? (rawSort as (typeof VALID_SORT_KEYS)[number])
+		: ('score_pertinence' as const);
 	const sortAsc = url.searchParams.get('dir') === 'asc';
 
 	// Phase 2 2026-05-01 : onglet actif (par défaut SIMAP, signal le plus actionnable).

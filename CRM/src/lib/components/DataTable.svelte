@@ -1,6 +1,7 @@
 <script lang="ts" generics="T extends Record<string, any>">
 	import Icon from '$lib/components/Icon.svelte';
 	import Tooltip from '$lib/components/Tooltip.svelte';
+	import { onDestroy } from 'svelte';
 	import type { Snippet } from 'svelte';
 
 	type Column = {
@@ -116,6 +117,23 @@
 	let currentPage = $state(serverMode ? currentServerPage : 0);
 	let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
+	// Audit 360 C-06 (bug-hunter) : memory leak via timers + listeners pointer non
+	// nettoyés à la destruction. DataTable utilisé sur 6 pages workspace donc
+	// surface large. activeResizeCleanup permet d'interrompre proprement un drag
+	// en cours si le composant est détruit avant le pointerup.
+	let activeResizeCleanup: (() => void) | null = null;
+
+	onDestroy(() => {
+		if (searchTimer) {
+			clearTimeout(searchTimer);
+			searchTimer = null;
+		}
+		if (activeResizeCleanup) {
+			activeResizeCleanup();
+			activeResizeCleanup = null;
+		}
+	});
+
 	$effect(() => { if (serverMode) search = serverSearch; });
 	$effect(() => { if (serverMode) sortKey = serverSortKey; });
 	$effect(() => { if (serverMode) sortAsc = serverSortAsc; });
@@ -198,12 +216,16 @@
 			document.removeEventListener('pointermove', onMove);
 			document.removeEventListener('pointerup', onUp);
 			document.removeEventListener('pointercancel', onUp);
+			activeResizeCleanup = null;
 		};
 		const onMove = (ev: PointerEvent) => {
 			lastWidth = Math.max(minW, Math.min(2000, startWidth + ev.clientX - startX));
 			th.style.width = lastWidth + 'px';
 		};
 		const onUp = () => cleanup();
+
+		// Trace pour interception par onDestroy si composant détruit pendant le drag.
+		activeResizeCleanup = cleanup;
 
 		document.addEventListener('pointermove', onMove);
 		document.addEventListener('pointerup', onUp);

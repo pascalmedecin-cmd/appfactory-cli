@@ -109,9 +109,14 @@
 		$pageSubtitle = total === 0 ? 'Aucune opportunité' : `${total} opportunité${total > 1 ? 's' : ''}${valueLabel}`;
 	});
 
-	function openDetail(opp: Opp) {
-		selectedOpp = opp;
-		slideOutOpen = true;
+	function openDetail(opp: { id: string }) {
+		// Le composant PipelineColumn fournit un Opp minimal (subset). On retrouve
+		// le record complet depuis data.opportunites via id pour le slide-out.
+		const full = data.opportunites.find((o) => o.id === opp.id);
+		if (full) {
+			selectedOpp = full;
+			slideOutOpen = true;
+		}
 	}
 
 	function openCreate(etape?: string) {
@@ -172,7 +177,7 @@
 	}
 
 	// Drag & drop
-	function onCardDragStart(e: DragEvent, opp: Opp) {
+	function onCardDragStart(e: DragEvent, opp: { id: string }) {
 		if (!e.dataTransfer) return;
 		e.dataTransfer.effectAllowed = 'move';
 		e.dataTransfer.setData('text/plain', opp.id);

@@ -10,10 +10,12 @@ import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { toCsv, csvFilename, csvResponseHeaders, type CsvColumn } from '$lib/server/csv-export';
 
+type ExportTable = 'contacts' | 'entreprises' | 'prospect_leads';
+
 type EntityConfig = {
-	table: string;
+	table: ExportTable;
 	select: string;
-	filter?: { column: string; value: unknown };
+	filter?: { column: string; value: boolean | string | number };
 	orderBy: string;
 	columns: CsvColumn<Record<string, unknown>>[];
 };
@@ -60,7 +62,7 @@ const ENTITIES: Record<string, EntityConfig> = {
 			{ key: 'adresse', label: 'Adresse' },
 			{ key: 'tags', label: 'Tags' },
 			{ key: 'notes_libres', label: 'Notes' },
-			{ key: 'date_creation', label: 'Créé le', transform: formatDateShort },
+			{ key: 'date_ajout', label: 'Créé le', transform: formatDateShort },
 			{ key: 'date_derniere_modification', label: 'Modifié le', transform: formatDateShort }
 		]
 	},
@@ -81,14 +83,14 @@ const ENTITIES: Record<string, EntityConfig> = {
 			{ key: 'source', label: 'Source' },
 			{ key: 'tags', label: 'Tags' },
 			{ key: 'notes_libres', label: 'Notes' },
-			{ key: 'date_creation', label: 'Créé le', transform: formatDateShort },
+			{ key: 'date_import_ajout', label: 'Créé le', transform: formatDateShort },
 			{ key: 'date_derniere_modification', label: 'Modifié le', transform: formatDateShort }
 		]
 	},
 	leads: {
 		table: 'prospect_leads',
 		select: '*',
-		orderBy: 'created_at',
+		orderBy: 'date_import',
 		columns: [
 			{ key: 'source', label: 'Source' },
 			{ key: 'source_id', label: 'Source ID' },
@@ -105,9 +107,9 @@ const ENTITIES: Record<string, EntityConfig> = {
 			{ key: 'secteur_detecte', label: 'Secteur' },
 			{ key: 'montant', label: 'Montant' },
 			{ key: 'statut', label: 'Statut' },
-			{ key: 'score', label: 'Score' },
+			{ key: 'score_pertinence', label: 'Score' },
 			{ key: 'date_publication', label: 'Publié le', transform: formatDateShort },
-			{ key: 'created_at', label: 'Créé le', transform: formatDateShort }
+			{ key: 'date_import', label: 'Créé le', transform: formatDateShort }
 		]
 	}
 };

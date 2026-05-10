@@ -31,6 +31,50 @@ describe('escapeCell', () => {
 	it('accents français conservés', () => {
 		expect(escapeCell('Crédit Suisse')).toBe('Crédit Suisse');
 	});
+
+	// Formula injection mitigation (OWASP CSV Injection, audit 360 C-04).
+	describe('formula injection (C-04)', () => {
+		it("préfixe ' devant = (formule Excel)", () => {
+			expect(escapeCell('=cmd|"/c calc"!A1')).toBe('"\'=cmd|""/c calc""!A1"');
+		});
+
+		it("préfixe ' devant + (numéro téléphone international)", () => {
+			expect(escapeCell('+41791234567')).toBe("'+41791234567");
+		});
+
+		it("préfixe ' devant - (potentielle formule négation)", () => {
+			expect(escapeCell('-100')).toBe("'-100");
+		});
+
+		it("préfixe ' devant @ (mention)", () => {
+			expect(escapeCell('@user')).toBe("'@user");
+		});
+
+		it("préfixe ' devant tab (contournement formule)", () => {
+			// Tab n'est pas un séparateur RFC 4180 (séparateur = ,) → pas de quote.
+			expect(escapeCell('\tcol')).toBe("'\tcol");
+		});
+
+		it("préfixe ' devant CR (contournement formule)", () => {
+			expect(escapeCell('\rdata')).toBe('"\'\rdata"');
+		});
+
+		it('valeur normale qui contient = au milieu : non préfixée', () => {
+			expect(escapeCell('a=b')).toBe('a=b');
+		});
+
+		it('email user@domain.com : non préfixé (commence par lettre)', () => {
+			expect(escapeCell('user@domain.com')).toBe('user@domain.com');
+		});
+
+		it('chaîne vide reste vide (pas de préfix)', () => {
+			expect(escapeCell('')).toBe('');
+		});
+
+		it('nombre positif simple : pas préfixé', () => {
+			expect(escapeCell(42)).toBe('42');
+		});
+	});
 });
 
 describe('toCsv', () => {

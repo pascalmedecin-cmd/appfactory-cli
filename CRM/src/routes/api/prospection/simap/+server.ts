@@ -97,7 +97,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			.eq('source', 'simap')
 			.in('source_id', projectIds);
 		if (existing) {
-			for (const e of existing) existingIds.add(e.source_id);
+			for (const e of existing) {
+				if (e.source_id) existingIds.add(e.source_id);
+			}
 		}
 	}
 

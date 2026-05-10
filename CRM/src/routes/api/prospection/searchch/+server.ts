@@ -218,7 +218,11 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	// 7) Insertion. Erreur DB → message générique côté client (évite leak schéma/contraintes).
 	let imported = 0;
 	if (inserts.length > 0) {
-		const { error } = await locals.supabase.from('prospect_leads').insert(inserts);
+		// Cast minimal : `inserts` est typé Record<string, unknown>[] (construit dynamiquement
+		// via forEach + spread). Audit 360 V3a M-19 traitera la refonte Zod côté construction.
+		const { error } = await locals.supabase
+			.from('prospect_leads')
+			.insert(inserts as never);
 		if (error) {
 			console.error(`searchch insert error: ${error.message}`);
 			return json(

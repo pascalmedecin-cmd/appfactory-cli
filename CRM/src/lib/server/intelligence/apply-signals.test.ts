@@ -47,7 +47,7 @@ function makeSupabase(responses: MockResp[]) {
 	};
 }
 
-function makeItem(rank: number, query: string, canton: string): IntelligenceItem {
+function makeItem(rank: number, query: string, canton: 'GE' | 'VD' | 'VS' | 'NE' | 'FR' | 'JU'): IntelligenceItem {
 	return {
 		rank,
 		title: 'Test item ' + rank,

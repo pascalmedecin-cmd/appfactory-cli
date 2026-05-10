@@ -13,10 +13,24 @@ export interface CsvColumn<T> {
 	transform?: (value: unknown, row: T) => string;
 }
 
+/**
+ * Caractères qui déclenchent l'évaluation d'une formule dans Excel/LibreOffice
+ * lorsqu'ils ouvrent la 1ʳᵉ position d'une cellule. La cellule est alors préfixée
+ * par une apostrophe (`'`) qui force l'interprétation en texte.
+ *
+ * Réf : OWASP « CSV Injection » (formula injection). Vector confirmé par audit
+ * 360 finding C-04 (cross-source bug-hunter + security-auditor).
+ */
+const FORMULA_TRIGGER_RE = /^[=+\-@\t\r]/;
+
 /** Échappe une valeur pour inclusion dans une cellule CSV (RFC 4180). Exporté pour tests. */
 export function escapeCell(value: unknown): string {
 	if (value === null || value === undefined) return '';
-	const s = String(value);
+	let s = String(value);
+	// Mitigation CSV/formula injection : neutraliser AVANT le quoting RFC 4180.
+	if (FORMULA_TRIGGER_RE.test(s)) {
+		s = `'${s}`;
+	}
 	// Quote si virgule, guillemet, CR ou LF.
 	if (/[",\r\n]/.test(s)) {
 		return `"${s.replace(/"/g, '""')}"`;
