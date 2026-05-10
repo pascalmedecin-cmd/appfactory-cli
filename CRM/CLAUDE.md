@@ -211,13 +211,26 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 
 <!-- BEGIN CONSOLIDATION (auto-géré par cockpit, ne pas éditer) -->
 
-### Consolidation cockpit (maj 2026-05-06T16:50:06)
+### Consolidation cockpit (maj 2026-05-10T11:57:01 S178 V2a)
 
-**Blocs actionnables** (ordre d'attaque) :
+**Blocs actionnables** (ordre d'attaque réordonné manuellement Pascal post-V2a, priorité cascade audit 360 livraison client lundi 2026-05-11) :
 
-- **Bloc #1** - Refonte UI dashboard CRM (charte v9) (3.0h, confiance Élevé)
-  - Objectif : Aligner /dashboard sur charte /prospection (ScorePill, TriageQueue sans fond bleu, ActionButton flat)
-  - Ajuster UI page dashboard
+- **Bloc #1** - Lancer V2b en terminal autonome (6h, confiance Élevé)
+  - Objectif : Lancement V2b en nouveau terminal autonome `--dangerously-skip-permissions` avec spec figée `notes/audit-360-2026-05-09/spec-vague-2b.md`
+  - 7 High concurrence/atomicité (H-02 enrichir Zefix overwrite, H-03 recheck-historical Promise.all illimité, H-05 VisitsPanel geoloc Promise leak, H-06 Contact create SELECT entreprises refonte trigram, H-08 unread compteur incohérent, H-09 addItem JSONB optimistic locking, H-10 transferer lead RPC atomique)
+
+- **Bloc #2** - Refonte page Aide CRM from scratch (6h, confiance Moyen)
+  - Objectif : Refonte 3 niveaux page /aide CRM (prise en main, détails, doc technique) - livraison client tâche #4
+  - Refonte from scratch large (1443 lignes), multi-skills design+UX+doc, isolée cascade (peut tourner en parallèle V2b car fichier `/aide/+page.svelte` non touché par les vagues)
+
+**Blocs bloqués** (cascade séquentielle) :
+
+- **Bloc B1** [BLOQUÉ - V2b non livrée] - Lancer V2c en terminal autonome (6h)
+  - 13 High UI golden v9 + tests gate global + CSS dedup
+- **Bloc B2** [BLOQUÉ - V2c non livrée] - Lancer V3a en terminal autonome (15h)
+  - 57 Medium toutes catégories
+- **Bloc B3** [BLOQUÉ - V3a non livrée] - Lancer V3b en terminal autonome (6h)
+  - 28 Low + 12 Info polish final
 
 <!-- END CONSOLIDATION -->
 
