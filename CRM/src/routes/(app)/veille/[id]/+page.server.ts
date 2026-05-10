@@ -186,8 +186,21 @@ export const actions: Actions = {
 			const reportRow = report as unknown as { id: string; items: unknown; version?: number };
 			const currentItems = (reportRow.items ?? []) as IntelligenceItem[];
 			const currentVersion = reportRow.version ?? 0;
+
+			// Audit 360 V2b bug-hunter F1 : cap rank=15 ne suffit pas en présence
+			// de plusieurs writers concurrents. `min(maxRank+1, 15)` causerait des
+			// collisions de rank quand items.length >= 15 (l'optimistic locking
+			// empêche les lost updates de version mais pas les ranks dupliqués
+			// dans le JSONB). Garde explicite : refuser l'ajout au-delà de 15.
+			if (currentItems.length >= 15) {
+				return fail(409, {
+					error: 'Édition saturée (15 items max). Cachez un item existant avant d\'en ajouter un nouveau.',
+					values: input
+				});
+			}
+
 			const maxRank = currentItems.reduce((acc, it) => Math.max(acc, it.rank ?? 0), 0);
-			const newRank = Math.min(maxRank + 1, 15);
+			const newRank = maxRank + 1;
 
 			const newItem: IntelligenceItem = {
 				rank: newRank,

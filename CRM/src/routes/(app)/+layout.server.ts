@@ -5,28 +5,29 @@ export const load: LayoutServerLoad = async ({ locals, parent }) => {
 
 	if (!user) return { unreadIntelligence: 0 };
 
-	// Audit 360 V2b H-08 : aligner le compteur unread sidebar avec les cards
-	// affichées dans `/veille/+page.server.ts` (filtre `archived_at IS NULL`).
-	// Avant le fix : SELECT count(*) sur tous les published → badge sidebar
-	// supérieur au nombre de cards visibles (5 vs 7) si 2 éditions étaient
-	// archivées.
-	const { count: totalPublished } = await locals.supabase
+	// Audit 360 V2b H-08 + bug-hunter F4 : aligner le compteur unread sidebar
+	// avec les cards affichées dans `/veille` (filtre `archived_at IS NULL`)
+	// ET aligner les reads sur les mêmes ids actifs. Sans filtre côté reads,
+	// le drift est permanent : si user a lu une édition puis qu'elle est
+	// archivée, sa row `intelligence_reads` reste, faussant le delta.
+	const { data: activeReports } = await locals.supabase
 		.from('intelligence_reports')
-		.select('id', { count: 'exact', head: true })
+		.select('id')
 		.eq('status', 'published')
 		.is('archived_at', null);
 
-	// Côté reads : on ne contraint pas avec un IN(report_ids) car
-	// (a) cela ferait un round-trip supplémentaire pour récupérer les ids,
-	// (b) lire une édition puis l'archiver garde la lecture en base ; le delta
-	//     reste cohérent (max(0, …) absorbe le cas où readCount > totalPublished
-	//     transitoire pendant un archivage).
+	const activeIds = (activeReports ?? []).map((r) => r.id);
+	const totalActive = activeIds.length;
+
+	if (totalActive === 0) return { unreadIntelligence: 0 };
+
 	const { count: readCount } = await locals.supabase
 		.from('intelligence_reads')
 		.select('report_id', { count: 'exact', head: true })
-		.eq('user_id', user.id);
+		.eq('user_id', user.id)
+		.in('report_id', activeIds);
 
-	const unreadIntelligence = Math.max(0, (totalPublished ?? 0) - (readCount ?? 0));
+	const unreadIntelligence = Math.max(0, totalActive - (readCount ?? 0));
 
 	return { unreadIntelligence };
 };

@@ -15,39 +15,29 @@ import { normalizeCompanyName } from '$lib/utils/contactsFormat';
  * UNIQUE partial DB (`entreprises_raison_sociale_normalized_unique`, migration
  * 20260510_001) + ce helper qui rattrape le 23505 unique violation.
  *
- * Audit 360 V2b H-06 : le lookup full-table `.limit(1000)` est remplacé par
- * un ILIKE prefix-bounded sur les 4 premiers chars du nom (case-insensitive,
- * trigram-friendly), backé par l'index GIN `entreprises_raison_sociale_trgm`
- * (migration 20260510_005). Le filtre JS final reste basé sur
- * `normalizeCompanyName` parce que la normalisation retire des suffixes
- * légaux ("SA", "SàRL", "GmbH") qu'un index DB simple ne couvre pas. La
- * cardinalité du résultat ILIKE est plafonnée à 50, donc même en cas de
- * faux positifs trigram, le filter JS reste O(50).
+ * Audit 360 V2b H-06 + bug-hunter F5 : recherche désormais via RPC
+ * `entreprises_lookup_by_name` (migration 20260510_010), qui exécute le
+ * prefix match directement sur `lower(immutable_unaccent(raison_sociale))`.
+ * Cela aligne le lookup avec l'index UNIQUE partial (sinon "École Suisse SA"
+ * en DB + saisie "ecole" rate le match côté ILIKE brut). Le filtre JS final
+ * reste basé sur `normalizeCompanyName` (qui retire les suffixes légaux
+ * "SA", "SàRL", "GmbH"), parce que la RPC matche le préfixe normalisé mais
+ * pas les suffixes équivalents.
  */
-const ENTREPRISES_LOOKUP_PREFIX_LEN = 4;
-const ENTREPRISES_LOOKUP_LIMIT = 50;
-
-function escapeIlike(s: string): string {
-	return s.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
-}
-
 async function lookupEntrepriseByName(
 	supabase: SupabaseClient<Database>,
 	trimmed: string,
 	normalized: string
 ): Promise<string | null> {
-	// Préfixe ILIKE basé sur les premiers chars (suffixes légaux retirés par
-	// normalize, donc on prend les chars bruts trimmed pour matcher la DB).
-	const prefix = trimmed.slice(0, ENTREPRISES_LOOKUP_PREFIX_LEN);
-	const pattern = `${escapeIlike(prefix)}%`;
+	// La RPC est créée par migration 010 ; les types Database générés ne
+	// la connaissent pas encore (cast `as never`, tracé V3a regen).
+	const { data: candidates } = await supabase.rpc(
+		'entreprises_lookup_by_name' as never,
+		{ p_query: trimmed } as never
+	);
 
-	const { data: candidates } = await supabase
-		.from('entreprises')
-		.select('id, raison_sociale')
-		.ilike('raison_sociale', pattern)
-		.limit(ENTREPRISES_LOOKUP_LIMIT);
-
-	const match = candidates?.find((e) => normalizeCompanyName(e.raison_sociale) === normalized);
+	const rows = (candidates ?? []) as Array<{ id: string; raison_sociale: string }>;
+	const match = rows.find((e) => normalizeCompanyName(e.raison_sociale) === normalized);
 	return match?.id ?? null;
 }
 

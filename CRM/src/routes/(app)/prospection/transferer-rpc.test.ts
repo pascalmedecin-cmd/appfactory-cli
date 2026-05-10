@@ -68,4 +68,14 @@ describe('transferer RPC atomique (V2b H-10)', () => {
 		const r = await callTransferer(supabase, '33333333-3333-4333-8333-333333333333');
 		expect((r as { status?: number }).status).toBe(500);
 	});
+
+	it('retourne fail(409) si lead déjà transféré (P0001, audit V2b bug-hunter F2)', async () => {
+		const supabase = createMockSupabase(async () => ({
+			data: null,
+			error: { code: 'P0001', message: 'lead_already_transferred: ...' },
+		}));
+		const r = await callTransferer(supabase, '44444444-4444-4444-8444-444444444444');
+		expect((r as { status?: number }).status).toBe(409);
+		expect((r as { data: { error: string } }).data.error).toMatch(/déjà transféré/i);
+	});
 });

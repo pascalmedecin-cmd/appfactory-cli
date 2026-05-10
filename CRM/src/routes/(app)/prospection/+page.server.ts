@@ -384,8 +384,12 @@ export const actions: Actions = {
 		);
 
 		if (rpcErr) {
-			// P0002 = lead_introuvable (RAISE EXCEPTION dans la function).
+			// P0002 = lead_introuvable.
 			if (rpcErr.code === 'P0002') return fail(400, { error: 'Lead introuvable' });
+			// P0001 = lead_already_transferred (audit V2b bug-hunter F2 fix).
+			if (rpcErr.code === 'P0001') {
+				return fail(409, { error: 'Lead déjà transféré dans le CRM' });
+			}
 			console.error('[transferer] RPC transfer_lead_to_crm failed:', rpcErr.message);
 			return fail(500, { error: 'Erreur lors du transfert (transaction annulée)' });
 		}

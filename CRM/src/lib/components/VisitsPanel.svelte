@@ -177,10 +177,10 @@
 			visits = visits.filter((v) => v.id !== id);
 			toasts.success('Visite supprimée');
 		} finally {
-			if (!cancelled) {
-				pendingDelete = null;
-				confirmOpen = false;
-			}
+			// Audit 360 V2b bug-hunter F6 : nettoyer state même si destroy en
+			// cours, évite la rétention `Visit` jusqu'au GC du composant.
+			pendingDelete = null;
+			confirmOpen = false;
 		}
 	}
 

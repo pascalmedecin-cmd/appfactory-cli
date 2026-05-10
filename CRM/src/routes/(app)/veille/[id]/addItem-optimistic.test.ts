@@ -204,4 +204,20 @@ describe('addItem optimistic locking (V2b H-09)', () => {
 		expect(state.updateSuccesses).toBe(1);
 		expect(state.current.items).toHaveLength(1);
 	});
+
+	it('refuse l\'ajout quand items.length >= 15 (V2b bug-hunter F1 saturated)', async () => {
+		const fifteenItems = Array.from({ length: 15 }, (_, i) => ({ rank: i + 1 }));
+		const mock = createMockServiceClient({
+			id: 'rpt-1',
+			items: fifteenItems,
+			version: 0,
+		});
+		const result = await callAddItem(mock);
+		// L'action retourne fail(409, ...) → wrapper SvelteKit { status: 409, data: {...} }.
+		expect((result as { status?: number }).status).toBe(409);
+		expect((result as { data: { error: string } }).data.error).toMatch(/saturée|15 items/i);
+		const state = mock._state();
+		expect(state.updateAttempts).toBe(0);
+		expect(state.current.items).toHaveLength(15);
+	});
 });
