@@ -14,7 +14,43 @@ import { normalizeCompanyName } from '$lib/utils/contactsFormat';
  * mobile + main app) créait des doublons silencieux. Fix structurel : index
  * UNIQUE partial DB (`entreprises_raison_sociale_normalized_unique`, migration
  * 20260510_001) + ce helper qui rattrape le 23505 unique violation.
+ *
+ * Audit 360 V2b H-06 : le lookup full-table `.limit(1000)` est remplacé par
+ * un ILIKE prefix-bounded sur les 4 premiers chars du nom (case-insensitive,
+ * trigram-friendly), backé par l'index GIN `entreprises_raison_sociale_trgm`
+ * (migration 20260510_005). Le filtre JS final reste basé sur
+ * `normalizeCompanyName` parce que la normalisation retire des suffixes
+ * légaux ("SA", "SàRL", "GmbH") qu'un index DB simple ne couvre pas. La
+ * cardinalité du résultat ILIKE est plafonnée à 50, donc même en cas de
+ * faux positifs trigram, le filter JS reste O(50).
  */
+const ENTREPRISES_LOOKUP_PREFIX_LEN = 4;
+const ENTREPRISES_LOOKUP_LIMIT = 50;
+
+function escapeIlike(s: string): string {
+	return s.replace(/\\/g, '\\\\').replace(/%/g, '\\%').replace(/_/g, '\\_');
+}
+
+async function lookupEntrepriseByName(
+	supabase: SupabaseClient<Database>,
+	trimmed: string,
+	normalized: string
+): Promise<string | null> {
+	// Préfixe ILIKE basé sur les premiers chars (suffixes légaux retirés par
+	// normalize, donc on prend les chars bruts trimmed pour matcher la DB).
+	const prefix = trimmed.slice(0, ENTREPRISES_LOOKUP_PREFIX_LEN);
+	const pattern = `${escapeIlike(prefix)}%`;
+
+	const { data: candidates } = await supabase
+		.from('entreprises')
+		.select('id, raison_sociale')
+		.ilike('raison_sociale', pattern)
+		.limit(ENTREPRISES_LOOKUP_LIMIT);
+
+	const match = candidates?.find((e) => normalizeCompanyName(e.raison_sociale) === normalized);
+	return match?.id ?? null;
+}
+
 async function getOrCreateEntreprise(
 	supabase: SupabaseClient<Database>,
 	rawName: string
@@ -25,15 +61,8 @@ async function getOrCreateEntreprise(
 	const normalized = normalizeCompanyName(trimmed);
 
 	// 1. Lookup optimiste (cas commun : entreprise déjà connue).
-	// Cap à 1000 = garde-fou DOS interne ; refonte trigram + ilike bounded prévue
-	// V2b H-06 (Contact create SELECT entreprises sans LIMIT). Cap actuel safe :
-	// la table compte ~100 entreprises en prod 2026-05-10.
-	const { data: existantes } = await supabase
-		.from('entreprises')
-		.select('id, raison_sociale')
-		.limit(1000);
-	const match = existantes?.find((e) => normalizeCompanyName(e.raison_sociale) === normalized);
-	if (match) return match.id;
+	const matchedId = await lookupEntrepriseByName(supabase, trimmed, normalized);
+	if (matchedId) return matchedId;
 
 	// 2. Tentative INSERT.
 	const entId = newId();
@@ -51,14 +80,8 @@ async function getOrCreateEntreprise(
 	// 3. Code 23505 = unique_violation : autre transaction a créé l'entreprise
 	//    entre notre lookup et notre INSERT. Re-lookup pour récupérer son id.
 	if (insertErr.code === '23505') {
-		const { data: existantes2 } = await supabase
-			.from('entreprises')
-			.select('id, raison_sociale')
-			.limit(1000);
-		const match2 = existantes2?.find(
-			(e) => normalizeCompanyName(e.raison_sociale) === normalized
-		);
-		if (match2) return match2.id;
+		const matchedId2 = await lookupEntrepriseByName(supabase, trimmed, normalized);
+		if (matchedId2) return matchedId2;
 	}
 
 	console.error('Erreur création entreprise auto:', insertErr.message);
@@ -66,23 +89,23 @@ async function getOrCreateEntreprise(
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
+	// Audit 360 V2b H-06 : le SELECT full-table `entreprises` est retiré du
+	// load. Le frontend autocomplete utilise désormais `/api/entreprises/search`
+	// (ilike trigram-backed, max 20 résultats par query). Le join contact ↔
+	// entreprise inclut `id, site_web` pour permettre au slide-out d'afficher
+	// le logo Clearbit sans round-trip supplémentaire.
 	const { data: contacts, error } = await locals.supabase
 		.from('contacts')
-		.select('*, entreprises(raison_sociale)')
+		.select('*, entreprises(id, raison_sociale, site_web)')
 		.eq('statut_archive', false)
 		.order('date_derniere_modification', { ascending: false });
 
 	if (error) {
 		console.error('Erreur chargement contacts:', error.message);
-		return { contacts: [], entreprises: [] };
+		return { contacts: [] };
 	}
 
-	const { data: entreprises } = await locals.supabase
-		.from('entreprises')
-		.select('id, raison_sociale, site_web')
-		.order('raison_sociale');
-
-	return { contacts: contacts ?? [], entreprises: entreprises ?? [] };
+	return { contacts: contacts ?? [] };
 };
 
 export const actions: Actions = {

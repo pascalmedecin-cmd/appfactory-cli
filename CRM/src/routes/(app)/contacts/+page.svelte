@@ -15,7 +15,6 @@
 		contactsIndicators,
 		contactsCountsByTab,
 		filterContactsByTab,
-		normalizeCompanyName,
 		type ContactsTab,
 	} from '$lib/utils/contactsFormat';
 	import ContactsIndicators from '$lib/components/contacts/ContactsIndicators.svelte';
@@ -55,7 +54,15 @@
 
 	let showSuggestions = $state(false);
 
-	const entreprises = $derived((data as any).entreprises as Entreprise[] ?? []);
+	// Audit 360 V2b H-06 : autocomplete async via /api/entreprises/search.
+	// Avant : pré-fetch full list dans data.entreprises + filter client. Maintenant :
+	// fetch debounced à chaque keystroke (250 ms), max 20 résultats, ilike trigram.
+	let filteredSuggestions = $state<Entreprise[]>([]);
+	let suggestionsLoading = $state(false);
+	let searchSeq = 0;
+	let searchTimer: ReturnType<typeof setTimeout> | null = null;
+	const SEARCH_DEBOUNCE_MS = 250;
+
 	const indicators = $derived(contactsIndicators(data.contacts));
 	const counts = $derived(contactsCountsByTab(data.contacts));
 	const filteredContacts = $derived(filterContactsByTab(data.contacts, activeTab));
@@ -67,16 +74,37 @@
 		{ key: 'sans-entreprise' as ContactsTab, label: 'Sans entreprise', count: counts['sans-entreprise'] },
 	]);
 
-	const filteredSuggestions = $derived.by(() => {
-		if (!entreprise_nom || entreprise_nom.length < 2) return [];
-		const qNorm = normalizeCompanyName(entreprise_nom);
-		return entreprises
-			.filter((e) => {
-				const nameNorm = normalizeCompanyName(e.raison_sociale);
-				return nameNorm.includes(qNorm) || qNorm.includes(nameNorm);
-			})
-			.slice(0, 8);
-	});
+	async function searchEntreprises(query: string): Promise<void> {
+		const seq = ++searchSeq;
+		if (!query || query.trim().length < 2) {
+			filteredSuggestions = [];
+			suggestionsLoading = false;
+			return;
+		}
+		suggestionsLoading = true;
+		try {
+			const url = `/api/entreprises/search?q=${encodeURIComponent(query.trim())}`;
+			const resp = await fetch(url);
+			// Drop la réponse si une nouvelle frappe est arrivée entre-temps.
+			if (seq !== searchSeq) return;
+			if (!resp.ok) {
+				filteredSuggestions = [];
+				return;
+			}
+			const json = (await resp.json()) as { results?: Entreprise[] };
+			if (seq !== searchSeq) return;
+			filteredSuggestions = json.results ?? [];
+		} catch {
+			if (seq === searchSeq) filteredSuggestions = [];
+		} finally {
+			if (seq === searchSeq) suggestionsLoading = false;
+		}
+	}
+
+	function scheduleSearch(query: string) {
+		if (searchTimer) clearTimeout(searchTimer);
+		searchTimer = setTimeout(() => void searchEntreprises(query), SEARCH_DEBOUNCE_MS);
+	}
 
 	$effect(() => {
 		const total = data.contacts.length;
@@ -105,8 +133,11 @@
 	}
 
 	function entrepriseForContact(contact: Contact): Entreprise | null {
-		if (!contact.entreprise_id) return null;
-		return entreprises.find((e) => e.id === contact.entreprise_id) ?? null;
+		// Audit 360 V2b H-06 : on lit l'entreprise jointe (`entreprises(id,
+		// raison_sociale, site_web)`) directement sur le contact, plus besoin de
+		// la liste pré-fetchée.
+		const ent = (contact as { entreprises?: Entreprise | null }).entreprises;
+		return ent ?? null;
 	}
 
 	const columns = [
@@ -462,10 +493,14 @@
 						id="entreprise_nom"
 						type="text"
 						bind:value={entreprise_nom}
-						onfocus={() => (showSuggestions = true)}
-						oninput={() => {
+						onfocus={() => {
+							showSuggestions = true;
+							if (entreprise_nom.length >= 2) scheduleSearch(entreprise_nom);
+						}}
+						oninput={(e) => {
 							entreprise_id = '';
 							showSuggestions = true;
+							scheduleSearch((e.currentTarget as HTMLInputElement).value);
 						}}
 						placeholder="Tapez pour chercher ou créer…"
 						autocomplete="off"

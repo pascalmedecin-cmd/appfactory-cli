@@ -4,6 +4,12 @@ import { timingSafeEqual } from 'crypto';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { verifyUrl } from '$lib/server/intelligence/url-verify';
 import type { IntelligenceItem } from '$lib/server/intelligence/schema';
+import { runWithConcurrency } from '$lib/server/utils/concurrency';
+
+// Audit 360 V2b H-03 : cap concurrence HEAD/GET URLs pour éviter ban IP
+// cible et timeout serveur cron quand une édition contient 10-15 items et
+// qu'on en cumule 30+ éditions.
+const URL_VERIFY_CONCURRENCY = 4;
 
 function verifyCronSecret(authHeader: string | null): boolean {
 	const secret = env.CRON_SECRET;
@@ -46,20 +52,18 @@ export async function POST({ request }: RequestEvent) {
 		const alreadyHidden = (report.items_hidden ?? []) as HiddenEntry[];
 		const alreadyHiddenRanks = new Set(alreadyHidden.map((h) => h.rank));
 
-		const results = await Promise.all(
-			items.map(async (it) => {
-				if (alreadyHiddenRanks.has(it.rank)) return null;
-				const res = await verifyUrl(it.source.url);
-				if (!res.ok) {
-					return {
-						rank: it.rank,
-						reason: `url_dead_retroactive_check:${res.reason ?? 'unknown'}`,
-						hidden_at: hiddenAt
-					} satisfies HiddenEntry;
-				}
-				return null;
-			})
-		);
+		const results = await runWithConcurrency(items, URL_VERIFY_CONCURRENCY, async (it) => {
+			if (alreadyHiddenRanks.has(it.rank)) return null;
+			const res = await verifyUrl(it.source.url);
+			if (!res.ok) {
+				return {
+					rank: it.rank,
+					reason: `url_dead_retroactive_check:${res.reason ?? 'unknown'}`,
+					hidden_at: hiddenAt
+				} satisfies HiddenEntry;
+			}
+			return null;
+		});
 
 		const newlyHidden = results.filter((r): r is HiddenEntry => r !== null);
 		if (newlyHidden.length > 0) {

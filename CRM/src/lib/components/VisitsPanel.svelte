@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
@@ -31,6 +31,15 @@
 	let confirmOpen = $state(false);
 	let pendingDelete = $state<Visit | null>(null);
 
+	// Audit 360 V2b H-05 : flag cancelled bascule à true quand le composant est
+	// détruit (slide-out fermé, navigation). Toutes les opérations async qui
+	// peuvent muter `state` après leur await checkent ce flag avant de toucher
+	// quoi que ce soit. Évite warnings console + leaks mémoire.
+	let cancelled = false;
+	onDestroy(() => {
+		cancelled = true;
+	});
+
 	const ownerQuery = $derived.by(() => {
 		if (leadId) return `lead_id=${leadId}`;
 		if (entrepriseId) return `entreprise_id=${entrepriseId}`;
@@ -52,19 +61,23 @@
 		loading = true;
 		try {
 			const resp = await fetch(`/api/visits?${ownerQuery}`);
+			if (cancelled) return;
 			if (!resp.ok) {
 				const err = await resp.json().catch(() => ({}));
+				if (cancelled) return;
 				toasts.error(err.error ?? 'Erreur chargement visites');
 				visits = [];
 				return;
 			}
 			const data = await resp.json();
+			if (cancelled) return;
 			visits = data.visits ?? [];
 			parentAddressRaw = data.parent_address_raw ?? null;
 		} catch (err) {
+			if (cancelled) return;
 			toasts.error(`Erreur chargement visites : ${String(err)}`);
 		} finally {
-			loading = false;
+			if (!cancelled) loading = false;
 		}
 	}
 
@@ -90,6 +103,7 @@
 			try {
 				position = await getCurrentPosition();
 			} catch (err) {
+				if (cancelled) return;
 				const e = err as GeolocationPositionError | Error;
 				if ('code' in e && e.code === 1) {
 					toasts.error('Géolocalisation refusée. Activez-la dans les réglages du navigateur pour utiliser le check-in.');
@@ -103,6 +117,8 @@
 				return;
 			}
 
+			if (cancelled) return;
+
 			const resp = await fetch('/api/visits', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
@@ -113,12 +129,15 @@
 					accuracy_m: position.coords.accuracy,
 				}),
 			});
+			if (cancelled) return;
 			if (!resp.ok) {
 				const err = await resp.json().catch(() => ({}));
+				if (cancelled) return;
 				toasts.error(err.error ?? 'Erreur enregistrement visite');
 				return;
 			}
 			const data = await resp.json();
+			if (cancelled) return;
 			const newVisit = data.visit as Visit;
 			const diag = data.geocode_diag as string | undefined;
 			visits = [newVisit, ...visits];
@@ -134,7 +153,7 @@
 				toasts.success('Visite confirmée');
 			}
 		} finally {
-			capturing = false;
+			if (!cancelled) capturing = false;
 		}
 	}
 
@@ -148,16 +167,20 @@
 		const id = pendingDelete.id;
 		try {
 			const resp = await fetch(`/api/visits/${id}`, { method: 'DELETE' });
+			if (cancelled) return;
 			if (!resp.ok) {
 				const err = await resp.json().catch(() => ({}));
+				if (cancelled) return;
 				toasts.error(err.error ?? 'Erreur suppression');
 				return;
 			}
 			visits = visits.filter((v) => v.id !== id);
 			toasts.success('Visite supprimée');
 		} finally {
-			pendingDelete = null;
-			confirmOpen = false;
+			if (!cancelled) {
+				pendingDelete = null;
+				confirmOpen = false;
+			}
 		}
 	}
 

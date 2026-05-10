@@ -156,52 +156,89 @@ export const actions: Actions = {
 			});
 		}
 
-		// Charger l'édition cible
+		// Audit 360 V2b H-09 : optimistic locking sur items JSONB pour éviter
+		// les lost updates si 2 admins ajoutent un item en parallèle. Migration
+		// 20260510_006 a ajouté `version INTEGER NOT NULL DEFAULT 0`. Algorithme :
+		//   1. SELECT items, version
+		//   2. UPDATE items=..., version=version+1 WHERE id=$id AND version=$old
+		//   3. Si UPDATE retourne 0 lignes → conflit, retry max 3 fois
 		const service = createSupabaseServiceClient();
-		const { data: report, error: dbErr } = await service
-			.from('intelligence_reports')
-			.select('id, items')
-			.eq('id', params.id)
-			.maybeSingle();
-		if (dbErr || !report) {
-			return fail(404, { error: 'Édition introuvable', values: input });
+		const MAX_RETRIES = 3;
+		let attempt = 0;
+		let lastError: string | null = null;
+		let createdRank: number | null = null;
+
+		while (attempt < MAX_RETRIES) {
+			attempt++;
+
+			// Cast `as never`/`as unknown` : la colonne `version` est ajoutée par
+			// migration 20260510_006 ; les types Database générés ne la connaissent
+			// pas encore. Tracé pour regen post-merge.
+			const { data: report, error: dbErr } = await service
+				.from('intelligence_reports')
+				.select('id, items, version' as 'id, items')
+				.eq('id', params.id)
+				.maybeSingle();
+			if (dbErr || !report) {
+				return fail(404, { error: 'Édition introuvable', values: input });
+			}
+
+			const reportRow = report as unknown as { id: string; items: unknown; version?: number };
+			const currentItems = (reportRow.items ?? []) as IntelligenceItem[];
+			const currentVersion = reportRow.version ?? 0;
+			const maxRank = currentItems.reduce((acc, it) => Math.max(acc, it.rank ?? 0), 0);
+			const newRank = Math.min(maxRank + 1, 15);
+
+			const newItem: IntelligenceItem = {
+				rank: newRank,
+				title: parsed.data.title,
+				summary: stripCitationTags(parsed.data.summary),
+				filmpro_relevance: stripCitationTags(parsed.data.filmpro_relevance),
+				maturity: parsed.data.maturity,
+				theme: parsed.data.theme,
+				geo_scope: parsed.data.geo_scope,
+				source: {
+					name: parsed.data.source_name,
+					url: cleanUrl,
+					published_at: `${parsed.data.published_at}T00:00:00Z`
+				},
+				deep_dive: null,
+				segment: parsed.data.segment,
+				actionability: parsed.data.actionability,
+				search_terms: buildDefaultChips(parsed.data.title)
+			};
+
+			const updatedItems = [...currentItems, newItem].sort((a, b) => a.rank - b.rank);
+
+			const { data: updated, error: updateErr } = await service
+				.from('intelligence_reports')
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				.update({ items: updatedItems as any, version: currentVersion + 1 } as never)
+				.eq('id', params.id)
+				.eq('version' as 'id', currentVersion as unknown as string)
+				.select('id');
+
+			if (updateErr) {
+				console.error('[veille addItem]', updateErr.message);
+				return fail(500, { error: 'Erreur DB', values: input });
+			}
+
+			if (updated && updated.length > 0) {
+				createdRank = newRank;
+				break;
+			}
+
+			lastError = `version conflict (attempt ${attempt}/${MAX_RETRIES})`;
 		}
 
-		const currentItems = (report.items ?? []) as IntelligenceItem[];
-		const maxRank = currentItems.reduce((acc, it) => Math.max(acc, it.rank ?? 0), 0);
-		const newRank = Math.min(maxRank + 1, 15);
-
-		const newItem: IntelligenceItem = {
-			rank: newRank,
-			title: parsed.data.title,
-			summary: stripCitationTags(parsed.data.summary),
-			filmpro_relevance: stripCitationTags(parsed.data.filmpro_relevance),
-			maturity: parsed.data.maturity,
-			theme: parsed.data.theme,
-			geo_scope: parsed.data.geo_scope,
-			source: {
-				name: parsed.data.source_name,
-				url: cleanUrl,
-				published_at: `${parsed.data.published_at}T00:00:00Z`
-			},
-			deep_dive: null,
-			segment: parsed.data.segment,
-			actionability: parsed.data.actionability,
-			search_terms: buildDefaultChips(parsed.data.title)
-		};
-
-		const updatedItems = [...currentItems, newItem].sort((a, b) => a.rank - b.rank);
-
-		const { error: updateErr } = await service
-			.from('intelligence_reports')
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-			.update({ items: updatedItems as any })
-			.eq('id', params.id);
-		if (updateErr) {
-			console.error('[veille addItem]', updateErr.message);
-			return fail(500, { error: 'Erreur DB', values: input });
+		if (createdRank === null) {
+			console.error('[veille addItem] optimistic locking exhausted:', lastError);
+			return fail(409, {
+				error: 'Conflit de version : un autre utilisateur a modifié cette édition. Rechargez la page.',
+				values: input
+			});
 		}
 
-		return { success: true, message: `Item "${parsed.data.title}" ajouté (rang ${newRank}).` };
+		return { success: true, message: `Item "${parsed.data.title}" ajouté (rang ${createdRank}).` };
 	}
 };

@@ -139,6 +139,16 @@ export const actions: Actions = {
 		const p = env.ZEFIX_PASSWORD;
 		if (!u || !p) return fail(400, { error: 'Credentials Zefix non configurés' });
 
+		// Audit 360 V2b H-02 : ne jamais écraser des notes_libres déjà saisies
+		// par l'utilisateur. On charge la fiche existante avant l'update et on
+		// ne réécrit `notes_libres` que si le champ est vide en DB.
+		const { data: existing, error: existingErr } = await locals.supabase
+			.from('entreprises')
+			.select('notes_libres')
+			.eq('id', id)
+			.single();
+		if (existingErr || !existing) return fail(400, { error: 'Entreprise introuvable' });
+
 		try {
 			const resp = await fetch('https://www.zefix.admin.ch/ZefixPublicREST/api/v1/company/search', {
 				method: 'POST',
@@ -169,7 +179,8 @@ export const actions: Actions = {
 				date_derniere_modification: now(),
 			};
 			if (adresse) updates.adresse_siege = adresse;
-			if (purpose) updates.notes_libres = purpose;
+			// H-02 : preserve user-entered notes_libres si existant et non vide.
+			if (purpose && !existing.notes_libres) updates.notes_libres = purpose;
 
 			const { error } = await locals.supabase
 				.from('entreprises')

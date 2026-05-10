@@ -370,74 +370,32 @@ export const actions: Actions = {
 		const parsed = validate(LeadTransfertSchema, extractForm(form, ['id']));
 		if (!parsed.success) return fail(400, { error: parsed.error });
 
-		const { data: lead, error: leadErr } = await locals.supabase
-			.from('prospect_leads')
-			.select('*')
-			.eq('id', parsed.data.id)
-			.single();
+		// Audit 360 V2b H-10 : transfert atomique via RPC plpgsql
+		// `transfer_lead_to_crm` (migration 20260510_007). Rollback automatique
+		// si l'un des INSERT/UPDATE échoue (transaction implicite Postgres).
+		// Avant le fix : 3 INSERT/UPDATE séquentiels en JS = état partiel
+		// corrompu (entreprise sans contact, ou orphelins) si erreur en cours.
+		// Cast `as never` : la fonction RPC est créée par migration 20260510_007 ;
+		// les types Database générés ne la connaissent pas encore. Tracé pour
+		// regen post-merge (prochaine génération `supabase gen types`).
+		const { data, error: rpcErr } = await locals.supabase.rpc(
+			'transfer_lead_to_crm' as never,
+			{ p_lead_id: parsed.data.id } as never
+		);
 
-		if (leadErr || !lead) return fail(400, { error: 'Lead introuvable' });
-
-		const ts = now();
-
-		// Create entreprise
-		const entrepriseId = newId();
-		const { error: entErr } = await locals.supabase.from('entreprises').insert({
-			id: entrepriseId,
-			raison_sociale: lead.raison_sociale,
-			canton: lead.canton || null,
-			adresse_siege: [lead.adresse, lead.npa, lead.localite].filter(Boolean).join(', ') || null,
-			numero_ide: lead.source_id || null,
-			site_web: lead.site_web || null,
-			secteur_activite: lead.secteur_detecte || null,
-			source: `prospection (${lead.source})`,
-			notes_libres: lead.description || null,
-			statut_qualification: 'nouveau',
-			date_import_ajout: ts,
-			date_derniere_modification: ts,
-		});
-
-		const entFail = dbFail(entErr);
-		if (entFail) return entFail;
-
-		// Create contact if nom_contact available
-		let contactId: string | null = null;
-		if (lead.nom_contact) {
-			contactId = newId();
-			const { error: ctErr } = await locals.supabase.from('contacts').insert({
-				id: contactId,
-				nom: lead.nom_contact,
-				entreprise_id: entrepriseId,
-				telephone: lead.telephone || null,
-				email_professionnel: lead.email || null,
-				canton: lead.canton || null,
-				source: `prospection (${lead.source})`,
-				statut_qualification: 'nouveau',
-				statut_archive: false,
-				est_prescripteur: false,
-				doublon_detecte: false,
-				date_ajout: ts,
-				date_derniere_modification: ts,
-			});
-			const ctFail = dbFail(ctErr);
-			if (ctFail) return ctFail;
+		if (rpcErr) {
+			// P0002 = lead_introuvable (RAISE EXCEPTION dans la function).
+			if (rpcErr.code === 'P0002') return fail(400, { error: 'Lead introuvable' });
+			console.error('[transferer] RPC transfer_lead_to_crm failed:', rpcErr.message);
+			return fail(500, { error: 'Erreur lors du transfert (transaction annulée)' });
 		}
 
-		// Update lead status
-		const { error: upErr } = await locals.supabase
-			.from('prospect_leads')
-			.update({
-				statut: 'transfere',
-				transfere_vers_entreprise_id: entrepriseId,
-				transfere_vers_contact_id: contactId,
-				date_modification: ts,
-			})
-			.eq('id', lead.id);
+		const result = data as { entreprise_id?: string; contact_id?: string | null } | null;
+		if (!result?.entreprise_id) {
+			return fail(500, { error: 'Réponse RPC invalide' });
+		}
 
-		const upFail = dbFail(upErr);
-		if (upFail) return upFail;
-
-		return { success: true, entrepriseId };
+		return { success: true, entrepriseId: result.entreprise_id };
 	},
 
 	saveRecherche: async ({ request, locals }) => {
