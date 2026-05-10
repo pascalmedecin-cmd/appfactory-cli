@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit 360 CRM FilmPro - 2026-05-09</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-bg: #FAFAF8;
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #F5F4F0;
+  --color-text: #1A1A1A;
+  --color-text-muted: #6B7280;
+  --color-text-subtle: #9CA3AF;
+  --color-border: #E5E7EB;
+  --color-border-hairline: rgba(0,0,0,0.06);
+  --color-primary: #2563EB;
+  --color-primary-light: #DBEAFE;
+  --color-primary-dark: #1D4ED8;
+  --color-critical: #B91C1C;
+  --color-critical-light: #FEE2E2;
+  --color-high: #C2410C;
+  --color-high-light: #FFEDD5;
+  --color-medium: #B45309;
+  --color-medium-light: #FEF3C7;
+  --color-low: #4B5563;
+  --color-low-light: #F3F4F6;
+  --color-info: #5A7190;
+  --color-info-light: #EDF1F5;
+  --color-success: #027A48;
+  --color-success-light: #DCFCE7;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --shadow-card: 0 1px 2px rgba(17,24,39,0.04), 0 1px 1px rgba(17,24,39,0.06);
+  --shadow-elevated: 0 4px 12px rgba(17,24,39,0.08), 0 2px 4px rgba(17,24,39,0.04);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+}
+* { box-sizing: border-box; }
+html { font-size: 14px; }
+body {
+  margin: 0;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  line-height: 1.5;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+.app-header {
+  position: sticky;
+  top: 0;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  z-index: 100;
+  padding: 16px 24px;
+}
+.app-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.app-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+.app-subtitle {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+.header-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 200ms var(--ease-out-expo);
+}
+.btn:hover { background: var(--color-surface-alt); }
+.btn-primary {
+  background: var(--color-primary);
+  color: white;
+  border-color: var(--color-primary);
+}
+.btn-primary:hover { background: var(--color-primary-dark); }
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+.section { margin-bottom: 48px; }
+.section-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 16px;
+  letter-spacing: -0.01em;
+}
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 32px;
+}
+.kpi-card {
+  padding: 24px;
+  position: relative;
+}
+.kpi-card:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 24px;
+  bottom: 24px;
+  width: 1px;
+  background: var(--color-border-hairline);
+}
+.kpi-label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+.kpi-value {
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--color-text);
+  font-variant-numeric: tabular-nums;
+}
+.kpi-value.crit { color: var(--color-critical); }
+.kpi-value.high { color: var(--color-high); }
+.kpi-value.med { color: var(--color-medium); }
+.kpi-value.low { color: var(--color-low); }
+.kpi-meta {
+  font-size: 12px;
+  color: var(--color-text-subtle);
+  margin-top: 6px;
+}
+.filters-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 24px;
+  padding: 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  flex-wrap: wrap;
+}
+.filter-label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  font-weight: 500;
+  margin-right: 4px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: all 150ms var(--ease-out-expo);
+  user-select: none;
+}
+.chip:hover { background: var(--color-surface); }
+.chip.active {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}
+.chip.sev-critical { background: var(--color-critical-light); color: var(--color-critical); border-color: transparent; }
+.chip.sev-high { background: var(--color-high-light); color: var(--color-high); border-color: transparent; }
+.chip.sev-medium { background: var(--color-medium-light); color: var(--color-medium); border-color: transparent; }
+.chip.sev-low { background: var(--color-low-light); color: var(--color-low); border-color: transparent; }
+.chip.sev-info { background: var(--color-info-light); color: var(--color-info); border-color: transparent; }
+.chip.axe-bug { background: #FEE2E2; color: #991B1B; }
+.chip.axe-security { background: #FFEDD5; color: #9A3412; }
+.chip.axe-contracts { background: #DBEAFE; color: #1E40AF; }
+.chip.axe-code { background: #DCFCE7; color: #166534; }
+.chip.axe-ui { background: #F3E8FF; color: #6B21A8; }
+.chip.axe-test { background: #FEF3C7; color: #92400E; }
+.chip.axe-history { background: #E0E7FF; color: #3730A3; }
+.chip.effort { background: #F5F4F0; color: var(--color-text-muted); border: 1px solid var(--color-border); }
+.severity-section {
+  margin-bottom: 32px;
+}
+.severity-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: background 150ms var(--ease-out-expo);
+}
+.severity-header:hover { background: var(--color-surface-alt); }
+.severity-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.severity-stats {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.severity-actions {
+  display: flex;
+  gap: 8px;
+}
+.btn-section {
+  height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+  border-radius: var(--radius-sm);
+}
+.findings-list { display: flex; flex-direction: column; gap: 8px; }
+.finding-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  transition: all 200ms var(--ease-out-expo);
+}
+.finding-card.approved {
+  background: rgba(2, 122, 72, 0.04);
+  border-color: rgba(2, 122, 72, 0.3);
+}
+.finding-card.rejected {
+  background: rgba(75, 85, 99, 0.04);
+  border-color: rgba(75, 85, 99, 0.2);
+  opacity: 0.7;
+}
+.finding-card.hidden { display: none; }
+.finding-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+.finding-id-title { flex: 1; min-width: 0; }
+.finding-id {
+  font-family: ui-monospace, SF Mono, Monaco, monospace;
+  font-size: 11px;
+  color: var(--color-text-subtle);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.finding-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 4px 0 0;
+  letter-spacing: -0.005em;
+}
+.finding-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.finding-chips .chip {
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+  cursor: default;
+}
+.finding-meta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: 8px 0;
+  font-family: ui-monospace, SF Mono, Monaco, monospace;
+  word-break: break-all;
+}
+.finding-detail {
+  font-size: 13px;
+  color: var(--color-text);
+  margin: 8px 0;
+  line-height: 1.55;
+}
+.finding-reco {
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--color-surface-alt);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  margin: 8px 0;
+  border-left: 3px solid var(--color-primary);
+}
+.finding-reco strong { color: var(--color-primary-dark); }
+.finding-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 150ms var(--ease-out-expo);
+}
+.action-btn:hover { background: var(--color-surface-alt); }
+.action-btn.approve.active {
+  background: var(--color-success-light);
+  border-color: var(--color-success);
+  color: var(--color-success);
+}
+.action-btn.reject.active {
+  background: var(--color-low-light);
+  border-color: var(--color-low);
+  color: var(--color-low);
+}
+.action-btn.note.active {
+  background: var(--color-primary-light);
+  border-color: var(--color-primary);
+  color: var(--color-primary-dark);
+}
+.note-textarea {
+  width: 100%;
+  min-height: 60px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: 13px;
+  resize: vertical;
+  display: none;
+}
+.note-textarea.visible { display: block; }
+.top-risks {
+  background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
+  border: 1px solid #FED7AA;
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  margin-bottom: 32px;
+}
+.top-risks-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-high);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 16px;
+}
+.top-risks ol {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.top-risks li { margin-bottom: 4px; }
+.top-risks li strong { color: var(--color-text); }
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+.scroll-target { scroll-margin-top: 100px; }
+@media (max-width: 768px) {
+  .container { padding: 16px; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .kpi-card:not(:last-child)::after { display: none; }
+}
+.fab {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.fab-btn {
+  height: 48px;
+  padding: 0 20px;
+  border-radius: var(--radius-full);
+  border: none;
+  background: var(--color-primary);
+  color: white;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-elevated);
+  transition: all 200ms var(--ease-out-expo);
+}
+.fab-btn:hover { background: var(--color-primary-dark); transform: translateY(-1px); }
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="app-header-row">
+    <div>
+      <h1 class="app-title">Audit 360 CRM FilmPro</h1>
+      <div class="app-subtitle">2026-05-09 - 7 agents orthogonaux - 136 findings cross-checkés - Livraison client lundi 2026-05-11</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn" id="btn-collapse-all">Replier tout</button>
+      <button class="btn" id="btn-expand-all">Déplier tout</button>
+      <button class="btn-primary btn" id="btn-export">Exporter mes décisions (JSON)</button>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+<section class="section">
+  <h2 class="section-title">Score global</h2>
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Critique</div><div class="kpi-value crit" id="kpi-crit">7</div><div class="kpi-meta">bloque livraison</div></div>
+    <div class="kpi-card"><div class="kpi-label">High</div><div class="kpi-value high" id="kpi-high">32</div><div class="kpi-meta">sécu / data integrity</div></div>
+    <div class="kpi-card"><div class="kpi-label">Medium</div><div class="kpi-value med" id="kpi-med">57</div><div class="kpi-meta">edge cases / drifts</div></div>
+    <div class="kpi-card"><div class="kpi-label">Low</div><div class="kpi-value low" id="kpi-low">28</div><div class="kpi-meta">polish / defense in depth</div></div>
+    <div class="kpi-card"><div class="kpi-label">Décidé</div><div class="kpi-value" id="kpi-decided">0 / 136</div><div class="kpi-meta" id="kpi-progress">0% complet</div></div>
+  </div>
+</section>
+
+<section class="top-risks">
+  <h2 class="top-risks-title">Top 10 risques bloquants livraison lundi</h2>
+  <ol>
+    <li><strong>C-01</strong> /reporting interroge `contacts.date_creation` qui n'existe pas. Tâche #2 livrée S177 va crasher.</li>
+    <li><strong>C-02</strong> /reporting KPI conversion compare `'transfere_crm'` au lieu de `'transfere'`. Toujours 0%.</li>
+    <li><strong>C-03</strong> /api/export/leads orderBy `'created_at'` qui n'existe pas. Endpoint export inutilisable.</li>
+    <li><strong>C-04</strong> CSV injection: `notes_libres` peut exécuter formules Excel chez destinataire (RCE indirect).</li>
+    <li><strong>C-05</strong> Race auto-création entreprise duplicate: pas de UNIQUE constraint, doublons silencieux.</li>
+    <li><strong>C-06</strong> DataTable listeners non cleanup: memory leak progressif sur 6 pages workspace.</li>
+    <li><strong>C-07</strong> LeadCreateSchema accepte `'lead_express'` que la DB CHECK refuse: F3 V2 mobile cassée.</li>
+    <li><strong>H-01</strong> npm audit: 5 CVEs (sveltejs/kit, vite, postcss). `npm audit fix` 2 min.</li>
+    <li><strong>H-26</strong> Double H1 sur 4 pages: bloquant WCAG AA `page-has-heading-one`.</li>
+    <li><strong>H-32</strong> search-ch legacy collapse 403/429: anti-pattern S171 violé. Démo client = message trompeur.</li>
+  </ol>
+</section>
+
+<section class="section">
+  <h2 class="section-title">Filtres</h2>
+  <div class="filters-bar">
+    <span class="filter-label">Sévérité</span>
+    <span class="chip filter-chip active" data-filter="severity" data-value="all">Toutes</span>
+    <span class="chip filter-chip sev-critical" data-filter="severity" data-value="critical">Critique (7)</span>
+    <span class="chip filter-chip sev-high" data-filter="severity" data-value="high">High (32)</span>
+    <span class="chip filter-chip sev-medium" data-filter="severity" data-value="medium">Medium (57)</span>
+    <span class="chip filter-chip sev-low" data-filter="severity" data-value="low">Low (28)</span>
+    <span class="chip filter-chip sev-info" data-filter="severity" data-value="info">Info (12)</span>
+  </div>
+  <div class="filters-bar">
+    <span class="filter-label">Axe</span>
+    <span class="chip filter-chip active" data-filter="axe" data-value="all">Tous</span>
+    <span class="chip filter-chip axe-bug" data-filter="axe" data-value="bug">Bugs</span>
+    <span class="chip filter-chip axe-security" data-filter="axe" data-value="security">Sécurité</span>
+    <span class="chip filter-chip axe-contracts" data-filter="axe" data-value="contracts">Contracts</span>
+    <span class="chip filter-chip axe-code" data-filter="axe" data-value="code">Code quality</span>
+    <span class="chip filter-chip axe-ui" data-filter="axe" data-value="ui">UI/UX</span>
+    <span class="chip filter-chip axe-test" data-filter="axe" data-value="test">Tests</span>
+    <span class="chip filter-chip axe-history" data-filter="axe" data-value="history">Historical</span>
+  </div>
+  <div class="filters-bar">
+    <span class="filter-label">Décision</span>
+    <span class="chip filter-chip active" data-filter="decision" data-value="all">Tous</span>
+    <span class="chip filter-chip" data-filter="decision" data-value="undecided">À décider</span>
+    <span class="chip filter-chip" data-filter="decision" data-value="approved">Approuvés</span>
+    <span class="chip filter-chip" data-filter="decision" data-value="rejected">Rejetés</span>
+  </div>
+</section>
+
+<div id="findings-container"></div>
+
+</div>
+
+<div class="fab">
+  <button class="fab-btn" id="fab-export">Exporter (<span id="fab-count">0</span> décisions)</button>
+</div>
+
+<script>
+const FINDINGS = [
+  // CRITIQUES
+  {id:"C-01", sev:"critical", axe:"contracts", title:"/reporting interroge colonnes inexistantes (date_creation)", file:"src/routes/(app)/reporting/+page.server.ts:21-22", effort:"XS", detail:"`contacts.date_creation` (vraie colonne `date_ajout`) et `entreprises.date_creation` (vraie colonne `date_import_ajout`) n'existent pas. Tâche #2 livrée S177 va crasher en runtime ou afficher des KPIs à 0.", reco:"Alias PostgREST: `select('date_creation:date_ajout')` et `select('date_creation:date_import_ajout')`."},
+  {id:"C-02", sev:"critical", axe:"contracts", title:"/reporting KPI conversion toujours 0%", file:"src/routes/(app)/reporting/+page.server.ts:42", effort:"XS", detail:"Compare `l.statut === 'transfere_crm'` mais l'enum réel est `'transfere'` (cf STATUTS_LEAD). KPI conversion = 0% en permanence, faux signal client.", reco:"Remplacer string + importer `STATUTS_LEAD` depuis `$lib/schemas`."},
+  {id:"C-03", sev:"critical", axe:"contracts", title:"/api/export/leads crash orderBy", file:"src/routes/api/export/[entity]/+server.ts:91, 108, 110", effort:"XS", detail:"orderBy `'created_at'` qui n'existe pas (vraie: `date_import`). Lit `score` au lieu de `score_pertinence`. Exports contacts/entreprises ont aussi cellules vides.", reco:"Renommer 5 occurrences: `created_at→date_import`, `score→score_pertinence`, `date_creation→date_ajout|date_import_ajout`."},
+  {id:"C-04", sev:"critical", axe:"security", title:"CSV injection (formula injection)", file:"src/lib/server/csv-export.ts:17-25", effort:"XS", detail:"Cellules commençant par `=`/`+`/`-`/`@`/`\\t`/`\\r` non neutralisées. `notes_libres = =cmd|'/c calc.exe'!A1` exécute la formule à l'ouverture Excel chez le destinataire. RCE indirect (OWASP CSV Injection). Confirmé par bug-hunter + security-auditor.", reco:"Préfixer `'` avant escapeCell quand le 1er char matche `[=+\\-@\\t\\r]`."},
+  {id:"C-05", sev:"critical", axe:"bug", title:"Race auto-création entreprise duplicate", file:"src/routes/(app)/contacts/+page.server.ts:34-58, 95-115", effort:"S", detail:"Pas de UNIQUE constraint sur `entreprises.raison_sociale`. Pattern check-then-insert (SELECT all + filter JS + INSERT) crée des doublons silencieux sous concurrence (Pascal terrain + main app simultané).", reco:"Index unique partial sur `lower(unaccent(raison_sociale))` + ON CONFLICT."},
+  {id:"C-06", sev:"critical", axe:"bug", title:"DataTable listeners memory leak", file:"src/lib/components/DataTable.svelte:117, 271, 198-211", effort:"S", detail:"`onDestroy` manquant. searchTimer 300ms + pointermove/up sur document persistent attachés après destroy. Composant utilisé sur 6 pages workspace. Memory leak progressif sur navigation rapide.", reco:"`onDestroy(() => clearTimeout(searchTimer))` + cleanup pointer listeners en cas d'unmount mid-drag."},
+  {id:"C-07", sev:"critical", axe:"contracts", title:"LeadCreateSchema ↔ DB CHECK drift sur source", file:"src/lib/schemas.ts:178-180 ↔ supabase/migrations/20260411_001_sources_regbl_minergie.sql:6", effort:"XS", detail:"Zod accepte `'lead_express'`, DB CHECK refuse. Soit la migration de mise à jour a été appliquée à la main en prod sans être committée, soit la fonctionnalité F3 V2 mobile saisie rapide est cassée silencieusement.", reco:"Vérifier prod: `SELECT pg_get_constraintdef(oid) FROM pg_constraint WHERE conname = 'prospect_leads_source_check';`. Migration ALTER CONSTRAINT si manquante. Aligner aussi `sitg/fosc/minergie` DB ↔ Zod."},
+
+  // HIGH
+  {id:"H-01", sev:"high", axe:"security", title:"npm audit: 5 CVEs (sveltejs/kit DoS, vite path traversal, postcss XSS)", file:"package.json", effort:"XS", detail:"`@sveltejs/kit` HIGH (DoS unvalidated redirect), adapter-node BODY_SIZE_LIMIT bypass, `vite 7.0-7.3.1` HIGH (3 CVEs path traversal + WebSocket file read), `postcss <8.5.10` MOD XSS, `cookie <0.7` LOW, `@anthropic-ai/sdk 0.79-0.91` MOD.", reco:"`npm audit fix` 2 min couvre tout sauf SDK Anthropic (requiert --force breaking 0.91→0.95.1)."},
+  {id:"H-02", sev:"high", axe:"bug", title:"Enrichir Zefix écrase notes_libres saisi", file:"src/routes/(app)/entreprises/+page.server.ts:166-179", effort:"XS", detail:"`if (purpose) updates.notes_libres = purpose` overwrite inconditionnel. Pascal annote « RDV 15/05 Marie Sauvage » → clique Enrichir → note effacée par texte juridique Zefix. Aucun warning.", reco:"Ne réécrire `notes_libres` que si vide actuellement."},
+  {id:"H-03", sev:"high", axe:"bug", title:"recheck-historical Promise.all illimité (DoS sortant)", file:"src/routes/api/intelligence/recheck-historical/+server.ts:49-62", effort:"S", detail:"500+ HEAD/GET sortants en parallèle sur tous les rapports publiés. Risque: DoS worker Vercel mémoire + ban IP par 24heures.ch/glassonweb/etc + timeout 300s.", reco:"`runWithConcurrency(items, 4, ...)` (existe déjà dans `cross-check.ts:250`)."},
+  {id:"H-04", sev:"high", axe:"bug", title:"Cross-check garde items malgré verbatim_ok=false", file:"src/lib/server/intelligence/cross-check.ts:332-340", effort:"XS", detail:"Logique `!verbatim_ok && hasFatal`. Si LLM Sonnet retourne `{verbatim_ok: false, divergences: [], confidence: 'low'}`, item gardé alors qu'explicitement marqué non-vérifié. Brèche dans garantie zéro hallucination.", reco:"Reject dès `!verdict.verbatim_ok`."},
+  {id:"H-05", sev:"high", axe:"bug", title:"VisitsPanel geoloc Promise leak post-unmount", file:"src/lib/components/VisitsPanel.svelte:71-83, 85-138", effort:"S", detail:"`getCurrentPosition` 15s timeout, si user navigue ailleurs avant résolution → callback mute state Svelte 5 sur composant détruit + toast affiché hors contexte + fetch POST partial.", reco:"`let cancelled = $state(false); onDestroy(() => cancelled = true);` + bail-out dans callbacks."},
+  {id:"H-06", sev:"high", axe:"bug", title:"Contact create SELECT entreprises sans LIMIT (latence 2-5s)", file:"src/routes/(app)/contacts/+page.server.ts:35-39, 96-101", effort:"S", detail:"À chaque création contact avec `entreprise_nom`, full table scan. À 10 000 entreprises = 500KB payload + filter JS in-memory à chaque form submit.", reco:"Index trigram sur colonne générée `lower(unaccent(raison_sociale))` + ILIKE prefix-bounded."},
+  {id:"H-07", sev:"high", axe:"contracts", title:"Schemas Zod date_publication accepte n'importe quoi", file:"src/lib/schemas.ts:96-99, 124, 138, 197-207", effort:"XS", detail:"`z.string().max(20)` accepte `\"not-a-date\"`. Postgres rejette à l'INSERT avec message opaque. UX: Pascal voit « Erreur » sans contexte. Risque aussi: `new Date(invalid)` → NaN.", reco:"Pattern regex YYYY-MM-DD comme `OpportuniteNextActionSchema` déjà fait."},
+  {id:"H-08", sev:"high", axe:"bug", title:"Compteur unread intelligence ratio incohérent", file:"src/routes/(app)/+layout.server.ts:9-19", effort:"S", detail:"`unread = totalPublished - readCount` ne tient pas compte de: (a) reports archivés encore `status='published'` mais filtrés UI, (b) reads peut référencer reports supprimés. Pascal voit 7 cards mais badge dit 5 unread.", reco:"NOT IN sub-SELECT direct."},
+  {id:"H-09", sev:"high", axe:"bug", title:"addItem veille read-modify-write JSONB non atomique", file:"src/routes/(app)/veille/[id]/+page.server.ts:160-203", effort:"M", detail:"Watchlist S169 ouverte. 2 onglets parallèles → write A écrasé par write B. Confirmé par bug-hunter + historical-context-reviewer.", reco:"Optimistic locking colonne `version` ou migration vers items table normalisée ou RPC SELECT FOR UPDATE."},
+  {id:"H-10", sev:"high", axe:"bug", title:"transferer lead pas atomique (3 INSERTs)", file:"src/routes/(app)/prospection/+page.server.ts:365-438", effort:"M", detail:"Si INSERT contact échoue après INSERT entreprise réussi, lead reste statut=`nouveau`, entreprise orpheline créée. Re-clique transferer → 2e entreprise duplicate (cumule avec C-05).", reco:"RPC Postgres function plpgsql avec BEGIN/COMMIT."},
+  {id:"H-11", sev:"high", axe:"contracts", title:"App.Locals.supabase typé sans <Database>", file:"src/app.d.ts:6", effort:"XS", detail:"Permet aux drifts C-01/C-03 de passer `svelte-check` sans erreur. Toutes les colonnes inventées dans `select()` sont silencieusement acceptées par TS.", reco:"`supabase: SupabaseClient<Database>` + import `Database`. Attendre vague `svelte-check` qui révèle drifts cachés."},
+  {id:"H-12", sev:"high", axe:"contracts", title:"coutsFormat.CostRun cast as CostRun[] sans Zod", file:"src/routes/(app)/dashboard/couts/+page.server.ts:45", effort:"S", detail:"Si la CHECK constraint DB est étendue (`feature IN (..., 'reporting')`) sans aligner `coutsFormat.CostRun.feature`, l'agrégation `bucket.byFeature[r.feature]` corrompt silencieusement le KPI.", reco:"`CostRunSchema = z.object(...)` + safeParse + filter + log rejects."},
+  {id:"H-13", sev:"high", axe:"contracts", title:"IntelligenceItemSchema.rank 1-15 vs DB CHECK 1-10", file:"src/lib/server/intelligence/schema.ts:86 ↔ supabase/migrations/20260427_001_lead_signals.sql:13", effort:"XS", detail:"addItem manuel rank 11-15 → futur apply-signals → CHECK violation 23514, transaction rollback, état partiel inconsistant.", reco:"Aligner sur 15 partout (DB ALTER CONSTRAINT 1-15)."},
+  {id:"H-14", sev:"high", axe:"contracts", title:"Form actions return shapes hétérogènes", file:"src/routes/(app)/prospection/+page.server.ts:533, 564 + signaux:111, 146", effort:"M", detail:"Drift typed-response-shape. `+page.svelte` doit coder type guards à la main (`if ('ambiguous' in result.data)`). Pas de cohérence entre 9+ form actions.", reco:"Discriminated union `{ kind: 'success' | 'duplicate' | 'ambiguous' }`. Refactor post-livraison."},
+  {id:"H-15", sev:"high", axe:"contracts", title:"DB schemas sans CHECK constraints critiques", file:"supabase/migrations/20260402_001_schema_filmpro.sql:77, 87, 101", effort:"S", detail:"`signaux_affaires.statut_traitement`, `type_signal`, `opportunites.etape_pipeline`, `entreprises/contacts.statut_qualification` text libres. Cron service_role peut insérer n'importe quoi (drift silencieux).", reco:"ADD CONSTRAINT CHECK alignés sur enums Zod."},
+  {id:"H-16", sev:"high", axe:"test", title:"Login form actions 0 tests (sendcode/verifycode)", file:"src/routes/login/+page.server.ts (73L)", effort:"S", detail:"Porte d'entrée auth. Manque: email manquant→400, hors domaine→403, OTP regex `\\d{6}`, expired→message, cookie `login_at` set + `secure` selon `url.protocol`.", reco:"~6 tests, mock Supabase auth pattern S120."},
+  {id:"H-17", sev:"high", axe:"test", title:"Auth callback OTP 0 tests", file:"src/routes/auth/callback/+server.ts (38L)", effort:"S", detail:"2 branches: `token_hash+type` (verifyOtp) et `code` (exchangeCodeForSession) non testées. Erreurs renvoient redirect avec error param non testé.", reco:"~4 tests."},
+  {id:"H-18", sev:"high", axe:"test", title:"hooks.server.ts gate global 0 tests", file:"src/hooks.server.ts (124L)", effort:"M", detail:"Rate limit 10/min, `RATE_LIMIT_MAP_CAP` fail-closed, expiration 7j, whitelist email signOut, `AUTH_EXEMPT_ROUTES` strict equals (commentaire ligne 66-67 explicite « ne jamais prefix match sur /auth/* »). Pattern incident S99 formation-ia analogue.", reco:"~12 tests + `vi.useFakeTimers` + cleanup `afterAll`."},
+  {id:"H-19", sev:"high", axe:"test", title:"Photos upload magic bytes 0 test régression", file:"src/routes/api/photos/+server.ts:12-30", effort:"M", detail:"`detectImageType` non exporté + 0 test. Magic bytes = défense UNIQUE anti MIME spoofing. Manque: JPEG/PNG/WebP/HEIC happy + PDF magic→null + MIME spoof (file.type=image/jpeg, bytes PDF)→400, file>5Mo→413, cap 10 photos→409.", reco:"~8 tests, fixtures binaires."},
+  {id:"H-20", sev:"high", axe:"test", title:"addItem veille manuel 0 tests", file:"src/routes/(app)/veille/[id]/+page.server.ts:104-206", effort:"M", detail:"Bypass partiel pipeline anti-hallu V2 (cross-check verbatim non appliqué). Manque: Zod ManualItemSchema reject min(10), thème inconnu→400, `isDeniedSource(hostname)`→400, `verifyUrl` 404→400, `Math.min(maxRank+1, 15)` cap.", reco:"~10 tests."},
+  {id:"H-21", sev:"high", axe:"code", title:"CSS workspace .page-actions/.btn/.fab dupliqué 4 pages", file:"src/routes/(app)/{signaux,pipeline,contacts,entreprises}/+page.svelte", effort:"M", detail:"~80 lignes CSS workspace copy-pasted ligne pour ligne (~320L drift potentiel). Aucune classe globale dans `app.css`. Première modif cross-pages = 4 fichiers à patcher.", reco:"Extraire dans `app.css @layer components` ou `(app)/+layout.svelte` shared. ~1h30."},
+  {id:"H-22", sev:"high", axe:"code", title:"5 implémentations inline NFD-normalize", file:"text-utils.ts:6 / scoring.ts:56 / segment-mapper.ts:225 / ImportModal.svelte:81 / searchch/helpers.ts:34", effort:"S", detail:"3 versions byte-identiques (`s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()`). Drift `normalizeCompanyName` S176bis non propagé. Évolution `ß→ss`/`œ→oe` = 5 patches.", reco:"Centraliser `text-utils.ts` exporté `normalizeForMatch(s)`. ~30 min + tests."},
+  {id:"H-23", sev:"high", axe:"code", title:"CSS tokens design system sous-utilisés", file:"src/app.css ↔ composants", effort:"M", detail:"81 hardcodes `border-radius` vs 15 tokens (5:1), 37 hardcodes `box-shadow` vs 2 tokens (18:1), 16 occurrences `font-size: X.5px` (drift type scale stricte 12/13/14/16/20/24/32). Modifier radius global = 81 endroits.", reco:"Sweep mapping radius (`4→sm`/`6→sm`/`8→md`/`10→lg`/`12→xl`/`9999→full`) + sweep demi-pixels. Trancher Tailwind utilities OU CSS variables."},
+  {id:"H-24", sev:"high", axe:"ui", title:"6 hex hardcodés TriageQueue ActionButton", file:"src/lib/components/dashboard/TriageQueue.svelte:364-386", effort:"S", detail:"`#6E9C8F #C28A86 #8A95A8 #7B8FAE #027A48 #C0391A` pour ab-yes/no/later/view. Viole golden v9 § 6 « Couleur hardcodée → empêche maintenance + conflit tokens ».", reco:"`var(--color-success/danger/info/primary)`."},
+  {id:"H-25", sev:"high", axe:"ui", title:"3 gradients dashboard (anti-pattern golden v9 § 6)", file:"SectionGreeting.svelte:83-88 / KpisBento.svelte:136 / TriageQueue.svelte:392", effort:"M", detail:"linear-gradient text fill .name + radial-gradient 280×280 (golden tolère 44×44 max) + linear-gradient footer. Identité éditoriale assumée mais en conflit avec § 6, divergence non tracée.", reco:"Trancher: documenter exception § 6 + ouvrir audit Pascal, ou retirer (aplats tokens)."},
+  {id:"H-26", sev:"high", axe:"ui", title:"Heading hierarchy double H1 (bloquant WCAG AA)", file:"reporting/+page.svelte:50 + dashboard/couts/+page.svelte:16 + veille/+page.svelte:67 + veille/[id]/+page.svelte:225 + Header.svelte:33", effort:"S", detail:"Header rend une h1 conditionnelle au pageTitle (présent partout). 4 routes rendent une H1 LOCALE supplémentaire. axe-core émettra `serious` sur `page-has-heading-one`. Lecteur d'écran annonce 2 niveaux 1 → confusion structure.", reco:"Soit basculer h1 local en h2, soit prop layout `hideHeaderTitle`."},
+  {id:"H-27", sev:"high", axe:"ui", title:"ARIA tablist sans roving tabindex (5 composants)", file:"contacts/ContactsTabs.svelte / entreprises/ / signaux/ / reporting/ / pipeline/", effort:"S", detail:"Aucun composant n'implémente le pattern ARIA Authoring Practices: pas de `tabindex=\"0\"` sur tab actif + `tabindex=\"-1\"` sur inactifs (roving), pas de handlers `ArrowLeft/Right/Home/End`, pas d'`aria-orientation`. Friction clavier (Tab x6).", reco:"Primitive `<Tabs>` partagée + `$lib/actions/rovingTabindex.ts`."},
+  {id:"H-28", sev:"high", axe:"ui", title:"/aide complètement hors charte (1443 lignes)", file:"src/routes/(app)/aide/+page.svelte", effort:"L", detail:"30+ off-grid spacing 0.625/0.9375/0.8125/1.25/2.5rem, borders 2px (golden = 1px), font-size 0.625rem hors scale, `border-radius: 50%` step badges, `text-transform: uppercase` table headers, tabs custom border 2px (golden § 5.12 = underline-only), pas d'ARIA tablist, mobile TOC = `<select>` natif.", reco:"Refonte 3 niveaux planifiée tâche #4 livraison client lundi."},
+  {id:"H-29", sev:"high", axe:"ui", title:"login SVG inline + font Inter + gap 2.5rem", file:"src/routes/(app)/auth/login/+page.svelte:143-145, 190-205", effort:"XS", detail:"SVG inline pour icône email (golden § 6 = Lucide via wrapper Icon). `font-family: 'Inter'` (golden § 3 = DM Sans). `gap: 2.5rem` (40px), `padding: 2.5rem`, `font-size: 1.1rem` (17.6px) hors grille/scale.", reco:"`<Icon name=\"mail\" size={20} />`, retirer Inter (héritage DM Sans), gap/padding/font-size sur scale."},
+  {id:"H-30", sev:"high", axe:"ui", title:"Type scale dashboard hors échelle (44/56/76px)", file:"SectionGreeting.svelte:75 / KpisBento.svelte:167, 175, 176", effort:"M", detail:"Type scale § 3.1 strict = `10/12/13/14/15/16/18/22 px` (mag-* éditorial). Dashboard introduit 17/40/44/56/76 hors scale. Volonté éditoriale assumée mais hors golden, pas tracée.", reco:"Soit ajouter « hero éditorial dashboard » comme 3e archétype au § 9, soit ramener à `mag-display 40/48/64`."},
+  {id:"H-31", sev:"high", axe:"ui", title:"KpisBento radius 24px + 50% hors token", file:"KpisBento.svelte:103, 135, 146", effort:"XS", detail:"Tokens radius § 2.6 = `4/8/10/12/full`. KpisBento utilise 24px partout + `border-radius: 50%`.", reco:"Soit étendre `tokens.radius.2xl: 24px`, soit `var(--radius-xl)`. `50%` → `var(--radius-full)`."},
+  {id:"H-32", sev:"high", axe:"history", title:"search-ch legacy 403 vs 429 collapse (anti-pattern S171 violé)", file:"src/routes/api/prospection/search-ch/+server.ts:57-58", effort:"XS", detail:"Endpoint legacy collapse HTTP 403 (clé invalide/bloquée) et 429 (quota). Pattern S171 (mémoire `feedback_searchch_key_validation.md`) gravée précisément ceci comme anti-pattern. Pascal s'est fait piéger 30 min en S171. L'endpoint moderne `/api/prospection/searchch/+server.ts` distingue. Encore appelé depuis `LeadSlideOut.svelte:76`. Démo client lundi = message trompeur si la clé se bloque.", reco:"Aligner sur pattern moderne `searchch/+server.ts:63-80`: 403 → 503 « Clé invalide ou bloquée », 429 → « Quota épuisé »."},
+
+  // MEDIUM
+  {id:"M-01", sev:"medium", axe:"security", title:"Fuite clé API search.ch via String(err) sur 4 endpoints", file:"prospection/search-ch:132 / enrichir-batch:172,245 / zefix:112 / simap:83", effort:"S", detail:"Clé en query string `?key=apiKey`, fetch erreur peut surfacer URL complète dans `err.message`. Pattern `sanitizeApiKeyInLogs` existe (S171) mais pas propagé.", reco:"Importer `sanitizeError` partout."},
+  {id:"M-02", sev:"medium", axe:"security", title:"lead.source_url rendu href sans validation https?://", file:"LeadSlideOut.svelte:216", effort:"XS", detail:"Defense in depth manquante. Si search.ch retournait `javascript:...` (compromission ou parsing pathologique), XSS dans contexte session FilmPro. Svelte 5 n'échappe pas les schémas URL.", reco:"Ajouter filtre `https?://` dans `extractAlternateLink` + côté client."},
+  {id:"M-03", sev:"medium", axe:"security", title:"auth/callback encode error.message brut", file:"src/routes/auth/callback/+server.ts:14-22", effort:"XS", detail:"URL `/login?error=callback&detail=...` apparaît dans historique navigateur, logs Vercel referrer, analytics.", reco:"Retirer `&detail=`, garder uniquement `?error=callback`."},
+  {id:"M-04", sev:"medium", axe:"security", title:"Rate limit ne couvre pas /login (cost-burn possible)", file:"src/hooks.server.ts:38-50", effort:"XS", detail:"Action `?/sendcode` peut être bombardée → cost-burn SMTP Resend, spam mailbox.", reco:"Étendre matcher pour inclure `event.url.pathname === '/login'`."},
+  {id:"M-05", sev:"medium", axe:"bug", title:"costTracker singleton non thread-safe", file:"src/lib/server/intelligence/cost-tracker.ts:227", effort:"M", detail:"workflow_dispatch GHA pendant cron auto = 2 invocations concurrentes mutent même singleton. Tests Vitest parallèles aussi.", reco:"DI explicite par invocation, ou AsyncLocalStorage."},
+  {id:"M-06", sev:"medium", axe:"bug", title:"Dashboard relances inclut opportunités closed", file:"src/routes/(app)/+page.server.ts:31-35", effort:"XS", detail:"Filtre `date_relance_prevue <= today` ne `.not('etape_pipeline', 'in', '(gagne,perdu)')` pas. Bruit dans widget Relances.", reco:"Ajouter `.not('etape_pipeline', 'in', '(gagne,perdu)')`."},
+  {id:"M-07", sev:"medium", axe:"bug", title:"+layout.svelte $effect setTimeout sans cleanup", file:"src/routes/(app)/+layout.svelte:23-29", effort:"XS", detail:"Navigations rapides A→B→C en <150ms = 2 setTimeout pendants.", reco:"`return () => clearTimeout(t)` dans $effect."},
+  {id:"M-08", sev:"medium", axe:"bug", title:"Photos check+upload race (cap 10/owner)", file:"src/routes/api/photos/+server.ts:138-156", effort:"S", detail:"2 uploads parallèles passent count<10 quand count=9, résultat 11.", reco:"Trigger BEFORE INSERT ou RPC INSERT WHERE count<10."},
+  {id:"M-09", sev:"medium", axe:"bug", title:"applySignals + recompute non-atomic", file:"src/lib/server/intelligence/apply-signals.ts:138-156", effort:"S", detail:"2 reports publiés à 1s d'écart → recompute concurrents. État intermédiaire visible côté UI.", reco:"Debounce recompute ou queue pg_cron."},
+  {id:"M-10", sev:"medium", axe:"bug", title:"sanitizeForLog slice avant redact (leak demi-clé)", file:"src/lib/server/intelligence/sanitize.ts:19-30", effort:"XS", detail:"Slice à 500 chars puis regex → si clé commence à index 470, `sk-ant-abc...` (truncated) ne matche pas, leak du préfixe.", reco:"Redact AVANT slice."},
+  {id:"M-11", sev:"medium", axe:"bug", title:"hooks.server.ts setInterval module-level", file:"src/hooks.server.ts:29-34", effort:"XS", detail:"HMR dev = multiplication d'intervals. Sur Vercel serverless = jamais fire (lambda hibernate <60s). Confondu avec test #20.", reco:"Guard `globalThis.__rateLimitInterval` ou cleanup paresseux."},
+  {id:"M-12", sev:"medium", axe:"bug", title:"recomputeLeadScoresBatch boucle séquentielle O(N)", file:"src/lib/server/intelligence/recompute-score.ts:97-109", effort:"S", detail:"100 leads matchés = 300 round-trips DB séquentiels = 10s+ latence. Bloque retour HTTP GHA.", reco:"`runWithConcurrency(leadIds, 6, ...)` ou RPC SQL bulk."},
+  {id:"M-13", sev:"medium", axe:"bug", title:"Cron nettoyage-crm timeout-killer", file:"src/routes/api/cron/nettoyage-crm/+server.ts:85-119", effort:"M", detail:"200 entreprises × ~1.15s + retries → timeout 300s possible. Compteur `archivees` perdu.", reco:"Cap BATCH 100 ou externaliser GHA pattern S167."},
+  {id:"M-14", sev:"medium", axe:"bug", title:"rateLimit Map fail-closed cap 10000 (DoS rotation IP)", file:"src/hooks.server.ts:18", effort:"M", detail:"10000 IPs distinctes = saturation 60s, fail-closed bloque tous les nouveaux.", reco:"Upstash Redis ou Vercel KV."},
+  {id:"M-15", sev:"medium", axe:"bug", title:"verifyUrlsBatch Promise.all illimité", file:"src/lib/server/intelligence/url-verify.ts:128-131", effort:"S", detail:"Pas de cap concurrence sur fetch sortants. Cousin de H-03.", reco:"runWithConcurrency."},
+  {id:"M-16", sev:"medium", axe:"contracts", title:"Pipeline opportunites cast non validé", file:"src/routes/(app)/pipeline/+page.server.ts:10", effort:"M", detail:"Si une FK devient nullable, forme retournée passe de `{contacts: {id, nom}}` à `{contacts: null}`. Pas de Zod schema.", reco:"`OppWithRelationsSchema`. Coûteux pour livraison lundi, dette nommée."},
+  {id:"M-17", sev:"medium", axe:"contracts", title:"extractForm coercion ad-hoc", file:"src/lib/schemas.ts:33-39 + prospection/+page.server.ts:443-457", effort:"S", detail:"Tout nouveau champ array ou boolean sans coercion explicite cassera silencieusement le parse. `=== 'true'` duplicable et fragile.", reco:"Étendre `extractForm` avec fieldsSpec, OU adopter `sveltekit-superforms`."},
+  {id:"M-18", sev:"medium", axe:"contracts", title:"Regex sans .max() cap longueur", file:"src/lib/server/intelligence/schema.ts:106-110", effort:"XS", detail:"`published_at: regex(/^\\d{4}-\\d{2}-\\d{2}.../)` accepte chaîne 1Mo scannée intégralement avant rejet (anchored donc pas de catastrophic backtracking exploitable).", reco:"`z.string().max(40).regex(...)` partout."},
+  {id:"M-19", sev:"medium", axe:"contracts", title:"intelligence_reports.items pas Zod parsé", file:"src/routes/(app)/veille/+page.server.ts:66 + veille/[id]/+page.server.ts:52-54", effort:"S", detail:"`Json` (jsonb DB) utilisé directement comme `IntelligenceItem[]`. DB legacy peut contenir forme JSON différente, rendu UI peut crasher.", reco:"`IntelligenceItemSchema.safeParse` étendu aux items en entier."},
+  {id:"M-20", sev:"medium", axe:"contracts", title:"prospect_visits FK type mismatch", file:"supabase/migrations/20260430_001_prospect_photos_visits.sql:67-69", effort:"L", detail:"`entreprise_id TEXT` vs `prospect_lead_id UUID` sur la même table. Pas un bug aujourd'hui (XOR fonctionne), bloquera refonte FK.", reco:"Laisser tel quel, documenter dans `docs/SPECS_*` qu'`entreprises.id` reste `text` legacy."},
+  {id:"M-21", sev:"medium", axe:"contracts", title:"CSV export sans X-Export-Schema-Version", file:"src/routes/api/export/[entity]/+server.ts", effort:"XS", detail:"Si Pascal partage un export à un client externe (Excel macro ou import CRM tiers), tout rename de colonne casse leur side.", reco:"Header `X-Export-Schema-Version: '1.0.0'`."},
+  {id:"M-22", sev:"medium", axe:"contracts", title:"IntelligenceItemSchema.theme validation slug dupliquée", file:"intelligence/schema.ts:98 + veille/[id]/+page.server.ts:130-134", effort:"S", detail:"2 lieux validant `theme` contre `veille_themes.slug`. Si l'un évolue, l'autre reste. Commentaire « lookup avec fallback gracieux sur 'autre' » suggère divergence existe déjà.", reco:"Factoriser `assertActiveTheme(client, slug)` dans `themes-repository.ts`."},
+  {id:"M-23", sev:"medium", axe:"code", title:"16 occurrences font-size demi-pixels (drift type scale v9)", file:"PipelineCard/Column / dashboard sub-composants", effort:"S", detail:"Violation directe règle Type scale stricte 12/13/14/16/20/24/32 (golden v9). Sous-composants pipeline/dashboard non-refondus dans cascade v9.", reco:"Mapping mécanique 11.5→12, 12.5→12 ou 13, 13.5→13 ou 14. ~45 min."},
+  {id:"M-24", sev:"medium", axe:"code", title:"2 formatPercent divergents", file:"coutsFormat.ts:52,96 vs reportingFormat.ts:73,84", effort:"S", detail:"Configs Intl divergentes, 2 `PERCENT_FORMATTER` séparés.", reco:"Extraire `numberFormat.ts` avec `formatPercent(value, opts?)`. ~30 min."},
+  {id:"M-25", sev:"medium", axe:"code", title:"Inconsistance casing taxonomies tabs", file:"signauxFormat (snake) / contactsFormat (kebab) / entreprisesFormat (kebab) / pipelineFormat (kebab+anglicisme)", effort:"XS", detail:"signaux = snake car colonne PostgreSQL `statut_traitement` check constraint, donc verrouillé DB.", reco:"Documenter asymétrie dans CRM/CLAUDE.md plutôt que migrer DB."},
+  {id:"M-26", sev:"medium", axe:"code", title:"(data as any) cast bypassant PageData", file:"src/routes/(app)/contacts/+page.svelte:58", effort:"XS", detail:"`const entreprises = $derived((data as any).entreprises as Entreprise[] ?? []);`. Drift type post-refactor.", reco:"Vérifier `+page.server.ts` retourne bien `entreprises` dans payload typé, supprimer le cast."},
+  {id:"M-27", sev:"medium", axe:"code", title:"Couleurs hardcodées composants golden v9", file:"ScorePill.svelte:60-83 + TriageQueue.svelte:364-376", effort:"S", detail:"5 hex ScorePill + 6 hex TriageQueue (DOUBLON H-24). Le commentaire S160 ScorePill prouve audit a11y → mérite token.", reco:"Suivre pattern `--color-prosp-import-*` déjà bien tokenisés dans `app.css:41-53`. ~20 min."},
+  {id:"M-28", sev:"medium", axe:"code", title:"Comments saturés tags audit historique (42 occurrences)", file:"DataTable.svelte + composants golden v9", effort:"L", detail:"Ex `// V4 audit S163 (F-V4-04)`, `// H-19 audit S160`. Saturent lecture par dev externe. Trade-off conscient methodo Pascal solo.", reco:"NE PAS fixer. Documenter dans CRM/CLAUDE.md que c'est volontaire et nettoyable en sweep si Pascal sous-traite."},
+  {id:"M-29", sev:"medium", axe:"code", title:"getElementById dans /aide", file:"src/routes/(app)/aide/+page.svelte:76, 88, 109", effort:"XS", detail:"3 occurrences pour ancres URL hash + IntersectionObserver. Cas légitime mais cohérent S176bis Low #1 `bind:this`. À migrer dans cadre tâche #4 refonte.", reco:"Migration via tâche #4 refonte (XS gratuit dans le scope)."},
+  {id:"M-30", sev:"medium", axe:"ui", title:"FAB position right:20 bottom:20 off-grid", file:"contacts/+page.svelte:628-629 + pipeline + entreprises + signaux", effort:"XS", detail:"`20px` hors grille 4/8/12/16/24/32/48 (§ 4). Si HIG iOS volontaire, à documenter exception mobile.", reco:"`right: 16px; bottom: 16px;` ou documenter `20px` HIG mobile en § 4 exception."},
+  {id:"M-31", sev:"medium", axe:"ui", title:"Modal h-11 vs spec h-10", file:"pipeline/+page.svelte:456, 463 + contacts:544, 551 + entreprises", effort:"XS", detail:"Modal Annuler/Enregistrer en `h-11` (44px). Golden v9 § 5.1 : `h-10` (40px) uniforme. Boutons modal plus grands que page = incohérence subtile.", reco:"Ramener à `h-10` + `min-height: 44px @media mobile`, OU documenter en § 5.1."},
+  {id:"M-32", sev:"medium", axe:"ui", title:"Sidebar nav landmark + aria-current manquants", file:"src/lib/components/Sidebar.svelte:23-108", effort:"XS", detail:"Pas de `<nav aria-label=\"Navigation principale\">`, pas d'`aria-current=\"page\"` sur lien actif. État actif = visuel uniquement.", reco:"L41 ajouter aria-label. L44 ajouter aria-current."},
+  {id:"M-33", sev:"medium", axe:"ui", title:"Sidebar badge bg-amber-500 (drift hex)", file:"src/lib/components/Sidebar.svelte:53, 59", effort:"XS", detail:"Badge unread `bg-amber-500` (Tailwind preset `#F59E0B`). Token warning golden v9 = `#F79009`.", reco:"`bg-warning text-white`."},
+  {id:"M-34", sev:"medium", axe:"ui", title:"h4 orphelins slide-out signaux (4)", file:"src/routes/(app)/signaux/+page.svelte:389, 416, 431, 450", effort:"XS", detail:"Slide-out signaux contient 4× `<h4 class=\"text-xs uppercase\">` sans h3 ancêtre. axe-core warning.", reco:"Basculer 4 h4 en h3."},
+  {id:"M-35", sev:"medium", axe:"ui", title:"h2 reporting font-size 14px (= body)", file:"src/routes/(app)/reporting/+page.svelte:184", effort:"XS", detail:"`.panel-header h2 { font-size: 14px }`. § 3.1: h2=18px / h3=16px / body=14px. 14px = body, sémantiquement h2.", reco:"Soit `<h3>` + `font-size: 16px`, soit augmenter à 18px."},
+  {id:"M-36", sev:"medium", axe:"ui", title:"h1 dashboard-couts/reporting 24px hors scale", file:"dashboard/couts/+page.svelte:43 + reporting:150", effort:"XS", detail:"Page h1 = 24px. § 3.1: h1 workspace = 22px.", reco:"`font-size: 22px`."},
+  {id:"M-37", sev:"medium", axe:"ui", title:"TriageQueue h2 22px (= h1 workspace)", file:"src/lib/components/dashboard/TriageQueue.svelte:215-219", effort:"XS", detail:"h2 = 22px. § 3.1: h2=18px. 22px = h1 workspace → confusion sémantique vs visuel.", reco:"`font-size: 18px` ou transformer en h3 (16px)."},
+  {id:"M-38", sev:"medium", axe:"ui", title:"ActionButton 34×34 vs spec 36×36", file:"src/lib/components/dashboard/TriageQueue.svelte:339-340", effort:"XS", detail:"`width: 34px; height: 34px;`. Golden v9 § 5.9 spec = 36×36 px.", reco:"`36×36 px`."},
+  {id:"M-39", sev:"medium", axe:"ui", title:"EmptyState pas role=status", file:"src/lib/components/EmptyState.svelte", effort:"XS", detail:"`<div>` simple sans `role=\"status\"` ni `aria-live=\"polite\"`. Filtre vidant la liste → aucune annonce screen reader.", reco:"Wrapper `role=\"status\" aria-live=\"polite\"`."},
+  {id:"M-40", sev:"medium", axe:"ui", title:"signaux warning rgba hardcoded", file:"src/routes/(app)/signaux/+page.svelte:837", effort:"XS", detail:"`.empty-card-icon.warning { background: rgba(247, 144, 9, 0.1) }` au lieu de `var(--color-warning-light)`.", reco:"`var(--color-warning-light)`."},
+  {id:"M-41", sev:"medium", axe:"ui", title:"signaux btn-danger hover rgba red-500 alpha", file:"src/routes/(app)/signaux/+page.svelte:761", effort:"XS", detail:"`.btn-danger:hover { background: rgba(239, 68, 68, 0.85) }` = Tailwind red-500. Token golden = `#F04438`. Hover doit être `--color-danger-hover` aligné `#C9342A`.", reco:"Définir `--color-danger-hover: #C9342A`, utiliser ici."},
+  {id:"M-42", sev:"medium", axe:"ui", title:"KpisBento radial 280×280 hors gabarit", file:"src/lib/components/dashboard/KpisBento.svelte:128-147", effort:"S", detail:"2 cercles décoratifs `::before` 280×280 + `::after` 180×180. § 6 anti-pattern autorise « radial-gradient discret 44×44, opacity 10% max ». Hors gabarit total.", reco:"Retirer ou réduire au scope spec."},
+  {id:"M-43", sev:"medium", axe:"ui", title:"Sidebar <aside> au lieu de <nav>", file:"src/lib/components/Sidebar.svelte:23 + +layout.svelte:50", effort:"XS", detail:"`<aside>` enveloppe nav principale. Sémantiquement, nav principale = `<nav>`, pas `<aside>` (contenu lié mais secondaire).", reco:"`<aside>` → `<nav aria-label=\"Navigation principale\">`."},
+  {id:"M-44", sev:"medium", axe:"ui", title:"signaux empty-card h3 orphelin", file:"src/routes/(app)/signaux/+page.svelte:253, 268", effort:"XS", detail:"Empty state cards rendent `<h3>` directement (Ajout manuel / Veille automatique) sans h2 parent. Header h1 → page (rien) → h3.", reco:"Soit ajouter h2 invisible (sr-only), soit basculer h3 → h2."},
+  {id:"M-45", sev:"medium", axe:"ui", title:"box-shadow rgba prolifération (30+ cards)", file:"EntreprisesCards / KpisBento / AlertesStrip / RelancesList / ActiviteTimeline / TriageQueue / QuickActionsFooter", effort:"S", detail:"Pattern box-shadow chained `rgba(17,24,39,…)` × 3 répété sur 7+ composants. Pas dans `tokens.shadow`. Drift systémique.", reco:"Définir `--shadow-card-resting`, `--shadow-card-hover` dans tokens.json. Sweep cross-composants."},
+  {id:"M-46", sev:"medium", axe:"ui", title:"tab aria-label sans unité", file:"ContactsTabs.svelte:32 + autres tabs", effort:"S", detail:"`<span class=\"tab-count\">{tab.count}</span>` lu comme « Tous 47 » par lecteur d'écran (manque unité).", reco:"`aria-label={`${tab.label}, ${tab.count} ${tab.count === 1 ? 'contact' : 'contacts'}`}`."},
+  {id:"M-47", sev:"medium", axe:"ui", title:"DataTable tr focusable + actions imbriquées", file:"src/lib/components/DataTable.svelte:412-432", effort:"M", detail:"`<tr role=\"button\" tabindex=\"0\" onclick>` avec rowSnippet pouvant rendre `<button>` ou `<a>` actions inline. Anti-pattern: focusable parent imbriqué avec focusables enfants → tab-order confus + double-action.", reco:"Pattern Linear: ligne non focusable, seul un bouton « ouvrir » par ligne. OU bannir focusables internes."},
+  {id:"M-48", sev:"medium", axe:"test", title:"Mock Supabase ne valide pas RLS (~25 vecteurs non testés)", file:"19 form actions + 5 cron + 1 callback", effort:"M", detail:"Cohérent `feedback_supabase_mock_proxy_pattern.md` + `quality.md § Sécurité DoD`. Pattern incident S99 formation-ia. Surface réelle non couverte par tests.", reco:"Court terme: note RISQUE OUVERT dans CLAUDE.md à côté de chaque action sécu. Long terme: `tests/integration/rls-spot-check.spec.ts` Playwright avec compte non-admin seedé."},
+  {id:"M-49", sev:"medium", axe:"test", title:"Couverture form actions ~5%", file:"19 actions Zod / 1 testée dédiée", effort:"L", detail:"Sur 19+ form actions Pascal mentionnées CLAUDE.md, seul `createExpress` prospection a un test dédié. Reste = tests indirects schemas.test.ts.", reco:"Prioriser /signaux/deleteBatch (Low #1 audit S176ter UUID + cap 500 sans test régression) et /entreprises/enrichir (fetch Zefix + 2 branches HTTP)."},
+  {id:"M-50", sev:"medium", axe:"test", title:"addItem JSONB concurrent writes 0 test (DOUBLON H-09)", file:"voir H-09", effort:"S", detail:"DOUBLON H-09 watch S169.", reco:"Voir H-09."},
+  {id:"M-51", sev:"medium", axe:"test", title:"Cron signaux happy path 0 test (314L handler)", file:"src/routes/api/cron/signaux/+server.ts", effort:"M", detail:"Tests helpers SIMAP existent mais 0 test handler. Manque: `verifyCronSecret` timing-safe, branches Zefix HTTP non-ok, `existingIds` skip, `isRelevant=false` SIMAP.", reco:"~10 tests handler."},
+  {id:"M-52", sev:"medium", axe:"test", title:"Cron alertes filter helper non testable", file:"src/routes/api/cron/alertes/+server.ts", effort:"S", detail:"Cron source DB `recherches_sauvegardees.temperatures`. Pas de test que liste reste contrainte 3 valeurs.", reco:"Extraire helper `buildScoreFilter(temps)` testable."},
+  {id:"M-53", sev:"medium", axe:"test", title:"Visits geocoding + Haversine 0 test", file:"src/routes/api/visits/+server.ts:31-133", effort:"M", detail:"`haversineMeters`/`parseSwissAddress`/`swisstopoQuery` non exportés. `distance_from_zefix_m` utilisée pour suivi terrain (V2 mobile S129). Régression silencieuse possible.", reco:"~10 tests helpers purs."},
+  {id:"M-54", sev:"medium", axe:"test", title:"Export CSV handler 0 test", file:"src/routes/api/export/[entity]/+server.ts", effort:"S", detail:"Helpers OK (csv-export.test.ts) mais handler 0 test. Manque: entity invalide→400, 0 rows→header-only, encoding accents UTF-8, injection CSV (`=cmd|...`).", reco:"~5 tests."},
+  {id:"M-55", sev:"medium", axe:"test", title:"Entreprises enrichir Zefix 0 test", file:"src/routes/(app)/entreprises/+page.server.ts:132-184", effort:"S", detail:"Fetch sortant + 0 test. Manque: credentials manquants, HTTP 503, array vide→400, happy path update partiel `purpose null`.", reco:"~5 tests."},
+  {id:"M-56", sev:"medium", axe:"test", title:"Couverture viewports Playwright manquante", file:"playwright.mobile.config.ts", effort:"XS", detail:"1 seul preset iPhone 14 Pro Max 430×932. Cascade golden v9 a inscrit `media queries 1024/768` partout, 0 test à 768px ni 375px (iPhone SE).", reco:"3 lignes config: preset Pixel 7 (412×915) + iPhone SE (375×667)."},
+  {id:"M-57", sev:"medium", axe:"test", title:"test.skip(true) orphelins mobile.spec.ts (7)", file:"tests/mobile.spec.ts", effort:"S", detail:"Lignes 219, 246, 311, 336, 460, 479, 489 conditionnels au state DB prod. Couverture mobile réelle bien moins que ~22 tests affichés.", reco:"Seeder lead/entreprise/opportunité de test FilmPro OU déplacer vers `tests/mobile-with-data.spec.ts` non-CI."},
+
+  // LOW
+  {id:"L-01", sev:"low", axe:"security", title:"HSTS manquant", file:"src/hooks.server.ts:113-121", effort:"XS", detail:"Pas de header `Strict-Transport-Security`.", reco:"`response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload')`."},
+  {id:"L-02", sev:"low", axe:"security", title:"CSP unsafe-inline", file:"svelte.config.js", effort:"L", detail:"SvelteKit hydratation l'exige. À terme migrer vers nonce-based CSP.", reco:"Court terme: compromis acceptable, documenter. Long terme: `svelte.config.js:csp.directives`."},
+  {id:"L-03", sev:"low", axe:"security", title:"RLS mono-tenant flat (3 fondateurs)", file:"11 tables migrations", effort:"L", detail:"`auth.role()='authenticated'` partout. Documenté comme choix design. À durcir avant 4e user non-fondateur.", reco:"owner_id + team policy si élargissement."},
+  {id:"L-04", sev:"low", axe:"security", title:"DELETE photos/visits sans ownership check", file:"src/routes/api/photos/[id]:27-29 + visits/[id]:19-21", effort:"S", detail:"Tout fondateur peut supprimer toute photo/visite. Commentaires « RISQUE OUVERT documenté » présents.", reco:"Court terme: audit log table. Long terme: check `uploaded_by = auth.uid()`."},
+  {id:"L-05", sev:"low", axe:"security", title:"ManualItemSchema URL z.string().url() trop permissif", file:"src/routes/(app)/veille/[id]/+page.server.ts:80", effort:"XS", detail:"Au lieu de `HttpsUrl`. Défense effective = `verifyUrl` qui appelle `isSafeUrlForFetch`.", reco:"Exporter `HttpsUrl` depuis `intelligence/schema.ts:79`."},
+  {id:"L-06", sev:"low", axe:"security", title:"Zefix raw response loggée", file:"src/routes/api/prospection/zefix/+server.ts:106", effort:"XS", detail:"Log `text.slice(0, 500)` sans sanitize.", reco:"Wrapper dans `sanitizeForLog`."},
+  {id:"L-07", sev:"low", axe:"bug", title:"escapeHtml email-recap couvre 5 entités", file:"src/lib/server/intelligence/email-recap.ts:63-70", effort:"XS", detail:"Surface réelle nulle (champs hardcoded) mais à durcir si futur user-controlled.", reco:"À durcir si surface s'élargit."},
+  {id:"L-08", sev:"low", axe:"bug", title:"weekKey ISO 8601 frontière fin/début année non testée", file:"src/lib/utils/coutsFormat.ts:133-140", effort:"XS", detail:"2026-12-29 (mardi) : W53 ou W01-2027 ? Algo correct mais pas de test sur la frontière.", reco:"1 test bord."},
+  {id:"L-09", sev:"low", axe:"bug", title:"formatTokens '0' pour valeurs négatives", file:"src/lib/utils/coutsFormat.ts:70-75", effort:"XS", detail:"Cache un bug en amont (signe inversé invisible).", reco:"Préférer `'—'`."},
+  {id:"L-10", sev:"low", axe:"bug", title:"Cron alertes drift `< 20h` au lieu de `< 24h`", file:"src/routes/api/cron/alertes/+server.ts:62-63", effort:"XS", detail:"Volontaire mais non documenté, risque correction par dev futur.", reco:"Ajouter commentaire."},
+  {id:"L-11", sev:"low", axe:"bug", title:"Cron signaux Zefix new Date(invalid) NaN silencieux", file:"src/routes/api/cron/signaux/+server.ts:103-106", effort:"XS", detail:"`sogcDate` invalide = item silencieusement skipped, pas de log.", reco:"Guard isNaN + warn."},
+  {id:"L-12", sev:"low", axe:"bug", title:"parseSwissAddress sans NPA", file:"src/routes/api/visits/+server.ts:119-133", effort:"XS", detail:"\"Lausanne\" → adresse:\"Lausanne\", npa:null, localite:null. Geocode marche mais structure dégradée.", reco:"Améliorer parser."},
+  {id:"L-13", sev:"low", axe:"bug", title:"DataTable pageSizeOptions accepte tableau arbitraire", file:"src/lib/components/DataTable.svelte:46", effort:"XS", detail:"Parent peut passer `[1, 1, 1]`. Surface nulle aujourd'hui.", reco:"Durcir validation."},
+  {id:"L-14", sev:"low", axe:"contracts", title:"complianceTag string|null au lieu d'enum", file:"src/lib/scoring.ts:31", effort:"XS", detail:"Faiblesse de typage. Si appelant passe `'OK FilmPro'` ou `'ok_filmpro'` selon les chemins, scoring incohérent.", reco:"Utiliser `ComplianceTagEnum`."},
+  {id:"L-15", sev:"low", axe:"contracts", title:"App.PageData session non-nullable", file:"src/app.d.ts:9-12", effort:"S", detail:"TS rendrait `data.session` non-nullable côté client si load ne le retourne pas.", reco:"`session?: Session | null`."},
+  {id:"L-16", sev:"low", axe:"contracts", title:"cost_audit_runs numeric(10,6) borne 9999 EUR", file:"supabase/migrations/20260509_001_cost_audit_runs.sql:33-34", effort:"XS", detail:"Aujourd'hui runs Veille 1-3 EUR donc OK. Futur run massif (signaux + autres features) pourrait dépasser.", reco:"`numeric(14, 4)` (couvre 99 999 999.9999 EUR)."},
+  {id:"L-17", sev:"low", axe:"code", title:"stores writable legacy (choix conscient)", file:"src/lib/stores/pageSubtitle.ts + toast.ts", effort:"NA", detail:"Choix conscient correct: runes `$state` exportées en module-level cassent SSR Vercel concurrent (mémoire `feedback_svelte5_store_ssr_safe.md`). `writable` plus sûr.", reco:"NE PAS fixer."},
+  {id:"L-18", sev:"low", axe:"code", title:"Magic numbers temps Unix dispersés (13)", file:"hooks.server.ts:87 + 12 autres", effort:"XS", detail:"13 occurrences répétant `60_000`, `86_400_000`, etc.", reco:"`src/lib/utils/timeConstants.ts`. ~15 min."},
+  {id:"L-19", sev:"low", axe:"code", title:"Pages workspace ≥ 600 lignes", file:"signaux 953 / prospection 944 / entreprises 720 / contacts 650 / pipeline 605 / veille-id 691", effort:"L", detail:"Justifié par orchestration cross-composants. Pas urgent. Si dépasse 1200, reconsidérer.", reco:"Surveiller."},
+  {id:"L-20", sev:"low", axe:"code", title:"eslint-disable sans justification", file:"icon-map.ts:26, 165 + csv-import.ts:124, 126 + veille/[id]:197", effort:"XS", detail:"5 occurrences. Ajouter commentaire « pourquoi any » au-dessus.", reco:"Ajouter commentaires."},
+  {id:"L-21", sev:"low", axe:"ui", title:"gap dashboard 56/20px off-grid", file:"src/routes/(app)/+page.svelte:131, 152", effort:"XS", detail:"Hors grille 4/8/12/16/24/32/48.", reco:"`gap: 48px` et `gap: 16px` ou `24px`."},
+  {id:"L-22", sev:"low", axe:"ui", title:"content padding 20/40px off-grid", file:"contacts/+page.svelte:599 + pipeline:524", effort:"XS", detail:"`padding: 20px 32px 40px`. 20 et 40 hors grille canon (16/24/32/48).", reco:"`padding: 24px 32px 32px` ou `padding: 16px 32px 48px`."},
+  {id:"L-23", sev:"low", axe:"ui", title:"Tabs height 44 vs spec 40", file:"ContactsTabs.svelte:56 + autres", effort:"XS", detail:"HIG iOS. § 5.12 spec : `h-10` (40px). Drift 4px voulu mobile-first non documenté.", reco:"Ramener à 40px desktop + 44px mobile @media, OU documenter exception."},
+  {id:"L-24", sev:"low", axe:"ui", title:"tab-count font 11px hors scale", file:"ContactsTabs.svelte:86 + autres", effort:"XS", detail:"`font-size: 11px; padding: 2px 8px`. Hors type scale (12 min) et grille (2 hors canon).", reco:"`font-size: 12px; padding: 4px 8px;`."},
+  {id:"L-25", sev:"low", axe:"ui", title:"pipeline kanban dimensions off-grid", file:"src/routes/(app)/pipeline/+page.svelte:529-541", effort:"XS", detail:"`min-height: calc(100vh - 360px)`, `minmax(280px, 1fr)`, `max-width: 720px`. 280/360/720 off-grid.", reco:"280→288 ou 320, 360→384 ou 320, 720→768."},
+  {id:"L-26", sev:"low", axe:"ui", title:"login overlay non décoratif (aria-hidden manquant)", file:"src/routes/(app)/auth/login/+page.svelte:53", effort:"XS", detail:"`<div class=\"login-overlay\">` purement décoratif sans `aria-hidden=\"true\"`.", reco:"Ajouter aria-hidden overlay et image bg."},
+  {id:"L-27", sev:"low", axe:"ui", title:"filter-select height 32 vs 34", file:"src/routes/(app)/signaux/+page.svelte:785", effort:"XS", detail:"Inputs golden v9 § 5.2 = 34px.", reco:"`height: 34px`."},
+  {id:"L-28", sev:"low", axe:"test", title:"SignalBatchDeleteSchema 0 test régression", file:"src/lib/schemas.test.ts", effort:"S", detail:"Fix Low #1 audit S176ter cap 500 + UUID validation. 0 test régression.", reco:"3 cases."},
+
+  // INFO
+  {id:"I-01", sev:"info", axe:"code", title:"cubic-bezier(0.16, 1, 0.3, 1) répété 30+ fois", file:"composants golden v9", effort:"XS", detail:"Tokeniser `--ease-out-expo` dans `app.css @theme`.", reco:"~10 min, inclure dans sweep workspace H-21."},
+  {id:"I-02", sev:"info", axe:"code", title:"padding 2px 8px tab pill 7 fois (factorisé OK)", file:"7 composants Tabs", effort:"NA", detail:"Cohérent avec doctrine cascade golden v9 (un `{Page}Tabs.svelte` par page).", reco:"Pas urgent."},
+  {id:"I-03", sev:"info", axe:"code", title:"setTimeout 200 magic non justifié", file:"src/lib/components/prospection/EnrichBatchModal.svelte:61", effort:"XS", detail:"Devrait matcher CSS transition var.", reco:"Constante locale ou commentaire."},
+  {id:"I-04", sev:"info", axe:"code", title:"Doctrine Tailwind utilities + CSS scoped non tranchée", file:"DataTable.svelte:291 + ailleurs", effort:"XS", detail:"Mélange `class=\"flex bg-white rounded-xl\"` (Tailwind) avec `<style>` Svelte scopé `.dt-th { padding: 12px 16px; }`.", reco:"Documenter dans CRM/CLAUDE.md la doctrine."},
+  {id:"I-05", sev:"info", axe:"security", title:"Pas de Dependabot/Snyk configuré", file:".github/", effort:"XS", detail:"H-01 = preuve drift NPM possible.", reco:"`.github/dependabot.yml`."},
+  {id:"I-06", sev:"info", axe:"security", title:"safeGetSession fail-closed sans test", file:"src/lib/server/auth.ts", effort:"XS", detail:"Comportement correct mais mériterait commentaire explicite + test unitaire.", reco:"Ajouter commentaire + 1 test."},
+  {id:"I-07", sev:"info", axe:"security", title:"Description thème admin LLM injection sans escape", file:"intelligence/prompt.ts:62", effort:"S", detail:"Modèle de menace = admin déjà accès complet. Cross-check verbatim S168 protège la sortie. Watchlist S169 ouverte.", reco:"Si surface s'élargit: escape `\\n` + délimiter `<themes_taxonomy>` XML-like."},
+  {id:"I-08", sev:"info", axe:"ui", title:"Icon wrapper appliqué partout (1 SVG inline résiduel)", file:"src/routes/(app)/auth/login/+page.svelte:143", effort:"NA", detail:"Migration Lucide globalement réussie. Bonne hygiène.", reco:"Maintenir vigilance, fix login = H-29."},
+  {id:"I-09", sev:"info", axe:"ui", title:"Focus trap modaux cohérent cross-modaux", file:"ConfirmModal + ModalForm + SlideOut", effort:"NA", detail:"Tous utilisent `use:trapFocus` + Escape handler. Cohérence parfaite.", reco:"Étendre pattern à tout futur modal-like."},
+  {id:"I-10", sev:"info", axe:"ui", title:"Règle noDashedLines respectée (0 occurrence)", file:"toute l'app", effort:"NA", detail:"Cascade golden v9 et pages legacy auditées: 0 dashed/dotted. Règle S176bis tenue.", reco:"Maintenir."},
+  {id:"I-11", sev:"info", axe:"test", title:"Ratio TDD helpers cascade médian ~13%", file:"signauxFormat 14.5% / coutsFormat 9.6% / reportingFormat 15.1% / pipelineFormat 13.6% / entreprisesFormat 12.6% / contactsFormat 12.5%", effort:"NA", detail:"Bonne hygiène TDD.", reco:"Capturer dans `feedback_helpers_tdd_ratio_target.md`."},
+  {id:"I-12", sev:"info", axe:"test", title:"Coverage outil non installé", file:"package.json", effort:"XS", detail:"`npx vitest --coverage` non lançable (pas de `@vitest/coverage-v8`). Pas de métrique objective.", reco:"Install + config v8 reporter, sans seuil minimum."}
+];
+
+const STATE_KEY = 'audit-360-2026-05-09-state';
+let state = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
+
+const filters = { severity: 'all', axe: 'all', decision: 'all' };
+const collapsed = new Set();
+
+const SEV_ORDER = ['critical', 'high', 'medium', 'low', 'info'];
+const SEV_LABEL = { critical: 'Critique', high: 'High', medium: 'Medium', low: 'Low', info: 'Info' };
+const SEV_COUNT = {};
+SEV_ORDER.forEach(s => SEV_COUNT[s] = FINDINGS.filter(f => f.sev === s).length);
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function getDecision(id) { return state[id]?.decision || null; }
+function getNote(id) { return state[id]?.note || ''; }
+function setDecision(id, d) {
+  state[id] = state[id] || {};
+  if (state[id].decision === d) state[id].decision = null;
+  else state[id].decision = d;
+  localStorage.setItem(STATE_KEY, JSON.stringify(state));
+}
+function setNote(id, n) {
+  state[id] = state[id] || {};
+  state[id].note = n;
+  localStorage.setItem(STATE_KEY, JSON.stringify(state));
+}
+
+function findingMatchesFilters(f) {
+  if (filters.severity !== 'all' && f.sev !== filters.severity) return false;
+  if (filters.axe !== 'all' && f.axe !== filters.axe) return false;
+  if (filters.decision !== 'all') {
+    const d = getDecision(f.id);
+    if (filters.decision === 'undecided' && d !== null) return false;
+    if (filters.decision === 'approved' && d !== 'approve') return false;
+    if (filters.decision === 'rejected' && d !== 'reject') return false;
+  }
+  return true;
+}
+
+function renderFinding(f) {
+  const decision = getDecision(f.id);
+  const note = getNote(f.id);
+  const cls = decision === 'approve' ? 'approved' : decision === 'reject' ? 'rejected' : '';
+  return `<div class="finding-card ${cls}" data-id="${f.id}" data-sev="${f.sev}" data-axe="${f.axe}">
+    <div class="finding-head">
+      <div class="finding-id-title">
+        <div class="finding-id">${f.id}</div>
+        <h3 class="finding-title">${escapeHtml(f.title)}</h3>
+      </div>
+      <div class="finding-chips">
+        <span class="chip sev-${f.sev}">${SEV_LABEL[f.sev]}</span>
+        <span class="chip axe-${f.axe}">${f.axe}</span>
+        <span class="chip effort">Effort ${f.effort}</span>
+      </div>
+    </div>
+    <div class="finding-meta">${escapeHtml(f.file)}</div>
+    <div class="finding-detail">${escapeHtml(f.detail)}</div>
+    <div class="finding-reco"><strong>Reco:</strong> ${escapeHtml(f.reco)}</div>
+    <div class="finding-actions">
+      <button class="action-btn approve ${decision==='approve'?'active':''}" data-action="approve" data-id="${f.id}">A fixer</button>
+      <button class="action-btn reject ${decision==='reject'?'active':''}" data-action="reject" data-id="${f.id}">Rejeter</button>
+      <button class="action-btn note ${note?'active':''}" data-action="note" data-id="${f.id}">Note ${note?'(•)':''}</button>
+    </div>
+    <textarea class="note-textarea ${note?'visible':''}" data-id="${f.id}" placeholder="Note Pascal sur ce finding...">${escapeHtml(note)}</textarea>
+  </div>`;
+}
+
+function renderSeveritySection(sev) {
+  const inSection = FINDINGS.filter(f => f.sev === sev && findingMatchesFilters(f));
+  const total = SEV_COUNT[sev];
+  const decided = FINDINGS.filter(f => f.sev === sev && getDecision(f.id) !== null).length;
+  const isCollapsed = collapsed.has(sev);
+  const visible = inSection.length;
+  return `<section class="severity-section scroll-target" id="sev-${sev}">
+    <div class="severity-header" data-toggle-sev="${sev}">
+      <h2><span class="chip sev-${sev}">${SEV_LABEL[sev]}</span> ${total} findings <span class="severity-stats">(${decided}/${total} décidés${visible !== total ? ` · ${visible} visibles` : ''})</span></h2>
+      <div class="severity-actions">
+        <button class="btn btn-section" data-bulk="approve" data-sev="${sev}">Tout fixer</button>
+        <button class="btn btn-section" data-bulk="reject" data-sev="${sev}">Tout rejeter</button>
+        <span style="font-size:11px;color:var(--color-text-subtle);margin-left:8px;">${isCollapsed?'▸ Déplier':'▾ Replier'}</span>
+      </div>
+    </div>
+    ${isCollapsed ? '' : `<div class="findings-list">${inSection.length === 0 ? '<div class="empty-state">Aucun finding ne correspond aux filtres actifs.</div>' : inSection.map(renderFinding).join('')}</div>`}
+  </section>`;
+}
+
+function render() {
+  const container = document.getElementById('findings-container');
+  container.innerHTML = SEV_ORDER.map(renderSeveritySection).join('');
+  updateProgress();
+}
+
+function updateProgress() {
+  const decided = Object.values(state).filter(s => s.decision !== null && s.decision !== undefined).length;
+  const total = FINDINGS.length;
+  const pct = Math.round((decided / total) * 100);
+  document.getElementById('kpi-decided').textContent = `${decided} / ${total}`;
+  document.getElementById('kpi-progress').textContent = `${pct}% complet`;
+  document.getElementById('fab-count').textContent = decided;
+}
+
+document.getElementById('findings-container').addEventListener('click', (e) => {
+  const action = e.target.dataset.action;
+  const id = e.target.dataset.id;
+  if (action && id) {
+    if (action === 'note') {
+      const ta = document.querySelector(`textarea[data-id="${id}"]`);
+      ta.classList.toggle('visible');
+      if (ta.classList.contains('visible')) ta.focus();
+    } else {
+      setDecision(id, action);
+      render();
+    }
+    return;
+  }
+  const bulk = e.target.dataset.bulk;
+  const bulkSev = e.target.dataset.sev;
+  if (bulk && bulkSev) {
+    e.stopPropagation();
+    const visible = FINDINGS.filter(f => f.sev === bulkSev && findingMatchesFilters(f));
+    visible.forEach(f => {
+      state[f.id] = state[f.id] || {};
+      state[f.id].decision = bulk;
+    });
+    localStorage.setItem(STATE_KEY, JSON.stringify(state));
+    render();
+    return;
+  }
+  const toggleSev = e.target.closest('.severity-header')?.dataset.toggleSev;
+  if (toggleSev) {
+    if (collapsed.has(toggleSev)) collapsed.delete(toggleSev);
+    else collapsed.add(toggleSev);
+    render();
+  }
+});
+
+document.getElementById('findings-container').addEventListener('input', (e) => {
+  if (e.target.classList.contains('note-textarea')) {
+    setNote(e.target.dataset.id, e.target.value);
+  }
+});
+
+document.querySelectorAll('.filter-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const filter = chip.dataset.filter;
+    const value = chip.dataset.value;
+    filters[filter] = value;
+    document.querySelectorAll(`[data-filter="${filter}"]`).forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    render();
+  });
+});
+
+document.getElementById('btn-collapse-all').addEventListener('click', () => {
+  SEV_ORDER.forEach(s => collapsed.add(s));
+  render();
+});
+document.getElementById('btn-expand-all').addEventListener('click', () => {
+  collapsed.clear();
+  render();
+});
+
+function exportDecisions() {
+  const decisions = FINDINGS.map(f => {
+    const s = state[f.id] || {};
+    return {
+      id: f.id,
+      severity: f.sev,
+      axe: f.axe,
+      title: f.title,
+      file: f.file,
+      effort: f.effort,
+      decision: s.decision || null,
+      note: s.note || ''
+    };
+  });
+  const summary = {
+    audit_date: '2026-05-09',
+    generated_at: new Date().toISOString(),
+    total_findings: FINDINGS.length,
+    decided: decisions.filter(d => d.decision !== null).length,
+    approved: decisions.filter(d => d.decision === 'approve').length,
+    rejected: decisions.filter(d => d.decision === 'reject').length,
+    by_severity: SEV_ORDER.reduce((acc, sev) => {
+      acc[sev] = {
+        total: SEV_COUNT[sev],
+        approved: decisions.filter(d => d.severity === sev && d.decision === 'approve').length,
+        rejected: decisions.filter(d => d.severity === sev && d.decision === 'reject').length
+      };
+      return acc;
+    }, {}),
+    findings: decisions
+  };
+  const blob = new Blob([JSON.stringify(summary, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `audit-360-decisions-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('btn-export').addEventListener('click', exportDecisions);
+document.getElementById('fab-export').addEventListener('click', exportDecisions);
+
+render();
+</script>
+</body>
+</html>
