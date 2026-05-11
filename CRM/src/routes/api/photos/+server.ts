@@ -110,7 +110,10 @@ export const POST = async ({ request, url, locals }: RequestEvent) => {
 		return json({ error: validated.error }, { status: validated.status });
 	}
 
-	// Limite 10 photos par owner (cohérence client/serveur).
+	// Limite 10 photos par owner — chemin rapide applicatif (409 avant l'upload
+	// storage). La garantie atomique est dans le trigger BEFORE INSERT
+	// `prospect_photos_cap_trigger` (audit 360 M-08, migration 20260511_001) : si
+	// une course passe ce check, l'INSERT plus bas échouera en 23514 → 409.
 	const col = owner.kind === 'lead' ? 'prospect_lead_id' : 'entreprise_id';
 	const { count, error: countErr } = await locals.supabase
 		.from('prospect_photos')
@@ -144,10 +147,17 @@ export const POST = async ({ request, url, locals }: RequestEvent) => {
 		.single();
 
 	if (insErr || !row) {
-		// Cleanup storage si insert DB échoue
+		// Cleanup storage si insert DB échoue (objet orphelin sinon).
 		const { error: cleanupErr } = await locals.supabase.storage.from(BUCKET).remove([path]);
 		if (cleanupErr) {
 			console.error('[photos] Cleanup orphelin échoué', { path, cleanupErr });
+		}
+		// Audit 360 M-08 : le trigger de plafond lève un check_violation (23514) si
+		// une course a dépassé le check applicatif. On renvoie alors le 409 attendu
+		// (et non un 500 générique).
+		const code = (insErr as { code?: string } | null)?.code;
+		if (code === '23514' || /Limite de 10 photos/.test(insErr?.message ?? '')) {
+			return json({ error: 'Limite de 10 photos atteinte pour cet élément' }, { status: 409 });
 		}
 		return genericError(insErr ?? new Error('Insert DB null'), 'Erreur enregistrement photo');
 	}
