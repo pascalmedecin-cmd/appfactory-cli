@@ -140,6 +140,15 @@ describe('addItem validation pipeline (H-20)', () => {
 		expect(r.data?.error).toMatch(/summary/i);
 	});
 
+	it('date de publication mal formée (pas YYYY-MM-DD) → fail(400)', async () => {
+		const r = (await callAddItem({ ...VALID_INPUT, published_at: '2026-5-1' })) as {
+			status?: number;
+			data?: { error: string };
+		};
+		expect(r.status).toBe(400);
+		expect(r.data?.error).toMatch(/published_at|YYYY-MM-DD/i);
+	});
+
 	it('thème inexistant ou inactif → fail(400)', async () => {
 		const r = (await callAddItem({ ...VALID_INPUT, theme: 'inconnu' })) as {
 			status?: number;

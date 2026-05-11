@@ -122,6 +122,15 @@ describe('hooks.server handle (H-18)', () => {
 		expect(mockSignOut).toHaveBeenCalled();
 	});
 
+	it('session sans email (user.email undefined) → signOut + redirect /login?error=unauthorized (défaut fail-closed)', async () => {
+		mockSessionState = { session: { access_token: 'x' }, user: {} };
+		const cookies = makeCookies({ login_at: String(Date.now()) });
+		const r = await runHandle(makeEvent('/dashboard', { cookies }));
+		expect(r.thrown).toBe(true);
+		expect(r.thrown && r.redirect.location).toBe('/login?error=unauthorized');
+		expect(mockSignOut).toHaveBeenCalled();
+	});
+
 	it('session expirée (login_at > 7 jours) → delete cookie + signOut + redirect /login?error=expired', async () => {
 		mockSessionState = { session: { access_token: 'x' }, user: { email: 'pascal@filmpro.ch' } };
 		const cookies = makeCookies({ login_at: String(Date.now() - 8 * 24 * 60 * 60 * 1000) });
@@ -170,6 +179,22 @@ describe('hooks.server handle (H-18)', () => {
 			await runHandle(makeEvent('/api/photos', { ip }));
 		}
 		const r11 = await runHandle(makeEvent('/api/photos', { ip }));
+		expect(r11.thrown).toBe(false);
+		expect(r11.thrown ? 0 : r11.response.status).toBe(429);
+	});
+
+	it('rate limit : /api/prospection/* est couvert (429 après 10 req/min)', async () => {
+		const ip = '203.0.113.51';
+		for (let i = 0; i < 10; i++) await runHandle(makeEvent('/api/prospection/search-ch', { ip }));
+		const r11 = await runHandle(makeEvent('/api/prospection/search-ch', { ip }));
+		expect(r11.thrown).toBe(false);
+		expect(r11.thrown ? 0 : r11.response.status).toBe(429);
+	});
+
+	it('rate limit : /api/visits* est couvert (429 après 10 req/min)', async () => {
+		const ip = '203.0.113.52';
+		for (let i = 0; i < 10; i++) await runHandle(makeEvent('/api/visits', { ip }));
+		const r11 = await runHandle(makeEvent('/api/visits', { ip }));
 		expect(r11.thrown).toBe(false);
 		expect(r11.thrown ? 0 : r11.response.status).toBe(429);
 	});
