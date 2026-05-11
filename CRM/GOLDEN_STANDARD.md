@@ -91,10 +91,11 @@ Le CRM est mono-tenant FilmPro. **Aucune dérivation par client.** Le bleu FilmP
 | `sidebar.widthCollapsed` | `64px` | Sidebar collapsée |
 | `header.height` | `48px` | Header app horizontal |
 | `radius.default` | `10px` | Radius standard cartes, boutons, sidebar items |
-| `radius.sm` | `4px` | Petits éléments |
+| `radius.sm` | `6px` | Petits éléments, focus ring radius (implémentation : `--radius-sm: 6px`) |
 | `radius.md` | `8px` | Inputs, slide-out |
-| `radius.lg` | `10px` | Cartes, ActionButton |
+| `radius.lg` | `10px` | Cartes, ActionButton, boutons workspace |
 | `radius.xl` | `12px` | Modal, archive cards éditoriales |
+| `radius.2xl` | `16px` | Cartes éditoriales dashboard (bento KPIs, TriageQueue, RelancesList, ActiviteTimeline) — S178 V2c |
 | `radius.full` | `9999px` | Pills, dot indicateur |
 
 ### 2.7 Charte étendue (paletteExtras)
@@ -141,6 +142,30 @@ Disponible pour pages métier spécifiques (signaux, marchés). Ne pas utiliser 
 | `micro` | `10px` | 500 | 1.5 | Micro-label, footer technique |
 
 Poids DM Sans utilisés : 400 (regular), 500 (medium), 600 (semibold), 700 (bold). Ne pas charger d'autres poids.
+
+### 3.2bis Échelle éditoriale dashboard (S178 V2c)
+
+Le **dashboard** (`/`) porte une identité éditoriale assumée (« inbox du matin du fondateur ») : titres de section et valeurs KPI plus grands que l'échelle workspace. **Échelle distincte, strictement bornée** : `24 / 40 / 56 / 76`. **Réservée au dashboard.** Toute autre page workspace s'aligne sur l'échelle universelle § 3.1.
+
+| Usage | Size |
+|---|---|
+| Section h2 (TriageQueue, blocs dashboard) | `22-24px` |
+| Hero greeting h2 (`SectionGreeting`) | `40px` (32px mobile) |
+| KPI value standard (`KpisBento.kpi-value`) | `56px` |
+| KPI value vedette (`KpisBento.kpi-featured`) | `76px` |
+| KPI value split | `40px` (32px mobile) |
+
+### 3.3 Tokens d'ombre carte (S178 V2c)
+
+Pattern récurrent des cartes éditoriales (ring hairline + diffusion douce), exposé en tokens pour éviter la duplication :
+
+| Token | Usage |
+|---|---|
+| `--shadow-card` | Carte éditoriale au repos (KpisBento, RelancesList, ActiviteTimeline, AlertesStrip, PipelineCard/Column, TriageQueue, SignauxCards, EntreprisesCards) |
+| `--shadow-card-hover` | Survol carte (lift accentué) |
+| `--shadow-card-active` | État hover/drag (ring `primary`) |
+
+Toute nouvelle carte éditoriale consomme ces tokens. **Aucune ombre multi-couche hardcodée** en composant. Les presets génériques `--shadow-xs/sm/md/lg/xl/2xl` restent disponibles pour boutons, dropdowns, modals, tooltips.
 
 ### 3.2 Échelle éditoriale (mag-*)
 
@@ -290,7 +315,7 @@ Indicateur statut 8×8px, radius `9999px`, sans texte. Variantes par couleur sé
 | Banni | Pourquoi | À la place |
 |---|---|---|
 | **Tailwind compilé lourd** (CDN play, runtime JIT) | Surcharge réseau, dépendance build instable | Tailwind v4 `@theme` côté repo applicatif (déjà en place) |
-| **Gradient** (linear, radial) | Esthétique 2010, trahit l'IA-générique | Aplats avec tokens + radial-gradient discret iconBox indicateur (44×44, opacity 10% max) |
+| **Gradient** (linear, radial) | Esthétique 2010, trahit l'IA-générique | Aplats avec tokens + radial-gradient discret iconBox indicateur (44×44, opacity 10% max). S178 V2c : gradients dashboard retirés (texte prénom `SectionGreeting`, radial 280×280 `KpisBento`, linear footer `TriageQueue`) → aplats `var(--color-*)` |
 | **Ombre lourde** (box-shadow > 4px blur) | Esthétique « card material design » datée | Token shadow `xs / sm / md / lg`. Cards = `xs`. Modal = `md`. Slide-out = `-8px 0 16px` (latéral). |
 | **Emoji Unicode** dans le rendu | Casse la posture pro, dépendance OS | Icônes Lucide en SVG inline via wrapper `<Icon name="..." />` + `icon-map.ts` (92 mappings) |
 | **Material Symbols** | Migration LIVRÉE S115 (-207 occurrences, 28 fichiers) | Lucide uniquement, interdit hors fichiers legacy non migrés |
@@ -376,11 +401,13 @@ Source unique de vérité pour couleurs, typo, spacing, radius, shadow, a11y, et
 
 **Layout type** :
 - Container `max-w-full` (pleine largeur sous header), pas de max-w restrictif.
-- Header condensé 2 rows (S164) : row 1 = H1 + actions globales, row 2 = tabs ARIA + actions contextuelles.
+- Header condensé 2 rows (S164) : row 1 = titre de page (h2 — le h1 est porté par `Header.svelte`) + actions globales, row 2 = tabs ARIA + actions contextuelles.
 - Filtres horizontaux serveur-side (URL params).
 - Indicateurs flat optionnels (3 cols desktop, empilés mobile, indicateurs factuels).
 - DataTable avec sticky 2 cols left + row cliquable + actions inline.
 - SlideOut pour détail entité.
+
+**Coquille partagée (S178 V2c)** : la chrome workspace (`.ws-page` / `.ws-page-actions` / `.ws-content` / `.ws-btn*` / `.ws-filter-select` / `.ws-fab` + media queries) vit dans `src/lib/styles/workspace.css`, importée une fois dans `(app)/+layout.svelte`. Les pages workspace consomment ces classes ; pas de re-définition locale. Le tablist underline vit dans la primitive `src/lib/components/Tabs.svelte` (roving tabindex + navigation clavier ArrowLeft/Right/Home/End) ; les composants `*Tabs.svelte` sont de simples wrappers.
 
 ### 9.3 Archétype editorial
 
