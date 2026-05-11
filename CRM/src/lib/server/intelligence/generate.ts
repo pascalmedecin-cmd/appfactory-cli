@@ -19,6 +19,7 @@ import { verifyUrl } from './url-verify';
 import { sanitizeUrlsBatch } from './url-sanitize';
 import { isDeniedSource, getDomainTier } from './source-allowlist';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
+import { isAllowedThemeSlug } from './theme-slug';
 import { costTracker, type CostSummary, type CostTracker } from './cost-tracker';
 
 const MODEL = 'claude-opus-4-7';
@@ -336,10 +337,12 @@ export async function generateIntelligenceReport(
 	// dynamique DB). Si le modèle a sorti un thème inconnu malgré le JSON
 	// schema strict-mode, on dégrade en 'autre' avec log plutôt que rejeter
 	// l'item entier (perte d'info éditoriale > coût d'un fallback gracieux).
-	const allowed = new Set(themes.allowedSlugs);
-	const fallbackTheme = allowed.has('autre') ? 'autre' : (themes.allowedSlugs[0] ?? 'autre');
+	// Audit 360 M-22 : `isAllowedThemeSlug` est le helper partagé avec /veille/[id].
+	const fallbackTheme = isAllowedThemeSlug('autre', themes.allowedSlugs)
+		? 'autre'
+		: (themes.allowedSlugs[0] ?? 'autre');
 	for (const item of parsed.data.items ?? []) {
-		if (!allowed.has(item.theme)) {
+		if (!isAllowedThemeSlug(item.theme, themes.allowedSlugs)) {
 			console.warn(
 				`[generate] theme inconnu "${item.theme}" sur item rank=${item.rank}, fallback "${fallbackTheme}"`
 			);

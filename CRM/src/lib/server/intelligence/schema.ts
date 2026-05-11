@@ -101,8 +101,11 @@ export const IntelligenceItemSchema = z.object({
 		name: z.string().min(2).max(120),
 		url: HttpsUrl,
 		// Accepte date seule (YYYY-MM-DD) ou datetime complet ; normalisée serveur.
+		// Audit 360 M-18 : `.max()` AVANT `.regex()` — la partie `(\.\d+)?` du regex
+		// est de longueur variable, on borne en amont.
 		published_at: z
 			.string()
+			.max(40, 'Date trop longue')
 			.regex(
 				/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?Z?)?$/,
 				'Format attendu : YYYY-MM-DD ou YYYY-MM-DDTHH:MM:SSZ'
@@ -153,7 +156,9 @@ export const LegacySearchTermSchema = z.object({
 });
 
 export const IntelligenceEditionSchema = z.object({
-	week_label: z.string().regex(/^\d{4}-W\d{2}$/, 'Format attendu : YYYY-Www'),
+	// Audit 360 M-18 : `.max()` en amont du regex (defense-in-depth, le regex est
+	// déjà ancré donc fixe-longueur, mais on borne explicitement).
+	week_label: z.string().max(12).regex(/^\d{4}-W\d{2}$/, 'Format attendu : YYYY-Www'),
 
 	generated_at: z.string().datetime(),
 	compliance_tag: ComplianceTagEnum,

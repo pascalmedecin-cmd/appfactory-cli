@@ -12,6 +12,7 @@ import type {
 	ActivityStats,
 	ConversionStats,
 } from '$lib/server/reporting';
+import { formatPercentValue } from './format-percent';
 
 export type ReportingTab = 'synthese' | 'pipeline' | 'activite' | 'export';
 
@@ -70,19 +71,14 @@ const CHF_FORMATTER = new Intl.NumberFormat('fr-CH', {
 	maximumFractionDigits: 0,
 });
 
-const PERCENT_FORMATTER = new Intl.NumberFormat('fr-CH', {
-	minimumFractionDigits: 1,
-	maximumFractionDigits: 1,
-});
-
 /** Formate un montant CHF sans décimales (séparateur fr-CH). */
 export function formatCHF(amount: number): string {
 	return CHF_FORMATTER.format(amount);
 }
 
-/** Formate un pourcentage avec 1 décimale + suffixe « % » (espace insécable fin). */
+/** Formate un pourcentage déjà exprimé en 0..100 (ex: 38.2 → "38,2 %"). (Audit 360 M-24 : helper partagé.) */
 export function formatPercent(value: number): string {
-	return `${PERCENT_FORMATTER.format(value)} %`;
+	return formatPercentValue(value);
 }
 
 /** Formate une clé YYYY-MM en libellé court fr-CH (Jan, Fév, …, Déc). */

@@ -4,6 +4,20 @@
  * /api/export/{contacts,entreprises,leads}.
  */
 
+/**
+ * Audit 360 M-21 : version du schéma d'export (nom + ordre des colonnes par
+ * entité). Tout renommage/réordonnancement de colonne = incrémenter ce numéro.
+ * Exposé en HTTP via `X-Export-Schema-Version` ET en 1ʳᵉ ligne du CSV
+ * (`# export-schema-version: N`) pour que les imports tiers puissent détecter
+ * une rupture de format. La source canonique est le header HTTP.
+ */
+export const EXPORT_SCHEMA_VERSION = 1;
+
+/** Ligne d'en-tête de version, préfixée `#`, à placer en tête du corps CSV. */
+export function csvSchemaVersionLine(): string {
+	return `# export-schema-version: ${EXPORT_SCHEMA_VERSION}\r\n`;
+}
+
 export interface CsvColumn<T> {
 	/** Clé de l'objet source. */
 	key: keyof T;
@@ -72,5 +86,7 @@ export function csvResponseHeaders(filename: string): Headers {
 	const headers = new Headers();
 	headers.set('Content-Type', 'text/csv; charset=utf-8');
 	headers.set('Content-Disposition', `attachment; filename="${filename}"`);
+	// Audit 360 M-21 : version du schéma d'export (source canonique).
+	headers.set('X-Export-Schema-Version', String(EXPORT_SCHEMA_VERSION));
 	return headers;
 }

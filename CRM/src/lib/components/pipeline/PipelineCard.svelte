@@ -165,7 +165,7 @@
 		outline-offset: 2px;
 	}
 	.card-title {
-		font-size: 13.5px;
+		font-size: 14px;
 		font-weight: 600;
 		color: var(--color-text);
 		line-height: 1.3;
@@ -191,7 +191,7 @@
 		margin-bottom: 8px;
 	}
 	.card-amount {
-		font-size: 13.5px;
+		font-size: 14px;
 		font-weight: 600;
 		color: var(--color-primary);
 		letter-spacing: -0.005em;
@@ -205,7 +205,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 4px;
-		font-size: 11.5px;
+		font-size: 12px;
 		font-weight: 500;
 		color: var(--color-text-muted);
 	}
@@ -235,7 +235,7 @@
 	.card-contact {
 		flex: 1;
 		min-width: 0;
-		font-size: 11.5px;
+		font-size: 12px;
 		color: var(--color-text-muted);
 		font-weight: 500;
 		overflow: hidden;

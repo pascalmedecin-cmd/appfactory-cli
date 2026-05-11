@@ -1,6 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { OpportuniteCreateSchema, OpportuniteUpdateSchema, OpportuniteMoveSchema, OpportuniteArchiveSchema, OpportuniteNextActionSchema, OPP_FIELDS, extractForm, validate } from '$lib/schemas';
+import { PipelineOpportuniteRowSchema } from '$lib/utils/pipelineFormat';
 import { dbFail, newId, now } from '$lib/server/db-helpers';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -20,8 +21,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.order('raison_sociale'),
 	]);
 
+	// Audit 360 M-16 : validation au boundary — on écarte (en loggant) une
+	// ligne `opportunites` dont les champs critiques sont absents/mal typés,
+	// plutôt que de la transmettre au composant cast à l'aveugle.
+	const opportunites = (oppsRes.data ?? []).filter((r) => {
+		const ok = PipelineOpportuniteRowSchema.safeParse(r).success;
+		if (!ok) console.warn('[pipeline] opportunité ignorée (forme inattendue)');
+		return ok;
+	});
+
 	return {
-		opportunites: oppsRes.data ?? [],
+		opportunites,
 		contacts: contactsRes.data ?? [],
 		entreprises: entreprisesRes.data ?? [],
 	};

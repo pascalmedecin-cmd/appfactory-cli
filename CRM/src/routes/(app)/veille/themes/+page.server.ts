@@ -1,6 +1,7 @@
 import { fail, redirect, type Actions, type ServerLoad } from '@sveltejs/kit';
 import { z } from 'zod';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
+import { coerceFormBoolean } from '$lib/schemas';
 import {
 	listAllThemes,
 	createTheme,
@@ -41,7 +42,7 @@ export const actions: Actions = {
 			description: String(fd.get('description') ?? '').trim(),
 			category: String(fd.get('category') ?? '').trim(),
 			sort_order: parseSortOrder(fd.get('sort_order')),
-			active: fd.get('active') === 'on' || fd.get('active') === 'true'
+			active: coerceFormBoolean(fd.get('active'))
 		};
 
 		const parsed = ThemeCreateSchema.safeParse(input);
@@ -107,7 +108,7 @@ export const actions: Actions = {
 		const idParsed = UuidSchema.safeParse(idRaw);
 		if (!idParsed.success) return fail(400, { error: 'id UUID invalide' });
 
-		const active = fd.get('active') === 'true';
+		const active = coerceFormBoolean(fd.get('active'));
 
 		try {
 			const service = createSupabaseServiceClient();

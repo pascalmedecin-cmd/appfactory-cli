@@ -4,6 +4,7 @@ import type {
 	Segment,
 	IntelligenceItem
 } from '$lib/server/intelligence/schema';
+import { readReportItems } from '$lib/server/intelligence/report-items';
 import { normalizeStoredChips } from '$lib/server/intelligence/chip-normalize';
 
 /**
@@ -63,7 +64,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	for (const r of reports ?? []) {
 		const hidden = (r.items_hidden ?? []) as Array<{ rank: number }>;
 		const hiddenRanks = new Set(hidden.map((h) => h.rank));
-		const items = ((r.items ?? []) as Array<IntelligenceItem & { is_update?: boolean }>)
+		const items = readReportItems(r.items, r.id)
 			.filter((it) => !hiddenRanks.has(it.rank))
 			.map((raw) => ({
 				...raw,

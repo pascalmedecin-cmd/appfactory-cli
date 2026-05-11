@@ -56,24 +56,28 @@
 		flex-shrink: 0;
 	}
 
+	/* Audit 360 M-27 (cf. H-24 TriageQueue V2c) : couleurs dérivées des tokens
+	   système par color-mix (« atténué » pour le fond, « saturé/sombre » pour le
+	   texte et l'icône) plutôt qu'en hex codés en dur. */
 	.score-pill--chaud {
-		background: #FFF1EC;
-		color: #C0391A;
+		background: color-mix(in srgb, var(--color-danger) 7%, white);
+		color: color-mix(in srgb, var(--color-danger) 75%, black);
 	}
-	.score-pill--chaud :global(svg) { stroke: #E04F2E; }
+	.score-pill--chaud :global(svg) { stroke: color-mix(in srgb, var(--color-danger) 88%, black); }
 
 	.score-pill--tiede {
-		background: #FFF7E6;
-		color: #B54708;
+		background: color-mix(in srgb, var(--color-warning) 9%, white);
+		color: color-mix(in srgb, var(--color-warning) 70%, black);
 	}
-	.score-pill--tiede :global(svg) { stroke: #DC8915; }
+	.score-pill--tiede :global(svg) { stroke: color-mix(in srgb, var(--color-warning) 90%, black); }
 
 	.score-pill--froid {
 		background: var(--color-info-light);
-		/* V2.6 audit S160 : passé de #475669 (4.43:1) à #3F4D5F (≈ 4.92:1) WCAG AA. */
+		/* V2.6 audit S160 : valeur tunée WCAG AA (≈ 4.92:1 sur fond info-light).
+		   Conservée en hex à dessein — un color-mix ne garantirait pas le ratio. */
 		color: #3F4D5F;
 	}
-	.score-pill--froid :global(svg) { stroke: #5A7190; }
+	.score-pill--froid :global(svg) { stroke: var(--color-info); }
 
 	/* Variante "Non scoré" : neutre ardoise très pâle, icône clock = en attente d'enrichissement */
 	.score-pill--unscored {

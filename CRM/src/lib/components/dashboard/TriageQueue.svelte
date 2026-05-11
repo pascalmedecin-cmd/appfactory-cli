@@ -273,7 +273,7 @@
 		margin: 0 0 6px;
 	}
 	.tq-empty-body {
-		font-size: 13.5px;
+		font-size: 14px;
 		color: var(--color-text-muted);
 		margin: 0;
 		line-height: 1.55;
@@ -317,7 +317,7 @@
 		white-space: nowrap;
 	}
 	.tq-context {
-		font-size: 12.5px;
+		font-size: 12px;
 		color: var(--color-text-muted);
 		margin-top: 2px;
 		overflow: hidden;

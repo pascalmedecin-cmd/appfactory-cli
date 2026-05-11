@@ -6,6 +6,8 @@ import {
 	type SearchChip
 } from '$lib/server/intelligence/chip-normalize';
 import type { IntelligenceItem } from '$lib/server/intelligence/schema';
+import { readReportItems } from '$lib/server/intelligence/report-items';
+import { isAllowedThemeSlug } from '$lib/server/intelligence/theme-slug';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { verifyUrl } from '$lib/server/intelligence/url-verify';
 import { sanitizeUrl } from '$lib/server/intelligence/url-sanitize';
@@ -49,9 +51,10 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 
 	// Agrégation chips items → liste flat dédupliquée. Chaque chip porte le rang
 	// du signal source (utile pour l'auto-exécution prospection + traçabilité).
-	const items = ((report.items ?? []) as Array<
+	// Audit 360 M-19 : items lus via readReportItems (validation Zod au boundary).
+	const items = readReportItems(report.items, report.id) as Array<
 		IntelligenceItem & { search_terms?: unknown }
-	>) ?? [];
+	>;
 	const aggregatedChips: AggregatedChip[] = [];
 	const seen = new Set<string>();
 	for (const it of items) {
@@ -79,7 +82,8 @@ const ManualItemSchema = z.object({
 	filmpro_relevance: z.string().min(20).max(1200),
 	url: z.string().url().max(2000),
 	source_name: z.string().min(2).max(120),
-	published_at: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD'),
+	// Audit 360 M-18 : `.max()` en amont du regex.
+	published_at: z.string().max(10).regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD'),
 	theme: z.string().min(1).max(64),
 	segment: z.enum(['tertiaire', 'residentiel', 'commerces', 'erp', 'partenaires']),
 	geo_scope: z.enum(['suisse_romande', 'suisse', 'monde']),
@@ -126,10 +130,9 @@ export const actions: Actions = {
 			return fail(400, { error: flattenIssues(parsed.error.issues), values: input });
 		}
 
-		// Validation thème : doit être un slug actif en DB.
+		// Validation thème : doit être un slug actif en DB (audit 360 M-22 : helper partagé).
 		const activeThemes = await listActiveThemes(locals.supabase);
-		const allowedSlugs = new Set(activeThemes.map((t) => t.slug));
-		if (!allowedSlugs.has(parsed.data.theme)) {
+		if (!isAllowedThemeSlug(parsed.data.theme, activeThemes.map((t) => t.slug))) {
 			return fail(400, { error: `Thème "${parsed.data.theme}" inconnu ou inactif`, values: input });
 		}
 

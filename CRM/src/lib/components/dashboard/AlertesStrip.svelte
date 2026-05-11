@@ -154,7 +154,7 @@
 	.alert-icon :global(svg) { color: var(--color-surface); }
 	.alert-body { flex: 1; min-width: 0; }
 	.alert-title {
-		font-size: 13.5px;
+		font-size: 14px;
 		font-weight: 600;
 		margin: 0;
 		color: var(--color-text);

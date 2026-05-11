@@ -8,7 +8,7 @@
  */
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { toCsv, csvFilename, csvResponseHeaders, type CsvColumn } from '$lib/server/csv-export';
+import { toCsv, csvFilename, csvResponseHeaders, csvSchemaVersionLine, type CsvColumn } from '$lib/server/csv-export';
 
 type ExportTable = 'contacts' | 'entreprises' | 'prospect_leads';
 
@@ -135,8 +135,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 
 	const rows = (data ?? []) as unknown as Record<string, unknown>[];
 	const csv = toCsv(rows, config.columns);
-	// BOM UTF-8 pour ouverture correcte dans Excel (sinon accents cassés).
-	const body = '\ufeff' + csv;
+	// BOM UTF-8 (Excel) + 1ère ligne `# export-schema-version: N` (audit 360 M-21).
+	const body = '\ufeff' + csvSchemaVersionLine() + csv;
 
 	return new Response(body, {
 		status: 200,

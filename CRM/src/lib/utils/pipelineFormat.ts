@@ -4,6 +4,24 @@
  * - Format montant compact : "28 500 CHF", "213.6 k CHF" (≥ 100 000), null si zéro/null
  * - Helpers totals/progress/indicators pour Kanban + bandeau indicateurs
  */
+import { z } from 'zod';
+
+/**
+ * Audit 360 M-16 : forme attendue d'une ligne `opportunites` (avec jointures)
+ * lue par /pipeline. Validation au boundary du `load` — une ligne dont les
+ * champs critiques sont absents/mal typés est ignorée + loggée plutôt que de
+ * traverser le composant en castée à l'aveugle. `.passthrough()` : les colonnes
+ * DB et jointures supplémentaires (contacts/entreprises/signaux_affaires) restent.
+ */
+export const PipelineOpportuniteRowSchema = z
+	.object({
+		id: z.string(),
+		titre: z.string().nullable().optional(),
+		etape_pipeline: z.string().nullable().optional(),
+		montant_estime: z.number().nullable().optional(),
+		date_relance_prevue: z.string().nullable().optional()
+	})
+	.passthrough();
 
 const MOIS_COURTS = ['janv.', 'févr.', 'mars', 'avr.', 'mai', 'juin', 'juil.', 'août', 'sept.', 'oct.', 'nov.', 'déc.'];
 

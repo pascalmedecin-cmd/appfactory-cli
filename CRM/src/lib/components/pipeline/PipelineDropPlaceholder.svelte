@@ -16,7 +16,7 @@
 		display: grid;
 		place-items: center;
 		color: var(--color-primary);
-		font-size: 11.5px;
+		font-size: 12px;
 		font-weight: 600;
 		letter-spacing: 0.02em;
 		text-transform: uppercase;

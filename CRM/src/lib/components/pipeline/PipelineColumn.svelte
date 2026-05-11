@@ -264,7 +264,7 @@
 		gap: 8px;
 	}
 	.col-total {
-		font-size: 12.5px;
+		font-size: 12px;
 		font-weight: 600;
 		color: var(--color-text);
 		letter-spacing: -0.005em;
@@ -292,7 +292,7 @@
 		border-radius: var(--radius-lg);
 		color: var(--color-text-muted);
 		font-family: inherit;
-		font-size: 12.5px;
+		font-size: 12px;
 		font-weight: 500;
 		cursor: pointer;
 		display: inline-flex;

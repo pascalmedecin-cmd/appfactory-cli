@@ -157,12 +157,12 @@
 		white-space: nowrap;
 	}
 	.rel-meta {
-		font-size: 11.5px;
+		font-size: 12px;
 		color: var(--color-text-muted);
 		margin-top: 2px;
 	}
 	.rel-date {
-		font-size: 11.5px;
+		font-size: 12px;
 		font-weight: 600;
 		font-variant-numeric: tabular-nums;
 		white-space: nowrap;
@@ -173,7 +173,7 @@
 	.rel-date-futur { color: var(--color-text-muted); }
 
 	.relances-more {
-		font-size: 12.5px;
+		font-size: 12px;
 		color: var(--color-primary);
 		font-weight: 600;
 		text-decoration: none;

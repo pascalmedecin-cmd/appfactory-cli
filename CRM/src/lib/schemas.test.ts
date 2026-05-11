@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-	validate, extractForm,
+	validate, extractForm, coerceFormBoolean, ETAPES_PIPELINE, ETAPES_PIPELINE_CLOSED,
 	ContactCreateSchema, ContactUpdateSchema, ContactDeleteSchema,
 	EntrepriseCreateSchema, EntrepriseUpdateSchema, EntrepriseDeleteSchema,
 	OpportuniteCreateSchema, OpportuniteUpdateSchema, OpportuniteMoveSchema, OpportuniteArchiveSchema,
@@ -8,6 +8,44 @@ import {
 	LeadCreateSchema, LeadUpdateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema,
 	RechercheCreateSchema, RechercheDeleteSchema,
 } from './schemas';
+
+describe('coerceFormBoolean (M-17)', () => {
+	it('"true" / "on" / "1" (insensible casse + trim) → true', () => {
+		expect(coerceFormBoolean('true')).toBe(true);
+		expect(coerceFormBoolean('TRUE')).toBe(true);
+		expect(coerceFormBoolean('  on  ')).toBe(true);
+		expect(coerceFormBoolean('On')).toBe(true);
+		expect(coerceFormBoolean('1')).toBe(true);
+	});
+	it('tout le reste → false', () => {
+		expect(coerceFormBoolean('false')).toBe(false);
+		expect(coerceFormBoolean('off')).toBe(false);
+		expect(coerceFormBoolean('0')).toBe(false);
+		expect(coerceFormBoolean('')).toBe(false);
+		expect(coerceFormBoolean('  ')).toBe(false);
+		expect(coerceFormBoolean(null)).toBe(false);
+		expect(coerceFormBoolean(undefined)).toBe(false);
+	});
+});
+
+describe('ETAPES_PIPELINE_CLOSED (M-06)', () => {
+	it('= [gagne, perdu], sous-ensemble de ETAPES_PIPELINE', () => {
+		expect([...ETAPES_PIPELINE_CLOSED]).toEqual(['gagne', 'perdu']);
+		for (const e of ETAPES_PIPELINE_CLOSED) {
+			expect((ETAPES_PIPELINE as readonly string[]).includes(e)).toBe(true);
+		}
+	});
+});
+
+describe('cap longueur champs date (M-18)', () => {
+	it('OpportuniteCreateSchema.date_relance_prevue rejette une chaîne trop longue', () => {
+		const tooLong = '2026-04-10'.repeat(50);
+		expect(validate(OpportuniteCreateSchema, { titre: 'X projet test', date_relance_prevue: tooLong }).success).toBe(false);
+	});
+	it('accepte une date valide YYYY-MM-DD', () => {
+		expect(validate(OpportuniteCreateSchema, { titre: 'X projet test', date_relance_prevue: '2026-04-10' }).success).toBe(true);
+	});
+});
 
 describe('validate helper', () => {
 	it('retourne success pour des donnees valides', () => {

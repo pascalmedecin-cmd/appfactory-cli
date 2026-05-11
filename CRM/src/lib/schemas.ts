@@ -31,7 +31,7 @@ export const TYPES_SIGNAL = [
 	'expansion', 'fusion_acquisition', 'autre',
 ] as const;
 
-// -- Form extraction helper --
+// -- Form extraction helpers --
 
 export function extractForm(form: FormData, fields: string[]) {
 	const data: Record<string, string> = {};
@@ -39,6 +39,18 @@ export function extractForm(form: FormData, fields: string[]) {
 		data[field] = (form.get(field) as string) ?? '';
 	}
 	return data;
+}
+
+/**
+ * Audit 360 M-17 : coercion booléenne unique pour les champs de formulaire.
+ * Une case à cocher HTML envoie `'on'` par défaut ; certains formulaires posent
+ * explicitement `'true'`/`'false'` ou `'1'`/`'0'`. Tout le reste (absent, `''`,
+ * `'false'`, valeur inconnue) → `false`. Insensible à la casse.
+ */
+export function coerceFormBoolean(value: FormDataEntryValue | null | undefined): boolean {
+	if (typeof value !== 'string') return false;
+	const v = value.trim().toLowerCase();
+	return v === 'true' || v === 'on' || v === '1';
 }
 
 // -- Contacts --
@@ -98,7 +110,7 @@ export const OpportuniteCreateSchema = z.object({
 	entreprise_id: optionalUUID,
 	montant_estime: z.coerce.number().min(0).max(999_999_999).optional().or(z.literal('')),
 	etape_pipeline: z.enum(ETAPES_PIPELINE).optional(),
-	date_relance_prevue: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD requis').optional().or(z.literal('')),
+	date_relance_prevue: z.string().max(10).regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD requis').optional().or(z.literal('')),
 	notes_libres: optionalText,
 	responsable: optionalString,
 	signal_affaires_id: optionalUUID,
@@ -124,7 +136,7 @@ export const OpportuniteArchiveSchema = z.object({
 // remonte une erreur Postgres opaque.
 export const OpportuniteNextActionSchema = z.object({
 	id: requiredUUID,
-	date_relance_prevue: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide').optional().or(z.literal('')),
+	date_relance_prevue: z.string().max(10).regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide').optional().or(z.literal('')),
 	notes_libres: optionalText,
 });
 
@@ -138,7 +150,7 @@ export const SignalCreateSchema = z.object({
 	canton: z.enum(CANTONS).optional().or(z.literal('')),
 	commune: optionalString,
 	source_officielle: optionalString,
-	date_publication: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD requis').optional().or(z.literal('')),
+	date_publication: z.string().max(10).regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD requis').optional().or(z.literal('')),
 	notes_libres: optionalText,
 	responsable_filmpro: optionalString,
 });
@@ -206,7 +218,7 @@ export const LeadCreateSchema = z.object({
 	secteur_detecte: optionalString,
 	description: optionalText,
 	montant: z.coerce.number().min(0).optional().or(z.literal('')),
-	date_publication: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD requis').optional().or(z.literal('')),
+	date_publication: z.string().max(10).regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD requis').optional().or(z.literal('')),
 });
 
 export const LeadUpdateSchema = LeadCreateSchema.extend({

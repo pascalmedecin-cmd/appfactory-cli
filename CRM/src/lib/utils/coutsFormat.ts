@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import { formatPercentFromRatio } from './format-percent';
 
 /**
  * Schéma Zod pour valider une ligne `cost_audit_runs` retournée par Supabase.
@@ -70,13 +71,6 @@ const USD_FORMATTER = new Intl.NumberFormat('en-US', {
 	maximumFractionDigits: 4
 });
 
-const PERCENT_FORMATTER = new Intl.NumberFormat('fr-CH', {
-	style: 'percent',
-	minimumFractionDigits: 1,
-	maximumFractionDigits: 1,
-	signDisplay: 'exceptZero'
-});
-
 export function formatEur(eur: number): string {
 	if (!Number.isFinite(eur)) return '—';
 	return EUR_FORMATTER.format(eur);
@@ -113,10 +107,9 @@ export function formatDateTime(iso: string): string {
 	return `${date} ${time}`;
 }
 
-/** Formate une variation en pourcentage : 0.124 → "+12.4 %". */
+/** Formate une variation en pourcentage : 0.124 → "+12,4 %". (Audit 360 M-24 : helper partagé.) */
 export function formatPercent(ratio: number): string {
-	if (!Number.isFinite(ratio)) return '—';
-	return PERCENT_FORMATTER.format(ratio);
+	return formatPercentFromRatio(ratio, { signed: true });
 }
 
 /** Label humain feature. */

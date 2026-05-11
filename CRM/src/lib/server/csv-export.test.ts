@@ -1,5 +1,25 @@
 import { describe, it, expect } from 'vitest';
-import { toCsv, csvFilename, escapeCell } from './csv-export';
+import {
+	toCsv,
+	csvFilename,
+	escapeCell,
+	csvResponseHeaders,
+	csvSchemaVersionLine,
+	EXPORT_SCHEMA_VERSION
+} from './csv-export';
+
+describe('versioning de l export CSV (M-21)', () => {
+	it('csvResponseHeaders pose X-Export-Schema-Version', () => {
+		const h = csvResponseHeaders('contacts-2026-01-05.csv');
+		expect(h.get('X-Export-Schema-Version')).toBe(String(EXPORT_SCHEMA_VERSION));
+		expect(h.get('Content-Type')).toBe('text/csv; charset=utf-8');
+		expect(h.get('Content-Disposition')).toContain('attachment');
+	});
+
+	it('csvSchemaVersionLine = commentaire `#` terminé par CRLF', () => {
+		expect(csvSchemaVersionLine()).toBe(`# export-schema-version: ${EXPORT_SCHEMA_VERSION}\r\n`);
+	});
+});
 
 describe('escapeCell', () => {
 	it('null / undefined → string vide', () => {

@@ -162,7 +162,7 @@
 
 	.timeline-content { min-width: 0; }
 	.timeline-title {
-		font-size: 13.5px;
+		font-size: 14px;
 		font-weight: 600;
 		color: var(--color-text);
 		margin: 0 0 2px;
@@ -171,7 +171,7 @@
 		white-space: nowrap;
 	}
 	.timeline-desc {
-		font-size: 12.5px;
+		font-size: 12px;
 		color: var(--color-text-muted);
 		margin: 0;
 		overflow: hidden;

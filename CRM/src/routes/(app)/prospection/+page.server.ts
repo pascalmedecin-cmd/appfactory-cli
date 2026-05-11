@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { LeadCreateSchema, LeadExpressCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema, RechercheCreateSchema, RechercheDeleteSchema, LEAD_FIELDS, LEAD_EXPRESS_FIELDS, extractForm, validate } from '$lib/schemas';
+import { LeadCreateSchema, LeadExpressCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema, RechercheCreateSchema, RechercheDeleteSchema, LEAD_FIELDS, LEAD_EXPRESS_FIELDS, extractForm, validate, coerceFormBoolean } from '$lib/schemas';
 import { calculerScore } from '$lib/scoring';
 import { dbFail, escapeIlike, newId, now } from '$lib/server/db-helpers';
 import { PROSPECTION_TABS, TAB_SOURCE_MAP, VALID_SORT_KEYS, type ProspectionTabKey } from '$lib/prospection-utils';
@@ -417,7 +417,7 @@ export const actions: Actions = {
 			mots_cles: safeJsonParse(form.get('mots_cles')),
 			temperatures: safeJsonParse(form.get('temperatures')),
 			score_minimum: form.get('score_minimum') ? Number(form.get('score_minimum')) : undefined,
-			alerte_active: form.get('alerte_active') === 'true',
+			alerte_active: coerceFormBoolean(form.get('alerte_active')),
 			frequence_alerte: (form.get('frequence_alerte') as string) || 'quotidien',
 		};
 

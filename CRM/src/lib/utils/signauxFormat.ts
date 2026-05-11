@@ -7,6 +7,12 @@
  * - formatTypeLabel / typeIcon / formatRelative / formatDate / scoreLabel / scoreStyle / statutLabel / statutVariant
  */
 
+// Audit 360 M-25 : casing des clés de tab — asymétrie assumée. Ici (signaux),
+// les clés non-`tous` sont en snake_case car elles MAPPENT 1:1 sur l'enum DB
+// `signaux_affaires.statut_traitement` (`en_analyse`, `ecarte`, …) : un kebab
+// imposerait une table de conversion. Sur /contacts, /entreprises, /pipeline,
+// au contraire, les clés de tab sont des regroupements UI-only (`a-qualifier`,
+// `sans-entreprise`) sans correspondance directe DB → kebab-case lisible.
 export type SignauxTab = 'tous' | 'nouveau' | 'en_analyse' | 'interesse' | 'converti' | 'ecarte';
 
 export type SignalLite = {

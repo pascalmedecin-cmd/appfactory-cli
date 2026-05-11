@@ -6,10 +6,40 @@ import {
 	totalsByEtape,
 	etapesVisibleForTab,
 	pipelineIndicators,
+	PipelineOpportuniteRowSchema,
 	type OppLite,
 } from './pipelineFormat';
 
 const NOW = new Date('2026-05-08T10:00:00');
+
+describe('PipelineOpportuniteRowSchema (M-16)', () => {
+	it('valide une ligne minimale (id seul)', () => {
+		expect(PipelineOpportuniteRowSchema.safeParse({ id: 'opp-1' }).success).toBe(true);
+	});
+	it('laisse passer les colonnes et jointures supplémentaires (.passthrough)', () => {
+		const row = {
+			id: 'opp-2',
+			titre: 'Projet X',
+			etape_pipeline: 'qualification',
+			montant_estime: 12000,
+			date_relance_prevue: '2026-06-01',
+			contacts: { id: 'c1', nom: 'A', prenom: 'B' },
+			entreprises: { id: 'e1', raison_sociale: 'Acme' },
+			notes_libres: 'rien',
+		};
+		const r = PipelineOpportuniteRowSchema.safeParse(row);
+		expect(r.success).toBe(true);
+		if (r.success) expect(r.data.contacts).toEqual({ id: 'c1', nom: 'A', prenom: 'B' });
+	});
+	it('rejette si id absent ou mal typé, ou montant_estime non-numérique', () => {
+		expect(PipelineOpportuniteRowSchema.safeParse({}).success).toBe(false);
+		expect(PipelineOpportuniteRowSchema.safeParse({ id: 42 }).success).toBe(false);
+		expect(PipelineOpportuniteRowSchema.safeParse({ id: 'x', montant_estime: 'beaucoup' }).success).toBe(false);
+	});
+	it('accepte null pour les champs optionnels', () => {
+		expect(PipelineOpportuniteRowSchema.safeParse({ id: 'x', titre: null, etape_pipeline: null, montant_estime: null, date_relance_prevue: null }).success).toBe(true);
+	});
+});
 
 describe('formatRelancePipeline', () => {
 	it('null/undefined/invalid → "À planifier" not overdue', () => {

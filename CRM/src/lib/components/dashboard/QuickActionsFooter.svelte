@@ -125,7 +125,7 @@
 		color: var(--color-text);
 	}
 	.qa-sub {
-		font-size: 11.5px;
+		font-size: 12px;
 		color: var(--color-text-muted);
 		margin-top: 2px;
 	}
