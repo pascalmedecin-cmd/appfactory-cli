@@ -6,7 +6,7 @@ import type { IntelligenceReport, IntelligenceItem } from './schema';
 import type { PreviousItem } from './prompt';
 import { sendRecapEmail } from './email-recap';
 import { applySignalsFromReport } from './apply-signals';
-import { costTracker, type PersistMeta } from './cost-tracker';
+import { costTracker, CostTracker, type PersistMeta } from './cost-tracker';
 import type { VeilleDeps } from './deps';
 import { sanitizeForLog, sanitizeError } from './sanitize';
 import { stripCitationsFromReport } from './strip-citations';
@@ -49,10 +49,11 @@ function buildVeilleRunId(weekLabel: string, startedAt: string): string {
 async function persistRunCosts(
 	supabase: Supabase,
 	weekLabel: string,
-	meta: PersistMeta
+	meta: PersistMeta,
+	tracker: CostTracker = costTracker
 ): Promise<void> {
 	try {
-		const result = await costTracker.persist(supabase as never, meta);
+		const result = await tracker.persist(supabase as never, meta);
 		if (!result.ok) {
 			console.error(
 				`[veille ${weekLabel}] cost_audit_runs persist failed: ${sanitizeForLog(result.error ?? 'unknown')}`
@@ -216,6 +217,9 @@ export async function runWeeklyGeneration(
 	const week = currentWeekRange(now);
 	const { supabase } = deps;
 	const startedAt = new Date().toISOString();
+	// Audit 360 M-05 : tracker de coûts dédié à CE run (pas le singleton module-level),
+	// pour isoler des invocations concurrentes éventuelles dans le même process.
+	const tracker = new CostTracker();
 
 	logPhase(week.weekLabel, 'start', { now: startedAt });
 
@@ -296,7 +300,7 @@ export async function runWeeklyGeneration(
 				windowDays: days,
 				previousItems
 			},
-			{ anthropicApiKey: deps.anthropicApiKey, themes }
+			{ anthropicApiKey: deps.anthropicApiKey, themes, tracker }
 		);
 		logPhase(week.weekLabel, 'generate_done', {
 			success: gen.success,
@@ -327,7 +331,7 @@ export async function runWeeklyGeneration(
 			status: 'error',
 			startedAt,
 			errorMessage: `Exception: ${message}`
-		});
+		}, tracker);
 		return {
 			ok: false,
 			weekLabel: week.weekLabel,
@@ -351,7 +355,7 @@ export async function runWeeklyGeneration(
 			status: 'error',
 			startedAt,
 			errorMessage: gen.error ?? 'Erreur inconnue'
-		});
+		}, tracker);
 		return {
 			ok: false,
 			weekLabel: week.weekLabel,
@@ -379,7 +383,8 @@ export async function runWeeklyGeneration(
 	try {
 		const ccResult = await crossCheckBatch(gen.report.items, {
 			anthropicApiKey: deps.anthropicApiKey,
-			rejectUnfetchable: true
+			rejectUnfetchable: true,
+			tracker
 		});
 		publishableItems = ccResult.kept;
 		logPhase(week.weekLabel, 'cross_check_done', {
@@ -414,7 +419,7 @@ export async function runWeeklyGeneration(
 			status: 'error',
 			startedAt,
 			errorMessage: `Cross-check failed: ${message}`
-		});
+		}, tracker);
 		return {
 			ok: false,
 			weekLabel: week.weekLabel,
@@ -493,7 +498,7 @@ export async function runWeeklyGeneration(
 			status: 'error',
 			startedAt,
 			errorMessage: errMsg
-		});
+		}, tracker);
 		return {
 			ok: false,
 			weekLabel: week.weekLabel,
@@ -547,7 +552,7 @@ export async function runWeeklyGeneration(
 		feature: 'veille',
 		status: report.items.length < LOW_VOLUME_THRESHOLD ? 'partial' : 'success',
 		startedAt
-	});
+	}, tracker);
 
 	return { ok: true, weekLabel: week.weekLabel, reportId: inserted.id };
 }

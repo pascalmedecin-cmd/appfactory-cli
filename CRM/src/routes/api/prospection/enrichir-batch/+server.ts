@@ -9,6 +9,7 @@ import {
 	validateBatchInput,
 	type EnrichFields,
 } from './helpers';
+import { sanitizeError } from '$lib/server/intelligence/sanitize';
 
 const SEARCH_CH_ENDPOINT = 'https://search.ch/tel/api/';
 const ZEFIX_BASE = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
@@ -169,7 +170,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 							if (found) Object.assign(allFields, fields);
 							if (i < leads.length - 1) await sleep(DELAY_SEARCH_CH);
 						} catch (err) {
-							const msg = String(err);
+							const msg = sanitizeError(err);
 							if (msg.includes('Quota search.ch')) {
 								// Quota épuisé : arrêter le batch proprement
 								controller.enqueue(encoder.encode(sseEvent('quota_exceeded', {
@@ -242,7 +243,8 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 					}
 				} catch (err) {
 					result.status = 'error';
-					result.message = `Erreur: ${String(err)}`;
+					// Audit 360 M-01 : sanitize l'exception avant de l'exposer dans le flux SSE.
+					result.message = `Erreur: ${sanitizeError(err)}`;
 					errors++;
 				}
 

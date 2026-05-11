@@ -4,6 +4,11 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { calculerScore, type IntelligenceSignalInput } from '$lib/scoring';
+import { runWithConcurrency } from '$lib/server/utils/concurrency';
+
+// Audit 360 M-12 : recompute batch avec concurrence bornée (4 leads en vol),
+// au lieu d'une boucle séquentielle O(N) × 3 round-trips DB.
+const RECOMPUTE_BATCH_CONCURRENCY = 4;
 
 interface LeadRow {
 	id: string;
@@ -96,12 +101,17 @@ export async function recomputeLeadScore(
  */
 export async function recomputeLeadScoresBatch(
 	supabase: Pick<SupabaseClient, 'from'>,
-	leadIds: string[]
+	leadIds: string[],
+	concurrency: number = RECOMPUTE_BATCH_CONCURRENCY
 ): Promise<{ updated: number; failed: number }> {
+	const results = await runWithConcurrency(
+		leadIds,
+		Math.max(1, concurrency),
+		(id) => recomputeLeadScore(supabase, id)
+	);
 	let updated = 0;
 	let failed = 0;
-	for (const id of leadIds) {
-		const r = await recomputeLeadScore(supabase, id);
+	for (const r of results) {
 		if (r === null) failed++;
 		else updated++;
 	}

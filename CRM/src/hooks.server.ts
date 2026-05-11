@@ -1,47 +1,28 @@
 import { createSupabaseServerClient } from '$lib/server/supabase';
 import { isEmailAllowed, parseEnvList } from '$lib/server/auth';
+import { createRateLimiter } from '$lib/server/rate-limiter';
 import { json, redirect, type Handle } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 
-// Rate limiting in-memory pour les API de prospection
-const RATE_LIMIT_WINDOW_MS = 60_000; // 1 minute
-const RATE_LIMIT_MAX = 10; // 10 requetes par minute par IP
-const RATE_LIMIT_MAP_CAP = 10_000; // Plafond anti-DoS memoire
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+// Rate limiting in-memory : 10 req/min/IP, éviction LRU à 10 000 entrées
+// (audit 360 M-14). Le timer de nettoyage est arrêté en HMR dev (audit 360 M-11).
+const rateLimiter = createRateLimiter({ windowMs: 60_000, max: 10, mapCap: 10_000 });
 
-function checkRateLimit(ip: string): boolean {
-	const now = Date.now();
-	const entry = rateLimitMap.get(ip);
-
-	if (!entry || now > entry.resetAt) {
-		// Fail-closed si la map est pleine et IP inconnue
-		if (!entry && rateLimitMap.size >= RATE_LIMIT_MAP_CAP) return false;
-		rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
-		return true;
-	}
-
-	if (entry.count >= RATE_LIMIT_MAX) return false;
-	entry.count++;
-	return true;
+if (import.meta.hot) {
+	import.meta.hot.dispose(() => rateLimiter.dispose());
 }
 
-// Nettoyage periodique (eviter fuite memoire)
-setInterval(() => {
-	const now = Date.now();
-	for (const [ip, entry] of rateLimitMap) {
-		if (now > entry.resetAt) rateLimitMap.delete(ip);
-	}
-}, 60_000);
-
 export const handle: Handle = async ({ event, resolve }) => {
-	// Rate limiting sur /api/prospection/*, /api/photos* et /api/visits*
-	if (
+	// Rate limiting sur /api/prospection/*, /api/photos*, /api/visits*
+	// et POST /login (audit 360 M-04 : anti cost-burn SMTP via `?/sendcode` bombing).
+	const isRateLimitedPath =
 		event.url.pathname.startsWith('/api/prospection/') ||
 		event.url.pathname.startsWith('/api/photos') ||
-		event.url.pathname.startsWith('/api/visits')
-	) {
+		event.url.pathname.startsWith('/api/visits') ||
+		(event.url.pathname === '/login' && event.request.method === 'POST');
+	if (isRateLimitedPath) {
 		const ip = event.getClientAddress();
-		if (!checkRateLimit(ip)) {
+		if (!rateLimiter.check(ip)) {
 			return json(
 				{ error: 'Trop de requetes. Reessayez dans une minute.' },
 				{ status: 429 }

@@ -6,7 +6,7 @@
 // Les leads touchés voient leur score recalculé.
 
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { recomputeLeadScoresBatch } from './recompute-score';
+import { recomputeLeadScore } from './recompute-score';
 import type { IntelligenceItem, IntelligenceReport } from './schema';
 import { normalizeStoredChips } from './chip-normalize';
 
@@ -109,7 +109,6 @@ export async function applySignalsFromReport(
 		match_kind: 'rescore';
 		match_term: string;
 	}> = [];
-	const touchedLeadIds = new Set<string>();
 
 	for (const item of report.items ?? []) {
 		const snapshot = itemSnapshots.find((s) => s.itemRank === item.rank);
@@ -129,35 +128,53 @@ export async function applySignalsFromReport(
 					match_kind: 'rescore',
 					match_term: chip.label.slice(0, 200)
 				});
-				touchedLeadIds.add(leadId);
 			}
 		}
 	}
 
-	// 3. Insert idempotent (la PK bloque les doublons sur ré-exécution).
-	let insertedSignals = 0;
-	if (inserts.length > 0) {
-		// Dédup en mémoire avant DB (un même lead peut matcher 2 chips du même item).
-		const dedupKey = (i: (typeof inserts)[number]) => `${i.lead_id}|${i.report_id}|${i.item_rank}`;
-		const seen = new Set<string>();
-		const unique = inserts.filter((i) => {
-			const k = dedupKey(i);
-			if (seen.has(k)) return false;
-			seen.add(k);
-			return true;
-		});
+	// 3+4. Insert idempotent + recompute, lead par lead.
+	//
+	// Audit 360 M-09 : on traite chaque lead touché d'affilée — upsert de ses
+	// signaux PUIS recalcul de son score — au lieu de « tout insérer, puis tout
+	// recalculer ». Ça réduit la fenêtre pendant laquelle un lead a un signal lié
+	// mais un score pas encore à jour, de « durée du recompute de N leads » à
+	// « ~3 round-trips pour 1 lead ». Une vraie transaction atomique est impossible
+	// ici : le calcul de score est du JS (calculerScore), pas du SQL. La PK
+	// (lead_id, report_id, item_rank) garantit l'idempotence des inserts, et
+	// recomputeLeadScore est idempotent.
 
+	// Dédup en mémoire avant DB (un même lead peut matcher 2 chips du même item).
+	const dedupKey = (i: (typeof inserts)[number]) => `${i.lead_id}|${i.report_id}|${i.item_rank}`;
+	const seen = new Set<string>();
+	const unique = inserts.filter((i) => {
+		const k = dedupKey(i);
+		if (seen.has(k)) return false;
+		seen.add(k);
+		return true;
+	});
+
+	// Regrouper les lignes par lead, en préservant l'ordre de découverte.
+	const rowsByLead = new Map<string, typeof unique>();
+	for (const ins of unique) {
+		const arr = rowsByLead.get(ins.lead_id);
+		if (arr) arr.push(ins);
+		else rowsByLead.set(ins.lead_id, [ins]);
+	}
+
+	let insertedSignals = 0;
+	let recomputedLeads = 0;
+	let failedLeads = 0;
+	for (const [leadId, rows] of rowsByLead) {
 		// upsert ignoreDuplicates : si la ligne existe déjà (run précédent), on ne fait rien.
 		const { error, count } = await supabase
 			.from('prospect_lead_signals')
-			.upsert(unique, { onConflict: 'lead_id,report_id,item_rank', ignoreDuplicates: true, count: 'exact' });
+			.upsert(rows, { onConflict: 'lead_id,report_id,item_rank', ignoreDuplicates: true, count: 'exact' });
+		if (!error) insertedSignals += count ?? rows.length;
 
-		if (!error) insertedSignals = count ?? unique.length;
+		const newScore = await recomputeLeadScore(supabase, leadId);
+		if (newScore === null) failedLeads++;
+		else recomputedLeads++;
 	}
 
-	// 4. Recompute scores des leads touchés.
-	const ids = [...touchedLeadIds];
-	const { updated, failed } = await recomputeLeadScoresBatch(supabase, ids);
-
-	return { insertedSignals, recomputedLeads: updated, failedLeads: failed };
+	return { insertedSignals, recomputedLeads, failedLeads };
 }

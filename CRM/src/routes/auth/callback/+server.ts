@@ -1,5 +1,13 @@
 import { redirect } from '@sveltejs/kit';
+import { sanitizeForLog } from '$lib/server/intelligence/sanitize';
 import type { RequestHandler } from './$types';
+
+// Audit 360 M-03 : le message d'erreur Supabase est repris dans l'URL `?detail=...`
+// (visible historique navigateur + logs referrer Vercel) et console.error. On le
+// sanitize (patterns secrets) + tronque court avant exposition.
+function safeDetail(message: string): string {
+	return sanitizeForLog(message, 200);
+}
 
 export const GET: RequestHandler = async ({ url, locals, cookies }) => {
 	const token_hash = url.searchParams.get('token_hash');
@@ -11,15 +19,17 @@ export const GET: RequestHandler = async ({ url, locals, cookies }) => {
 	if (token_hash && type) {
 		const { error } = await locals.supabase.auth.verifyOtp({ token_hash, type });
 		if (error) {
-			console.error('Auth callback error (OTP):', error.message);
-			throw redirect(303, `/login?error=callback&detail=${encodeURIComponent(error.message)}`);
+			const detail = safeDetail(error.message);
+			console.error('Auth callback error (OTP):', detail);
+			throw redirect(303, `/login?error=callback&detail=${encodeURIComponent(detail)}`);
 		}
 		authenticated = true;
 	} else if (code) {
 		const { error } = await locals.supabase.auth.exchangeCodeForSession(code);
 		if (error) {
-			console.error('Auth callback error:', error.message);
-			throw redirect(303, `/login?error=callback&detail=${encodeURIComponent(error.message)}`);
+			const detail = safeDetail(error.message);
+			console.error('Auth callback error:', detail);
+			throw redirect(303, `/login?error=callback&detail=${encodeURIComponent(detail)}`);
 		}
 		authenticated = true;
 	}

@@ -3,6 +3,7 @@ import { env } from '$env/dynamic/private';
 import { calculerScore } from '$lib/scoring';
 import { fetchIntelligenceSignalLookup } from '$lib/server/intelligence/signal-lookup';
 import { linkImportSignals } from '$lib/server/intelligence/link-import-signal';
+import { sanitizeError, sanitizeForLog } from '$lib/server/intelligence/sanitize';
 import { randomUUID } from 'crypto';
 
 const ZEFIX_BASE = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
@@ -103,13 +104,15 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		}
 		if (!resp.ok) {
 			const text = await resp.text();
-			console.error(`Zefix API error ${resp.status}: ${text.slice(0, 500)}`);
+			console.error(`Zefix API error ${resp.status}: ${sanitizeForLog(text.slice(0, 500))}`);
 			return json({ error: `Erreur API Zefix (${resp.status}). Réessayez plus tard.` }, { status: 502 });
 		}
 
 		companies = await resp.json();
 	} catch (err) {
-		return json({ error: `Erreur réseau Zefix: ${String(err)}` }, { status: 502 });
+		// Audit 360 M-01 : sanitize l'exception (cas `TypeError: fetch failed` Node 20+
+		// peut stringify l'URL fetch, defense-in-depth).
+		return json({ error: `Erreur réseau Zefix: ${sanitizeError(err)}` }, { status: 502 });
 	}
 
 	if (!Array.isArray(companies) || companies.length === 0) {

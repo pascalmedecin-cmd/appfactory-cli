@@ -148,8 +148,30 @@ describe('recomputeLeadScoresBatch', () => {
 			{ data: null, error: null }
 		]) as unknown as Parameters<typeof recomputeLeadScoresBatch>[0];
 
-		const r = await recomputeLeadScoresBatch(supabase, ['l1', 'l2']);
+		// concurrency=1 : exécution séquentielle déterministe (le mock consomme les
+		// réponses en FIFO ; avec >1 les workers interleavent leurs awaits).
+		const r = await recomputeLeadScoresBatch(supabase, ['l1', 'l2'], 1);
 		expect(r.updated).toBe(1);
 		expect(r.failed).toBe(1);
+	});
+
+	it('M-12 : N leads tous OK comptés en updated (concurrency=1 pour le déterminisme du mock FIFO)', async () => {
+		const leadResp = (id: string): MockResp[] => [
+			{
+				data: {
+					id, canton: 'GE', description: null, raison_sociale: 'X',
+					source: 'simap', date_publication: null, telephone: null, montant: null
+				},
+				error: null
+			},
+			{ data: [], error: null },
+			{ data: null, error: null }
+		];
+		const supabase = makeSupabase([
+			...leadResp('a'), ...leadResp('b'), ...leadResp('c'), ...leadResp('d')
+		]) as unknown as Parameters<typeof recomputeLeadScoresBatch>[0];
+		const r = await recomputeLeadScoresBatch(supabase, ['a', 'b', 'c', 'd'], 1);
+		expect(r.updated).toBe(4);
+		expect(r.failed).toBe(0);
 	});
 });

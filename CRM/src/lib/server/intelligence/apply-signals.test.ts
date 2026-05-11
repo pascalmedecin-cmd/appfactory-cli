@@ -99,23 +99,18 @@ describe('applySignalsFromReport', () => {
 		expect(r.recomputedLeads).toBe(0);
 	});
 
-	it('match leads + dédup + upsert + recompute', async () => {
-		// 1 chip → 2 ILIKE en parallèle (raison_sociale, description) → trouve 2 leads
-		// → upsert 2 lignes → recompute 2 leads (succès)
-		const responses: MockResp[] = [
-			// 1a. findMatchingLeadIds : ILIKE raison_sociale → 2 leads
-			{ data: [{ id: 'lead-A' }, { id: 'lead-B' }], error: null },
-			// 1b. ILIKE description → vide
-			{ data: [], error: null },
-			// 2. upsert prospect_lead_signals
-			{ data: null, error: null, count: 2 },
-			// 3a. recompute lead-A : select lead
+	it('match leads + dédup + upsert + recompute (M-09 : upsert+recompute par lead)', async () => {
+		// 1 chip → 2 ILIKE en parallèle (raison_sociale, description) → trouve 2 leads.
+		// Audit 360 M-09 : on traite chaque lead d'affilée — upsert de SES lignes
+		// puis recompute de SON score — donc 1 upsert par lead (pas un bulk unique).
+		const recomputeLeadResp = (id: string, raison: string): MockResp[] => [
+			// recompute : select lead (maybeSingle)
 			{
 				data: {
-					id: 'lead-A',
+					id,
 					canton: 'VD',
 					description: null,
-					raison_sociale: 'Test SA',
+					raison_sociale: raison,
 					source: 'simap',
 					date_publication: null,
 					telephone: null,
@@ -123,21 +118,53 @@ describe('applySignalsFromReport', () => {
 				},
 				error: null
 			},
-			// 3b. select signaux lead-A
+			// recompute : select signaux du lead
 			{ data: [], error: null },
-			// 3c. update lead-A
-			{ data: null, error: null },
-			// 4a-c. recompute lead-B
+			// recompute : update score du lead
+			{ data: null, error: null }
+		];
+		const responses: MockResp[] = [
+			// 1a. findMatchingLeadIds : ILIKE raison_sociale → 2 leads
+			{ data: [{ id: 'lead-A' }, { id: 'lead-B' }], error: null },
+			// 1b. ILIKE description → vide
+			{ data: [], error: null },
+			// lead-A : upsert (1 ligne) puis recompute
+			{ data: null, error: null, count: 1 },
+			...recomputeLeadResp('lead-A', 'Test SA'),
+			// lead-B : upsert (1 ligne) puis recompute
+			{ data: null, error: null, count: 1 },
+			...recomputeLeadResp('lead-B', 'Other SA')
+		];
+		const supabase = makeSupabase(responses) as unknown as Parameters<typeof applySignalsFromReport>[0];
+		const item = makeItem(1, 'films solaires Lausanne', 'VD');
+		const r = await applySignalsFromReport(supabase, 'report-1', makeReport([item]));
+		expect(r.insertedSignals).toBe(2); // 1 (lead-A) + 1 (lead-B)
+		expect(r.recomputedLeads).toBe(2);
+		expect(r.failedLeads).toBe(0);
+	});
+
+	it('M-09 : un lead dont l’update échoue compte en failedLeads, le suivant est quand même traité', async () => {
+		const responses: MockResp[] = [
+			// findMatchingLeadIds : ILIKE raison_sociale → lead-A puis lead-B
+			{ data: [{ id: 'lead-A' }, { id: 'lead-B' }], error: null },
+			{ data: [], error: null },
+			// lead-A : upsert ok, recompute (select lead ok, select signaux ok, update ÉCHOUE)
+			{ data: null, error: null, count: 1 },
 			{
 				data: {
-					id: 'lead-B',
-					canton: 'VD',
-					description: null,
-					raison_sociale: 'Other SA',
-					source: 'simap',
-					date_publication: null,
-					telephone: null,
-					montant: null
+					id: 'lead-A', canton: 'VD', description: null, raison_sociale: 'A SA',
+					source: 'simap', date_publication: null, telephone: null, montant: null
+				},
+				error: null
+			},
+			{ data: [], error: null },
+			{ data: null, error: { message: 'update failed' } },
+			// lead-B : upsert ok, recompute ok
+			{ data: null, error: null, count: 1 },
+			{
+				data: {
+					id: 'lead-B', canton: 'VD', description: null, raison_sociale: 'B SA',
+					source: 'simap', date_publication: null, telephone: null, montant: null
 				},
 				error: null
 			},
@@ -148,8 +175,8 @@ describe('applySignalsFromReport', () => {
 		const item = makeItem(1, 'films solaires Lausanne', 'VD');
 		const r = await applySignalsFromReport(supabase, 'report-1', makeReport([item]));
 		expect(r.insertedSignals).toBe(2);
-		expect(r.recomputedLeads).toBe(2);
-		expect(r.failedLeads).toBe(0);
+		expect(r.recomputedLeads).toBe(1);
+		expect(r.failedLeads).toBe(1);
 	});
 
 	it('dédup cross-fields : un lead matche raison_sociale ET description sans doubler', async () => {

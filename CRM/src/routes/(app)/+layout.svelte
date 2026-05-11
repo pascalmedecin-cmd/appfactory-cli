@@ -20,13 +20,16 @@
 		return match?.label ?? '';
 	});
 
-	// Fermer le menu mobile sur navigation (délai pour voir le highlight)
+	// Fermer le menu mobile sur navigation (délai pour voir le highlight).
+	// Audit 360 M-07 : cleanup du setTimeout — si la route change à nouveau avant
+	// 150 ms, on annule le timeout précédent (sinon plusieurs callbacks en file).
 	let prevPath = $state(page.url.pathname);
 	$effect(() => {
 		const currentPath = page.url.pathname;
 		if (currentPath !== prevPath) {
 			prevPath = currentPath;
-			setTimeout(() => { mobileMenuOpen = false; }, 150);
+			const t = setTimeout(() => { mobileMenuOpen = false; }, 150);
+			return () => clearTimeout(t);
 		}
 	});
 </script>

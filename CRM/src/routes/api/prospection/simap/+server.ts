@@ -3,6 +3,7 @@ import { calculerScore } from '$lib/scoring';
 import { fetchIntelligenceSignalLookup } from '$lib/server/intelligence/signal-lookup';
 import { linkImportSignals } from '$lib/server/intelligence/link-import-signal';
 import { randomUUID } from 'crypto';
+import { sanitizeError, sanitizeForLog } from '$lib/server/intelligence/sanitize';
 import { translate, cantonToLead, CANTON_MAP, type Translation } from './helpers';
 
 const SIMAP_BASE = 'https://www.simap.ch/api';
@@ -74,13 +75,14 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 		if (!resp.ok) {
 			const text = await resp.text();
-			return json({ error: `SIMAP error ${resp.status}: ${text.slice(0, 200)}` }, { status: 502 });
+			return json({ error: `SIMAP error ${resp.status}: ${sanitizeForLog(text.slice(0, 200), 200)}` }, { status: 502 });
 		}
 
 		const data = await resp.json();
 		projects = data.projects ?? [];
 	} catch (err) {
-		return json({ error: `Erreur réseau SIMAP: ${String(err)}` }, { status: 502 });
+		// Audit 360 M-01 : sanitize l'exception (defense-in-depth, cas `fetch failed` Node 20+).
+		return json({ error: `Erreur réseau SIMAP: ${sanitizeError(err)}` }, { status: 502 });
 	}
 
 	if (projects.length === 0) {

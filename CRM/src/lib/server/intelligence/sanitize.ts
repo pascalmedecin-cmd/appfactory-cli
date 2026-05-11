@@ -13,12 +13,15 @@
  *  - JWT (Supabase, third-party) : `eyJ*.*.*`
  *  - Resend API key : `re_*`
  *  - Génériques `api_key=val`, `token=val`, `secret=val`, `apikey=val`
+ *  - Query param `key=val` (search.ch passe sa clé en `?key=...`)
  *
  * Tronque par défaut à 500 chars pour éviter l'inflation de logs.
  */
 export function sanitizeForLog(message: string, maxLen = 500): string {
+	// Audit 360 M-10 : redact AVANT de tronquer. Si la troncature coupait un
+	// secret en deux (clé qui chevauche l'index `maxLen`), le préfixe restant
+	// n'aurait plus matché les regex et aurait fuité. Redact d'abord → slice ensuite.
 	return message
-		.slice(0, maxLen)
 		.replace(/sk-ant-[a-zA-Z0-9_-]+/g, '[REDACTED_API_KEY]')
 		.replace(/Bearer\s+[a-zA-Z0-9_.-]+/gi, 'Bearer [REDACTED]')
 		.replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '[REDACTED_JWT]')
@@ -26,7 +29,9 @@ export function sanitizeForLog(message: string, maxLen = 500): string {
 		.replace(
 			/(api[_-]?key|token|secret|apikey)\s*[:=]\s*[a-zA-Z0-9_\-.]+/gi,
 			'$1=[REDACTED]'
-		);
+		)
+		.replace(/([?&])key=[^&\s'"]+/gi, '$1key=[REDACTED]')
+		.slice(0, maxLen);
 }
 
 /**

@@ -3,8 +3,15 @@ import { env } from '$env/dynamic/private';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { timingSafeEqual } from 'crypto';
 
+// Audit 360 M-13 : ce cron faisait 1 fetch Zefix + 150 ms de pause par entreprise.
+// À 200 entreprises ≈ 200 × ~0,7 s = 140 s → risque de timeout Vercel mid-run
+// (et reprise partielle au prochain tick). On plafonne à 100 par run (les plus
+// anciennement vérifiées d'abord, `nullsFirst` → tournante naturelle) et on
+// déclare explicitement maxDuration = 300 s pour la marge.
+export const config = { maxDuration: 300 };
+
 const ZEFIX_BASE = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
-const BATCH_LIMIT = 200;
+const BATCH_LIMIT = 100;
 const DELAY_MS = 150;
 
 export function _motifArchivage(status: string | null): string | null {

@@ -19,6 +19,9 @@ export const ETAPES_PIPELINE = [
 	'identification', 'qualification', 'proposition', 'negociation', 'gagne', 'perdu',
 ] as const;
 
+/** Étapes terminales (deal clos) : exclues des relances / du Kanban "en cours". */
+export const ETAPES_PIPELINE_CLOSED = ['gagne', 'perdu'] as const;
+
 export const STATUTS_TRAITEMENT = [
 	'nouveau', 'en_analyse', 'interesse', 'ecarte', 'converti',
 ] as const;

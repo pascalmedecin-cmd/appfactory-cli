@@ -19,7 +19,7 @@ import { verifyUrl } from './url-verify';
 import { sanitizeUrlsBatch } from './url-sanitize';
 import { isDeniedSource, getDomainTier } from './source-allowlist';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
-import { costTracker, type CostSummary } from './cost-tracker';
+import { costTracker, type CostSummary, type CostTracker } from './cost-tracker';
 
 const MODEL = 'claude-opus-4-7';
 // 32K : run prod S112 retry 1 a été coupé par max_tokens à 16K (12K thinking
@@ -269,17 +269,23 @@ export interface GenerateOptions {
 	 * (cf. theme-loader FALLBACK_THEMES) — le cron prod doit toujours fournir.
 	 */
 	themes?: ThemeBundle;
+	/**
+	 * Tracker de coûts à alimenter (audit 360 M-05 : DI explicite plutôt que
+	 * le singleton module-level). Défaut : le singleton `costTracker`.
+	 */
+	tracker?: CostTracker;
 }
 
 export async function generateIntelligenceReport(
 	input: GenerateInput,
 	opts: GenerateOptions
 ): Promise<GenerateResult> {
+	const tracker = opts.tracker ?? costTracker;
 	// Reset du tracker : une invocation = une collecte complète.
-	costTracker.reset();
+	tracker.reset();
 
 	if (!opts.anthropicApiKey) {
-		return { success: false, error: 'ANTHROPIC_API_KEY manquante', costs: costTracker.summary() };
+		return { success: false, error: 'ANTHROPIC_API_KEY manquante', costs: tracker.summary() };
 	}
 
 	const client = new Anthropic({ apiKey: opts.anthropicApiKey });
@@ -288,7 +294,7 @@ export async function generateIntelligenceReport(
 	// Fallback explicite vers la liste hardcoded si l'appelant l'omet (tests).
 	const themes = opts.themes ?? getFallbackBundle();
 	const response = await callModel(client, input, themes);
-	costTracker.addClaudeCall(MODEL, response.usage, 'Claude veille (1-phase)');
+	tracker.addClaudeCall(MODEL, response.usage, 'Claude veille (1-phase)');
 
 	// Garde stop_reason : si le modèle a été coupé par max_tokens, l'éventuel
 	// emit_report final est probablement tronqué (items vides alors que la
@@ -299,7 +305,7 @@ export async function generateIntelligenceReport(
 			success: false,
 			error: `Modèle coupé par max_tokens (${MAX_TOKENS} tokens consommés). Output partiel.`,
 			raw: response,
-			costs: costTracker.summary()
+			costs: tracker.summary()
 		};
 	}
 
@@ -312,7 +318,7 @@ export async function generateIntelligenceReport(
 			success: false,
 			error: `Modèle n'a pas appelé emit_report (stop_reason=${response.stop_reason})`,
 			raw: response,
-			costs: costTracker.summary()
+			costs: tracker.summary()
 		};
 	}
 
@@ -322,7 +328,7 @@ export async function generateIntelligenceReport(
 			success: false,
 			error: `Validation Zod échouée : ${parsed.error.message}`,
 			raw: response,
-			costs: costTracker.summary()
+			costs: tracker.summary()
 		};
 	}
 
@@ -364,7 +370,7 @@ export async function generateIntelligenceReport(
 		success: true,
 		report: enrichedReport,
 		raw: response,
-		costs: costTracker.summary(),
+		costs: tracker.summary(),
 		rejected,
 		sanitizedUrlsCount: sanitizedCount
 	};

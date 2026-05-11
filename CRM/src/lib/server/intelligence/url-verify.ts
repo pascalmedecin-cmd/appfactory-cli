@@ -12,8 +12,13 @@
 // - Body GET < 5KB sur domaines paywall connus → paywall
 
 import { isSafeUrlForFetch } from './url-guard';
+import { runWithConcurrency } from '$lib/server/utils/concurrency';
 
 const VERIFY_TIMEOUT_MS = 8000;
+
+// Audit 360 M-15 : concurrence bornée pour le batch (cousin de H-03 recheck-historical).
+// Sans plafond, vérifier N URLs = N HEAD/GET simultanés → saturation sockets + ban IP.
+const VERIFY_BATCH_CONCURRENCY = 4;
 
 const USER_AGENT =
 	'Mozilla/5.0 (compatible; FilmProBot/1.0; +https://filmpro-crm.vercel.app)';
@@ -126,8 +131,8 @@ export async function verifyUrl(rawUrl: string): Promise<UrlVerifyResult> {
 }
 
 export async function verifyUrlsBatch(urls: string[]): Promise<Map<string, UrlVerifyResult>> {
-	const entries = await Promise.all(urls.map(async (u) => [u, await verifyUrl(u)] as const));
-	return new Map(entries);
+	const results = await runWithConcurrency(urls, VERIFY_BATCH_CONCURRENCY, async (u) => verifyUrl(u));
+	return new Map(urls.map((u, i) => [u, results[i]]));
 }
 
 // Export pour tests

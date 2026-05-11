@@ -54,10 +54,11 @@ function makeCookies(initial: Record<string, string> = {}) {
 
 function makeEvent(
 	pathname: string,
-	opts: { ip?: string; cookies?: ReturnType<typeof makeCookies> } = {}
+	opts: { ip?: string; cookies?: ReturnType<typeof makeCookies>; method?: string } = {}
 ) {
 	return {
 		url: new URL(`https://filmpro-crm.vercel.app${pathname}`),
+		request: { method: opts.method ?? 'GET' },
 		getClientAddress: () => opts.ip ?? '10.0.0.1',
 		cookies: opts.cookies ?? makeCookies(),
 		locals: {} as Record<string, unknown>
@@ -197,5 +198,22 @@ describe('hooks.server handle (H-18)', () => {
 		const r11 = await runHandle(makeEvent('/api/visits', { ip }));
 		expect(r11.thrown).toBe(false);
 		expect(r11.thrown ? 0 : r11.response.status).toBe(429);
+	});
+
+	it('rate limit M-04 : POST /login est couvert (429 après 10 req/min, anti cost-burn SMTP)', async () => {
+		const ip = '203.0.113.60';
+		for (let i = 0; i < 10; i++) await runHandle(makeEvent('/login', { ip, method: 'POST' }));
+		const r11 = await runHandle(makeEvent('/login', { ip, method: 'POST' }));
+		expect(r11.thrown).toBe(false);
+		expect(r11.thrown ? 0 : r11.response.status).toBe(429);
+	});
+
+	it('rate limit M-04 : GET /login n’est PAS rate-limité (navigation libre)', async () => {
+		const ip = '203.0.113.61';
+		for (let i = 0; i < 25; i++) await runHandle(makeEvent('/login', { ip, method: 'GET' }));
+		const r = await runHandle(makeEvent('/login', { ip, method: 'GET' }));
+		// Pas de 429 : GET /login reste accessible (sans session → resolve appelé).
+		expect(r.thrown).toBe(false);
+		expect(r.thrown ? 0 : r.response.status).not.toBe(429);
 	});
 });

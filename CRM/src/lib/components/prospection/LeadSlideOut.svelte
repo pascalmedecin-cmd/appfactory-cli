@@ -9,6 +9,7 @@
 	import VisitsPanel from '$lib/components/VisitsPanel.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { calculerScore } from '$lib/scoring';
+	import { safeHttpUrl } from '$lib/utils/safe-url';
 	import {
 		cantonNoms, scoreBadgeVariant,
 		statutLabel, statutBadgeVariant, sourceLabel,
@@ -212,15 +213,18 @@
 			{/if}
 
 			{#if lead.source_url}
-				<a
-					href={lead.source_url}
-					target="_blank"
-					rel="noopener noreferrer"
-					class="inline-flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
-				>
-					<Icon name="open_in_new" size={16} />
-					Voir la source originale
-				</a>
+				{@const sourceHref = safeHttpUrl(lead.source_url)}
+				{#if sourceHref}
+					<a
+						href={sourceHref}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="inline-flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
+					>
+						<Icon name="open_in_new" size={16} />
+						Voir la source originale
+					</a>
+				{/if}
 			{/if}
 
 			<!-- Photos chantier (V2 mobile F1) -->

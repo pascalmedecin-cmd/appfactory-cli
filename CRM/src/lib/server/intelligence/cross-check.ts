@@ -14,7 +14,7 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import type { IntelligenceItem } from './schema';
-import { costTracker } from './cost-tracker';
+import { costTracker, type CostTracker } from './cost-tracker';
 import { isSafeUrlForFetch } from './url-guard';
 
 const CROSS_CHECK_MODEL = 'claude-sonnet-4-6';
@@ -202,6 +202,12 @@ export interface CrossCheckOptions {
 	rejectUnfetchable?: boolean;
 	/** Max appels SDK Anthropic + fetch concurrents. Défaut 4 (audit Medium #2). */
 	concurrency?: number;
+	/**
+	 * Tracker de coûts à alimenter (audit 360 M-05 : DI explicite plutôt que
+	 * le singleton module-level, pour isoler des invocations concurrentes).
+	 * Défaut : le singleton `costTracker` (rétrocompat).
+	 */
+	tracker?: CostTracker;
 }
 
 const DEFAULT_CONCURRENCY = 4;
@@ -271,7 +277,8 @@ async function runWithConcurrency<T, R>(
  */
 export async function crossCheckItem(
 	client: Anthropic,
-	item: IntelligenceItem
+	item: IntelligenceItem,
+	tracker: CostTracker = costTracker
 ): Promise<CrossCheckVerdict | null> {
 	const html = await fetchPageContent(item.source.url);
 	if (!html) return null;
@@ -280,7 +287,7 @@ export async function crossCheckItem(
 
 	const response = await callVerifierWithRetry(client, item, pageText);
 
-	costTracker.addClaudeCall(CROSS_CHECK_MODEL, response.usage, 'Cross-check verbatim');
+	tracker.addClaudeCall(CROSS_CHECK_MODEL, response.usage, 'Cross-check verbatim');
 
 	const block = response.content.find(
 		(b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'emit_verdict'
@@ -304,12 +311,13 @@ export async function crossCheckBatch(
 	}
 	const client = new Anthropic({ apiKey: opts.anthropicApiKey });
 	const concurrency = opts.concurrency ?? DEFAULT_CONCURRENCY;
+	const tracker = opts.tracker ?? costTracker;
 
 	// Pool de concurrence (audit Medium #2) : limite N appels Anthropic en parallèle
 	// pour éviter rate-limit 429 + DoS amplification fetch sortants.
 	const verdicts = await runWithConcurrency(items, concurrency, async (item) => ({
 		item,
-		verdict: await crossCheckItem(client, item)
+		verdict: await crossCheckItem(client, item, tracker)
 	}));
 
 	const kept: IntelligenceItem[] = [];
