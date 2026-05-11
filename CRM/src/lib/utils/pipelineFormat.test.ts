@@ -31,10 +31,16 @@ describe('PipelineOpportuniteRowSchema (M-16)', () => {
 		expect(r.success).toBe(true);
 		if (r.success) expect(r.data.contacts).toEqual({ id: 'c1', nom: 'A', prenom: 'B' });
 	});
-	it('rejette si id absent ou mal typé, ou montant_estime non-numérique', () => {
+	it('rejette si id absent ou mal typé', () => {
 		expect(PipelineOpportuniteRowSchema.safeParse({}).success).toBe(false);
 		expect(PipelineOpportuniteRowSchema.safeParse({ id: 42 }).success).toBe(false);
-		expect(PipelineOpportuniteRowSchema.safeParse({ id: 'x', montant_estime: 'beaucoup' }).success).toBe(false);
+		expect(PipelineOpportuniteRowSchema.safeParse({ id: null }).success).toBe(false);
+	});
+	it('tolère montant_estime number OU string (numeric DB peut transiter en string)', () => {
+		expect(PipelineOpportuniteRowSchema.safeParse({ id: 'x', montant_estime: 12000 }).success).toBe(true);
+		expect(PipelineOpportuniteRowSchema.safeParse({ id: 'x', montant_estime: '12000.50' }).success).toBe(true);
+		// objet/booléen restent rejetés
+		expect(PipelineOpportuniteRowSchema.safeParse({ id: 'x', montant_estime: { a: 1 } }).success).toBe(false);
 	});
 	it('accepte null pour les champs optionnels', () => {
 		expect(PipelineOpportuniteRowSchema.safeParse({ id: 'x', titre: null, etape_pipeline: null, montant_estime: null, date_relance_prevue: null }).success).toBe(true);

@@ -9,9 +9,14 @@
 -- L'app garde son check applicatif (chemin rapide : 409 avant l'upload storage) ;
 -- ce trigger est le filet de sécurité contre la course.
 
+-- ERRCODE custom levé quand le plafond est dépassé : `P0010`. L'endpoint
+-- /api/photos le mappe vers HTTP 409 (sans dépendre du texte du message ni du
+-- code générique 23514, partagé avec les CHECK de format UUID).
 CREATE OR REPLACE FUNCTION enforce_prospect_photos_cap()
 RETURNS trigger
 LANGUAGE plpgsql
+-- search_path épinglé (defense-in-depth, recommandation Supabase « function search_path mutable »).
+SET search_path = public, pg_catalog
 AS $$
 DECLARE
 	v_owner_key text;
@@ -36,7 +41,7 @@ BEGIN
 
 	IF v_count >= 10 THEN
 		RAISE EXCEPTION 'Limite de 10 photos atteinte pour cet élément'
-			USING ERRCODE = 'check_violation';
+			USING ERRCODE = 'P0010';
 	END IF;
 
 	RETURN NEW;

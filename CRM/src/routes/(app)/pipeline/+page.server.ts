@@ -25,9 +25,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 	// ligne `opportunites` dont les champs critiques sont absents/mal typés,
 	// plutôt que de la transmettre au composant cast à l'aveugle.
 	const opportunites = (oppsRes.data ?? []).filter((r) => {
-		const ok = PipelineOpportuniteRowSchema.safeParse(r).success;
-		if (!ok) console.warn('[pipeline] opportunité ignorée (forme inattendue)');
-		return ok;
+		const parsed = PipelineOpportuniteRowSchema.safeParse(r);
+		if (!parsed.success) {
+			const id = (r as { id?: unknown })?.id;
+			console.warn(
+				`[pipeline] opportunité ignorée (forme inattendue, id=${String(id)}): ${parsed.error.issues.map((i) => i.path.join('.') || '_').join(', ')}`
+			);
+		}
+		return parsed.success;
 	});
 
 	return {

@@ -46,6 +46,25 @@ describe('sanitizeForLog - patterns redact (5)', () => {
 		expect(sanitizeForLog(long, 100).length).toBe(100);
 	});
 
+	it('M-10 : un secret chevauchant maxLen est masqué (redact AVANT slice)', () => {
+		// JWT à 3 segments. Avec l'ancien ordre (slice PUIS redact, maxLen=100),
+		// la troncature laissait `eyJ` + alphanumérique SANS les 2 points → le regex
+		// JWT ne matchait plus → le préfixe du token fuitait. Maintenant : redact
+		// d'abord (le JWT complet matche), slice ensuite.
+		const jwt = 'eyJ' + 'B'.repeat(50) + '.' + 'C'.repeat(50) + '.' + 'D'.repeat(50);
+		const padded = 'X'.repeat(70) + jwt; // le JWT démarre avant l'index 100 et déborde largement après
+		const out = sanitizeForLog(padded, 100);
+		expect(out).not.toMatch(/eyJBBBBB/);
+		expect(out).toContain('[REDACTED_JWT]');
+		expect(out.length).toBeLessThanOrEqual(100);
+	});
+
+	it('M-01 : masque le query param ?key=... (clé search.ch)', () => {
+		const out = sanitizeForLog('fetch https://tel.search.ch/api/?key=ABC123secret&was=film failed');
+		expect(out).not.toMatch(/ABC123secret/);
+		expect(out).toContain('key=[REDACTED]');
+	});
+
 	it('message vide → vide', () => {
 		expect(sanitizeForLog('')).toBe('');
 	});

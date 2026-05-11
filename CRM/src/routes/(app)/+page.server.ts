@@ -30,10 +30,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 		locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }),
 		locals.supabase.from('opportunites').select('*', { count: 'exact', head: true }),
 		// Audit 360 M-06 : exclure les deals clos (gagné/perdu) des relances en retard.
+		// `etape_pipeline` est nullable : `NOT IN (...)` exclurait les NULL en logique
+		// ternaire SQL → on inclut explicitement `etape_pipeline IS NULL` (deal pas
+		// encore qualifié mais relance en retard = pertinent à afficher).
 		locals.supabase.from('opportunites')
 			.select('id, titre, etape_pipeline, date_relance_prevue, entreprise_id')
 			.lte('date_relance_prevue', today)
-			.not('etape_pipeline', 'in', `(${ETAPES_PIPELINE_CLOSED.join(',')})`)
+			.or(`etape_pipeline.is.null,etape_pipeline.not.in.(${ETAPES_PIPELINE_CLOSED.join(',')})`)
 			.order('date_relance_prevue', { ascending: true })
 			.limit(10),
 		locals.supabase.from('activites')

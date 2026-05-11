@@ -7,16 +7,11 @@
 /**
  * Audit 360 M-21 : version du schéma d'export (nom + ordre des colonnes par
  * entité). Tout renommage/réordonnancement de colonne = incrémenter ce numéro.
- * Exposé en HTTP via `X-Export-Schema-Version` ET en 1ʳᵉ ligne du CSV
- * (`# export-schema-version: N`) pour que les imports tiers puissent détecter
- * une rupture de format. La source canonique est le header HTTP.
+ * Exposé via le header HTTP `X-Export-Schema-Version` uniquement — PAS dans le
+ * corps CSV (une ligne `# ...` en tête décalerait la ligne d'en-tête pour les
+ * parseurs naïfs : ni Excel ni pandas ne traitent `#` comme un commentaire CSV).
  */
 export const EXPORT_SCHEMA_VERSION = 1;
-
-/** Ligne d'en-tête de version, préfixée `#`, à placer en tête du corps CSV. */
-export function csvSchemaVersionLine(): string {
-	return `# export-schema-version: ${EXPORT_SCHEMA_VERSION}\r\n`;
-}
 
 export interface CsvColumn<T> {
 	/** Clé de l'objet source. */

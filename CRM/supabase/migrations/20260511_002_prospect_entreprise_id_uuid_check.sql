@@ -13,11 +13,13 @@
 
 ALTER TABLE prospect_photos
 	ADD CONSTRAINT prospect_photos_entreprise_id_uuid_fmt
-	CHECK (entreprise_id IS NULL OR entreprise_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
+	-- `~*` (insensible à la casse) pour matcher le UUID_RE `/i` côté app (audit contracts).
+	CHECK (entreprise_id IS NULL OR entreprise_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
 
 ALTER TABLE prospect_visits
 	ADD CONSTRAINT prospect_visits_entreprise_id_uuid_fmt
-	CHECK (entreprise_id IS NULL OR entreprise_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
+	-- `~*` (insensible à la casse) pour matcher le UUID_RE `/i` côté app (audit contracts).
+	CHECK (entreprise_id IS NULL OR entreprise_id ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$');
 
 COMMENT ON COLUMN prospect_photos.entreprise_id IS
 	'FK vers entreprises.id (type TEXT legacy, format UUID — CHECK prospect_photos_entreprise_id_uuid_fmt). NULL si la photo est rattachée à un lead (XOR).';

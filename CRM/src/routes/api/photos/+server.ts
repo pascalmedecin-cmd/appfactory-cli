@@ -152,11 +152,11 @@ export const POST = async ({ request, url, locals }: RequestEvent) => {
 		if (cleanupErr) {
 			console.error('[photos] Cleanup orphelin échoué', { path, cleanupErr });
 		}
-		// Audit 360 M-08 : le trigger de plafond lève un check_violation (23514) si
-		// une course a dépassé le check applicatif. On renvoie alors le 409 attendu
-		// (et non un 500 générique).
+		// Audit 360 M-08 : le trigger de plafond lève l'ERRCODE custom `P0010` si une
+		// course a dépassé le check applicatif → 409 attendu (et non un 500 générique).
+		// On matche sur l'ERRCODE (contrat stable), pas sur le texte du message.
 		const code = (insErr as { code?: string } | null)?.code;
-		if (code === '23514' || /Limite de 10 photos/.test(insErr?.message ?? '')) {
+		if (code === 'P0010') {
 			return json({ error: 'Limite de 10 photos atteinte pour cet élément' }, { status: 409 });
 		}
 		return genericError(insErr ?? new Error('Insert DB null'), 'Erreur enregistrement photo');

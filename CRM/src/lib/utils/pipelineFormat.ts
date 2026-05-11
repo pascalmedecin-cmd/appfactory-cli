@@ -18,7 +18,11 @@ export const PipelineOpportuniteRowSchema = z
 		id: z.string(),
 		titre: z.string().nullable().optional(),
 		etape_pipeline: z.string().nullable().optional(),
-		montant_estime: z.number().nullable().optional(),
+		// `montant_estime` : numeric DB ; PostgREST/supabase-js peut le transiter en
+		// string selon la config. Le code aval (formatMontantCompact) tolère déjà
+		// number|null ; on ne veut pas écarter toute la ligne pour un type souple
+		// (audit contracts). Seul `id` (PK NOT NULL) est strict.
+		montant_estime: z.union([z.number(), z.string()]).nullable().optional(),
 		date_relance_prevue: z.string().nullable().optional()
 	})
 	.passthrough();
