@@ -81,8 +81,8 @@
 <style>
 	.panel {
 		background: var(--color-surface);
-		border-radius: 24px;
-		box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02), 0 0 0 1px rgba(17, 24, 39, 0.04), 0 8px 20px -12px rgba(17, 24, 39, 0.10);
+		border-radius: var(--radius-2xl);
+		box-shadow: var(--shadow-card);
 		overflow: hidden;
 	}
 	.panel-head {
@@ -146,7 +146,7 @@
 	.timeline-icon {
 		width: 28px;
 		height: 28px;
-		border-radius: 9999px;
+		border-radius: var(--radius-full);
 		background: var(--color-primary-light);
 		color: var(--color-primary);
 		display: flex;

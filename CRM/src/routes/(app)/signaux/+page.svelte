@@ -178,21 +178,21 @@
 	}
 </script>
 
-<div class="page">
-	<div class="page-actions">
+<div class="ws-page">
+	<div class="ws-page-actions">
 		{#if data.signaux.length > 0}
 			{#if selectMode}
-				<button type="button" class="btn btn-secondary" onclick={exitSelectMode}>
+				<button type="button" class="ws-btn ws-btn-secondary" onclick={exitSelectMode}>
 					Annuler
 				</button>
 			{:else}
-				<button type="button" class="btn btn-secondary" onclick={() => (selectMode = true)}>
+				<button type="button" class="ws-btn ws-btn-secondary" onclick={() => (selectMode = true)}>
 					<Icon name="checklist" size={18} />
 					Sélectionner
 				</button>
 			{/if}
 		{/if}
-		<button type="button" class="btn btn-primary" onclick={openCreate}>
+		<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
 			<Icon name="add" size={18} />
 			Ajouter
 		</button>
@@ -204,7 +204,7 @@
 		{#snippet actions()}
 			<select
 				bind:value={filterType}
-				class="filter-select"
+				class="ws-filter-select"
 				aria-label="Filtrer par type"
 			>
 				<option value="">Tous les types</option>
@@ -214,7 +214,7 @@
 			</select>
 			<select
 				bind:value={filterCanton}
-				class="filter-select"
+				class="ws-filter-select"
 				aria-label="Filtrer par canton"
 			>
 				<option value="">Tous les cantons</option>
@@ -225,7 +225,7 @@
 			{#if filterType || filterCanton}
 				<button
 					type="button"
-					class="btn-ghost"
+					class="ws-btn-ghost"
 					onclick={() => {
 						filterType = '';
 						filterCanton = '';
@@ -238,7 +238,7 @@
 	</SignauxTabs>
 
 	<div
-		class="content"
+		class="ws-content"
 		role="tabpanel"
 		id={`panel-${activeTab}`}
 		aria-labelledby={`tab-${activeTab}`}
@@ -255,7 +255,7 @@
 					<p>
 						Vous avez repéré un appel d'offres, un permis de construire ou une opportunité ? Ajoutez-le comme signal pour le suivre.
 					</p>
-					<button type="button" class="btn btn-primary" onclick={openCreate}>
+					<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
 						<Icon name="add" size={18} />
 						Ajouter un signal
 					</button>
@@ -323,7 +323,7 @@
 						<input type="hidden" name="ids" value={[...selectedIds].join(',')} />
 						<button
 							type="button"
-							class="btn btn-danger"
+							class="ws-btn ws-btn-danger"
 							onclick={() => (batchDeleteConfirmOpen = true)}
 							disabled={selectedIds.size === 0 || batchDeleting}
 						>
@@ -348,7 +348,7 @@
 
 <button
 	type="button"
-	class="fab"
+	class="ws-fab"
 	aria-label="Ajouter un signal"
 	onclick={openCreate}
 >
@@ -711,97 +711,6 @@
 />
 
 <style>
-	.page {
-		display: flex;
-		flex-direction: column;
-		min-height: calc(100vh - var(--header-height, 56px));
-	}
-	.page-actions {
-		display: flex;
-		justify-content: flex-end;
-		gap: 8px;
-		padding: 12px 32px;
-	}
-	.btn {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		height: 40px;
-		padding: 8px 16px;
-		border-radius: 10px;
-		font-family: inherit;
-		font-size: 14px;
-		font-weight: 600;
-		cursor: pointer;
-		border: none;
-		box-sizing: border-box;
-		transition: background 220ms cubic-bezier(0.16, 1, 0.3, 1), color 220ms cubic-bezier(0.16, 1, 0.3, 1);
-	}
-	.btn-primary {
-		background: var(--color-primary);
-		color: white;
-	}
-	.btn-primary:hover {
-		background: var(--color-primary-hover);
-	}
-	.btn-secondary {
-		background: transparent;
-		color: var(--color-text-muted);
-		border: 1px solid var(--color-border);
-	}
-	.btn-secondary:hover {
-		color: var(--color-text);
-		border-color: var(--color-text-muted);
-	}
-	.btn-danger {
-		background: var(--color-danger);
-		color: white;
-	}
-	.btn-danger:hover {
-		background: rgba(239, 68, 68, 0.85);
-	}
-	.btn-danger:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-	.btn:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-	}
-	.btn-ghost {
-		background: transparent;
-		border: none;
-		color: var(--color-text-muted);
-		font-size: 13px;
-		cursor: pointer;
-		padding: 0 8px;
-		font-family: inherit;
-	}
-	.btn-ghost:hover {
-		color: var(--color-text);
-	}
-
-	.filter-select {
-		height: 32px;
-		padding: 0 8px;
-		border: 1px solid var(--color-border);
-		border-radius: 8px;
-		background: var(--color-surface);
-		font-family: inherit;
-		font-size: 13px;
-		color: var(--color-text);
-		cursor: pointer;
-	}
-	.filter-select:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-	}
-
-	.content {
-		flex: 1;
-		padding: 32px;
-	}
-
 	/* Empty state grid 2 cards */
 	.empty-grid {
 		display: grid;
@@ -811,7 +720,7 @@
 	.empty-card {
 		background: var(--color-surface);
 		border: 1px solid var(--color-border);
-		border-radius: 12px;
+		border-radius: var(--radius-xl);
 		padding: 24px;
 		display: grid;
 		gap: 16px;
@@ -824,7 +733,7 @@
 	.empty-card-icon {
 		width: 40px;
 		height: 40px;
-		border-radius: 10px;
+		border-radius: var(--radius-lg);
 		display: grid;
 		place-items: center;
 		flex-shrink: 0;
@@ -876,7 +785,7 @@
 		padding: 12px 16px;
 		background: var(--color-surface);
 		border: 1px solid var(--color-border);
-		border-radius: 12px;
+		border-radius: var(--radius-xl);
 		margin-bottom: 16px;
 	}
 	.batch-link {
@@ -902,52 +811,4 @@
 		flex: 1;
 	}
 
-	@media (max-width: 1024px) {
-		.page-actions {
-			padding: 12px 24px;
-		}
-		.content {
-			padding: 24px;
-		}
-	}
-	@media (max-width: 768px) {
-		.page-actions {
-			display: none;
-		}
-		.content {
-			padding: 16px 16px 96px;
-		}
-	}
-
-	.fab {
-		display: none;
-	}
-
-	@media (max-width: 768px) {
-		.fab {
-			display: grid;
-			place-items: center;
-			position: fixed;
-			right: 20px;
-			bottom: 20px;
-			width: 56px;
-			height: 56px;
-			border-radius: 9999px;
-			background: var(--color-primary);
-			color: white;
-			border: none;
-			cursor: pointer;
-			box-shadow: 0 8px 24px -6px rgba(47, 90, 158, 0.45);
-			transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), background 220ms cubic-bezier(0.16, 1, 0.3, 1);
-			z-index: 20;
-		}
-		.fab:hover {
-			transform: translateY(-2px);
-			background: var(--color-primary-hover);
-		}
-		.fab:focus-visible {
-			outline: 2px solid var(--color-primary);
-			outline-offset: 2px;
-		}
-	}
 </style>

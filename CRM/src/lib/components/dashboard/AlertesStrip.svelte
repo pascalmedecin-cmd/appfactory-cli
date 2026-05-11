@@ -110,21 +110,21 @@
 	}
 	.alert-card {
 		background: var(--color-surface);
-		border-radius: 16px;
+		border-radius: var(--radius-2xl);
 		padding: 18px 20px;
 		display: flex;
 		align-items: center;
 		gap: 14px;
 		text-decoration: none;
 		color: inherit;
-		box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02), 0 0 0 1px rgba(17, 24, 39, 0.04), 0 8px 20px -12px rgba(17, 24, 39, 0.10);
+		box-shadow: var(--shadow-card);
 		transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1);
 		position: relative;
 		overflow: hidden;
 	}
 	.alert-card:hover {
 		transform: translateY(-2px);
-		box-shadow: 0 1px 3px rgba(17, 24, 39, 0.05), 0 20px 40px -15px rgba(17, 24, 39, 0.08);
+		box-shadow: var(--shadow-card-hover);
 	}
 	.alert-card:focus-visible {
 		outline: 2px solid var(--color-primary);
@@ -143,7 +143,7 @@
 	.alert-icon {
 		width: 40px;
 		height: 40px;
-		border-radius: 12px;
+		border-radius: var(--radius-xl);
 		display: flex;
 		align-items: center;
 		justify-content: center;

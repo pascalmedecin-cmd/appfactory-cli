@@ -72,8 +72,8 @@
 		text-transform: none;
 		letter-spacing: 0;
 		border: 1px solid var(--color-border);
-		border-radius: 10px;
-		box-shadow: 0 6px 20px rgba(15, 23, 41, 0.10), 0 1px 3px rgba(15, 23, 41, 0.05);
+		border-radius: var(--radius-lg);
+		box-shadow: var(--shadow-lg);
 		opacity: 0;
 		visibility: hidden;
 		transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;

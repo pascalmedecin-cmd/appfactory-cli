@@ -36,7 +36,7 @@
 		display: inline-flex;
 		background: var(--color-surface-alt);
 		border: 1px solid var(--color-border);
-		border-radius: 8px;
+		border-radius: var(--radius-md);
 		padding: 2px;
 		gap: 2px;
 		height: 32px;
@@ -47,7 +47,7 @@
 		border: none;
 		background: transparent;
 		cursor: pointer;
-		border-radius: 4px;
+		border-radius: var(--radius-sm);
 		display: grid;
 		place-items: center;
 		color: var(--color-text-muted);
@@ -59,7 +59,7 @@
 	button[aria-pressed='true'] {
 		background: var(--color-surface);
 		color: var(--color-primary);
-		box-shadow: 0 1px 2px rgba(17, 24, 39, 0.08);
+		box-shadow: var(--shadow-xs);
 	}
 	button:focus-visible {
 		outline: 2px solid var(--color-primary);

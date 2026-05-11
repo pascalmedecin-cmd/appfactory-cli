@@ -48,7 +48,7 @@
 	.export-card {
 		background: var(--color-surface);
 		border: 1px solid var(--color-border);
-		border-radius: 12px;
+		border-radius: var(--radius-xl);
 		padding: 24px;
 		display: flex;
 		flex-direction: column;
@@ -59,7 +59,7 @@
 	}
 	.export-card:hover {
 		transform: translateY(-2px);
-		box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+		box-shadow: var(--shadow-lg);
 		border-color: var(--color-primary);
 	}
 	.export-card:focus-visible {
@@ -74,7 +74,7 @@
 	.export-card-icon {
 		width: 40px;
 		height: 40px;
-		border-radius: 10px;
+		border-radius: var(--radius-lg);
 		background: radial-gradient(circle at 30% 30%, rgba(47, 90, 158, 0.12), rgba(47, 90, 158, 0.02));
 		color: var(--color-primary);
 		display: grid;

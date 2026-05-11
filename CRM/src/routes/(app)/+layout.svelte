@@ -6,6 +6,8 @@
 	import Toast from '$lib/components/Toast.svelte';
 	import { config } from '$lib/config';
 	import { page } from '$app/state';
+	// Audit 360 V2c H-21 : coquille workspace partagée (factorisation CSS cross-pages).
+	import '$lib/styles/workspace.css';
 
 	let { children, data }: { children: Snippet; data: LayoutData } = $props();
 	let sidebarCollapsed = $state(false);

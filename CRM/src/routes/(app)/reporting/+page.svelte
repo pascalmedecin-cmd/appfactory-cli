@@ -47,7 +47,8 @@
 
 <div class="page">
 	<header class="hero">
-		<h1>Reporting</h1>
+		<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
+		<h2>Reporting</h2>
 		<p>Synthèse opérationnelle FilmPro — pipeline, conversion, activité.</p>
 	</header>
 
@@ -146,7 +147,7 @@
 		padding: 32px 32px 24px;
 		background: var(--color-surface);
 	}
-	.hero h1 {
+	.hero h2 {
 		font-size: 24px;
 		font-weight: 700;
 		color: var(--color-primary-dark);
@@ -169,7 +170,7 @@
 	.panel {
 		background: var(--color-surface);
 		border: 1px solid var(--color-border);
-		border-radius: 12px;
+		border-radius: var(--radius-xl);
 		padding: 24px;
 	}
 	.panel-header {
@@ -208,7 +209,7 @@
 		.hero {
 			padding: 16px;
 		}
-		.hero h1 {
+		.hero h2 {
 			font-size: 20px;
 		}
 		.content {

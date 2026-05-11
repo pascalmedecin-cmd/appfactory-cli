@@ -159,14 +159,14 @@
 		align-items: center;
 		gap: 12px;
 		padding: 14px 16px;
-		border-radius: 12px;
+		border-radius: var(--radius-xl);
 		background: var(--color-primary);
 		color: white;
 		border: 0;
 		cursor: pointer;
 		font-family: inherit;
 		text-align: left;
-		box-shadow: 0 4px 12px -2px rgba(47, 90, 158, 0.30);
+		box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--color-primary) 30%, transparent);
 		transition: background 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
 	}
 	.lead-express-mobile:hover {
@@ -180,7 +180,7 @@
 	.lead-express-icon {
 		width: 32px;
 		height: 32px;
-		border-radius: 8px;
+		border-radius: var(--radius-md);
 		background: rgba(255, 255, 255, 0.15);
 		display: inline-flex;
 		align-items: center;

@@ -127,11 +127,8 @@
 	}
 	.card-signal {
 		background: var(--color-surface);
-		border-radius: 12px;
-		box-shadow:
-			0 1px 0 rgba(17, 24, 39, 0.02),
-			0 0 0 1px rgba(17, 24, 39, 0.04),
-			0 8px 20px -12px rgba(17, 24, 39, 0.1);
+		border-radius: var(--radius-xl);
+		box-shadow: var(--shadow-card);
 		padding: 16px;
 		cursor: pointer;
 		transition:
@@ -146,19 +143,14 @@
 	}
 	.card-signal:hover {
 		transform: translateY(-2px);
-		box-shadow:
-			0 1px 0 rgba(17, 24, 39, 0.02),
-			0 0 0 1px rgba(47, 90, 158, 0.16),
-			0 16px 28px -16px rgba(17, 24, 39, 0.14);
+		box-shadow: var(--shadow-card-active);
 	}
 	.card-signal:focus-visible {
 		outline: 2px solid var(--color-primary);
 		outline-offset: 2px;
 	}
 	.card-signal.selected {
-		box-shadow:
-			0 0 0 2px var(--color-primary),
-			0 8px 20px -12px rgba(17, 24, 39, 0.1);
+		box-shadow: 0 0 0 2px var(--color-primary), 0 8px 20px -12px color-mix(in srgb, var(--color-text) 10%, transparent);
 		background: var(--color-primary-light);
 	}
 	.card-signal-head {
@@ -169,7 +161,7 @@
 	.card-signal-icon {
 		width: 40px;
 		height: 40px;
-		border-radius: 10px;
+		border-radius: var(--radius-lg);
 		flex-shrink: 0;
 		display: grid;
 		place-items: center;
@@ -219,7 +211,7 @@
 		align-items: center;
 		gap: 4px;
 		padding: 2px 8px;
-		border-radius: 9999px;
+		border-radius: var(--radius-full);
 		font-size: 12px;
 		font-weight: 600;
 	}

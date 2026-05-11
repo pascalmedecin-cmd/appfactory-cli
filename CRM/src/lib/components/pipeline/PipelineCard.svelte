@@ -127,9 +127,9 @@
 <style>
 	.card {
 		background: var(--color-surface);
-		border-radius: 12px;
+		border-radius: var(--radius-xl);
 		padding: 14px;
-		box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02), 0 0 0 1px rgba(17, 24, 39, 0.04), 0 8px 20px -12px rgba(17, 24, 39, 0.1);
+		box-shadow: var(--shadow-card);
 		cursor: grab;
 		position: relative;
 		transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms ease;
@@ -150,7 +150,7 @@
 	}
 	.card:hover {
 		transform: translateY(-1px);
-		box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02), 0 0 0 1px rgba(47, 90, 158, 0.16), 0 16px 28px -16px rgba(17, 24, 39, 0.14);
+		box-shadow: var(--shadow-card-active);
 	}
 	.card:active {
 		cursor: grabbing;
@@ -223,7 +223,7 @@
 	.card-avatar {
 		width: 18px;
 		height: 18px;
-		border-radius: 9999px;
+		border-radius: var(--radius-full);
 		background: var(--color-info-light);
 		color: var(--color-info);
 		display: grid;

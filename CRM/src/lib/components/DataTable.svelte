@@ -682,7 +682,7 @@
 	:global(.dt-sticky-2.dt-scrolled-x:not(.dt-no-checkbox) tbody td:nth-child(3)),
 	:global(.dt-sticky-2.dt-scrolled-x.dt-no-checkbox thead th:nth-child(2)),
 	:global(.dt-sticky-2.dt-scrolled-x.dt-no-checkbox tbody td:nth-child(2)) {
-		box-shadow: 4px 0 4px -4px rgba(0, 0, 0, 0.08);
+		box-shadow: 4px 0 4px -4px color-mix(in srgb, var(--color-text) 8%, transparent);
 	}
 
 	/* Resize handle (drag horizontal sur séparateur de colonne) */

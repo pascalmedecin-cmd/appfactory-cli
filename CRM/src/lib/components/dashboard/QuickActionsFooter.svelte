@@ -84,19 +84,19 @@
 	}
 	.qa-card {
 		background: var(--color-surface);
-		border-radius: 12px;
+		border-radius: var(--radius-xl);
 		padding: 14px 16px;
 		display: flex;
 		align-items: center;
 		gap: 12px;
 		text-decoration: none;
 		color: var(--color-text);
-		box-shadow: 0 0 0 1px rgba(17, 24, 39, 0.05);
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-text) 5%, transparent);
 		transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1);
 	}
 	.qa-card:hover {
 		transform: translateY(-1px);
-		box-shadow: 0 0 0 1px rgba(47, 90, 158, 0.25), 0 8px 16px -8px rgba(47, 90, 158, 0.18);
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-primary) 25%, transparent), 0 8px 16px -8px color-mix(in srgb, var(--color-primary) 18%, transparent);
 	}
 	.qa-card:focus-visible {
 		outline: 2px solid var(--color-primary);
@@ -105,7 +105,7 @@
 	.qa-icon {
 		width: 32px;
 		height: 32px;
-		border-radius: 8px;
+		border-radius: var(--radius-md);
 		background: var(--color-primary-light);
 		color: var(--color-primary);
 		display: flex;

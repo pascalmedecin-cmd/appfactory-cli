@@ -89,7 +89,7 @@
 						placeholder="000000"
 						bind:value={code}
 						required
-						class="w-full px-4 py-3 rounded-lg text-sm text-center tracking-[0.3em] text-lg font-mono {bgImage
+						class="w-full px-4 py-3 rounded-lg text-lg text-center tracking-[0.3em] font-mono {bgImage
 							? 'bg-white/10 border border-white/20 text-white placeholder-white/40 backdrop-blur-sm'
 							: 'bg-white border border-border text-text placeholder-text-light/50'}"
 					/>
@@ -140,9 +140,7 @@
 							? 'border border-white/20 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20'
 							: 'border border-primary bg-primary text-white hover:bg-primary-hover'}"
 				>
-					<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-						<path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-					</svg>
+					<Icon name="mail" size={20} strokeWidth={1.75} />
 					{loading ? 'Envoi en cours...' : 'Recevoir le code'}
 				</button>
 			</form>
@@ -176,7 +174,7 @@
 	.login-overlay {
 		position: absolute;
 		inset: 0;
-		background: rgba(10, 22, 40, 0.45);
+		background: color-mix(in srgb, var(--color-primary-dark) 45%, transparent);
 		z-index: 1;
 	}
 
@@ -187,8 +185,9 @@
 		width: 100%;
 		display: flex;
 		flex-direction: column;
-		gap: 2.5rem;
-		padding: 2.5rem;
+		/* Audit 360 V2c H-29 : gap aligné échelle (2rem = 32px), cf. GOLDEN § 4. */
+		gap: 2rem;
+		padding: 2rem;
 	}
 
 	.login-logo {
@@ -197,11 +196,11 @@
 	}
 
 	.login-subtitle {
-		font-size: 1.1rem;
+		/* Audit 360 V2c H-29 : DM Sans (héritée), pas de police décorative (cf. GOLDEN § 6). */
+		font-size: 1rem;
 		font-weight: 700;
 		letter-spacing: 0.15em;
 		text-transform: uppercase;
 		color: white;
-		font-family: 'Inter', system-ui, sans-serif;
 	}
 </style>

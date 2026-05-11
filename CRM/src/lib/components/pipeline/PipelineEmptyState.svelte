@@ -65,7 +65,7 @@
 	.col-empty-icon {
 		width: 40px;
 		height: 40px;
-		border-radius: 9999px;
+		border-radius: var(--radius-full);
 		background: var(--color-surface-alt);
 		display: grid;
 		place-items: center;
@@ -94,7 +94,7 @@
 		color: var(--color-primary);
 		background: transparent;
 		border: 1px solid var(--color-primary-light);
-		border-radius: 8px;
+		border-radius: var(--radius-md);
 		cursor: pointer;
 		display: inline-flex;
 		align-items: center;

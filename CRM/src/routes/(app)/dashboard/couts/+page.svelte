@@ -13,7 +13,8 @@
 <div class="page">
 	<header class="page-header">
 		<div>
-			<h1>Coûts API Claude</h1>
+			<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
+			<h2>Coûts API Claude</h2>
 			<p class="subtitle">
 				Suivi des dépenses de la veille hebdomadaire sur 12 semaines glissantes.
 			</p>
@@ -39,7 +40,7 @@
 	.page-header {
 		padding: 32px 32px 24px;
 	}
-	.page-header h1 {
+	.page-header h2 {
 		font-size: 24px;
 		font-weight: 700;
 		color: var(--color-primary-dark);
@@ -80,7 +81,7 @@
 		.chart-section {
 			padding: 16px;
 		}
-		.page-header h1 {
+		.page-header h2 {
 			font-size: 20px;
 		}
 	}

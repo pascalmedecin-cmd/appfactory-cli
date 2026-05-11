@@ -222,9 +222,10 @@
 		<div class="flex items-start justify-between gap-6 flex-wrap">
 			<div class="flex-1 min-w-0 max-w-3xl">
 				<div class="mag-kicker text-primary mb-3">Veille sectorielle FilmPro</div>
-				<h1 class="mag-display text-[40px] md:text-6xl text-primary-dark">
+				<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
+				<h2 class="mag-display text-[40px] md:text-6xl text-primary-dark">
 					Édition n° {editionNumber(data.report.week_label)}
-				</h1>
+				</h2>
 				<p class="mag-body text-text-body mt-4 text-base md:text-[17px]">
 					{data.report.week_label} · panorama hebdomadaire des marchés bâtiment, films
 					solaires, vitrages et réglementation pour servir vos décisions commerciales.

@@ -134,11 +134,8 @@
 	}
 	.card-visite {
 		background: var(--color-surface);
-		border-radius: 12px;
-		box-shadow:
-			0 1px 0 rgba(17, 24, 39, 0.02),
-			0 0 0 1px rgba(17, 24, 39, 0.04),
-			0 8px 20px -12px rgba(17, 24, 39, 0.1);
+		border-radius: var(--radius-xl);
+		box-shadow: var(--shadow-card);
 		padding: 24px;
 		cursor: pointer;
 		transition:
@@ -153,10 +150,7 @@
 	}
 	.card-visite:hover {
 		transform: translateY(-2px);
-		box-shadow:
-			0 1px 0 rgba(17, 24, 39, 0.02),
-			0 0 0 1px rgba(47, 90, 158, 0.16),
-			0 16px 28px -16px rgba(17, 24, 39, 0.14);
+		box-shadow: var(--shadow-card-active);
 	}
 	.card-visite:focus-visible {
 		outline: 2px solid var(--color-primary);
@@ -170,7 +164,7 @@
 	.card-visite-logo {
 		width: 56px;
 		height: 56px;
-		border-radius: 10px;
+		border-radius: var(--radius-lg);
 		flex-shrink: 0;
 		overflow: hidden;
 		border: 1px solid var(--color-border);

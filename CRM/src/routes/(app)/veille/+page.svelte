@@ -64,9 +64,10 @@
 	<header class="pb-6 md:pb-8 mb-10 md:mb-14 border-b-2 border-primary-dark">
 		<div class="mag-kicker text-primary mb-3">Veille sectorielle FilmPro</div>
 		<div class="flex items-end justify-between gap-6 flex-wrap">
-			<h1 class="mag-display text-[40px] md:text-6xl text-primary-dark max-w-3xl">
+			<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
+			<h2 class="mag-display text-[40px] md:text-6xl text-primary-dark max-w-3xl">
 				Le pouls hebdomadaire des films FilmPro
-			</h1>
+			</h2>
 			<div class="flex items-end gap-4 shrink-0">
 				{#if featured}
 					<div class="text-right hidden md:block">

@@ -138,7 +138,7 @@
 	.col {
 		background: var(--color-surface);
 		border: 1px solid var(--color-border);
-		border-radius: 16px;
+		border-radius: var(--radius-2xl);
 		display: flex;
 		flex-direction: column;
 		min-width: 280px;
@@ -148,7 +148,7 @@
 	.col[data-dragover='true'] {
 		background: var(--color-primary-light);
 		border-color: var(--color-primary);
-		box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04), 0 8px 24px -12px rgba(17, 24, 39, 0.1);
+		box-shadow: var(--shadow-card);
 	}
 
 	.col-head {
@@ -164,7 +164,7 @@
 	.col-icon {
 		width: 36px;
 		height: 36px;
-		border-radius: 10px;
+		border-radius: var(--radius-lg);
 		display: grid;
 		place-items: center;
 		flex-shrink: 0;
@@ -209,12 +209,12 @@
 		padding: 2px 8px;
 		background: var(--color-surface-alt);
 		color: var(--color-text-muted);
-		border-radius: 9999px;
+		border-radius: var(--radius-full);
 	}
 	.col-add {
 		width: 24px;
 		height: 24px;
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		background: transparent;
 		border: none;
 		cursor: pointer;
@@ -235,13 +235,13 @@
 	.col-progress {
 		height: 3px;
 		background: var(--color-surface-alt);
-		border-radius: 9999px;
+		border-radius: var(--radius-full);
 		overflow: hidden;
 		margin-bottom: 8px;
 	}
 	.col-progress-bar {
 		height: 100%;
-		border-radius: 9999px;
+		border-radius: var(--radius-full);
 		transition: width 320ms cubic-bezier(0.16, 1, 0.3, 1);
 	}
 	.col-progress-bar--identification {
@@ -289,7 +289,7 @@
 		padding: 0 12px;
 		background: var(--color-surface-alt);
 		border: 1px solid transparent;
-		border-radius: 10px;
+		border-radius: var(--radius-lg);
 		color: var(--color-text-muted);
 		font-family: inherit;
 		font-size: 12.5px;

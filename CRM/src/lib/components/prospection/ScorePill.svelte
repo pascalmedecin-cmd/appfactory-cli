@@ -43,7 +43,7 @@
 		min-width: 130px;
 		height: 26px;
 		padding: 0 11px;
-		border-radius: 6px;
+		border-radius: var(--radius-sm);
 		font-size: 12px;
 		font-weight: 600;
 		letter-spacing: 0.005em;

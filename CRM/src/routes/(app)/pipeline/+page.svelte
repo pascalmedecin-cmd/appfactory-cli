@@ -231,11 +231,11 @@
 	<input type="hidden" name="etape_pipeline" value={moveFormEtape} />
 </form>
 
-<div class="page">
-	<div class="page-actions">
+<div class="ws-page">
+	<div class="ws-page-actions">
 		<button
 			type="button"
-			class="btn btn-primary"
+			class="ws-btn ws-btn-primary"
 			onclick={() => openCreate()}
 		>
 			<Icon name="add" size={18} />
@@ -278,7 +278,7 @@
 
 <button
 	type="button"
-	class="fab"
+	class="ws-fab"
 	aria-label="Nouvelle opportunité"
 	onclick={() => openCreate()}
 >
@@ -487,43 +487,6 @@
 />
 
 <style>
-	.page {
-		display: flex;
-		flex-direction: column;
-		min-height: calc(100vh - var(--header-height, 56px));
-	}
-	.page-actions {
-		display: flex;
-		justify-content: flex-end;
-		padding: 12px 32px;
-	}
-	.btn {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		height: 40px;
-		padding: 8px 16px;
-		border-radius: 10px;
-		font-family: inherit;
-		font-size: 14px;
-		font-weight: 600;
-		cursor: pointer;
-		border: none;
-		box-sizing: border-box;
-		transition: background 220ms cubic-bezier(0.16, 1, 0.3, 1);
-	}
-	.btn-primary {
-		background: var(--color-primary);
-		color: white;
-	}
-	.btn-primary:hover {
-		background: var(--color-primary-hover);
-	}
-	.btn-primary:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 2px;
-	}
-
 	.kanban-wrap {
 		flex: 1;
 		padding: 20px 32px 40px;
@@ -555,9 +518,6 @@
 		.kanban--toutes {
 			grid-template-columns: repeat(2, minmax(280px, 1fr));
 		}
-		.page-actions {
-			padding: 12px 24px;
-		}
 		.kanban-wrap {
 			padding: 16px 24px 32px;
 		}
@@ -568,43 +528,8 @@
 		.kanban--toutes {
 			grid-template-columns: 1fr;
 		}
-		.page-actions {
-			display: none;
-		}
 		.kanban-wrap {
 			padding: 12px 16px 96px;
-		}
-	}
-
-	.fab {
-		display: none;
-	}
-
-	@media (max-width: 768px) {
-		.fab {
-			display: grid;
-			place-items: center;
-			position: fixed;
-			right: 20px;
-			bottom: 20px;
-			width: 56px;
-			height: 56px;
-			border-radius: 9999px;
-			background: var(--color-primary);
-			color: white;
-			border: none;
-			cursor: pointer;
-			box-shadow: 0 8px 24px -6px rgba(47, 90, 158, 0.45);
-			transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), background 220ms cubic-bezier(0.16, 1, 0.3, 1);
-			z-index: 20;
-		}
-		.fab:hover {
-			transform: translateY(-2px);
-			background: var(--color-primary-hover);
-		}
-		.fab:focus-visible {
-			outline: 2px solid var(--color-primary);
-			outline-offset: 2px;
 		}
 	}
 </style>

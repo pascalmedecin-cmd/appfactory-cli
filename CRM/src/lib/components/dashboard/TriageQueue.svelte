@@ -240,9 +240,9 @@
 	.kicker .dot {
 		width: 6px;
 		height: 6px;
-		border-radius: 9999px;
+		border-radius: var(--radius-full);
 		background: var(--color-success);
-		box-shadow: 0 0 0 4px rgba(83, 139, 107, 0.15);
+		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-success) 15%, transparent);
 		animation: pulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 	}
 	@keyframes pulse {
@@ -252,8 +252,8 @@
 
 	.tq {
 		background: var(--color-surface);
-		border-radius: 24px;
-		box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02), 0 0 0 1px rgba(17, 24, 39, 0.04), 0 8px 20px -12px rgba(17, 24, 39, 0.10);
+		border-radius: var(--radius-2xl);
+		box-shadow: var(--shadow-card);
 		overflow: hidden;
 	}
 	.tq-list {
@@ -339,7 +339,7 @@
 		width: 34px;
 		height: 34px;
 		padding: 0;
-		border-radius: 8px;
+		border-radius: var(--radius-md);
 		border: 1px solid transparent;
 		background: transparent;
 		cursor: pointer;
@@ -357,39 +357,41 @@
 	.ab:active:not(:disabled) { transform: scale(0.96) translateY(0); transition-duration: 80ms; }
 	.ab:focus-visible {
 		outline: none;
-		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.30);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 30%, transparent);
 	}
 	.ab:disabled { cursor: wait; opacity: 0.5; transform: none !important; }
 
-	.ab-yes { color: #6E9C8F; }
-	.ab-no { color: #C28A86; }
-	.ab-later { color: #8A95A8; }
-	.ab-view { color: #7B8FAE; }
+	/* Audit 360 V2c H-24 : couleurs ActionButton dérivées des tokens sémantiques
+	   (repos = variante atténuée via color-mix, hover = token saturé). Aucun hex hardcodé. */
+	.ab-yes { color: color-mix(in srgb, var(--color-success) 62%, var(--color-text-muted)); }
+	.ab-no { color: color-mix(in srgb, var(--color-danger) 58%, var(--color-text-muted)); }
+	.ab-later { color: var(--color-info); }
+	.ab-view { color: color-mix(in srgb, var(--color-primary) 68%, var(--color-text-muted)); }
 	.ab-yes:hover:not(:disabled) {
 		background: var(--color-success-light);
-		color: #027A48;
-		box-shadow: 0 4px 12px -3px rgba(2, 122, 72, 0.20);
+		color: var(--color-success);
+		box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--color-success) 22%, transparent);
 	}
 	.ab-no:hover:not(:disabled) {
 		background: var(--color-danger-light);
-		color: #C0391A;
-		box-shadow: 0 4px 12px -3px rgba(192, 57, 26, 0.20);
+		color: var(--color-danger);
+		box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--color-danger) 22%, transparent);
 	}
 	.ab-later:hover:not(:disabled) {
 		background: var(--color-info-light);
 		color: var(--color-info);
-		box-shadow: 0 4px 12px -3px rgba(90, 113, 144, 0.18);
+		box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--color-info) 20%, transparent);
 	}
 	.ab-view:hover:not(:disabled) {
 		background: var(--color-primary-light);
 		color: var(--color-primary);
-		box-shadow: 0 4px 12px -3px rgba(47, 90, 158, 0.20);
+		box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--color-primary) 22%, transparent);
 	}
 
 	.tq-footer {
 		padding: 14px 24px;
-		border-top: 1px solid rgba(17, 24, 39, 0.05);
-		background: linear-gradient(180deg, var(--color-surface) 0%, var(--color-surface-alt) 100%);
+		border-top: 1px solid var(--color-border);
+		background: var(--color-surface-alt);
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
@@ -415,7 +417,7 @@
 	.tq-footer-cta:focus-visible {
 		outline: 2px solid var(--color-primary);
 		outline-offset: 2px;
-		border-radius: 4px;
+		border-radius: var(--radius-sm);
 	}
 
 	@keyframes fadeUp {

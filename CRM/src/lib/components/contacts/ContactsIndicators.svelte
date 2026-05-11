@@ -88,7 +88,7 @@
 	.indicator-icon {
 		width: 44px;
 		height: 44px;
-		border-radius: 12px;
+		border-radius: var(--radius-xl);
 		background: radial-gradient(circle at 30% 30%, rgba(47, 90, 158, 0.1), rgba(47, 90, 158, 0.02));
 		display: grid;
 		place-items: center;

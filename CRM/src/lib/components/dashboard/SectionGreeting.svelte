@@ -46,13 +46,13 @@
 			<span class="kicker-text">{dateLabel} · {timeLabel}</span>
 		</span>
 	</div>
-	<h1 class="hero-h1">
+	<h2 class="hero-h1">
 		{#if firstName}
 			Bonjour <span class="name">{firstName}</span>.
 		{:else}
 			{greeting}
 		{/if}
-	</h1>
+	</h2>
 	<p class="hero-summary">
 		<strong>{triageTotal} {triageTotal === 1 ? 'lead prioritaire' : 'leads prioritaires'}</strong> à trier ce matin,
 		<strong>{signauxCount} {signauxCount === 1 ? 'marché' : 'marchés'}</strong>,
@@ -71,20 +71,18 @@
 		gap: 12px;
 		margin-bottom: 16px;
 	}
+	/* Audit 360 V2c H-30 : échelle éditoriale dashboard (24/40/56/76), cf. GOLDEN_STANDARD § 3.3. */
 	.hero-h1 {
-		font-size: 44px;
+		font-size: 40px;
 		font-weight: 700;
 		letter-spacing: -0.025em;
 		line-height: 1.05;
 		color: var(--color-primary-dark);
 		margin: 0 0 12px;
 	}
+	/* Audit 360 V2c H-25 : prénom en aplat primary (pas de gradient text, cf. GOLDEN § 6). */
 	.hero-h1 .name {
-		background: linear-gradient(135deg, var(--color-primary-dark) 0%, var(--color-primary) 100%);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
-		color: transparent;
+		color: var(--color-primary);
 	}
 	.hero-summary {
 		font-size: 17px;
@@ -112,9 +110,9 @@
 	.kicker .dot {
 		width: 6px;
 		height: 6px;
-		border-radius: 9999px;
+		border-radius: var(--radius-full);
 		background: var(--color-success);
-		box-shadow: 0 0 0 4px rgba(83, 139, 107, 0.15);
+		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-success) 15%, transparent);
 		animation: pulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
 	}
 	@keyframes pulse {

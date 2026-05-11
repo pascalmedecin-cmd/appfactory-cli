@@ -139,7 +139,8 @@
 <div class="px-6 py-6 md:px-8 md:py-8 space-y-6">
 	<header class="flex items-center justify-between gap-4">
 		<div>
-			<h1 class="text-2xl font-semibold tracking-tight">Thèmes veille</h1>
+			<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
+			<h2 class="text-2xl font-semibold tracking-tight">Thèmes veille</h2>
 			<p class="text-sm text-text-muted mt-1">
 				Taxonomie utilisée par le pipeline veille hebdomadaire (LLM + cross-check). Les thèmes
 				actifs sont injectés dans le prompt à chaque génération.

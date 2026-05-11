@@ -1,0 +1,169 @@
+/*
+ * Coquille partagée des pages workspace (audit 360 V2c H-21).
+ *
+ * Factorise ~320 lignes de CSS dupliqué cross-pages (.page / .page-actions / .btn / .fab /
+ * .filter-select / .content) entre /signaux, /pipeline, /contacts, /entreprises.
+ * Importé une fois dans src/routes/(app)/+layout.svelte (donc global au shell app).
+ * Toutes les valeurs viennent des tokens design system (app.css @theme) — cf. GOLDEN § 5.1.
+ *
+ * Classes préfixées `ws-` pour éviter toute collision avec les styles scopés des autres pages.
+ */
+
+.ws-page {
+	display: flex;
+	flex-direction: column;
+	min-height: calc(100vh - var(--header-height, 56px));
+}
+
+/* Barre d'actions globales de la page (haut droite). Masquée < 768px → FAB. */
+.ws-page-actions {
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
+	padding: 12px 32px;
+}
+
+/* Zone de contenu principale (table, cartes, kanban...). */
+.ws-content {
+	flex: 1;
+	padding: 32px;
+}
+
+/* Boutons workspace — alignés GOLDEN_STANDARD § 5.1 (h-10, radius lg, 14px/600). */
+.ws-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	height: 40px;
+	padding: 8px 16px;
+	border-radius: var(--radius-lg);
+	font-family: inherit;
+	font-size: 14px;
+	font-weight: 600;
+	cursor: pointer;
+	border: none;
+	box-sizing: border-box;
+	transition:
+		background 220ms cubic-bezier(0.16, 1, 0.3, 1),
+		color 220ms cubic-bezier(0.16, 1, 0.3, 1),
+		border-color 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.ws-btn:focus-visible {
+	outline: 2px solid var(--color-primary);
+	outline-offset: 2px;
+}
+.ws-btn-primary {
+	background: var(--color-primary);
+	color: var(--color-text-inverse);
+}
+.ws-btn-primary:hover {
+	background: var(--color-primary-hover);
+}
+.ws-btn-secondary {
+	background: transparent;
+	color: var(--color-text-muted);
+	border: 1px solid var(--color-border);
+}
+.ws-btn-secondary:hover {
+	color: var(--color-text);
+	border-color: var(--color-text-muted);
+}
+.ws-btn-danger {
+	background: var(--color-danger);
+	color: var(--color-text-inverse);
+}
+.ws-btn-danger:hover {
+	background: color-mix(in srgb, var(--color-danger) 85%, transparent);
+}
+.ws-btn-danger:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.ws-btn-ghost {
+	background: transparent;
+	border: none;
+	color: var(--color-text-muted);
+	font-family: inherit;
+	font-size: 13px;
+	cursor: pointer;
+	padding: 0 8px;
+}
+.ws-btn-ghost:hover {
+	color: var(--color-text);
+}
+
+/* Selects de filtre inline. */
+.ws-filter-select {
+	height: 32px;
+	padding: 0 8px;
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-md);
+	background: var(--color-surface);
+	font-family: inherit;
+	font-size: 13px;
+	color: var(--color-text);
+	cursor: pointer;
+}
+.ws-filter-select:focus-visible {
+	outline: 2px solid var(--color-primary);
+	outline-offset: 2px;
+}
+
+/* FAB mobile (action primaire, bottom-right) — visible < 768px uniquement. */
+.ws-fab {
+	display: none;
+}
+
+@media (max-width: 1024px) {
+	.ws-page-actions {
+		padding: 12px 24px;
+	}
+	.ws-content {
+		padding: 24px;
+	}
+}
+@media (max-width: 768px) {
+	.ws-page-actions {
+		display: none;
+	}
+	.ws-content {
+		padding: 16px 16px 96px;
+	}
+	.ws-fab {
+		display: grid;
+		place-items: center;
+		position: fixed;
+		right: 20px;
+		bottom: 20px;
+		width: 56px;
+		height: 56px;
+		border-radius: var(--radius-full);
+		background: var(--color-primary);
+		color: var(--color-text-inverse);
+		border: none;
+		cursor: pointer;
+		box-shadow: 0 8px 24px -6px color-mix(in srgb, var(--color-primary) 45%, transparent);
+		transition:
+			transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
+			background 220ms cubic-bezier(0.16, 1, 0.3, 1);
+		z-index: 20;
+	}
+	.ws-fab:hover {
+		transform: translateY(-2px);
+		background: var(--color-primary-hover);
+	}
+	.ws-fab:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ws-btn,
+	.ws-fab {
+		transition: none;
+	}
+	.ws-fab:hover {
+		transform: none;
+	}
+}

@@ -100,9 +100,10 @@
 	}
 	.kpi-card {
 		background: var(--color-surface);
-		border-radius: 24px;
+		/* Audit 360 V2c H-31 : radius aligné token --radius-2xl (16px), cf. GOLDEN § 2.6. */
+		border-radius: var(--radius-2xl);
 		padding: 24px;
-		box-shadow: 0 1px 0 rgba(17, 24, 39, 0.02), 0 0 0 1px rgba(17, 24, 39, 0.04), 0 8px 20px -12px rgba(17, 24, 39, 0.10);
+		box-shadow: var(--shadow-card);
 		position: relative;
 		overflow: hidden;
 		transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 280ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -112,7 +113,7 @@
 	}
 	.kpi-card:hover {
 		transform: translateY(-2px);
-		box-shadow: 0 1px 3px rgba(17, 24, 39, 0.05), 0 20px 40px -15px rgba(17, 24, 39, 0.08);
+		box-shadow: var(--shadow-card-hover);
 	}
 	.kpi-card:focus-visible {
 		outline: 2px solid var(--color-primary);
@@ -125,6 +126,7 @@
 		color: white;
 		padding: 28px;
 	}
+	/* Audit 360 V2c H-25 : aplat translucide (pas de radial-gradient, cf. GOLDEN § 6). */
 	.kpi-featured::before {
 		content: "";
 		position: absolute;
@@ -133,7 +135,7 @@
 		width: 280px;
 		height: 280px;
 		border-radius: 50%;
-		background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
+		background: rgba(255, 255, 255, 0.045);
 		pointer-events: none;
 	}
 	.kpi-featured::after {
@@ -222,7 +224,7 @@
 		.kpis { grid-template-columns: 1fr; gap: 12px; margin-bottom: 32px; }
 		.kpi-featured, .kpi-split { grid-column: span 1; }
 		.kpi-featured .kpi-value { font-size: 56px; }
-		.kpi-split .kpi-value { font-size: 36px; }
+		.kpi-split .kpi-value { font-size: 32px; }
 	}
 
 	@media (prefers-reduced-motion: reduce) {
