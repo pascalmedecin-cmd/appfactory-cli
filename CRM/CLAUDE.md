@@ -159,7 +159,7 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc #1 V3a - cascade audit 360 reprise (V1+V2a+V2b+V2c livrées S178 2026-05-10/11, 2 vagues autonomes restantes ~21h cumul, V3a 57 Medium ~15h prête en session dédiée `--dangerously-skip-permissions` avec spec figée `notes/audit-360-2026-05-09/spec-vague-3a.md`, découpage facultatif V3a-1/V3a-2 si fatigue ; tag rollback `pre-v3a-2026-05-11` posé). Tâche #4 refonte page Aide (H-28/M-29 délégués) peut tourner en parallèle (fichier `/aide/+page.svelte` non touché par les vagues).
+**Prochaine attaque** : Bloc #1 V3a - cascade audit 360 reprise (V1+V2a+V2b+V2c livrées S178 2026-05-10/11, 2 vagues autonomes restantes ~21h cumul, V3a 57 Medium ~15h prête en session dédiée `--dangerously-skip-permissions` avec spec figée `notes/audit-360-2026-05-09/spec-vague-3a.md`, découpage facultatif V3a-1/V3a-2 si fatigue ; tag rollback `pre-v3a-2026-05-11` posé). **Arbitrage Pascal 2026-05-11** : finir 100% du CRM (cascade V3a+V3b) AVANT de produire la page Aide → la tâche #4 refonte Aide (H-28/M-29 délégués) est `[BLOQUÉ - V3b non livrée]`, pas en parallèle.
 
 ### 1. Cascade audit 360 V2a - sécu + contracts + DB CHECK [LIVRÉ S178]
 
@@ -193,6 +193,7 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 - **[WATCH] V3a feedback_rpc_atomique_idempotence.md à graver** : pattern checklist obligatoire pour toute nouvelle RPC plpgsql (idempotence + EXCEPTION handlers + ERRCODE distincts). F2 a montré que la spec V2b ne capturait pas l'idempotence comme contrainte de design.
 - **[WATCH] V3a `Tabs.svelte` glue DOM non testée (post-V2c)** : la primitive `Tabs.svelte` n'a qu'un test sur la logique pure `tabsNav.ts` (14 tests), pas un test DOM du composant (`focusTabAt`, `e.preventDefault()`, binding `tabindex={active ? 0 : -1}`, `aria-selected`/`aria-controls`). Repo sans jsdom configuré (vitest env = node). Trigger d'ajout (jsdom + `@testing-library/svelte` + test composant) = 3e régression a11y sur les workspace tabs. Flaggé par test-coverage-reviewer (Low).
 - **[WATCH] V3a `aria-controls` Tabs vers panels inexistants (post-V2c)** : `Tabs.svelte:65` `aria-controls={panel-${tab.key}}` pointe vers des IDs `panel-{key}` absents sur les pages workspace (contacts/entreprises/signaux/pipeline filtrent une table, pas de `<div role="tabpanel">`). Pré-existant (les 5 composants `*Tabs.svelte` avaient déjà ce câblage), centralisé en V2c. Reco : rendre `aria-controls` optionnel sur la primitive (passé seulement quand un panel existe — cas `/reporting`), ou ajouter `role="tabpanel"` sur les pages. Aucun impact sécurité. Flaggé par security-auditor (Info).
+- **[WATCH] cockpit entry V3a `block_role: bloque` stale (post-V2c)** : l'entry `78249fed4e8d` (V3a) côté `~/.claude/cockpit/projets/appfactory/entries.jsonl` a `block_role: bloque` (figé par la dernière consolidation appliquée, antérieure à V2c) alors que V3a est désormais `[EXÉCUTABLE]`. Le pivot S178 a remis `blocked: false` mais pas le `block_role` ; la re-consolidation 2026-05-11 a été régressive (summaries périmés) donc non appliquée. Conséquence : `/start` afficherait V3a dans « Bloc B1 (bloqué) » au lieu de « Bloc #1 » — la « Prochaine attaque » CLAUDE.md (Bloc #1 V3a) reste autoritative. Fix : drag UI cockpit V3a vers actionnable, ou re-consolider après rafraîchissement des summaries des entries V3a/V3b.
 
 ### 5. Cascade audit 360 V3b - 28 Low + 12 Info [AUTO • xhigh • ~6h]
 
@@ -203,10 +204,10 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 
 ### 6. Tâche #4 Refonte page Aide CRM from scratch [SUPERVISÉ • xhigh • session dédiée]
 
-**Pourquoi** : Tâche #4 livraison client cadrée S177 (3 niveaux : prise en main débutants, détails fonctionnalités, doc technique architecte+admin). Indépendante de la cascade audit 360 — H-28 (/aide hors charte 1443 lignes) et M-29 (getElementById /aide) délégués à cette refonte from scratch. Skills refactoring-ui + golden-standard + frontend-design + ux-guide + taste-skill + doc-coauthoring + webapp-testing. Subagents security-auditor + test-coverage-reviewer.
-**Prérequis** : aucun (peut tourner en parallèle des vagues V2a→V3b sans conflit fichier ; refonte from scratch d'un fichier que les autres vagues ne touchent pas).
+**Pourquoi** : Tâche #4 livraison client cadrée S177 (3 niveaux : prise en main débutants, détails fonctionnalités, doc technique architecte+admin). H-28 (/aide hors charte 1443 lignes) et M-29 (getElementById /aide) délégués à cette refonte from scratch. Skills refactoring-ui + golden-standard + frontend-design + ux-guide + taste-skill + doc-coauthoring + webapp-testing. Subagents security-auditor + test-coverage-reviewer.
+**Prérequis** : **Arbitrage Pascal 2026-05-11** : finir 100% du CRM (cascade audit 360 V3a + V3b mergées) AVANT de produire la page Aide. Techniquement indépendante (fichier `/aide/+page.svelte` non touché par les vagues), mais l'ordre est arbitré : pas de parallélisation, Aide en dernier.
 
-- [ ] **[EXÉCUTABLE]** Refonte page Aide CRM 3 niveaux
+- [ ] **[BLOQUÉ - cascade audit 360 V3b non livrée (ordre arbitré Pascal : finir le CRM avant la refonte Aide)]** Refonte page Aide CRM 3 niveaux
 
 ### Watch list S178 (post-V1)
 
@@ -227,14 +228,15 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
   - Objectif : Lancement V3a en nouveau terminal autonome `--dangerously-skip-permissions` avec spec figée `notes/audit-360-2026-05-09/spec-vague-3a.md` (découpage facultatif V3a-1/V3a-2)
   - 57 Medium toutes catégories (sécu defense in depth, bugs latents, contracts cleanup, dette code, UI golden v9 polish, gaps tests)
 
-- **Bloc #2** - Refonte page Aide CRM from scratch (6h, confiance Moyen)
-  - Objectif : Refonte 3 niveaux page /aide CRM (prise en main, détails, doc technique) - livraison client tâche #4
-  - Refonte from scratch large (~1443 lignes), multi-skills design+UX+doc, isolée cascade (peut tourner en parallèle V3a car fichier `/aide/+page.svelte` non touché par les vagues ; H-28/M-29 délégués)
-
-**Blocs bloqués** (cascade séquentielle) :
+**Blocs bloqués** (cascade séquentielle + arbitrage Pascal) :
 
 - **Bloc B1** [BLOQUÉ - V3a non livrée] - Lancer V3b en terminal autonome (6h)
   - 28 Low + 12 Info polish final
+- **Bloc B2** [BLOQUÉ - V3b non livrée, ordre arbitré Pascal] - Refonte page Aide CRM from scratch (6h, confiance Moyen)
+  - Objectif : Refonte 3 niveaux page /aide CRM (prise en main, détails, doc technique) - livraison client tâche #4 ; H-28/M-29 délégués
+  - Arbitrage Pascal 2026-05-11 : finir 100% du CRM (cascade V3a+V3b) avant la refonte Aide — pas de parallélisation malgré l'absence de conflit fichier
+
+**Note cockpit** : l'entry `78249fed4e8d` (V3a) conserve `block_role: bloque` côté `entries.jsonl` (état figé par la dernière consolidation appliquée, antérieure à la livraison V2c) — la consolidation LLM relancée 2026-05-11 a produit un résultat régressif (summaries d'entries périmés citant « dépend de V2b ») donc non appliquée. Le pivot a remis `blocked: false` sur l'entry mais pas le `block_role`. À réconcilier au prochain `/start` (drag UI cockpit V3a vers actionnable, ou re-consolider après rafraîchissement des summaries). Ce bloc CLAUDE.md fait foi.
 
 <!-- END CONSOLIDATION -->
 
