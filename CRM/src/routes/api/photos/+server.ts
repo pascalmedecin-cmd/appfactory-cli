@@ -1,34 +1,13 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
+import {
+	ALLOWED_MIME,
+	MAX_PHOTO_BYTES,
+	validatePhotoUpload
+} from '$lib/server/photos/image-validate';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const BUCKET = 'prospect_photos';
 const SIGN_TTL_SECONDS = 60 * 60; // 1h
-
-const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
-const ALLOWED_EXT = ['jpg', 'jpeg', 'png', 'webp', 'heic'] as const;
-const MAX_BYTES = 5 * 1024 * 1024; // 5 MB côté serveur (cohérent avec compression client)
-
-// Magic bytes : signatures réelles, contre MIME spoofing.
-function detectImageType(bytes: Uint8Array): 'jpeg' | 'png' | 'webp' | 'heic' | null {
-	if (bytes.length < 12) return null;
-	if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'jpeg';
-	if (
-		bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47 &&
-		bytes[4] === 0x0d && bytes[5] === 0x0a && bytes[6] === 0x1a && bytes[7] === 0x0a
-	) return 'png';
-	if (
-		bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
-		bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
-	) return 'webp';
-	// HEIC : ftyp box at offset 4
-	if (
-		bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70
-	) {
-		const brand = String.fromCharCode(bytes[8], bytes[9], bytes[10], bytes[11]);
-		if (brand === 'heic' || brand === 'heix' || brand === 'mif1' || brand === 'msf1') return 'heic';
-	}
-	return null;
-}
 
 function genericError(error: unknown, fallback: string, status = 500) {
 	console.error('[photos]', error);
@@ -85,7 +64,7 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 	}
 
 	return json({
-		photos: (rows ?? []).map((r) => ({ ...r, url: signed[r.storage_path] ?? null })),
+		photos: (rows ?? []).map((r) => ({ ...r, url: signed[r.storage_path] ?? null }))
 	});
 };
 
@@ -116,23 +95,19 @@ export const POST = async ({ request, url, locals }: RequestEvent) => {
 	if (!ALLOWED_MIME.includes(file.type)) {
 		return json({ error: 'Type fichier non supporté' }, { status: 400 });
 	}
-	if (file.size > MAX_BYTES) {
+	if (file.size > MAX_PHOTO_BYTES) {
 		return json({ error: 'Fichier trop lourd (max 5 Mo)' }, { status: 413 });
 	}
 
-	// Validation magic bytes (anti MIME spoofing)
+	// Validation magic bytes + cohérence type/contenu + extension (anti MIME spoofing).
 	const headerBuf = await file.slice(0, 16).arrayBuffer();
-	const detected = detectImageType(new Uint8Array(headerBuf));
-	if (!detected) {
-		return json({ error: 'Le fichier n\'est pas une image valide' }, { status: 400 });
-	}
-	const expectedType =
-		detected === 'jpeg' ? 'image/jpeg' :
-		detected === 'png' ? 'image/png' :
-		detected === 'webp' ? 'image/webp' :
-		'image/heic';
-	if (expectedType !== file.type) {
-		return json({ error: 'Incohérence type/contenu fichier' }, { status: 400 });
+	const validated = validatePhotoUpload({
+		type: file.type,
+		size: file.size,
+		headerBytes: new Uint8Array(headerBuf)
+	});
+	if (!validated.ok) {
+		return json({ error: validated.error }, { status: validated.status });
 	}
 
 	// Limite 10 photos par owner (cohérence client/serveur).
@@ -146,13 +121,8 @@ export const POST = async ({ request, url, locals }: RequestEvent) => {
 		return json({ error: 'Limite de 10 photos atteinte pour cet élément' }, { status: 409 });
 	}
 
-	// Whitelist extension stricte (basée sur magic bytes détecté, pas sur file.name)
-	const safeExt = detected === 'jpeg' ? 'jpg' : detected;
-	if (!ALLOWED_EXT.includes(safeExt)) {
-		return json({ error: 'Extension non autorisée' }, { status: 400 });
-	}
 	const folder = owner.kind === 'lead' ? 'leads' : 'entreprises';
-	const path = `${folder}/${owner.id}/${crypto.randomUUID()}.${safeExt}`;
+	const path = `${folder}/${owner.id}/${crypto.randomUUID()}.${validated.ext}`;
 
 	const { error: upErr } = await locals.supabase.storage
 		.from(BUCKET)
@@ -165,7 +135,7 @@ export const POST = async ({ request, url, locals }: RequestEvent) => {
 		caption,
 		uploaded_by: user.id,
 		size_bytes: file.size,
-		mime_type: file.type,
+		mime_type: file.type
 	};
 	const { data: row, error: insErr } = await locals.supabase
 		.from('prospect_photos')
