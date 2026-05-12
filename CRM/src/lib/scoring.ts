@@ -4,6 +4,10 @@
  */
 
 import { config } from './config';
+import { DAY_MS } from './utils/time-constants';
+// Audit 360 V3b L-14 : type-only import (erasé au build) — pas de couplage runtime
+// avec le code serveur ; resserre `complianceTag` de `string` vers l'enum réelle.
+import type { ComplianceTag } from './server/intelligence/schema';
 
 const { scoring } = config;
 
@@ -28,7 +32,7 @@ export const SIGNAL_VEILLE_SCORING = {
 
 export interface IntelligenceSignalInput {
 	maturity: 'emergent' | 'etabli' | 'speculatif';
-	complianceTag?: string | null; // "OK FilmPro" | "Adjacent pertinent" | "À surveiller" | "Non exploitable"
+	complianceTag?: ComplianceTag | null; // 'OK FilmPro' | 'Adjacent pertinent' | 'À surveiller' | 'Non exploitable'
 	weeksSince: number;
 }
 
@@ -93,7 +97,7 @@ export function calculerBonusVeille(
 }
 
 function differenceEnJours(a: Date, b: Date): number {
-	return Math.floor((a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
+	return Math.floor((a.getTime() - b.getTime()) / DAY_MS);
 }
 
 export function calculerScore(lead: LeadScoring): ScoreDetail {

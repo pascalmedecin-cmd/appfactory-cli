@@ -2,6 +2,7 @@ import { fail } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { isEmailAllowed, parseEnvList } from '$lib/server/auth';
 import { createSupabaseServerClient } from '$lib/server/supabase';
+import { SESSION_MAX_AGE_S } from '$lib/utils/time-constants';
 import type { Actions } from './$types';
 
 export const actions: Actions = {
@@ -65,7 +66,7 @@ export const actions: Actions = {
 			httpOnly: true,
 			secure: url.protocol === 'https:',
 			sameSite: 'lax',
-			maxAge: 7 * 24 * 60 * 60
+			maxAge: SESSION_MAX_AGE_S
 		});
 
 		return { verified: true };

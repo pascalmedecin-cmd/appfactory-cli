@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import { sanitizeForLog } from '$lib/server/intelligence/sanitize';
+import { SESSION_MAX_AGE_S } from '$lib/utils/time-constants';
 import type { RequestHandler } from './$types';
 
 // Audit 360 M-03 : le message d'erreur Supabase est repris dans l'URL `?detail=...`
@@ -40,7 +41,7 @@ export const GET: RequestHandler = async ({ url, locals, cookies }) => {
 			httpOnly: true,
 			secure: url.protocol === 'https:',
 			sameSite: 'lax',
-			maxAge: 7 * 24 * 60 * 60
+			maxAge: SESSION_MAX_AGE_S
 		});
 	}
 

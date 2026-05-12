@@ -13,13 +13,16 @@ vi.mock('$env/dynamic/public', () => ({
 
 type SessionState = { session: unknown; user: { email?: string } | null };
 let mockSessionState: SessionState;
+// Audit 360 V3b I-06 : simule l'échec de auth.getUser() même quand getSession() renvoie
+// un token (token révoqué / réseau). safeGetSession doit alors fail-closed.
+let mockGetUserFails = false;
 const mockSignOut = vi.fn(async () => ({ error: null }));
 vi.mock('$lib/server/supabase', () => ({
 	createSupabaseServerClient: () => ({
 		auth: {
 			getSession: async () => ({ data: { session: mockSessionState.session } }),
 			getUser: async () =>
-				mockSessionState.session
+				mockSessionState.session && !mockGetUserFails
 					? { data: { user: mockSessionState.user }, error: null }
 					: { data: { user: null }, error: { message: 'no user' } },
 			signOut: mockSignOut
@@ -86,6 +89,7 @@ beforeEach(() => {
 	mockEnv.ALLOWED_DOMAINS = 'filmpro.ch';
 	mockEnv.ALLOWED_EMAILS = '';
 	mockSessionState = { session: null, user: null };
+	mockGetUserFails = false;
 	mockSignOut.mockClear();
 	vi.spyOn(console, 'error').mockImplementation(() => {});
 });
@@ -162,6 +166,27 @@ describe('hooks.server handle (H-18)', () => {
 		expect(h?.get('X-Content-Type-Options')).toBe('nosniff');
 		expect(h?.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
 		expect(h?.get('Permissions-Policy')).toContain('camera=()');
+		// Audit 360 V3b L-01 : HSTS 2 ans, sous-domaines, preload.
+		expect(h?.get('Strict-Transport-Security')).toBe('max-age=63072000; includeSubDomains; preload');
+	});
+
+	it('safeGetSession fail-closed (I-06) : session présente mais getUser échoue → non authentifié → redirect /login', async () => {
+		mockSessionState = { session: { access_token: 'x' }, user: { email: 'pascal@filmpro.ch' } };
+		mockGetUserFails = true;
+		const cookies = makeCookies({ login_at: String(Date.now()) });
+		const r = await runHandle(makeEvent('/dashboard', { cookies }));
+		expect(r.thrown).toBe(true);
+		expect(r.thrown ? r.redirect.status : 0).toBe(303);
+		expect(r.thrown ? r.redirect.location : '').toBe('/login');
+	});
+
+	it('safeGetSession fail-closed (I-06) : locals.safeGetSession() renvoie {session:null,user:null} si getUser échoue', async () => {
+		mockSessionState = { session: { access_token: 'x' }, user: { email: 'pascal@filmpro.ch' } };
+		mockGetUserFails = true;
+		const event = makeEvent('/login'); // route exempt → pas de redirect, on peut inspecter locals
+		await runHandle(event);
+		const safeGetSession = event.locals.safeGetSession as () => Promise<{ session: unknown; user: unknown }>;
+		await expect(safeGetSession()).resolves.toEqual({ session: null, user: null });
 	});
 
 	it('force charset=utf-8 sur les réponses application/json', async () => {

@@ -7,6 +7,7 @@
 
 import { z } from 'zod';
 import { formatPercentFromRatio } from './format-percent';
+import { DAY_MS } from './time-constants';
 
 /**
  * Schéma Zod pour valider une ligne `cost_audit_runs` retournée par Supabase.
@@ -83,7 +84,14 @@ export function formatUsd(usd: number): string {
 
 /** Formate un nombre de tokens : 1234567 → "1,2 M". */
 export function formatTokens(n: number): string {
-	if (!Number.isFinite(n) || n < 0) return '0';
+	if (!Number.isFinite(n)) return '0';
+	// Audit 360 V3b L-09 : un compteur de tokens ne devrait jamais être négatif. Si ça
+	// arrive (bug amont d'agrégation), on logge un warning au lieu de masquer en '0' et
+	// on affiche la valeur absolue (l'ordre de grandeur reste lisible pour diagnostic).
+	if (n < 0) {
+		if (typeof console !== 'undefined') console.warn(`formatTokens: valeur de tokens négative reçue (${n})`);
+		n = Math.abs(n);
+	}
 	if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace('.', ',')} M`;
 	if (n >= 1_000) return `${(n / 1_000).toFixed(1).replace('.', ',')} k`;
 	return String(Math.round(n));
@@ -149,7 +157,7 @@ export function weekKey(date: Date): string {
 	const dayNum = d.getUTCDay() || 7;
 	d.setUTCDate(d.getUTCDate() + 4 - dayNum);
 	const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-	const weekNum = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+	const weekNum = Math.ceil(((d.getTime() - yearStart.getTime()) / DAY_MS + 1) / 7);
 	return `${d.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
 }
 

@@ -4,7 +4,7 @@ import {
 	ContactCreateSchema, ContactUpdateSchema, ContactDeleteSchema,
 	EntrepriseCreateSchema, EntrepriseUpdateSchema, EntrepriseDeleteSchema,
 	OpportuniteCreateSchema, OpportuniteUpdateSchema, OpportuniteMoveSchema, OpportuniteArchiveSchema,
-	SignalCreateSchema, SignalUpdateSchema, SignalUpdateStatutSchema, SignalCreateOpportuniteSchema,
+	SignalCreateSchema, SignalUpdateSchema, SignalUpdateStatutSchema, SignalCreateOpportuniteSchema, SignalBatchDeleteSchema,
 	LeadCreateSchema, LeadUpdateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema,
 	RechercheCreateSchema, RechercheDeleteSchema,
 } from './schemas';
@@ -163,6 +163,31 @@ describe('LeadBatchStatutSchema', () => {
 			statut: 'inconnu',
 		});
 		expect(r.success).toBe(false);
+	});
+});
+
+describe('SignalBatchDeleteSchema (audit 360 V3b L-28)', () => {
+	const uuid = (n: number) => `550e8400-e29b-41d4-a716-44665544000${n}`;
+
+	it('accepte une liste CSV de UUID valides et la transforme en array', () => {
+		const r = validate(SignalBatchDeleteSchema, { ids: `${uuid(1)},${uuid(2)},${uuid(3)}` });
+		expect(r.success).toBe(true);
+		if (r.success) expect(r.data.ids).toEqual([uuid(1), uuid(2), uuid(3)]);
+	});
+
+	it('rejette une entrée vide ou un id non-UUID', () => {
+		expect(validate(SignalBatchDeleteSchema, { ids: '' }).success).toBe(false);
+		expect(validate(SignalBatchDeleteSchema, { ids: 'pas-un-uuid' }).success).toBe(false);
+		expect(validate(SignalBatchDeleteSchema, { ids: `${uuid(1)},pas-un-uuid` }).success).toBe(false);
+	});
+
+	it('rejette un lot de plus de 500 ids (cap anti-DoS)', () => {
+		const tooMany = Array.from({ length: 501 }, () => '550e8400-e29b-41d4-a716-446655440000').join(',');
+		const r = validate(SignalBatchDeleteSchema, { ids: tooMany });
+		expect(r.success).toBe(false);
+		// 500 pile passe (borne inclusive).
+		const exactly500 = Array.from({ length: 500 }, () => '550e8400-e29b-41d4-a716-446655440000').join(',');
+		expect(validate(SignalBatchDeleteSchema, { ids: exactly500 }).success).toBe(true);
 	});
 });
 

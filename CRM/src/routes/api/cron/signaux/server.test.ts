@@ -76,6 +76,37 @@ describe('GET /api/cron/signaux', () => {
 		expect(body.zefix.imported).toBe(0);
 	});
 
+	it('audit 360 V3b L-11 : une sogcDate Zefix malformée est skippée + tracée en erreur (pas de drop silencieux)', async () => {
+		const today = new Date().toISOString().slice(0, 10);
+		// fetch : Zefix renvoie 1 création avec une date pourrie + 1 récente valide ; SIMAP renvoie vide.
+		vi.stubGlobal(
+			'fetch',
+			vi.fn((url: string) => {
+				const u = String(url);
+				if (u.includes('zefix.admin.ch')) {
+					return Promise.resolve({
+						ok: true,
+						json: async () => [
+							{ uid: 'CHE-111.111.111', name: 'Pourrie SA', sogcDate: 'pas-une-date', purpose: { fr: 'x' } },
+							{ uid: 'CHE-222.222.222', name: 'Valide SA', sogcDate: today, purpose: { fr: 'y' } },
+						],
+					});
+				}
+				return Promise.resolve({ ok: true, json: async () => [] }); // SIMAP
+			})
+		);
+		const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+		const res = await callGet('Bearer test-secret');
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as { errors: number; zefix: { imported: number } };
+		expect(body.errors).toBeGreaterThanOrEqual(1);
+		expect(body.zefix.imported).toBeGreaterThanOrEqual(1); // la création valide est bien importée
+		// la date pourrie a été tracée explicitement (pas droppée en silence)
+		const loggedAll = errSpy.mock.calls.flat().map((a) => JSON.stringify(a)).join(' ');
+		expect(loggedAll).toContain('sogcDate invalide');
+		errSpy.mockRestore();
+	});
+
 	it('CRON_SECRET non configuré → 401 même avec un token plausible', async () => {
 		delete mockEnv.CRON_SECRET;
 		const res = await callGet('Bearer test-secret');

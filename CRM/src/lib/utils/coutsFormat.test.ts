@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
 	formatEur,
 	formatUsd,
@@ -60,9 +60,19 @@ describe('coutsFormat - format helpers', () => {
 		expect(formatTokens(1_500_000)).toMatch(/1,5\s*M/);
 	});
 
-	it('formatTokens sur valeurs négatives ou NaN → 0', () => {
-		expect(formatTokens(-10)).toBe('0');
+	it('formatTokens sur NaN/Infinity → 0', () => {
 		expect(formatTokens(NaN)).toBe('0');
+		expect(formatTokens(Infinity)).toBe('0');
+		expect(formatTokens(-Infinity)).toBe('0');
+	});
+
+	it('formatTokens sur valeur négative (audit 360 V3b L-09) → warn + valeur absolue', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		expect(formatTokens(-10)).toBe('10');
+		expect(formatTokens(-1500)).toMatch(/1,5\s*k/);
+		expect(formatTokens(-2_000_000)).toMatch(/2,0\s*M/);
+		expect(warn).toHaveBeenCalled();
+		warn.mockRestore();
 	});
 
 	it('formatDuration : secondes / minutes / mixte', () => {
@@ -112,6 +122,23 @@ describe('coutsFormat - weekKey ISO', () => {
 
 	it('1er janvier 2026 (jeudi) → 2026-W01', () => {
 		expect(weekKey(new Date('2026-01-01T12:00:00Z'))).toBe('2026-W01');
+	});
+
+	// Audit 360 V3b L-08 : frontière fin/début d'année (2026 commence un jeudi → 53 semaines ISO).
+	it('31 décembre 2026 (jeudi) → 2026-W53', () => {
+		expect(weekKey(new Date('2026-12-31T12:00:00Z'))).toBe('2026-W53');
+	});
+
+	it('1er janvier 2027 (vendredi) → encore 2026-W53 (semaine à cheval)', () => {
+		expect(weekKey(new Date('2027-01-01T12:00:00Z'))).toBe('2026-W53');
+	});
+
+	it('4 janvier 2027 (lundi) → 2027-W01', () => {
+		expect(weekKey(new Date('2027-01-04T12:00:00Z'))).toBe('2027-W01');
+	});
+
+	it('1er janvier 2025 (mercredi) → 2025-W01 (le 4 janvier tombe la même semaine)', () => {
+		expect(weekKey(new Date('2025-01-01T12:00:00Z'))).toBe('2025-W01');
 	});
 });
 

@@ -162,6 +162,14 @@ export async function loadThemeBundle(
 /**
  * Construit la section "Thèmes à couvrir" pour le SYSTEM_PROMPT.
  * Format aligné sur l'ancien hardcode de prompt.ts.
+ *
+ * Audit 360 V3b I-07 : les `description` proviennent de `veille_themes`, éditables par un
+ * admin authentifié — concaténées telles quelles dans le prompt système (pas d'échappement).
+ * Modèle de menace = admin déjà entièrement privilégié sur le CRM (OTP `@filmpro.ch`, ≤ 10
+ * personnes) : une « injection de prompt » via une description ne lui donne aucun accès qu'il
+ * n'a pas déjà. Validation Zod en amont (longueur ≤ 500). La sortie LLM est re-vérifiée
+ * verbatim en aval (cross-check chiffres/citations vs page réelle, S168). Mitigation si la
+ * surface s'élargit (auteurs non-admin) : échapper `\n` + délimiter `<themes_taxonomy>` XML-like.
  */
 export function buildThemesPromptSection(bundle: ThemeBundle): string {
 	const coreLines = bundle.core

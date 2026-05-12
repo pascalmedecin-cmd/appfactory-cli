@@ -5,6 +5,7 @@ import { matchMotsCles } from '$lib/text-utils';
 import { config } from '$lib/config';
 import { timingSafeEqual } from 'crypto';
 import { buildScoreFilter, type ScoreFilterPlan, type ScoreThresholds } from './score-filter';
+import { HOUR_MS } from '$lib/utils/time-constants';
 
 // Seuils de température : source unique config.scoring.labels.
 // chaud >= CHAUD_MIN, tiede dans [TIEDE_MIN, CHAUD_MIN-1], froid < TIEDE_MIN.
@@ -83,8 +84,13 @@ export async function GET(event: RequestEvent) {
 		// Determiner si on doit checker (frequence)
 		if (rech.dernier_check) {
 			const dernierCheck = new Date(rech.dernier_check);
-			const heuresDepuis = (Date.now() - dernierCheck.getTime()) / (1000 * 60 * 60);
+			const heuresDepuis = (Date.now() - dernierCheck.getTime()) / HOUR_MS;
 
+			// Audit 360 V3b L-10 : seuils volontairement < 24h / < 168h (et non pile).
+			// Marge de jitter du planificateur Vercel (le cron peut se déclencher un peu
+			// tôt). Sans cette marge, un run quotidien qui s'exécute à H-23h59 serait sauté
+			// jusqu'au lendemain → une journée entière sans check. 20h / 140h = ~4h / ~28h
+			// de tolérance, suffisant pour absorber tout décalage de scheduling.
 			if (rech.frequence_alerte === 'quotidien' && heuresDepuis < 20) continue;
 			if (rech.frequence_alerte === 'hebdomadaire' && heuresDepuis < 140) continue;
 		}

@@ -102,7 +102,15 @@ async function importZefix(
 		cutoff.setDate(cutoff.getDate() - DAYS_BACK);
 		const recent = companies.filter((c) => {
 			if (!c.sogcDate) return false;
-			return new Date(c.sogcDate) >= cutoff;
+			// Audit 360 V3b L-11 : `new Date(malformé)` donne Invalid Date, et toute
+			// comparaison renvoie false silencieusement → la création serait droppée sans
+			// trace. On loggue et on skippe explicitement.
+			const d = new Date(c.sogcDate);
+			if (Number.isNaN(d.getTime())) {
+				errors.push(`Zefix ${canton}: sogcDate invalide "${c.sogcDate}" (uid=${c.uid ?? '?'})`);
+				return false;
+			}
+			return d >= cutoff;
 		});
 
 		if (recent.length === 0) continue;

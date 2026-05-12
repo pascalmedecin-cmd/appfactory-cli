@@ -3,10 +3,11 @@ import { isEmailAllowed, parseEnvList } from '$lib/server/auth';
 import { createRateLimiter } from '$lib/server/rate-limiter';
 import { json, redirect, type Handle } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { RATE_LIMIT_WINDOW_MS, SESSION_MAX_AGE_MS } from '$lib/utils/time-constants';
 
 // Rate limiting in-memory : 10 req/min/IP, éviction LRU à 10 000 entrées
 // (audit 360 M-14). Le timer de nettoyage est arrêté en HMR dev (audit 360 M-11).
-const rateLimiter = createRateLimiter({ windowMs: 60_000, max: 10, mapCap: 10_000 });
+const rateLimiter = createRateLimiter({ windowMs: RATE_LIMIT_WINDOW_MS, max: 10, mapCap: 10_000 });
 
 if (import.meta.hot) {
 	import.meta.hot.dispose(() => rateLimiter.dispose());
@@ -64,8 +65,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
-	// Expiration session 7 jours (cookie cote serveur)
-	const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+	// Expiration session 7 jours (cookie cote serveur) — voir SESSION_MAX_AGE_MS (time-constants).
 	if (session && !isAuthRoute && !isCronRoute) {
 		const loginAt = event.cookies.get('login_at');
 		if (loginAt && Date.now() - Number(loginAt) > SESSION_MAX_AGE_MS) {
@@ -98,7 +98,17 @@ export const handle: Handle = async ({ event, resolve }) => {
 	response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
 	response.headers.set(
 		'Content-Security-Policy',
+		// 'unsafe-inline' sur script-src/style-src : requis par l'hydratation SvelteKit
+		// (inline <script> + styles scoped). Non fixable sans nonce/hash dynamique (refactor
+		// majeur du framework). Documenté audit 360 V3b L-02 : risque résiduel XSS limité
+		// (mono-tenant ≤ 10 admins @filmpro.ch, pas d'UGC rendu en HTML brut).
 		"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'"
+	);
+	// HSTS (audit 360 V3b L-01) : 2 ans, sous-domaines inclus, éligible preload list.
+	// Vercel sert exclusivement en HTTPS, donc aucun risque de lock-out HTTP.
+	response.headers.set(
+		'Strict-Transport-Security',
+		'max-age=63072000; includeSubDomains; preload'
 	);
 
 	return response;

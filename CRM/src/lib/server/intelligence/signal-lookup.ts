@@ -4,6 +4,15 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { IntelligenceSignalInput } from '$lib/scoring';
+import { ComplianceTagEnum, type ComplianceTag } from './schema';
+import { WEEK_MS } from '$lib/utils/time-constants';
+
+// Audit 360 V3b L-14 : narrow une valeur DB brute vers l'enum compliance_tag. La colonne
+// est écrite via ComplianceTagEnum (validation LLM), mais on reste défensif sur la lecture
+// (donnée legacy / corruption) → tag inconnu = null = pas de bonus, scoring classique OK.
+export function narrowComplianceTag(v: string | null | undefined): ComplianceTag | null {
+	return v != null && ComplianceTagEnum.safeParse(v).success ? (v as ComplianceTag) : null;
+}
 
 interface IntelligenceReportRow {
 	compliance_tag: string;
@@ -38,7 +47,7 @@ function weeksSinceIso(iso: string): number {
 	if (Number.isNaN(t)) return Infinity; // invalide → hors fenêtre = pas de bonus
 	const diffMs = Date.now() - t;
 	if (diffMs < 0) return 0; // future → traité comme semaine 0
-	return Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+	return Math.floor(diffMs / WEEK_MS);
 }
 
 /**
@@ -69,7 +78,7 @@ export async function fetchIntelligenceSignalLookup(
 		return {
 			forScoring: {
 				maturity: item.maturity,
-				complianceTag: row.compliance_tag ?? null,
+				complianceTag: narrowComplianceTag(row.compliance_tag),
 				weeksSince: weeksSinceIso(row.generated_at)
 			},
 			snapshot: {

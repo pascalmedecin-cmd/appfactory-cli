@@ -5,6 +5,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { calculerScore, type IntelligenceSignalInput } from '$lib/scoring';
 import { runWithConcurrency } from '$lib/server/utils/concurrency';
+import { ComplianceTagEnum, type ComplianceTag } from './schema';
+import { WEEK_MS } from '$lib/utils/time-constants';
 
 // Audit 360 M-12 : recompute batch avec concurrence bornée (4 leads en vol),
 // au lieu d'une boucle séquentielle O(N) × 3 round-trips DB.
@@ -37,7 +39,7 @@ function weeksSinceIso(iso: string): number {
 	if (Number.isNaN(t)) return Infinity;
 	const diffMs = Date.now() - t;
 	if (diffMs < 0) return 0;
-	return Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
+	return Math.floor(diffMs / WEEK_MS);
 }
 
 /**
@@ -66,7 +68,10 @@ export async function recomputeLeadScore(
 	const intelligenceSignals: IntelligenceSignalInput[] = (signals as SignalRow[] | null ?? []).map(
 		(s) => ({
 			maturity: s.maturity,
-			complianceTag: s.compliance_tag,
+			// Audit 360 V3b L-14 : narrow le tag DB vers l'enum (tag inconnu → null = pas de bonus).
+			complianceTag: ComplianceTagEnum.safeParse(s.compliance_tag).success
+				? (s.compliance_tag as ComplianceTag)
+				: null,
 			weeksSince: weeksSinceIso(s.signal_generated_at)
 		})
 	);

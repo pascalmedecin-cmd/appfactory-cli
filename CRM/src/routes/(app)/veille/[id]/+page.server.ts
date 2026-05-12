@@ -80,7 +80,9 @@ const ManualItemSchema = z.object({
 	title: z.string().min(10).max(200),
 	summary: z.string().min(40).max(1500),
 	filmpro_relevance: z.string().min(20).max(1200),
-	url: z.string().url().max(2000),
+	// Defense-in-depth (audit 360 V3b L-05) : .url() seul accepte javascript:/ftp:/data:
+	// — on resserre au schéma http(s). La vraie garde reste sanitizeUrl + verifyUrl ci-dessous.
+	url: z.string().url().regex(/^https?:\/\//i, 'URL doit commencer par http:// ou https://').max(2000),
 	source_name: z.string().min(2).max(120),
 	// Audit 360 M-18 : `.max()` en amont du regex.
 	published_at: z.string().max(10).regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD'),
@@ -228,7 +230,9 @@ export const actions: Actions = {
 
 			const { data: updated, error: updateErr } = await service
 				.from('intelligence_reports')
-				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any -- les types Supabase générés
+				// ne couvrent pas la colonne `items` JSONB ni `version` (drift typegen, [WATCH] V3a regen) ;
+				// `as never` + `as any` jusqu'au prochain `supabase gen types` (audit 360 V3b L-20).
 				.update({ items: updatedItems as any, version: currentVersion + 1 } as never)
 				.eq('id', params.id)
 				.eq('version' as 'id', currentVersion as unknown as string)
