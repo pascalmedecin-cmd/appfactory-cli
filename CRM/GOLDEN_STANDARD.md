@@ -553,9 +553,9 @@ A11y :
 
 ---
 
-## 14. Décisions tranchées - audit 360 V3a-2 (S179, 2026-05-12)
+## 14. Décisions tranchées - audit 360 V3a-2 + V3b (S179-S180, 2026-05-12)
 
-Trois findings UI demandaient un arbitrage in-session (« aligner X **OU** mettre à jour la spec »). Décisions actées ici :
+Findings UI demandant un arbitrage in-session (« aligner X **OU** mettre à jour la spec »). Décisions actées ici :
 
 ### 14.1 Hauteur des boutons d'action en pied de modal — `h-11` (44px), pas `h-10` (M-31)
 
@@ -568,3 +568,11 @@ Le pseudo-élément `::before` 280×280 (et `::after` 180×180) du `.kpi-feature
 ### 14.3 Ligne de DataTable cliquable + descendants focusables — pattern conservé, contrainte gravée (M-47)
 
 La ligne cliquable de `DataTable` (`<tr role="button" tabindex="0">` → ouvre le détail) est le pattern retenu (aligné Gmail / Linear / Notion). **Contrainte dure** : un `rowSnippet` ne doit JAMAIS imbriquer d'élément focusable (`<button>` / `<a>` / `<input>`) **autre que** la case à cocher de sélection — celle-ci vit dans un `<td>` qui stoppe la propagation `click` + `keydown`, donc l'activation de la ligne reste sans ambiguïté de tab-order. Les actions par ligne (éditer, désactiver…) se font soit dans le panneau de détail, soit sur une page **sans** `onRowClick` (la ligne n'est alors ni focusable ni `role=button` — cf. `/veille/themes`). Commentaire de rappel posé dans `DataTable.svelte` au niveau du `<tr>`.
+
+### 14.4 Hauteur de la barre d'onglets de navigation — 48px (confortable) / 44px (compact), pas 40px (V3b L-23)
+
+La primitive `Tabs.svelte` (§ 5.12) rend la **barre d'onglets** en `height: 48px` en variante `comfortable` (par défaut, `padding-x 32px`) et `height: 44px` en variante `compact` (`padding-x 24px`) — et non `h-10` (40px) comme le suggérait la note historique de § 5.12. Décision : la barre d'onglets est une zone de navigation tapée au doigt sur mobile/tablette ; 44px = cible tactile minimale HIG iOS / WCAG 2.5.5. Le `h-10` de § 5.12 reste valable pour le *bouton* d'onglet individuel hors barre (cas rare) ; pour la barre, c'est 48/44. Pas de régression : c'est l'état actuel post-V3a-2 (M-46), on le grave.
+
+### 14.5 Courbe d'easing éditoriale — token `--ease-out-expo` (V3b I-01)
+
+Toutes les transitions/animations « éditoriales » (fadeUp dashboard, hover des cartes bento, slide-out panels, cartes pipeline/signaux/entreprises, etc.) utilisent désormais le token `--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1)` défini dans `app.css` (`@theme`). Interdit de réintroduire la valeur littérale `cubic-bezier(0.16, 1, 0.3, 1)` en dur : référencer `var(--ease-out-expo)`. Une autre courbe peut être introduite comme nouveau token (ex. `--ease-in-out-quad`) si un besoin distinct apparaît, jamais en littéral inline.
