@@ -49,7 +49,7 @@ export type AideSearchEntry = {
 	haystack: string;
 };
 
-/** Index construit une fois — `aideContent` est statique. */
+/** Index construit une fois - `aideContent` est statique. */
 export const aideSearchIndex: AideSearchEntry[] = aideContent.flatMap((level) =>
 	level.sections.map((section) => {
 		const raw = [section.title, section.lead, ...section.blocks.map(blockText)].join(' ');

@@ -20,10 +20,14 @@
 		return match?.label ?? '';
 	});
 
-	// Fermer le menu mobile sur navigation (délai pour voir le highlight).
-	// Audit 360 M-07 : cleanup du setTimeout — si la route change à nouveau avant
-	// 150 ms, on annule le timeout précédent (sinon plusieurs callbacks en file).
-	let prevPath = $state(page.url.pathname);
+	// Fermer le menu mobile sur navigation (filet de sécurité pour les navigations
+	// programmatiques : un clic dans la page qui change de route alors que le drawer
+	// est ouvert). Le cas principal (clic sur un lien du menu) est géré par onNavigate
+	// passé à <Sidebar>, qui ferme aussi quand on reclique sur la page courante.
+	// `prevPath` est un simple `let` (pas `$state`) : s'il était réactif, l'écriture
+	// `prevPath = currentPath` relancerait l'effet, dont le cleanup annulerait le
+	// setTimeout avant qu'il ne se déclenche (le menu ne se fermait jamais).
+	let prevPath = page.url.pathname;
 	$effect(() => {
 		const currentPath = page.url.pathname;
 		if (currentPath !== prevPath) {
@@ -47,7 +51,7 @@
 
 <!-- Sidebar unique : desktop = static, mobile = slide-in -->
 <div class="sidebar-wrapper" class:open={mobileMenuOpen}>
-	<Sidebar bind:collapsed={sidebarCollapsed} currentPath={page.url.pathname} unreadIntelligence={data.unreadIntelligence} />
+	<Sidebar bind:collapsed={sidebarCollapsed} currentPath={page.url.pathname} unreadIntelligence={data.unreadIntelligence} onNavigate={() => mobileMenuOpen = false} />
 </div>
 
 <Header user={data.user} {sidebarCollapsed} onMenuToggle={() => mobileMenuOpen = !mobileMenuOpen} pageTitle={pageTitle()} />

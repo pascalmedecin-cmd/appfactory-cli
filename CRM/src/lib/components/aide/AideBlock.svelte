@@ -85,16 +85,16 @@
 <style>
 	.aide-p {
 		font-size: 14px;
-		line-height: 1.6;
+		line-height: 1.7;
 		color: var(--color-text-body);
-		margin: 0 0 12px;
+		margin: 0 0 16px;
 	}
 	.aide-p:last-child {
 		margin-bottom: 0;
 	}
 
 	.aide-list {
-		margin: 0 0 12px;
+		margin: 0 0 16px;
 		padding-left: 24px;
 		list-style: disc;
 	}
@@ -103,9 +103,12 @@
 	}
 	.aide-list li {
 		font-size: 14px;
-		line-height: 1.6;
+		line-height: 1.7;
 		color: var(--color-text-body);
-		margin-bottom: 8px;
+		margin-bottom: 10px;
+	}
+	.aide-list li:last-child {
+		margin-bottom: 0;
 	}
 	.aide-list li::marker {
 		color: var(--color-text-muted);
@@ -113,7 +116,7 @@
 
 	.aide-table-wrap {
 		overflow-x: auto;
-		margin: 0 0 8px;
+		margin: 0 0 16px;
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
 	}
@@ -128,16 +131,16 @@
 		font-weight: 600;
 		color: var(--color-text-muted);
 		background: var(--color-surface-alt);
-		padding: 12px 16px;
+		padding: 14px 18px;
 		border-bottom: 1px solid var(--color-border);
 		white-space: nowrap;
 	}
 	.aide-table td {
-		padding: 12px 16px;
+		padding: 14px 18px;
 		color: var(--color-text-body);
 		border-bottom: 1px solid var(--color-border);
 		vertical-align: top;
-		line-height: 1.5;
+		line-height: 1.6;
 	}
 	.aide-table tbody tr:last-child td {
 		border-bottom: none;
@@ -148,18 +151,18 @@
 
 	.aide-caption {
 		font-size: 12px;
-		line-height: 1.33;
+		line-height: 1.4;
 		color: var(--color-text-muted);
-		margin: 0 0 12px;
+		margin: 0 0 16px;
 	}
 
 	.aide-callout {
 		display: flex;
-		gap: 12px;
-		padding: 12px 16px;
+		gap: 14px;
+		padding: 16px 18px;
 		border-radius: var(--radius-lg);
 		border: 1px solid var(--color-border);
-		margin: 0 0 12px;
+		margin: 0 0 16px;
 		align-items: flex-start;
 	}
 	.aide-callout-icon {
@@ -171,11 +174,11 @@
 		font-size: 14px;
 		font-weight: 600;
 		color: var(--color-text);
-		margin: 0 0 2px;
+		margin: 0 0 4px;
 	}
 	.aide-callout-text {
 		font-size: 14px;
-		line-height: 1.55;
+		line-height: 1.65;
 		color: var(--color-text-body);
 		margin: 0;
 	}
@@ -206,11 +209,11 @@
 		color: var(--color-text-inverse);
 		font-family: var(--font-mono);
 		font-size: 13px;
-		line-height: 1.6;
-		padding: 12px 16px;
+		line-height: 1.65;
+		padding: 14px 18px;
 		border-radius: var(--radius-md);
 		overflow-x: auto;
-		margin: 0 0 12px;
+		margin: 0 0 16px;
 	}
 	.aide-code code {
 		font-family: inherit;
@@ -224,10 +227,10 @@
 		font-weight: 600;
 		color: var(--color-primary);
 		text-decoration: none;
-		padding: 8px 12px;
+		padding: 9px 14px;
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-md);
-		margin: 0 8px 12px 0;
+		margin: 0 8px 16px 0;
 		transition: border-color 180ms var(--ease-out-expo), background 180ms var(--ease-out-expo);
 	}
 	.aide-link:hover {

@@ -68,7 +68,7 @@ export type AideLevel = {
 };
 
 // --------------------------------------------------------------------------
-// Routes CRM connues — utilisé pour valider les liens internes (cf. content.test.ts).
+// Routes CRM connues - utilisé pour valider les liens internes (cf. content.test.ts).
 // --------------------------------------------------------------------------
 
 export const KNOWN_ROUTES = [
@@ -86,7 +86,7 @@ export const KNOWN_ROUTES = [
 ] as const;
 
 // --------------------------------------------------------------------------
-// Niveau 1 — Prise en main
+// Niveau 1 - Prise en main
 // --------------------------------------------------------------------------
 
 const niveau1: AideLevel = {
@@ -130,20 +130,20 @@ const niveau1: AideLevel = {
 			blocks: [
 				{
 					type: 'paragraph',
-					text: 'Étape 1 — Se connecter. Tu reçois un lien de connexion par e-mail (magic link), tu cliques dessus, tu es dedans. Pas de mot de passe à retenir. La session dure une semaine.'
+					text: 'Étape 1 - Se connecter. Tu reçois un lien de connexion par e-mail (magic link), tu cliques dessus, tu es dedans. Pas de mot de passe à retenir. La session dure une semaine.'
 				},
 				{
 					type: 'paragraph',
-					text: 'Étape 2 — Regarder le tableau de bord. C\'est la page d\'accueil. Elle te dit en un coup d\'œil : combien de relances sont dues, quels leads sont chauds, quelles alertes du secteur méritent un coup d\'œil. Tu pars de là chaque matin.'
+					text: 'Étape 2 - Regarder le tableau de bord. C\'est la page d\'accueil. Elle te dit en un coup d\'œil : combien de relances sont dues, quels leads sont chauds, quelles alertes du secteur méritent un coup d\'œil. Tu pars de là chaque matin.'
 				},
 				{
 					type: 'paragraph',
-					text: 'Étape 3 — Faire le tour des six écrans principaux. Contacts, Entreprises, Pipeline, Prospection, Signaux, Veille. Chacun a un rôle précis (voir la carte ci-dessous). Tu n\'as pas besoin de tout maîtriser le premier jour.'
+					text: 'Étape 3 - Faire le tour des six écrans principaux. Contacts, Entreprises, Pipeline, Prospection, Signaux, Veille. Chacun a un rôle précis (voir la carte ci-dessous). Tu n\'as pas besoin de tout maîtriser le premier jour.'
 				},
 				{ type: 'diagram', name: 'ecosysteme', caption: 'Les écrans du CRM et comment ils s\'enchaînent.' },
 				{
 					type: 'paragraph',
-					text: 'Étape 4 — Faire une première action. Ouvre la prospection, lance une recherche d\'entreprises sur ton canton, et regarde les leads remonter avec leur score. Ou ouvre le pipeline et fais avancer une opportunité d\'une colonne. C\'est tout. Le reste vient à l\'usage.'
+					text: 'Étape 4 - Faire une première action. Ouvre la prospection, lance une recherche d\'entreprises sur ton canton, et regarde les leads remonter avec leur score. Ou ouvre le pipeline et fais avancer une opportunité d\'une colonne. C\'est tout. Le reste vient à l\'usage.'
 				},
 				{
 					type: 'callout',
@@ -157,7 +157,7 @@ const niveau1: AideLevel = {
 			id: 'checklist-demarrage',
 			title: 'Checklist de démarrage',
 			icon: 'checklist',
-			lead: 'Sept étapes pour être opérationnel. Coche au fur et à mesure — ta progression est gardée sur cet ordinateur.',
+			lead: 'Sept étapes pour être opérationnel. Coche au fur et à mesure - ta progression est gardée sur cet ordinateur.',
 			blocks: [
 				{
 					type: 'steps',
@@ -189,10 +189,10 @@ const niveau1: AideLevel = {
 					type: 'table',
 					head: ['Pastille', 'Sens', 'Score'],
 					rows: [
-						['Prioritaire', 'À traiter en premier — bon canton, secteur cible, source chaude.', '7 et plus'],
+						['Prioritaire', 'À traiter en premier - bon canton, secteur cible, source chaude.', '7 et plus'],
 						['À qualifier', 'Du potentiel, à creuser avant d\'investir du temps.', '4 à 6'],
 						['Faible signal', 'Peu d\'indices favorables pour l\'instant.', '0 à 3'],
-						['Non scoré', 'Pas encore évalué.', '—']
+						['Non scoré', 'Pas encore évalué.', '-']
 					],
 					caption: 'Le score est calculé automatiquement à partir du canton, du secteur et de la source du lead.'
 				},
@@ -208,7 +208,7 @@ const niveau1: AideLevel = {
 					type: 'callout',
 					tone: 'warning',
 					title: 'Ce que l\'outil ne fait pas',
-					text: 'Pas d\'e-mails automatiques aux prospects, pas d\'export vers un autre logiciel, pas de relance qui part toute seule. Les relances sont des rappels dans le CRM — c\'est toi qui appelles ou écris.'
+					text: 'Pas d\'e-mails automatiques aux prospects, pas d\'export vers un autre logiciel, pas de relance qui part toute seule. Les relances sont des rappels dans le CRM - c\'est toi qui appelles ou écris.'
 				}
 			]
 		}
@@ -216,7 +216,7 @@ const niveau1: AideLevel = {
 };
 
 // --------------------------------------------------------------------------
-// Niveau 2 — Fonctions détaillées (9 fiches écran)
+// Niveau 2 - Fonctions détaillées (9 fiches écran)
 // --------------------------------------------------------------------------
 
 const niveau2: AideLevel = {
@@ -238,7 +238,7 @@ const niveau2: AideLevel = {
 					items: [
 						'File de triage : pour chaque lead, un bouton oui / non / plus tard. Trois clics et la file du jour est faite.',
 						'Relances dues : les contacts à recontacter aujourd\'hui ou en retard, triés par urgence.',
-						'Indicateurs : leads actifs, opportunités ouvertes, transferts du mois — des chiffres factuels, pas de jauge décorative.',
+						'Indicateurs : leads actifs, opportunités ouvertes, transferts du mois - des chiffres factuels, pas de jauge décorative.',
 						'Alertes signaux : les appels d\'offres et chantiers à fort enjeu remontés par la veille.'
 					]
 				},
@@ -258,13 +258,13 @@ const niveau2: AideLevel = {
 					type: 'list',
 					ordered: true,
 					items: [
-						'Filtrer la liste (par canton, par statut) — les filtres se reflètent dans l\'adresse de la page, donc partageables.',
+						'Filtrer la liste (par canton, par statut) - les filtres se reflètent dans l\'adresse de la page, donc partageables.',
 						'Cliquer une ligne pour ouvrir la fiche détail dans le panneau latéral.',
 						'Programmer une relance : elle remonte ensuite au tableau de bord à la date prévue.',
 						'Lier le contact à une opportunité du pipeline si une affaire se dessine.'
 					]
 				},
-				{ type: 'callout', tone: 'tip', title: 'Action clé', text: 'Après chaque appel, ouvre la fiche, note l\'essentiel en deux lignes, programme la prochaine relance. Trente secondes — sinon ça se perd.' },
+				{ type: 'callout', tone: 'tip', title: 'Action clé', text: 'Après chaque appel, ouvre la fiche, note l\'essentiel en deux lignes, programme la prochaine relance. Trente secondes - sinon ça se perd.' },
 				{ type: 'callout', tone: 'warning', title: 'Piège', text: 'Ne crée pas un contact en double : utilise la recherche entreprise pour vérifier si la personne existe déjà sous une autre orthographe.' },
 				{ type: 'link', link: { href: '/contacts', label: 'Ouvrir les contacts' } }
 			]
@@ -279,7 +279,7 @@ const niveau2: AideLevel = {
 				{
 					type: 'list',
 					items: [
-						'Rechercher une entreprise par nom — la recherche tolère les accents et les variantes d\'écriture.',
+						'Rechercher une entreprise par nom - la recherche tolère les accents et les variantes d\'écriture.',
 						'Ouvrir la fiche pour voir d\'un coup les contacts, les affaires en cours et les notes.',
 						'Enrichir une fiche depuis le registre du commerce (Zefix) si les données sont incomplètes.',
 						'Marquer une entreprise comme cliente posée une fois la pose réalisée.'
@@ -327,7 +327,7 @@ const niveau2: AideLevel = {
 						['search.ch', 'Annuaire : entreprises locales avec téléphone et catégorie d\'activité.'],
 						['SIMAP', 'Marchés publics : appels d\'offres en cours (source « chaude », bonus de score).'],
 						['RegBL', 'Registre des bâtiments : chantiers et permis de construire récents.'],
-						['Google Places', 'Établissements opérationnels par type d\'activité (réseau de partenaires) — quota mensuel limité.'],
+						['Google Places', 'Établissements opérationnels par type d\'activité (réseau de partenaires) - quota mensuel limité.'],
 						['Autres sources', 'Saisie manuelle d\'un lead terrain, import d\'un fichier CSV.']
 					]
 				},
@@ -374,7 +374,7 @@ const niveau2: AideLevel = {
 			icon: 'radar',
 			lead: 'La synthèse hebdomadaire du secteur vitrage et bâtiment romand : à lire chaque semaine.',
 			blocks: [
-				{ type: 'paragraph', text: 'La veille est le magazine interne : chaque édition reprend les signaux de la semaine, les vérifie, et les met en forme — appels d\'offres à suivre, chantiers, mouvements d\'entreprises, enseignements. Elle est générée puis relue, jamais publiée brute. Une page d\'administration permet de gérer les thèmes suivis.' },
+				{ type: 'paragraph', text: 'La veille est le magazine interne : chaque édition reprend les signaux de la semaine, les vérifie, et les met en forme - appels d\'offres à suivre, chantiers, mouvements d\'entreprises, enseignements. Elle est générée puis relue, jamais publiée brute. Une page d\'administration permet de gérer les thèmes suivis.' },
 				{ type: 'diagram', name: 'veille-hebdo', caption: 'Le déroulé d\'une édition de veille, de la captation à la lecture.' },
 				{
 					type: 'list',
@@ -396,7 +396,7 @@ const niveau2: AideLevel = {
 			icon: 'bar_chart',
 			lead: 'La vue d\'ensemble chiffrée : volumes, conversions, activité sur la période.',
 			blocks: [
-				{ type: 'paragraph', text: 'Le reporting agrège les chiffres : combien de leads générés, combien transférés, combien d\'opportunités ouvertes, combien gagnées, sur une période donnée. Pas de graphique décoratif — des indicateurs factuels qui répondent à « où on en est ».' },
+				{ type: 'paragraph', text: 'Le reporting agrège les chiffres : combien de leads générés, combien transférés, combien d\'opportunités ouvertes, combien gagnées, sur une période donnée. Pas de graphique décoratif - des indicateurs factuels qui répondent à « où on en est ».' },
 				{
 					type: 'list',
 					items: [
@@ -449,7 +449,7 @@ const niveau2: AideLevel = {
 };
 
 // --------------------------------------------------------------------------
-// Niveau 3 — Documentation technique + runbook
+// Niveau 3 - Documentation technique + runbook
 // --------------------------------------------------------------------------
 
 const niveau3: AideLevel = {
@@ -505,7 +505,7 @@ const niveau3: AideLevel = {
 			lead: 'Les principales tables et le modèle d\'accès.',
 			blocks: [
 				{ type: 'paragraph', text: 'La base PostgreSQL stocke les entités du CRM : contacts, entreprises, opportunités du pipeline, leads de prospection, signaux, éditions de veille, journaux de quota et de coûts. Les migrations SQL sont versionnées dans le dépôt et appliquées en production de façon traçable.' },
-				{ type: 'paragraph', text: 'La sécurité au niveau des lignes (RLS) est active : seul un utilisateur authentifié accède aux données. Le modèle actuel est « mono-tenant plat » — les fondateurs FilmPro voient et modifient les mêmes données, par décision. Les suppressions sensibles (photos, visites) sont journalisées quand un fondateur agit sur la donnée d\'un autre.' },
+				{ type: 'paragraph', text: 'La sécurité au niveau des lignes (RLS) est active : seul un utilisateur authentifié accède aux données. Le modèle actuel est « mono-tenant plat » - les fondateurs FilmPro voient et modifient les mêmes données, par décision. Les suppressions sensibles (photos, visites) sont journalisées quand un fondateur agit sur la donnée d\'un autre.' },
 				{ type: 'callout', tone: 'warning', title: 'À durcir avant un quatrième utilisateur non-fondateur', text: 'Le modèle « tout le monde voit tout » est assumé tant que l\'équipe se limite aux fondateurs. L\'arrivée d\'un commercial junior, d\'un profil terrain ou d\'un prestataire impose de passer à des politiques par propriétaire (created_by = utilisateur) et d\'ajouter des tests d\'intégration RLS contre une vraie base.' }
 			]
 		},
@@ -515,7 +515,7 @@ const niveau3: AideLevel = {
 			icon: 'lock',
 			lead: 'Magic link e-mail, un seul chemin de connexion.',
 			blocks: [
-				{ type: 'paragraph', text: 'Le CRM utilise un lien de connexion envoyé par e-mail (magic link) : l\'utilisateur saisit son adresse @filmpro.ch, reçoit un lien, clique, et une session de sept jours est ouverte dans un cookie httpOnly. Pas de mot de passe, pas d\'OAuth tiers, pas de fallback — un seul chemin.' },
+				{ type: 'paragraph', text: 'Le CRM utilise un lien de connexion envoyé par e-mail (magic link) : l\'utilisateur saisit son adresse @filmpro.ch, reçoit un lien, clique, et une session de sept jours est ouverte dans un cookie httpOnly. Pas de mot de passe, pas d\'OAuth tiers, pas de fallback - un seul chemin.' },
 				{
 					type: 'list',
 					items: [
@@ -605,7 +605,7 @@ const niveau3: AideLevel = {
 						'Anti-CSRF : contrôle d\'origine sur les routes de mutation sensibles.'
 					]
 				},
-				{ type: 'callout', tone: 'note', title: 'Décisions assumées', text: 'Le CSP autorise les styles et scripts inline — c\'est un prérequis de l\'hydratation SvelteKit ; le risque résiduel est jugé acceptable pour un CRM mono-tenant ≤ 10 administrateurs sans contenu utilisateur tiers. Le modèle RLS « plat » est assumé tant que l\'équipe se limite aux fondateurs.' },
+				{ type: 'callout', tone: 'note', title: 'Décisions assumées', text: 'Le CSP autorise les styles et scripts inline - c\'est un prérequis de l\'hydratation SvelteKit ; le risque résiduel est jugé acceptable pour un CRM mono-tenant ≤ 10 administrateurs sans contenu utilisateur tiers. Le modèle RLS « plat » est assumé tant que l\'équipe se limite aux fondateurs.' },
 				{ type: 'callout', tone: 'warning', title: 'Limite des tests', text: 'Les tests unitaires simulent la base de données : ils ne prouvent rien sur le comportement RLS réel, qui n\'existe qu\'au runtime PostgreSQL. Avant de bâtir sur un contrôle d\'autorisation, vérifier le code et tester manuellement en production avec un compte au rôle visé.' }
 			]
 		},
@@ -617,19 +617,19 @@ const niveau3: AideLevel = {
 			blocks: [
 				{
 					type: 'paragraph',
-					text: 'Procédure 1 — Réinitialiser l\'accès d\'un utilisateur. L\'authentification étant par magic link, il n\'y a pas de mot de passe à réinitialiser : si quelqu\'un n\'arrive pas à se connecter, vérifier que son adresse est bien @filmpro.ch, qu\'elle figure dans les utilisateurs autorisés côté Supabase (Authentication → Users), puis lui demander de redemander un lien depuis /login. Vérifier aussi les spams. En dernier recours, l\'administrateur Supabase peut inviter l\'utilisateur manuellement.'
+					text: 'Procédure 1 - Réinitialiser l\'accès d\'un utilisateur. L\'authentification étant par magic link, il n\'y a pas de mot de passe à réinitialiser : si quelqu\'un n\'arrive pas à se connecter, vérifier que son adresse est bien @filmpro.ch, qu\'elle figure dans les utilisateurs autorisés côté Supabase (Authentication → Users), puis lui demander de redemander un lien depuis /login. Vérifier aussi les spams. En dernier recours, l\'administrateur Supabase peut inviter l\'utilisateur manuellement.'
 				},
 				{
 					type: 'paragraph',
-					text: 'Procédure 2 — Appliquer une migration en production. Les fichiers de migration vivent dans supabase/migrations/. Vérifier que la migration est versionnée dans le dépôt, exécuter le script d\'application dédié contre la base de production, puis vérifier le résultat dans information_schema (colonne ajoutée, contrainte présente). Toujours poser un tag Git de point de bascule avant un changement structurel.'
+					text: 'Procédure 2 - Appliquer une migration en production. Les fichiers de migration vivent dans supabase/migrations/. Vérifier que la migration est versionnée dans le dépôt, exécuter le script d\'application dédié contre la base de production, puis vérifier le résultat dans information_schema (colonne ajoutée, contrainte présente). Toujours poser un tag Git de point de bascule avant un changement structurel.'
 				},
 				{
 					type: 'paragraph',
-					text: 'Procédure 3 — Régénérer les types de la base. Après un changement de schéma, lancer la régénération des types TypeScript (supabase gen types) pour que l\'application reste alignée. Les casts temporaires « as never » posés en attendant la régénération doivent être retirés à cette occasion.'
+					text: 'Procédure 3 - Régénérer les types de la base. Après un changement de schéma, lancer la régénération des types TypeScript (supabase gen types) pour que l\'application reste alignée. Les casts temporaires « as never » posés en attendant la régénération doivent être retirés à cette occasion.'
 				},
 				{
 					type: 'paragraph',
-					text: 'Procédure 4 — Lancer la veille manuellement. La veille est produite par le cron « intelligence ». Pour la déclencher hors planning, appeler la route /api/cron/intelligence avec le secret de cron en en-tête (la même que le planning Vercel utilise). Vérifier ensuite l\'édition produite dans l\'écran Veille avant de la considérer publiée.'
+					text: 'Procédure 4 - Lancer la veille manuellement. La veille est produite par le cron « intelligence ». Pour la déclencher hors planning, appeler la route /api/cron/intelligence avec le secret de cron en en-tête (la même que le planning Vercel utilise). Vérifier ensuite l\'édition produite dans l\'écran Veille avant de la considérer publiée.'
 				},
 				{
 					type: 'callout',

@@ -3,7 +3,7 @@
  *
  * Le composant `AideChecklist.svelte` ne fait que brancher cette logique sur `localStorage`
  * et le rendu. Tout ce qui est testable (sérialisation, bascule, calcul de progression,
- * filtrage des clés obsolètes) vit ici — le repo n'a pas de jsdom configuré, donc les `.svelte`
+ * filtrage des clés obsolètes) vit ici - le repo n'a pas de jsdom configuré, donc les `.svelte`
  * ne sont pas couverts par Vitest.
  */
 
@@ -22,7 +22,7 @@ export function parseChecklistState(raw: string | null | undefined): ChecklistSt
 			return new Set(parsed.filter((x): x is string => typeof x === 'string'));
 		}
 	} catch {
-		// JSON corrompu — on repart d'un état vide plutôt que de planter.
+		// JSON corrompu - on repart d'un état vide plutôt que de planter.
 	}
 	return new Set();
 }

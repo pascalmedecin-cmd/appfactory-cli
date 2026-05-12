@@ -3,7 +3,7 @@
 	import { config } from '$lib/config';
 	import { createSupabaseBrowserClient } from '$lib/supabase';
 
-	let { collapsed = $bindable(false), currentPath = '', unreadIntelligence = 0 }: { collapsed?: boolean; currentPath?: string; unreadIntelligence?: number } = $props();
+	let { collapsed = $bindable(false), currentPath = '', unreadIntelligence = 0, onNavigate }: { collapsed?: boolean; currentPath?: string; unreadIntelligence?: number; onNavigate?: () => void } = $props();
 
 	const navItems = config.navigation.primary;
 	const secondaryItems = config.navigation.secondary;
@@ -44,6 +44,7 @@
 			{@const badge = item.href === '/veille' && unreadIntelligence > 0 ? unreadIntelligence : 0}
 			<a
 				href={item.href}
+				onclick={() => onNavigate?.()}
 				aria-current={isActive(item.href) ? 'page' : undefined}
 				class="flex items-center gap-3 px-3 py-2 min-h-11 md:min-h-0 text-sm rounded-lg transition-colors relative
 					{isActive(item.href) ? 'bg-white/15 text-white font-medium shadow-xs' : 'text-white/65 hover:bg-white/8 hover:text-white'}"
@@ -72,6 +73,7 @@
 				href={item.href}
 				target={external ? '_blank' : undefined}
 				rel={external ? 'noopener noreferrer' : undefined}
+				onclick={() => onNavigate?.()}
 				aria-current={!external && isActive(item.href) ? 'page' : undefined}
 				class="flex items-center gap-3 px-3 py-2 min-h-11 md:min-h-0 text-sm rounded-lg transition-colors
 					{!external && isActive(item.href) ? 'bg-white/15 text-white font-medium' : 'text-white/65 hover:bg-white/8 hover:text-white'}"

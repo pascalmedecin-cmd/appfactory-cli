@@ -1,7 +1,7 @@
 <!--
 	Checklist de démarrage interactive (niveau 1 de l'aide).
 
-	État coché persisté dans `localStorage` (clé versionnée) — la logique pure (sérialisation,
+	État coché persisté dans `localStorage` (clé versionnée) - la logique pure (sérialisation,
 	bascule, progression, nettoyage des clés obsolètes) vit dans `$lib/aide/checklist.ts` et est
 	testée là-bas (le repo n'a pas de jsdom). Ce composant ne fait que la brancher.
 

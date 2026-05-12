@@ -1,5 +1,5 @@
 <!--
-	Centre d'aide CRM FilmPro — orchestrateur (audit 360 H-28 / M-29).
+	Centre d'aide CRM FilmPro - orchestrateur (audit 360 H-28 / M-29).
 
 	Refonte from scratch : remplace l'ancien HTML monolithe de 1443 lignes (hors charte,
 	`getElementById`, recherche bidon). Contenu désormais data-driven (`$lib/aide/content.ts`),
@@ -29,7 +29,7 @@
 	const results = $derived<AideSearchResult[]>(searchAide(query));
 	const searching = $derived(query.trim().length > 0);
 
-	// Section visible (mise à jour par l'IntersectionObserver) — pilote le « sur cette page ».
+	// Section visible (mise à jour par l'IntersectionObserver) - pilote le « sur cette page ».
 	let activeSectionId = $state<string>('');
 
 	// Registre des éléments de section (remplace getElementById, audit 360 M-29).
@@ -120,7 +120,7 @@
 	}
 </script>
 
-<svelte:head><title>Aide — CRM FilmPro</title></svelte:head>
+<svelte:head><title>Aide - CRM FilmPro</title></svelte:head>
 
 <div class="aide">
 	<!-- En-tête de page (le H1 « Aide » est porté par Header.svelte ; ici on ouvre en H2). -->
@@ -262,7 +262,7 @@
 
 	/* En-tête */
 	.aide-head {
-		padding: 8px 0 16px;
+		padding: 8px 0 24px;
 	}
 	.aide-kicker {
 		font-size: 11px;
@@ -270,18 +270,18 @@
 		letter-spacing: 0.14em;
 		text-transform: uppercase;
 		color: var(--color-text-muted);
-		margin: 0 0 6px;
+		margin: 0 0 8px;
 	}
 	.aide-title {
-		font-size: 22px;
+		font-size: 24px;
 		font-weight: 600;
-		line-height: 1.1;
+		line-height: 1.15;
 		color: var(--color-text);
-		margin: 0 0 4px;
+		margin: 0 0 6px;
 	}
 	.aide-tagline {
 		font-size: 14px;
-		line-height: 1.5;
+		line-height: 1.6;
 		color: var(--color-text-muted);
 		margin: 0;
 	}
@@ -482,7 +482,7 @@
 		min-width: 0;
 	}
 	.aide-section {
-		padding: 24px 0 32px;
+		padding: 32px 0 40px;
 		border-bottom: 1px solid var(--color-border);
 		scroll-margin-top: 16px;
 	}
@@ -495,7 +495,7 @@
 	.aide-section-head {
 		display: flex;
 		gap: 12px;
-		margin-bottom: 16px;
+		margin-bottom: 20px;
 		align-items: flex-start;
 	}
 	.aide-section-icon {
@@ -514,11 +514,11 @@
 		font-weight: 600;
 		line-height: 1.25;
 		color: var(--color-text);
-		margin: 2px 0 4px;
+		margin: 2px 0 6px;
 	}
 	.aide-section-lead {
 		font-size: 14px;
-		line-height: 1.5;
+		line-height: 1.6;
 		color: var(--color-text-muted);
 		margin: 0;
 	}

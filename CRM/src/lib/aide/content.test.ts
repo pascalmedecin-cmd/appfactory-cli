@@ -19,7 +19,7 @@ function allBlocks(): AideBlock[] {
 	return aideContent.flatMap((l) => l.sections.flatMap((s) => s.blocks));
 }
 
-describe('aideContent — intégrité de l\'arbre', () => {
+describe('aideContent - intégrité de l\'arbre', () => {
 	it('expose trois niveaux dans l\'ordre démarrage / fonctions / technique', () => {
 		expect(aideContent.map((l) => l.key)).toEqual(['demarrage', 'fonctions', 'technique']);
 	});
@@ -86,7 +86,7 @@ describe('aideContent — intégrité de l\'arbre', () => {
 	});
 });
 
-describe('aideContent — couvre les trois niveaux comme spécifié', () => {
+describe('aideContent - couvre les trois niveaux comme spécifié', () => {
 	it('niveau 1 : parcours, checklist 7 étapes, carte mentale, ≥ 3 encarts', () => {
 		const n1 = levelByKey('demarrage');
 		const blocks = n1.sections.flatMap((s) => s.blocks);

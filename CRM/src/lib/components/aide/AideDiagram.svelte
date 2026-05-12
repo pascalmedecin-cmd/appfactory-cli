@@ -23,10 +23,10 @@
 	const label = $derived(caption?.trim() || titles[name]);
 
 	const veilleSteps: { name: string; desc: string; x: number }[] = [
-		{ name: 'Capter', desc: 'robots : marchés, chantiers…', x: 24 },
+		{ name: 'Capter', desc: 'marchés, chantiers…', x: 24 },
 		{ name: 'Trier & vérifier', desc: 'étiquette de conformité', x: 196 },
 		{ name: 'Mettre en forme', desc: 'génération, puis relecture', x: 368 },
-		{ name: 'Lire', desc: 'dix minutes en début de semaine', x: 540 }
+		{ name: 'Lire', desc: '10 min par semaine', x: 540 }
 	];
 </script>
 
@@ -87,11 +87,11 @@
 			<path d="M79 228 L79 256 L116 256" class="link" marker-end="url(#aide-arrow)" />
 			<path d="M171 228 L171 256 L134 256" class="link" marker-end="url(#aide-arrow)" />
 			<path d="M125 300 L125 318" class="link" marker-end="url(#aide-arrow)" />
-			<path d="M210 140 L298 195" class="link" marker-end="url(#aide-arrow)" />
+			<path d="M210 140 L300 196" class="link" marker-end="url(#aide-arrow)" />
 			<path d="M595 160 L595 188" class="link" marker-end="url(#aide-arrow)" />
-			<path d="M510 215 L422 270" class="link" marker-end="url(#aide-arrow)" />
+			<path d="M510 215 L420 268" class="link" marker-end="url(#aide-arrow)" />
+			<path d="M595 230 L595 258" class="link" marker-end="url(#aide-arrow)" />
 			<path d="M360 222 L360 258" class="link" marker-end="url(#aide-arrow)" />
-			<path d="M300 200 L240 140 L210 140" class="link" marker-end="url(#aide-arrow)" />
 			<!-- vers le tableau de bord -->
 			<path d="M210 130 L290 60" class="link link-up" marker-end="url(#aide-arrow)" />
 			<path d="M360 178 L360 62" class="link link-up" marker-end="url(#aide-arrow)" />
@@ -123,8 +123,8 @@
 			<path d="M635 116 L662 198" class="link" marker-end="url(#aide-arrow)" />
 
 			<!-- suite après gagné -->
-			<rect x="500" y="288" width="196" height="40" rx="10" class="node node-out" />
-			<text x="598" y="312" class="t-node t-sm">Pose suivie sur la fiche entreprise</text>
+			<rect x="470" y="288" width="226" height="40" rx="10" class="node node-out" />
+			<text x="583" y="312" class="t-node t-sm">Pose suivie sur la fiche entreprise</text>
 			<path d="M560 244 L560 286" class="link" marker-end="url(#aide-arrow)" />
 
 			<text x="360" y="32" class="t-flow">on glisse la carte d'une colonne à la suivante</text>
@@ -141,13 +141,13 @@
 					<path d={`M${step.x + 156} 180 L${step.x + 196} 180`} class="link" marker-end="url(#aide-arrow)" />
 				{/if}
 			{/each}
-			<text x="360" y="56" class="t-flow">une édition par semaine — jamais publiée brute</text>
+			<text x="360" y="56" class="t-flow">une édition par semaine, jamais publiée brute</text>
 			<rect x="24" y="280" width="672" height="44" rx="10" class="node node-soft" />
 			<text x="360" y="307" class="t-node t-sm">L'écran « Signaux » montre la matière première (étape 1) ; l'écran « Veille » montre l'édition finie (étape 4).</text>
 
 		{:else if name === 'scoring-prospection'}
 			<!-- Barres empilées : composition du score sur 12 -->
-			<text x="360" y="32" class="t-flow">score de priorité d'un lead — calculé automatiquement (sur 12)</text>
+			<text x="360" y="32" class="t-flow">score de priorité d'un lead, calculé automatiquement (sur 12)</text>
 			{#each [
 				['Secteur cible (bâtiment, architecte, régie…)', 3, 'node-mid'],
 				['Canton prioritaire (GE / VD / VS)', 2, 'node'],
@@ -158,12 +158,12 @@
 			] as row, i}
 				<rect x="24" y={64 + i * 44} width="380" height="36" rx="8" class="node {row[2]}" />
 				<text x="40" y={86 + i * 44} class="t-node t-xs t-left">{row[0]}</text>
-				<rect x="420" y={64 + i * 44} width={Number(row[1]) * 88} height="36" rx="8" class="bar" />
-				<text x={420 + Number(row[1]) * 88 + 14} y={86 + i * 44} class="t-node t-xs t-left">+{row[1]} pt{Number(row[1]) > 1 ? 's' : ''}</text>
+				<rect x="420" y={64 + i * 44} width={Number(row[1]) * 80} height="36" rx="8" class="bar" />
+				<text x={420 + Number(row[1]) * 80 + 14} y={86 + i * 44} class="t-node t-xs t-left">+{row[1]} pt{Number(row[1]) > 1 ? 's' : ''}</text>
 			{/each}
 			<line x1="420" y1="56" x2="420" y2="332" class="axis" />
 			<rect x="24" y="338" width="672" height="0.5" class="axis" />
-			<text x="500" y="354" class="t-node t-xs">Pastille : « Prioritaire » ≥ 7 · « À qualifier » 4–6 · « Faible signal » 0–3</text>
+			<text x="500" y="354" class="t-node t-xs">Pastille : « Prioritaire » ≥ 7 · « À qualifier » 4-6 · « Faible signal » 0-3</text>
 
 		{:else if name === 'architecture'}
 			<!-- 4 couches : navigateur → application → base → services externes -->
@@ -203,7 +203,7 @@
 
 <style>
 	.aide-diagram {
-		margin: 24px 0;
+		margin: 32px 0;
 	}
 	.aide-diagram svg {
 		display: block;
