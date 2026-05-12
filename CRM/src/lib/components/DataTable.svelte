@@ -431,6 +431,16 @@
 					</tr>
 				{:else}
 					{#each paged as row, i}
+						<!--
+							Audit 360 M-47 (décision tranchée, cf. GOLDEN_STANDARD § 5.13) : la ligne entière
+							est cliquable (`role="button"` + tabindex) pour ouvrir le détail — pattern aligné
+							Gmail/Linear/Notion. CONTRAINTE : un `rowSnippet` ne doit JAMAIS imbriquer d'élément
+							focusable (button / link / input) autre que la case à cocher de sélection — celle-ci
+							vit dans un `<td>` qui stoppe la propagation click+keydown (plus bas), donc l'activation
+							de la ligne reste sans ambiguïté de tab-order. Les actions par ligne se font dans le
+							panneau de détail, ou sur une page sans `onRowClick` (la ligne n'est alors ni focusable
+							ni `role=button`).
+						-->
 						<tr
 							class="border-b border-border/40 hover:bg-surface-alt/50 transition-colors duration-150 {onRowClick ? 'cursor-pointer focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-[-2px]' : ''}"
 							tabindex={onRowClick ? 0 : undefined}

@@ -24,6 +24,12 @@
 		density?: 'comfortable' | 'compact';
 		tabIdPrefix?: string;
 		panelIdPrefix?: string;
+		/**
+		 * Nom de l'unité du compteur (ex: "contacts", "opportunités"). Quand fourni, le badge
+		 * de compteur expose `aria-label="{count} {countNoun}"` pour que les lecteurs d'écran
+		 * annoncent l'unité au lieu d'un nombre isolé (audit 360 M-46).
+		 */
+		countNoun?: string;
 		/** Outils de vue à droite (search, toggle...). Sépare data filters et display tools (GOLDEN § 7). */
 		actions?: Snippet;
 	};
@@ -36,6 +42,7 @@
 		density = 'comfortable',
 		tabIdPrefix = 'tab',
 		panelIdPrefix = 'panel',
+		countNoun,
 		actions
 	}: Props = $props();
 
@@ -72,7 +79,10 @@
 			>
 				{tab.label}
 				{#if tab.count !== undefined}
-					<span class="tab-count tabular-nums">{tab.count}</span>
+					<span
+						class="tab-count tabular-nums"
+						aria-label={countNoun ? `${tab.count} ${countNoun}` : undefined}
+					>{tab.count}</span>
 				{/if}
 			</button>
 		{/each}

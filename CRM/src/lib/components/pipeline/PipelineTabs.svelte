@@ -17,4 +17,4 @@
 	let { active, tabs, onSelect }: Props = $props();
 </script>
 
-<Tabs {tabs} {active} {onSelect} ariaLabel="Filtrer le pipeline" density="compact" />
+<Tabs {tabs} {active} {onSelect} ariaLabel="Filtrer le pipeline" density="compact" countNoun="opportunités" />

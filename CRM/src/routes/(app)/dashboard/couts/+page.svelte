@@ -41,7 +41,7 @@
 		padding: 32px 32px 24px;
 	}
 	.page-header h2 {
-		font-size: 24px;
+		font-size: 22px;
 		font-weight: 700;
 		color: var(--color-primary-dark);
 		letter-spacing: -0.01em;

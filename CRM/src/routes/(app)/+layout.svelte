@@ -95,8 +95,8 @@
 			transform: translateX(0);
 		}
 
-		/* Le wrapper gère le fixed+transform, l'aside devient statique */
-		.sidebar-wrapper :global(aside) {
+		/* Le wrapper gère le fixed+transform, la nav sidebar devient statique */
+		.sidebar-wrapper :global(.sidebar-root) {
 			position: static !important;
 			z-index: auto !important;
 			width: 100% !important;

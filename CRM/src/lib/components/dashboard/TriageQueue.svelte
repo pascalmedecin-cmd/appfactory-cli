@@ -213,7 +213,7 @@
 		gap: 8px;
 	}
 	.section-h2 {
-		font-size: 22px;
+		font-size: 18px;
 		font-weight: 700;
 		letter-spacing: -0.02em;
 		line-height: 1.1;
@@ -336,8 +336,8 @@
 		flex-shrink: 0;
 	}
 	.ab {
-		width: 34px;
-		height: 34px;
+		width: 36px;
+		height: 36px;
 		padding: 0;
 		border-radius: var(--radius-md);
 		border: 1px solid transparent;

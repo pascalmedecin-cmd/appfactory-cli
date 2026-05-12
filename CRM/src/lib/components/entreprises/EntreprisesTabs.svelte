@@ -19,4 +19,4 @@
 	let { active, tabs, onSelect, actions }: Props = $props();
 </script>
 
-<Tabs {tabs} {active} {onSelect} ariaLabel="Filtrer les entreprises" {actions} />
+<Tabs {tabs} {active} {onSelect} ariaLabel="Filtrer les entreprises" countNoun="entreprises" {actions} />

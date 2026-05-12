@@ -550,3 +550,21 @@ A11y :
 - Label associé à l'input email (`<label for="email">`).
 - Focus visible ring 2px primary sur input + bouton.
 - Annonce statut envoi via `aria-live="polite"` après submit.
+
+---
+
+## 14. Décisions tranchées - audit 360 V3a-2 (S178, 2026-05-12)
+
+Trois findings UI demandaient un arbitrage in-session (« aligner X **OU** mettre à jour la spec »). Décisions actées ici :
+
+### 14.1 Hauteur des boutons d'action en pied de modal — `h-11` (44px), pas `h-10` (M-31)
+
+Les boutons d'action principaux en pied de modal (`ModalForm`, `PipelineQuickAdvance`, `LeadExpress`, footers des pages pipeline / contacts / entreprises) restent en **`h-11` (44px)**, distincts des `h-10` (40px) de la barre d'outils workspace (§ 5.1). Raison : le pied de modal est une zone d'action confirmatoire souvent atteinte au pouce sur mobile → on respecte la cible tactile minimale WCAG 2.5.5 (44×44 CSS px). La barre d'outils workspace (`.ws-btn`) reste en `h-10` car elle vit en haut de page, hors zone de pouce, et la densité y prime. Pas de régression : c'est l'état actuel, on le grave.
+
+### 14.2 Disque décoratif translucide du KPI vedette — conservé (M-42)
+
+Le pseudo-élément `::before` 280×280 (et `::after` 180×180) du `.kpi-featured` (KpisBento) déborde volontairement du gabarit de la carte (`top/right: -64px`, `pointer-events: none`, `border-radius: 50%`). C'est un **aplat translucide** (`rgba(255,255,255,0.045)` / `0.025` sur fond `--color-primary-dark`), pas un gradient — il respecte donc l'interdiction § 6 (gradients bannis ; V2c H-25 a retiré le radial-gradient). On le **conserve** : il ajoute une profondeur subtile à l'unique carte sombre du bento sans bruit visuel. Tout autre élément décoratif hors gabarit reste interdit ailleurs.
+
+### 14.3 Ligne de DataTable cliquable + descendants focusables — pattern conservé, contrainte gravée (M-47)
+
+La ligne cliquable de `DataTable` (`<tr role="button" tabindex="0">` → ouvre le détail) est le pattern retenu (aligné Gmail / Linear / Notion). **Contrainte dure** : un `rowSnippet` ne doit JAMAIS imbriquer d'élément focusable (`<button>` / `<a>` / `<input>`) **autre que** la case à cocher de sélection — celle-ci vit dans un `<td>` qui stoppe la propagation `click` + `keydown`, donc l'activation de la ligne reste sans ambiguïté de tab-order. Les actions par ligne (éditer, désactiver…) se font soit dans le panneau de détail, soit sur une page **sans** `onRowClick` (la ligne n'est alors ni focusable ni `role=button` — cf. `/veille/themes`). Commentaire de rappel posé dans `DataTable.svelte` au niveau du `<tr>`.

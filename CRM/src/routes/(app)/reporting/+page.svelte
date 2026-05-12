@@ -148,7 +148,7 @@
 		background: var(--color-surface);
 	}
 	.hero h2 {
-		font-size: 24px;
+		font-size: 22px;
 		font-weight: 700;
 		color: var(--color-primary-dark);
 		letter-spacing: -0.01em;
@@ -182,7 +182,7 @@
 	}
 	.panel-header h2 {
 		margin: 0;
-		font-size: 14px;
+		font-size: 18px;
 		font-weight: 700;
 		color: var(--color-primary-dark);
 	}

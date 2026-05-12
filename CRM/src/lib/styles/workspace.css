@@ -133,8 +133,8 @@
 		display: grid;
 		place-items: center;
 		position: fixed;
-		right: 20px;
-		bottom: 20px;
+		right: 24px;
+		bottom: 24px;
 		width: 56px;
 		height: 56px;
 		border-radius: var(--radius-full);

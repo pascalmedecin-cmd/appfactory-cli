@@ -250,7 +250,7 @@
 						<span class="empty-card-icon primary">
 							<Icon name="edit_note" size={22} />
 						</span>
-						<h3>Ajout manuel</h3>
+						<h2>Ajout manuel</h2>
 					</div>
 					<p>
 						Vous avez repéré un appel d'offres, un permis de construire ou une opportunité ? Ajoutez-le comme signal pour le suivre.
@@ -265,7 +265,7 @@
 						<span class="empty-card-icon warning">
 							<Icon name="notifications_active" size={22} />
 						</span>
-						<h3>Veille automatique</h3>
+						<h2>Veille automatique</h2>
 					</div>
 					<p>
 						Le système surveille les sources publiques et vous alerte quand de nouveaux signaux apparaissent.
@@ -386,7 +386,7 @@
 
 			<!-- Section : Acteurs -->
 			<div class="space-y-3">
-				<h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Acteurs</h4>
+				<h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Acteurs</h3>
 				<div class="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<span class="text-text-muted">Maître d'ouvrage</span>
@@ -413,7 +413,7 @@
 
 			<!-- Section : Localisation -->
 			<div class="space-y-3">
-				<h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Localisation</h4>
+				<h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Localisation</h3>
 				<div class="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<span class="text-text-muted">Canton</span>
@@ -428,7 +428,7 @@
 
 			<!-- Section : Source & Dates -->
 			<div class="space-y-3">
-				<h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Source & dates</h4>
+				<h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Source & dates</h3>
 				<div class="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<span class="text-text-muted">Source</span>
@@ -447,7 +447,7 @@
 
 			{#if selectedSignal.notes_libres}
 				<div class="space-y-3">
-					<h4 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Scoring</h4>
+					<h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Scoring</h3>
 					<div class="flex flex-wrap gap-2">
 						{#each selectedSignal.notes_libres.split(', ') as critere}
 							<span class="px-2 py-1 text-xs rounded-lg bg-surface-alt/60 text-text">{critere}</span>
@@ -743,10 +743,10 @@
 		color: var(--color-primary);
 	}
 	.empty-card-icon.warning {
-		background: rgba(247, 144, 9, 0.1);
+		background: color-mix(in srgb, var(--color-warning) 10%, transparent);
 		color: var(--color-warning);
 	}
-	.empty-card h3 {
+	.empty-card h2 {
 		font-size: 14px;
 		font-weight: 600;
 		color: var(--color-text);
