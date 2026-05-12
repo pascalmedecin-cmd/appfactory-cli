@@ -4,6 +4,7 @@ import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { matchMotsCles } from '$lib/text-utils';
 import { config } from '$lib/config';
 import { timingSafeEqual } from 'crypto';
+import { buildScoreFilter, type ScoreFilterPlan, type ScoreThresholds } from './score-filter';
 
 // Seuils de température : source unique config.scoring.labels.
 // chaud >= CHAUD_MIN, tiede dans [TIEDE_MIN, CHAUD_MIN-1], froid < TIEDE_MIN.
@@ -11,6 +12,31 @@ const CHAUD_MIN = config.scoring.labels.chaud;
 const TIEDE_MIN = config.scoring.labels.tiede;
 const FROID_MAX = TIEDE_MIN - 1;
 const TIEDE_MAX = CHAUD_MIN - 1;
+const SCORE_THRESHOLDS: ScoreThresholds = {
+	chaudMin: CHAUD_MIN,
+	tiedeMin: TIEDE_MIN,
+	tiedeMax: TIEDE_MAX,
+	froidMax: FROID_MAX,
+};
+
+// Audit 360 M-52 : applique le plan de filtrage température (calculé par `buildScoreFilter`)
+// au query builder PostgREST. Dé-duplique les deux branches (mots-clés / count seul).
+function applyScoreFilter<Q extends { gte(c: string, v: number): Q; lte(c: string, v: number): Q; or(e: string): Q }>(
+	query: Q,
+	plan: ScoreFilterPlan | null
+): Q {
+	if (!plan) return query;
+	switch (plan.mode) {
+		case 'gte':
+			return query.gte('score_pertinence', plan.gte);
+		case 'lte':
+			return query.lte('score_pertinence', plan.lte);
+		case 'between':
+			return query.gte('score_pertinence', plan.gte).lte('score_pertinence', plan.lte);
+		case 'or':
+			return query.or(plan.orExpr);
+	}
+}
 
 function verifyCronSecret(authHeader: string | null): boolean {
 	const secret = env.CRON_SECRET;
@@ -78,19 +104,7 @@ export async function GET(event: RequestEvent) {
 			if (rech.sources && rech.sources.length > 0) query = query.in('source', rech.sources);
 			if (rech.cantons && rech.cantons.length > 0) query = query.in('canton', rech.cantons);
 			if (rech.score_minimum) query = query.gte('score_pertinence', rech.score_minimum);
-			if (rech.temperatures && rech.temperatures.length > 0 && rech.temperatures.length < 3) {
-				const ranges: string[] = [];
-				if (rech.temperatures.includes('chaud')) ranges.push(`score_pertinence.gte.${CHAUD_MIN}`);
-				if (rech.temperatures.includes('tiede')) ranges.push(`and(score_pertinence.gte.${TIEDE_MIN},score_pertinence.lte.${TIEDE_MAX})`);
-				if (rech.temperatures.includes('froid')) ranges.push(`score_pertinence.lte.${FROID_MAX}`);
-				if (ranges.length === 1) {
-					if (rech.temperatures.includes('chaud')) query = query.gte('score_pertinence', CHAUD_MIN);
-					else if (rech.temperatures.includes('tiede')) query = query.gte('score_pertinence', TIEDE_MIN).lte('score_pertinence', TIEDE_MAX);
-					else if (rech.temperatures.includes('froid')) query = query.lte('score_pertinence', FROID_MAX);
-				} else {
-					query = query.or(ranges.join(','));
-				}
-			}
+			query = applyScoreFilter(query, buildScoreFilter(rech.temperatures, SCORE_THRESHOLDS));
 
 			const { data: leads } = await query;
 			nbNouveaux = (leads ?? []).filter(lead =>
@@ -107,19 +121,7 @@ export async function GET(event: RequestEvent) {
 			if (rech.sources && rech.sources.length > 0) query = query.in('source', rech.sources);
 			if (rech.cantons && rech.cantons.length > 0) query = query.in('canton', rech.cantons);
 			if (rech.score_minimum) query = query.gte('score_pertinence', rech.score_minimum);
-			if (rech.temperatures && rech.temperatures.length > 0 && rech.temperatures.length < 3) {
-				const ranges: string[] = [];
-				if (rech.temperatures.includes('chaud')) ranges.push(`score_pertinence.gte.${CHAUD_MIN}`);
-				if (rech.temperatures.includes('tiede')) ranges.push(`and(score_pertinence.gte.${TIEDE_MIN},score_pertinence.lte.${TIEDE_MAX})`);
-				if (rech.temperatures.includes('froid')) ranges.push(`score_pertinence.lte.${FROID_MAX}`);
-				if (ranges.length === 1) {
-					if (rech.temperatures.includes('chaud')) query = query.gte('score_pertinence', CHAUD_MIN);
-					else if (rech.temperatures.includes('tiede')) query = query.gte('score_pertinence', TIEDE_MIN).lte('score_pertinence', TIEDE_MAX);
-					else if (rech.temperatures.includes('froid')) query = query.lte('score_pertinence', FROID_MAX);
-				} else {
-					query = query.or(ranges.join(','));
-				}
-			}
+			query = applyScoreFilter(query, buildScoreFilter(rech.temperatures, SCORE_THRESHOLDS));
 
 			const { count } = await query;
 			nbNouveaux = count ?? 0;

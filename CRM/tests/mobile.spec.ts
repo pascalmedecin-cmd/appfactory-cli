@@ -1,6 +1,8 @@
 import { test, expect, type Page } from '@playwright/test';
 import { mkdirSync } from 'fs';
 import { dirname } from 'path';
+// Audit 360 M-57 : seeders d'état DB → déskip des tests qui dépendaient de données prod.
+import { ensureSeedLead, ensureSeedEntreprise } from './fixtures';
 
 const SCREENSHOTS_DIR = 'docs/golden/v6/mobile';
 
@@ -213,12 +215,11 @@ test.describe('CRM mobile V1 — audits objectifs', () => {
 		await page.goto('/prospection', { waitUntil: 'networkidle' });
 		await page.waitForTimeout(500);
 
-		const firstRow = page.locator('main tbody tr').first();
-		const hasRows = await firstRow.isVisible().catch(() => false);
-		if (!hasRows) {
-			test.skip(true, 'Aucun lead en prod, test ignoré');
+		if (!(await ensureSeedLead(page))) {
+			test.skip(true, 'Aucun lead disponible (seed e2e indisponible) — test ignoré');
 			return;
 		}
+		const firstRow = page.locator('main tbody tr').first();
 
 		await firstRow.click();
 		await page.waitForTimeout(800);
@@ -240,12 +241,11 @@ test.describe('CRM mobile V1 — audits objectifs', () => {
 		await page.goto('/entreprises', { waitUntil: 'networkidle' });
 		await page.waitForTimeout(500);
 
-		const firstRow = page.locator('main tbody tr').first();
-		const hasRows = await firstRow.isVisible().catch(() => false);
-		if (!hasRows) {
-			test.skip(true, 'Aucune entreprise en prod, test ignoré');
+		if (!(await ensureSeedEntreprise(page))) {
+			test.skip(true, 'Aucune entreprise disponible (seed e2e indisponible) — test ignoré');
 			return;
 		}
+		const firstRow = page.locator('main tbody tr').first();
 
 		await firstRow.click();
 		await page.waitForTimeout(800);
@@ -305,12 +305,11 @@ test.describe('CRM mobile V1 — audits objectifs', () => {
 		await page.goto('/prospection', { waitUntil: 'networkidle' });
 		await page.waitForTimeout(500);
 
-		const firstRow = page.locator('main tbody tr').first();
-		const hasRows = await firstRow.isVisible().catch(() => false);
-		if (!hasRows) {
-			test.skip(true, 'Aucun lead en prod, test ignoré');
+		if (!(await ensureSeedLead(page))) {
+			test.skip(true, 'Aucun lead disponible (seed e2e indisponible) — test ignoré');
 			return;
 		}
+		const firstRow = page.locator('main tbody tr').first();
 
 		await firstRow.click();
 		await page.waitForTimeout(800);
@@ -330,12 +329,11 @@ test.describe('CRM mobile V1 — audits objectifs', () => {
 		await page.goto('/entreprises', { waitUntil: 'networkidle' });
 		await page.waitForTimeout(500);
 
-		const firstRow = page.locator('main tbody tr').first();
-		const hasRows = await firstRow.isVisible().catch(() => false);
-		if (!hasRows) {
-			test.skip(true, 'Aucune entreprise en prod, test ignoré');
+		if (!(await ensureSeedEntreprise(page))) {
+			test.skip(true, 'Aucune entreprise disponible (seed e2e indisponible) — test ignoré');
 			return;
 		}
+		const firstRow = page.locator('main tbody tr').first();
 
 		await firstRow.click();
 		await page.waitForTimeout(800);
@@ -454,12 +452,11 @@ test.describe('CRM mobile V1 — audits objectifs', () => {
 		await page.goto('/entreprises', { waitUntil: 'networkidle' });
 		await page.waitForTimeout(500);
 
-		const firstRow = page.locator('main tbody tr').first();
-		const hasRows = await firstRow.isVisible().catch(() => false);
-		if (!hasRows) {
-			test.skip(true, 'Aucune entreprise en prod, test ignoré');
+		if (!(await ensureSeedEntreprise(page))) {
+			test.skip(true, 'Aucune entreprise disponible (seed e2e indisponible) — test ignoré');
 			return;
 		}
+		const firstRow = page.locator('main tbody tr').first();
 
 		await firstRow.click();
 		await page.waitForTimeout(800);
@@ -473,20 +470,22 @@ test.describe('CRM mobile V1 — audits objectifs', () => {
 		await page.goto('/entreprises', { waitUntil: 'networkidle' });
 		await page.waitForTimeout(500);
 
-		const firstRow = page.locator('main tbody tr').first();
-		const hasRows = await firstRow.isVisible().catch(() => false);
-		if (!hasRows) {
-			test.skip(true, 'Aucune entreprise en prod, test ignoré');
+		if (!(await ensureSeedEntreprise(page))) {
+			test.skip(true, 'Aucune entreprise disponible (seed e2e indisponible) — test ignoré');
 			return;
 		}
+		const firstRow = page.locator('main tbody tr').first();
 
 		await firstRow.click();
 		await page.waitForTimeout(800);
 
+		// Conditionnel par nature : le bouton « Étape suivante » n'apparaît que si la 1re entreprise
+		// listée porte une opportunité active. Seedable uniquement en créant entreprise + opp liée +
+		// garantie d'ordre (fragile) → on assume le skip conditionnel ici (cf. CLAUDE.md watch list M-57).
 		const advanceBtn = page.locator('button:has-text("Étape suivante")').first();
 		const visible = await advanceBtn.isVisible().catch(() => false);
 		if (!visible) {
-			test.skip(true, 'Pas d\'opportunité active sur cette entreprise, test ignoré');
+			test.skip(true, "Pas d'opportunité active sur la 1re entreprise — test conditionnel ignoré");
 			return;
 		}
 		const box = await advanceBtn.boundingBox().catch(() => null);

@@ -14,7 +14,18 @@ export default defineConfig({
 		storageState: 'tests/.auth.json',
 		trace: 'retain-on-failure',
 	},
+	// Audit 360 M-56 : couverture multi-viewports — petit (iPhone SE 375×667),
+	// Android moyen (Pixel 7 412×915), grand iOS (iPhone 14 Pro Max 430×932).
+	// Filtrer un projet : `npm run test:mobile -- --project=pixel-7`.
 	projects: [
+		{
+			name: 'iphone-se',
+			use: { ...devices['iPhone SE'] },
+		},
+		{
+			name: 'pixel-7',
+			use: { ...devices['Pixel 7'] },
+		},
 		{
 			name: 'iphone-14-pro-max',
 			use: { ...devices['iPhone 14 Pro Max'] },

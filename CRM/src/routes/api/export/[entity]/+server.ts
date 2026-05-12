@@ -20,10 +20,17 @@ type EntityConfig = {
 	columns: CsvColumn<Record<string, unknown>>[];
 };
 
-/** Helper : formatage sécurisé d'une relation jointe. */
+/**
+ * Helper : formatage sécurisé d'une relation jointe.
+ *
+ * `path` part de la VALEUR de la cellule (la relation jointe), pas de la ligne entière —
+ * ex. pour la colonne `key: 'entreprises'`, `formatJoined(['raison_sociale'])` lit
+ * `row.entreprises.raison_sociale`. (Audit 360 V3a-2 : la version précédente repartait de
+ * `row` en ignorant la valeur → la colonne « Entreprise » du CSV contacts était toujours vide.)
+ */
 function formatJoined(path: string[]): (v: unknown, row: Record<string, unknown>) => string {
-	return (_v, row) => {
-		let current: unknown = row;
+	return (value) => {
+		let current: unknown = value;
 		for (const key of path) {
 			if (current && typeof current === 'object' && key in current) {
 				current = (current as Record<string, unknown>)[key];
