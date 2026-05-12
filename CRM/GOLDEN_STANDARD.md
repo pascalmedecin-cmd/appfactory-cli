@@ -553,7 +553,7 @@ A11y :
 
 ---
 
-## 14. Décisions tranchées - audit 360 V3a-2 (S178, 2026-05-12)
+## 14. Décisions tranchées - audit 360 V3a-2 (S179, 2026-05-12)
 
 Trois findings UI demandaient un arbitrage in-session (« aligner X **OU** mettre à jour la spec »). Décisions actées ici :
 
