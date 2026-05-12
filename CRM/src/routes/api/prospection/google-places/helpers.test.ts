@@ -35,12 +35,12 @@ describe('validateGooglePlacesImportInput', () => {
 		expect(r.valid).toBe(false);
 	});
 	it('rejette un canton hors liste', () => {
-		const r = validateGooglePlacesImportInput({ activityType: 'electrician', canton: 'ZH' });
+		const r = validateGooglePlacesImportInput({ activityType: 'cvc_hvac', canton: 'ZH' });
 		expect(r.valid).toBe(false);
 	});
 	it('rejette un mot-clé trop court ou générique', () => {
-		expect(validateGooglePlacesImportInput({ activityType: 'electrician', canton: 'GE', keyword: 'ab' }).valid).toBe(false);
-		expect(validateGooglePlacesImportInput({ activityType: 'electrician', canton: 'GE', keyword: 'SARL' }).valid).toBe(false);
+		expect(validateGooglePlacesImportInput({ activityType: 'cvc_hvac', canton: 'GE', keyword: 'ab' }).valid).toBe(false);
+		expect(validateGooglePlacesImportInput({ activityType: 'cvc_hvac', canton: 'GE', keyword: 'SARL' }).valid).toBe(false);
 	});
 	it('exige un mot-clé quand le type est « other »', () => {
 		expect(validateGooglePlacesImportInput({ activityType: 'other', canton: 'GE' }).valid).toBe(false);
@@ -48,17 +48,17 @@ describe('validateGooglePlacesImportInput', () => {
 		expect(ok.valid).toBe(true);
 	});
 	it('accepte un input valide et normalise le canton', () => {
-		const r = validateGooglePlacesImportInput({ activityType: 'real_estate_agency', canton: 'vd' });
+		const r = validateGooglePlacesImportInput({ activityType: 'regies_syndics', canton: 'vd' });
 		expect(r.valid).toBe(true);
 		if (r.valid) {
 			expect(r.input.canton).toBe('VD');
-			expect(r.input.activityType).toBe('real_estate_agency');
+			expect(r.input.activityType).toBe('regies_syndics');
 			expect(r.input.keyword).toBeNull();
 		}
 	});
 	it('valide from_intelligence (UUID) et from_term', () => {
 		const r = validateGooglePlacesImportInput({
-			activityType: 'plumber', canton: 'GE',
+			activityType: 'bureaux_etudes', canton: 'GE',
 			from_intelligence: '11111111-2222-3333-4444-555555555555', from_term: 'chauffage',
 		});
 		expect(r.valid).toBe(true);
@@ -66,26 +66,32 @@ describe('validateGooglePlacesImportInput', () => {
 			expect(r.input.from_intelligence).toBe('11111111-2222-3333-4444-555555555555');
 			expect(r.input.from_term).toBe('chauffage');
 		}
-		const bad = validateGooglePlacesImportInput({ activityType: 'plumber', canton: 'GE', from_intelligence: 'not-a-uuid' });
+		const bad = validateGooglePlacesImportInput({ activityType: 'bureaux_etudes', canton: 'GE', from_intelligence: 'not-a-uuid' });
 		expect(bad.valid && bad.input.from_intelligence).toBeNull();
 	});
 });
 
 describe('buildTextQuery / includedTypeFor', () => {
-	it('compose libellé métier + canton + Suisse', () => {
-		const q = buildTextQuery({ activityType: 'electrician', keyword: null, canton: 'GE' });
-		expect(q).toContain('électricien');
+	it('compose mot-clé métier + canton + Suisse', () => {
+		const q = buildTextQuery({ activityType: 'regies_syndics', keyword: null, canton: 'GE' });
+		expect(q).toContain('régie immobilière');
 		expect(q).toContain('Genève');
 		expect(q).toContain('Suisse');
 	});
 	it('ajoute le mot-clé complémentaire', () => {
-		const q = buildTextQuery({ activityType: 'plumber', keyword: 'ventilation', canton: 'VD' });
-		expect(q).toContain('ventilation');
+		const q = buildTextQuery({ activityType: 'cvc_hvac', keyword: 'ventilation industrielle', canton: 'VD' });
+		expect(q).toContain('ventilation industrielle');
+		expect(q).toContain('Vaud');
 	});
-	it('includedType présent pour les types natifs, null pour architect/other', () => {
-		expect(includedTypeFor('electrician')).toBe('electrician');
-		expect(includedTypeFor('real_estate_agency')).toBe('real_estate_agency');
-		expect(includedTypeFor('architect')).toBeNull();
+	it('« other » sans mot-clé métier propre : seuls le mot-clé saisi + canton', () => {
+		const q = buildTextQuery({ activityType: 'other', keyword: 'cabinet médical', canton: 'GE' });
+		expect(q).toContain('cabinet médical');
+		expect(q).toContain('Genève');
+	});
+	it('aucun includedType natif (tout passe par mot-clé)', () => {
+		expect(includedTypeFor('regies_syndics')).toBeNull();
+		expect(includedTypeFor('entreprises_generales')).toBeNull();
+		expect(includedTypeFor('commerce')).toBeNull();
 		expect(includedTypeFor('other')).toBeNull();
 	});
 });

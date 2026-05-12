@@ -5,8 +5,8 @@
  * Spec : notes/google-places-2026-05-12/spec.md
  * Doc Google : https://developers.google.com/maps/documentation/places/web-service/text-search
  *
- * Économie de quota : type d'activité dans une enum fermée (mappé aux `includedType`
- * Google) + canton requis (bornage géographique) + cap dur 20 résultats / requête.
+ * Économie de quota : type d'activité dans une enum fermée + canton requis (bornage
+ * géographique via rectangle) + cap dur 20 résultats / requête.
  */
 
 import { normalizeNFDTrim } from '$lib/utils/text-normalize';
@@ -26,21 +26,24 @@ const CANTON_NAMES: Record<AllowedCanton, string> = {
 };
 
 /**
- * Types d'activité proposés à l'utilisateur, mappés aux `includedType` de la Table A
- * « Places API (New) » utilisables en Text Search. `includedType: null` → on omet le
- * paramètre et on force le mot-clé `keyword` dans la requête texte.
- *
- * Le `key` est ce que le client envoie ; il est validé contre cette liste (enum fermée).
+ * Types d'activité proposés à l'utilisateur. Le `key` est ce que le client envoie ;
+ * il est validé contre cette liste (enum fermée). `keyword` est injecté dans `textQuery`.
  */
+// Cibles du réseau de partenaires FilmPro (validées 2026-05-12 par tests live sur Places API,
+// cf. scripts/probe-google-places-queries.mjs). Tout passe par mot-clé : aucun `includedType`
+// natif (Text Search New n'accepte qu'une liste restreinte de types — ex: `general_contractor`
+// renvoie 400 — et le filtre par type est souvent trop restrictif). Le mot-clé + le nom du
+// canton + « Suisse » sont concaténés dans `textQuery`.
 export const ACTIVITY_TYPES = [
-	{ key: 'real_estate_agency', label: 'Régies immobilières', includedType: 'real_estate_agency', keyword: 'régie immobilière' },
-	{ key: 'general_contractor', label: 'Entreprises générales / construction', includedType: 'general_contractor', keyword: 'entreprise générale construction' },
-	{ key: 'electrician', label: 'Électriciens', includedType: 'electrician', keyword: 'électricien' },
-	{ key: 'plumber', label: 'Sanitaire / chauffage', includedType: 'plumber', keyword: 'sanitaire chauffage' },
-	{ key: 'roofing_contractor', label: 'Toiture / étanchéité', includedType: 'roofing_contractor', keyword: 'toiture étanchéité' },
-	{ key: 'painter', label: 'Peinture / plâtrerie', includedType: 'painter', keyword: 'peinture plâtrerie' },
-	{ key: 'architect', label: 'Architectes / bureaux d’études', includedType: null, keyword: 'architecte bureau d’études' },
-	{ key: 'other', label: 'Autre (mot-clé libre)', includedType: null, keyword: null },
+	{ key: 'regies_syndics', label: 'Régies immobilières et syndics de copropriété', includedType: null, keyword: 'régie immobilière syndic de copropriété' },
+	{ key: 'facility_management', label: 'Facility management et gestion de bâtiments', includedType: null, keyword: 'facility management gestion technique de bâtiment property management' },
+	{ key: 'bureaux_etudes', label: 'Bureaux d’études énergie et thermique', includedType: null, keyword: 'bureau d’études thermique énergie bâtiment CECB' },
+	{ key: 'architectes_designers', label: 'Architectes et architectes d’intérieur', includedType: null, keyword: 'architecte architecte d’intérieur agence d’architecture' },
+	{ key: 'cvc_hvac', label: 'Climatisation, ventilation, CVC / HVAC', includedType: null, keyword: 'climatisation ventilation CVC chauffage entreprise HVAC' },
+	{ key: 'entreprises_generales', label: 'Entreprises générales du bâtiment', includedType: null, keyword: 'entreprise générale du bâtiment rénovation' },
+	{ key: 'securite_batiment', label: 'Sécurité du bâtiment (alarme, accès, vidéo)', includedType: null, keyword: 'sécurité bâtiment alarme contrôle d’accès vidéosurveillance' },
+	{ key: 'commerce', label: 'Commerce (magasins, boutiques, vitrines)', includedType: null, keyword: 'magasin boutique commerce de détail vitrine' },
+	{ key: 'other', label: 'Mot-clé libre', includedType: null, keyword: null },
 ] as const;
 export type ActivityTypeKey = (typeof ACTIVITY_TYPES)[number]['key'];
 const ACTIVITY_TYPE_MAP = new Map(ACTIVITY_TYPES.map((a) => [a.key, a]));

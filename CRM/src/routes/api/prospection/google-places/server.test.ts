@@ -80,7 +80,7 @@ describe('POST /api/prospection/google-places', () => {
 	beforeEach(() => { vi.restoreAllMocks(); });
 
 	it('401 si pas de session', async () => {
-		const res = await POST(makeEvent({ activityType: 'electrician', canton: 'GE' }, { session: false }).event);
+		const res = await POST(makeEvent({ activityType: 'cvc_hvac', canton: 'GE' }, { session: false }).event);
 		expect(res.status).toBe(401);
 	});
 
@@ -90,14 +90,14 @@ describe('POST /api/prospection/google-places', () => {
 	});
 
 	it('429 si quota mensuel applicatif épuisé', async () => {
-		const res = await POST(makeEvent({ activityType: 'electrician', canton: 'GE' }, { behavior: { quotaUsed: 900 } }).event);
+		const res = await POST(makeEvent({ activityType: 'cvc_hvac', canton: 'GE' }, { behavior: { quotaUsed: 900 } }).event);
 		expect(res.status).toBe(429);
 	});
 
 	it('happy path : importe les leads, incrémente le quota, dédup intra-source', async () => {
 		mockFetch([PLACE('p1', 'Régie Alpha SA', 'GE', '022 111 11 11'), PLACE('p2', 'Régie Beta', 'GE'), PLACE('p3', 'Régie Gamma', 'GE')]);
 		const incrementCalls = { count: 0 };
-		const ev = makeEvent({ activityType: 'real_estate_agency', canton: 'GE' }, {
+		const ev = makeEvent({ activityType: 'regies_syndics', canton: 'GE' }, {
 			behavior: { quotaUsed: 10, existing: [{ source_id: 'pid:p3' }], incrementCalls },
 		});
 		const res = await POST(ev.event);
@@ -115,7 +115,7 @@ describe('POST /api/prospection/google-places', () => {
 
 	it('marque « déjà connue (Zefix) » via la RPC entreprises_lookup_by_name', async () => {
 		mockFetch([PLACE('p1', 'Vitrerie Lausanne SA', 'VD')]);
-		const ev = makeEvent({ activityType: 'real_estate_agency', canton: 'VD' }, {
+		const ev = makeEvent({ activityType: 'regies_syndics', canton: 'VD' }, {
 			behavior: { entreprisesLookup: [{ id: 'e1', raison_sociale: 'Vitrerie Lausanne SA' }] },
 		});
 		const res = await POST(ev.event);
@@ -127,7 +127,7 @@ describe('POST /api/prospection/google-places', () => {
 
 	it('canton hors cibles → lead conservé avec canton null + mention', async () => {
 		mockFetch([PLACE('p1', 'Zurich Bau', 'ZH')]);
-		const ev = makeEvent({ activityType: 'general_contractor', canton: 'GE' });
+		const ev = makeEvent({ activityType: 'entreprises_generales', canton: 'GE' });
 		const res = await POST(ev.event);
 		const data = await res.json();
 		expect(data.imported).toBe(1);
@@ -139,19 +139,19 @@ describe('POST /api/prospection/google-places', () => {
 
 	it('502 si Google répond en erreur', async () => {
 		global.fetch = vi.fn(async () => ({ ok: false, status: 500, headers: { get: () => null }, text: async () => 'oops' })) as never;
-		const res = await POST(makeEvent({ activityType: 'electrician', canton: 'GE' }).event);
+		const res = await POST(makeEvent({ activityType: 'cvc_hvac', canton: 'GE' }).event);
 		expect(res.status).toBe(502);
 	});
 
 	it('503 si Google renvoie 403 (clé invalide)', async () => {
 		global.fetch = vi.fn(async () => ({ ok: false, status: 403, headers: { get: () => null }, text: async () => 'forbidden' })) as never;
-		const res = await POST(makeEvent({ activityType: 'electrician', canton: 'GE' }).event);
+		const res = await POST(makeEvent({ activityType: 'cvc_hvac', canton: 'GE' }).event);
 		expect(res.status).toBe(503);
 	});
 
 	it('aucun résultat → message vide, pas d’insert', async () => {
 		mockFetch([]);
-		const ev = makeEvent({ activityType: 'electrician', canton: 'GE' });
+		const ev = makeEvent({ activityType: 'cvc_hvac', canton: 'GE' });
 		const res = await POST(ev.event);
 		const data = await res.json();
 		expect(data.imported).toBe(0);
@@ -160,7 +160,7 @@ describe('POST /api/prospection/google-places', () => {
 
 	it('un lead déjà écarté/transféré n’est pas ré-importé', async () => {
 		mockFetch([PLACE('p1', 'Régie X', 'GE')]);
-		const ev = makeEvent({ activityType: 'real_estate_agency', canton: 'GE' }, { behavior: { dismissed: [{ source_id: 'pid:p1', statut: 'ecarte' }] } });
+		const ev = makeEvent({ activityType: 'regies_syndics', canton: 'GE' }, { behavior: { dismissed: [{ source_id: 'pid:p1', statut: 'ecarte' }] } });
 		const res = await POST(ev.event);
 		const data = await res.json();
 		expect(data.imported).toBe(0);
@@ -169,7 +169,7 @@ describe('POST /api/prospection/google-places', () => {
 
 	it('erreur d’insert Supabase → 500', async () => {
 		mockFetch([PLACE('p1', 'Régie X', 'GE')]);
-		const ev = makeEvent({ activityType: 'real_estate_agency', canton: 'GE' }, { behavior: { insertError: 'boom' } });
+		const ev = makeEvent({ activityType: 'regies_syndics', canton: 'GE' }, { behavior: { insertError: 'boom' } });
 		const res = await POST(ev.event);
 		expect(res.status).toBe(500);
 		const data = await res.json();
@@ -178,7 +178,7 @@ describe('POST /api/prospection/google-places', () => {
 
 	it('import depuis un signal Veille : source_intelligence_id posé sur les leads', async () => {
 		mockFetch([PLACE('p1', 'Régie X', 'GE')]);
-		const ev = makeEvent({ activityType: 'real_estate_agency', canton: 'GE', from_intelligence: '11111111-2222-3333-4444-555555555555', from_term: 'régie' });
+		const ev = makeEvent({ activityType: 'regies_syndics', canton: 'GE', from_intelligence: '11111111-2222-3333-4444-555555555555', from_term: 'régie' });
 		await POST(ev.event);
 		const inserted = ev.captured.current as Array<Record<string, unknown>>;
 		expect(inserted[0].source_intelligence_id).toBe('11111111-2222-3333-4444-555555555555');

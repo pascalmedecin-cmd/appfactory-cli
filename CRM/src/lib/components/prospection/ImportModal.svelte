@@ -60,20 +60,21 @@
 	let importRegblCantons = $state<string[]>(['GE', 'VD']);
 	let importSearchchTerm = $state('');
 	let importSearchchVille = $state('');
-	let importGpActivityType = $state<string>('real_estate_agency');
+	let importGpActivityType = $state<string>('regies_syndics');
 	let importGpKeyword = $state('');
 	let gpQuota = $state<{ used: number; cap: number; remaining: number; exhausted: boolean } | null>(null);
 
 	// Types d'activite proposes (miroir de helpers.ts ACTIVITY_TYPES, libelles uniquement).
 	const GP_ACTIVITY_OPTIONS = [
-		{ key: 'real_estate_agency', label: 'Regies immobilieres' },
-		{ key: 'general_contractor', label: 'Entreprises generales / construction' },
-		{ key: 'electrician', label: 'Electriciens' },
-		{ key: 'plumber', label: 'Sanitaire / chauffage' },
-		{ key: 'roofing_contractor', label: 'Toiture / etancheite' },
-		{ key: 'painter', label: 'Peinture / platrerie' },
-		{ key: 'architect', label: 'Architectes / bureaux d\u2019etudes' },
-		{ key: 'other', label: 'Autre (mot-cle libre)' },
+		{ key: 'regies_syndics', label: 'Régies immobilières et syndics de copropriété' },
+		{ key: 'facility_management', label: 'Facility management et gestion de bâtiments' },
+		{ key: 'bureaux_etudes', label: 'Bureaux d\u2019études énergie et thermique' },
+		{ key: 'architectes_designers', label: 'Architectes et architectes d\u2019intérieur' },
+		{ key: 'cvc_hvac', label: 'Climatisation, ventilation, CVC / HVAC' },
+		{ key: 'entreprises_generales', label: 'Entreprises générales du bâtiment' },
+		{ key: 'securite_batiment', label: 'Sécurité du bâtiment (alarme, accès, vidéo)' },
+		{ key: 'commerce', label: 'Commerce (magasins, boutiques, vitrines)' },
+		{ key: 'other', label: 'Mot-clé libre' },
 	] as const;
 	const GP_GENERIC_TERMS = new Set([
 		'sa', 'sarl', 'sa rl', 'sasu', 'srl', 'gmbh', 'ag', 'kg', 'ohg',
