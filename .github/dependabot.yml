@@ -1,0 +1,43 @@
+# Dependabot — surveillance hebdomadaire des dépendances (audit 360 V3b I-05).
+#
+# Le CRM FilmPro (SvelteKit) vit dans le sous-dossier /CRM avec son propre
+# package.json / package-lock.json. GitHub Actions vit dans /.github/workflows.
+# Dependabot ouvre des PR groupées pour les bumps mineurs/patch ; les majeures
+# arrivent en PR séparées (review humaine avant merge).
+version: 2
+updates:
+  # Dépendances npm du CRM FilmPro
+  - package-ecosystem: "npm"
+    directory: "/CRM"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Zurich"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+    groups:
+      # Regrouper les mises à jour mineures + patch en une seule PR par run.
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Actions GitHub utilisées par les workflows (cron veille, etc.)
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "Europe/Zurich"
+    open-pull-requests-limit: 3
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"

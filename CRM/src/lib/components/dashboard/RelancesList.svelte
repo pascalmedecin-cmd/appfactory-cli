@@ -134,7 +134,7 @@
 		grid-template-columns: 1fr auto;
 		gap: 8px;
 		align-items: center;
-		transition: background 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+		transition: background 200ms var(--ease-out-expo), transform 200ms var(--ease-out-expo);
 		text-decoration: none;
 		color: inherit;
 	}

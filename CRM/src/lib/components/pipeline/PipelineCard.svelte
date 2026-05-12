@@ -132,8 +132,8 @@
 		box-shadow: var(--shadow-card);
 		cursor: grab;
 		position: relative;
-		transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms ease;
-		animation: cardEnter 320ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+		transition: transform 220ms var(--ease-out-expo), box-shadow 220ms var(--ease-out-expo), opacity 200ms ease;
+		animation: cardEnter 320ms var(--ease-out-expo) backwards;
 		animation-delay: calc(var(--i, 0) * 50ms);
 		display: block;
 		text-align: left;

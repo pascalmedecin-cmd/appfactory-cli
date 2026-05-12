@@ -106,7 +106,7 @@
 		box-shadow: var(--shadow-card);
 		position: relative;
 		overflow: hidden;
-		transition: transform 280ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 280ms cubic-bezier(0.16, 1, 0.3, 1);
+		transition: transform 280ms var(--ease-out-expo), box-shadow 280ms var(--ease-out-expo);
 		display: block;
 		text-decoration: none;
 		color: inherit;

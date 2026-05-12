@@ -57,8 +57,11 @@
 			abortController.abort();
 		}
 		open = false;
-		// Reset apres la fermeture pour eviter flash visuel
-		setTimeout(reset, 200);
+		// Reset après la fermeture pour éviter un flash visuel : on attend que la
+		// transition de sortie de la modale soit terminée (~150-200ms) avant de remettre
+		// l'état à zéro. 200ms = durée de transition + petite marge (audit 360 V3b I-03).
+		const MODAL_CLOSE_TRANSITION_MS = 200;
+		setTimeout(reset, MODAL_CLOSE_TRANSITION_MS);
 	}
 
 	async function start() {

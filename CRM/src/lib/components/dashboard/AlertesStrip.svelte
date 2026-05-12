@@ -118,7 +118,7 @@
 		text-decoration: none;
 		color: inherit;
 		box-shadow: var(--shadow-card);
-		transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1);
+		transition: transform 240ms var(--ease-out-expo), box-shadow 240ms var(--ease-out-expo);
 		position: relative;
 		overflow: hidden;
 	}
@@ -172,7 +172,7 @@
 	}
 	.alert-arrow {
 		color: var(--color-text-muted);
-		transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), color 200ms ease;
+		transition: transform 240ms var(--ease-out-expo), color 200ms ease;
 		display: inline-flex;
 	}
 	.alert-card:hover .alert-arrow {

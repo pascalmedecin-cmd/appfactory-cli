@@ -132,8 +132,8 @@
 		padding: 16px;
 		cursor: pointer;
 		transition:
-			transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
-			box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1);
+			transform 200ms var(--ease-out-expo),
+			box-shadow 200ms var(--ease-out-expo);
 		text-align: left;
 		border: none;
 		font-family: inherit;

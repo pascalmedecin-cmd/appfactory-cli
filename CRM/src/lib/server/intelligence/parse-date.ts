@@ -1,3 +1,5 @@
+import { DAY_MS } from '$lib/utils/time-constants';
+
 /**
  * Parse flexible d'une date émise par le LLM ou par une métadonnée HTML.
  * Accepte : YYYY-MM-DD, ISO 8601 complet, partielles YYYY-MM, YYYY.
@@ -42,6 +44,6 @@ export function isWithinWindow(
 	const start = parseFlexibleDate(dateStart);
 	const end = parseFlexibleDate(dateEnd);
 	if (!start || !end) return false;
-	const endOfDay = new Date(end.getTime() + 24 * 60 * 60 * 1000 - 1);
+	const endOfDay = new Date(end.getTime() + DAY_MS - 1);
 	return date.getTime() >= start.getTime() && date.getTime() <= endOfDay.getTime();
 }

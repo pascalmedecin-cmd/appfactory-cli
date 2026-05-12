@@ -23,7 +23,8 @@ import {
 	Zap,
 } from 'lucide-svelte';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- les composants lucide-svelte
+// n'exposent pas de type commun stable ; `any` garde la table de mapping lisible (audit 360 V3b L-20).
 export const ICON_MAP: Record<string, any> = {
 	ac_unit: Snowflake,
 	account_tree: ListTree,
@@ -162,5 +163,6 @@ export const ICON_MAP: Record<string, any> = {
 	waving_hand: Hand,
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- même raison que ICON_MAP : type
+// composant lucide non exposé ; `any` aligné sur la valeur du map (audit 360 V3b L-20).
 export const FALLBACK_ICON: any = CircleHelp;

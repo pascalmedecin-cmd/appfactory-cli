@@ -594,7 +594,7 @@
 <style>
 	.table-wrap {
 		flex: 1;
-		padding: 20px 32px 40px;
+		padding: 24px 32px 32px; /* audit 360 V3b L-22 : sur la grille 8px (était 20/.../40) */
 	}
 
 	@media (max-width: 1024px) {

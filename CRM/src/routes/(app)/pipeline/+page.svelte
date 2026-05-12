@@ -489,7 +489,7 @@
 <style>
 	.kanban-wrap {
 		flex: 1;
-		padding: 20px 32px 40px;
+		padding: 24px 32px 32px; /* audit 360 V3b L-22 : sur la grille 8px (était 20/.../40) */
 		overflow-x: auto;
 	}
 	.kanban {
@@ -529,7 +529,7 @@
 			grid-template-columns: 1fr;
 		}
 		.kanban-wrap {
-			padding: 12px 16px 96px;
+			padding: 16px 16px 96px; /* audit 360 V3b L-25 : sur la grille 8px (était 12px en haut) */
 		}
 	}
 </style>

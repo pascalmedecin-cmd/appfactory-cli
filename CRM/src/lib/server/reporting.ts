@@ -9,6 +9,8 @@
  * Supabase ; (2) réutilisation par un futur dashboard exec.
  */
 
+import { DAY_MS } from '$lib/utils/time-constants';
+
 export interface PipelineRow {
 	etape_pipeline: string | null;
 	montant_estime: number | string | null;
@@ -80,8 +82,8 @@ export function aggregateActivity(
 	now: Date = new Date()
 ): ActivityStats {
 	const nowMs = now.getTime();
-	const d30 = nowMs - 30 * 24 * 60 * 60 * 1000;
-	const d90 = nowMs - 90 * 24 * 60 * 60 * 1000;
+	const d30 = nowMs - 30 * DAY_MS;
+	const d90 = nowMs - 90 * DAY_MS;
 
 	let count30 = 0;
 	let count90 = 0;

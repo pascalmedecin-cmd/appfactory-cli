@@ -243,7 +243,7 @@
 		border-radius: var(--radius-full);
 		background: var(--color-success);
 		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-success) 15%, transparent);
-		animation: pulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+		animation: pulse 2.4s var(--ease-out-expo) infinite;
 	}
 	@keyframes pulse {
 		0%, 100% { transform: scale(1); opacity: 1; }
@@ -288,7 +288,7 @@
 		align-items: center;
 		gap: 16px;
 		padding: 16px 24px;
-		transition: background 220ms cubic-bezier(0.16, 1, 0.3, 1), opacity 200ms ease;
+		transition: background 220ms var(--ease-out-expo), opacity 200ms ease;
 		position: relative;
 		animation: fadeUp 280ms ease both;
 		animation-delay: calc(var(--i, 0) * 50ms);
@@ -346,10 +346,10 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1),
-					background 220ms cubic-bezier(0.16, 1, 0.3, 1),
+		transition: transform 220ms var(--ease-out-expo),
+					background 220ms var(--ease-out-expo),
 					color 180ms ease,
-					box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
+					box-shadow 220ms var(--ease-out-expo);
 		font-family: inherit;
 		will-change: transform;
 	}

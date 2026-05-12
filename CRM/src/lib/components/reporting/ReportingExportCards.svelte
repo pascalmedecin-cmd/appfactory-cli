@@ -55,7 +55,7 @@
 		gap: 12px;
 		text-decoration: none;
 		color: inherit;
-		transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 200ms ease, border-color 180ms ease;
+		transition: transform 200ms var(--ease-out-expo), box-shadow 200ms ease, border-color 180ms ease;
 	}
 	.export-card:hover {
 		transform: translateY(-2px);

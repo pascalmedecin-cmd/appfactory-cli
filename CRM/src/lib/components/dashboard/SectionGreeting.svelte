@@ -113,7 +113,7 @@
 		border-radius: var(--radius-full);
 		background: var(--color-success);
 		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-success) 15%, transparent);
-		animation: pulse 2.4s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+		animation: pulse 2.4s var(--ease-out-expo) infinite;
 	}
 	@keyframes pulse {
 		0%, 100% { transform: scale(1); opacity: 1; }

@@ -49,8 +49,9 @@
 
 <div class="login-page" class:has-bg={bgImage}>
 	{#if bgImage}
-		<img src="/{bgImage}" alt="" class="login-bg" />
-		<div class="login-overlay"></div>
+		<img src="/{bgImage}" alt="" class="login-bg" aria-hidden="true" />
+		<!-- Voile décoratif (assombrit l'image de fond pour le contraste du texte) — audit 360 V3b L-26 -->
+		<div class="login-overlay" aria-hidden="true"></div>
 	{/if}
 	<div class="login-card">
 		<div class="text-center">

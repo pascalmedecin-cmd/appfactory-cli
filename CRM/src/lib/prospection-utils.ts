@@ -3,6 +3,7 @@
  * Labels, variants, options de filtrage - source unique (pas de duplication).
  */
 import { config } from '$lib/config';
+import { DAY_MS } from '$lib/utils/time-constants';
 
 // === Phase 2 2026-05-01 : 4 onglets par nature de signal — source unique ===
 
@@ -146,7 +147,7 @@ export function relativeDate(dateStr: string | null): string {
 	const date = new Date(dateStr);
 	const now = new Date();
 	const diffMs = now.getTime() - date.getTime();
-	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+	const diffDays = Math.floor(diffMs / DAY_MS);
 	if (diffDays === 0) return "Aujourd'hui";
 	if (diffDays === 1) return 'Hier';
 	if (diffDays < 7) return `Il y a ${diffDays} j`;

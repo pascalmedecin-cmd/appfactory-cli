@@ -1,5 +1,7 @@
 // Utilitaires de calcul de semaine ISO 8601 (aligne sur le format "YYYY-Www").
 
+import { DAY_MS } from '$lib/utils/time-constants';
+
 export interface WeekRange {
 	weekLabel: string;   // "2026-W15"
 	dateStart: string;   // "2026-04-06" (lundi)
@@ -19,7 +21,7 @@ export function getIsoWeek(date: Date): { year: number; week: number } {
 	const dayNum = d.getUTCDay() || 7;
 	d.setUTCDate(d.getUTCDate() + 4 - dayNum);
 	const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-	const week = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+	const week = Math.ceil(((d.getTime() - yearStart.getTime()) / DAY_MS + 1) / 7);
 	return { year: d.getUTCFullYear(), week };
 }
 

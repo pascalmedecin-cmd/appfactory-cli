@@ -7,6 +7,8 @@
  * - formatTypeLabel / typeIcon / formatRelative / formatDate / scoreLabel / scoreStyle / statutLabel / statutVariant
  */
 
+import { DAY_MS } from './time-constants';
+
 // Audit 360 M-25 : casing des clés de tab — asymétrie assumée. Ici (signaux),
 // les clés non-`tous` sont en snake_case car elles MAPPENT 1:1 sur l'enum DB
 // `signaux_affaires.statut_traitement` (`en_analyse`, `ecarte`, …) : un kebab
@@ -201,7 +203,7 @@ export function formatRelative(d: string | null, now: Date = new Date()): string
 	const date = new Date(d);
 	if (Number.isNaN(date.getTime())) return '–';
 	const diff = now.getTime() - date.getTime();
-	const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+	const days = Math.floor(diff / DAY_MS);
 	if (days === 0) return "Aujourd'hui";
 	if (days === 1) return 'Hier';
 	if (days < 7) return `Il y a ${days} jours`;

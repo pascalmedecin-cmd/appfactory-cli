@@ -127,7 +127,7 @@
 	.dash {
 		display: flex;
 		flex-direction: column;
-		gap: 56px;
+		gap: 48px; /* audit 360 V3b L-21 : sur la grille 8px (était 56px) */
 	}
 	.dash > :global(*) { display: block; }
 
@@ -137,7 +137,7 @@
 
 	.stagger {
 		opacity: 0;
-		animation: fadeUp 700ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+		animation: fadeUp 700ms var(--ease-out-expo) forwards;
 		animation-delay: calc(var(--i, 0) * 60ms);
 	}
 	@keyframes fadeUp {
@@ -148,7 +148,7 @@
 	.duo {
 		display: grid;
 		grid-template-columns: 1.5fr 1fr;
-		gap: 20px;
+		gap: 24px; /* audit 360 V3b L-21 : sur la grille 8px (était 20px) */
 	}
 	@media (max-width: 1024px) {
 		.duo { grid-template-columns: 1fr; }
@@ -167,7 +167,7 @@
 		font-family: inherit;
 		text-align: left;
 		box-shadow: 0 4px 12px -2px color-mix(in srgb, var(--color-primary) 30%, transparent);
-		transition: background 200ms cubic-bezier(0.16, 1, 0.3, 1), transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+		transition: background 200ms var(--ease-out-expo), transform 200ms var(--ease-out-expo);
 	}
 	.lead-express-mobile:hover {
 		background: var(--color-primary-hover);

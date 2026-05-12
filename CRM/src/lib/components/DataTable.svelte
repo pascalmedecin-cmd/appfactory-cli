@@ -255,6 +255,15 @@
 		return result;
 	});
 
+	// Audit 360 V3b L-13 : sanitize les options de taille de page passées en prop
+	// (entiers positifs ≤ 500, dédupliqués, triés). Évite un <option> aberrant si un
+	// caller passe une valeur invalide ; no-op si la prop est conforme (10/25/50/100).
+	const safePageSizeOptions = $derived(
+		Array.from(
+			new Set((pageSizeOptions ?? []).filter((n) => Number.isInteger(n) && n > 0 && n <= 500))
+		).sort((a, b) => a - b)
+	);
+
 	const effectiveTotalCount = $derived(serverMode ? totalCount : filtered.length);
 	const totalPages = $derived(Math.max(1, Math.ceil(effectiveTotalCount / pageSize)));
 	const paged = $derived(serverMode ? data : filtered.slice(currentPage * pageSize, (currentPage + 1) * pageSize));
@@ -478,11 +487,11 @@
 		</table>
 	</div>
 
-	{#if totalPages > 1 || (pageSizeOptions && pageSizeOptions.length > 0)}
+	{#if totalPages > 1 || safePageSizeOptions.length > 0}
 		<div class="px-4 py-3 border-t border-border flex items-center justify-between text-sm text-text-muted shrink-0 gap-2 flex-wrap">
 			<div class="flex items-center gap-3">
 				<span>{effectiveTotalCount} résultat{effectiveTotalCount > 1 ? 's' : ''}</span>
-				{#if pageSizeOptions && pageSizeOptions.length > 0}
+				{#if safePageSizeOptions.length > 0}
 					<label class="flex items-center gap-2 text-xs">
 						<span class="hidden md:inline">Afficher</span>
 						<select
@@ -490,7 +499,7 @@
 							onchange={(e) => onPageSizeChange?.(Number((e.target as HTMLSelectElement).value))}
 							aria-label="Nombre d'entrées par page"
 						>
-							{#each pageSizeOptions as opt}
+							{#each safePageSizeOptions as opt}
 								<option value={opt} selected={opt === pageSize}>{opt}</option>
 							{/each}
 						</select>

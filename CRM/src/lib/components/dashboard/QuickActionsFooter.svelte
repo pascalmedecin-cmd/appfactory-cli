@@ -92,7 +92,7 @@
 		text-decoration: none;
 		color: var(--color-text);
 		box-shadow: 0 0 0 1px color-mix(in srgb, var(--color-text) 5%, transparent);
-		transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1), box-shadow 240ms cubic-bezier(0.16, 1, 0.3, 1);
+		transition: transform 240ms var(--ease-out-expo), box-shadow 240ms var(--ease-out-expo);
 	}
 	.qa-card:hover {
 		transform: translateY(-1px);
@@ -112,7 +112,7 @@
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		transition: background 240ms cubic-bezier(0.16, 1, 0.3, 1), color 240ms ease;
+		transition: background 240ms var(--ease-out-expo), color 240ms ease;
 	}
 	.qa-card:hover .qa-icon {
 		background: var(--color-primary);

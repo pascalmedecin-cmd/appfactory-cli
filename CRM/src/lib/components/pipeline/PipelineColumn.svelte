@@ -142,7 +142,7 @@
 		display: flex;
 		flex-direction: column;
 		min-width: 280px;
-		transition: background 180ms ease, border-color 180ms ease, box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
+		transition: background 180ms ease, border-color 180ms ease, box-shadow 220ms var(--ease-out-expo);
 		overflow: hidden;
 	}
 	.col[data-dragover='true'] {
@@ -242,7 +242,7 @@
 	.col-progress-bar {
 		height: 100%;
 		border-radius: var(--radius-full);
-		transition: width 320ms cubic-bezier(0.16, 1, 0.3, 1);
+		transition: width 320ms var(--ease-out-expo);
 	}
 	.col-progress-bar--identification {
 		background: var(--color-info);

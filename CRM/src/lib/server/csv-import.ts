@@ -121,9 +121,11 @@ export interface ImportResult<T> {
  * Shape minimale d'un schema Zod (v3 ou v4) consommable par validateRows.
  * Typage volontairement permissif pour rester neutre vs version Zod.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- structural type minimal, neutre
+// vis-à-vis de la version de Zod (v3/v4) : la forme exacte de `safeParse` diffère (audit 360 V3b L-20).
 export interface ValidationSchema<T> {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any -- retour `safeParse` typé en interne
+	// par chaque schéma Zod concret ; ici on reste générique (audit 360 V3b L-20).
 	safeParse: (v: unknown) => any;
 }
 

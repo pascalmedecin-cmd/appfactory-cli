@@ -101,6 +101,11 @@
 	--sidebar-width: 240px;
 	--sidebar-collapsed: 64px;
 	--header-height: 48px;
+
+	/* Easing : courbe « ease-out-expo » — décélération marquée, sortie douce.
+	   Token unique (audit 360 V3b I-01) consommé par les transitions/animations
+	   éditoriales (fadeUp dashboard, hover cartes bento, slide-out panels, etc.). */
+	--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Mobile : masquer le bloc titre de page (affiché dans le header sticky) */
