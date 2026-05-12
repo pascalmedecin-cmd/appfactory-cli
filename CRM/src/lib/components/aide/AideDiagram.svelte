@@ -13,7 +13,7 @@
 	let { name, caption }: { name: AideDiagramName; caption?: string } = $props();
 
 	const titles: Record<AideDiagramName, string> = {
-		ecosysteme: 'Les écrans du CRM et leurs enchaînements',
+		ecosysteme: 'Les écrans du CRM, rangés par usage',
 		'cycle-opportunite': 'Le cycle de vie d\'une opportunité dans le pipeline',
 		'veille-hebdo': 'Le déroulé d\'une édition de veille hebdomadaire',
 		'scoring-prospection': 'La composition du score de priorité d\'un lead',
@@ -46,56 +46,44 @@
 		</defs>
 
 		{#if name === 'ecosysteme'}
-			<!-- Tableau de bord = la vigie au-dessus, alimentée par tous les écrans. -->
-			<rect x="270" y="16" width="180" height="44" rx="12" class="node node-accent" />
-			<text x="360" y="38" class="t-title t-inv">Tableau de bord</text>
-			<text x="360" y="52" class="t-sub t-inv">ce qui demande ton attention</text>
+			<!--
+				Vue d'ensemble : où situer chaque écran. Pas de flèches de flux (le texte
+				au-dessus explique le parcours) : juste le tableau de bord en haut, puis les
+				six écrans rangés en deux familles, chacun avec son rôle en une ligne.
+			-->
+			<rect x="150" y="14" width="420" height="48" rx="12" class="node node-accent" />
+			<text x="360" y="35" class="t-title t-inv">Tableau de bord</text>
+			<text x="360" y="51" class="t-sub t-inv">relances dues · leads chauds · alertes du secteur</text>
+			<text x="360" y="80" class="t-flow">tu pars d'ici chaque matin ; tout le reste y remonte</text>
 
-			<!-- Colonne gauche : prospection → entreprises/contacts → pipeline -->
-			<rect x="40" y="120" width="170" height="40" rx="10" class="node" />
-			<text x="125" y="144" class="t-node">Prospection</text>
-			<rect x="40" y="190" width="78" height="38" rx="10" class="node node-soft" />
-			<text x="79" y="213" class="t-node t-sm">Entreprises</text>
-			<rect x="132" y="190" width="78" height="38" rx="10" class="node node-soft" />
-			<text x="171" y="213" class="t-node t-sm">Contacts</text>
-			<rect x="40" y="260" width="170" height="40" rx="10" class="node" />
-			<text x="125" y="284" class="t-node">Pipeline</text>
-			<rect x="40" y="320" width="170" height="30" rx="8" class="node node-out" />
-			<text x="125" y="339" class="t-node t-sm">Pose / Perte</text>
+			<!-- Famille 1 : tes clients -->
+			<rect x="24" y="94" width="336" height="254" rx="14" class="group-panel" />
+			<text x="192" y="115" class="t-grouplabel">Tes clients</text>
+			{#each [
+				['Prospection', 'trouver de nouveaux leads'],
+				['Entreprises', 'la fiche de chaque société'],
+				['Contacts', 'la fiche de chaque personne'],
+				['Pipeline', 'tes affaires en cours']
+			] as row, i}
+				{@const y = 124 + i * 56}
+				<rect x="40" y={y} width="304" height="46" rx="10" class="node" />
+				<text x="192" y={y + 20} class="t-node t-sm">{row[0]}</text>
+				<text x="192" y={y + 35} class="t-node t-xs">{row[1]}</text>
+			{/each}
 
-			<!-- Colonne droite : signaux → veille -->
-			<rect x="510" y="120" width="170" height="40" rx="10" class="node" />
-			<text x="595" y="144" class="t-node">Signaux</text>
-			<rect x="510" y="190" width="170" height="40" rx="10" class="node" />
-			<text x="595" y="214" class="t-node">Veille sectorielle</text>
-			<rect x="510" y="260" width="170" height="40" rx="10" class="node node-soft" />
-			<text x="595" y="284" class="t-node t-sm">Reporting</text>
-
-			<!-- Centre : flux principal -->
-			<text x="360" y="150" class="t-flow">le travail commercial</text>
-			<line x1="295" y1="200" x2="425" y2="200" class="link" />
-			<line x1="295" y1="280" x2="425" y2="280" class="link" />
-			<rect x="300" y="178" width="120" height="44" rx="10" class="node node-mid" />
-			<text x="360" y="200" class="t-node t-sm">Affaires</text>
-			<text x="360" y="214" class="t-node t-xs">qualifier → suivre</text>
-			<rect x="300" y="258" width="120" height="44" rx="10" class="node node-mid" />
-			<text x="360" y="280" class="t-node t-sm">Contexte secteur</text>
-			<text x="360" y="294" class="t-node t-xs">à lire chaque semaine</text>
-
-			<!-- Arrows -->
-			<path d="M125 160 L125 188" class="link" marker-end="url(#aide-arrow)" />
-			<path d="M79 228 L79 256 L116 256" class="link" marker-end="url(#aide-arrow)" />
-			<path d="M171 228 L171 256 L134 256" class="link" marker-end="url(#aide-arrow)" />
-			<path d="M125 300 L125 318" class="link" marker-end="url(#aide-arrow)" />
-			<path d="M210 140 L300 196" class="link" marker-end="url(#aide-arrow)" />
-			<path d="M595 160 L595 188" class="link" marker-end="url(#aide-arrow)" />
-			<path d="M510 215 L420 268" class="link" marker-end="url(#aide-arrow)" />
-			<path d="M595 230 L595 258" class="link" marker-end="url(#aide-arrow)" />
-			<path d="M360 222 L360 258" class="link" marker-end="url(#aide-arrow)" />
-			<!-- vers le tableau de bord -->
-			<path d="M210 130 L290 60" class="link link-up" marker-end="url(#aide-arrow)" />
-			<path d="M360 178 L360 62" class="link link-up" marker-end="url(#aide-arrow)" />
-			<path d="M510 130 L430 60" class="link link-up" marker-end="url(#aide-arrow)" />
+			<!-- Famille 2 : le marché et le bilan -->
+			<rect x="384" y="94" width="312" height="254" rx="14" class="group-panel" />
+			<text x="540" y="115" class="t-grouplabel">Le marché et le bilan</text>
+			{#each [
+				['Signaux', 'les alertes brutes du secteur'],
+				['Veille sectorielle', 'le résumé, une fois par semaine'],
+				['Reporting', 'tes chiffres consolidés']
+			] as row, i}
+				{@const y = 126 + i * 74}
+				<rect x="400" y={y} width="280" height="56" rx="10" class="node" />
+				<text x="540" y={y + 24} class="t-node t-sm">{row[0]}</text>
+				<text x="540" y={y + 40} class="t-node t-xs">{row[1]}</text>
+			{/each}
 
 		{:else if name === 'cycle-opportunite'}
 			<!-- Cycle linéaire à 5 étapes + 2 issues -->
@@ -109,7 +97,7 @@
 			<!-- step numbers -->
 			{#each [24, 158, 292, 426, 560] as x, i}
 				<circle cx={x + 18} cy={60} r="13" class="badge" />
-				<text x={x + 18} y={64} class="t-badge">{i + 1}</text>
+				<text x={x + 18} y={60} class="t-badge">{i + 1}</text>
 			{/each}
 
 			<!-- issues -->
@@ -134,7 +122,7 @@
 			{#each veilleSteps as step, i (step.x)}
 				<rect x={step.x} y="120" width="156" height="120" rx="12" class="node {i === 3 ? 'node-mid' : 'node'}" />
 				<circle cx={step.x + 26} cy={146} r="14" class="badge" />
-				<text x={step.x + 26} y={150} class="t-badge">{i + 1}</text>
+				<text x={step.x + 26} y={146} class="t-badge">{i + 1}</text>
 				<text x={step.x + 78} y={186} class="t-node t-sm">{step.name}</text>
 				<text x={step.x + 78} y={206} class="t-node t-xs">{step.desc}</text>
 				{#if i < 3}
@@ -253,6 +241,12 @@
 		fill: var(--color-danger-light);
 		stroke: var(--color-danger);
 	}
+	/* Panneau de regroupement (carte « écosystème ») : fond discret derrière des cartes. */
+	.group-panel {
+		fill: var(--color-surface-alt);
+		stroke: var(--color-border);
+		stroke-width: 1;
+	}
 
 	/* Liens */
 	.link {
@@ -330,7 +324,15 @@
 		font-size: 11px;
 		font-weight: 700;
 		text-anchor: middle;
+		dominant-baseline: central;
 		fill: var(--color-text-inverse);
-		dominant-baseline: middle;
+	}
+	.t-grouplabel {
+		font-size: 11px;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		text-anchor: middle;
+		fill: var(--color-text-muted);
 	}
 </style>

@@ -140,7 +140,7 @@ const niveau1: AideLevel = {
 					type: 'paragraph',
 					text: 'Étape 3 - Faire le tour des six écrans principaux. Contacts, Entreprises, Pipeline, Prospection, Signaux, Veille. Chacun a un rôle précis (voir la carte ci-dessous). Tu n\'as pas besoin de tout maîtriser le premier jour.'
 				},
-				{ type: 'diagram', name: 'ecosysteme', caption: 'Les écrans du CRM et comment ils s\'enchaînent.' },
+				{ type: 'diagram', name: 'ecosysteme', caption: 'Les six écrans du CRM, rangés en deux familles, avec le rôle de chacun.' },
 				{
 					type: 'paragraph',
 					text: 'Étape 4 - Faire une première action. Ouvre la prospection, lance une recherche d\'entreprises sur ton canton, et regarde les leads remonter avec leur score. Ou ouvre le pipeline et fais avancer une opportunité d\'une colonne. C\'est tout. Le reste vient à l\'usage.'
