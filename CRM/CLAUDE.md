@@ -212,6 +212,7 @@ Origine : Session C CRM mobile V1 2026-04-27, Pascal a explicitement refusé Pla
 - **[WATCH] F3 V2 mobile saisie lead express** : `lead_express` maintenant accepté par DB CHECK (migration `20260510_002`), prochain test terrain à confirmer (CHECK violation 23514 disparue).
 - **[WATCH] svelte-check baseline 0 erreur** : V1 a ramené baseline de 4 → 0. Si V2a→V3b font remonter erreurs, viser maintien baseline 0 (zéro nouvelle erreur tolérée).
 - **[WATCH] Consolidation cockpit S178 calculée mais apply refusé local strict** : audit déterministe a flaggé 2 tâches `effort.score=3` mais 4 critères True (incohérence LLM dans blocs cumulés bloqués V2b+V2c et V3a+V3b). Output reste mémoire serveur cockpit, ré-applicable via UI après ajustement manuel ou re-consolidation à la prochaine clôture.
+- **[WATCH] Durcissement RLS si 4e user non-fondateur (post-V3b)** : tant que FilmPro = 3 fondateurs symétriques, RLS « tous voient/suppriment tout » assumée (cf. § DECISIONS STRUCTURELLES > « Sécurité - décisions assumées » + § RISQUES OUVERTS M-48). Le jour où Pascal mentionne un 4e utilisateur non-fondateur (commercial junior, terrain, prestataire) → ouvrir une tâche `[EXÉCUTABLE]` : policies `created_by = auth.uid()` + checks d'ownership applicatifs + tests d'intégration RLS contre une vraie DB. Checklist complète : `~/.claude/projects/-Users-pascal-Claude-Projets-AppFactory/memory/feedback_rls_multitenant_durcissement_si_4_users.md`.
 
 
 <!-- BEGIN CONSOLIDATION (auto-géré par cockpit, ne pas éditer) -->
