@@ -290,8 +290,8 @@
 	// F-V4-05 audit S163 : périmètre des sources d'import par onglet (cohérence avec headerCTA).
 	// SIMAP → marchés publics, RegBL → registre bâtiments, Entreprises → registre commerce, Terrain → ImportModal jamais ouvert depuis cet onglet.
 	type ImportScope = {
-		allowedSources: Array<'zefix' | 'search_ch' | 'simap' | 'regbl'> | null;
-		defaultSource: 'zefix' | 'search_ch' | 'simap' | 'regbl' | null;
+		allowedSources: Array<'zefix' | 'search_ch' | 'simap' | 'regbl' | 'google_places'> | null;
+		defaultSource: 'zefix' | 'search_ch' | 'simap' | 'regbl' | 'google_places' | null;
 		title: string | null;
 	};
 	const importScope = $derived.by((): ImportScope => {
@@ -302,7 +302,7 @@
 				return { allowedSources: ['regbl'], defaultSource: 'regbl', title: 'Importer depuis le registre des bâtiments' };
 			case 'entreprises':
 				return {
-					allowedSources: ['zefix', 'search_ch'],
+					allowedSources: ['zefix', 'search_ch', 'google_places'],
 					defaultSource: 'zefix',
 					title: 'Importer des entreprises',
 				};

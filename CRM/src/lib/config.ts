@@ -74,7 +74,9 @@ export const config = {
 		},
 		entrepriseIdentifiee: {
 			points: 1,
-			sources: ['zefix'],
+			// Sources qui identifient une entreprise réelle et active : Zefix (inscription RC + UID)
+			// et Google Places (établissement opérationnel avec adresse + tél vérifiés par Google).
+			sources: ['zefix', 'google_places'],
 		},
 		secteursCibles: {
 			points: 3,
@@ -135,6 +137,11 @@ export const config = {
 			regbl: {
 				label: 'RegBL (registre des bâtiments)',
 				enabled: true,
+			},
+			google_places: {
+				label: 'Google Places (entreprises locales)',
+				enabled: true,
+				cantons: ['GE', 'VD', 'VS', 'NE', 'FR', 'JU'],
 			},
 			lead_express: {
 				label: 'Saisie terrain (mobile)',

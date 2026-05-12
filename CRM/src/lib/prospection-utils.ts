@@ -16,7 +16,7 @@ export type ProspectionTabKey = typeof PROSPECTION_TABS[number];
 export const TAB_SOURCE_MAP: Record<ProspectionTabKey, readonly string[]> = {
 	simap: ['simap'],
 	regbl: ['regbl'],
-	entreprises: ['zefix', 'search_ch'],
+	entreprises: ['zefix', 'search_ch', 'google_places'],
 	terrain: ['lead_express', 'veille'],
 } as const;
 
@@ -108,6 +108,7 @@ export function sourceLabel(s: string): string {
 		simap: 'Marchés publics',
 		regbl: 'Registre des bâtiments',
 		search_ch: 'Annuaire',
+		google_places: 'Google Places',
 		lead_express: 'Saisie terrain',
 	};
 	return labels[s] ?? s;
@@ -120,6 +121,7 @@ export const sourceOptions = [
 	{ value: 'simap', label: 'SIMAP (marchés publics)' },
 	{ value: 'regbl', label: 'RegBL (registre des bâtiments)' },
 	{ value: 'search_ch', label: 'search.ch (annuaire)' },
+	{ value: 'google_places', label: 'Google Places (entreprises locales)' },
 	{ value: 'lead_express', label: 'Saisie terrain (mobile)' },
 ];
 

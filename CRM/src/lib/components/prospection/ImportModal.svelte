@@ -11,7 +11,7 @@
 	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
 
 	// Valeur 'search_ch' (avec underscore) imposée par la check constraint DB prospect_leads_source_check.
-	type ImportSourceKey = 'zefix' | 'search_ch' | 'simap' | 'regbl';
+	type ImportSourceKey = 'zefix' | 'search_ch' | 'simap' | 'regbl' | 'google_places';
 
 	let {
 		open = $bindable(false),
@@ -60,6 +60,32 @@
 	let importRegblCantons = $state<string[]>(['GE', 'VD']);
 	let importSearchchTerm = $state('');
 	let importSearchchVille = $state('');
+	let importGpActivityType = $state<string>('real_estate_agency');
+	let importGpKeyword = $state('');
+	let gpQuota = $state<{ used: number; cap: number; remaining: number; exhausted: boolean } | null>(null);
+
+	// Types d'activite proposes (miroir de helpers.ts ACTIVITY_TYPES, libelles uniquement).
+	const GP_ACTIVITY_OPTIONS = [
+		{ key: 'real_estate_agency', label: 'Regies immobilieres' },
+		{ key: 'general_contractor', label: 'Entreprises generales / construction' },
+		{ key: 'electrician', label: 'Electriciens' },
+		{ key: 'plumber', label: 'Sanitaire / chauffage' },
+		{ key: 'roofing_contractor', label: 'Toiture / etancheite' },
+		{ key: 'painter', label: 'Peinture / platrerie' },
+		{ key: 'architect', label: 'Architectes / bureaux d\u2019etudes' },
+		{ key: 'other', label: 'Autre (mot-cle libre)' },
+	] as const;
+	const GP_GENERIC_TERMS = new Set([
+		'sa', 'sarl', 'sa rl', 'sasu', 'srl', 'gmbh', 'ag', 'kg', 'ohg',
+		'ltd', 'llc', 'inc', 'societe', 'company', 'compagnie', 'entreprise', 'firma',
+	]);
+	let gpKeywordTrimmed = $derived(importGpKeyword.trim());
+	let gpKeywordTooShort = $derived(gpKeywordTrimmed.length > 0 && gpKeywordTrimmed.length < 3);
+	let gpKeywordGeneric = $derived(gpKeywordTrimmed.length >= 3 && GP_GENERIC_TERMS.has(searchchTermNormalize(gpKeywordTrimmed)));
+	let gpRequiresKeyword = $derived(importGpActivityType === 'other');
+	let gpInvalid = $derived(
+		gpKeywordTooShort || gpKeywordGeneric || (gpRequiresKeyword && gpKeywordTrimmed.length < 3) || (gpQuota?.exhausted ?? false)
+	);
 
 	const zefixMaxResults = API_LIMITS.zefix.maxResultsPerQuery;
 	const searchchMaxResults = API_LIMITS.search_ch.maxResultsPerQuery;
@@ -168,9 +194,25 @@
 			bgCssVar: '--color-prosp-convert-bg',
 			borderCssVar: '--color-prosp-convert-border',
 		},
+		google_places: {
+			code: 'GP',
+			title: 'Google Places',
+			subtitle: 'Entreprises locales',
+			hero: {
+				icon: 'location_on',
+				kicker: 'Cartographie d\u2019entreprises',
+				promise: 'Nom, adresse, telephone direct et site web depuis Google Maps.',
+				helper: 'Ideal pour reperer regies, entreprises generales et corps d\u2019etat dans un canton. Cout : 0\u00a0\u20ac jusqu\u2019a 900 recherches/mois.',
+			},
+			action: { icon: 'search', label: 'Rechercher sur Google Places', pendingLabel: 'Recherche en cours\u2026' },
+			footer: { icon: 'verified', text: 'Donnees fournies par Google Maps. Max 20 resultats / requete. Dedupliquee automatiquement, croisee avec le registre du commerce.' },
+			cssVar: '--color-prosp-place',
+			bgCssVar: '--color-prosp-place-bg',
+			borderCssVar: '--color-prosp-place-border',
+		},
 	};
 
-	const allTabs: ImportSourceKey[] = ['zefix', 'search_ch', 'simap', 'regbl'];
+	const allTabs: ImportSourceKey[] = ['zefix', 'search_ch', 'simap', 'regbl', 'google_places'];
 
 	// Filtrage déterministe par allowedSources (préserve l'ordre canonique).
 	let visibleTabs = $derived(
@@ -254,6 +296,26 @@
 			cantons: importRegblCantons,
 			limit: Number(importLimit) || 50,
 		});
+	}
+
+	async function refreshGpQuota() {
+		try {
+			const resp = await fetch('/api/prospection/google-places/quota');
+			if (resp.ok) gpQuota = await resp.json();
+		} catch { /* silencieux : l'absence de quota n'empeche pas la recherche, le serveur reverifie */ }
+	}
+	$effect(() => {
+		if (open && activeTab === 'google_places' && gpQuota === null) refreshGpQuota();
+	});
+
+	async function importGooglePlaces() {
+		if (gpInvalid) return;
+		await importFromSource('/api/prospection/google-places', {
+			activityType: importGpActivityType,
+			keyword: gpKeywordTrimmed || null,
+			canton: importCanton,
+		});
+		refreshGpQuota();
 	}
 
 	function toggleCanton(list: string[], canton: string): string[] {
@@ -615,6 +677,81 @@
 			</div>
 		{/if}
 
+		<!-- GOOGLE PLACES parcours : SELECT-FIRST (type d'activité piloté, mot-clé secondaire) -->
+		{#if activeTab === 'google_places'}
+			<div id="import-panel-google_places" role="tabpanel" aria-labelledby={visibleTabs.length > 1 ? 'tab-google_places' : undefined}
+				aria-label={visibleTabs.length === 1 ? sourceMeta.google_places.title : undefined} class="space-y-5">
+				<div class="p-5 rounded-2xl flex gap-4" style={`background: var(${activeMeta.bgCssVar}); border: 1px solid color-mix(in srgb, var(${activeMeta.borderCssVar}), transparent 70%);`}>
+					<div class="shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style={`background: color-mix(in srgb, var(${activeMeta.cssVar}), transparent 88%);`}>
+						<span style={`color: var(${activeMeta.cssVar});`}><Icon name={activeMeta.hero.icon} size={26} /></span>
+					</div>
+					<div>
+						<p class="text-xs font-bold uppercase tracking-wider mb-1" style={`color: var(${activeMeta.cssVar});`}>{activeMeta.hero.kicker}</p>
+						<p class="text-sm font-semibold text-text">{activeMeta.hero.promise}</p>
+						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeMeta.hero.helper}</p>
+					</div>
+				</div>
+
+				<!-- Type d'activité PROMINENT (select piloté = pertinence + maîtrise du coût) -->
+				<div>
+					<label for="gp-activity" class="block text-sm font-semibold text-text mb-2">
+						Type d'activité
+						<span class="font-normal text-danger ml-0.5">*</span>
+					</label>
+					<select id="gp-activity" bind:value={importGpActivityType} class="w-full h-12 px-3 text-base box-border border-2 border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
+						{#each GP_ACTIVITY_OPTIONS as opt}
+							<option value={opt.key}>{opt.label}</option>
+						{/each}
+					</select>
+					<p class="text-xs text-text-muted mt-1.5">La recherche est ciblée sur ce métier dans le canton choisi. Max 20 résultats par requête.</p>
+				</div>
+
+				<!-- Mot-clé complémentaire + canton : 2 cols -->
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+					<div>
+						<label for="gp-keyword" class="block text-sm font-medium text-text mb-1.5">
+							Mot-clé complémentaire
+							{#if gpRequiresKeyword}<span class="font-normal text-danger ml-0.5">*</span>{:else}<span class="font-normal text-text-muted">(optionnel)</span>{/if}
+						</label>
+						<input
+							id="gp-keyword"
+							type="text"
+							bind:value={importGpKeyword}
+							placeholder={gpRequiresKeyword ? 'ex: agencement de magasins' : 'ex: ventilation, charpente métallique…'}
+							maxlength="80"
+							class="w-full h-10 px-3 text-sm box-border border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {(gpKeywordTooShort || gpKeywordGeneric || (gpRequiresKeyword && gpKeywordTrimmed.length < 3 && gpKeywordTrimmed.length > 0)) ? 'border-danger' : 'border-border'}"
+						/>
+						{#if gpKeywordTooShort || (gpRequiresKeyword && gpKeywordTrimmed.length > 0 && gpKeywordTrimmed.length < 3)}
+							<p class="text-xs text-danger mt-1">Min. 3 caractères.</p>
+						{:else if gpKeywordGeneric}
+							<p class="text-xs text-danger mt-1">Trop générique (forme juridique seule).</p>
+						{/if}
+					</div>
+					<div>
+						<label for="gp-canton" class="block text-sm font-medium text-text mb-1.5">
+							Canton
+							<span class="font-normal text-danger ml-0.5">*</span>
+						</label>
+						<select id="gp-canton" bind:value={importCanton} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
+							{#each cantons as c}
+								<option value={c}>{cantonNoms[c] ?? c} ({c})</option>
+							{/each}
+						</select>
+					</div>
+				</div>
+
+				<!-- Compteur quota mensuel -->
+				<div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg" style={`background: var(${activeMeta.bgCssVar}); border: 1px solid color-mix(in srgb, var(${activeMeta.borderCssVar}), transparent 70%);`}>
+					<Icon name="payments" size={16} class="shrink-0" />
+					<p class="text-xs text-text-body leading-relaxed">
+						{#if gpQuota}
+							{#if gpQuota.exhausted}Quota mensuel épuisé ({gpQuota.used}/{gpQuota.cap}). Réessayez le mois prochain.{:else}Il reste <strong>{gpQuota.remaining}</strong> recherche{gpQuota.remaining > 1 ? 's' : ''} ce mois (gratuit jusqu'à {gpQuota.cap}).{/if}
+						{:else}Quota mensuel : gratuit jusqu'à 900 recherches.{/if}
+					</p>
+				</div>
+			</div>
+		{/if}
+
 		<!-- Footer pédagogique commun (identique à toutes les sources mais texte source-specific) -->
 		<div class="flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-surface-alt border border-border/60">
 			<Icon name={activeMeta.footer.icon} size={16} class="mt-0.5 shrink-0 text-text-muted" />
@@ -636,12 +773,14 @@
 				activeTab === 'zefix' ? importZefix
 				: activeTab === 'search_ch' ? importSearchch
 				: activeTab === 'simap' ? importSimap
+				: activeTab === 'google_places' ? importGooglePlaces
 				: importRegbl
 			}
 			disabled={importing
 				|| (activeTab === 'zefix' && zefixNameInvalid)
 				|| (activeTab === 'search_ch' && searchchTermInvalid)
 				|| (activeTab === 'simap' && simapSearchInvalid)
+				|| (activeTab === 'google_places' && gpInvalid)
 				|| (activeTab === 'regbl' && importRegblCantons.length === 0)}
 			class="w-full inline-flex items-center justify-center gap-2 h-12 px-4 box-border text-base font-semibold text-white rounded-xl disabled:opacity-50 cursor-pointer shadow-md transition-all hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
 			style={`background-color: var(${activeMeta.cssVar}); --tw-ring-color: var(${activeMeta.cssVar});`}

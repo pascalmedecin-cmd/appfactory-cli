@@ -51,6 +51,10 @@
 	--color-prosp-convert: #538B6B;
 	--color-prosp-convert-bg: #EBF3EF;
 	--color-prosp-convert-border: #7BAA8E;
+	/* Source Google Places (entreprises locales) — teal sobre, registre FilmPro (pas le rouge/jaune Google) */
+	--color-prosp-place: #3F7C82;
+	--color-prosp-place-bg: #E9F1F2;
+	--color-prosp-place-border: #6BA3A8;
 
 	/* Phase 2 2026-05-01 : tokens onglets prospection (palette segmentation subtile premium).
 	   4 natures de signal cartographiées, fond pastel + trait coloré pour distinction visuelle. */

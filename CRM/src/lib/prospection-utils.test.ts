@@ -127,3 +127,17 @@ describe('formatLeadContext : phrase courte par source (Phase 1 queue triage)', 
 		expect(ctx).not.toContain('\n');
 	});
 });
+
+import { TAB_SOURCE_MAP, sourceLabel, sourceOptions } from './prospection-utils';
+
+describe('Google Places intégré aux utilitaires prospection (spec 2026-05-12)', () => {
+	it("google_places appartient à l'onglet entreprises", () => {
+		expect(TAB_SOURCE_MAP.entreprises).toContain('google_places');
+	});
+	it('sourceLabel rend un libellé pour google_places', () => {
+		expect(sourceLabel('google_places')).toBe('Google Places');
+	});
+	it('google_places figure dans les options de filtre source', () => {
+		expect(sourceOptions.some((o) => o.value === 'google_places')).toBe(true);
+	});
+});

@@ -426,6 +426,14 @@ export const actions: Actions = {
 		if (!parsed.success) return fail(400, { success: false as const, error: parsed.error });
 
 		const d = parsed.data;
+		// Spec google-places-2026-05-12 A5 : Google Places est une source payante — interdit
+		// dans les recherches/alertes rejouables automatiquement (garde-fou budget). Import manuel only.
+		if (Array.isArray(d.sources) && d.sources.includes('google_places')) {
+			return fail(400, {
+				success: false as const,
+				error: 'Google Places ne peut pas être enregistré dans une recherche ou une alerte automatique (source payante — import manuel uniquement).',
+			});
+		}
 		const { error } = await locals.supabase.from('recherches_sauvegardees').insert({
 			id: newId(),
 			nom: d.nom,

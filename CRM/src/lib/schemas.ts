@@ -191,7 +191,7 @@ export const SignalCreateOpportuniteSchema = z.object({
 // -- Prospect Leads --
 
 export const SOURCES_LEAD = [
-	'zefix', 'simap', 'search_ch', 'regbl', 'lead_express',
+	'zefix', 'simap', 'search_ch', 'regbl', 'lead_express', 'google_places',
 ] as const;
 
 export const STATUTS_LEAD = [
