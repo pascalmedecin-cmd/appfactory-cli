@@ -161,7 +161,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 - [ ] **[EXÉCUTABLE]** Le 14/05 après 7h CH : ouvrir `/signaux`, vérifier (a) **entrées `creation_entreprise` source `zefix`** (impossible avant S187 ; cible 40-80 sur 7j), (b) **SIMAP scorées via mots-clés v2/v3** (`notes_libres` montre `Bonus rénovation×N (+2)` / `Coeur vitrage×1 (+5)` / `Éviter route (-3)` ; le `s?` permet matche pluriel), (c) **0 erreur Vercel logs** sur `/api/cron/signaux`. Si KO → `vercel logs` filter `cron/signaux` + entry cockpit avec payload exact.
 
-→ voir entry cockpit `d63c416f` (transmitted).
+→ voir entry cockpit `f983a9eb` (transmitted ; remplace `d63c416f` purgé S188 après réécriture du texte du bloc, raw_key déterministe).
 
 ### 2. Audit mobile CRM - réduire à l'essentiel [SUPERVISÉ • xhigh • ~3h]
 
@@ -169,7 +169,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 - [ ] **[EXÉCUTABLE]** Audit transverse mobile toutes pages CRM (dashboard, prospection, contacts, entreprises, signaux, pipeline, veille, aide, log) + cockpit, arbitrage par page : (a) quelles fonctions garder, (b) quelles fonctions masquer ou simplifier, (c) breakpoint < 1024px appliqué via media query `.desktop-only-nav` ou prop `desktopOnly:true` dans `config.navigation`. Inclure : (d) re-validation Chrome DevTools Device Toolbar (preset iPhone 14 Pro Max) sur `/log` : FAB absent, entrée sidebar Log absente, page /log rend uniquement encart desktop_windows ; (e) smoke burger mobile : tap un lien ferme le menu. Skill `audit-uiux` + golden v9.
 
-→ voir entry cockpit `d068a79d` (transmitted, summary enrichi S188 avec 2 checks mobile reportés du Bloc #1).
+→ voir entry cockpit `20c37767` (transmitted ; remplace `d068a79d` purgé S188 après réécriture du texte du bloc, raw_key déterministe ; summary enrichi S188 avec 2 checks mobile reportés du Bloc #1).
 
 ### Watch list S188 (post-refonte Signaux V3)
 
