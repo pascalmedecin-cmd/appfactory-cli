@@ -8,6 +8,9 @@ import { DAY_MS } from './utils/time-constants';
 // Audit 360 V3b L-14 : type-only import (erasé au build) — pas de couplage runtime
 // avec le code serveur ; resserre `complianceTag` de `string` vers l'enum réelle.
 import type { ComplianceTag } from './server/intelligence/schema';
+// V2 scoring : mots-clés FilmPro pilotés depuis la BDD (table signaux_mots_cles)
+// au lieu de la liste hardcodée config.scoring.secteursCibles.
+import { scoreKeywords, type KeywordRow } from './scoring/keywords';
 
 const { scoring } = config;
 
@@ -100,7 +103,7 @@ function differenceEnJours(a: Date, b: Date): number {
 	return Math.floor((a.getTime() - b.getTime()) / DAY_MS);
 }
 
-export function calculerScore(lead: LeadScoring): ScoreDetail {
+export function calculerScore(lead: LeadScoring, keywords?: KeywordRow[]): ScoreDetail {
 	let total = 0;
 	const criteres: string[] = [];
 
@@ -113,18 +116,36 @@ export function calculerScore(lead: LeadScoring): ScoreDetail {
 		criteres.push(`Canton ${lead.canton} (+${scoring.cantonsSecondaires.points})`);
 	}
 
-	// Secteur : on regarde 3 sources, dans l'ordre de fiabilité.
-	// 1. secteur_detecte (calculé à l'import, normalisé) → matching direct sur les keywords.
-	// 2. fallback sur description + raison_sociale via normalize() pour gérer les accents
-	//    ("Bâtiment".toLowerCase() = "bâtiment" qui ne matche jamais le keyword "batiment" sans NFD strip).
-	const secteurDetecteNorm = lead.secteur_detecte ? normalize(lead.secteur_detecte) : '';
-	const texte = normalize(`${lead.description || ''} ${lead.raison_sociale || ''}`);
-	const secteurMatch =
-		scoring.secteursCibles.keywords.find((s) => secteurDetecteNorm.includes(s)) ||
-		scoring.secteursCibles.keywords.find((s) => texte.includes(s));
-	if (secteurMatch) {
-		total += scoring.secteursCibles.points;
-		criteres.push(`Secteur "${secteurMatch}" (+${scoring.secteursCibles.points})`);
+	// Pertinence métier (vitrage FilmPro).
+	// V2 (depuis 2026-05-13) : si `keywords` non-vide est fourni, on pilote depuis la BDD
+	// (table signaux_mots_cles, catégories Cœur/Bonus/Éviter, poids signés). Le composant
+	// secteur de `criteres[]` est remplacé par les composants Cœur/Bonus/Éviter détaillés.
+	// V1 (rétro-compat) : si `keywords` absent ou vide, on retombe sur la liste hardcodée
+	// `config.scoring.secteursCibles` — préserve le comportement de tous les callers existants
+	// qui n'ont pas encore migré (12 callers en `src/lib/`, `src/routes/api/`).
+	if (keywords && keywords.length > 0) {
+		const texteForKeywords = [lead.description || '', lead.raison_sociale || '', lead.secteur_detecte || '']
+			.filter(Boolean)
+			.join(' ');
+		const kwScore = scoreKeywords(texteForKeywords, keywords);
+		if (kwScore.total !== 0) {
+			total += kwScore.total;
+			for (const c of kwScore.criteres) criteres.push(c);
+		}
+	} else {
+		// V1 legacy : 3 sources, dans l'ordre de fiabilité.
+		// 1. secteur_detecte (calculé à l'import, normalisé) → matching direct sur les keywords.
+		// 2. fallback sur description + raison_sociale via normalize() pour gérer les accents
+		//    ("Bâtiment".toLowerCase() = "bâtiment" qui ne matche jamais le keyword "batiment" sans NFD strip).
+		const secteurDetecteNorm = lead.secteur_detecte ? normalize(lead.secteur_detecte) : '';
+		const texte = normalize(`${lead.description || ''} ${lead.raison_sociale || ''}`);
+		const secteurMatch =
+			scoring.secteursCibles.keywords.find((s) => secteurDetecteNorm.includes(s)) ||
+			scoring.secteursCibles.keywords.find((s) => texte.includes(s));
+		if (secteurMatch) {
+			total += scoring.secteursCibles.points;
+			criteres.push(`Secteur "${secteurMatch}" (+${scoring.secteursCibles.points})`);
+		}
 	}
 
 	// Signal chaud (appel d'offres explicite, budgété)

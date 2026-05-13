@@ -2,6 +2,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
@@ -9,7 +10,6 @@
 	import Select from '$lib/components/Select.svelte';
 	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
@@ -30,6 +30,7 @@
 	import SignauxIndicators from '$lib/components/signaux/SignauxIndicators.svelte';
 	import SignauxTabs from '$lib/components/signaux/SignauxTabs.svelte';
 	import SignauxCards from '$lib/components/signaux/SignauxCards.svelte';
+	import SignauxKeywordsPanel from '$lib/components/signaux/SignauxKeywordsPanel.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -41,7 +42,6 @@
 	let slideOutOpen = $state(false);
 	let selectedSignal = $state<Signal | null>(null);
 	let modalOpen = $state(false);
-	let editMode = $state(false);
 	let saving = $state(false);
 	let convertModalOpen = $state(false);
 	let confirmDeleteOpen = $state(false);
@@ -56,6 +56,48 @@
 	// Filtres secondaires (type, canton)
 	let filterType = $state('');
 	let filterCanton = $state('');
+
+	// V2 : tri + toggle hors-scope + panneau collapsible (persistance localStorage).
+	type SortKey = 'pertinence' | 'date';
+	let sortKey: SortKey = $state('pertinence');
+	let hideOutOfScope = $state(false);
+	let panelCollapsed = $state(false);
+
+	onMount(() => {
+		try {
+			const s = localStorage.getItem('signaux.sort');
+			if (s === 'pertinence' || s === 'date') sortKey = s;
+			hideOutOfScope = localStorage.getItem('signaux.hideOutOfScope') === '1';
+			panelCollapsed = localStorage.getItem('signaux.keywordsPanel') === 'collapsed';
+		} catch {
+			// localStorage indisponible (mode privé, quota) : on garde les défauts.
+		}
+	});
+
+	function setSort(k: SortKey) {
+		sortKey = k;
+		try {
+			localStorage.setItem('signaux.sort', k);
+		} catch {
+			// ignore
+		}
+	}
+	function setHideOutOfScope(v: boolean) {
+		hideOutOfScope = v;
+		try {
+			localStorage.setItem('signaux.hideOutOfScope', v ? '1' : '0');
+		} catch {
+			// ignore
+		}
+	}
+	function setPanelCollapsed(v: boolean) {
+		panelCollapsed = v;
+		try {
+			localStorage.setItem('signaux.keywordsPanel', v ? 'collapsed' : 'open');
+		} catch {
+			// ignore
+		}
+	}
 
 	// Form fields
 	let type_signal = $state('');
@@ -94,6 +136,22 @@
 		let out = filteredByTab;
 		if (filterType) out = out.filter((s: Signal) => s.type_signal === filterType);
 		if (filterCanton) out = out.filter((s: Signal) => s.canton === filterCanton);
+		if (hideOutOfScope) out = out.filter((s: Signal) => (s.score_pertinence ?? 0) > 0);
+		if (sortKey === 'pertinence') {
+			// Tri par score desc ; NULLs en queue de liste ; tie-break sur date_detection desc.
+			out = [...out].sort((a, b) => {
+				const sa = a.score_pertinence;
+				const sb = b.score_pertinence;
+				if (sa == null && sb == null) return 0;
+				if (sa == null) return 1;
+				if (sb == null) return -1;
+				if (sb !== sa) return sb - sa;
+				const da = a.date_detection ? new Date(a.date_detection).getTime() : 0;
+				const db = b.date_detection ? new Date(b.date_detection).getTime() : 0;
+				return db - da;
+			});
+		}
+		// sortKey === 'date' : on garde l'ordre du load (date_detection DESC côté serveur).
 		return out;
 	});
 
@@ -132,15 +190,8 @@
 		slideOutOpen = true;
 	}
 
-	function openCreate() {
-		editMode = false;
-		resetForm();
-		modalOpen = true;
-	}
-
 	function openEdit() {
 		if (!selectedSignal) return;
-		editMode = true;
 		type_signal = selectedSignal.type_signal ?? '';
 		description_projet = selectedSignal.description_projet ?? '';
 		maitre_ouvrage = selectedSignal.maitre_ouvrage ?? '';
@@ -178,7 +229,8 @@
 	}
 </script>
 
-<div class="ws-page">
+<div class="ws-page signaux-layout">
+	<section class="signaux-main">
 	<div class="ws-page-actions">
 		{#if data.signaux.length > 0}
 			{#if selectMode}
@@ -192,10 +244,6 @@
 				</button>
 			{/if}
 		{/if}
-		<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
-			<Icon name="add" size={18} />
-			Ajouter
-		</button>
 	</div>
 
 	<SignauxIndicators values={indicators} />
@@ -237,6 +285,37 @@
 		{/snippet}
 	</SignauxTabs>
 
+	<div class="signaux-toolbar">
+		<div class="sort-group" role="group" aria-label="Tri des signaux">
+			<button
+				type="button"
+				class="sort-btn"
+				class:active={sortKey === 'pertinence'}
+				onclick={() => setSort('pertinence')}
+				aria-pressed={sortKey === 'pertinence'}
+			>
+				<Icon name="bolt" size={14} /> Pertinence
+			</button>
+			<button
+				type="button"
+				class="sort-btn"
+				class:active={sortKey === 'date'}
+				onclick={() => setSort('date')}
+				aria-pressed={sortKey === 'date'}
+			>
+				<Icon name="schedule" size={14} /> Date
+			</button>
+		</div>
+		<label class="toggle-out">
+			<input
+				type="checkbox"
+				checked={hideOutOfScope}
+				onchange={(e) => setHideOutOfScope((e.currentTarget as HTMLInputElement).checked)}
+			/>
+			<span>Cacher les hors-scope</span>
+		</label>
+	</div>
+
 	<div
 		class="ws-content"
 		role="tabpanel"
@@ -244,47 +323,9 @@
 		aria-labelledby={`tab-${activeTab}`}
 	>
 		{#if data.signaux.length === 0}
-			<div class="empty-grid">
-				<div class="empty-card">
-					<div class="empty-card-head">
-						<span class="empty-card-icon primary">
-							<Icon name="edit_note" size={22} />
-						</span>
-						<h2>Ajout manuel</h2>
-					</div>
-					<p>
-						Vous avez repéré un appel d'offres, un permis de construire ou une opportunité ? Ajoutez-le comme signal pour le suivre.
-					</p>
-					<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
-						<Icon name="add" size={18} />
-						Ajouter un signal
-					</button>
-				</div>
-				<div class="empty-card">
-					<div class="empty-card-head">
-						<span class="empty-card-icon warning">
-							<Icon name="notifications_active" size={22} />
-						</span>
-						<h2>Veille automatique</h2>
-					</div>
-					<p>
-						Le système surveille les sources publiques et vous alerte quand de nouveaux signaux apparaissent.
-					</p>
-					<ul class="empty-card-list">
-						<li>
-							<Icon name="check_circle" size={14} />
-							Scan quotidien des marchés publics (SIMAP)
-						</li>
-						<li>
-							<Icon name="check_circle" size={14} />
-							Alertes sur le Dashboard
-						</li>
-						<li>
-							<Icon name="check_circle" size={14} />
-							Conversion en opportunité en un clic
-						</li>
-					</ul>
-				</div>
+			<div class="empty-simple">
+				<Icon name="schedule" size={32} class="empty-simple-icon" />
+				<p>Pas encore de signaux. Le scanner Zefix + SIMAP remplit cette page chaque matin à 6 h.</p>
 			</div>
 		{:else}
 			{#if selectMode}
@@ -341,19 +382,19 @@
 				onSelect={openDetail}
 				onToggleSelect={toggleSelect}
 				emptyMessage={emptyMessageForTab(activeTab)}
+				keywords={data.keywords}
 			/>
 		{/if}
 	</div>
-</div>
+	</section>
 
-<button
-	type="button"
-	class="ws-fab"
-	aria-label="Ajouter un signal"
-	onclick={openCreate}
->
-	<Icon name="add" size={20} />
-</button>
+	<SignauxKeywordsPanel
+		keywords={data.keywords}
+		canEdit={data.canEditKeywords}
+		collapsed={panelCollapsed}
+		onCollapsedChange={setPanelCollapsed}
+	/>
+</div>
 
 <!-- SlideOut détail signal -->
 <SlideOut bind:open={slideOutOpen} title="Signal d'affaires">
@@ -540,28 +581,28 @@
 	{/if}
 </SlideOut>
 
-<!-- Modal création/édition signal -->
+<!-- Modal édition signal (création supprimée 2026-05-13 : décision Pascal, scan auto suffit) -->
 <ModalForm
 	bind:open={modalOpen}
-	title={editMode ? 'Modifier le signal' : 'Nouveau signal'}
+	title="Modifier le signal"
 	{saving}
 >
 	<form
 		method="POST"
-		action={editMode ? '?/update' : '?/create'}
+		action="?/update"
 		use:enhance={() => {
 			saving = true;
 			return async ({ result, update }) => {
 				saving = false;
 				modalOpen = false;
 				resetForm();
-				if (result.type === 'success') toasts.success(editMode ? 'Signal modifié' : 'Signal créé');
+				if (result.type === 'success') toasts.success('Signal modifié');
 				else toasts.error("Erreur lors de l'enregistrement");
 				await update();
 			};
 		}}
 	>
-		{#if editMode && selectedSignal}
+		{#if selectedSignal}
 			<input type="hidden" name="id" value={selectedSignal.id} />
 		{/if}
 
@@ -580,17 +621,15 @@
 				<FormField label="Maître d'ouvrage" bind:value={maitre_ouvrage} />
 			</div>
 
-			{#if editMode}
-				<div class="grid grid-cols-2 gap-4">
-					<FormField label="Architecte / Bureau" bind:value={architecte_bureau} />
-					<FormField label="Commune" bind:value={commune} />
-				</div>
-				<div class="grid grid-cols-2 gap-4">
-					<FormField label="Source officielle" bind:value={source_officielle} />
-					<FormField label="Date publication" type="date" bind:value={date_publication} />
-				</div>
-				<FormField label="Notes" type="textarea" bind:value={notes_libres} />
-			{/if}
+			<div class="grid grid-cols-2 gap-4">
+				<FormField label="Architecte / Bureau" bind:value={architecte_bureau} />
+				<FormField label="Commune" bind:value={commune} />
+			</div>
+			<div class="grid grid-cols-2 gap-4">
+				<FormField label="Source officielle" bind:value={source_officielle} />
+				<FormField label="Date publication" type="date" bind:value={date_publication} />
+			</div>
+			<FormField label="Notes" type="textarea" bind:value={notes_libres} />
 		</div>
 
 		<input type="hidden" name="type_signal" value={type_signal} />
@@ -711,6 +750,96 @@
 />
 
 <style>
+	/* Layout 2 colonnes : cards à gauche + panneau pertinence à droite */
+	.signaux-layout {
+		display: flex;
+		align-items: stretch;
+		gap: 0;
+		padding-right: 0 !important;
+	}
+	.signaux-main {
+		flex: 1;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 24px;
+	}
+	@media (max-width: 1023px) {
+		.signaux-layout {
+			flex-direction: column;
+		}
+		.signaux-main {
+			width: 100%;
+		}
+	}
+
+	/* Toolbar tri + toggle hors-scope */
+	.signaux-toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		padding: 8px 0 0;
+		flex-wrap: wrap;
+	}
+	.sort-group {
+		display: inline-flex;
+		gap: 0;
+		background: var(--color-surface-alt);
+		border-radius: var(--radius-full);
+		padding: 2px;
+		border: 1px solid var(--color-border);
+	}
+	.sort-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 4px 12px;
+		border-radius: var(--radius-full);
+		font-size: 12px;
+		font-weight: 500;
+		background: transparent;
+		color: var(--color-text-muted);
+		border: none;
+		cursor: pointer;
+		font-family: inherit;
+	}
+	.sort-btn.active {
+		background: var(--color-surface);
+		color: var(--color-primary);
+		box-shadow: var(--shadow-card);
+	}
+	.toggle-out {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 12px;
+		color: var(--color-text-muted);
+		cursor: pointer;
+	}
+	.toggle-out input {
+		accent-color: var(--color-primary);
+	}
+
+	/* Empty state simple (V2 : scan auto remplit la page) */
+	.empty-simple {
+		padding: 64px 32px;
+		text-align: center;
+		color: var(--color-text-muted);
+		display: grid;
+		gap: 12px;
+		justify-items: center;
+	}
+	.empty-simple :global(.empty-simple-icon) {
+		opacity: 0.4;
+	}
+	.empty-simple p {
+		font-size: 14px;
+		max-width: 420px;
+		line-height: 1.5;
+		margin: 0;
+	}
+
 	/* Empty state grid 2 cards */
 	.empty-grid {
 		display: grid;

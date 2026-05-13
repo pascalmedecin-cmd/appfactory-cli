@@ -16,13 +16,16 @@ if (import.meta.hot) {
 export const handle: Handle = async ({ event, resolve }) => {
 	// Rate limiting sur /api/prospection/*, /api/photos*, /api/visits*,
 	// POST /login (audit 360 M-04 : anti cost-burn SMTP via `?/sendcode` bombing),
-	// et POST /log/* (form actions create/updateStatus/updateAdminNotes, audit S185 Info-1).
+	// POST /log/* (form actions create/updateStatus/updateAdminNotes, audit S185 Info-1),
+	// et POST /signaux (form actions addKeyword/removeKeyword + rescoreActiveSignaux synchrone,
+	// audit S186 LOW-1 : anti spam UPDATE en cascade sur 130+ signaux par appel).
 	const isRateLimitedPath =
 		event.url.pathname.startsWith('/api/prospection/') ||
 		event.url.pathname.startsWith('/api/photos') ||
 		event.url.pathname.startsWith('/api/visits') ||
 		(event.url.pathname === '/login' && event.request.method === 'POST') ||
-		(event.url.pathname.startsWith('/log') && event.request.method === 'POST');
+		(event.url.pathname.startsWith('/log') && event.request.method === 'POST') ||
+		(event.url.pathname === '/signaux' && event.request.method === 'POST');
 	if (isRateLimitedPath) {
 		const ip = event.getClientAddress();
 		if (!rateLimiter.check(ip)) {

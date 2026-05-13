@@ -10,6 +10,7 @@
 		statutVariant,
 		signalAriaLabel,
 	} from '$lib/utils/signauxFormat';
+	import { highlightKeywords, type KeywordRow } from '$lib/scoring/keywords';
 
 	type Props = {
 		signaux: T[];
@@ -18,6 +19,9 @@
 		onSelect: (signal: T) => void;
 		onToggleSelect?: (id: string) => void;
 		emptyMessage?: string;
+		// V2 : si fourni, les mots-clés matchés dans description_projet sont surlignés
+		// par catégorie (Cœur / Bonus / Éviter). Échappement HTML natif Svelte (zéro {@html}).
+		keywords?: KeywordRow[];
 	};
 
 	let {
@@ -27,6 +31,7 @@
 		onSelect,
 		onToggleSelect,
 		emptyMessage = 'Aucun signal.',
+		keywords = [],
 	}: Props = $props();
 
 	function handleClick(signal: T) {
@@ -83,7 +88,19 @@
 				</div>
 
 				{#if signal.description_projet}
-					<p class="card-signal-desc">{signal.description_projet}</p>
+					<p class="card-signal-desc">
+						{#if keywords.length > 0}
+							{#each highlightKeywords(signal.description_projet, keywords) as chunk}
+								{#if chunk.cat}
+									<mark class="kw-{chunk.cat}">{chunk.text}</mark>
+								{:else}
+									{chunk.text}
+								{/if}
+							{/each}
+						{:else}
+							{signal.description_projet}
+						{/if}
+					</p>
 				{/if}
 
 				<div class="card-signal-footer">
@@ -225,6 +242,27 @@
 		line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
+	}
+	.card-signal-desc :global(mark.kw-coeur) {
+		background: var(--color-success-light);
+		color: var(--color-success);
+		padding: 0 3px;
+		border-radius: 3px;
+		font-weight: 600;
+	}
+	.card-signal-desc :global(mark.kw-bonus) {
+		background: var(--color-primary-light);
+		color: var(--color-primary);
+		padding: 0 3px;
+		border-radius: 3px;
+		font-weight: 600;
+	}
+	.card-signal-desc :global(mark.kw-eviter) {
+		background: var(--color-danger-light);
+		color: var(--color-danger);
+		padding: 0 3px;
+		border-radius: 3px;
+		font-weight: 600;
 	}
 	.card-signal-footer {
 		display: flex;

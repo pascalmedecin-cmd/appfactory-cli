@@ -2,7 +2,7 @@ import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { calculerScore } from '$lib/scoring';
-import { config } from '$lib/config';
+import type { KeywordRow } from '$lib/scoring/keywords';
 import { timingSafeEqual } from 'crypto';
 import { randomUUID } from 'crypto';
 import { translate, cantonToLead, CANTON_MAP } from '../../prospection/simap/helpers';
@@ -120,6 +120,7 @@ interface SimapProject {
 async function importZefix(
 	supabase: ReturnType<typeof createSupabaseServiceClient>,
 	authHeader: string,
+	keywords: KeywordRow[],
 ): Promise<{ imported: number; skipped: number; errors: string[] }> {
 	let imported = 0;
 	let skipped = 0;
@@ -192,16 +193,19 @@ async function importZefix(
 		const purpose = extractPurposeFromMessage(p.message);
 		const cleanName = fixCompanyName(c.name);
 		const cleanSeat = c.legalSeat ? fixCompanyName(c.legalSeat) : null;
-		const score = calculerScore({
-			canton: p.registryOfCommerceCanton,
-			description: purpose,
-			raison_sociale: cleanName,
-			secteur_detecte: null,
-			source: 'zefix',
-			date_publication: sogcDate ?? null,
-			telephone: null,
-			montant: null,
-		});
+		const score = calculerScore(
+			{
+				canton: p.registryOfCommerceCanton,
+				description: purpose,
+				raison_sociale: cleanName,
+				secteur_detecte: null,
+				source: 'zefix',
+				date_publication: sogcDate ?? null,
+				telephone: null,
+				montant: null,
+			},
+			keywords,
+		);
 
 		inserts.push({
 			id: randomUUID(),
@@ -235,6 +239,7 @@ async function importZefix(
 // --- SIMAP import ---
 async function importSimap(
 	supabase: ReturnType<typeof createSupabaseServiceClient>,
+	keywords: KeywordRow[],
 ): Promise<{ imported: number; skipped: number; errors: string[] }> {
 	let imported = 0;
 	let skipped = 0;
@@ -296,21 +301,23 @@ async function importSimap(
 				`Type : ${project.projectSubType} | Procédure : ${project.processType}`,
 			].filter(Boolean).join('\n');
 
-			// Filtrer par pertinence secteur : ne garder que les projets liés aux mots-clés cibles
-			const texteLower = `${title} ${procOffice} ${description}`.toLowerCase();
-			const isRelevant = config.scoring.secteursCibles.keywords.some((kw) => texteLower.includes(kw));
-			if (!isRelevant) { skipped++; continue; }
+			// V2 (2026-05-13) : on n'applique plus de filtre dur à l'import (audit Q-A1 figée).
+			// Tous les projets construction Romandie sont importés ; le scoring trie ensuite.
+			// L'admin peut masquer les hors-scope d'un clic via toggle UI (signaux.hideOutOfScope).
 
-			const score = calculerScore({
-				canton: cantonCode,
-				description,
-				raison_sociale: procOffice || title,
-				secteur_detecte: 'construction',
-				source: 'simap',
-				date_publication: project.publicationDate,
-				telephone: null,
-				montant: null,
-			});
+			const score = calculerScore(
+				{
+					canton: cantonCode,
+					description,
+					raison_sociale: procOffice || title,
+					secteur_detecte: 'construction',
+					source: 'simap',
+					date_publication: project.publicationDate,
+					telephone: null,
+					montant: null,
+				},
+				keywords,
+			);
 
 			inserts.push({
 				id: randomUUID(),
@@ -351,6 +358,17 @@ export async function GET(event: RequestEvent) {
 
 	const supabase = createSupabaseServiceClient();
 
+	// V2 : lecture de la liste de mots-clés FilmPro (cache mémoire pour la durée du run).
+	// Si la table est vide ou inaccessible, on retombe sur le scoring v1 legacy
+	// (config.scoring.secteursCibles) via le fallback de calculerScore quand keywords=[].
+	const { data: kwData, error: kwError } = await supabase
+		.from('signaux_mots_cles' as never)
+		.select('id, terme, terme_norm, categorie, poids');
+	if (kwError) {
+		console.error('Cron signaux : lecture mots-clés impossible, fallback scoring v1 :', kwError.message);
+	}
+	const keywords = (kwData ?? []) as KeywordRow[];
+
 	// Zefix
 	const zefixAuth = (() => {
 		const u = env.ZEFIX_USERNAME;
@@ -360,10 +378,10 @@ export async function GET(event: RequestEvent) {
 	})();
 
 	const zefix = zefixAuth
-		? await importZefix(supabase, zefixAuth)
+		? await importZefix(supabase, zefixAuth, keywords)
 		: { imported: 0, skipped: 0, errors: ['Credentials Zefix non configurés'] };
 
-	const simap = await importSimap(supabase);
+	const simap = await importSimap(supabase, keywords);
 
 	const totalImported = zefix.imported + simap.imported;
 	const totalErrors = [...zefix.errors, ...simap.errors];
