@@ -72,6 +72,27 @@ export type Database = {
           },
         ]
       }
+      api_quota_log: {
+        Row: {
+          calls: number
+          source: string
+          updated_at: string
+          year_month: string
+        }
+        Insert: {
+          calls?: number
+          source: string
+          updated_at?: string
+          year_month: string
+        }
+        Update: {
+          calls?: number
+          source?: string
+          updated_at?: string
+          year_month?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           adresse: string | null
@@ -293,6 +314,51 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback_entries: {
+        Row: {
+          admin_notes: string | null
+          context: Json
+          created_at: string
+          created_by: string | null
+          created_by_email: string
+          description: string
+          id: string
+          page: string
+          severity: string | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          context?: Json
+          created_at?: string
+          created_by?: string | null
+          created_by_email: string
+          description: string
+          id?: string
+          page: string
+          severity?: string | null
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          context?: Json
+          created_at?: string
+          created_by?: string | null
+          created_by_email?: string
+          description?: string
+          id?: string
+          page?: string
+          severity?: string | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       imports_zefix: {
         Row: {
           cantons_filtres: string | null
@@ -380,6 +446,7 @@ export type Database = {
           raw_response: Json | null
           search_terms: Json
           status: string
+          version: number
           week_label: string
         }
         Insert: {
@@ -395,6 +462,7 @@ export type Database = {
           raw_response?: Json | null
           search_terms: Json
           status?: string
+          version?: number
           week_label: string
         }
         Update: {
@@ -410,6 +478,7 @@ export type Database = {
           raw_response?: Json | null
           search_terms?: Json
           status?: string
+          version?: number
           week_label?: string
         }
         Relationships: []
@@ -1008,7 +1077,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      api_quota_increment: {
+        Args: { p_by?: number; p_source: string; p_year_month: string }
+        Returns: number
+      }
+      entreprises_lookup_by_name: {
+        Args: { p_query: string }
+        Returns: {
+          id: string
+          raison_sociale: string
+        }[]
+      }
+      immutable_unaccent: { Args: { "": string }; Returns: string }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
+      transfer_lead_to_crm: { Args: { p_lead_id: string }; Returns: Json }
+      unaccent: { Args: { "": string }; Returns: string }
     }
     Enums: {
       [_ in never]: never

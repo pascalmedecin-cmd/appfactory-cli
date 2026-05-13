@@ -261,7 +261,7 @@ export const FEEDBACK_SEVERITIES_ENUM = ['bloquant', 'genant', 'mineur'] as cons
 export const FEEDBACK_STATUSES_ENUM = ['nouveau', 'a_actionner', 'traite', 'logge'] as const;
 
 // Contexte capturé côté client (envoyé en string JSON dans le form).
-const FeedbackContextSchema = z.object({
+export const FeedbackContextSchema = z.object({
 	url: z.string().max(2000).default(''),
 	viewport: z
 		.object({
@@ -317,7 +317,20 @@ export const FeedbackUpdateStatusSchema = z.object({
 
 export const FeedbackUpdateNotesSchema = z.object({
 	id: requiredUUID,
-	admin_notes: z.string().max(2000).optional().or(z.literal('')),
+	// Normalisation au boundary Zod : trim + `'' → null`. Honore le CHECK SQL durci
+	// `feedback_entries_admin_notes_check` (migration `_002`) : interdit '' (vide)
+	// pour éviter notes vides indistinguables de NULL. Defense-in-depth si un futur
+	// caller bypass `+page.server.ts` (script ops, cron, autre route) le payload
+	// reste valide sans 23514 SQL leak.
+	admin_notes: z
+		.string()
+		.max(2000)
+		.optional()
+		.or(z.literal(''))
+		.transform((s) => {
+			const trimmed = s?.trim() ?? '';
+			return trimmed === '' ? null : trimmed;
+		}),
 });
 
 export const FEEDBACK_CREATE_FIELDS = ['type', 'severity', 'page', 'description', 'context'] as const;

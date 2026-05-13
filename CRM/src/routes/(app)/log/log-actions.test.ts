@@ -69,7 +69,13 @@ async function callLoad(
 	safeGetSession: ReturnType<typeof makeSession>
 ) {
 	const mod = await import('./+page.server');
-	return mod.load({ locals: { supabase, safeGetSession } } as unknown as Parameters<typeof mod.load>[0]);
+	// PageServerLoad TS type est `MaybeWithVoid<...>` côté SvelteKit. Le retour réel
+	// est toujours `{entries, isAdmin, userEmail}` (jamais void) — on cast pour exposer
+	// la forme effective consommée par les assertions des tests.
+	const result = await mod.load({
+		locals: { supabase, safeGetSession },
+	} as unknown as Parameters<typeof mod.load>[0]);
+	return result as { entries: unknown[]; isAdmin: boolean; userEmail: string };
 }
 
 const VALID_UUID = '11111111-1111-4111-8111-111111111111';
