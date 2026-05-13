@@ -10,7 +10,12 @@
 		statutVariant,
 		signalAriaLabel,
 	} from '$lib/utils/signauxFormat';
-	import { highlightKeywordsAndSearch, type KeywordRow } from '$lib/scoring/keywords';
+	import {
+		highlightKeywordsAndSearch,
+		dominantKeywordCategory,
+		type KeywordRow,
+		type KeywordCategorie,
+	} from '$lib/scoring/keywords';
 
 	type Props = {
 		signaux: T[];
@@ -45,6 +50,13 @@
 			onSelect(signal);
 		}
 	}
+
+	// V4 (S189) : pour chaque card, calcule la catégorie dominante des mots-clés
+	// détectés dans la description (Cœur > Bonus > Éviter > null). Pilote la couleur
+	// du bandeau 3px en haut de card, pour identifier la classe d'intérêt à l'œil nu.
+	function dominantFor(s: T): KeywordCategorie | null {
+		return dominantKeywordCategory(s.description_projet, keywords);
+	}
 </script>
 
 {#if signaux.length === 0}
@@ -57,13 +69,16 @@
 		{#each signaux as signal (signal.id)}
 			{@const sStyle = scoreStyle(signal.score_pertinence)}
 			{@const isSelected = selectedIds.has(signal.id)}
+			{@const dom = dominantFor(signal)}
 			<button
 				type="button"
 				class="card-signal"
 				class:selected={selectMode && isSelected}
+				data-dominant={dom ?? 'neutral'}
 				onclick={() => handleClick(signal)}
 				aria-label={signalAriaLabel(signal)}
 			>
+				<span class="card-signal-band" aria-hidden="true"></span>
 				<div class="card-signal-head">
 					{#if selectMode}
 						<span class="card-signal-icon" class:icon-selected={isSelected}>
@@ -149,10 +164,14 @@
 		opacity: 0.5;
 	}
 	.card-signal {
+		position: relative;
 		background: var(--color-surface);
 		border-radius: var(--radius-xl);
 		box-shadow: var(--shadow-card);
-		padding: 16px;
+		/* V4 : padding 16 → 20, gap 16 → 20 — densité texte plus généreuse pour
+		   line-clamp 4 (vs 2 en V3). Plus respirable, plus lisible. */
+		padding: 20px;
+		padding-top: 22px; /* +2px pour le bandeau coloré 3px en haut */
 		cursor: pointer;
 		transition:
 			transform 200ms var(--ease-out-expo),
@@ -162,11 +181,12 @@
 		font-family: inherit;
 		width: 100%;
 		display: grid;
-		gap: 16px;
+		gap: 20px;
+		overflow: hidden; /* clip le bandeau dans le border-radius */
 	}
 	.card-signal:hover {
-		transform: translateY(-2px);
-		box-shadow: var(--shadow-card-active);
+		transform: translateY(-3px);
+		box-shadow: var(--shadow-card-hover);
 	}
 	.card-signal:focus-visible {
 		outline: 2px solid var(--color-primary);
@@ -175,6 +195,28 @@
 	.card-signal.selected {
 		box-shadow: 0 0 0 2px var(--color-primary), 0 8px 20px -12px color-mix(in srgb, var(--color-text) 10%, transparent);
 		background: var(--color-primary-light);
+	}
+
+	/* V4 (S189) : bandeau coloré 3px en haut de chaque card, pilote par la
+	   catégorie dominante des mots-clés détectés. Permet d'identifier la classe
+	   d'intérêt d'un signal à l'œil nu (Cœur métier > Bonus > Éviter > neutre)
+	   avant même de lire la description. data-dominant est posé côté markup. */
+	.card-signal-band {
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: 3px;
+		background: transparent;
+	}
+	.card-signal[data-dominant='coeur'] .card-signal-band {
+		background: linear-gradient(90deg, var(--color-success) 0%, color-mix(in srgb, var(--color-success) 70%, white) 100%);
+	}
+	.card-signal[data-dominant='bonus'] .card-signal-band {
+		background: linear-gradient(90deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 70%, white) 100%);
+	}
+	.card-signal[data-dominant='eviter'] .card-signal-band {
+		background: linear-gradient(90deg, var(--color-danger) 0%, color-mix(in srgb, var(--color-danger) 70%, white) 100%);
 	}
 	.card-signal-head {
 		display: flex;
@@ -232,20 +274,23 @@
 	.score-pill {
 		display: inline-flex;
 		align-items: center;
-		gap: 4px;
-		padding: 2px 8px;
+		gap: 5px;
+		padding: 4px 10px;
 		border-radius: var(--radius-full);
 		font-size: 12px;
-		font-weight: 600;
+		font-weight: 700;
+		line-height: 1;
 	}
 	.card-signal-desc {
-		font-size: 13px;
+		font-size: 14px;
 		color: var(--color-text);
-		line-height: 1.5;
+		line-height: 1.55;
 		margin: 0;
 		display: -webkit-box;
-		-webkit-line-clamp: 2;
-		line-clamp: 2;
+		/* V4 (S189) : line-clamp 2 → 4, plus de texte visible directement sur la card
+		   (objectif Pascal : « identifier d'un seul coup d'œil sans cliquer »). */
+		-webkit-line-clamp: 4;
+		line-clamp: 4;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 	}

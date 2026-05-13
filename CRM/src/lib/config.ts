@@ -63,7 +63,11 @@ export const config = {
 	},
 
 	scoring: {
-		maxPoints: 12,
+		// V4 (S189) : maxPoints réduit de 12 → 10 après retrait de la temporalité
+		// (bloc `recence` supprimé). Plafond théorique = canton prio (2) + entreprise
+		// identifiée (1) + secteur (3) + simap (2) + regbl (1) [exclusif] + tel (1)
+		// + montant (1). Veille (max +4) est un bonus cross-table non comptabilisé ici.
+		maxPoints: 10,
 		cantonsPrioritaires: {
 			points: 2,
 			values: ['GE', 'VD', 'VS'],
@@ -96,16 +100,6 @@ export const config = {
 			queueCap: 25,
 			visibleLimit: 12,
 		},
-		recence: [
-			{
-				maxJours: 30,
-				points: 2,
-			},
-			{
-				maxJours: 90,
-				points: 1,
-			},
-		],
 		telephoneDisponible: {
 			points: 1,
 		},

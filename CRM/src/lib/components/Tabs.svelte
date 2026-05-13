@@ -119,7 +119,9 @@
 		padding: 0 16px;
 		border: none;
 		background: transparent;
-		border-bottom: 2px solid transparent;
+		/* V4 (S189) : underline 3px coloré pour l'onglet actif. Le repos garde
+		 * 3px transparent pour éviter tout reflow vertical au changement d'état. */
+		border-bottom: 3px solid transparent;
 		font-family: inherit;
 		font-size: 14px;
 		font-weight: 500;

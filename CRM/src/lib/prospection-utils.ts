@@ -200,7 +200,8 @@ export function formatLeadContext(lead: LeadContextInput): string {
 	if (lead.source === 'zefix') {
 		const age = lead.date_publication ? daysSince(lead.date_publication) : null;
 		const c = lead.canton ? cantonNoms[lead.canton] ?? lead.canton : '';
-		// Seuil 90 j cohérent avec config.scoring.recence (30/90), pas 60 arbitraire.
+		// Seuil 90 j retenu pour le formatage UI (cohérent avec l'ancien `config.scoring.recence`
+		// retiré en V4 S189 — usage purement cosmétique ici, indépendant du scoring).
 		return age !== null && age >= 0 && age <= 90
 			? `Inscription RC · ${age} j · ${c}`.trim()
 			: `Registre du commerce · ${c}`.trim();

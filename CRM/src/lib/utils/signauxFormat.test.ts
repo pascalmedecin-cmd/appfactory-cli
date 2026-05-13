@@ -163,21 +163,39 @@ describe('scoreLabel + scoreStyle', () => {
 	it('null → non_qualifie', () => {
 		expect(scoreLabel(null)).toBe('non_qualifie');
 	});
-	it('seuils par défaut chaud=10 / tiede=7 / froid=4', () => {
-		expect(scoreLabel(11)).toBe('chaud');
+	// V4 (S189) : seuils alignés sur config.scoring.labels après retrait de la
+	// temporalité (maxPoints 12 → 10). Chaud >= 7, tiede >= 4, froid >= 1.
+	it('seuils par défaut V4 : chaud=7 / tiede=4 / froid=1', () => {
 		expect(scoreLabel(10)).toBe('chaud');
-		expect(scoreLabel(9)).toBe('tiede');
-		expect(scoreLabel(7)).toBe('tiede');
-		expect(scoreLabel(6)).toBe('froid');
-		expect(scoreLabel(4)).toBe('froid');
-		expect(scoreLabel(3)).toBe('non_qualifie');
+		expect(scoreLabel(8)).toBe('chaud');
+		expect(scoreLabel(7)).toBe('chaud');
+		expect(scoreLabel(6)).toBe('tiede');
+		expect(scoreLabel(5)).toBe('tiede');
+		expect(scoreLabel(4)).toBe('tiede');
+		expect(scoreLabel(3)).toBe('froid');
+		expect(scoreLabel(1)).toBe('froid');
 		expect(scoreLabel(0)).toBe('non_qualifie');
+		expect(scoreLabel(-1)).toBe('non_qualifie');
 	});
-	it('scoreStyle retourne icon/color/bg/label', () => {
-		const s = scoreStyle(11);
+	// V4 (S189) : SCORE_STYLES refondu, classes premium `signal-score-pill--*`
+	// (gradient saturé + ring inset + shadow). `bgClass` vidé : tout est porté
+	// par `colorClass` côté CSS global (cf. src/app.css).
+	it('scoreStyle retourne icon + classe premium + label', () => {
+		const s = scoreStyle(10);
 		expect(s.icon).toBe('local_fire_department');
-		expect(s.colorClass).toBe('text-danger');
+		expect(s.colorClass).toBe('signal-score-pill--chaud');
+		expect(s.bgClass).toBe('');
 		expect(s.label).toBe('Chaud');
+	});
+	it('scoreStyle pour tiède retourne signal-score-pill--tiede', () => {
+		expect(scoreStyle(5).colorClass).toBe('signal-score-pill--tiede');
+	});
+	it('scoreStyle pour froid retourne signal-score-pill--froid', () => {
+		expect(scoreStyle(2).colorClass).toBe('signal-score-pill--froid');
+	});
+	it('scoreStyle pour non qualifié retourne signal-score-pill--unscored', () => {
+		expect(scoreStyle(0).colorClass).toBe('signal-score-pill--unscored');
+		expect(scoreStyle(null).colorClass).toBe('signal-score-pill--unscored');
 	});
 });
 

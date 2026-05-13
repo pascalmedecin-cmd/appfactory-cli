@@ -39,8 +39,10 @@
 
 	type Signal = (typeof data.signaux)[number];
 
-	// UI state
-	let activeTab: SignauxTab = $state('tous');
+	// UI state — V4 (S189) : tab défaut "nouveau" (= inbox métier). L'onglet "Tous"
+	// est retiré : la page commence sur ce que l'utilisateur DOIT trier, pas sur
+	// l'intégralité d'un dataset croissant qui dilue l'attention.
+	let activeTab: SignauxTab = $state('nouveau');
 	let slideOutOpen = $state(false);
 	let selectedSignal = $state<Signal | null>(null);
 	let modalOpen = $state(false);
@@ -59,11 +61,13 @@
 	let filterType = $state('');
 	let filterCanton = $state('');
 
-	// V2 : tri + toggle hors-scope + panneau collapsible (persistance localStorage).
+	// V2 : tri + toggle hors-scope (persistance localStorage).
+	// V4 (S189) : `panelCollapsed` retiré — l'ancien panneau sticky est devenu un
+	// drawer overlay déclenché à la demande via le bouton « Mots-clés » de la toolbar.
 	type SortKey = 'pertinence' | 'date';
 	let sortKey: SortKey = $state('pertinence');
 	let hideOutOfScope = $state(false);
-	let panelCollapsed = $state(false);
+	let keywordsDrawerOpen = $state(false);
 
 	// V3 (S188 spec § 4 C5-C9) : recherche client + debounce 200ms + persistance.
 	let search = $state('');
@@ -74,7 +78,6 @@
 			const s = localStorage.getItem('signaux.sort');
 			if (s === 'pertinence' || s === 'date') sortKey = s;
 			hideOutOfScope = localStorage.getItem('signaux.hideOutOfScope') === '1';
-			panelCollapsed = localStorage.getItem('signaux.keywordsPanel') === 'collapsed';
 			const sv = localStorage.getItem('signaux.search') ?? '';
 			if (sv) {
 				search = sv;
@@ -127,14 +130,6 @@
 			// ignore
 		}
 	}
-	function setPanelCollapsed(v: boolean) {
-		panelCollapsed = v;
-		try {
-			localStorage.setItem('signaux.keywordsPanel', v ? 'collapsed' : 'open');
-		} catch {
-			// ignore
-		}
-	}
 
 	// Form fields
 	let type_signal = $state('');
@@ -158,8 +153,9 @@
 	const indicators = $derived(signauxIndicators(data.signaux));
 	const counts = $derived(signauxCountsByTab(data.signaux));
 
+	// V4 (S189) : tab "Tous" retiré. La page commence sur "Nouveau" (cf. activeTab
+	// default). L'intégralité est lisible en cumulant les autres tabs si besoin.
 	const tabsSpec = $derived([
-		{ key: 'tous' as SignauxTab, label: 'Tous', count: counts.tous },
 		{ key: 'nouveau' as SignauxTab, label: 'Nouveau', count: counts.nouveau },
 		{ key: 'en_analyse' as SignauxTab, label: 'En analyse', count: counts.en_analyse },
 		{ key: 'interesse' as SignauxTab, label: 'Intéressé', count: counts.interesse },
@@ -169,11 +165,14 @@
 
 	const filteredByTab = $derived(filterSignauxByTab(data.signaux, activeTab));
 
-	const filteredSignaux = $derived.by(() => {
+	// V4 (S189) : on isole la chaîne « tab + type + canton + search » dans une derived
+	// dédiée pour pouvoir calculer le compteur `outOfScopeCount` (= nombre de signaux
+	// que le toggle « Cacher les hors-scope » retirerait dans la sélection courante).
+	// Sans ça, le toggle est invisible quand tous les signaux affichés ont déjà score > 0.
+	const filteredBeforeScope = $derived.by(() => {
 		let out = filteredByTab;
 		if (filterType) out = out.filter((s: Signal) => s.type_signal === filterType);
 		if (filterCanton) out = out.filter((s: Signal) => s.canton === filterCanton);
-		if (hideOutOfScope) out = out.filter((s: Signal) => (s.score_pertinence ?? 0) > 0);
 		// V3 spec § 4 C6 : filtre search client (case + accent insensitive) sur 3 champs.
 		const searchNorm = normalizeNFD(searchDebounced.trim());
 		if (searchNorm.length >= KW_SEARCH_MIN_LEN) {
@@ -184,6 +183,16 @@
 				return d.includes(searchNorm) || mo.includes(searchNorm) || co.includes(searchNorm);
 			});
 		}
+		return out;
+	});
+
+	const outOfScopeCount = $derived(
+		filteredBeforeScope.filter((s: Signal) => (s.score_pertinence ?? 0) <= 0).length
+	);
+
+	const filteredSignaux = $derived.by(() => {
+		let out = filteredBeforeScope;
+		if (hideOutOfScope) out = out.filter((s: Signal) => (s.score_pertinence ?? 0) > 0);
 		if (sortKey === 'pertinence') {
 			// Tri par score desc ; NULLs en queue de liste ; tie-break sur date_detection desc.
 			out = [...out].sort((a, b) => {
@@ -276,8 +285,7 @@
 	}
 </script>
 
-<div class="ws-page signaux-layout">
-	<section class="signaux-main">
+<div class="ws-page">
 	<div class="ws-page-actions">
 		{#if data.signaux.length > 0}
 			{#if selectMode}
@@ -374,14 +382,33 @@
 				<Icon name="schedule" size={14} /> Date
 			</button>
 		</div>
-		<label class="toggle-out">
+		<div class="toolbar-right">
+		<button
+			type="button"
+			class="kw-trigger"
+			onclick={() => (keywordsDrawerOpen = true)}
+			aria-haspopup="dialog"
+			aria-expanded={keywordsDrawerOpen}
+		>
+			<Icon name="tune" size={16} />
+			<span>Mots-clés</span>
+			<span class="kw-trigger-count tabular-nums">{data.keywords.length}</span>
+		</button>
+		<label class="toggle-out" class:disabled={outOfScopeCount === 0}>
 			<input
 				type="checkbox"
 				checked={hideOutOfScope}
+				disabled={outOfScopeCount === 0 && !hideOutOfScope}
 				onchange={(e) => setHideOutOfScope((e.currentTarget as HTMLInputElement).checked)}
 			/>
-			<span>Cacher les hors-scope</span>
+			<span>
+				Cacher les hors-scope
+				<span class="toggle-out-count" class:has-out={outOfScopeCount > 0}>
+					{outOfScopeCount > 0 ? `(${outOfScopeCount} masqué${outOfScopeCount > 1 ? 's' : ''})` : '(0)'}
+				</span>
+			</span>
 		</label>
+		</div>
 	</div>
 
 	<div
@@ -455,15 +482,14 @@
 			/>
 		{/if}
 	</div>
-	</section>
-
-	<SignauxKeywordsPanel
-		keywords={data.keywords}
-		canEdit={data.canEditKeywords}
-		collapsed={panelCollapsed}
-		onCollapsedChange={setPanelCollapsed}
-	/>
 </div>
+
+<SignauxKeywordsPanel
+	keywords={data.keywords}
+	canEdit={data.canEditKeywords}
+	open={keywordsDrawerOpen}
+	onClose={() => (keywordsDrawerOpen = false)}
+/>
 
 <!-- SlideOut détail signal -->
 <SlideOut bind:open={slideOutOpen} title="Signal d'affaires">
@@ -819,31 +845,10 @@
 />
 
 <style>
-	/* Layout 2 colonnes : cards à gauche + panneau pertinence à droite.
-	 * `.ws-page` (global) pose `display: flex; flex-direction: column` — on doit
-	 * forcer `flex-direction: row` ici, sinon le panneau s'empile en bas. */
-	.signaux-layout {
-		display: flex !important;
-		flex-direction: row !important;
-		align-items: stretch;
-		gap: 0;
-		padding-right: 0 !important;
-	}
-	.signaux-main {
-		flex: 1;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 24px;
-	}
-	@media (max-width: 1023px) {
-		.signaux-layout {
-			flex-direction: column !important;
-		}
-		.signaux-main {
-			width: 100%;
-		}
-	}
+	/* V4 (S189) : layout 2 colonnes retiré. L'ancien panneau pertinence sticky droit
+	 * est devenu un drawer overlay (SignauxKeywordsPanel) déclenché par le bouton
+	 * « Mots-clés » de la toolbar. La page utilise désormais le flex column standard
+	 * de `.ws-page` sans override, ce qui libère 100 % de la largeur pour les cards. */
 
 	/* Input search V3 (spec § 4 C5-C9) : recherche client sur description / maître / commune. */
 	.signaux-search {
@@ -906,7 +911,7 @@
 		background: var(--color-surface-alt);
 	}
 
-	/* Toolbar tri + toggle hors-scope */
+	/* Toolbar tri + bouton mots-clés + toggle hors-scope */
 	.signaux-toolbar {
 		display: flex;
 		align-items: center;
@@ -915,43 +920,128 @@
 		padding: 8px 0 0;
 		flex-wrap: wrap;
 	}
+	.toolbar-right {
+		display: inline-flex;
+		align-items: center;
+		gap: 16px;
+		flex-wrap: wrap;
+	}
+	.kw-trigger {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		height: 36px;
+		padding: 0 14px;
+		border-radius: var(--radius-full);
+		font-size: 13px;
+		font-weight: 600;
+		font-family: inherit;
+		background: var(--color-surface);
+		color: var(--color-text);
+		border: 1px solid var(--color-border);
+		cursor: pointer;
+		box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+		transition:
+			border-color 150ms,
+			background 150ms,
+			box-shadow 150ms,
+			transform 150ms var(--ease-out-expo, ease-out);
+	}
+	.kw-trigger:hover {
+		background: var(--color-primary-light);
+		border-color: color-mix(in srgb, var(--color-primary) 25%, transparent);
+		color: var(--color-primary);
+	}
+	.kw-trigger:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+	.kw-trigger:active {
+		transform: translateY(1px);
+	}
+	.kw-trigger-count {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 22px;
+		height: 20px;
+		padding: 0 6px;
+		border-radius: var(--radius-full);
+		background: var(--color-primary);
+		color: white;
+		font-size: 11px;
+		font-weight: 700;
+		line-height: 1;
+	}
+	.kw-trigger:hover .kw-trigger-count {
+		background: var(--color-primary-hover, var(--color-primary));
+	}
 	.sort-group {
 		display: inline-flex;
-		gap: 0;
+		gap: 2px;
 		background: var(--color-surface-alt);
 		border-radius: var(--radius-full);
-		padding: 2px;
+		padding: 3px;
 		border: 1px solid var(--color-border);
 	}
 	.sort-btn {
 		display: inline-flex;
 		align-items: center;
-		gap: 4px;
-		padding: 4px 12px;
+		gap: 6px;
+		height: 28px;
+		padding: 0 14px;
 		border-radius: var(--radius-full);
-		font-size: 12px;
-		font-weight: 500;
+		font-size: 13px;
+		font-weight: 600;
 		background: transparent;
 		color: var(--color-text-muted);
 		border: none;
 		cursor: pointer;
 		font-family: inherit;
+		transition:
+			background 150ms,
+			color 150ms,
+			box-shadow 150ms;
+	}
+	.sort-btn:hover:not(.active) {
+		color: var(--color-text);
+		background: color-mix(in srgb, var(--color-surface) 60%, transparent);
 	}
 	.sort-btn.active {
 		background: var(--color-surface);
 		color: var(--color-primary);
-		box-shadow: var(--shadow-card);
+		box-shadow:
+			0 0 0 1px color-mix(in srgb, var(--color-primary) 12%, transparent),
+			0 2px 4px -1px rgba(16, 24, 40, 0.08);
 	}
 	.toggle-out {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
+		gap: 8px;
 		font-size: 12px;
 		color: var(--color-text-muted);
 		cursor: pointer;
+		font-weight: 500;
 	}
 	.toggle-out input {
 		accent-color: var(--color-primary);
+		cursor: pointer;
+	}
+	.toggle-out.disabled {
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+	.toggle-out.disabled input {
+		cursor: not-allowed;
+	}
+	.toggle-out-count {
+		font-variant-numeric: tabular-nums;
+		color: var(--color-text-muted);
+		font-weight: 400;
+	}
+	.toggle-out-count.has-out {
+		color: var(--color-warning);
+		font-weight: 600;
 	}
 
 	/* Empty state simple (V2 : scan auto remplit la page) */
@@ -971,72 +1061,6 @@
 		max-width: 420px;
 		line-height: 1.5;
 		margin: 0;
-	}
-
-	/* Empty state grid 2 cards */
-	.empty-grid {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-		gap: 16px;
-	}
-	.empty-card {
-		background: var(--color-surface);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-xl);
-		padding: 24px;
-		display: grid;
-		gap: 16px;
-	}
-	.empty-card-head {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-	}
-	.empty-card-icon {
-		width: 40px;
-		height: 40px;
-		border-radius: var(--radius-lg);
-		display: grid;
-		place-items: center;
-		flex-shrink: 0;
-	}
-	.empty-card-icon.primary {
-		background: var(--color-primary-light);
-		color: var(--color-primary);
-	}
-	.empty-card-icon.warning {
-		background: color-mix(in srgb, var(--color-warning) 10%, transparent);
-		color: var(--color-warning);
-	}
-	.empty-card h2 {
-		font-size: 14px;
-		font-weight: 600;
-		color: var(--color-text);
-		margin: 0;
-	}
-	.empty-card p {
-		font-size: 13px;
-		color: var(--color-text-muted);
-		line-height: 1.5;
-		margin: 0;
-	}
-	.empty-card-list {
-		list-style: none;
-		padding: 0;
-		margin: 0;
-		display: grid;
-		gap: 8px;
-		font-size: 13px;
-		color: var(--color-text-muted);
-	}
-	.empty-card-list li {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-	}
-	.empty-card-list li :global(svg) {
-		color: var(--color-success);
-		flex-shrink: 0;
 	}
 
 	/* Batch action bar */

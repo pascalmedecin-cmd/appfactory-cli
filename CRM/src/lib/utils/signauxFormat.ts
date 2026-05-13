@@ -79,11 +79,16 @@ export type ScoreStyle = {
 	label: string;
 };
 
+// V4 (S189) : ScorePill saturée premium. Les anciennes classes pâles
+// (`bg-danger/10 text-danger`) cédaient sous le bruit visuel d'une liste dense :
+// impossible de repérer un Chaud du premier coup d'œil. Nouvelles classes
+// `signal-score-pill--*` (dans SignauxCards.svelte + SlideOut) : fond saturé, texte
+// blanc, ring 1px inset, shadow douce. Le différencier devient instantané.
 const SCORE_STYLES: Record<ScoreBucket, ScoreStyle> = {
-	chaud: { icon: 'local_fire_department', colorClass: 'text-danger', bgClass: 'bg-danger/10', label: 'Chaud' },
-	tiede: { icon: 'thermostat', colorClass: 'text-warning', bgClass: 'bg-warning/10', label: 'Tiède' },
-	froid: { icon: 'ac_unit', colorClass: 'text-primary', bgClass: 'bg-primary-light', label: 'Froid' },
-	non_qualifie: { icon: 'remove', colorClass: 'text-text-muted', bgClass: 'bg-surface', label: 'Non qualifié' },
+	chaud: { icon: 'local_fire_department', colorClass: 'signal-score-pill--chaud', bgClass: '', label: 'Chaud' },
+	tiede: { icon: 'thermostat', colorClass: 'signal-score-pill--tiede', bgClass: '', label: 'Tiède' },
+	froid: { icon: 'ac_unit', colorClass: 'signal-score-pill--froid', bgClass: '', label: 'Froid' },
+	non_qualifie: { icon: 'remove', colorClass: 'signal-score-pill--unscored', bgClass: '', label: 'Non qualifié' },
 };
 
 /**
@@ -213,11 +218,14 @@ export function formatRelative(d: string | null, now: Date = new Date()): string
 
 /**
  * Bucket de score : chaud / tiede / froid / non_qualifie selon seuils.
- * Seuils par défaut : chaud >= 10, tiede >= 7, froid >= 4, sinon non_qualifie.
+ * V4 (S189) : seuils alignés sur `config.scoring.labels` (chaud=7, tiede=4)
+ * après retrait de la temporalité (maxPoints 12 → 10). Froid >= 1 (signal
+ * positif mais sous le seuil tiède), 0 ou null → non_qualifié.
+ * Seuils par défaut : chaud >= 7, tiede >= 4, froid >= 1.
  */
 export function scoreLabel(
 	score: number | null,
-	thresholds: { chaud: number; tiede: number; froid: number } = { chaud: 10, tiede: 7, froid: 4 }
+	thresholds: { chaud: number; tiede: number; froid: number } = { chaud: 7, tiede: 4, froid: 1 }
 ): ScoreBucket {
 	if (score == null) return 'non_qualifie';
 	if (score >= thresholds.chaud) return 'chaud';

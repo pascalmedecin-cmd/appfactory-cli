@@ -4,7 +4,6 @@
  */
 
 import { config } from './config';
-import { DAY_MS } from './utils/time-constants';
 // Audit 360 V3b L-14 : type-only import (erasé au build) — pas de couplage runtime
 // avec le code serveur ; resserre `complianceTag` de `string` vers l'enum réelle.
 import type { ComplianceTag } from './server/intelligence/schema';
@@ -99,10 +98,6 @@ export function calculerBonusVeille(
 	return { points, critere: `${label} (+${points})` };
 }
 
-function differenceEnJours(a: Date, b: Date): number {
-	return Math.floor((a.getTime() - b.getTime()) / DAY_MS);
-}
-
 export function calculerScore(lead: LeadScoring, keywords?: KeywordRow[]): ScoreDetail {
 	let total = 0;
 	const criteres: string[] = [];
@@ -166,25 +161,10 @@ export function calculerScore(lead: LeadScoring, keywords?: KeywordRow[]): Score
 		criteres.push(`Entreprise identifiee (+${scoring.entrepriseIdentifiee.points})`);
 	}
 
-	// Recence
-	if (lead.date_publication) {
-		const datePub = lead.date_publication instanceof Date
-			? lead.date_publication
-			: new Date(lead.date_publication);
-		// Ignorer les dates invalides et les dates futures
-		if (!isNaN(datePub.getTime())) {
-			const jours = differenceEnJours(new Date(), datePub);
-			if (jours >= 0) {
-				for (const seuil of scoring.recence) {
-					if (jours <= seuil.maxJours) {
-						total += seuil.points;
-						criteres.push(`Recente < ${seuil.maxJours}j (+${seuil.points})`);
-						break;
-					}
-				}
-			}
-		}
-	}
+	// V4 (S189) : la temporalité (récence) a été retirée du scoring. Pascal,
+	// décision 2026-05-13 : un Cœur Vitrages ancien doit rester visible avec
+	// son score brut ; un signal frais n'a pas à être boosté artificiellement
+	// par le simple fait d'être récent. Le tri par date reste disponible côté UI.
 
 	// Telephone disponible
 	if (lead.telephone) {

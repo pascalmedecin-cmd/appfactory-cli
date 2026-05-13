@@ -52,14 +52,15 @@ function scoreKeywords(text, keywords) {
 	return { total: Math.max(KEYWORD_SCORE_FLOOR, Math.min(KEYWORD_SCORE_CEIL, raw)), criteres };
 }
 
-// Composants v1 résiduels (canton, source, récence) reproduits depuis src/lib/scoring.ts
+// Composants v1 résiduels (canton, source) reproduits depuis src/lib/scoring.ts
 // pour calculer le score final cohérent avec le runtime (sinon dérive).
+// V4 (S189) : le composant `recence` a été retiré (Pascal, 2026-05-13 :
+// "retirer toute temporalité dans scoring, inutile"). cf. src/lib/scoring.ts.
 const CANTONS_PRIO = new Set(['GE', 'VD', 'VS']);
 const CANTONS_SEC = new Set(['NE', 'FR', 'JU']);
 const SOURCES_CHAUDES = new Set(['simap']);
 const SOURCES_INTERVENTION = new Set(['regbl']);
 const SOURCES_ENTREPRISE = new Set(['zefix', 'google_places']);
-const DAY_MS = 86400000;
 
 function computeFullScore(s, keywords) {
 	let total = 0;
@@ -71,14 +72,6 @@ function computeFullScore(s, keywords) {
 	if (s.source_officielle && SOURCES_CHAUDES.has(s.source_officielle)) { total += 2; criteres.push(`Signal ${s.source_officielle.toUpperCase()} (+2)`); }
 	if (s.source_officielle && SOURCES_INTERVENTION.has(s.source_officielle)) { total += 1; criteres.push(`Source ${s.source_officielle.toUpperCase()} (+1)`); }
 	if (s.source_officielle && SOURCES_ENTREPRISE.has(s.source_officielle)) { total += 1; criteres.push('Entreprise identifiee (+1)'); }
-	if (s.date_publication) {
-		const d = new Date(s.date_publication);
-		if (!isNaN(d.getTime())) {
-			const jours = Math.floor((Date.now() - d.getTime()) / DAY_MS);
-			if (jours >= 0 && jours <= 30) { total += 2; criteres.push(`Recente < 30j (+2)`); }
-			else if (jours > 30 && jours <= 90) { total += 1; criteres.push(`Recente < 90j (+1)`); }
-		}
-	}
 	return { total, criteres };
 }
 
@@ -97,7 +90,9 @@ async function main() {
 	console.log(`Mots-clés chargés : ${keywords.length}`);
 
 	const signauxRes = await c.query(
-		`SELECT id, canton, description_projet, maitre_ouvrage, source_officielle, date_publication, score_pertinence, notes_libres
+		// V4 (S189) : `date_publication` retiré du SELECT — plus utilisé par
+		// `computeFullScore` après le retrait du composant temporel.
+		`SELECT id, canton, description_projet, maitre_ouvrage, source_officielle, score_pertinence, notes_libres
 		 FROM signaux_affaires
 		 WHERE statut_traitement IN ('nouveau', 'en_analyse')`
 	);

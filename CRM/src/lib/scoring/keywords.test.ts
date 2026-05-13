@@ -3,6 +3,7 @@ import {
 	scoreKeywords,
 	highlightKeywords,
 	highlightKeywordsAndSearch,
+	dominantKeywordCategory,
 	KEYWORD_CAPS,
 	KEYWORD_SCORE_FLOOR,
 	KEYWORD_SCORE_CEIL,
@@ -413,4 +414,78 @@ describe('parité runtime keywords.ts ↔ script rescore', () => {
 			expect(script).toBe(ts);
 		});
 	}
+});
+
+// ----------------------------------------------------------------------------
+// V4 (S189) : dominantKeywordCategory — alimente le bandeau coloré 3 px sur
+// chaque card signal (page /signaux). Priorité Cœur > Bonus > Éviter > null.
+
+describe('dominantKeywordCategory (V4)', () => {
+	const KEYWORDS_FULL = [
+		KW_COEUR_VITRAGE,
+		KW_COEUR_FILM,
+		KW_COEUR_CONTROLE,
+		KW_BONUS_REGIE,
+		KW_BONUS_ARCHI,
+		KW_EVITER_ROUTE,
+		KW_EVITER_VOIRIE,
+	];
+
+	it('retourne null pour texte vide ou null', () => {
+		expect(dominantKeywordCategory('', KEYWORDS_FULL)).toBe(null);
+		expect(dominantKeywordCategory(null, KEYWORDS_FULL)).toBe(null);
+		expect(dominantKeywordCategory(undefined, KEYWORDS_FULL)).toBe(null);
+	});
+
+	it('retourne null pour liste keywords vide', () => {
+		expect(dominantKeywordCategory('pose de vitrage', [])).toBe(null);
+	});
+
+	it('retourne null pour texte sans aucun match', () => {
+		expect(dominantKeywordCategory('aucun mot pertinent ici', KEYWORDS_FULL)).toBe(null);
+	});
+
+	it('retourne "coeur" sur un seul match coeur', () => {
+		expect(dominantKeywordCategory('pose de vitrage neuf', KEYWORDS_FULL)).toBe('coeur');
+	});
+
+	it('retourne "bonus" sur un seul match bonus (pas de coeur)', () => {
+		expect(dominantKeywordCategory('architecte mandataire', KEYWORDS_FULL)).toBe('bonus');
+	});
+
+	it('retourne "eviter" sur un seul match eviter (pas de coeur ni bonus)', () => {
+		expect(dominantKeywordCategory('réfection de la route cantonale', KEYWORDS_FULL)).toBe('eviter');
+	});
+
+	it('Cœur prime sur bonus + eviter cumulés', () => {
+		// 2 bonus + 2 eviter + 1 coeur → coeur l'emporte (priorité)
+		expect(
+			dominantKeywordCategory(
+				'architecte régie route voirie vitrage',
+				KEYWORDS_FULL,
+			),
+		).toBe('coeur');
+	});
+
+	it('Bonus prime sur eviter quand pas de coeur', () => {
+		expect(
+			dominantKeywordCategory('architecte mandataire route nationale', KEYWORDS_FULL),
+		).toBe('bonus');
+	});
+
+	it('tolère le pluriel FR (vitrages → coeur)', () => {
+		expect(dominantKeywordCategory('Vitrages de toits en pente', KEYWORDS_FULL)).toBe('coeur');
+	});
+
+	it('insensible aux accents (Régie → bonus)', () => {
+		expect(dominantKeywordCategory('la Régie immobilière', KEYWORDS_FULL)).toBe('bonus');
+	});
+
+	it('court-circuit Cœur : le 1er match Cœur trouvé termine la boucle', () => {
+		// Test conceptuel : l'ordre des keywords ne change pas le résultat tant
+		// qu'un coeur est présent. On rajoute un bonus et eviter avant le coeur
+		// dans le tableau pour vérifier que coeur reste prioritaire malgré ça.
+		const ordered = [KW_BONUS_REGIE, KW_EVITER_ROUTE, KW_COEUR_VITRAGE];
+		expect(dominantKeywordCategory('régie route vitrage', ordered)).toBe('coeur');
+	});
 });

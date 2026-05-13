@@ -219,6 +219,48 @@ export function highlightKeywords(text: string, keywords: KeywordRow[]): Highlig
 }
 
 // ----------------------------------------------------------------------------
+// V4 (refonte signaux S189) : catégorie dominante par card.
+
+/**
+ * Détermine la catégorie dominante d'un texte selon les mots-clés détectés.
+ * Priorité visuelle (spec V4) : Cœur > Bonus > Éviter > null (aucun match).
+ *
+ * Usage : alimente le bandeau coloré 3 px en haut de chaque card signal (page
+ * `/signaux`) pour permettre une identification à l'œil nu (sans lire le texte)
+ * de la classe d'intérêt d'un signal. La couleur du bandeau = couleur de la
+ * catégorie dominante (success pour Cœur, primary pour Bonus, danger pour
+ * Éviter, transparent pour neutre).
+ *
+ * Volontairement basé sur la PRÉSENCE et non le SCORE : un signal avec 1 seul
+ * match Cœur (faible) doit visuellement primer un signal avec 4 matches Bonus,
+ * car c'est un projet vitrage avéré (Cœur métier FilmPro).
+ */
+export function dominantKeywordCategory(
+	text: string | null | undefined,
+	keywords: KeywordRow[],
+): KeywordCategorie | null {
+	if (!text || !Array.isArray(keywords) || keywords.length === 0) return null;
+	const textNorm = normalizeNFD(text);
+	let hasCoeur = false;
+	let hasBonus = false;
+	let hasEviter = false;
+	for (const kw of keywords) {
+		if (!kw.terme_norm || kw.terme_norm.length < 2) continue;
+		if (countMatches(textNorm, kw.terme_norm) === 0) continue;
+		if (kw.categorie === 'coeur') {
+			hasCoeur = true;
+			break; // Cœur prime : court-circuit dès le 1er match.
+		}
+		if (kw.categorie === 'bonus') hasBonus = true;
+		else if (kw.categorie === 'eviter') hasEviter = true;
+	}
+	if (hasCoeur) return 'coeur';
+	if (hasBonus) return 'bonus';
+	if (hasEviter) return 'eviter';
+	return null;
+}
+
+// ----------------------------------------------------------------------------
 // V3 (refonte signaux S188) : composition keyword × search.
 
 export const KW_SEARCH_MIN_LEN = 2;

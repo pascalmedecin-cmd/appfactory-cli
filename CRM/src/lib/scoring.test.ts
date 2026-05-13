@@ -71,26 +71,29 @@ describe('calculerScore', () => {
 		expect(result.criteres).toContainEqual(expect.stringContaining('Entreprise identifiee'));
 	});
 
-	it('donne +2 pour date < 30 jours', () => {
+	// V4 (S189) : la temporalité a été retirée du scoring. Un signal ancien ou récent
+	// reçoit 0 point au titre de sa date_publication. Le tri par date reste disponible
+	// côté UI (sortKey='date'), mais ne pondère plus le score absolu.
+	it('ne donne aucun bonus pour une date récente (V4 : temporalité retirée)', () => {
 		const recent = new Date();
 		recent.setDate(recent.getDate() - 10);
 		const result = calculerScore({
 			source: 'search_ch',
 			date_publication: recent.toISOString(),
 		});
-		expect(result.total).toBe(2);
-		expect(result.criteres).toContainEqual(expect.stringContaining('30j'));
+		expect(result.total).toBe(0);
+		expect(result.criteres.every((c) => !c.includes('Recente'))).toBe(true);
 	});
 
-	it('donne +1 pour date entre 30 et 90 jours', () => {
+	it('ne donne aucun bonus pour une date ancienne (V4 : temporalité retirée)', () => {
 		const older = new Date();
 		older.setDate(older.getDate() - 60);
 		const result = calculerScore({
 			source: 'search_ch',
 			date_publication: older.toISOString(),
 		});
-		expect(result.total).toBe(1);
-		expect(result.criteres).toContainEqual(expect.stringContaining('90j'));
+		expect(result.total).toBe(0);
+		expect(result.criteres.every((c) => !c.includes('Recente'))).toBe(true);
 	});
 
 	it('donne +1 si telephone present', () => {
@@ -128,8 +131,9 @@ describe('calculerScore', () => {
 			telephone: '+41 22 000 00 00',
 			montant: 500000,
 		});
-		// canton GE (2) + secteur (3) + simap (2) + recent (2) + tel (1) + montant (1) = 11
-		expect(result.total).toBe(11);
+		// V4 : canton GE (2) + secteur (3) + simap (2) + tel (1) + montant (1) = 9.
+		// La temporalité a été retirée (anciennement +2 pour recent < 30j → 11).
+		expect(result.total).toBe(9);
 		expect(result.label).toBe('chaud');
 	});
 

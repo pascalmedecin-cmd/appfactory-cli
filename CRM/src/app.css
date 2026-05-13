@@ -150,6 +150,42 @@
 	color: var(--color-primary);
 }
 
+/* ScorePill premium (V4 S189). Linear Priority pattern golden v9, variantes saturées
+   pour identifier Chaud/Tiède/Froid d'un coup d'œil dans une liste dense. Fond saturé,
+   texte blanc, ring 1px inset hairline, shadow douce, tabular-nums pour stabilité. */
+.signal-score-pill--chaud,
+.signal-score-pill--tiede,
+.signal-score-pill--froid,
+.signal-score-pill--unscored {
+	color: white;
+	background: linear-gradient(135deg, var(--score-pill-from), var(--score-pill-to));
+	box-shadow:
+		inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+		0 1px 2px var(--score-pill-shadow);
+	font-variant-numeric: tabular-nums;
+}
+.signal-score-pill--chaud {
+	--score-pill-from: #F65447;
+	--score-pill-to: #D5392C;
+	--score-pill-shadow: rgba(240, 68, 56, 0.32);
+}
+.signal-score-pill--tiede {
+	--score-pill-from: #F8A33B;
+	--score-pill-to: #D97706;
+	--score-pill-shadow: rgba(247, 144, 9, 0.30);
+}
+.signal-score-pill--froid {
+	--score-pill-from: #4F7AB8;
+	--score-pill-to: #2F5A9E;
+	--score-pill-shadow: rgba(47, 90, 158, 0.28);
+}
+.signal-score-pill--unscored {
+	--score-pill-from: #B5BAC4;
+	--score-pill-to: #9CA3AF;
+	--score-pill-shadow: rgba(107, 114, 128, 0.20);
+	color: white;
+}
+
 /* V2.5 audit S160 : focus-visible globaux (WCAG 2.4.7 AA).
    Étendu à tous éléments interactifs : input/select/textarea + ARIA roles + tabindex custom.
    Override possible localement (col-resizer offset négatif intra-cell, tr[role=button] offset
