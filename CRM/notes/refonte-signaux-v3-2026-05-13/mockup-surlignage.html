@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Refonte Signaux V3 - Mockup surlignage premium</title>
+<style>
+  :root {
+    --color-primary: #2F5A9E;
+    --color-primary-light: #F0F4F8;
+    --color-text: #111827;
+    --color-text-muted: #6B7280;
+    --color-surface: #FFFFFF;
+    --color-surface-alt: #F9FAFB;
+    --color-border: #E5E7EB;
+    --color-success: #12B76A;
+    --color-success-light: #ECFDF3;
+    --color-danger: #F04438;
+    --color-danger-light: #FEF3F2;
+    --radius-xl: 12px;
+    --radius-lg: 8px;
+    --radius-full: 9999px;
+    --shadow-card: 0 1px 0 rgba(17, 24, 39, 0.02), 0 0 0 1px rgba(17, 24, 39, 0.04), 0 8px 20px -12px rgba(17, 24, 39, 0.10);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: var(--color-surface-alt);
+    color: var(--color-text);
+    padding: 32px;
+    line-height: 1.5;
+  }
+  h1 {
+    font-size: 18px;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+  .subtitle {
+    color: var(--color-text-muted);
+    font-size: 13px;
+    margin-bottom: 32px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1280px;
+  }
+  .col {
+    display: grid;
+    gap: 12px;
+  }
+  .col-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+  }
+  .col-subtitle {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    margin: -8px 0 4px;
+    line-height: 1.45;
+  }
+  .legend {
+    font-size: 11px;
+    color: var(--color-text-muted);
+    padding-top: 8px;
+    border-top: 1px dashed var(--color-border);
+    line-height: 1.6;
+  }
+
+  /* ==== Card (commune aux 3 options) ==== */
+  .card {
+    background: var(--color-surface);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    padding: 16px;
+    display: grid;
+    gap: 16px;
+  }
+  .card-head { display: flex; align-items: flex-start; gap: 16px; }
+  .card-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--radius-lg);
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    display: grid; place-items: center; flex-shrink: 0;
+    font-size: 20px;
+  }
+  .card-meta { flex: 1; min-width: 0; }
+  .card-type { font-size: 14px; font-weight: 600; margin: 0; }
+  .card-when {
+    font-size: 12px; color: var(--color-text-muted); margin: 4px 0 0;
+  }
+  .card-status { display: flex; flex-direction: column; gap: 8px; align-items: flex-end; flex-shrink: 0; }
+  .score-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: var(--radius-full);
+    font-size: 12px; font-weight: 600;
+    background: var(--color-success-light); color: var(--color-success);
+  }
+  .badge {
+    padding: 2px 8px; border-radius: var(--radius-full);
+    font-size: 11px; font-weight: 600;
+    background: var(--color-surface-alt); color: var(--color-text-muted);
+    text-transform: uppercase; letter-spacing: 0.3px;
+  }
+  .card-desc {
+    font-size: 13px; line-height: 1.55; margin: 0;
+    color: var(--color-text);
+  }
+  .card-footer {
+    display: flex; gap: 16px;
+    padding-top: 8px; border-top: 1px solid rgba(17,24,39,0.05);
+    font-size: 12px; color: var(--color-text-muted);
+  }
+
+  /* ==== Option A : Underline typo éditorial ==== */
+  .a mark.kw-coeur {
+    background: none; color: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-decoration-color: var(--color-success);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+  .a mark.kw-bonus {
+    background: none;
+    color: var(--color-primary);
+    font-weight: 500;
+  }
+  .a mark.kw-eviter {
+    background: none;
+    color: var(--color-danger);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+    text-decoration-color: rgba(240, 68, 56, 0.55);
+  }
+
+  /* ==== Option B : Pleine couleur Cœur + pill Bonus + underline Éviter ==== */
+  .b mark.kw-coeur {
+    background: var(--color-success);
+    color: #fff;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .b mark.kw-bonus {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+  }
+  .b mark.kw-eviter {
+    background: none;
+    color: var(--color-danger);
+    text-decoration: underline wavy;
+    text-decoration-color: var(--color-danger);
+    text-decoration-thickness: 1px;
+  }
+
+  /* ==== Option C : Variations color-only uniformes ==== */
+  .c mark.kw-coeur {
+    background: none;
+    color: var(--color-success);
+    font-weight: 500;
+  }
+  .c mark.kw-bonus {
+    background: none;
+    color: var(--color-primary);
+    font-weight: 500;
+  }
+  .c mark.kw-eviter {
+    background: none;
+    color: var(--color-danger);
+    font-weight: 500;
+  }
+</style>
+</head>
+<body>
+
+<h1>Refonte Signaux V3 - Surlignage des mots-clés</h1>
+<p class="subtitle">
+  3 options visuelles. Même contenu, même card, seul le rendu des mots Cœur (vitrage, façade vitrée, film, vernis) / Bonus (rénovation, architecte, régie) / Éviter (route, voirie) change.
+</p>
+
+<div class="grid">
+
+  <!-- ====================== OPTION A ====================== -->
+  <div class="col a">
+    <h2 class="col-title">A — Underline typo éditorial (reco)</h2>
+    <p class="col-subtitle">
+      Cœur : font 700 + underline 2px vert (offset 3px).<br>
+      Bonus : couleur bleue seule, poids 500.<br>
+      Éviter : couleur rouge + line-through subtil.
+    </p>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">📄</div>
+        <div class="card-meta">
+          <p class="card-type">SIMAP - Appel d'offres</p>
+          <p class="card-when">VD · il y a 2 j</p>
+        </div>
+        <div class="card-status">
+          <span class="score-pill">↑ 8</span>
+          <span class="badge">Nouveau</span>
+        </div>
+      </div>
+      <p class="card-desc">
+        <mark class="kw-bonus">Rénovation</mark> énergétique du bâtiment administratif à Lausanne. Pose de double <mark class="kw-coeur">vitrage</mark> et <mark class="kw-coeur">film</mark> solaire sur <mark class="kw-coeur">façade vitrée</mark> sud par <mark class="kw-bonus">architecte</mark> mandaté. Coordination services <mark class="kw-eviter">voirie</mark> pour <mark class="kw-eviter">route</mark> d'accès.
+      </p>
+      <div class="card-footer">
+        <span>📍 Lausanne</span>
+        <span>🔗 SIMAP</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🏗️</div>
+        <div class="card-meta">
+          <p class="card-type">Création entreprise</p>
+          <p class="card-when">GE · il y a 4 j</p>
+        </div>
+        <div class="card-status">
+          <span class="score-pill">↑ 5</span>
+          <span class="badge">À traiter</span>
+        </div>
+      </div>
+      <p class="card-desc">
+        Nouvelle <mark class="kw-bonus">régie</mark> immobilière spécialisée dans la <mark class="kw-bonus">rénovation</mark> de <mark class="kw-coeur">verrières</mark> et survitrages industriels.
+      </p>
+      <div class="card-footer">
+        <span>📍 Genève</span>
+        <span>🔗 ZEFIX</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <strong>Densité :</strong> minimale. Le texte reste dans le flow.<br>
+      <strong>Premium :</strong> oui (pattern Linear/Stripe/Notion).<br>
+      <strong>Hiérarchie :</strong> Cœur ressort fort, Bonus discret, Éviter signalé.
+    </div>
+  </div>
+
+  <!-- ====================== OPTION B ====================== -->
+  <div class="col b">
+    <h2 class="col-title">B — Pleine couleur Cœur + pill Bonus + underline Éviter</h2>
+    <p class="col-subtitle">
+      Cœur : badge vert saturé + texte blanc.<br>
+      Bonus : pill bleue claire.<br>
+      Éviter : underline ondulé rouge.
+    </p>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">📄</div>
+        <div class="card-meta">
+          <p class="card-type">SIMAP - Appel d'offres</p>
+          <p class="card-when">VD · il y a 2 j</p>
+        </div>
+        <div class="card-status">
+          <span class="score-pill">↑ 8</span>
+          <span class="badge">Nouveau</span>
+        </div>
+      </div>
+      <p class="card-desc">
+        <mark class="kw-bonus">Rénovation</mark> énergétique du bâtiment administratif à Lausanne. Pose de double <mark class="kw-coeur">vitrage</mark> et <mark class="kw-coeur">film</mark> solaire sur <mark class="kw-coeur">façade vitrée</mark> sud par <mark class="kw-bonus">architecte</mark> mandaté. Coordination services <mark class="kw-eviter">voirie</mark> pour <mark class="kw-eviter">route</mark> d'accès.
+      </p>
+      <div class="card-footer">
+        <span>📍 Lausanne</span>
+        <span>🔗 SIMAP</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🏗️</div>
+        <div class="card-meta">
+          <p class="card-type">Création entreprise</p>
+          <p class="card-when">GE · il y a 4 j</p>
+        </div>
+        <div class="card-status">
+          <span class="score-pill">↑ 5</span>
+          <span class="badge">À traiter</span>
+        </div>
+      </div>
+      <p class="card-desc">
+        Nouvelle <mark class="kw-bonus">régie</mark> immobilière spécialisée dans la <mark class="kw-bonus">rénovation</mark> de <mark class="kw-coeur">verrières</mark> et survitrages industriels.
+      </p>
+      <div class="card-footer">
+        <span>📍 Genève</span>
+        <span>🔗 ZEFIX</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <strong>Densité :</strong> élevée. Card peut paraître chargée si 3+ mots Cœur.<br>
+      <strong>Premium :</strong> non, esthétique highlighter / surligneur.<br>
+      <strong>Hiérarchie :</strong> Cœur très fort, Bonus moyen, Éviter signalé.
+    </div>
+  </div>
+
+  <!-- ====================== OPTION C ====================== -->
+  <div class="col c">
+    <h2 class="col-title">C — Variations color-only uniformes</h2>
+    <p class="col-subtitle">
+      Cœur : texte vert, poids 500.<br>
+      Bonus : texte bleu, poids 500.<br>
+      Éviter : texte rouge, poids 500.<br>
+      (Aucune emphase typo, juste la couleur.)
+    </p>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">📄</div>
+        <div class="card-meta">
+          <p class="card-type">SIMAP - Appel d'offres</p>
+          <p class="card-when">VD · il y a 2 j</p>
+        </div>
+        <div class="card-status">
+          <span class="score-pill">↑ 8</span>
+          <span class="badge">Nouveau</span>
+        </div>
+      </div>
+      <p class="card-desc">
+        <mark class="kw-bonus">Rénovation</mark> énergétique du bâtiment administratif à Lausanne. Pose de double <mark class="kw-coeur">vitrage</mark> et <mark class="kw-coeur">film</mark> solaire sur <mark class="kw-coeur">façade vitrée</mark> sud par <mark class="kw-bonus">architecte</mark> mandaté. Coordination services <mark class="kw-eviter">voirie</mark> pour <mark class="kw-eviter">route</mark> d'accès.
+      </p>
+      <div class="card-footer">
+        <span>📍 Lausanne</span>
+        <span>🔗 SIMAP</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-icon">🏗️</div>
+        <div class="card-meta">
+          <p class="card-type">Création entreprise</p>
+          <p class="card-when">GE · il y a 4 j</p>
+        </div>
+        <div class="card-status">
+          <span class="score-pill">↑ 5</span>
+          <span class="badge">À traiter</span>
+        </div>
+      </div>
+      <p class="card-desc">
+        Nouvelle <mark class="kw-bonus">régie</mark> immobilière spécialisée dans la <mark class="kw-bonus">rénovation</mark> de <mark class="kw-coeur">verrières</mark> et survitrages industriels.
+      </p>
+      <div class="card-footer">
+        <span>📍 Genève</span>
+        <span>🔗 ZEFIX</span>
+      </div>
+    </div>
+
+    <div class="legend">
+      <strong>Densité :</strong> très faible. Très lisible.<br>
+      <strong>Premium :</strong> oui mais générique.<br>
+      <strong>Hiérarchie :</strong> Cœur ne ressort pas plus que Bonus (problème).
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

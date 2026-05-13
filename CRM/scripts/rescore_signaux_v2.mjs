@@ -19,23 +19,12 @@
  */
 import { readFileSync } from 'fs';
 import { Client } from 'pg';
+// Source partagée avec le test de parité Vitest (src/lib/scoring/keywords.test.ts).
+// Si normalizeNFD / countMatches divergent de src/lib/scoring/keywords.ts, le test
+// rouge l'indique avant que le script ne tourne en prod.
+import { normalizeNFD, countMatches } from './_keywords_pure.mjs';
 
 const DRY_RUN = !process.argv.includes('--apply');
-
-function normalizeNFD(s) {
-	return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-}
-
-function escapeRegex(s) {
-	return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
-function countMatches(textNorm, termeNorm) {
-	if (!termeNorm || termeNorm.length < 2) return 0;
-	const re = new RegExp(`\\b${escapeRegex(termeNorm)}\\b`, 'gi');
-	const m = textNorm.match(re);
-	return m ? m.length : 0;
-}
 
 const KEYWORD_CAPS = { coeur: 10, bonus: 4 };
 const KEYWORD_SCORE_FLOOR = -10;

@@ -48,8 +48,15 @@ function escapeRegex(s: string): string {
 // Construit la regex plein-mot pour un terme normalisé (NFD strip + lowercase).
 // `\b` marche pour les mots commençant/finissant par [A-Za-z0-9_] après NFD ;
 // on l'utilise tel quel car normalizeNFD a déjà retiré les accents.
+//
+// V3 (S188) : suffix `s?` optionnel pour tolérer le pluriel FR (« vitrage » matche
+// aussi « vitrages »). Le suffix n'est PAS ajouté si le terme finit déjà par `s`
+// (évite « vitrages » → `vitragess?`). Le pluriel ne s'applique que sur la fin du
+// terme entier : « contrôle solaire » ne matche pas « contrôles solaires » (pluriel
+// distribué non couvert, hors-scope spec § 3).
 function makeWordRegex(termeNorm: string): RegExp {
-	return new RegExp(`\\b${escapeRegex(termeNorm)}\\b`, 'gi');
+	const suffix = termeNorm.endsWith('s') ? '' : 's?';
+	return new RegExp(`\\b${escapeRegex(termeNorm)}${suffix}\\b`, 'gi');
 }
 
 /**
@@ -146,12 +153,14 @@ export interface HighlightChunk {
 	cat: KeywordCategorie | null;
 }
 
-export function highlightKeywords(text: string, keywords: KeywordRow[]): HighlightChunk[] {
-	if (!text) return [];
-	if (!Array.isArray(keywords) || keywords.length === 0) return [{ text, cat: null }];
-
-	// Map index original → offset normalisé. On normalise char par char pour préserver
-	// l'alignement (au pire on perd les ligatures rares).
+// Map des offsets entre la chaîne originale (avec accents) et la normalisée (sans accents,
+// lowercase). Utilisée à la fois par highlightKeywords (V2) et highlightKeywordsAndSearch (V3).
+// Pas exporté : helper privé du module.
+function buildOffsetMap(text: string): {
+	origChars: string[];
+	normStr: string;
+	normToOrig: number[];
+} {
 	const origChars: string[] = Array.from(text);
 	let normStr = '';
 	const origStartInNorm: number[] = []; // origStartInNorm[i] = offset où démarre origChars[i] dans normStr
@@ -159,19 +168,21 @@ export function highlightKeywords(text: string, keywords: KeywordRow[]): Highlig
 		origStartInNorm.push(normStr.length);
 		normStr += normalizeNFD(c);
 	}
-	// Sentinelle : index `origChars.length` démarre à `normStr.length`.
-	origStartInNorm.push(normStr.length);
-
-	// Map normalisée → originale (inversion stricte) :
-	// pour chaque offset normalisé k, on cherche le plus grand i tel que origStartInNorm[i] <= k.
-	// Comme origStartInNorm est croissant, on remplit par balayage linéaire.
+	origStartInNorm.push(normStr.length); // sentinelle
 	const normToOrig: number[] = new Array(normStr.length + 1);
 	let i = 0;
 	for (let k = 0; k <= normStr.length; k++) {
-		// Avance i tant que le caractère suivant commence à <= k.
 		while (i + 1 < origStartInNorm.length && origStartInNorm[i + 1] <= k) i++;
 		normToOrig[k] = i;
 	}
+	return { origChars, normStr, normToOrig };
+}
+
+export function highlightKeywords(text: string, keywords: KeywordRow[]): HighlightChunk[] {
+	if (!text) return [];
+	if (!Array.isArray(keywords) || keywords.length === 0) return [{ text, cat: null }];
+
+	const { origChars, normStr, normToOrig } = buildOffsetMap(text);
 
 	// Collecte tous les matchs (origStart, origEnd, cat). Plusieurs keywords peuvent
 	// se chevaucher ; on garde le 1er match qui couvre chaque caractère.
@@ -205,4 +216,113 @@ export function highlightKeywords(text: string, keywords: KeywordRow[]): Highlig
 		chunks.push({ text: origChars.slice(cursor).join(''), cat: null });
 	}
 	return chunks;
+}
+
+// ----------------------------------------------------------------------------
+// V3 (refonte signaux S188) : composition keyword × search.
+
+export const KW_SEARCH_MIN_LEN = 2;
+
+export interface HighlightChunkV2 {
+	text: string;
+	cat: KeywordCategorie | null;
+	search: boolean;
+}
+
+/**
+ * Surlignage combiné catégorie keyword + recherche utilisateur.
+ *
+ * - keywords : matchs plein-mot (`\b...\b`) catégorisés Cœur/Bonus/Éviter.
+ * - searchTerm : sous-chaîne libre (case-insensitive, accents-insensitive), longueur ≥ 2.
+ *
+ * Règle de priorité visuelle (spec § 4 C7) : si une portion de texte est à la fois dans
+ * un keyword et dans un match de recherche, le **search prime** (chunk rendu jaune,
+ * cat=null pour cette portion). Le reste du keyword reste catégorisé.
+ *
+ * Algorithme : painter char-par-char. Coût O(n*k) où n = longueur texte, k = nb keywords + 1.
+ * Acceptable pour les descriptions SIMAP (~200 chars × 40 keywords = ~8 000 ops).
+ */
+export function highlightKeywordsAndSearch(
+	text: string,
+	keywords: KeywordRow[],
+	searchTerm: string,
+): HighlightChunkV2[] {
+	if (!text) return [];
+	const queryNorm = normalizeNFD((searchTerm ?? '').trim());
+	const hasKeywords = Array.isArray(keywords) && keywords.length > 0;
+	const hasSearch = queryNorm.length >= KW_SEARCH_MIN_LEN;
+	if (!hasKeywords && !hasSearch) {
+		return [{ text, cat: null, search: false }];
+	}
+
+	const { origChars, normStr, normToOrig } = buildOffsetMap(text);
+
+	// État par caractère original. Default = (null, false).
+	const stateAt: Array<{ cat: KeywordCategorie | null; search: boolean }> = origChars.map(() => ({
+		cat: null,
+		search: false,
+	}));
+
+	// Passe 1 : peindre les ranges keywords. First-win sur chevauchement (cohérent avec
+	// le comportement de highlightKeywords V2).
+	if (hasKeywords) {
+		type Range = { start: number; end: number; cat: KeywordCategorie };
+		const kwRanges: Range[] = [];
+		for (const kw of keywords) {
+			if (!kw.terme_norm || kw.terme_norm.length < 2) continue;
+			const re = makeWordRegex(kw.terme_norm);
+			let m: RegExpExecArray | null;
+			while ((m = re.exec(normStr)) !== null) {
+				kwRanges.push({
+					start: normToOrig[m.index],
+					end: normToOrig[m.index + m[0].length],
+					cat: kw.categorie,
+				});
+			}
+		}
+		// Tri par start, fusion first-win (mêmes règles que highlightKeywords).
+		kwRanges.sort((a, b) => a.start - b.start || b.end - a.end);
+		let cursor = 0;
+		for (const r of kwRanges) {
+			if (r.start < cursor) continue;
+			for (let i = r.start; i < r.end; i++) stateAt[i].cat = r.cat;
+			cursor = r.end;
+		}
+	}
+
+	// Passe 2 : peindre les ranges search (override cat → null sur la portion search).
+	if (hasSearch) {
+		let idx = 0;
+		while ((idx = normStr.indexOf(queryNorm, idx)) !== -1) {
+			const start = normToOrig[idx];
+			const end = normToOrig[idx + queryNorm.length];
+			for (let i = start; i < end; i++) {
+				stateAt[i].search = true;
+				stateAt[i].cat = null; // jaune prime
+			}
+			idx += queryNorm.length;
+		}
+	}
+
+	// Groupage des positions consécutives ayant le même état.
+	const out: HighlightChunkV2[] = [];
+	let i = 0;
+	while (i < origChars.length) {
+		const start = i;
+		const s = stateAt[i];
+		while (
+			i + 1 < origChars.length &&
+			stateAt[i + 1].cat === s.cat &&
+			stateAt[i + 1].search === s.search
+		) {
+			i++;
+		}
+		out.push({
+			text: origChars.slice(start, i + 1).join(''),
+			cat: s.cat,
+			search: s.search,
+		});
+		i++;
+	}
+	return out;
 }

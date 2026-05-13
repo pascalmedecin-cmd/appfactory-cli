@@ -31,6 +31,8 @@
 	import SignauxTabs from '$lib/components/signaux/SignauxTabs.svelte';
 	import SignauxCards from '$lib/components/signaux/SignauxCards.svelte';
 	import SignauxKeywordsPanel from '$lib/components/signaux/SignauxKeywordsPanel.svelte';
+	import { KW_SEARCH_MIN_LEN } from '$lib/scoring/keywords';
+	import { normalizeNFD } from '$lib/utils/text-normalize';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -63,16 +65,51 @@
 	let hideOutOfScope = $state(false);
 	let panelCollapsed = $state(false);
 
+	// V3 (S188 spec § 4 C5-C9) : recherche client + debounce 200ms + persistance.
+	let search = $state('');
+	let searchDebounced = $state('');
+
 	onMount(() => {
 		try {
 			const s = localStorage.getItem('signaux.sort');
 			if (s === 'pertinence' || s === 'date') sortKey = s;
 			hideOutOfScope = localStorage.getItem('signaux.hideOutOfScope') === '1';
 			panelCollapsed = localStorage.getItem('signaux.keywordsPanel') === 'collapsed';
+			const sv = localStorage.getItem('signaux.search') ?? '';
+			if (sv) {
+				search = sv;
+				searchDebounced = sv; // appliqué immédiatement au mount (pas de débounce d'entrée)
+			}
 		} catch {
 			// localStorage indisponible (mode privé, quota) : on garde les défauts.
 		}
 	});
+
+	// Debounce 200ms + persistance localStorage (clé `signaux.search`). Se relance à chaque
+	// frappe ; cleanup auto via $effect quand search re-change avant la fin du timer.
+	$effect(() => {
+		const value = search;
+		const t = setTimeout(() => {
+			searchDebounced = value;
+			try {
+				if (value) localStorage.setItem('signaux.search', value);
+				else localStorage.removeItem('signaux.search');
+			} catch {
+				// ignore
+			}
+		}, 200);
+		return () => clearTimeout(t);
+	});
+
+	function clearSearch() {
+		search = '';
+		searchDebounced = '';
+		try {
+			localStorage.removeItem('signaux.search');
+		} catch {
+			// ignore
+		}
+	}
 
 	function setSort(k: SortKey) {
 		sortKey = k;
@@ -137,6 +174,16 @@
 		if (filterType) out = out.filter((s: Signal) => s.type_signal === filterType);
 		if (filterCanton) out = out.filter((s: Signal) => s.canton === filterCanton);
 		if (hideOutOfScope) out = out.filter((s: Signal) => (s.score_pertinence ?? 0) > 0);
+		// V3 spec § 4 C6 : filtre search client (case + accent insensitive) sur 3 champs.
+		const searchNorm = normalizeNFD(searchDebounced.trim());
+		if (searchNorm.length >= KW_SEARCH_MIN_LEN) {
+			out = out.filter((s: Signal) => {
+				const d = normalizeNFD(s.description_projet ?? '');
+				const mo = normalizeNFD(s.maitre_ouvrage ?? '');
+				const co = normalizeNFD(s.commune ?? '');
+				return d.includes(searchNorm) || mo.includes(searchNorm) || co.includes(searchNorm);
+			});
+		}
 		if (sortKey === 'pertinence') {
 			// Tri par score desc ; NULLs en queue de liste ; tie-break sur date_detection desc.
 			out = [...out].sort((a, b) => {
@@ -285,6 +332,27 @@
 		{/snippet}
 	</SignauxTabs>
 
+	<div class="signaux-search" class:filled={search.length > 0}>
+		<Icon name="search" size={16} class="search-icon" />
+		<input
+			type="search"
+			bind:value={search}
+			placeholder="Rechercher dans description, maître d'ouvrage, commune…"
+			class="search-input"
+			aria-label="Rechercher dans les signaux"
+		/>
+		{#if search.length > 0}
+			<button
+				type="button"
+				class="search-clear"
+				onclick={clearSearch}
+				aria-label="Effacer la recherche"
+			>
+				<Icon name="close" size={16} />
+			</button>
+		{/if}
+	</div>
+
 	<div class="signaux-toolbar">
 		<div class="sort-group" role="group" aria-label="Tri des signaux">
 			<button
@@ -383,6 +451,7 @@
 				onToggleSelect={toggleSelect}
 				emptyMessage={emptyMessageForTab(activeTab)}
 				keywords={data.keywords}
+				searchTerm={searchDebounced}
 			/>
 		{/if}
 	</div>
@@ -774,6 +843,67 @@
 		.signaux-main {
 			width: 100%;
 		}
+	}
+
+	/* Input search V3 (spec § 4 C5-C9) : recherche client sur description / maître / commune. */
+	.signaux-search {
+		position: relative;
+		display: flex;
+		align-items: center;
+		background: var(--color-surface);
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		padding: 8px 12px;
+		gap: 8px;
+		margin: 8px 0 0;
+		transition: border-color 150ms, box-shadow 150ms;
+	}
+	.signaux-search:focus-within {
+		border-color: var(--color-primary);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
+	}
+	.signaux-search.filled {
+		border-color: var(--color-border-strong);
+	}
+	.signaux-search :global(.search-icon) {
+		color: var(--color-text-muted);
+		flex-shrink: 0;
+	}
+	.search-input {
+		flex: 1;
+		min-width: 0;
+		border: none;
+		outline: none;
+		background: transparent;
+		font-size: 14px;
+		color: var(--color-text);
+		font-family: inherit;
+	}
+	.search-input::placeholder {
+		color: var(--color-text-muted);
+	}
+	/* Retire la croix native du type=search (WebKit) car on a notre propre bouton clear. */
+	.search-input::-webkit-search-decoration,
+	.search-input::-webkit-search-cancel-button,
+	.search-input::-webkit-search-results-button,
+	.search-input::-webkit-search-results-decoration {
+		appearance: none;
+	}
+	.search-clear {
+		background: none;
+		border: none;
+		padding: 4px;
+		border-radius: var(--radius-full);
+		color: var(--color-text-muted);
+		cursor: pointer;
+		display: grid;
+		place-items: center;
+		flex-shrink: 0;
+		font-family: inherit;
+	}
+	.search-clear:hover {
+		color: var(--color-text);
+		background: var(--color-surface-alt);
 	}
 
 	/* Toolbar tri + toggle hors-scope */

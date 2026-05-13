@@ -1,10 +1,12 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll } from 'vitest';
 import {
 	scoreKeywords,
 	highlightKeywords,
+	highlightKeywordsAndSearch,
 	KEYWORD_CAPS,
 	KEYWORD_SCORE_FLOOR,
 	KEYWORD_SCORE_CEIL,
+	KW_SEARCH_MIN_LEN,
 	type KeywordRow,
 } from './keywords';
 
@@ -240,4 +242,175 @@ describe('highlightKeywords', () => {
 		expect(highlighted).toHaveLength(1);
 		expect(highlighted[0].text).toBe('contrôle solaire');
 	});
+});
+
+describe('highlightKeywordsAndSearch - V3 composition keyword × search', () => {
+	it('texte vide → []', () => {
+		expect(highlightKeywordsAndSearch('', [KW_COEUR_VITRAGE], 'vit')).toEqual([]);
+	});
+
+	it('pas de keywords ni search → 1 chunk neutre', () => {
+		const r = highlightKeywordsAndSearch('hello world', [], '');
+		expect(r).toEqual([{ text: 'hello world', cat: null, search: false }]);
+	});
+
+	it('keyword seul, pas de search → comportement V2 + flag search=false', () => {
+		const r = highlightKeywordsAndSearch('pose de vitrage neuf', [KW_COEUR_VITRAGE], '');
+		const reconstr = r.map((c) => c.text).join('');
+		expect(reconstr).toBe('pose de vitrage neuf');
+		const hl = r.find((c) => c.cat === 'coeur');
+		expect(hl?.text).toBe('vitrage');
+		expect(hl?.search).toBe(false);
+		// Tous les chunks ont search=false.
+		expect(r.every((c) => c.search === false)).toBe(true);
+	});
+
+	it('search seul, pas de keywords → portion search en jaune', () => {
+		const r = highlightKeywordsAndSearch('rendez-vous à Lausanne demain', [], 'lausanne');
+		const hl = r.find((c) => c.search === true);
+		expect(hl?.text).toBe('Lausanne');
+		expect(hl?.cat).toBe(null);
+	});
+
+	it('search case-insensitive et accent-insensitive', () => {
+		const r = highlightKeywordsAndSearch("La Régie d'Étoile a contacté", [], 'regie');
+		const hl = r.find((c) => c.search === true);
+		expect(hl?.text).toBe('Régie');
+	});
+
+	it('search trop court (< 2 chars) → ignoré', () => {
+		const r = highlightKeywordsAndSearch('vitrage neuf', [KW_COEUR_VITRAGE], 'v');
+		// Seul le keyword est highlighté ; pas de chunk search:true.
+		expect(r.some((c) => c.search === true)).toBe(false);
+		expect(r.some((c) => c.cat === 'coeur')).toBe(true);
+	});
+
+	it('keyword + search non-chevauchants → 2 chunks distincts', () => {
+		const r = highlightKeywordsAndSearch('vitrage à Lausanne', [KW_COEUR_VITRAGE], 'lausanne');
+		const reconstr = r.map((c) => c.text).join('');
+		expect(reconstr).toBe('vitrage à Lausanne');
+		const coeur = r.find((c) => c.cat === 'coeur' && !c.search);
+		const search = r.find((c) => c.search === true && c.cat === null);
+		expect(coeur?.text).toBe('vitrage');
+		expect(search?.text).toBe('Lausanne');
+	});
+
+	it('keyword + search chevauchants → search prime sur la portion (cat=null, search=true)', () => {
+		// "vitrage" est Cœur. Search "vit" cible le début de "vitrage".
+		const r = highlightKeywordsAndSearch('pose de vitrage neuf', [KW_COEUR_VITRAGE], 'vit');
+		const reconstr = r.map((c) => c.text).join('');
+		expect(reconstr).toBe('pose de vitrage neuf');
+		// La portion "vit" doit être search-true cat-null ; "rage" reste Cœur.
+		const searchPortion = r.find((c) => c.search === true);
+		expect(searchPortion?.text).toBe('vit');
+		expect(searchPortion?.cat).toBe(null);
+		const coeurPortion = r.find((c) => c.cat === 'coeur');
+		expect(coeurPortion?.text).toBe('rage');
+	});
+
+	it('search multi-occurrence → toutes les occurrences marquées', () => {
+		const r = highlightKeywordsAndSearch('Pose vitrage et autre vitrage', [], 'vitrage');
+		const searches = r.filter((c) => c.search === true);
+		expect(searches).toHaveLength(2);
+		expect(searches.every((c) => c.text === 'vitrage')).toBe(true);
+	});
+
+	it('zéro caractère perdu : la somme des chunks = texte original', () => {
+		const text = 'Rénovation thermique d\'une façade vitrée à Lausanne (régie)';
+		const r = highlightKeywordsAndSearch(
+			text,
+			[KW_COEUR_VITRAGE, KW_BONUS_REGIE],
+			'lausanne',
+		);
+		expect(r.map((c) => c.text).join('')).toBe(text);
+	});
+
+	it('KW_SEARCH_MIN_LEN exporté = 2', () => {
+		expect(KW_SEARCH_MIN_LEN).toBe(2);
+	});
+});
+
+describe('pluriel FR (S188 makeWordRegex suffix s?)', () => {
+	it('« vitrage » matche aussi « vitrages » (singulier→pluriel)', () => {
+		const r = scoreKeywords('Vitrages de toits en pente', [KW_COEUR_VITRAGE]);
+		expect(r.total).toBe(5);
+		expect(r.matches[0].count).toBe(1);
+	});
+
+	it('« vitrage » continue à matcher le singulier', () => {
+		const r = scoreKeywords('pose de vitrage neuf', [KW_COEUR_VITRAGE]);
+		expect(r.total).toBe(5);
+	});
+
+	it('« route » matche aussi « routes » (cohérence Éviter)', () => {
+		const r = scoreKeywords('réfection des routes cantonales', [KW_EVITER_ROUTE]);
+		expect(r.total).toBe(-3);
+	});
+
+	it('plein-mot strict conservé : « route » ne matche pas « routine »', () => {
+		const r = scoreKeywords('mise en place de routines', [KW_EVITER_ROUTE]);
+		// "routines" contient "routine" (s? optionnel) mais "routine" ≠ "route" plein-mot.
+		expect(r.total).toBe(0);
+	});
+
+	it('terme finissant déjà par s : pas de double pluralisation', () => {
+		// On fabrique un keyword "vitrages" (déjà au pluriel).
+		const kwAlreadyPlural = kw('vitrages', 'vitrages', 'coeur', 5);
+		const r = scoreKeywords('plusieurs vitrages installés', [kwAlreadyPlural]);
+		expect(r.total).toBe(5);
+		// Sanity : ne match pas "vitragess" (jamais en FR).
+		const noMatch = scoreKeywords('vitragess', [kwAlreadyPlural]);
+		expect(noMatch.total).toBe(0);
+	});
+
+	it('highlight V3 reflète aussi le pluriel', () => {
+		const r = highlightKeywordsAndSearch('Vitrages de toits', [KW_COEUR_VITRAGE], '');
+		const hl = r.find((c) => c.cat === 'coeur');
+		expect(hl?.text).toBe('Vitrages');
+	});
+});
+
+// Test de parité runtime ↔ script (audit contracts M2). Le script
+// `scripts/rescore_signaux_v2.mjs` lit la BDD prod et UPDATE les signaux : si sa
+// regex/normalization diverge de keywords.ts, on rescore en silence avec une règle
+// différente du runtime. Test de garde via import du module pur partagé.
+describe('parité runtime keywords.ts ↔ script rescore', () => {
+	// Import dynamique pour éviter de polluer le bundle Vitest avec un .mjs lib.
+	let pureCountMatches: (textNorm: string, termeNorm: string) => number;
+	let pureNormalizeNFD: (s: string) => string;
+	beforeAll(async () => {
+		const mod = await import('../../../scripts/_keywords_pure.mjs');
+		pureCountMatches = mod.countMatches;
+		pureNormalizeNFD = mod.normalizeNFD;
+	});
+
+	// Helper : count que scoreKeywords TS voit pour un keyword donné.
+	function tsCount(text: string, kwRow: KeywordRow): number {
+		const r = scoreKeywords(text, [kwRow]);
+		const m = r.matches.find((x) => x.keyword.terme_norm === kwRow.terme_norm);
+		return m?.count ?? 0;
+	}
+
+	const FIXTURES: Array<{ text: string; kw: KeywordRow; expected: number }> = [
+		{ text: 'pose de vitrage neuf', kw: KW_COEUR_VITRAGE, expected: 1 },
+		{ text: 'Vitrages de toits en pente', kw: KW_COEUR_VITRAGE, expected: 1 },
+		{ text: 'réfection des routes cantonales', kw: KW_EVITER_ROUTE, expected: 1 },
+		{ text: 'mise en place de routines', kw: KW_EVITER_ROUTE, expected: 0 },
+		{ text: 'contrôle solaire et film vitrage', kw: KW_COEUR_VITRAGE, expected: 1 },
+		{ text: 'aucun match ici', kw: KW_COEUR_VITRAGE, expected: 0 },
+		{ text: 'régie et régies', kw: KW_BONUS_REGIE, expected: 2 },
+		{ text: 'architecte mandataire', kw: KW_BONUS_ARCHI, expected: 1 },
+		// Match accent insensitive
+		{ text: 'la Régie immobilière', kw: KW_BONUS_REGIE, expected: 1 },
+	];
+
+	for (const f of FIXTURES) {
+		it(`"${f.text}" / "${f.kw.terme}" → script=${f.expected}, TS=${f.expected}`, () => {
+			const ts = tsCount(f.text, f.kw);
+			const script = pureCountMatches(pureNormalizeNFD(f.text), f.kw.terme_norm);
+			expect(ts).toBe(f.expected);
+			expect(script).toBe(f.expected);
+			expect(script).toBe(ts);
+		});
+	}
 });

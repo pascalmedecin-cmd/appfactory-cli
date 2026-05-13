@@ -10,7 +10,7 @@
 		statutVariant,
 		signalAriaLabel,
 	} from '$lib/utils/signauxFormat';
-	import { highlightKeywords, type KeywordRow } from '$lib/scoring/keywords';
+	import { highlightKeywordsAndSearch, type KeywordRow } from '$lib/scoring/keywords';
 
 	type Props = {
 		signaux: T[];
@@ -22,6 +22,9 @@
 		// V2 : si fourni, les mots-clés matchés dans description_projet sont surlignés
 		// par catégorie (Cœur / Bonus / Éviter). Échappement HTML natif Svelte (zéro {@html}).
 		keywords?: KeywordRow[];
+		// V3 (spec § 4 C7) : si fourni, les occurrences du terme dans description_projet
+		// sont surlignées en jaune. Prime visuellement sur la catégorie keyword.
+		searchTerm?: string;
 	};
 
 	let {
@@ -32,6 +35,7 @@
 		onToggleSelect,
 		emptyMessage = 'Aucun signal.',
 		keywords = [],
+		searchTerm = '',
 	}: Props = $props();
 
 	function handleClick(signal: T) {
@@ -89,9 +93,11 @@
 
 				{#if signal.description_projet}
 					<p class="card-signal-desc">
-						{#if keywords.length > 0}
-							{#each highlightKeywords(signal.description_projet, keywords) as chunk}
-								{#if chunk.cat}
+						{#if keywords.length > 0 || searchTerm.length > 0}
+							{#each highlightKeywordsAndSearch(signal.description_projet, keywords, searchTerm) as chunk}
+								{#if chunk.search}
+									<mark class="kw-search">{chunk.text}</mark>
+								{:else if chunk.cat}
 									<mark class="kw-{chunk.cat}">{chunk.text}</mark>
 								{:else}
 									{chunk.text}
@@ -243,26 +249,37 @@
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 	}
+	/* V3 spec § 4 C7 : highlight jaune des matches de recherche.
+	   Prime visuellement sur la catégorie keyword (chunk search rendu sans cat). */
+	.card-signal-desc :global(mark.kw-search) {
+		background: #FEF9C3;
+		color: inherit;
+		padding: 0 2px;
+		border-radius: 2px;
+	}
+
+	/* V3 option A "underline typo éditorial" (spec § 4 C1-C3) :
+	   zéro fond saturé, hiérarchie via typo. */
 	.card-signal-desc :global(mark.kw-coeur) {
-		background: var(--color-success-light);
-		color: var(--color-success);
-		padding: 0 3px;
-		border-radius: 3px;
-		font-weight: 600;
+		background: none;
+		color: inherit;
+		font-weight: 700;
+		text-decoration: underline;
+		text-decoration-color: var(--color-success);
+		text-decoration-thickness: 2px;
+		text-underline-offset: 3px;
 	}
 	.card-signal-desc :global(mark.kw-bonus) {
-		background: var(--color-primary-light);
+		background: none;
 		color: var(--color-primary);
-		padding: 0 3px;
-		border-radius: 3px;
-		font-weight: 600;
+		font-weight: 500;
 	}
 	.card-signal-desc :global(mark.kw-eviter) {
-		background: var(--color-danger-light);
+		background: none;
 		color: var(--color-danger);
-		padding: 0 3px;
-		border-radius: 3px;
-		font-weight: 600;
+		text-decoration: line-through;
+		text-decoration-thickness: 1px;
+		text-decoration-color: rgba(240, 68, 56, 0.55);
 	}
 	.card-signal-footer {
 		display: flex;
