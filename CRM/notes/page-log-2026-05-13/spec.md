@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS public.feedback_entries (
   context          jsonb NOT NULL DEFAULT '{}'::jsonb,
   status           text NOT NULL DEFAULT 'nouveau'
                      CHECK (status IN ('nouveau', 'a_actionner', 'traite', 'logge')),
-  admin_notes      text CHECK (admin_notes IS NULL OR char_length(admin_notes) <= 2000),
+  admin_notes      text CHECK (admin_notes IS NULL OR char_length(admin_notes) BETWEEN 1 AND 2000),
   updated_at       timestamptz NOT NULL DEFAULT now(),
 
   -- Sévérité obligatoire ssi type=bug.
