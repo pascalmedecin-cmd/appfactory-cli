@@ -69,14 +69,16 @@
 	<div class="border-t border-white/8 px-3 py-2 space-y-0.5">
 		{#each secondaryItems as item}
 			{@const external = 'external' in item && item.external}
+			{@const desktopOnly = 'desktopOnly' in item && item.desktopOnly}
 			<a
 				href={item.href}
 				target={external ? '_blank' : undefined}
 				rel={external ? 'noopener noreferrer' : undefined}
 				onclick={() => onNavigate?.()}
 				aria-current={!external && isActive(item.href) ? 'page' : undefined}
-				class="flex items-center gap-3 px-3 py-2 min-h-11 md:min-h-0 text-sm rounded-lg transition-colors
+				class="nav-item flex items-center gap-3 px-3 py-2 min-h-11 md:min-h-0 text-sm rounded-lg transition-colors
 					{!external && isActive(item.href) ? 'bg-white/15 text-white font-medium' : 'text-white/65 hover:bg-white/8 hover:text-white'}"
+				class:desktop-only-nav={desktopOnly}
 				title={collapsed ? item.label : undefined}
 			>
 				<Icon name={item.icon} class="shrink-0" />
@@ -111,3 +113,13 @@
 		</button>
 	</div>
 </nav>
+
+<style>
+	/* Spec page-log § 2 critère 1 + § 6.1 : entrées flaggées desktopOnly masquées
+	   sur le breakpoint mobile sidebar existant (1023px, aligné +layout.svelte). */
+	@media (max-width: 1023px) {
+		.desktop-only-nav {
+			display: none !important;
+		}
+	}
+</style>

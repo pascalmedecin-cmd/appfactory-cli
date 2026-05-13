@@ -242,6 +242,13 @@ export const config = {
 		],
 		secondary: [
 			{
+				href: '/log',
+				label: 'Log',
+				icon: 'bug_report',
+				external: true,
+				desktopOnly: true,
+			},
+			{
 				href: '/aide',
 				label: 'Aide',
 				icon: 'help_outline',

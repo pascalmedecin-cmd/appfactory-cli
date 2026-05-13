@@ -4,6 +4,7 @@
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import Header from '$lib/components/Header.svelte';
 	import Toast from '$lib/components/Toast.svelte';
+	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
 	import { config } from '$lib/config';
 	import { page } from '$app/state';
 	// Audit 360 V2c H-21 : coquille workspace partagée (factorisation CSS cross-pages).
@@ -66,6 +67,8 @@
 </main>
 
 <Toast />
+
+<FeedbackButton />
 
 <style>
 	/* Desktop : sidebar visible en place */
