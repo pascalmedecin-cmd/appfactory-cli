@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import { toasts } from '$lib/stores/toast';
@@ -70,17 +69,18 @@
 
 	// Échap ferme le drawer (sauf si un input d'ajout est ouvert : Échap annule d'abord
 	// l'ajout, puis ferme le drawer au second Échap).
+	// V4 fix (S189) : `$effect` au lieu de `onMount` + `onDestroy`. Raison : `onDestroy`
+	// s'exécute aussi côté SSR (cleanup post-render), or `window` y est undefined → 500.
+	// `$effect` ne tourne QUE côté client, son cleanup callback aussi. Idiom Svelte 5.
 	function onWindowKeydown(e: KeyboardEvent) {
 		if (!open || e.key !== 'Escape') return;
 		if (addingFor) return; // l'input gère son propre Échap
 		onClose();
 	}
 
-	onMount(() => {
+	$effect(() => {
 		window.addEventListener('keydown', onWindowKeydown);
-	});
-	onDestroy(() => {
-		window.removeEventListener('keydown', onWindowKeydown);
+		return () => window.removeEventListener('keydown', onWindowKeydown);
 	});
 </script>
 
