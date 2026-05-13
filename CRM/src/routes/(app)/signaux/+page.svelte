@@ -750,9 +750,12 @@
 />
 
 <style>
-	/* Layout 2 colonnes : cards à gauche + panneau pertinence à droite */
+	/* Layout 2 colonnes : cards à gauche + panneau pertinence à droite.
+	 * `.ws-page` (global) pose `display: flex; flex-direction: column` — on doit
+	 * forcer `flex-direction: row` ici, sinon le panneau s'empile en bas. */
 	.signaux-layout {
-		display: flex;
+		display: flex !important;
+		flex-direction: row !important;
 		align-items: stretch;
 		gap: 0;
 		padding-right: 0 !important;
@@ -766,7 +769,7 @@
 	}
 	@media (max-width: 1023px) {
 		.signaux-layout {
-			flex-direction: column;
+			flex-direction: column !important;
 		}
 		.signaux-main {
 			width: 100%;
