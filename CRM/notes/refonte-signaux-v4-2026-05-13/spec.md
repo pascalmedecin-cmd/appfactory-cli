@@ -19,7 +19,7 @@ Pascal a demandé une revue UX/UI premium de `/signaux`. Objectif explicite :
 |---|---------|---------|
 | C1 | Tab par défaut au load | « Nouveau » sélectionné, **pas « Tous »** (qui n'existe plus dans la barre). |
 | C2 | Onglet « Tous » | **Absent** de la barre d'onglets. |
-| C3 | Score d'un signal SIMAP `Vitrages` (S188 top tri) | Score **9** (et plus 10 avec récence). Pas de critère `Recente < 30j` dans `notes_libres`. |
+| C3 | Score d'un signal SIMAP `Vitrages` (S188 top tri) | Score **7** (Cœur vitrage +5 + SIMAP +2). Plus de critère `Recente < 30j` dans `notes_libres`. Anciennement 9 (avec +2 récence). |
 | C4 | Score d'un signal Zefix `creation_entreprise` <30j | **0** (anciennement 2). Plus aucun critère `Recente` ne s'affiche jamais. |
 | C5 | Sidebar « Pertinence » droite | **Absente** (layout 100 % largeur cards). |
 | C6 | Toolbar | Affiche bouton **« Mots-clés »** avec icône `tune` + badge count (ex : `30`). |
