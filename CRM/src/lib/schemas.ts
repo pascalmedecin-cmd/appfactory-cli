@@ -253,6 +253,77 @@ export const LeadTransfertSchema = z.object({
 	id: z.string().uuid(),
 });
 
+// -- Feedback entries (page /log) --
+// Spec : notes/page-log-2026-05-13/spec.md § 4 + § 8.
+
+export const FEEDBACK_TYPES_ENUM = ['bug', 'suggestion', 'question'] as const;
+export const FEEDBACK_SEVERITIES_ENUM = ['bloquant', 'genant', 'mineur'] as const;
+export const FEEDBACK_STATUSES_ENUM = ['nouveau', 'a_actionner', 'traite', 'logge'] as const;
+
+// Contexte capturé côté client (envoyé en string JSON dans le form).
+const FeedbackContextSchema = z.object({
+	url: z.string().max(2000).default(''),
+	viewport: z
+		.object({
+			w: z.coerce.number().int().min(0).max(20_000),
+			h: z.coerce.number().int().min(0).max(20_000),
+		})
+		.default({ w: 0, h: 0 }),
+	userAgent: z.string().max(1000).default(''),
+	recentErrors: z
+		.array(
+			z.object({
+				message: z.string().max(2000),
+				stack: z.string().max(2000).optional(),
+				at: z.string().max(50),
+			})
+		)
+		.max(3)
+		.default([]),
+});
+
+export const FeedbackCreateSchema = z
+	.object({
+		type: z.enum(FEEDBACK_TYPES_ENUM),
+		severity: z.enum(FEEDBACK_SEVERITIES_ENUM).optional().or(z.literal('')),
+		page: z.string().min(1, 'La page est requise').max(100),
+		description: z
+			.string()
+			.min(10, 'La description doit faire au moins 10 caractères')
+			.max(1000, 'La description ne peut pas dépasser 1000 caractères'),
+		context: z
+			.string()
+			.max(20_000)
+			.optional()
+			.or(z.literal(''))
+			.transform((s) => {
+				if (!s) return null;
+				try {
+					return FeedbackContextSchema.parse(JSON.parse(s));
+				} catch {
+					return null;
+				}
+			}),
+	})
+	.refine(
+		(data) => (data.type === 'bug' ? !!data.severity : !data.severity),
+		{ message: 'Sévérité requise pour un bug, interdite sinon', path: ['severity'] }
+	);
+
+export const FeedbackUpdateStatusSchema = z.object({
+	id: requiredUUID,
+	status: z.enum(FEEDBACK_STATUSES_ENUM),
+});
+
+export const FeedbackUpdateNotesSchema = z.object({
+	id: requiredUUID,
+	admin_notes: z.string().max(2000).optional().or(z.literal('')),
+});
+
+export const FEEDBACK_CREATE_FIELDS = ['type', 'severity', 'page', 'description', 'context'] as const;
+export const FEEDBACK_UPDATE_STATUS_FIELDS = ['id', 'status'] as const;
+export const FEEDBACK_UPDATE_NOTES_FIELDS = ['id', 'admin_notes'] as const;
+
 // -- Recherches sauvegardees --
 
 export const FREQUENCES_ALERTE = ['quotidien', 'hebdomadaire'] as const;
