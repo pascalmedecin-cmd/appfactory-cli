@@ -78,17 +78,41 @@ describe('GET /api/cron/signaux', () => {
 
 	it('audit 360 V3b L-11 : une sogcDate Zefix malformée est skippée + tracée en erreur (pas de drop silencieux)', async () => {
 		const today = new Date().toISOString().slice(0, 10);
-		// fetch : Zefix renvoie 1 création avec une date pourrie + 1 récente valide ; SIMAP renvoie vide.
+		// fetch : Zefix /sogc/bydate renvoie 1 création avec date pourrie + 1 valide ;
+		// SIMAP renvoie vide. Format = [{sogcPublication, companyShort}] depuis 2026-05-13.
+		let firstZefixCall = true;
 		vi.stubGlobal(
 			'fetch',
 			vi.fn((url: string) => {
 				const u = String(url);
 				if (u.includes('zefix.admin.ch')) {
+					// On ne renvoie le payload de test que sur le premier appel (date today) ;
+					// les jours antérieurs renvoient du vide pour ne pas multiplier les erreurs.
+					if (!firstZefixCall) return Promise.resolve({ ok: true, json: async () => [] });
+					firstZefixCall = false;
 					return Promise.resolve({
 						ok: true,
 						json: async () => [
-							{ uid: 'CHE-111.111.111', name: 'Pourrie SA', sogcDate: 'pas-une-date', purpose: { fr: 'x' } },
-							{ uid: 'CHE-222.222.222', name: 'Valide SA', sogcDate: today, purpose: { fr: 'y' } },
+							{
+								sogcPublication: {
+									sogcDate: 'pas-une-date',
+									sogcId: 1,
+									registryOfCommerceCanton: 'GE',
+									message: 'But: pourri',
+									mutationTypes: [{ id: 2, key: 'status.neu' }],
+								},
+								companyShort: { name: 'Pourrie SA', uid: 'CHE-111.111.111', legalSeat: 'Genève' },
+							},
+							{
+								sogcPublication: {
+									sogcDate: today,
+									sogcId: 2,
+									registryOfCommerceCanton: 'VD',
+									message: 'But: conseil aux entreprises',
+									mutationTypes: [{ id: 2, key: 'status.neu' }],
+								},
+								companyShort: { name: 'Valide SA', uid: 'CHE-222.222.222', legalSeat: 'Lausanne' },
+							},
 						],
 					});
 				}
