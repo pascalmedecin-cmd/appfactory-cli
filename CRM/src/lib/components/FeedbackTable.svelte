@@ -149,8 +149,6 @@
 																	if (result.type === 'failure') {
 																		const msg = (result.data as { error?: string } | undefined)?.error ?? 'Mise à jour impossible.';
 																		toasts.error(msg);
-																	} else if (result.type === 'success') {
-																		expandedId = null;
 																	}
 																	await update();
 																};
@@ -179,6 +177,7 @@
 													return async ({ result, update }) => {
 														if (result.type === 'success') {
 															toasts.success('Note enregistrée');
+															expandedId = null;
 														} else if (result.type === 'failure') {
 															const msg = (result.data as { error?: string } | undefined)?.error ?? 'Mise à jour impossible.';
 															toasts.error(msg);
