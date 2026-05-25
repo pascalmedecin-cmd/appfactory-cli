@@ -97,7 +97,7 @@
 						<span class="panel-hint">Compte et montants par étape pipeline</span>
 					</header>
 					<ReportingChartPipeline stats={data.pipelineEtape} />
-					<div class="mt-24">
+					<div class="mt-24 desktop-only">
 						<ReportingPipelineTable stats={data.pipelineEtape} />
 					</div>
 				</section>
@@ -126,19 +126,44 @@
 			</div>
 		{:else if activeTab === 'export'}
 			<div role="tabpanel" id="panel-export" aria-labelledby="tab-export">
-				<section class="panel">
+				<section class="panel desktop-only">
 					<header class="panel-header">
 						<h2>Export CSV</h2>
 						<span class="panel-hint">Données complètes pour utilisation externe</span>
 					</header>
 					<ReportingExportCards entries={exports} />
 				</section>
+				<div class="mobile-only-banner">
+					<p>Export CSV optimisé pour ordinateur. Ouvrez le CRM depuis un ordinateur pour télécharger les fichiers.</p>
+				</div>
 			</div>
 		{/if}
 	</div>
 </div>
 
 <style>
+	/* Refonte mobile S191 : masquer ReportingPipelineTable + Export CSV en viewport < 1024px. */
+	.mobile-only-banner {
+		display: none;
+		margin: 24px;
+		padding: 20px;
+		border: 1px solid var(--color-border-soft);
+		border-radius: var(--radius-card);
+		background: var(--color-card);
+		color: var(--color-text-muted);
+		text-align: center;
+		font-size: 14px;
+		line-height: 1.5;
+	}
+	@media (max-width: 1023.98px) {
+		.desktop-only {
+			display: none;
+		}
+		.mobile-only-banner {
+			display: block;
+		}
+	}
+
 	.page {
 		display: flex;
 		flex-direction: column;

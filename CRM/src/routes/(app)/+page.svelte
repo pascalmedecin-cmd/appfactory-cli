@@ -208,4 +208,10 @@
 		.lead-express-mobile { transition: none; }
 		.lead-express-mobile:hover { transform: none; }
 	}
+	@media (max-width: 1023.98px) {
+		.stagger {
+			opacity: 1;
+			animation: none;
+		}
+	}
 </style>

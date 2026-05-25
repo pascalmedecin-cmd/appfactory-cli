@@ -20,6 +20,8 @@
 	import PipelineIndicators from '$lib/components/pipeline/PipelineIndicators.svelte';
 	import PipelineTabs from '$lib/components/pipeline/PipelineTabs.svelte';
 	import PipelineColumn from '$lib/components/pipeline/PipelineColumn.svelte';
+	import PipelineMobileAccordion from '$lib/components/pipeline/PipelineMobileAccordion.svelte';
+	import { buildAccordionStages } from '$lib/components/pipeline/pipeline-mobile-accordion.helpers';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -100,6 +102,32 @@
 		etapesVisibleForTab(activeTab)
 			.map((k) => ETAPE_BY_KEY[k])
 			.filter(Boolean)
+	);
+
+	// Refonte mobile S191 : accordéon en viewport < 1024px si flag ON.
+	// Pattern $effect SSR-safe — cf. memory/feedback_svelte5_ondestroy_ssr_window_undefined.md.
+	let isMobileViewport = $state(false);
+	$effect(() => {
+		const mql = window.matchMedia('(max-width: 1023.98px)');
+		const sync = () => (isMobileViewport = mql.matches);
+		sync();
+		mql.addEventListener('change', sync);
+		return () => mql.removeEventListener('change', sync);
+	});
+	const useMobileAccordion = $derived(
+		isMobileViewport && data.featureFlags?.ffCrmMobileV2 === true,
+	);
+	const accordionStages = $derived(
+		buildAccordionStages(
+			data.opportunites.map((o) => ({
+				id: o.id,
+				etape_pipeline: o.etape_pipeline,
+				montant_estime: o.montant_estime,
+				date_relance_prevue: o.date_relance_prevue,
+				titre: o.titre,
+			})),
+			etapesVisible.map((e) => ({ key: e.key, label: e.label, icon: e.icon })),
+		),
 	);
 
 	$effect(() => {
@@ -253,26 +281,30 @@
 		id={`panel-${activeTab}`}
 		aria-labelledby={`tab-${activeTab}`}
 	>
-		<div class="kanban kanban--{activeTab}">
-			{#each etapesVisible as etape (etape.key)}
-				{@const opps = oppsByEtape[etape.key] ?? []}
-				{@const total = totals[etape.key]?.sum ?? 0}
-				<PipelineColumn
-					{etape}
-					{opps}
-					{total}
-					dragOver={dragOverEtape === etape.key}
-					{draggedId}
-					onCardClick={openDetail}
-					{onCardDragStart}
-					{onCardDragEnd}
-					{onColumnDragOver}
-					{onColumnDragLeave}
-					{onColumnDrop}
-					onAddClick={(k) => openCreate(k)}
-				/>
-			{/each}
-		</div>
+		{#if useMobileAccordion}
+			<PipelineMobileAccordion stages={accordionStages} onOppTap={(o) => openDetail({ id: o.id })} />
+		{:else}
+			<div class="kanban kanban--{activeTab}">
+				{#each etapesVisible as etape (etape.key)}
+					{@const opps = oppsByEtape[etape.key] ?? []}
+					{@const total = totals[etape.key]?.sum ?? 0}
+					<PipelineColumn
+						{etape}
+						{opps}
+						{total}
+						dragOver={dragOverEtape === etape.key}
+						{draggedId}
+						onCardClick={openDetail}
+						{onCardDragStart}
+						{onCardDragEnd}
+						{onColumnDragOver}
+						{onColumnDragLeave}
+						{onColumnDrop}
+						onAddClick={(k) => openCreate(k)}
+					/>
+				{/each}
+			</div>
+		{/if}
 	</div>
 </div>
 

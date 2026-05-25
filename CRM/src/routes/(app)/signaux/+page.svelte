@@ -385,7 +385,7 @@
 		<div class="toolbar-right">
 		<button
 			type="button"
-			class="kw-trigger"
+			class="kw-trigger desktop-only-inline"
 			onclick={() => (keywordsDrawerOpen = true)}
 			aria-haspopup="dialog"
 			aria-expanded={keywordsDrawerOpen}
@@ -845,6 +845,13 @@
 />
 
 <style>
+	/* Refonte mobile S191 : drawer Keywords expert-only, masqué en viewport < 1024px. */
+	@media (max-width: 1023.98px) {
+		.desktop-only-inline {
+			display: none;
+		}
+	}
+
 	/* V4 (S189) : layout 2 colonnes retiré. L'ancien panneau pertinence sticky droit
 	 * est devenu un drawer overlay (SignauxKeywordsPanel) déclenché par le bouton
 	 * « Mots-clés » de la toolbar. La page utilise désormais le flex column standard
