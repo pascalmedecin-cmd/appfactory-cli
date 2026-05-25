@@ -19,6 +19,11 @@
 	} from '$lib/utils/contactsFormat';
 	import ContactsIndicators from '$lib/components/contacts/ContactsIndicators.svelte';
 	import ContactsTabs from '$lib/components/contacts/ContactsTabs.svelte';
+	import MobileEntityCard from '$lib/components/mobile/MobileEntityCard.svelte';
+	import type {
+		MobileEntityCardAction,
+		MobileEntityCardBadge,
+	} from '$lib/components/mobile/mobile-entity-card.helpers';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -241,6 +246,44 @@
 				return 'default';
 		}
 	}
+
+	// Refonte mobile (S190bis) : helpers de mapping pour MobileEntityCard.
+	// Affiché uniquement si featureFlags.ffCrmMobileV2 + viewport < 1024px (CSS).
+	function contactCardSubtitle(c: Contact): string {
+		const company = c.entreprises?.raison_sociale ?? '';
+		const fn = c.role_fonction ?? '';
+		if (company && fn) return `${company} · ${fn}`;
+		return company || fn || (c.canton ? `Canton ${c.canton}` : 'Sans entreprise');
+	}
+
+	function contactCardBadges(c: Contact): MobileEntityCardBadge[] {
+		const badges: MobileEntityCardBadge[] = [
+			{ label: c.statut_qualification ?? 'inconnu', variant: statutBadgeVariant(c.statut_qualification) },
+		];
+		if (c.est_prescripteur) badges.push({ label: 'Prescripteur', variant: 'default' });
+		return badges;
+	}
+
+	function contactCardActions(c: Contact): MobileEntityCardAction[] {
+		const actions: MobileEntityCardAction[] = [];
+		if (c.telephone) {
+			actions.push({
+				icon: 'phone',
+				label: `Appeler ${c.prenom ?? ''} ${c.nom ?? ''}`.trim(),
+				href: `tel:${c.telephone}`,
+				variant: 'primary',
+			});
+		}
+		if (c.email_professionnel) {
+			actions.push({
+				icon: 'mail',
+				label: `Envoyer un email à ${c.prenom ?? ''} ${c.nom ?? ''}`.trim(),
+				href: `mailto:${c.email_professionnel}`,
+				variant: 'neutral',
+			});
+		}
+		return actions;
+	}
 </script>
 
 <div class="ws-page">
@@ -256,42 +299,74 @@
 	<ContactsTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)} />
 
 	<div
-		class="table-wrap"
+		class="contacts-shell"
+		data-mobile-enabled={data.featureFlags?.ffCrmMobileV2 ? 'true' : 'false'}
 		role="tabpanel"
 		id={`panel-${activeTab}`}
 		aria-labelledby={`tab-${activeTab}`}
 	>
 		{#if data.contacts.length === 0}
-			<EmptyState
-				icon="contacts"
-				title="Aucun contact"
-				description="Ajoutez votre premier contact pour commencer à construire votre réseau."
-				actionLabel="Ajouter un contact"
-				onAction={openCreate}
-			/>
+			<div class="contacts-empty-wrap">
+				<EmptyState
+					icon="contacts"
+					title="Aucun contact"
+					description="Ajoutez votre premier contact pour commencer à construire votre réseau."
+					actionLabel="Ajouter un contact"
+					onAction={openCreate}
+				/>
+			</div>
 		{:else}
-			<DataTable
-				data={filteredContacts}
-				{columns}
-				onRowClick={openDetail}
-				searchPlaceholder="Rechercher un contact…"
-				stickyLeftCols={2}
-				rowAriaLabel={rowAriaLabelFor}
-				emptyMessage={emptyMessageFor(activeTab)}
-			>
-				{#snippet row(contact, _i)}
-					<td class="px-4 py-3 font-medium text-text">{contact.nom ?? '–'}</td>
-					<td class="px-4 py-3 text-text hidden md:table-cell">{contact.prenom ?? '–'}</td>
-					<td class="px-4 py-3 text-text">{contact.entreprises?.raison_sociale ?? '–'}</td>
-					<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.role_fonction ?? '–'}</td>
-					<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.email_professionnel ?? '–'}</td>
-					<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.telephone ?? '–'}</td>
-					<td class="px-4 py-3 text-text w-20 hidden md:table-cell">{contact.canton ?? '–'}</td>
-					<td class="px-4 py-3 w-24">
-						<Badge label={contact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(contact.statut_qualification)} />
-					</td>
-				{/snippet}
-			</DataTable>
+			{#if data.featureFlags?.ffCrmMobileV2}
+				<!-- Mobile cards (visible uniquement viewport < 1024px via CSS) -->
+				<div class="contacts-mobile-cards">
+					{#if filteredContacts.length === 0}
+						<div class="contacts-mobile-empty">
+							<Icon name="filter_alt_off" size={28} />
+							<p>{emptyMessageFor(activeTab)}</p>
+						</div>
+					{:else}
+						{#each filteredContacts as contact (contact.id)}
+							<MobileEntityCard
+								title={`${contact.prenom ?? ''} ${contact.nom ?? ''}`.trim() || 'Contact sans nom'}
+								subtitle={contactCardSubtitle(contact)}
+								badges={contactCardBadges(contact)}
+								footerItems={contact.canton
+									? [{ icon: 'location_on', text: `Canton ${contact.canton}` }]
+									: []}
+								actions={contactCardActions(contact)}
+								onTap={() => openDetail(contact)}
+								ariaLabel={rowAriaLabelFor(contact)}
+							/>
+						{/each}
+					{/if}
+				</div>
+			{/if}
+
+			<!-- Desktop table (visible >= 1024px ; visible aussi mobile si flag OFF, fallback) -->
+			<div class="table-wrap">
+				<DataTable
+					data={filteredContacts}
+					{columns}
+					onRowClick={openDetail}
+					searchPlaceholder="Rechercher un contact…"
+					stickyLeftCols={2}
+					rowAriaLabel={rowAriaLabelFor}
+					emptyMessage={emptyMessageFor(activeTab)}
+				>
+					{#snippet row(contact, _i)}
+						<td class="px-4 py-3 font-medium text-text">{contact.nom ?? '–'}</td>
+						<td class="px-4 py-3 text-text hidden md:table-cell">{contact.prenom ?? '–'}</td>
+						<td class="px-4 py-3 text-text">{contact.entreprises?.raison_sociale ?? '–'}</td>
+						<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.role_fonction ?? '–'}</td>
+						<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.email_professionnel ?? '–'}</td>
+						<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.telephone ?? '–'}</td>
+						<td class="px-4 py-3 text-text w-20 hidden md:table-cell">{contact.canton ?? '–'}</td>
+						<td class="px-4 py-3 w-24">
+							<Badge label={contact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(contact.statut_qualification)} />
+						</td>
+					{/snippet}
+				</DataTable>
+			</div>
 		{/if}
 	</div>
 </div>
@@ -592,6 +667,15 @@
 </ModalForm>
 
 <style>
+	.contacts-shell {
+		flex: 1;
+		display: flex;
+		flex-direction: column;
+	}
+	.contacts-empty-wrap {
+		flex: 1;
+		padding: 24px 32px 32px;
+	}
 	.table-wrap {
 		flex: 1;
 		padding: 24px 32px 32px; /* audit 360 V3b L-22 : sur la grille 8px (était 20/.../40) */
@@ -605,6 +689,41 @@
 	@media (max-width: 768px) {
 		.table-wrap {
 			padding: 12px 16px 96px;
+		}
+	}
+
+	/* Refonte mobile (S190bis) : cards mobile masquées par défaut. Visible uniquement
+	   viewport < 1024px ET flag ffCrmMobileV2 activé. Quand visible, masque la table. */
+	.contacts-mobile-cards {
+		display: none;
+	}
+	.contacts-mobile-empty {
+		padding: 48px 24px;
+		text-align: center;
+		color: var(--color-text-muted);
+		font-size: 14px;
+		display: grid;
+		gap: 8px;
+		justify-items: center;
+	}
+	.contacts-mobile-empty :global(svg) {
+		color: var(--color-text-muted);
+		opacity: 0.5;
+	}
+	@media (max-width: 1023.98px) {
+		.contacts-shell[data-mobile-enabled='true'] .contacts-mobile-cards {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 12px;
+			padding: 12px 16px 96px;
+		}
+		.contacts-shell[data-mobile-enabled='true'] .table-wrap {
+			display: none;
+		}
+	}
+	@media (min-width: 600px) and (max-width: 1023.98px) {
+		.contacts-shell[data-mobile-enabled='true'] .contacts-mobile-cards {
+			grid-template-columns: repeat(2, 1fr);
 		}
 	}
 </style>

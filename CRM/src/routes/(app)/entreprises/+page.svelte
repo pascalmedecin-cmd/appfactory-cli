@@ -73,6 +73,22 @@
 		persistView(typeof window !== 'undefined' ? window.localStorage : null, v);
 	}
 
+	// Refonte mobile (S190bis) : forçage vue cards en viewport < 1024px si flag ON.
+	// Pattern Svelte 5 : `$effect` (jamais `onMount`/`onDestroy`) pour rester safe SSR — cf.
+	// `memory/feedback_svelte5_ondestroy_ssr_window_undefined.md` (incident S189 page Signaux V4).
+	let isMobileViewport = $state(false);
+	$effect(() => {
+		const mql = window.matchMedia('(max-width: 1023.98px)');
+		const sync = () => (isMobileViewport = mql.matches);
+		sync();
+		mql.addEventListener('change', sync);
+		return () => mql.removeEventListener('change', sync);
+	});
+	const forceMobileCards = $derived(
+		isMobileViewport && data.featureFlags?.ffCrmMobileV2 === true,
+	);
+	const effectiveView = $derived<EntreprisesView>(forceMobileCards ? 'cards' : view);
+
 	const indicators = $derived(entreprisesIndicators(data.entreprises, data.contacts));
 	const counts = $derived(entreprisesCountsByTab(data.entreprises, data.contacts));
 
@@ -226,7 +242,9 @@
 					aria-label="Rechercher une entreprise"
 				/>
 			</div>
-			<EntreprisesViewToggle {view} onChange={setView} />
+			{#if !forceMobileCards}
+				<EntreprisesViewToggle {view} onChange={setView} />
+			{/if}
 		{/snippet}
 	</EntreprisesTabs>
 
@@ -244,7 +262,7 @@
 				actionLabel="Ajouter une entreprise"
 				onAction={openCreate}
 			/>
-		{:else if view === 'table'}
+		{:else if effectiveView === 'table'}
 			<DataTable
 				data={filteredEntreprises}
 				{columns}

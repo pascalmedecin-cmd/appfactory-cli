@@ -16,10 +16,17 @@
 	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
 	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
 	import ProspectionTabs from '$lib/components/prospection/ProspectionTabs.svelte';
+	import MobileEntityCard from '$lib/components/mobile/MobileEntityCard.svelte';
+	import type {
+		MobileEntityCardAction,
+		MobileEntityCardBadge,
+		ScorePillLabel,
+	} from '$lib/components/mobile/mobile-entity-card.helpers';
 	import {
 		cantonNoms,
 		statutLabel, statutBadgeVariant, sourceLabel, relativeDate,
 		sourceOptions, cantonOptions, temperatureOptions, statutOptions,
+		scoreToCategory,
 		type ProspectionTabKey,
 	} from '$lib/prospection-utils';
 	import type { PageData } from './$types';
@@ -444,6 +451,59 @@
 			saveRechercheLoading = false;
 		}
 	}
+
+	// Refonte mobile (S190bis) : helpers mapping Lead -> MobileEntityCard.
+	// Affiché uniquement si data.featureFlags.ffCrmMobileV2 + viewport < 1024px (CSS).
+	function leadCardSubtitle(lead: Lead): string {
+		const parts: string[] = [];
+		if (lead.canton) parts.push(cantonNoms[lead.canton] ?? lead.canton);
+		if (lead.localite) parts.push(lead.localite);
+		parts.push(sourceLabel(lead.source));
+		return parts.join(' · ');
+	}
+
+	function leadCardScorePill(lead: Lead): { label: ScorePillLabel; value: number } | undefined {
+		const score = lead.score_pertinence;
+		if (typeof score !== 'number') return undefined;
+		const category = scoreToCategory(score);
+		const label: ScorePillLabel = category === 'tiede' ? 'tiède' : (category as 'chaud' | 'froid');
+		return { label, value: score };
+	}
+
+	function leadCardBadges(lead: Lead): MobileEntityCardBadge[] {
+		return [{ label: statutLabel(lead.statut), variant: statutBadgeVariant(lead.statut) }];
+	}
+
+	function leadCardFooterItems(lead: Lead): Array<{ icon: string; text: string }> {
+		const items: Array<{ icon: string; text: string }> = [];
+		const dateKey = lead.date_publication ?? lead.date_import;
+		if (dateKey) items.push({ icon: 'calendar_today', text: relativeDate(dateKey) });
+		if (lead.montant != null && lead.montant > 0) {
+			items.push({ icon: 'payments', text: `${Math.round(lead.montant / 1000)} k CHF` });
+		}
+		return items;
+	}
+
+	function leadCardActions(lead: Lead): MobileEntityCardAction[] {
+		const actions: MobileEntityCardAction[] = [];
+		if (lead.telephone) {
+			actions.push({
+				icon: 'phone',
+				label: `Appeler ${lead.raison_sociale}`,
+				href: `tel:${lead.telephone}`,
+				variant: 'primary',
+			});
+		}
+		return actions;
+	}
+
+	function leadCardAriaLabel(lead: Lead): string {
+		const parts: string[] = [`Prospect ${lead.raison_sociale}`];
+		if (lead.canton) parts.push(`canton ${lead.canton}`);
+		if (typeof lead.score_pertinence === 'number') parts.push(`score ${lead.score_pertinence}`);
+		if (lead.statut) parts.push(`statut ${lead.statut}`);
+		return parts.join(', ');
+	}
 </script>
 
 <div class="flex flex-col gap-3 md:gap-6 md:h-[calc(100dvh-var(--header-height)-3rem)]">
@@ -741,7 +801,10 @@
 		</div>
 	{:else}
 	<!-- Phase 2 : onglets par nature de signal collés au DataTable (1 shell visuel cohérent) -->
-	<div class="bg-white rounded-xl border border-border shadow-sm flex flex-1 flex-col min-h-0 overflow-visible">
+	<div
+		class="bg-white rounded-xl border border-border shadow-sm flex flex-1 flex-col min-h-0 overflow-visible prospection-shell"
+		data-mobile-enabled={data.featureFlags?.ffCrmMobileV2 ? 'true' : 'false'}
+	>
 		<ProspectionTabs tabs={tabsConfig} active={data.tab as ProspectionTabKey} onSelect={selectTab}>
 			{#snippet actions()}
 				<!-- F-V4-07 : actions desktop descendues sur la même ligne que les onglets.
@@ -840,6 +903,24 @@
 				{/if}
 			</div>
 		{:else}
+	{#if data.featureFlags?.ffCrmMobileV2}
+		<!-- Refonte mobile (S190bis) : cards mobile visibles uniquement viewport < 1024px via CSS, masquent le DataTable. -->
+		<div class="prospection-mobile-cards">
+			{#each data.leads as lead (lead.id)}
+				<MobileEntityCard
+					title={lead.raison_sociale}
+					subtitle={leadCardSubtitle(lead)}
+					badges={leadCardBadges(lead)}
+					scorePill={leadCardScorePill(lead)}
+					footerItems={leadCardFooterItems(lead)}
+					actions={leadCardActions(lead)}
+					onTap={() => openDetail(lead)}
+					ariaLabel={leadCardAriaLabel(lead)}
+				/>
+			{/each}
+		</div>
+	{/if}
+	<div class="prospection-table-wrap flex flex-1 flex-col min-h-0">
 	<DataTable
 		data={data.leads}
 		{columns}
@@ -903,6 +984,7 @@
 			{/each}
 		{/snippet}
 	</DataTable>
+	</div><!-- /prospection-table-wrap -->
 		{/if}
 		</div><!-- /tabpanel V2.1 -->
 	</div>
@@ -944,3 +1026,27 @@
 		}
 	}}
 />
+
+<style>
+	/* Refonte mobile (S190bis) : cards mobile masquées par défaut. Visible uniquement
+	   viewport < 1024px ET flag ffCrmMobileV2 activé. Quand visible, masque le DataTable. */
+	.prospection-mobile-cards {
+		display: none;
+	}
+	@media (max-width: 1023.98px) {
+		.prospection-shell[data-mobile-enabled='true'] .prospection-mobile-cards {
+			display: grid;
+			grid-template-columns: 1fr;
+			gap: 12px;
+			padding: 12px 16px 96px;
+		}
+		.prospection-shell[data-mobile-enabled='true'] .prospection-table-wrap {
+			display: none;
+		}
+	}
+	@media (min-width: 600px) and (max-width: 1023.98px) {
+		.prospection-shell[data-mobile-enabled='true'] .prospection-mobile-cards {
+			grid-template-columns: repeat(2, 1fr);
+		}
+	}
+</style>
