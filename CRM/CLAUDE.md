@@ -3,10 +3,10 @@
 **Note migration restructure** : ce fichier vit dans `CRM/CLAUDE.md`. Le sous-projet CRM FilmPro est dans `AppFactory/CRM/` (path Vercel `rootDirectory: CRM`). Voie A livrée S173 2026-05-06 (split container CLAUDE.md). Voie B livrée S174 2026-05-07 (rename `template/` → `CRM/` + retrait wizard méta + repointage Vercel). Le `AppFactory/CLAUDE.md` racine est un stub container minimal qui pointe vers les 3 sous-projets (CRM, Consulting, Formation). Voir `~/.claude/projects/-Users-pascal-Claude-Projets-AppFactory/memory/project_appfactory_restructure.md` pour le contexte migration complet.
 
 **Statut :** Phase C. Refonte page Signaux V4 livrée prod (S189, 2026-05-13) : scoring sans temporalité + drawer mots-clés overlay + ScorePill saturée gradient + bandeau dominante 3px par card + cards line-clamp 4 + tab underline 3px ; fix SSR 500 `onDestroy`→`$effect`. Détail complet + tests/audits/deploy : § Livré S189 ci-dessous + mémoire `feedback_svelte5_ondestroy_ssr_window_undefined.md`. **Antérieur** : Refonte Signaux V3 S188 + cron Zefix S187, Page Log CRM S185+S186, refonte page Aide S182+S183, cascade audit 360 fermée S178→S180 (136 findings, 134 fixés), API Google Places S181, cascade golden v9 6/6 (S175-S176ter), migration restructure Voie A+B (S173-S174). Formation IA = sous-projet autonome dans `Formation/`, `cc` option 5.
-**Derniere mise a jour :** 2026-05-25 (S191 : refonte mobile CRM Bloc #1 cockpit - helpers MobileEntityCard testés + Cards Prospection + Cards Entreprises)
+**Derniere mise a jour :** 2026-05-25 (S192 : refonte mobile Pipeline accordéon + polish Reporting/Dashboard/Signaux ; Blocs cockpit #1 + #2 fermés)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session courante :** S191 livrée (high, ~1h, Score 2/4). Bloc #1 cockpit refonte mobile fermé : (1) Helpers MobileEntityCard extraits en `.ts` pur + 25 tests Vitest TDD (arbitrage Option B preserving-productive-tensions : doctrine projet `.svelte=e2e` respectée, aucune nouvelle dep jsdom/testing-library). (2) Cards Prospection : 5 helpers `leadCard*` + wrapper `.prospection-shell[data-mobile-enabled]` + CSS-only switch. (3) Cards Entreprises : matchMedia + derived `forceMobileCards`/`effectiveView`, toggle masqué mobile (`onMount`/`onDestroy` évités, $effect cleanup SSR-safe). Tests 1371/1371 verts (+25 vs baseline), typecheck 0 erreur. Commit prod `09703bb` (9 fichiers, +781). Prochaine session : Bloc 1 cockpit Pipeline (PipelineMobileAccordion + tests + intégration `pipeline/+page.svelte`) puis Bloc 2 polish Reporting + 4 pages MOBILE-OK puis Phase 4 QA + Phase 5 livraison. Date cible : 2026-05-31.
+**Session courante :** S192 livrée (high, ~2h, Score 2/4 helpers + 4/4 sur l'enchaînement). Blocs cockpit #1 (Pipeline mobile accordéon) + #2 (polish 4 pages MOBILE-OK) fermés en autonomie après réordonnancement TDD-first (tâche 6 helpers AVANT tâche 1 composant). Périmètre livré : (a) `pipeline-mobile-accordion.helpers.ts` (.ts purs, 7 fonctions + 4 types) + 22 tests Vitest TDD red-green, (b) `PipelineMobileAccordion.svelte` (6 étapes header tappable min-h 56px, animation transform-only scaleY 200ms ease-out-expo, aria-expanded/controls, Enter/Space toggle, prefers-reduced-motion), (c) intégration `pipeline/+page.svelte` ($effect matchMedia SSR-safe + featureFlags.ffCrmMobileV2 + buildAccordionStages), (d) Reporting `desktop-only` + bandeau mobile, (e) Dashboard stagger off mobile, (f) Signaux drawer Keywords expert-only. Audit qualité avant commit : 0 `!important` / 0 `any` / 0 TODO / 0 onDestroy+window / 0 code mort / `:global()` retiré. Tests 1393/1393 verts (+22), 0 erreur typecheck, 28 warnings baseline, build prod 14s. 2 commits pushed : `bd0b930` (docs CLAUDE.md cleanup -43%) + `4aef918` (feat mobile). Restant : smoke Pascal iPhone réel sur preview Vercel AVANT Phase 4 QA.
 **Sessions précédentes (condensé)** - détail S165-S175 : `archive/2026-05-06-sessions.md` + S174-S175 dans Livré ci-dessous. Détail S122-S125 : `archive/2026-04-28-sessions.md`. Détail S78-S79 : `archive/decisions-sessions-78-79.md`. Détail S70-S77 : `archive/decisions-sessions-70-77.md`. Détail S80-S107 : `Formation/CLAUDE.md` (sous-projet autonome).
 
 
@@ -153,59 +153,44 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 1 - Refonte mobile CRM Pipeline (créer PipelineMobileAccordion + tests + intégration page) (~2h xhigh). Bloc #1 cockpit livré ce tour (S191 2026-05-25, commit `09703bb`, 1371/1371 tests verts +25, 0 régression typecheck) : Helpers MobileEntityCard testés (25 tests Vitest, pattern Option B « préserver tension productive » helpers .ts purs + e2e Playwright à venir B1, doctrine projet .svelte=e2e respectée), Cards mobile Prospection (5 helpers leadCard* + wrapper data-mobile-enabled), Cards mobile Entreprises (matchMedia + derived `forceMobileCards`/`effectiveView` + toggle masqué).
+**Prochaine attaque** : Bloc 1 - Smoke iPhone réel Pascal sur preview Vercel (validation visuelle 3 user flows F1/F2/F3) avant Phase 4 QA (~15 min SUPERVISÉ). Blocs cockpit #1 (Pipeline accordion) + #2 (polish 4 pages) livrés ce tour (S192 2026-05-25, commits `bd0b930` + `4aef918`, 1393/1393 tests verts +22, 0 erreur typecheck, build prod 14s). Phase 3 product-architect du PRD refonte mobile désormais complète côté code (Phase 4 QA peut démarrer si smoke validé).
 
-### 1. Refonte mobile CRM - Pipeline (composant + tests + intégration) [AUTONOME • xhigh • ~2h]
+### 1. Smoke iPhone réel Pascal sur preview Vercel [SUPERVISÉ • low • ~15min]
 
-- **Pourquoi** : Composant `PipelineMobileAccordion` reste à créer et intégrer. Pattern TDD éprouvé sur MobileEntityCard (Option B : helpers .ts extraits + tests Vitest purs, e2e Playwright laissé pour B1 QA). Spec : `.product-architect/prd.md` + acceptance-criteria.json + DESIGN.md § Composants.
+- **Pourquoi** : Incident V4 S189 a prouvé que build local + 1393 tests verts ≠ rendu prod (`onDestroy` SSR-unsafe non reproductible en vite preview). Avant de débloquer Phase 4 QA (audits + Playwright + Lighthouse), validation visuelle Pascal sur iPhone réel sur les 5 pages refondues mobile.
 
-- **Prérequis** : Aucun, pattern MobileEntityCard validé (Bloc #1 cockpit livré ce tour).
+- **Prérequis** : Aucun. Auto-promote Vercel actif (pas de rollback récent). Vérifier alias prod via `vercel inspect filmpro-crm.vercel.app` post-deploy.
 
-- [ ] **[EXÉCUTABLE]** Créer `src/lib/components/pipeline/PipelineMobileAccordion.svelte` (spec DESIGN.md § Composants) : 6 étapes header tappable (icon + label + count opps + somme CHF formatée + chevron rotate), animation transform-only scaleY 200ms ease-out-expo, aria-expanded/aria-controls, clavier Enter/Space, état vide « Aucune opportunité dans cette étape ».
+- [ ] **[EXÉCUTABLE]** Activer le feature flag `ff_crm_mobile_v2` pour Pascal via SQL UPDATE Supabase (`auth.users.raw_app_meta_data`). Préalable au smoke (sinon les refontes mobile sont invisibles).
+- [ ] **[EXÉCUTABLE]** Smoke F1 (Signal→prospect→relance) sur iPhone : ouvrir `/signaux` (drawer Keywords masqué), tap signal → SlideOut détail, créer prospect, retour `/prospection` (cards visibles, pas de table).
+- [ ] **[EXÉCUTABLE]** Smoke F2 (fiche terrain+photo+appel) : ouvrir `/contacts` (cards visibles), tap contact, vérifier action `tel:` fonctionne sur iPhone réel.
+- [ ] **[EXÉCUTABLE]** Smoke F3 (pipeline→faire avancer) : ouvrir `/pipeline` (accordéon 6 étapes au lieu du kanban), tap header étape → expand 200ms, tap opp → SlideOut détail.
+- [ ] **[EXÉCUTABLE]** Spot-check pages MOBILE-OK : `/reporting` (table pipeline + export CSV masqués, bandeau « optimisé ordinateur » visible), `/` Dashboard (pas d'animation stagger), `/veille` + `/aide` (responsive existant intact).
 
-- [ ] **[EXÉCUTABLE]** Tests Vitest helpers PipelineMobileAccordion : extraire logique pure (formatage CHF, expand/collapse state, mapping étape→sommes/counts) dans `pipeline-mobile-accordion.helpers.ts` + ≥10 tests TDD. Pattern Option B (cf. memory/feedback_svelte5_tests_option_b_preserving_tension.md à créer si nouvelle convention).
+### 2. Phase 4 QA 360 refonte mobile CRM [AUTO • xhigh • ~2h]
 
-- [ ] **[EXÉCUTABLE]** Modifier `src/routes/(app)/pipeline/+page.svelte` : guard `isMobile && featureFlags.ffCrmMobileV2` (pattern matchMedia + $effect cleanup déjà utilisé sur entreprises +page.svelte), remplacer kanban par PipelineMobileAccordion, SlideOut détail opp avec bouton « Faire avancer » (dropdown 5 étapes alternatives).
+- **Pourquoi** : Gate 3→4 atteinte une fois Bloc 1 smoke validé. Cf. `.product-architect/prd.md § 10 Plan de test` + `acceptance-criteria.json` (24 critères bloquants Phase 4). 6 sous-tâches enchaînables en autonomie.
 
-### 2. Refonte mobile CRM - Polish Reporting + 4 pages MOBILE-OK [AUTONOME • high • ~2h]
+- **Prérequis** : Bloc 1 smoke iPhone validé OK (sinon ajustements ciblés AVANT Phase 4).
 
-- **Pourquoi** : 5 pages restantes à polish CSS-only mobile (masquage éléments desktop-only). Pas de refonte structurelle.
+- [ ] **[BLOQUÉ - smoke OK]** audit-uiux Mode A (5 agents parallèles : composants, typo, interactions, responsive, accessibilité) sur les 5 pages refondues + 4 polish. 0 finding Critical, ≤ 2 High justifiés hors-scope.
+- [ ] **[BLOQUÉ - smoke OK]** Playwright E2E 3 user flows critiques (F1/F2/F3) sur preset `iPhone 14 Pro Max`. Tests `tests/mobile-flows.spec.ts`. Inclut e2e PipelineMobileAccordion (entry cockpit `b8a43ba1` couverte ici).
+- [ ] **[BLOQUÉ - smoke OK]** Playwright snapshots desktop verrouillés (0 régression). Assertions : `scrollWidth <= clientWidth` mobile + `page.locator('table').count() === 0` viewport < 1024px sur 5 pages.
+- [ ] **[BLOQUÉ - smoke OK]** axe-core via `@axe-core/playwright` : 0 sérieux/critique, 100% tap targets >= 44x44 CSS px.
+- [ ] **[BLOQUÉ - smoke OK]** Lighthouse CI mobile (preset mobile, Vercel preview) : >= 90 sur Perf / A11y / Best Practices / SEO, 5 pages refondues.
+- [ ] **[BLOQUÉ - smoke OK]** code-review:security-auditor + bug-hunter + contracts-reviewer (subagents Opus). 0 H/C/M, 0 Critical, 0 breaking change. Artifact `~/.claude/projects/-Users-pascal--claude/memory/audit_secu_2026-05-XX_crm_mobile_v2.md` persisté.
 
-- **Prérequis** : Aucun, indépendant Bloc 1 ci-dessus.
+### 3. Phase 5 livraison refonte mobile CRM [SUPERVISÉ • high • ~1h]
 
-- [ ] **[EXÉCUTABLE]** Modifier `src/routes/(app)/reporting/+page.svelte` : masquer ReportingPipelineTable + export CSV en mobile (CSS media query `< 1024px` + class `desktop-only`). KPI + charts + activity cards restent visibles.
-
-- [ ] **[EXÉCUTABLE]** Polish 4 pages MOBILE-OK : Dashboard (masquer animations stagger mobile, perf), Signaux (masquer drawer Keywords mobile, expert-only), Veille (masquer sommaire droit sticky mobile), Aide (masquer sommaire TOC droit mobile). Audit visuel rapide Chrome DevTools iPhone preset.
-
-### 3. Refonte mobile CRM - Phase 4 QA 360 [AUTONOME • xhigh • ~2h]
-
-- **Pourquoi** : Gate 3->4 atteinte une fois Bloc 1 terminé. Cf. `.product-architect/prd.md § 10 Plan de test` + acceptance-criteria.json (24 critères bloquants Phase 4).
-
-- **Prérequis** : Bloc 1 terminé, 1346+ tests verts, typecheck 0 erreur.
-
-- [ ] **[BLOQUÉ - Bloc 1 livré]** audit-uiux Mode A (5 agents parallèles : composants, typo, interactions, responsive, accessibilité) sur les 5 pages refondues + 4 polish. 0 finding Critical, ≤ 2 High justifiés hors-scope.
-
-- [ ] **[BLOQUÉ - Bloc 1 livré]** Playwright E2E 3 user flows critiques (F1 Signal→prospect→relance, F2 fiche terrain+photo+appel, F3 pipeline→faire avancer) sur preset `iPhone 14 Pro Max`. Tests `tests/mobile-flows.spec.ts`.
-
-- [ ] **[BLOQUÉ - Bloc 1 livré]** Playwright snapshots desktop verrouillés (0 régression). Assertions Playwright : `scrollWidth <= clientWidth` mobile + `page.locator('table').count() === 0` viewport < 1024px sur 5 pages.
-
-- [ ] **[BLOQUÉ - Bloc 1 livré]** axe-core via `@axe-core/playwright` : 0 sérieux/critique, 100% tap targets >= 44x44 CSS px.
-
-- [ ] **[BLOQUÉ - Bloc 1 livré]** Lighthouse CI mobile (preset mobile, Vercel preview) : >= 90 sur Perf / A11y / Best Practices / SEO, 5 pages refondues.
-
-- [ ] **[BLOQUÉ - Bloc 1 livré]** code-review:security-auditor + bug-hunter + contracts-reviewer (subagents Opus). 0 H/C/M, 0 Critical, 0 breaking change. Artifact `~/.claude/projects/-Users-pascal--claude/memory/audit_secu_2026-05-XX_crm_mobile_v2.md` persisté.
-
-### 4. Refonte mobile CRM - Phase 5 livraison [SUPERVISÉ • high • ~1h]
-
-- **Pourquoi** : Gate 5 nécessite validation Pascal. Rollout canary->beta->GA via SQL UPDATE auth.users (feature flag JWT custom claims).
+- **Pourquoi** : Gate 5 nécessite validation Pascal. Rollout canary→beta→GA via SQL UPDATE `auth.users.raw_app_meta_data` (feature flag JWT custom claim).
 
 - **Prérequis** : Phase 4 verte, audit secu artifact daté.
 
-- [ ] **[BLOQUÉ - Phase 4 verte]** Canary Pascal (SQL UPDATE) + smoke J+1 (flows F1+F2+F3) sur iPhone réel.
-- [ ] **[BLOQUÉ - canary OK]** Beta Antoine (SQL UPDATE) + smoke J+2.
-- [ ] **[BLOQUÉ - beta OK]** GA 3ᵉ fondateur (SQL UPDATE), snapshot DB pré-livraison, CHANGELOG.md, mise à jour CLAUDE.md Livré, entry cockpit outcome (durée + succès + 1 ligne). Cleanup flag après J+7 stable GA.
+- [ ] **[BLOQUÉ - Phase 4 verte]** Canary Pascal SQL UPDATE + smoke J+1 (flows F1+F2+F3) sur iPhone réel.
+- [ ] **[BLOQUÉ - canary OK]** Beta Antoine SQL UPDATE + smoke J+2.
+- [ ] **[BLOQUÉ - beta OK]** GA 3ᵉ fondateur SQL UPDATE, snapshot DB pré-livraison, CHANGELOG.md, mise à jour CLAUDE.md Livré, entry cockpit outcome (durée + succès + 1 ligne). Cleanup flag après J+7 stable GA.
 
-→ voir pack spec complet : `CRM/.product-architect/prd.md` + `acceptance-criteria.json` + `DESIGN.md` + `feature-flag-plan.md` + `adr/*.md`. Gates signées : `.product-architect/gates-signed.jsonl` (1->2 et 2->3 OK). État Phase 3 partiel : foundation feature flag + MobileEntityCard + page Contacts mobile livrés. Entry cockpit `20c37767` reste transmitted (livrable continu, fermée après Phase 5 GA).
+→ voir pack spec complet : `CRM/.product-architect/prd.md` + `acceptance-criteria.json` + `DESIGN.md` + `feature-flag-plan.md` + `adr/*.md`. Gates signées : `.product-architect/gates-signed.jsonl` (1→2 et 2→3 OK). État Phase 3 : foundation feature flag + MobileEntityCard + 4 pages refondues (Contacts S190bis, Prospection + Entreprises S191, Pipeline S192) + polish 4 pages (S192). Entry cockpit `20c37767` reste transmitted (livrable continu, fermée après Phase 5 GA).
 
 ### Watch list S189 (post-refonte Signaux V4)
 
@@ -230,13 +215,13 @@ Seul [WATCH] toujours actif au global :
 
 <!-- BEGIN CONSOLIDATION (auto-géré par cockpit, ne pas éditer) -->
 
-### Consolidation cockpit (réconcilié S181 2026-05-12)
+### Consolidation cockpit (état S192 2026-05-25)
 
-**Blocs actionnables** : aucun — la refonte page Aide (ex-Bloc #1) est livrée S182. Backlog CRM cockpit vide.
+**Blocs actionnables côté cockpit** : Bloc #1 (Pipeline mobile) + Bloc #2 (polish) fermés ce tour. Reste 1 entry `transmitted` du Bloc #1 cockpit (`b8a43ba1` e2e Playwright PipelineMobileAccordion → couverte par Phase 4 QA dans CLAUDE.md Bloc 2). 1 entry nouvelle créée par pivot (`2ffecd20` Playwright E2E 3 user flows, alimente Phase 4 QA). 1 entry continue (`20c37767`, fermée après Phase 5 GA).
 
-**Blocs bloqués** : aucun.
+**Blocs bloqués** : B1 (Phase 4 QA, 6 entries) + B2 (Rollout canary/beta, 2 entries) + GA hors-bloc. 2 dead_ids résiduels dans `blocks-crm.json` collection `blocs_bloques` (anciens `1397967b` + `818c7bd9` du B2 Rollout, renommés cette session) — non bloquant, à nettoyer manuellement via cockpit UI.
 
-**Note** : la cascade audit 360 (V1→V3b) est entièrement fermée (S180) et la source Google Places est livrée (S181), donc les anciens blocs B1/B2 de cette section sont caducs. CRM n'a plus qu'une entry `transmitted` côté cockpit → la consolidation LLM ne se relance pas (< 2 entrées) ; ce bloc est tenu à la main jusqu'à ce qu'une 2ᵉ tâche soit en file.
+**Skip consolidation LLM S192** : `/api/consolidate/start/appfactory?subproject=crm` a échoué (exit_code=1 sans stderr) après 3min32 de run, pattern WATCH Hygiène v2 connu (Opus 4.7 timeout silencieux sur prompts ≥ 30 KB, cf. `memory/feedback_hygiene_llm_execution_robustness_2026-05-21.md`). Skip noté pour cette clôture, à relancer prochaine session si nécessaire. Pivot + sync livraisons réussis (étapes amont OK).
 
 <!-- END CONSOLIDATION -->
 
@@ -247,8 +232,9 @@ Seul [WATCH] toujours actif au global :
 
 ### Livré cette session (récents + archives)
 
-→ Sessions antérieures : `archive/2026-05-13-sessions.md` (S180 cascade V3b closure + S181 Google Places + recaps LIVRÉE) · `archive/2026-05-10-sessions.md` (S178 cascade audit 360 V1 + V2a + V2b + V2c + V3a-1 ; S179-S180 V3a-2 + détails connexes) · `archive/2026-05-09-sessions.md` (S174 Voie B + cascade golden 6/6 fermée + S176ter T2/T3 + S177 dashboard coûts) · `archive/2026-05-08-sessions.md` (S171-S173 + S175 dashboard v9 + S176bis x3 cascade /pipeline /contacts /entreprises) · `archive/2026-05-04-sessions.md` (antérieures)
+→ Sessions antérieures : `archive/2026-05-25-sessions.md` (S187-S191 détaillé + watch lists archivées) · `archive/2026-05-13-sessions.md` (S180 cascade V3b closure + S181 Google Places) · `archive/2026-05-10-sessions.md` (S178 cascade audit 360 + V3a-1) · `archive/2026-05-09-sessions.md` (S174 Voie B + S177 dashboard coûts) · `archive/2026-05-08-sessions.md` (S171-S173 + S176bis cascade)
 
+- [x] ~~S192 - Refonte mobile CRM Blocs cockpit #1 + #2 (Pipeline accordéon + polish Reporting/Dashboard/Signaux)~~ - Fait 2026-05-25 (high, ~2h ; Score 2/4 helpers TDD + 4/4 enchaînement). **Trigger** : 5 entries cockpit (Bloc #1 cockpit Pipeline 3 tâches + Bloc #2 cockpit Polish 2 tâches + Bloc #3 cockpit Tests helpers). Réordonnancement pré-attaque validé par Pascal (TDD-first : tâche 6 helpers AVANT tâche 1 composant, e2e Playwright tâche 2 reportée Phase 4 QA). **Périmètre livré** : (a) `src/lib/components/pipeline/pipeline-mobile-accordion.helpers.ts` (.ts purs, 7 fonctions exportées — `createCollapsedState`, `toggleStageExpansion`, `isStageExpanded`, `expandAllStages`, `buildAccordionStages`, `formatStageCount`, `formatStageMontantTotal` — réutilise `formatMontantCompact` `fr-CH` apostrophe). (b) `pipeline-mobile-accordion.helpers.test.ts` 22 tests Vitest TDD red-green strict (createCollapsedState, toggleStageExpansion immutable, isStageExpanded, expandAllStages, buildAccordionStages distribution opps+ordre+bucket défaut+count+sum+label+icon, formatStageCount pluriel, formatStageMontantTotal CHF). (c) `PipelineMobileAccordion.svelte` : 6 étapes header tappable min-h 56px, animation transform scaleY 200ms ease-out-expo, aria-expanded/controls, Enter/Space toggle, état vide « Aucune opportunité dans cette étape », prefers-reduced-motion, opp tap-to-detail via callback. (d) `pipeline/+page.svelte` : import + state `isMobileViewport` via `$effect` matchMedia SSR-safe + derived `useMobileAccordion = isMobileViewport && featureFlags.ffCrmMobileV2` + `accordionStages` via `buildAccordionStages`, switch `{#if useMobileAccordion}accordéon{:else}kanban{/if}`. (e) `reporting/+page.svelte` : `ReportingPipelineTable` + section Export CSV wrappés `.desktop-only` (CSS scoped, sans `:global` ni `!important`), bandeau `.mobile-only-banner` explicatif. (f) `(app)/+page.svelte` : animation `stagger` désactivée `@media (max-width: 1023.98px)` (perf mobile). (g) `signaux/+page.svelte` : drawer Keywords trigger `.desktop-only-inline` (expert-only mobile). **Doctrine** : pattern Option B respectée (`.svelte=e2e` projet, e2e Playwright reporté Phase 4 QA). Pattern `$effect` matchMedia jamais `onDestroy+window` (incident SSR V4 S189). **Audit qualité pré-commit** : 0 `!important` / 0 `any` / 0 TODO/FIXME/HACK / 0 `onDestroy+window` / 0 `console.log` / 0 code mort (`onMobileOppTap` fantôme évité) / `:global(.desktop-only)` retiré (markup direct → scope Svelte auto). Tap targets ≥ 44px (56 header + 48 opp). **Validation** : `npm run check` 0 erreur (28 warnings baseline inchangé), `npm test` 1393/1393 verts (+22 vs baseline 1371, 0 régression), `npm run build` 14s adapter-vercel OK. **Cockpit** : 5 entries delivered via deliver.py mid-session, Blocs #2 et #3 cockpit auto-fermés (`block_marked_delivered: true`), Bloc #1 cockpit reste 1 entry transmitted (`b8a43ba1` e2e Playwright reportée Phase 4 QA). **Commits pushed** : `bd0b930 docs(crm): nettoyer CLAUDE.md - archiver détails S187-S191 (-43%, 53k → 30k chars)` (2 fichiers, +98/-18) + `4aef918 feat(crm): refonte mobile Blocs #1+#2 - Pipeline accordéon + polish Reporting/Dashboard/Signaux` (7 fichiers, +597/-23). **Restant pour Gate 3→4** : smoke iPhone réel Pascal sur preview Vercel (5 user flows). **Tracking git** : `CRM/src/lib/components/pipeline/PipelineMobileAccordion.svelte` (nouveau) + `pipeline-mobile-accordion.helpers.ts` (nouveau) + `pipeline-mobile-accordion.helpers.test.ts` (nouveau) + `CRM/src/routes/(app)/pipeline/+page.svelte` (modifié) + `CRM/src/routes/(app)/reporting/+page.svelte` (modifié) + `CRM/src/routes/(app)/+page.svelte` (modifié) + `CRM/src/routes/(app)/signaux/+page.svelte` (modifié) + `CRM/CLAUDE.md` (nettoyé + Prochaine session ré-écrite) + `CRM/archive/2026-05-25-sessions.md` (nouveau, archive S187-S191).
 - [x] ~~S191 - Refonte mobile CRM Bloc #1 cockpit (helpers MobileEntityCard testés + Cards Prospection + Cards Entreprises)~~ - Fait 2026-05-25 (high, ~1h ; Score 2/4). Helpers `.ts` purs + 25 tests Vitest TDD (arbitrage Option B preserving-productive-tensions : doctrine projet `.svelte=e2e` respectée). Cards Prospection (5 helpers `leadCard*` + wrapper `.prospection-shell[data-mobile-enabled]`). Cards Entreprises (matchMedia + derived `forceMobileCards`/`effectiveView` + toggle masqué via `$effect` cleanup SSR-safe). Tests 1371/1371 verts (+25), `npm run check` 0 erreur. Commit prod `09703bb` (9 fichiers, +781 lignes, foundation S190bis incluse). → détail intégral `archive/2026-05-25-sessions.md`.
 - [x] ~~S190bis - Refonte mobile CRM Phases 1+2 product-architect + Phase 3 partielle~~ - Fait 2026-05-24 (xhigh, ~3h ; Score 4/4). Phase 1 cadrage (8 questions + audit factuel 10 pages CRM via agent Explore). Phase 2 specs : pack `.product-architect/` (11 fichiers : prd.md + acceptance-criteria.json 27 critères + DESIGN.md + slo-sli.md + feature-flag-plan.md + 5 ADRs). Phase 3 partielle : `feature-flags.ts` + `app.d.ts` + `+layout.server.ts` + `MobileEntityCard.svelte` (350+ lignes) + `contacts/+page.svelte`. 1346/1346 tests verts. Pas de commit prod. Gates 1→2 et 2→3 signées. → détail intégral `archive/2026-05-25-sessions.md`.
 - [x] ~~S190 - Vérification crons signaux prod + relance manuelle veille W20~~ - Fait 2026-05-18 (low, ~0,2h). Zefix `creation_entreprise` 417/7j (cible CLAUDE.md sous-estimée), SIMAP v2/v3 actif (11/41 matchés Cœur/Bonus/Éviter sur 7j), 0 erreur Vercel. Veille W20 relancée via `gh workflow run cron-veille.yml` après skip vendredi 15/05 (crédit API insuffisant) → édition publiée. → détail `archive/2026-05-25-sessions.md`.
