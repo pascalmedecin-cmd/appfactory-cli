@@ -1,4 +1,5 @@
 {
+  "model": "opus",
   "enabledPlugins": {
     "vercel@claude-plugins-official": true
   },
