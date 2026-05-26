@@ -1,7 +1,9 @@
+import * as Sentry from '@sentry/sveltekit';
 import { createSupabaseServerClient } from '$lib/server/supabase';
 import { isEmailAllowed, parseEnvList } from '$lib/server/auth';
 import { createRateLimiter } from '$lib/server/rate-limiter';
 import { json, redirect, type Handle } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
 import { env } from '$env/dynamic/private';
 import { RATE_LIMIT_WINDOW_MS, SESSION_MAX_AGE_MS } from '$lib/utils/time-constants';
 
@@ -13,7 +15,7 @@ if (import.meta.hot) {
 	import.meta.hot.dispose(() => rateLimiter.dispose());
 }
 
-export const handle: Handle = async ({ event, resolve }) => {
+const baseHandle: Handle = async ({ event, resolve }) => {
 	// Rate limiting sur /api/prospection/*, /api/photos*, /api/visits*,
 	// POST /login (audit 360 M-04 : anti cost-burn SMTP via `?/sendcode` bombing),
 	// POST /log/* (form actions create/updateStatus/updateAdminNotes, audit S185 Info-1),
@@ -118,3 +120,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 
 	return response;
 };
+
+export const handle: Handle = sequence(Sentry.sentryHandle(), baseHandle);
+
+export const handleError = Sentry.handleErrorWithSentry();
