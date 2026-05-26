@@ -153,6 +153,21 @@
 /* ScorePill premium (V4 S189). Linear Priority pattern golden v9, variantes saturées
    pour identifier Chaud/Tiède/Froid d'un coup d'œil dans une liste dense. Fond saturé,
    texte blanc, ring 1px inset hairline, shadow douce, tabular-nums pour stabilité. */
+.signal-score-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 4px 10px;
+	border-radius: var(--radius-full);
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1;
+	white-space: nowrap;
+}
+.signal-score-pill > :global(svg) {
+	stroke-width: 2;
+	flex-shrink: 0;
+}
 .signal-score-pill--chaud,
 .signal-score-pill--tiede,
 .signal-score-pill--froid,

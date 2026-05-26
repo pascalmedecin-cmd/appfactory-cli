@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
 	scorePillModifier,
 	scorePillClass,
+	scorePillIcon,
 	scorePillTitle,
 	actionVariant,
 	shouldInvokeOnClick,
@@ -119,5 +120,20 @@ describe('isValidDominant', () => {
 		expect(isValidDominant(42)).toBe(false);
 		expect(isValidDominant(null)).toBe(false);
 		expect(isValidDominant(undefined)).toBe(false);
+	});
+});
+
+describe('scorePillIcon', () => {
+	it('mappe chaud → local_fire_department', () => {
+		expect(scorePillIcon('chaud')).toBe('local_fire_department');
+	});
+	it('mappe tiède → thermostat', () => {
+		expect(scorePillIcon('tiède')).toBe('thermostat');
+	});
+	it('mappe froid → ac_unit', () => {
+		expect(scorePillIcon('froid')).toBe('ac_unit');
+	});
+	it('mappe unscored → remove', () => {
+		expect(scorePillIcon('unscored')).toBe('remove');
 	});
 });

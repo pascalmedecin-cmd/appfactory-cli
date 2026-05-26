@@ -84,6 +84,21 @@ export type ScoreStyle = {
 // impossible de repérer un Chaud du premier coup d'œil. Nouvelles classes
 // `signal-score-pill--*` (dans SignauxCards.svelte + SlideOut) : fond saturé, texte
 // blanc, ring 1px inset, shadow douce. Le différencier devient instantané.
+
+// Borne d'affichage du score signal. La DB peut stocker un score > maxPoints
+// (somme canton+keywords+source avant cap final), utile pour le tri par
+// pertinence. L'affichage clamp à maxPoints pour éviter les "13/10" et garder
+// une échelle visuellement cohérente. Le tri ORDER BY score_pertinence DESC
+// reste correct car on lit la valeur brute en DB.
+export function clampDisplayScore(
+	raw: number | null | undefined,
+	maxPoints: number
+): number {
+	if (raw === null || raw === undefined) return 0;
+	if (raw < 0) return 0;
+	if (raw > maxPoints) return maxPoints;
+	return raw;
+}
 const SCORE_STYLES: Record<ScoreBucket, ScoreStyle> = {
 	chaud: { icon: 'local_fire_department', colorClass: 'signal-score-pill--chaud', bgClass: '', label: 'Chaud' },
 	tiede: { icon: 'thermostat', colorClass: 'signal-score-pill--tiede', bgClass: '', label: 'Tiède' },

@@ -9,7 +9,9 @@
 		statutLabel,
 		statutVariant,
 		signalAriaLabel,
+		clampDisplayScore,
 	} from '$lib/utils/signauxFormat';
+	import { config } from '$lib/config';
 	import {
 		highlightKeywordsAndSearch,
 		dominantKeywordCategory,
@@ -70,6 +72,7 @@
 			{@const sStyle = scoreStyle(signal.score_pertinence)}
 			{@const isSelected = selectedIds.has(signal.id)}
 			{@const dom = dominantFor(signal)}
+			{@const displayScore = clampDisplayScore(signal.score_pertinence, config.scoring.maxPoints)}
 			<button
 				type="button"
 				class="card-signal"
@@ -98,9 +101,9 @@
 						</p>
 					</div>
 					<div class="card-signal-status">
-						<span class="score-pill {sStyle.bgClass} {sStyle.colorClass}" title={`Score ${signal.score_pertinence ?? 0}`}>
+						<span class="score-pill {sStyle.bgClass} {sStyle.colorClass}" title={`Score ${displayScore}/${config.scoring.maxPoints}`}>
 							<Icon name={sStyle.icon} size={14} />
-							<span class="tabular-nums">{signal.score_pertinence ?? 0}</span>
+							<span class="tabular-nums">{displayScore}</span>
 						</span>
 						<Badge label={statutLabel(signal.statut_traitement)} variant={statutVariant(signal.statut_traitement)} />
 					</div>

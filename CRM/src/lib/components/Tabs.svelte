@@ -61,6 +61,21 @@
 		onSelect(tabs[nextIndex].key);
 		focusTabAt(nextIndex);
 	}
+
+	// Auto-scroll vers l'onglet actif : sur mobile, le tablist scrolle
+	// horizontalement (scroll-snap) ; sans ce $effect, l'onglet sélectionné peut
+	// rester hors champ après navigation clavier ou tab par défaut hors-vue.
+	// Pattern Vercel / Linear. scrollIntoView honore prefers-reduced-motion en
+	// natif (Chromium/WebKit 2024+). Limité au tablist (closest scroll container).
+	$effect(() => {
+		const list = tablistEl;
+		if (!list) return;
+		const btn = list.querySelector<HTMLButtonElement>(
+			`#${CSS.escape(`${tabIdPrefix}-${active}`)}`
+		);
+		if (!btn) return;
+		btn.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+	});
 </script>
 
 <div class="tabs-bar" class:compact={density === 'compact'} class:has-actions={!!actions}>
@@ -180,35 +195,53 @@
 			padding: 0 24px;
 		}
 	}
-	/* Sans bloc d'actions : la barre scrolle horizontalement sur mobile. */
+
+	/* Mobile (≤ 768px) : best-in-class pattern Vercel / Linear.
+	   - tablist = scroll container horizontal (jamais .tabs-bar : éviter de masquer .tabs-actions).
+	   - scroll-snap-type x mandatory : l'onglet tappé centre proprement (pas de demi-onglet).
+	   - mask-image fade gauche+droite : signale visuellement le contenu hors écran sans chevron explicite.
+	   - scrollbar-width none : aucune barre native (encombrement visuel).
+	   - $effect côté script : auto-center du tab actif après sélection clavier ou re-render. */
 	@media (max-width: 768px) {
-		.tabs-bar:not(.has-actions) {
+		.tabs-bar {
 			padding: 0 16px;
-			overflow-x: auto;
-			scrollbar-width: none;
+			gap: 12px;
 		}
-		.tabs-bar:not(.has-actions)::-webkit-scrollbar {
-			display: none;
-		}
-		.tabs-bar:not(.has-actions) [role='tablist'] {
-			min-width: max-content;
-		}
-	}
-	/* Avec bloc d'actions : empilement vertical (tabs scrollables au-dessus, actions en dessous). */
-	@media (max-width: 768px) {
 		.tabs-bar.has-actions {
 			flex-direction: column;
 			align-items: stretch;
-			padding: 0 16px;
 			gap: 0;
 		}
-		.tabs-bar.has-actions [role='tablist'] {
-			min-width: max-content;
+		[role='tablist'] {
 			overflow-x: auto;
+			overflow-y: hidden;
 			scrollbar-width: none;
+			-ms-overflow-style: none;
+			scroll-snap-type: x mandatory;
+			scroll-padding-inline: 16px;
+			min-width: 0;
+			flex: 1 1 auto;
+			-webkit-mask-image: linear-gradient(
+				to right,
+				transparent 0,
+				black 16px,
+				black calc(100% - 16px),
+				transparent 100%
+			);
+			mask-image: linear-gradient(
+				to right,
+				transparent 0,
+				black 16px,
+				black calc(100% - 16px),
+				transparent 100%
+			);
 		}
-		.tabs-bar.has-actions [role='tablist']::-webkit-scrollbar {
+		[role='tablist']::-webkit-scrollbar {
 			display: none;
+		}
+		.tab {
+			scroll-snap-align: center;
+			padding: 0 12px;
 		}
 		.tabs-bar.has-actions .tabs-actions {
 			width: 100%;
@@ -223,6 +256,9 @@
 	@media (prefers-reduced-motion: reduce) {
 		.tab {
 			transition: none;
+		}
+		[role='tablist'] {
+			scroll-behavior: auto;
 		}
 	}
 </style>

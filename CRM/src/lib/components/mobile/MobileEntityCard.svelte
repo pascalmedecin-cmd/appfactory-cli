@@ -11,6 +11,7 @@
 	import {
 		actionVariant,
 		scorePillClass,
+		scorePillIcon,
 		scorePillTitle,
 		shouldInvokeOnClick,
 		type DominantBand,
@@ -18,6 +19,8 @@
 		type MobileEntityCardBadge,
 		type ScorePillLabel,
 	} from './mobile-entity-card.helpers';
+	import { clampDisplayScore } from '$lib/utils/signauxFormat';
+	import { config } from '$lib/config';
 
 	type Props = {
 		title: string;
@@ -69,8 +72,10 @@
 				{/if}
 			</div>
 			{#if scorePill}
-				<span class={scorePillClass(scorePill.label)} title={scorePillTitle(scorePill.value)}>
-					<span class="tabular-nums">{scorePill.value}</span>
+				{@const displayValue = clampDisplayScore(scorePill.value, config.scoring.maxPoints)}
+				<span class={scorePillClass(scorePill.label)} title={scorePillTitle(displayValue)}>
+					<Icon name={scorePillIcon(scorePill.label)} size={14} />
+					<span class="tabular-nums">{displayValue}</span>
 				</span>
 			{/if}
 		</div>

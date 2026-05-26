@@ -13,6 +13,7 @@ import {
 	statutLabel,
 	statutVariant,
 	signalAriaLabel,
+	clampDisplayScore,
 	type SignalLite,
 } from './signauxFormat';
 
@@ -229,5 +230,31 @@ describe('signalAriaLabel', () => {
 	it('fallback canton non renseigné', () => {
 		const label = signalAriaLabel(sample[4]);
 		expect(label).toContain('non renseigné');
+	});
+});
+
+
+describe('clampDisplayScore', () => {
+	it('null → 0', () => {
+		expect(clampDisplayScore(null, 10)).toBe(0);
+	});
+	it('undefined → 0', () => {
+		expect(clampDisplayScore(undefined, 10)).toBe(0);
+	});
+	it('valeur négative → 0', () => {
+		expect(clampDisplayScore(-3, 10)).toBe(0);
+	});
+	it('valeur sous le plafond → identité', () => {
+		expect(clampDisplayScore(7, 10)).toBe(7);
+	});
+	it('valeur égale au plafond → identité', () => {
+		expect(clampDisplayScore(10, 10)).toBe(10);
+	});
+	it('valeur au-dessus du plafond → clamp', () => {
+		expect(clampDisplayScore(13, 10)).toBe(10);
+		expect(clampDisplayScore(19, 10)).toBe(10);
+	});
+	it('0 → 0', () => {
+		expect(clampDisplayScore(0, 10)).toBe(0);
 	});
 });

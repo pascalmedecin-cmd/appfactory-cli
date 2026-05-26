@@ -25,6 +25,7 @@
 		scoreStyle,
 		statutLabel,
 		statutVariant,
+		clampDisplayScore,
 		type SignauxTab,
 	} from '$lib/utils/signauxFormat';
 	import SignauxIndicators from '$lib/components/signaux/SignauxIndicators.svelte';
@@ -509,7 +510,7 @@
 				</div>
 				<span class="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold {sStyle.bgClass} {sStyle.colorClass}">
 					<Icon name={sStyle.icon} size={18} />
-					{selectedSignal.score_pertinence ?? 0}/{config.scoring.maxPoints} : {sStyle.label}
+					{clampDisplayScore(selectedSignal.score_pertinence, config.scoring.maxPoints)}/{config.scoring.maxPoints} : {sStyle.label}
 				</span>
 			</div>
 

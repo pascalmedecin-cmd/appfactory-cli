@@ -37,6 +37,19 @@ export function scorePillTitle(value: number): string {
 	return `Score ${value}`;
 }
 
+// Material Symbols cohérent avec SignauxCards / SCORE_STYLES.
+// Permet à MobileEntityCard d'afficher icône + valeur sans dupliquer la map ailleurs.
+const SCORE_PILL_ICONS: Record<ScorePillLabel, string> = {
+	chaud: 'local_fire_department',
+	tiède: 'thermostat',
+	froid: 'ac_unit',
+	unscored: 'remove',
+};
+
+export function scorePillIcon(label: ScorePillLabel): string {
+	return SCORE_PILL_ICONS[label] ?? 'remove';
+}
+
 export function actionVariant(variant?: ActionVariant): ActionVariant {
 	return variant ?? 'neutral';
 }

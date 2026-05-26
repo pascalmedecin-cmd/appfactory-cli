@@ -21,15 +21,21 @@
 		</div>
 	</header>
 
-	<CoutsIndicators kpi={data.kpi} />
+	<div class="desktop-only">
+		<CoutsIndicators kpi={data.kpi} />
 
-	<section class="chart-section">
-		<header class="section-header">
-			<h2>Évolution sur 12 semaines</h2>
-			<p class="section-subtitle">Total hebdomadaire en euros.</p>
-		</header>
-		<CoutsChart weeks={data.weeks} />
-	</section>
+		<section class="chart-section">
+			<header class="section-header">
+				<h2>Évolution sur 12 semaines</h2>
+				<p class="section-subtitle">Total hebdomadaire en euros.</p>
+			</header>
+			<CoutsChart weeks={data.weeks} />
+		</section>
+	</div>
+
+	<div class="mobile-only-banner">
+		<p>Tableau Coûts API optimisé pour ordinateur. Ouvrez le CRM depuis un ordinateur pour consulter le détail des dépenses.</p>
+	</div>
 </div>
 
 <style>
@@ -68,6 +74,29 @@
 		font-size: 13px;
 		color: var(--color-text-muted);
 		margin: 4px 0 0;
+	}
+
+	/* Refonte mobile : masquer indicateurs + chart < 1024px et afficher bandeau
+	   "optimisé desktop" (cohérent avec /reporting tab=export S191). */
+	.mobile-only-banner {
+		display: none;
+		margin: 24px;
+		padding: 20px;
+		border: 1px solid var(--color-border-soft);
+		border-radius: var(--radius-card);
+		background: var(--color-card);
+		color: var(--color-text-muted);
+		text-align: center;
+		font-size: 14px;
+		line-height: 1.5;
+	}
+	@media (max-width: 1023.98px) {
+		.desktop-only {
+			display: none;
+		}
+		.mobile-only-banner {
+			display: block;
+		}
 	}
 
 	@media (max-width: 1024px) {
