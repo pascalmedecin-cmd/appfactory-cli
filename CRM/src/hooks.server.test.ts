@@ -146,12 +146,12 @@ describe('hooks.server handle (H-18)', () => {
 		expect(cookies.delete).toHaveBeenCalledWith('login_at', { path: '/' });
 	});
 
-	it('session valide sur /login → redirect /crm', async () => {
+	it('session valide sur /login → redirect /', async () => {
 		mockSessionState = { session: { access_token: 'x' }, user: { email: 'pascal@filmpro.ch' } };
 		const cookies = makeCookies({ login_at: String(Date.now()) });
 		const r = await runHandle(makeEvent('/login', { cookies }));
 		expect(r.thrown).toBe(true);
-		expect(r.thrown && r.redirect.location).toBe('/crm');
+		expect(r.thrown && r.redirect.location).toBe('/');
 	});
 
 	it('session valide sur route protégée → résout + pose les headers de sécurité', async () => {

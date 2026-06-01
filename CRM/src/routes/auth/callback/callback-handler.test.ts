@@ -37,7 +37,7 @@ beforeEach(() => {
 });
 
 describe('auth/callback GET (H-17)', () => {
-	it('verifyOtp succeed → redirect 303 vers /crm + cookie login_at 7 jours', async () => {
+	it('verifyOtp succeed → redirect 303 vers / + cookie login_at 7 jours', async () => {
 		const cookieSet = vi.fn();
 		const supabase: SupabaseAuthMock = {
 			auth: {
@@ -48,7 +48,7 @@ describe('auth/callback GET (H-17)', () => {
 		const r = await runGet(makeEvent({ token_hash: 'abc123', type: 'email' }, supabase, cookieSet));
 		expect(r.thrown).toBe(true);
 		expect(r.thrown && r.redirect.status).toBe(303);
-		expect(r.thrown && r.redirect.location).toBe('/crm');
+		expect(r.thrown && r.redirect.location).toBe('/');
 		expect(supabase.auth.verifyOtp).toHaveBeenCalledWith({ token_hash: 'abc123', type: 'email' });
 		expect(cookieSet).toHaveBeenCalledWith(
 			'login_at',
@@ -72,7 +72,7 @@ describe('auth/callback GET (H-17)', () => {
 		expect(cookieSet).not.toHaveBeenCalled();
 	});
 
-	it('exchangeCodeForSession succeed → redirect /crm + cookie', async () => {
+	it('exchangeCodeForSession succeed → redirect / + cookie', async () => {
 		const cookieSet = vi.fn();
 		const supabase: SupabaseAuthMock = {
 			auth: {
@@ -81,7 +81,7 @@ describe('auth/callback GET (H-17)', () => {
 			}
 		};
 		const r = await runGet(makeEvent({ code: 'pkce-code' }, supabase, cookieSet));
-		expect(r.thrown && r.redirect.location).toBe('/crm');
+		expect(r.thrown && r.redirect.location).toBe('/');
 		expect(supabase.auth.exchangeCodeForSession).toHaveBeenCalledWith('pkce-code');
 		expect(cookieSet).toHaveBeenCalled();
 		expect(supabase.auth.verifyOtp).not.toHaveBeenCalled();
@@ -100,13 +100,13 @@ describe('auth/callback GET (H-17)', () => {
 		expect(cookieSet).not.toHaveBeenCalled();
 	});
 
-	it('aucun token_hash ni code → redirect /crm sans cookie (no-op)', async () => {
+	it('aucun token_hash ni code → redirect / sans cookie (no-op)', async () => {
 		const cookieSet = vi.fn();
 		const supabase: SupabaseAuthMock = {
 			auth: { verifyOtp: vi.fn(), exchangeCodeForSession: vi.fn() }
 		};
 		const r = await runGet(makeEvent({}, supabase, cookieSet));
-		expect(r.thrown && r.redirect.location).toBe('/crm');
+		expect(r.thrown && r.redirect.location).toBe('/');
 		expect(cookieSet).not.toHaveBeenCalled();
 		expect(supabase.auth.verifyOtp).not.toHaveBeenCalled();
 		expect(supabase.auth.exchangeCodeForSession).not.toHaveBeenCalled();

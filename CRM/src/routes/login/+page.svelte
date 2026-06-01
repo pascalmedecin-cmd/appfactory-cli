@@ -2,7 +2,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import { config, CRM_BASE } from '$lib/config';
+	import { config } from '$lib/config';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
@@ -35,8 +35,8 @@
 			sentEmail = form.email ?? '';
 		}
 		if (form?.verified) {
-			// Post-login : entree dans le CRM (pas la home portail). AC-015.
-			goto(CRM_BASE);
+			// Post-login : home portail (choix outil CRM / Devis). Decision Pascal 2026-06-01 (AC-015 revisee).
+			goto('/');
 		}
 	});
 

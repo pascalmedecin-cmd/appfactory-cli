@@ -101,8 +101,8 @@ const baseHandle: Handle = async ({ event, resolve }) => {
 	}
 
 	if (session && event.url.pathname === '/login') {
-		// Post-login : entree dans le CRM (pas la home portail). AC-015.
-		throw redirect(303, CRM_BASE);
+		// Deja connecte sur /login : renvoi vers la home portail. Decision Pascal 2026-06-01 (AC-015 revisee).
+		throw redirect(303, '/');
 	}
 
 	const response = await resolve(event, {
