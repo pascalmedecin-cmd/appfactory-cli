@@ -19,6 +19,7 @@
 	} from '$lib/utils/contactsFormat';
 	import ContactsIndicators from '$lib/components/contacts/ContactsIndicators.svelte';
 	import ContactsTabs from '$lib/components/contacts/ContactsTabs.svelte';
+	import ContactSuggestionQueue from '$lib/components/contacts/ContactSuggestionQueue.svelte';
 	import MobileEntityCard from '$lib/components/mobile/MobileEntityCard.svelte';
 	import type {
 		MobileEntityCardAction,
@@ -295,6 +296,8 @@
 	</div>
 
 	<ContactsIndicators values={indicators} />
+
+	<ContactSuggestionQueue contacts={data.contacts} />
 
 	<ContactsTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)} />
 
