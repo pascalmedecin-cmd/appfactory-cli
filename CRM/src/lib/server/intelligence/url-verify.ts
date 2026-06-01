@@ -20,8 +20,7 @@ const VERIFY_TIMEOUT_MS = 8000;
 // Sans plafond, vérifier N URLs = N HEAD/GET simultanés → saturation sockets + ban IP.
 const VERIFY_BATCH_CONCURRENCY = 4;
 
-const USER_AGENT =
-	'Mozilla/5.0 (compatible; FilmProBot/1.0; +https://filmpro-crm.vercel.app)';
+const USER_AGENT = `Mozilla/5.0 (compatible; FilmProBot/1.0; +${process.env.PUBLIC_APP_URL || 'https://filmpro-crm.vercel.app'})`;
 
 // Domaines connus pour servir des paywalls hard (302 boucle ou body court).
 // Ajouter ici si on découvre un nouveau pattern via audit.

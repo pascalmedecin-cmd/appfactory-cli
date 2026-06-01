@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
-	import { config } from '$lib/config';
+	import { config, CRM_BASE } from '$lib/config';
 	import { createSupabaseBrowserClient } from '$lib/supabase';
 
 	let { collapsed = $bindable(false), currentPath = '', unreadIntelligence = 0, onNavigate }: { collapsed?: boolean; currentPath?: string; unreadIntelligence?: number; onNavigate?: () => void } = $props();
@@ -10,7 +10,9 @@
 	const supabase = createSupabaseBrowserClient();
 
 	function isActive(href: string): boolean {
-		if (href === '/') return currentPath === '/';
+		// Le dashboard est exactement /crm : sans match exact, son startsWith
+		// matcherait toutes les pages /crm/* et marquerait le dashboard actif partout.
+		if (href === CRM_BASE) return currentPath === CRM_BASE;
 		return currentPath.startsWith(href);
 	}
 
@@ -25,7 +27,13 @@
 	style="width: {collapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)'}"
 	aria-label="Navigation principale"
 >
-	<div class="flex items-center px-4 py-5 shrink-0 overflow-hidden">
+	<!-- Logo cliquable = retour portail FilmPro (home /). -->
+	<a
+		href="/"
+		class="brand-link flex items-center px-4 py-5 shrink-0 overflow-hidden"
+		aria-label="Retour au portail FilmPro"
+		onclick={() => onNavigate?.()}
+	>
 		{#if !collapsed}
 			{#if config.branding.logoWhite}
 				<img src="/{config.branding.logoWhite}" alt={config.app.name} class="h-7 w-auto" />
@@ -37,11 +45,11 @@
 		{:else}
 			<span class="font-bold text-lg">{config.app.name[0]}</span>
 		{/if}
-	</div>
+	</a>
 
 	<div class="flex-1 px-3 py-1 overflow-y-auto space-y-0.5 md:space-y-1.5">
 		{#each navItems as item}
-			{@const badge = item.href === '/veille' && unreadIntelligence > 0 ? unreadIntelligence : 0}
+			{@const badge = item.href === `${CRM_BASE}/veille` && unreadIntelligence > 0 ? unreadIntelligence : 0}
 			<a
 				href={item.href}
 				onclick={() => onNavigate?.()}

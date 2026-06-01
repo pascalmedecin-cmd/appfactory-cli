@@ -3,7 +3,7 @@
  *
  * Source unique data-driven (audit 360 H-28 : remplace le HTML monolithe de 1443 lignes).
  * L'arbre est consommé par :
- *  - `src/routes/(app)/aide/+page.svelte` (rendu : onglets / TOC / contenu / « sur cette page »)
+ *  - `src/routes/crm/aide/+page.svelte` (rendu : onglets / TOC / contenu / « sur cette page »)
  *  - `src/lib/aide/search.ts` (index full-text)
  *  - `src/lib/aide/checklist.ts` (état des cases de la checklist de démarrage)
  *
@@ -16,6 +16,8 @@
  * Registre éditorial : GOLDEN_STANDARD § 1 (CRM interne FilmPro, vocabulaire métier vitrage,
  * zéro jargon SaaS). Pas d'emoji, pas de gradient, pas de bordure pointillée.
  */
+
+import { APP_URL } from '$lib/app-url';
 
 /** Lien (interne `/...` ou externe `https://...`). */
 export type AideLink = { href: string; label: string; external?: boolean };
@@ -72,17 +74,17 @@ export type AideLevel = {
 // --------------------------------------------------------------------------
 
 export const KNOWN_ROUTES = [
-	'/',
-	'/contacts',
-	'/entreprises',
-	'/pipeline',
-	'/prospection',
-	'/signaux',
-	'/veille',
-	'/veille/themes',
-	'/reporting',
-	'/dashboard/couts',
-	'/aide',
+	'/crm',
+	'/crm/contacts',
+	'/crm/entreprises',
+	'/crm/pipeline',
+	'/crm/prospection',
+	'/crm/signaux',
+	'/crm/veille',
+	'/crm/veille/themes',
+	'/crm/reporting',
+	'/crm/dashboard/couts',
+	'/crm/aide',
 ] as const;
 
 // --------------------------------------------------------------------------
@@ -164,13 +166,13 @@ const niveau1: AideLevel = {
 					id: 'onboarding',
 					intro: 'Chaque étape ouvre l\'écran concerné dans un nouvel onglet.',
 					items: [
-						{ id: 'connexion', text: 'Me connecter via le lien e-mail et arriver sur le tableau de bord.', link: { href: '/', label: 'Ouvrir le tableau de bord' } },
-						{ id: 'tour', text: 'Ouvrir chacun des six écrans principaux une fois pour voir ce qu\'ils contiennent.', link: { href: '/contacts', label: 'Commencer par Contacts' } },
-						{ id: 'prospection', text: 'Lancer une recherche de prospection sur mon canton et regarder les leads remonter.', link: { href: '/prospection', label: 'Ouvrir la prospection' } },
-						{ id: 'qualif', text: 'Ouvrir un lead chaud dans le panneau de détail et le transférer dans le CRM.', link: { href: '/prospection', label: 'Voir les leads' } },
-						{ id: 'pipeline', text: 'Faire avancer une opportunité d\'une colonne du pipeline à la suivante.', link: { href: '/pipeline', label: 'Ouvrir le pipeline' } },
-						{ id: 'relance', text: 'Programmer une relance sur un contact et vérifier qu\'elle apparaît au tableau de bord.', link: { href: '/contacts', label: 'Ouvrir les contacts' } },
-						{ id: 'veille', text: 'Lire la dernière édition de la veille sectorielle de bout en bout.', link: { href: '/veille', label: 'Ouvrir la veille' } }
+						{ id: 'connexion', text: 'Me connecter via le lien e-mail et arriver sur le tableau de bord.', link: { href: '/crm', label: 'Ouvrir le tableau de bord' } },
+						{ id: 'tour', text: 'Ouvrir chacun des six écrans principaux une fois pour voir ce qu\'ils contiennent.', link: { href: '/crm/contacts', label: 'Commencer par Contacts' } },
+						{ id: 'prospection', text: 'Lancer une recherche de prospection sur mon canton et regarder les leads remonter.', link: { href: '/crm/prospection', label: 'Ouvrir la prospection' } },
+						{ id: 'qualif', text: 'Ouvrir un lead chaud dans le panneau de détail et le transférer dans le CRM.', link: { href: '/crm/prospection', label: 'Voir les leads' } },
+						{ id: 'pipeline', text: 'Faire avancer une opportunité d\'une colonne du pipeline à la suivante.', link: { href: '/crm/pipeline', label: 'Ouvrir le pipeline' } },
+						{ id: 'relance', text: 'Programmer une relance sur un contact et vérifier qu\'elle apparaît au tableau de bord.', link: { href: '/crm/contacts', label: 'Ouvrir les contacts' } },
+						{ id: 'veille', text: 'Lire la dernière édition de la veille sectorielle de bout en bout.', link: { href: '/crm/veille', label: 'Ouvrir la veille' } }
 					]
 				}
 			]
@@ -244,7 +246,7 @@ const niveau2: AideLevel = {
 				},
 				{ type: 'callout', tone: 'tip', title: 'Action clé', text: 'Vide la file de triage chaque matin. Un lead « plus tard » revient automatiquement après quelques jours.' },
 				{ type: 'callout', tone: 'warning', title: 'Piège', text: 'Si le tableau de bord paraît vide, ce n\'est pas un bug : il n\'y a peut-être rien à traiter. Vérifie la prospection pour réalimenter le haut de l\'entonnoir.' },
-				{ type: 'link', link: { href: '/', label: 'Ouvrir le tableau de bord' } }
+				{ type: 'link', link: { href: '/crm', label: 'Ouvrir le tableau de bord' } }
 			]
 		},
 		{
@@ -266,7 +268,7 @@ const niveau2: AideLevel = {
 				},
 				{ type: 'callout', tone: 'tip', title: 'Action clé', text: 'Après chaque appel, ouvre la fiche, note l\'essentiel en deux lignes, programme la prochaine relance. Trente secondes - sinon ça se perd.' },
 				{ type: 'callout', tone: 'warning', title: 'Piège', text: 'Ne crée pas un contact en double : utilise la recherche entreprise pour vérifier si la personne existe déjà sous une autre orthographe.' },
-				{ type: 'link', link: { href: '/contacts', label: 'Ouvrir les contacts' } }
+				{ type: 'link', link: { href: '/crm/contacts', label: 'Ouvrir les contacts' } }
 			]
 		},
 		{
@@ -286,7 +288,7 @@ const niveau2: AideLevel = {
 					]
 				},
 				{ type: 'callout', tone: 'note', title: 'Bon à savoir', text: 'Le CRM dédoublonne automatiquement à l\'import : une entreprise déjà connue par le registre du commerce n\'est pas recréée, le lead est juste rattaché.' },
-				{ type: 'link', link: { href: '/entreprises', label: 'Ouvrir les entreprises' } }
+				{ type: 'link', link: { href: '/crm/entreprises', label: 'Ouvrir les entreprises' } }
 			]
 		},
 		{
@@ -309,7 +311,7 @@ const niveau2: AideLevel = {
 				},
 				{ type: 'callout', tone: 'tip', title: 'Action clé', text: 'Tiens le pipeline à jour en temps réel, pas une fois par semaine. Une carte mal placée fausse la lecture de tout le tableau.' },
 				{ type: 'callout', tone: 'warning', title: 'Piège', text: 'Une opportunité « gagnée » ne veut pas dire « pose terminée » : c\'est la soumission acceptée. La pose réelle se suit sur la fiche entreprise.' },
-				{ type: 'link', link: { href: '/pipeline', label: 'Ouvrir le pipeline' } }
+				{ type: 'link', link: { href: '/crm/pipeline', label: 'Ouvrir le pipeline' } }
 			]
 		},
 		{
@@ -345,7 +347,7 @@ const niveau2: AideLevel = {
 				},
 				{ type: 'callout', tone: 'tip', title: 'Action clé', text: 'Sauvegarde une recherche utile (source + canton + critères) pour la rejouer plus tard d\'un clic. Google Places fait exception : source payante, non rejouable automatiquement.' },
 				{ type: 'callout', tone: 'warning', title: 'Piège', text: 'Le score est une aide à la priorisation, pas un verdict. Un « faible signal » peut être un excellent client si tu connais le contexte.' },
-				{ type: 'link', link: { href: '/prospection', label: 'Ouvrir la prospection' } }
+				{ type: 'link', link: { href: '/crm/prospection', label: 'Ouvrir la prospection' } }
 			]
 		},
 		{
@@ -365,7 +367,7 @@ const niveau2: AideLevel = {
 					]
 				},
 				{ type: 'callout', tone: 'note', title: 'Bon à savoir', text: 'Les signaux alimentent la veille hebdomadaire : ce que tu vois ici en vrac sera trié, vérifié et synthétisé dans l\'édition de la semaine.' },
-				{ type: 'link', link: { href: '/signaux', label: 'Ouvrir les signaux' } }
+				{ type: 'link', link: { href: '/crm/signaux', label: 'Ouvrir les signaux' } }
 			]
 		},
 		{
@@ -386,8 +388,8 @@ const niveau2: AideLevel = {
 					]
 				},
 				{ type: 'callout', tone: 'tip', title: 'Action clé', text: 'Bloque dix minutes en début de semaine pour lire la veille. C\'est le meilleur ratio temps / contexte du CRM.' },
-				{ type: 'link', link: { href: '/veille', label: 'Ouvrir la veille' } },
-				{ type: 'link', link: { href: '/veille/themes', label: 'Gérer les thèmes suivis' } }
+				{ type: 'link', link: { href: '/crm/veille', label: 'Ouvrir la veille' } },
+				{ type: 'link', link: { href: '/crm/veille/themes', label: 'Gérer les thèmes suivis' } }
 			]
 		},
 		{
@@ -406,7 +408,7 @@ const niveau2: AideLevel = {
 					]
 				},
 				{ type: 'callout', tone: 'note', title: 'Bon à savoir', text: 'Le reporting est descriptif, pas prédictif : il dit ce qui s\'est passé, pas ce qui va se passer. Les décisions restent humaines.' },
-				{ type: 'link', link: { href: '/reporting', label: 'Ouvrir le reporting' } }
+				{ type: 'link', link: { href: '/crm/reporting', label: 'Ouvrir le reporting' } }
 			]
 		},
 		{
@@ -424,7 +426,7 @@ const niveau2: AideLevel = {
 						'Croiser avec les quotas (par exemple le quota mensuel Google Places).'
 					]
 				},
-				{ type: 'link', link: { href: '/dashboard/couts', label: 'Ouvrir les coûts API' } }
+				{ type: 'link', link: { href: '/crm/dashboard/couts', label: 'Ouvrir les coûts API' } }
 			]
 		},
 		{
@@ -576,7 +578,7 @@ const niveau3: AideLevel = {
 			icon: 'cloud_upload',
 			lead: 'Du commit GitHub à la production Vercel, automatiquement.',
 			blocks: [
-				{ type: 'paragraph', text: 'Le déploiement est automatique : un push sur la branche principale du dépôt déclenche un build Vercel et une mise en production sur https://filmpro-crm.vercel.app. Les branches de fonctionnalité obtiennent une preview isolée. La racine du projet côté Vercel est le dossier CRM/.' },
+				{ type: 'paragraph', text: `Le déploiement est automatique : un push sur la branche principale du dépôt déclenche un build Vercel et une mise en production sur ${APP_URL}. Les branches de fonctionnalité obtiennent une preview isolée. La racine du projet côté Vercel est le dossier CRM/.` },
 				{
 					type: 'list',
 					items: [

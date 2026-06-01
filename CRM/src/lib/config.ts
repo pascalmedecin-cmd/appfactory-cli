@@ -1,12 +1,19 @@
 /**
- * Configuration specifique CRM FilmPro. Fichier statique, edite directement.
+ * Configuration specifique FilmPro (CRM + portail multi-outils). Fichier statique, edite directement.
  */
+
+/**
+ * Segment d'URL racine du CRM dans le portail FilmPro. Le CRM vit sous `/crm/*`
+ * (la home portail occupe `/`). Source unique : tout lien interne CRM se prefixe par CRM_BASE
+ * plutot que d'etre remplace string-by-string (revue specs portail 2026-06-01, point E).
+ */
+export const CRM_BASE = '/crm';
 
 export const config = {
 	app: {
-		name: 'FilmPro CRM',
+		name: 'FilmPro',
 		slug: 'filmpro',
-		description: 'CRM de gestion commerciale pour le secteur de la production audiovisuelle et construction',
+		description: 'Traitements pour vitrage (films + vernis) - Suisse romande',
 		locale: 'fr-CH',
 	},
 
@@ -194,62 +201,62 @@ export const config = {
 	navigation: {
 		primary: [
 			{
-				href: '/',
+				href: CRM_BASE,
 				label: 'Dashboard',
 				icon: 'dashboard',
 			},
 			{
-				href: '/contacts',
+				href: `${CRM_BASE}/contacts`,
 				label: 'Contacts',
 				icon: 'contacts',
 			},
 			{
-				href: '/entreprises',
+				href: `${CRM_BASE}/entreprises`,
 				label: 'Entreprises',
 				icon: 'business',
 			},
 			{
-				href: '/pipeline',
+				href: `${CRM_BASE}/pipeline`,
 				label: 'Pipeline',
 				icon: 'conversion_path',
 			},
 			{
-				href: '/prospection',
+				href: `${CRM_BASE}/prospection`,
 				label: 'Prospection',
 				icon: 'search',
 			},
 			{
-				href: '/signaux',
+				href: `${CRM_BASE}/signaux`,
 				label: 'Signaux',
 				icon: 'notifications',
 			},
 			{
-				href: '/veille',
+				href: `${CRM_BASE}/veille`,
 				label: 'Veille Sectorielle',
 				icon: 'radar',
 			},
 			{
-				href: '/reporting',
+				href: `${CRM_BASE}/reporting`,
 				label: 'Reporting',
 				icon: 'bar_chart',
 			},
 		],
 		secondary: [
 			{
-				href: '/log',
+				href: `${CRM_BASE}/log`,
 				label: 'Log',
 				icon: 'bug_report',
 				external: true,
 				desktopOnly: true,
 			},
 			{
-				href: '/aide',
+				href: `${CRM_BASE}/aide`,
 				label: 'Aide',
 				icon: 'help_outline',
 				external: true,
 			},
 			{
-				href: '/dashboard/couts',
+				href: `${CRM_BASE}/dashboard/couts`,
 				label: 'Coûts API',
 				icon: 'payments',
 			},

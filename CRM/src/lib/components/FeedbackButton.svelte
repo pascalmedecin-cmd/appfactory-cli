@@ -7,12 +7,13 @@
 	import { trapFocus } from '$lib/actions/trapFocus';
 	import FeedbackForm from '$lib/components/FeedbackForm.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import { CRM_BASE } from '$lib/config';
 
 	let open = $state(false);
 
 	const hidden = $derived.by(() => {
 		const path = page.url.pathname;
-		return path === '/log' || path.startsWith('/login');
+		return path === `${CRM_BASE}/log` || path.startsWith('/login');
 	});
 
 	function handleKeydown(e: KeyboardEvent) {

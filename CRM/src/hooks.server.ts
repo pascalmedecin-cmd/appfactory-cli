@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '$lib/server/supabase';
 import { isEmailAllowed, parseEnvList } from '$lib/server/auth';
 import { createRateLimiter } from '$lib/server/rate-limiter';
 import { isRateLimitedPath } from '$lib/server/rate-limit-paths';
+import { CRM_BASE } from '$lib/config';
 import { json, redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { env } from '$env/dynamic/private';
@@ -16,7 +17,34 @@ if (import.meta.hot) {
 	import.meta.hot.dispose(() => rateLimiter.dispose());
 }
 
+// Anciennes URLs internes du CRM (favoris des fondateurs) avant la reorg portail
+// (2026-06-01) : le CRM est passe sous /crm. Redirects 308 (preservent la methode)
+// vers /crm/* pour ne pas casser les favoris. `/login`, `/auth/*`, `/api/*` et `/`
+// (= home portail) ne sont volontairement PAS dans la liste.
+const CRM_LEGACY_PREFIXES = [
+	'/contacts',
+	'/entreprises',
+	'/pipeline',
+	'/prospection',
+	'/signaux',
+	'/veille',
+	'/reporting',
+	'/aide',
+	'/log',
+	// Seul /dashboard/couts existait sous l'ancien group (le tableau de bord etait a `/`,
+	// pas `/dashboard`). On ne capture donc pas le bare `/dashboard` (jamais une page).
+	'/dashboard/couts'
+];
+
 const baseHandle: Handle = async ({ event, resolve }) => {
+	// Redirects 308 des anciennes URLs internes -> /crm/* (reorg portail 2026-06-01).
+	// Match exact OU prefixe suivi de '/' (evite que '/login' matche '/log').
+	const path = event.url.pathname;
+	const legacy = CRM_LEGACY_PREFIXES.find((pre) => path === pre || path.startsWith(pre + '/'));
+	if (legacy) {
+		throw redirect(308, `${CRM_BASE}${path}${event.url.search}`);
+	}
+
 	// Rate limiting (10 req/min/IP) — liste des chemins extraite dans un helper pur testable.
 	if (isRateLimitedPath(event.url.pathname, event.request.method)) {
 		const ip = event.getClientAddress();
@@ -73,7 +101,8 @@ const baseHandle: Handle = async ({ event, resolve }) => {
 	}
 
 	if (session && event.url.pathname === '/login') {
-		throw redirect(303, '/');
+		// Post-login : entree dans le CRM (pas la home portail). AC-015.
+		throw redirect(303, CRM_BASE);
 	}
 
 	const response = await resolve(event, {

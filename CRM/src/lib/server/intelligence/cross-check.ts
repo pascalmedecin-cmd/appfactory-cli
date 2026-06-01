@@ -21,8 +21,7 @@ const CROSS_CHECK_MODEL = 'claude-sonnet-4-6';
 const CROSS_CHECK_MAX_TOKENS = 1500;
 const PAGE_FETCH_TIMEOUT_MS = 12000;
 const PAGE_BODY_MAX_BYTES = 200 * 1024; // 200KB
-const USER_AGENT =
-	'Mozilla/5.0 (compatible; FilmProBot/1.0; +https://filmpro-crm.vercel.app)';
+const USER_AGENT = `Mozilla/5.0 (compatible; FilmProBot/1.0; +${process.env.PUBLIC_APP_URL || 'https://filmpro-crm.vercel.app'})`;
 
 export interface CrossCheckDivergence {
 	quoted: string;

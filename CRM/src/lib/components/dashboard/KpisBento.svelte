@@ -57,7 +57,7 @@
 	</a>
 
 	<!-- Split : marchés ouverts -->
-	<a class="kpi-card kpi-split" href="/signaux">
+	<a class="kpi-card kpi-split" href="/crm/signaux">
 		<div class="kpi-kicker">
 			<Icon name="radar" size={13} />
 			Signaux ouverts
@@ -71,7 +71,7 @@
 	</a>
 
 	<!-- Split : relances -->
-	<a class="kpi-card kpi-split" href="/pipeline">
+	<a class="kpi-card kpi-split" href="/crm/pipeline">
 		<div class="kpi-kicker">
 			<Icon name="schedule" size={13} />
 			Relances dues

@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import { sanitizeForLog } from '$lib/server/intelligence/sanitize';
 import { SESSION_MAX_AGE_S } from '$lib/utils/time-constants';
+import { CRM_BASE } from '$lib/config';
 import type { RequestHandler } from './$types';
 
 // Audit 360 M-03 : le message d'erreur Supabase est repris dans l'URL `?detail=...`
@@ -45,5 +46,6 @@ export const GET: RequestHandler = async ({ url, locals, cookies }) => {
 		});
 	}
 
-	throw redirect(303, '/');
+	// Post-login : entree dans le CRM (pas la home portail). AC-015.
+	throw redirect(303, CRM_BASE);
 };

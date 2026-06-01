@@ -2,7 +2,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import { config } from '$lib/config';
+	import { config, CRM_BASE } from '$lib/config';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
@@ -35,7 +35,8 @@
 			sentEmail = form.email ?? '';
 		}
 		if (form?.verified) {
-			goto('/');
+			// Post-login : entree dans le CRM (pas la home portail). AC-015.
+			goto(CRM_BASE);
 		}
 	});
 

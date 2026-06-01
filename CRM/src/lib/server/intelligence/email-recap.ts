@@ -20,7 +20,7 @@ import type { CostSummary, CostEntry } from './cost-tracker';
 import type { EmailRecapConfig } from './deps';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
-const CRM_URL = 'https://filmpro-crm.vercel.app';
+const CRM_URL = process.env.PUBLIC_APP_URL || 'https://filmpro-crm.vercel.app';
 
 export interface SendRecapSuccess {
 	report: IntelligenceReport;
@@ -104,7 +104,7 @@ function renderSuccessHtml(data: SendRecapSuccess): string {
 		<div style="padding:20px;">
 			<div style="margin-bottom:16px;">
 				<span style="color:#16a34a;font-weight:600;">✅ Veille publiée</span>
- : <a href="${CRM_URL}/veille" style="color:#2563eb;">Ouvrir dans le CRM</a>
+ : <a href="${CRM_URL}/crm/veille" style="color:#2563eb;">Ouvrir dans le CRM</a>
 			</div>
 
 			<h3 style="margin:20px 0 8px;font-size:14px;color:#475569;text-transform:uppercase;letter-spacing:.04em;">Métriques</h3>
@@ -154,7 +154,7 @@ function renderSuccessText(data: SendRecapSuccess): string {
 	const lines: string[] = [];
 	lines.push(`FilmPro Veille : W${weekLabel}`);
 	lines.push(`=== Veille publiée ===`);
-	lines.push(`URL : ${CRM_URL}/veille`);
+	lines.push(`URL : ${CRM_URL}/crm/veille`);
 	lines.push('');
 	lines.push(`Items générés : ${itemsCount}`);
 	lines.push('');
@@ -195,7 +195,7 @@ function renderSparseHtml(data: SendRecapSuccess): string {
 		<div style="padding:20px;">
 			<div style="margin-bottom:16px;">
 				<span style="color:#9a3412;font-weight:600;">⚠️ Volume anormalement bas (&lt; 2 items)</span>
-				 : <a href="${CRM_URL}/veille" style="color:#2563eb;">Ouvrir dans le CRM</a>
+				 : <a href="${CRM_URL}/crm/veille" style="color:#2563eb;">Ouvrir dans le CRM</a>
 			</div>
 
 			<p style="margin:0 0 12px;color:#475569;font-size:14px;line-height:1.5;">
@@ -233,7 +233,7 @@ function renderSparseText(data: SendRecapSuccess): string {
 	const lines: string[] = [];
 	lines.push(`[ALERTE] Veille FilmPro W${weekLabel} : semaine creuse (${itemsCount} item${itemsCount > 1 ? 's' : ''})`);
 	lines.push('');
-	lines.push(`URL : ${CRM_URL}/veille`);
+	lines.push(`URL : ${CRM_URL}/crm/veille`);
 	lines.push('');
 	lines.push(`La génération automatique n'a retenu que ${itemsCount} item${itemsCount > 1 ? 's' : ''} cette semaine.`);
 	lines.push(`À investiguer : périmètre trop strict, fenêtre temporelle insuffisante, ou semaine réellement creuse.`);

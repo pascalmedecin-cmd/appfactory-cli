@@ -13,12 +13,15 @@ describe('isRateLimitedPath', () => {
 		expect(isRateLimitedPath('/api/visits', 'POST')).toBe(true);
 	});
 
-	it('login/log/signaux uniquement en POST', () => {
+	it('login/crm-log/crm-signaux uniquement en POST (sous /crm depuis reorg portail)', () => {
 		expect(isRateLimitedPath('/login', 'POST')).toBe(true);
 		expect(isRateLimitedPath('/login', 'GET')).toBe(false);
-		expect(isRateLimitedPath('/log/x', 'POST')).toBe(true);
-		expect(isRateLimitedPath('/signaux', 'POST')).toBe(true);
-		expect(isRateLimitedPath('/signaux', 'GET')).toBe(false);
+		expect(isRateLimitedPath('/crm/log/x', 'POST')).toBe(true);
+		expect(isRateLimitedPath('/crm/signaux', 'POST')).toBe(true);
+		expect(isRateLimitedPath('/crm/signaux', 'GET')).toBe(false);
+		// Les anciens chemins (hors /crm) ne sont plus rate-limités (devenus des redirects 308).
+		expect(isRateLimitedPath('/signaux', 'POST')).toBe(false);
+		expect(isRateLimitedPath('/log/x', 'POST')).toBe(false);
 	});
 
 	it('ne rate-limite pas la recherche (GET léger) ni les chemins hors liste', () => {

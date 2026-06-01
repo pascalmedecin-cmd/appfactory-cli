@@ -144,7 +144,7 @@
 			<p class="text-sm font-medium text-text mt-0.5 truncate" title={opp.titre}>{opp.titre}</p>
 		</div>
 		<a
-			href="/pipeline"
+			href="/crm/pipeline"
 			class="text-xs text-primary hover:text-primary-hover whitespace-nowrap"
 			aria-label="Ouvrir le pipeline complet"
 		>

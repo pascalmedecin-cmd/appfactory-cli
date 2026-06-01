@@ -213,35 +213,39 @@ describe('buildPageOptions / pagesForUrl (spec § 8.5)', () => {
 	it('buildPageOptions inclut les pages primaires + secondaires + fallback', () => {
 		const opts = buildPageOptions();
 		// Au moins les pages connues du CRM doivent être présentes.
-		expect(opts.some((o) => o.href === '/contacts')).toBe(true);
-		expect(opts.some((o) => o.href === '/pipeline')).toBe(true);
-		expect(opts.some((o) => o.href === '/aide')).toBe(true);
+		expect(opts.some((o) => o.href === '/crm/contacts')).toBe(true);
+		expect(opts.some((o) => o.href === '/crm/pipeline')).toBe(true);
+		expect(opts.some((o) => o.href === '/crm/aide')).toBe(true);
 		// Le fallback est en dernière position.
 		expect(opts[opts.length - 1]).toEqual(FALLBACK_PAGE);
 	});
 
 	it('buildPageOptions exclut /log (qui est l\'écran de saisie lui-même)', () => {
 		const opts = buildPageOptions();
-		expect(opts.some((o) => o.href === '/log')).toBe(false);
+		expect(opts.some((o) => o.href === '/crm/log')).toBe(false);
 	});
 
 	it('pagesForUrl(/contacts) → option Contacts', () => {
-		const p = pagesForUrl('/contacts');
-		expect(p.href).toBe('/contacts');
+		const p = pagesForUrl('/crm/contacts');
+		expect(p.href).toBe('/crm/contacts');
 		expect(p.label).toBe('Contacts');
 	});
 
 	it('pagesForUrl(/contacts/abc/123) matche /contacts par préfixe', () => {
-		const p = pagesForUrl('/contacts/abc/123');
-		expect(p.href).toBe('/contacts');
+		const p = pagesForUrl('/crm/contacts/abc/123');
+		expect(p.href).toBe('/crm/contacts');
 	});
 
-	it('pagesForUrl(/) → option Dashboard, sans matcher tout par accident', () => {
-		const p = pagesForUrl('/');
-		expect(p.href).toBe('/');
-		// vérif anti-régression : / ne match pas /pipeline
-		const p2 = pagesForUrl('/pipeline');
-		expect(p2.href).toBe('/pipeline');
+	it('pagesForUrl(/crm) → option Dashboard, sans matcher tout par accident', () => {
+		const p = pagesForUrl('/crm');
+		expect(p.href).toBe('/crm');
+		// vérif anti-régression : /crm (dashboard) ne match pas /crm/pipeline
+		const p2 = pagesForUrl('/crm/pipeline');
+		expect(p2.href).toBe('/crm/pipeline');
+	});
+
+	it('pagesForUrl(/) → fallback (la home portail n\'est pas une page CRM)', () => {
+		expect(pagesForUrl('/')).toEqual(FALLBACK_PAGE);
 	});
 
 	it('pagesForUrl(/inconnu) → fallback Autre / hors CRM', () => {
@@ -251,8 +255,8 @@ describe('buildPageOptions / pagesForUrl (spec § 8.5)', () => {
 	});
 
 	it('pagesForUrl ignore les query params et hash', () => {
-		expect(pagesForUrl('/pipeline?view=mois').href).toBe('/pipeline');
-		expect(pagesForUrl('/pipeline#section').href).toBe('/pipeline');
+		expect(pagesForUrl('/crm/pipeline?view=mois').href).toBe('/crm/pipeline');
+		expect(pagesForUrl('/crm/pipeline#section').href).toBe('/crm/pipeline');
 	});
 });
 

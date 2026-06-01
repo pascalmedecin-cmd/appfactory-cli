@@ -3,7 +3,7 @@
 // « Autre / hors CRM ». Permet de pré-remplir le dropdown « Page concernée » du formulaire
 // à partir de l'URL active.
 
-import { config } from '$lib/config';
+import { config, CRM_BASE } from '$lib/config';
 
 export interface FeedbackPageOption {
 	href: string;
@@ -20,7 +20,7 @@ export function buildPageOptions(): FeedbackPageOption[] {
 	const secondary = config.navigation.secondary
 		// /log lui-même n'a pas de sens comme « page concernée » d'un retour, on l'exclut.
 		// (l'entrée existe pour le menu, mais l'utilisateur signalera plutôt /log via Autre).
-		.filter((item) => item.href !== '/log')
+		.filter((item) => item.href !== `${CRM_BASE}/log`)
 		.map((item) => ({ href: item.href, label: item.label }));
 	return [...primary, ...secondary, FALLBACK_PAGE];
 }
@@ -36,8 +36,10 @@ export function pagesForUrl(pathname: string): FeedbackPageOption {
 		.filter((opt) => opt.href !== FALLBACK_PAGE.href)
 		.sort((a, b) => b.href.length - a.href.length);
 	for (const opt of ranked) {
-		if (opt.href === '/') {
-			if (cleaned === '/') return opt;
+		// Le dashboard (= CRM_BASE) ne matche qu'en exact : son prefixe matcherait
+		// sinon toutes les pages /crm/* (le tri par longueur le couvre, ceinture + bretelles).
+		if (opt.href === CRM_BASE) {
+			if (cleaned === CRM_BASE) return opt;
 			continue;
 		}
 		if (cleaned === opt.href || cleaned.startsWith(opt.href + '/')) {

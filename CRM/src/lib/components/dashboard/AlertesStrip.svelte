@@ -39,7 +39,7 @@
 		</div>
 		<div class="alerts-strip">
 			{#if showSignaux}
-				<a href="/signaux" class="alert-card alert-info">
+				<a href="/crm/signaux" class="alert-card alert-info">
 					<span class="alert-icon">
 						<Icon name="radar" size={18} strokeWidth={1.75} />
 					</span>
@@ -57,7 +57,7 @@
 				</a>
 			{/if}
 			{#if showAlertes}
-				<a href="/prospection" class="alert-card alert-warn">
+				<a href="/crm/prospection" class="alert-card alert-warn">
 					<span class="alert-icon">
 						<Icon name="notifications_active" size={18} strokeWidth={1.75} />
 					</span>

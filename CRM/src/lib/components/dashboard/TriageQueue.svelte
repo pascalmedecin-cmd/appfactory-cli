@@ -122,7 +122,7 @@
 	}
 
 	function viewQueueAll() {
-		goto('/prospection?statut=nouveau', { invalidateAll: true });
+		goto('/crm/prospection?statut=nouveau', { invalidateAll: true });
 	}
 </script>
 

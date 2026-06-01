@@ -3,7 +3,7 @@
  *
  * Factorise ~320 lignes de CSS dupliqué cross-pages (.page / .page-actions / .btn / .fab /
  * .filter-select / .content) entre /signaux, /pipeline, /contacts, /entreprises.
- * Importé une fois dans src/routes/(app)/+layout.svelte (donc global au shell app).
+ * Importé une fois dans src/routes/crm/+layout.svelte (donc global au shell app).
  * Toutes les valeurs viennent des tokens design system (app.css @theme) — cf. GOLDEN § 5.1.
  *
  * Classes préfixées `ws-` pour éviter toute collision avec les styles scopés des autres pages.
