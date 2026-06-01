@@ -34,14 +34,24 @@
 	let withGps = $state(false);
 	let saving = $state(false);
 	let saveError = $state<string | null>(null);
+	let confirmWithoutFailed = $state(false);
 
 	const MAX_PHOTOS = 10;
 	const NOTE_MAX = 2000;
 
 	const noteCount = $derived(note.length);
 	const canSave = $derived(resultat !== null && !saving);
+	const failedCount = $derived(photos.filter((p) => p.state === 'echec').length);
 
 	let fileInput: HTMLInputElement;
+	// Promesses d'upload en vol, par localId : permet d'attendre que les photos
+	// soient résolues (envoyé/échec) avant de quitter l'écran (BUG-1 / AC-011).
+	const uploads = new Map<string, Promise<void>>();
+
+	// Révoque les blob URLs au démontage (BUG-2 : fuite mémoire sur PWA terrain).
+	$effect(() => () => {
+		for (const p of photos) URL.revokeObjectURL(p.previewUrl);
+	});
 
 	const STATE_META: Record<PhotoItem['state'], { icon: string; label: string; cls: string }> = {
 		envoi: { icon: 'progress_activity', label: 'Envoi…', cls: 'st-envoi' },
@@ -49,23 +59,28 @@
 		echec: { icon: 'retry', label: 'Réessayer', cls: 'st-echec' },
 	};
 
-	async function uploadPhoto(item: PhotoItem) {
-		const fd = new FormData();
-		fd.append('file', item.file);
-		try {
-			const res = await fetch(`/api/photos?entreprise_id=${entrepriseId}`, {
-				method: 'POST',
-				body: fd,
-			});
-			const body = await res.json().catch(() => ({}));
-			if (res.ok && body.photo) {
-				updatePhoto(item.localId, { state: 'envoye', serverId: body.photo.id });
-			} else {
+	function uploadPhoto(item: PhotoItem) {
+		const task = (async () => {
+			const fd = new FormData();
+			fd.append('file', item.file);
+			try {
+				const res = await fetch(`/api/photos?entreprise_id=${entrepriseId}`, {
+					method: 'POST',
+					body: fd,
+				});
+				const body = await res.json().catch(() => ({}));
+				if (res.ok && body.photo) {
+					updatePhoto(item.localId, { state: 'envoye', serverId: body.photo.id });
+				} else {
+					updatePhoto(item.localId, { state: 'echec' });
+				}
+			} catch {
 				updatePhoto(item.localId, { state: 'echec' });
+			} finally {
+				uploads.delete(item.localId);
 			}
-		} catch {
-			updatePhoto(item.localId, { state: 'echec' });
-		}
+		})();
+		uploads.set(item.localId, task);
 	}
 
 	function updatePhoto(localId: string, patch: Partial<PhotoItem>) {
@@ -78,7 +93,7 @@
 		for (const file of files) {
 			if (photos.length >= MAX_PHOTOS) break;
 			const item: PhotoItem = {
-				localId: `${file.name}-${file.size}-${photos.length}-${file.lastModified}`,
+				localId: crypto.randomUUID(), // BUG-4 : id réellement unique (captures iOS homonymes)
 				previewUrl: URL.createObjectURL(file),
 				state: 'envoi',
 				file,
@@ -113,10 +128,27 @@
 		});
 	}
 
+	let photoWarning = $state(false);
+
+	function saveWithoutFailed() {
+		confirmWithoutFailed = true;
+		save();
+	}
+
 	async function save() {
 		if (!canSave || resultat === null) return;
 		saving = true;
 		saveError = null;
+		// BUG-1 / AC-011 : attendre la résolution des uploads en vol avant de quitter,
+		// sinon les photos en cours sont abandonnées au démontage (perte silencieuse).
+		if (uploads.size > 0) await Promise.allSettled([...uploads.values()]);
+		// Photos en échec : ne JAMAIS partir en silence. On demande une confirmation
+		// explicite (« Enregistrer sans »), la note et les photos restent à l'écran.
+		if (failedCount > 0 && !confirmWithoutFailed) {
+			saving = false;
+			photoWarning = true;
+			return;
+		}
 		const gps = await captureGps();
 		const payload: Record<string, unknown> = { entreprise_id: entrepriseId, resultat };
 		if (note.trim()) payload.note = note.trim();
@@ -237,6 +269,18 @@
 			<input type="checkbox" bind:checked={withGps} />
 			<span class="text-base text-[var(--color-text-body)]">Enregistrer ma position (optionnel)</span>
 		</label>
+
+		{#if photoWarning && failedCount > 0}
+			<div class="warn" role="alert">
+				<p>
+					{failedCount === 1 ? '1 photo non envoyée.' : `${failedCount} photos non envoyées.`}
+					Touchez la vignette pour réessayer, ou enregistrez sans.
+				</p>
+				<button type="button" class="warn-btn" onclick={saveWithoutFailed}>
+					Enregistrer sans ces photos
+				</button>
+			</div>
+		{/if}
 
 		{#if saveError}
 			<p class="err" role="alert">{saveError}</p>
@@ -443,6 +487,31 @@
 		border: 1px solid var(--color-danger);
 		border-radius: var(--radius-md);
 		padding: 10px 12px;
+	}
+	.warn {
+		display: flex;
+		flex-direction: column;
+		gap: 10px;
+		font-size: 16px;
+		color: var(--color-text-body);
+		background: var(--color-warning-light);
+		border: 1px solid var(--color-warning);
+		border-radius: var(--radius-md);
+		padding: 12px;
+	}
+	.warn p {
+		margin: 0;
+	}
+	.warn-btn {
+		align-self: flex-start;
+		min-height: 44px;
+		padding: 0 16px;
+		border-radius: var(--radius-md);
+		background: var(--color-surface);
+		border: 1px solid var(--color-border-input);
+		color: var(--color-text);
+		font-weight: 600;
+		font-size: 16px;
 	}
 	.ov-footer {
 		flex: 0 0 auto;

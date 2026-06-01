@@ -18,6 +18,11 @@
 
 	let overlay = $state<'none' | 'compte-rendu' | 'contact'>('none');
 	let toast = $state<string | null>(null);
+	let toastTimer: ReturnType<typeof setTimeout> | null = null;
+
+	$effect(() => () => {
+		if (toastTimer) clearTimeout(toastTimer);
+	});
 
 	function openCR() {
 		overlay = 'compte-rendu';
@@ -37,7 +42,8 @@
 		overlay = 'none';
 		toast = 'Contact à valider au bureau';
 		await invalidateAll();
-		setTimeout(() => (toast = null), 3000);
+		if (toastTimer) clearTimeout(toastTimer);
+		toastTimer = setTimeout(() => (toast = null), 3000);
 	}
 
 	function visitLabel(r: string | null): string {

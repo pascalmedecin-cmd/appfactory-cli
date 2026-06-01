@@ -11,25 +11,33 @@
 	let loading = $state(false);
 	let searched = $state(false);
 	let timer: ReturnType<typeof setTimeout> | null = null;
+	// Jeton de génération : ignore une réponse arrivée dans le désordre (BUG-3).
+	let gen = 0;
 
 	async function runSearch(term: string) {
 		const trimmed = term.trim();
 		if (trimmed.length < 2) {
+			gen++; // invalide toute requête en vol
 			results = [];
 			searched = false;
 			loading = false;
 			return;
 		}
+		const myGen = ++gen;
 		loading = true;
 		try {
 			const res = await fetch(`/api/entreprises/search?q=${encodeURIComponent(trimmed)}`);
 			const body = await res.json();
+			if (myGen !== gen) return; // une saisie plus récente a démarré → on jette
 			results = res.ok ? (body.results ?? []) : [];
 		} catch {
+			if (myGen !== gen) return;
 			results = [];
 		} finally {
-			loading = false;
-			searched = true;
+			if (myGen === gen) {
+				loading = false;
+				searched = true;
+			}
 		}
 	}
 
@@ -45,6 +53,11 @@
 		searched = false;
 		if (timer) clearTimeout(timer);
 	}
+
+	// Nettoie le timer de debounce au démontage.
+	$effect(() => () => {
+		if (timer) clearTimeout(timer);
+	});
 </script>
 
 <MobileShell title="Rechercher">

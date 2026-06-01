@@ -30,8 +30,14 @@
 	}
 
 	function handleBack() {
-		if (backHref) goto(backHref);
-		else if (typeof history !== 'undefined') history.back();
+		if (backHref) {
+			goto(backHref);
+		} else if (typeof history !== 'undefined' && history.length > 1) {
+			history.back();
+		} else {
+			// Deep-link sans historique : ne pas sortir de la PWA, retomber sur l'accueil.
+			goto('/terrain');
+		}
 	}
 </script>
 
