@@ -3,7 +3,7 @@
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import { applyAction, deserialize } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
-	import { config } from '$lib/config';
+	import { config, CRM_BASE } from '$lib/config';
 	import { toasts } from '$lib/stores/toast';
 	import type { ActionResult } from '@sveltejs/kit';
 
@@ -84,7 +84,7 @@
 			const data = new FormData();
 			data.set('id', opp.id);
 			data.set('etape_pipeline', target);
-			const response = await fetch('/pipeline?/move', { method: 'POST', body: data });
+			const response = await fetch(`${CRM_BASE}/pipeline?/move`, { method: 'POST', body: data });
 			const result: ActionResult = deserialize(await response.text());
 			if (result.type === 'success') {
 				toasts.success(`Pipeline avancé à ${nextStage.label}`);
@@ -112,7 +112,7 @@
 		const data = new FormData(form);
 		savingNextAction = true;
 		try {
-			const response = await fetch('/pipeline?/updateNextAction', { method: 'POST', body: data });
+			const response = await fetch(`${CRM_BASE}/pipeline?/updateNextAction`, { method: 'POST', body: data });
 			const result: ActionResult = deserialize(await response.text());
 			if (result.type === 'success') {
 				toasts.success('Prochaine action mise à jour');
@@ -240,7 +240,7 @@
 	icon="event"
 	maxWidth="max-w-md"
 >
-	<form method="POST" action="/pipeline?/updateNextAction" onsubmit={saveNextAction}>
+	<form method="POST" action={`${CRM_BASE}/pipeline?/updateNextAction`} onsubmit={saveNextAction}>
 		<input type="hidden" name="id" value={opp.id} />
 		<div class="space-y-4">
 			<div class="space-y-1">

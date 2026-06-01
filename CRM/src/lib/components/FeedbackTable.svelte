@@ -6,6 +6,7 @@
 	import { enhance } from '$app/forms';
 	import { toasts } from '$lib/stores/toast';
 	import Icon from '$lib/components/Icon.svelte';
+	import { CRM_BASE } from '$lib/config';
 	import {
 		TYPE_LABELS,
 		SEVERITY_LABELS,
@@ -143,7 +144,7 @@
 													{#each FEEDBACK_STATUSES as st}
 														<form
 															method="POST"
-															action="/log?/updateStatus"
+															action={`${CRM_BASE}/log?/updateStatus`}
 															use:enhance={() => {
 																return async ({ result, update }) => {
 																	if (result.type === 'failure') {
@@ -172,7 +173,7 @@
 
 											<form
 												method="POST"
-												action="/log?/updateAdminNotes"
+												action={`${CRM_BASE}/log?/updateAdminNotes`}
 												use:enhance={() => {
 													return async ({ result, update }) => {
 														if (result.type === 'success') {

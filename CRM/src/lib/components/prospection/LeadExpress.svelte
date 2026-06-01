@@ -4,6 +4,7 @@
 	import { applyAction, deserialize } from '$app/forms';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { toasts } from '$lib/stores/toast';
+	import { CRM_BASE } from '$lib/config';
 	import type { ActionResult } from '@sveltejs/kit';
 
 	let {
@@ -42,7 +43,7 @@
 	async function handleResolve(leadId: string) {
 		open = false;
 		if (redirectAfterCreate) {
-			await goto(`/prospection?slideOut=${encodeURIComponent(leadId)}`, { invalidateAll: true });
+			await goto(`${CRM_BASE}/prospection?slideOut=${encodeURIComponent(leadId)}`, { invalidateAll: true });
 			toasts.success('Prospect existant ouvert');
 		} else {
 			toasts.success('Prospect existant ouvert');
@@ -60,7 +61,7 @@
 			data.set('telephone', telephone);
 			data.set('notes', notes);
 			if (force) data.set('force_create', '1');
-			const response = await fetch('/prospection?/createExpress', { method: 'POST', body: data });
+			const response = await fetch(`${CRM_BASE}/prospection?/createExpress`, { method: 'POST', body: data });
 			const result: ActionResult = deserialize(await response.text());
 			if (result.type === 'success') {
 				const payload = (result.data ?? {}) as { id?: string; duplicate?: boolean };
@@ -68,7 +69,7 @@
 				const wasDup = payload.duplicate === true;
 				open = false;
 				if (redirectAfterCreate && leadId) {
-					await goto(`/prospection?slideOut=${encodeURIComponent(leadId)}`, { invalidateAll: true });
+					await goto(`${CRM_BASE}/prospection?slideOut=${encodeURIComponent(leadId)}`, { invalidateAll: true });
 					toasts.success(wasDup ? 'Prospect existant ouvert' : 'Lead express créé');
 				} else {
 					toasts.success(wasDup ? 'Prospect déjà présent' : 'Lead express créé');
@@ -180,7 +181,7 @@
 	{:else}
 		<form
 			method="POST"
-			action="/prospection?/createExpress"
+			action={`${CRM_BASE}/prospection?/createExpress`}
 			onsubmit={handleSubmit}
 		>
 			<div class="space-y-4">

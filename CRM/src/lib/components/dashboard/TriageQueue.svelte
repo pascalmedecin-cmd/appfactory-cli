@@ -16,7 +16,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { toasts } from '$lib/stores/toast';
 	import { sourceLabel, formatLeadContext } from '$lib/prospection-utils';
-	import { config } from '$lib/config';
+	import { config, CRM_BASE } from '$lib/config';
 	import type { TriageAction } from '$lib/api/triage-actions';
 
 	type Lead = {
@@ -95,7 +95,7 @@
 				onLeadOpen(lead);
 				await invalidateAll();
 			} else {
-				goto(`/prospection?slideOut=${encodeURIComponent(lead.id)}`, { invalidateAll: true, keepFocus: false });
+				goto(`${CRM_BASE}/prospection?slideOut=${encodeURIComponent(lead.id)}`, { invalidateAll: true, keepFocus: false });
 			}
 		}
 	}
@@ -117,7 +117,7 @@
 		if (onLeadOpen) {
 			onLeadOpen(lead);
 		} else {
-			goto(`/prospection?slideOut=${encodeURIComponent(lead.id)}`, { invalidateAll: false, keepFocus: false });
+			goto(`${CRM_BASE}/prospection?slideOut=${encodeURIComponent(lead.id)}`, { invalidateAll: false, keepFocus: false });
 		}
 	}
 

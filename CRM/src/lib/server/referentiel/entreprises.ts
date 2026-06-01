@@ -51,13 +51,12 @@ export async function lookupEntrepriseByName(
 	trimmed: string,
 	normalized: string
 ): Promise<string | null> {
-	// La RPC (migration 010) n'est pas encore dans les types générés (cast `as never`, tracé V3a regen).
-	const { data: candidates } = await supabase.rpc(
-		'entreprises_lookup_by_name' as never,
-		{ p_query: escapeLikePattern(trimmed) } as never
-	);
+	// RPC `entreprises_lookup_by_name` (migration 010) typée dans database.types.ts.
+	const { data: candidates } = await supabase.rpc('entreprises_lookup_by_name', {
+		p_query: escapeLikePattern(trimmed)
+	});
 
-	const rows = (candidates ?? []) as Array<{ id: string; raison_sociale: string }>;
+	const rows = candidates ?? [];
 	const match = rows.find((e) => normalizeCompanyName(e.raison_sociale) === normalized);
 	return match?.id ?? null;
 }

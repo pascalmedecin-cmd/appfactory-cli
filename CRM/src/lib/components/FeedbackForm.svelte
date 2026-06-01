@@ -9,6 +9,7 @@
 	import { FEEDBACK_TYPES, FEEDBACK_SEVERITIES, TYPE_LABELS, SEVERITY_LABELS, TYPE_ICONS } from '$lib/feedback/options';
 	import { buildPageOptions, pagesForUrl } from '$lib/feedback/pages';
 	import { errorCapture } from '$lib/feedback/error-capture';
+	import { CRM_BASE } from '$lib/config';
 	import type { FeedbackType, FeedbackSeverity, FeedbackContext } from '$lib/feedback/types';
 	import Icon from '$lib/components/Icon.svelte';
 
@@ -68,7 +69,7 @@
 
 <form
 	method="POST"
-	action="/log?/create"
+	action={`${CRM_BASE}/log?/create`}
 	class="feedback-form"
 	use:enhance={() => {
 		submitting = true;

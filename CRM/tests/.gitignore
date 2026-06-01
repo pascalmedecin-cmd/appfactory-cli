@@ -1,1 +1,3 @@
 .auth.json
+.auth.local.json
+.auth*.json

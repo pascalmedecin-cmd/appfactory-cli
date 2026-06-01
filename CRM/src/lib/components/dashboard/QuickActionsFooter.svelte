@@ -7,6 +7,7 @@
 	 * subtil enough pour ne pas concurrencer le KPI vedette.
 	 */
 	import Icon from '$lib/components/Icon.svelte';
+	import { CRM_BASE } from '$lib/config';
 
 	type Action = {
 		href: string;
@@ -16,10 +17,10 @@
 	};
 
 	const actions: Action[] = [
-		{ href: '/contacts', icon: 'person_add', label: 'Nouveau contact', sub: 'Saisie rapide' },
-		{ href: '/entreprises', icon: 'domain_add', label: 'Nouvelle entreprise', sub: 'Import Zefix' },
-		{ href: '/pipeline', icon: 'add_circle', label: 'Nouvelle opportunité', sub: 'Pipeline' },
-		{ href: '/signaux', icon: 'radar', label: 'Voir les signaux', sub: 'Marchés et créations' },
+		{ href: `${CRM_BASE}/contacts`, icon: 'person_add', label: 'Nouveau contact', sub: 'Saisie rapide' },
+		{ href: `${CRM_BASE}/entreprises`, icon: 'domain_add', label: 'Nouvelle entreprise', sub: 'Import Zefix' },
+		{ href: `${CRM_BASE}/pipeline`, icon: 'add_circle', label: 'Nouvelle opportunité', sub: 'Pipeline' },
+		{ href: `${CRM_BASE}/signaux`, icon: 'radar', label: 'Voir les signaux', sub: 'Marchés et créations' },
 	];
 </script>
 
