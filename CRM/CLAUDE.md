@@ -1,6 +1,6 @@
 # CRM FilmPro : CLAUDE.md
 
-**Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; le container racine est un stub pointant vers les sous-projets. Contexte migration complet → `~/.claude/projects/-Users-pascal-Claude-Projets-AppFactory/memory/project_appfactory_restructure.md`.
+**Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; le container racine est un stub pointant vers les sous-projets. Contexte migration complet → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_appfactory_restructure.md`.
 
 **Statut :** Clean state 2026-05-28 — refonte mobile V2 **abandonnée** après smoke iPhone (overscope, lisibilité) → pivot **V3 outil terrain only** (`archive/2026-05-28-pivot-mobile-v3.md`). **Antérieur en prod** (Signaux V4, Log CRM, Aide, audit 360, Google Places, golden v9, migration restructure S173-S174) → détail `archive/2026-05-06-sessions.md` + Livré ci-dessous. Formation IA = sous-projet autonome `Formation/`, `cc` option 5.
 **Derniere mise a jour :** 2026-06-01 (shell mobile V3 terrain livré + déployé prod + smoke iPhone validé)
@@ -51,7 +51,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 **Le nom prête à confusion : FilmPro NE FAIT PAS de production vidéo.** « Film » = film pour vitrage.
 
-→ Brief verbatim + règles d'application (scoring, prospection appels d'offres SIMAP, créations Zefix, copy UI) : `~/.claude/projects/-Users-pascal-Claude-Projets-AppFactory/memory/project_filmpro_metier.md` (consulter AVANT toute proposition de mots-clés, ciblage, ou wording orienté métier).
+→ Brief verbatim + règles d'application (scoring, prospection appels d'offres SIMAP, créations Zefix, copy UI) : `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_filmpro_metier.md` (consulter AVANT toute proposition de mots-clés, ciblage, ou wording orienté métier).
 
 ---
 
@@ -153,46 +153,30 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **QA 360 formelle portail (3fc5b372)** puis **bascule adresse (79ec4f5d, supervisé)**. **Tout est désormais en prod** : `main` a été promu 2026-06-01 (shell V3 terrain + portail Session 1 + backend V3). Le shell V3 `/terrain` est livré et **smoke iPhone validé** (AC-017) ; le portail est en prod, header mobile validé par smoke. Reste : (1) QA 360 formelle portail (audit-uiux home + axe-core + Lighthouse + Playwright e2e redirects 308 + post-login `/`) ; (2) bascule adresse = alias `filmpro.vercel.app` + template OTP Supabase + com re-login aux 2 autres fondateurs ; (3) optionnel axe-core AA shell terrain (AC-012). **Pack + plan : `.product-architect/portail/delivery-plan.md`**. **NB OTP Supabase** : quota limité — pour les e2e qui exigent un login, utiliser l'alias de branche stable, pas une URL jetable → `feedback_vercel_branch_alias_pour_smoke`.
+**Prochaine attaque** : Bloc 1 - **QA 360 formelle portail** - tout est en prod (shell V3 `/terrain` smoke-validé AC-017 + portail Session 1), mais la QA formelle portail (audit-uiux, axe-core, Lighthouse, Playwright redirects/post-login) n'a pas tourné ; elle débloque la bascule d'adresse (Bloc 2). **NB OTP Supabase** : quota limité, utiliser un alias stable (pas d'URL jetable) pour les e2e → `feedback_vercel_branch_alias_pour_smoke`. Plan : `.product-architect/portail/delivery-plan.md`.
 
-### 1. Portail FilmPro - Session 1 coding (réorg + renommage + fondation) [MIXTE • xhigh • ~1 session]
+### 1. QA 360 formelle portail [SUPERVISÉ • xhigh • ~0,5-1 session]
 
-- **Pourquoi** : cadrage Phase 1 + specs Phase 2 validés best-in-class cette session (gates 1→2 et 2→3 signés). Refonte structurelle (routing) + UI golden-validée → MIXTE (specs verrouillées → exécution auto, smoke home supervisé).
-- **Prérequis** : OK démarrage Pascal. NB : service worker présent (`src/service-worker.ts`) → bumper le nom du cache SW au renommage + invalider après bascule d'adresse (sinon ancienne app servie depuis le cache).
-- [x] ~~**[EXÉCUTABLE]** Réorg `(app)/`→`crm/` + home portail `/` + redirects 308 + `CRM_BASE` + renommage + `PUBLIC_APP_URL` + référentiel.~~ **Livré 2026-06-01** (détail + écarts vs spec + dette nommée → « Livré cette session » ci-dessous).
+- **Pourquoi** : valider les 24 AC portail (v1.1) avant la bascule d'adresse. Tout est en prod, mais la QA formelle n'a pas été lancée (seul le header mobile a été validé par smoke).
+- [ ] **[EXÉCUTABLE]** Lancer la QA 360 portail : audit-uiux + axe-core home, Playwright e2e (nav `/crm/*` + redirects 308 + **post-login → `/`** + entrée/sortie portail) — **MAJ les e2e qui pointent les anciens paths**, snapshot + Lighthouse home, `security-auditor` 0 H/C/M (AC-016), bug-hunter + contracts (routing + couche référentiel). → voir `.product-architect/portail/delivery-plan.md` (Session 2).
 
-### 2. Portail - Session 2 QA 360 [SUPERVISÉ • xhigh • ~0,5-1 session]
+### 2. Bascule adresse portail [SUPERVISÉ • high • ~0,5 session]
 
-- **Pourquoi** : valider les 24 critères d'acceptation (v1.1) avant la bascule d'adresse.
-- [ ] **[EXÉCUTABLE]** (débloqué : Bloc 1 livré 2026-06-01) audit-uiux + axe-core home, Playwright e2e (nav `/crm/*` + redirects 308 + **post-login → `/`** + entrée/sortie portail) — **mettre à jour les e2e qui pointent les anciens paths**, snapshot home, Lighthouse home, `code-review:security-auditor` 0 H/C/M (artefact daté AC-016), bug-hunter + contracts-reviewer (centré routing + couche référentiel). QA sur la preview de branche `portail-session-1` (pas prod). → voir `.product-architect/portail/delivery-plan.md` (Session 2).
+- **Pourquoi** : bascule URL = seul vrai risque (accès fondateurs), faite avec Pascal. Le code est déjà en prod.
+- [ ] **[BLOQUÉ - Bloc 1 QA portail vert]** Bascule adresse : alias `filmpro.vercel.app` + redirection ancienne→nouvelle + template OTP Supabase (dashboard) + communication re-login aux 2 autres fondateurs + metrics-baseline. Trap : vérifier `vercel inspect` après tout rollback. → voir `.product-architect/portail/delivery-plan.md` (Session 3) + `feature-flag-plan.md`.
 
-### 3. Portail - Session 3 livraison + bascule adresse [SUPERVISÉ • high • ~0,5 session]
+### 3. axe-core AA shell terrain (optionnel) [AUTO • low • ~30 min]
 
-- **Pourquoi** : bascule URL = seul vrai risque (accès fondateurs), faite avec Pascal (type update Vercel).
-- [ ] **[BLOQUÉ - Bloc 2 vert]** Promotion prod, ajout alias `filmpro.vercel.app` + redirection ancienne→nouvelle, template OTP Supabase (dashboard), communication nouveau lien + **re-login cross-domain** aux 3 fondateurs, metrics-baseline figée, clôture. Trap : vérifier `vercel inspect` après tout rollback. → voir `.product-architect/portail/delivery-plan.md` (Session 3) + `feature-flag-plan.md`.
-
-### 4. Build mobile V3 outil terrain [SUPERVISÉ • xhigh • ~2 sessions]
-
-- **Pourquoi** : pack specs complet validé (PRD + data-model + RLS + contrats + 20 AC + 7 ADR + DESIGN + golden). Backend déjà en **prod** (migration `20260531_001` + endpoints, 70 tests, livré 2026-05-31). Reste UI à valider sur iPhone réel → SUPERVISÉ.
-
-- [x] ~~**[EXÉCUTABLE]** Shell mobile PWA : câbler `ffCrmMobileV3` + routing `/terrain` + 2 onglets + fiche + 3 actions natives + compte-rendu + brouillon contact + desktop badge.~~ **Livré 2026-06-01** (voir Livré ci-dessous).
-- [x] ~~**[BLOQUÉ - shell livré]** Déploiement prod + QA + smoke iPhone (AC-016/AC-017).~~ **Livré 2026-06-01** : deploy prod + security 0 H/C/M + bug-hunter (1 critique AC-011 fixé) + smoke iPhone Pascal validé. axe-core AA + Playwright e2e **différés** (décision Pascal : smoke réel = acceptation).
-
-→ Specs : `.product-architect/` + `docs/SPECS_CRM_MOBILE_V3_TERRAIN.md` + mémoire `project_refonte_mobile_v3_terrain.md`. Audit sécu shell : `audit_secu_2026-06-01_v3_mobile_shell.md`.
-
-### Reste ouvert (portail, après V3)
-
-- [ ] **[EXÉCUTABLE]** QA 360 formelle portail (3fc5b372) : audit-uiux home + axe-core + Lighthouse + Playwright e2e (redirects 308 + post-login → `/`). Header mobile déjà validé par smoke. → `.product-architect/portail/delivery-plan.md` (Session 2).
-- [ ] **[EXÉCUTABLE]** Bascule adresse portail (79ec4f5d, supervisé) : alias `filmpro.vercel.app` + template OTP Supabase + communication re-login aux 2 autres fondateurs. Code déjà en prod. → `.product-architect/portail/delivery-plan.md` (Session 3).
-- [ ] **[optionnel]** axe-core AA contraste sur le shell terrain (AC-012) : vérif légère différée, conçu AA mais non mesuré automatiquement.
+- **Pourquoi** : shell V3 conçu AA mais contraste non mesuré automatiquement (AC-012). Smoke iPhone réel déjà validé, donc faible priorité.
+- [ ] **[EXÉCUTABLE]** axe-core sur les écrans `/terrain` (flag ON, session test) → 0 violation color-contrast. → `audit_secu_2026-06-01_v3_mobile_shell.md` (reste Phase 4).
 
 ### Livré cette session
 
-- [x] ~~Shell mobile V3 « outil terrain » (Phase 3 build) + deploy prod + smoke iPhone validé~~ - Livré 2026-06-01 (xhigh, ~4,5h). Route `/terrain` gardée par flag `ffCrmMobileV3` (OFF → CRM desktop intact, AC-013) ; 2 onglets (À faire = relances dues / Rechercher) ; fiche lecture seule + 3 actions natives `tel:`/maps/`mailto:` (grisées si absente) + historique visites ; compte-rendu (résultat enum fermé + note + photos état envoi/échec/réessayer + GPS optionnel) ; brouillon contact → `contact_suggestions` en_attente ; desktop = file Valider/Fusionner/Rejeter sur page Contacts (`ContactSuggestionQueue`). 11 composants composent les primitives + tokens `app.css` (zéro thème). TDD 28 helpers (native-actions/relative-date/contact-draft). **QA** : security-auditor 0 H/C/M (artefact `audit_secu_2026-06-01_v3_mobile_shell`) ; bug-hunter Opus 1 critique (AC-011 photos larguées en silence) + 3 moyens (fuite blob URL, race recherche, localId collision) **fixés in-session** ; svelte-check 0 ; build prod vert ; 1487 Vitest verts (17 baseline Sentry). **Deploy prod** (main FF, commits `64f21ea`/`9756777`) + flag activé sur `pascal@filmpro.ch` (via `pg` lib, MCP read-only). **Smoke iPhone Pascal validé** (AC-017) : cards + nav OK, boucle compte-rendu/brouillon OK. **Fix post-smoke** : header portail mobile (logo wordmark ratio 5.7:1 à 44px débordait → réduit 28-32px + déconnexion ramenée dans l'écran, vérifié Playwright 320/375/390, commit `9321733`). axe-core AA + Playwright e2e différés (décision Pascal). → mémoire `audit_secu_2026-06-01_v3_mobile_shell` + `project_refonte_mobile_v3_terrain`.
-- [x] ~~Portail FilmPro Session 1 (coding) : réorg `(app)→crm/` + home portail `/` + redirects 308 + `CRM_BASE` + renommage FilmPro + `PUBLIC_APP_URL` + couche référentiel~~ - Livré 2026-06-01. Branche `portail-session-1` (commits `bb0a737`/`bdd1dab`/`57aa994`, **pas mergée prod** → Session 3). svelte-check 0, 1459 Vitest verts (17 baseline Sentry), build OK, smoke + logo validés Pascal sur preview branche. Logo : cause racine = sous-chemins tronqués lors de la reconstruction (« Film » en blocs pleins au lieu d'évidés) → tracés verbatim asset marque. Post-login → home portail `/` (révision AC-015, décision Pascal). **Dette nommée** : call sites API référentiel (visits/contact-suggestions/search) à centraliser sur `referentiel/` (chantier 2 Devis) ; e2e Playwright anciens paths à MAJ en Session 2 (gardés OK par les 308). → `.product-architect/portail/delivery-plan.md` + mémoires `project_portail_filmpro_multi_outils`, `feedback_vercel_branch_alias_pour_smoke`.
-- [x] ~~Portail FilmPro : cadrage Phase 1 + specs Phase 2 (product-architect), validés best-in-class~~ - Fait 2026-06-01 : CRM devient un outil d'un portail multi-outils FilmPro (home 2 cards, renommage + nouvelle adresse, référentiel partagé ; Devis = chantier 2). Revue 2 agents → 14 corrections, gates 1→2 et 2→3 signés, golden validé, plan 3 sessions. Specs only. → voir `.product-architect/portail/` + mémoire `project_portail_filmpro_multi_outils`.
-- [x] ~~Backend V3 mobile terrain (migration prod + endpoints, 70 tests Vitest, TDD)~~ - Livré 2026-05-31. Reste Phase 3 UI → `docs/HANDOFF_V3_PHASE3_BUILD.md`.
-- [x] ~~Cadrage + pack specs V3 mobile terrain (council 4 voix + product-architect, 16 fichiers, gate 2→3 ouvert)~~ - Fait 2026-05-31 → `.product-architect/` + `project_refonte_mobile_v3_terrain.md`.
+- [x] ~~Shell mobile V3 « outil terrain » (Phase 3 build) + deploy prod + smoke iPhone validé~~ - Livré 2026-06-01 (xhigh, ~4,5h). Route `/terrain` gardée par flag `ffCrmMobileV3` (OFF → CRM desktop intact, AC-013) ; 2 onglets (À faire = relances dues / Rechercher) ; fiche lecture seule + 3 actions natives tel/maps/mailto (grisées si absente) + historique visites ; compte-rendu (résultat enum fermé + note + photos état envoi/échec/réessayer + GPS optionnel) ; brouillon contact → `contact_suggestions` en_attente ; desktop = file Valider/Fusionner/Rejeter sur page Contacts (`ContactSuggestionQueue`). 11 composants composent primitives + tokens `app.css` (zéro thème). TDD 28 helpers. **QA** : security-auditor 0 H/C/M (artefact `audit_secu_2026-06-01_v3_mobile_shell`) ; bug-hunter Opus 1 critique (AC-011 photos larguées) + 3 moyens (fuite blob, race recherche, localId) **fixés in-session** ; svelte-check 0 ; build prod vert ; 1487 Vitest verts. **Deploy prod** (main FF, `64f21ea`/`9756777`) + flag activé `pascal@filmpro.ch` (via `pg` lib, MCP read-only). **Smoke iPhone validé** (AC-017). **Fix post-smoke** : header portail mobile (logo wordmark 5.7:1 à 44px débordait → 28-32px + déconnexion dans l'écran, vérifié Playwright 320/375/390, `9321733`). axe-core AA + Playwright différés (décision Pascal). → `audit_secu_2026-06-01_v3_mobile_shell` + `project_refonte_mobile_v3_terrain`.
+- [x] ~~Portail FilmPro Session 1 (coding) : réorg `(app)→crm/` + home portail + redirects 308 + renommage + référentiel~~ - Livré 2026-06-01. svelte-check 0, build OK, smoke + logo validés Pascal. Dette nommée : call sites API référentiel à centraliser (chantier 2 Devis). → `project_portail_filmpro_multi_outils`, `.product-architect/portail/delivery-plan.md`.
+- [x] ~~Portail FilmPro : cadrage Phase 1 + specs Phase 2 (product-architect)~~ - Fait 2026-06-01 : gates 1→2 et 2→3 signés, golden validé, plan 3 sessions. → `.product-architect/portail/`.
+- [x] ~~Backend V3 mobile terrain (migration prod + endpoints, 70 tests Vitest, TDD)~~ - Livré 2026-05-31. → `docs/HANDOFF_V3_PHASE3_BUILD.md`.
+- [x] ~~Cadrage + pack specs V3 mobile terrain (council + product-architect, 16 fichiers)~~ - Fait 2026-05-31 → `.product-architect/` + `project_refonte_mobile_v3_terrain.md`.
 
 ### Watch list active après pivot
 
