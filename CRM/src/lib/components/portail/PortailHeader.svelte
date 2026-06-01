@@ -62,10 +62,13 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
+		gap: 12px;
 	}
 
 	.logo-link {
 		display: inline-flex;
+		min-width: 0; /* le logo se compresse avant de pousser le groupe droit hors écran */
+		flex: 0 1 auto;
 		border-radius: 4px;
 	}
 	.logo-link:focus-visible {
@@ -75,6 +78,7 @@
 
 	.logo-link :global(.logo) {
 		height: 44px;
+		max-width: 100%;
 		width: auto;
 		display: block;
 	}
@@ -83,6 +87,7 @@
 		display: flex;
 		align-items: center;
 		gap: 16px;
+		flex: 0 0 auto; /* jamais clippé : déconnexion toujours visible */
 	}
 
 	.avatar {
@@ -121,6 +126,33 @@
 	@media (prefers-reduced-motion: reduce) {
 		.logout {
 			transition: none;
+		}
+	}
+
+	/* Mobile : le wordmark (ratio ~5.7:1) déborde à 44px de haut. On le réduit et
+	   on resserre le header pour garder « Déconnexion » dans l'écran. */
+	@media (max-width: 640px) {
+		.portail-header {
+			height: 60px;
+		}
+		.header-inner {
+			padding: 0 16px;
+		}
+		.logo-link :global(.logo) {
+			height: 32px;
+		}
+		.header-right {
+			gap: 12px;
+		}
+	}
+
+	/* Très petit écran (iPhone SE) : avatar décoratif masqué pour gagner la place. */
+	@media (max-width: 380px) {
+		.logo-link :global(.logo) {
+			height: 28px;
+		}
+		.avatar {
+			display: none;
 		}
 	}
 </style>
