@@ -6,7 +6,13 @@ import {
 	parseOwner,
 	parseOwnerFromBody,
 	parseSwissAddress,
+	validateGpsInput,
 } from './geo-helpers';
+import { validate, VisitResultatSchema, VisitNoteSchema } from '$lib/schemas';
+
+// Sur-ensemble de colonnes lu par le desktop ET le mobile V3 (resultat/note ajoutés
+// en V3 ; accuracy_m/distance_from_zefix_m/user_id conservés pour le desktop).
+const VISIT_COLS = 'id, visited_at, resultat, note, lat, lng, accuracy_m, address_resolved, distance_from_zefix_m, user_id';
 
 function genericError(error: unknown, fallback: string, status = 500) {
 	console.error('[visits]', error);
@@ -48,7 +54,7 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 	const col = owner.kind === 'lead' ? 'prospect_lead_id' : 'entreprise_id';
 	const { data: rows, error } = await locals.supabase
 		.from('prospect_visits')
-		.select('id, visited_at, lat, lng, accuracy_m, address_resolved, distance_from_zefix_m, user_id')
+		.select(VISIT_COLS)
 		.eq(col, owner.id)
 		.order('visited_at', { ascending: false });
 
@@ -71,16 +77,24 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const owner = parseOwnerFromBody(body);
 	if (!owner) return json({ error: 'lead_id ou entreprise_id requis (UUID)' }, { status: 400 });
 
-	const lat = Number(body.lat);
-	const lng = Number(body.lng);
-	if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
-		return json({ error: 'lat invalide (-90..90)' }, { status: 400 });
+	// V3 : GPS optionnel et indivisible (pas de demi-GPS).
+	const gps = validateGpsInput(body);
+	if ('error' in gps) return json({ error: gps.error }, { status: 400 });
+	const { lat, lng, accuracy_m } = gps;
+
+	// V3 : résultat (enum fermé, optionnel) + note courte (optionnelle, bornée).
+	let resultat: string | null = null;
+	if (typeof body.resultat === 'string' && body.resultat.trim() !== '') {
+		const r = validate(VisitResultatSchema, body.resultat.trim());
+		if (!r.success) return json({ error: 'résultat invalide' }, { status: 400 });
+		resultat = r.data;
 	}
-	if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
-		return json({ error: 'lng invalide (-180..180)' }, { status: 400 });
+	let note: string | null = null;
+	if (typeof body.note === 'string' && body.note.trim() !== '') {
+		const n = validate(VisitNoteSchema, body.note);
+		if (!n.success) return json({ error: 'note trop longue (max 2000)' }, { status: 400 });
+		note = body.note.trim();
 	}
-	const accuracyRaw = Number(body.accuracy_m);
-	const accuracy_m = Number.isFinite(accuracyRaw) && accuracyRaw >= 0 && accuracyRaw < 100000 ? accuracyRaw : null;
 
 	// Vérifier l'existence du parent + récupérer adresse pour géocodage.
 	let parent: { id: string; adresse: string | null; npa: string | null; localite: string | null; canton: string | null } | null = null;
@@ -107,25 +121,26 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	}
 	if (!parent) return json({ error: 'Parent introuvable' }, { status: 404 });
 
-	// Géocodage best-effort cascade (3 tentatives, 2.5s chacune, null si tout échoue).
-	const geocoded = await geocodeAddress({
-		adresse: parent.adresse,
-		npa: parent.npa,
-		localite: parent.localite,
-		canton: parent.canton,
-	});
-	const distance_from_zefix_m =
-		geocoded != null ? Math.round(haversineMeters(lat, lng, geocoded.lat, geocoded.lng) * 10) / 10 : null;
-	const address_resolved = geocoded?.resolved ?? null;
-
-	// Diagnostic non-sensible : permet de comprendre pourquoi address_resolved est null.
-	const hasAnyAddress = !!(parent.adresse || parent.npa || parent.localite);
-	const geocode_diag: string =
-		geocoded != null
-			? 'ok'
-			: !hasAnyAddress
-				? 'no_address_in_db'
-				: 'geocoder_no_match';
+	// Géocodage + distance Zefix UNIQUEMENT si un GPS a été capté (sinon NULL,
+	// cohérent avec le CHECK distance_requires_gps_chk). Évite un appel réseau inutile.
+	let distance_from_zefix_m: number | null = null;
+	let address_resolved: string | null = null;
+	let geocode_diag: string;
+	if (lat !== null && lng !== null) {
+		const geocoded = await geocodeAddress({
+			adresse: parent.adresse,
+			npa: parent.npa,
+			localite: parent.localite,
+			canton: parent.canton,
+		});
+		distance_from_zefix_m =
+			geocoded != null ? Math.round(haversineMeters(lat, lng, geocoded.lat, geocoded.lng) * 10) / 10 : null;
+		address_resolved = geocoded?.resolved ?? null;
+		const hasAnyAddress = !!(parent.adresse || parent.npa || parent.localite);
+		geocode_diag = geocoded != null ? 'ok' : !hasAnyAddress ? 'no_address_in_db' : 'geocoder_no_match';
+	} else {
+		geocode_diag = 'no_gps';
+	}
 
 	const col = owner.kind === 'lead' ? 'prospect_lead_id' : 'entreprise_id';
 	const insertRow = {
@@ -136,12 +151,14 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		accuracy_m,
 		address_resolved,
 		distance_from_zefix_m,
+		resultat,
+		note,
 	};
 
 	const { data: row, error: insErr } = await locals.supabase
 		.from('prospect_visits')
 		.insert(insertRow)
-		.select('id, visited_at, lat, lng, accuracy_m, address_resolved, distance_from_zefix_m, user_id')
+		.select(VISIT_COLS)
 		.single();
 
 	if (insErr || !row) return genericError(insErr ?? new Error('Insert null'), 'Erreur enregistrement visite');

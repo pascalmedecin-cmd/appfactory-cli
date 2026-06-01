@@ -93,6 +93,82 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_suggestions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          email: string | null
+          entreprise_id: string
+          id: string
+          merged_contact_id: string | null
+          nom: string | null
+          notes: string | null
+          prenom: string | null
+          resolved_at: string | null
+          resolved_by: string | null
+          role_fonction: string | null
+          statut: string
+          telephone: string | null
+          visit_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          entreprise_id: string
+          id?: string
+          merged_contact_id?: string | null
+          nom?: string | null
+          notes?: string | null
+          prenom?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          role_fonction?: string | null
+          statut?: string
+          telephone?: string | null
+          visit_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          email?: string | null
+          entreprise_id?: string
+          id?: string
+          merged_contact_id?: string | null
+          nom?: string | null
+          notes?: string | null
+          prenom?: string | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          role_fonction?: string | null
+          statut?: string
+          telephone?: string | null
+          visit_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_suggestions_entreprise_id_fkey"
+            columns: ["entreprise_id"]
+            isOneToOne: false
+            referencedRelation: "entreprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_suggestions_merged_contact_id_fkey"
+            columns: ["merged_contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_suggestions_visit_id_fkey"
+            columns: ["visit_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_visits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contacts: {
         Row: {
           adresse: string | null
@@ -833,9 +909,11 @@ export type Database = {
           distance_from_zefix_m: number | null
           entreprise_id: string | null
           id: string
-          lat: number
-          lng: number
+          lat: number | null
+          lng: number | null
+          note: string | null
           prospect_lead_id: string | null
+          resultat: string | null
           user_id: string | null
           visited_at: string
         }
@@ -845,9 +923,11 @@ export type Database = {
           distance_from_zefix_m?: number | null
           entreprise_id?: string | null
           id?: string
-          lat: number
-          lng: number
+          lat?: number | null
+          lng?: number | null
+          note?: string | null
           prospect_lead_id?: string | null
+          resultat?: string | null
           user_id?: string | null
           visited_at?: string
         }
@@ -857,9 +937,11 @@ export type Database = {
           distance_from_zefix_m?: number | null
           entreprise_id?: string | null
           id?: string
-          lat?: number
-          lng?: number
+          lat?: number | null
+          lng?: number | null
+          note?: string | null
           prospect_lead_id?: string | null
+          resultat?: string | null
           user_id?: string | null
           visited_at?: string
         }

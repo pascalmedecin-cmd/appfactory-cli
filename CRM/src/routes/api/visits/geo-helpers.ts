@@ -125,3 +125,43 @@ export async function geocodeAddress(
 	}
 	return null;
 }
+
+export type GpsInput = { lat: number | null; lng: number | null; accuracy_m: number | null };
+
+/**
+ * V3 : le GPS est optionnel (géoloc refusable sur le terrain) mais indivisible.
+ * Règles (miroir des CHECK DB latlng_together_chk) :
+ *  - aucune coordonnée → { null, null, null } (visite sans géoloc, acceptée) ;
+ *  - une seule coordonnée → erreur (pas de demi-GPS) ;
+ *  - les deux → validées en range, sinon erreur.
+ * `accuracy_m` invalide (négative / non finie / hors borne) est silencieusement
+ * ramené à null (best-effort, ne bloque pas l'enregistrement de la visite).
+ * Accepte les nombres et les chaînes numériques (formulaire terrain).
+ */
+export function validateGpsInput(body: Record<string, unknown>): GpsInput | { error: string } {
+	const present = (v: unknown) => v !== undefined && v !== null && v !== '';
+	const hasLat = present(body.lat);
+	const hasLng = present(body.lng);
+
+	if (hasLat !== hasLng) {
+		return { error: 'lat et lng doivent être fournis ensemble' };
+	}
+	if (!hasLat && !hasLng) {
+		return { lat: null, lng: null, accuracy_m: null };
+	}
+
+	const lat = Number(body.lat);
+	const lng = Number(body.lng);
+	if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
+		return { error: 'lat invalide (-90..90)' };
+	}
+	if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+		return { error: 'lng invalide (-180..180)' };
+	}
+
+	const accuracyRaw = Number(body.accuracy_m);
+	const accuracy_m =
+		Number.isFinite(accuracyRaw) && accuracyRaw >= 0 && accuracyRaw < 100000 ? accuracyRaw : null;
+
+	return { lat, lng, accuracy_m };
+}

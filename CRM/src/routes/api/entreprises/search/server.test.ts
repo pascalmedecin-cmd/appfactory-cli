@@ -2,12 +2,12 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('$app/environment', () => ({ browser: false, dev: true, building: false }));
 
-type Entreprise = { id: string; raison_sociale: string; site_web: string | null };
+type Entreprise = { id: string; raison_sociale: string; site_web: string | null; canton?: string | null };
 
 function createMockSupabase(rows: Entreprise[], opts: { error?: { message: string } } = {}) {
-	const calls: { ilikePattern?: string; limit?: number; statut_archive?: boolean } = {};
+	const calls: { ilikePattern?: string; limit?: number; statut_archive?: boolean; selectCols?: string } = {};
 	const builder = {
-		select() { return builder; },
+		select(cols: string) { calls.selectCols = cols; return builder; },
 		eq(_col: string, val: boolean) {
 			calls.statut_archive = val;
 			return builder;
@@ -91,5 +91,12 @@ describe('GET /api/entreprises/search (V2b H-06)', () => {
 		const supabase = createMockSupabase([], { error: { message: 'connection refused' } });
 		const r = await callGET(supabase, 'Acm');
 		expect(r.status).toBe(500);
+	});
+
+	it('V3 : SELECT inclut canton (pastille fiche mobile)', async () => {
+		const supabase = createMockSupabase([{ id: '1', raison_sociale: 'Acme SA', site_web: null, canton: 'VD' }]);
+		const r = await callGET(supabase, 'Acm');
+		expect(supabase._calls.selectCols).toContain('canton');
+		expect((r.body as { results: Entreprise[] }).results[0].canton).toBe('VD');
 	});
 });

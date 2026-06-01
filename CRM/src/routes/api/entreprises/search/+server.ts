@@ -19,6 +19,7 @@ export type EntrepriseSearchResult = {
 	id: string;
 	raison_sociale: string;
 	site_web: string | null;
+	canton: string | null; // V3 : pastille canton de la fiche mobile (ajout additif au SELECT).
 };
 
 const MIN_QUERY_LEN = 2;
@@ -46,7 +47,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 	const { data, error } = await locals.supabase
 		.from('entreprises')
-		.select('id, raison_sociale, site_web')
+		.select('id, raison_sociale, site_web, canton')
 		.eq('statut_archive', false)
 		.ilike('raison_sociale', pattern)
 		.order('raison_sociale')

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { RESULTAT_VISITE } from './types/visit-result';
 
 // -- Helpers --
 
@@ -387,6 +388,42 @@ export const LEAD_FIELDS = [
 ] as const;
 
 // -- Generic validation helper --
+
+// -- V3 mobile terrain : visites + suggestions de contact --
+
+/** Résultat de visite : enum fermé dérivé de la source unique RESULTAT_VISITE. */
+export const VisitResultatSchema = z.enum(RESULTAT_VISITE);
+
+/** Note de compte-rendu : bornée (miroir du CHECK DB note_len_chk <= 2000). */
+export const VisitNoteSchema = z.string().max(2000);
+
+/**
+ * Brouillon de contact croisé sur le terrain (mobile V3). Au moins un identifiant
+ * exploitable requis (miroir du CHECK DB contact_suggestions_has_identifier).
+ * Email volontairement non strict (capture terrain imparfaite tolérée) mais borné :
+ * la validation forte se fait au desktop avant fusion dans `contacts`.
+ */
+export const ContactSuggestionCreateSchema = z
+	.object({
+		entreprise_id: z.string().min(1).max(64),
+		visit_id: z.string().uuid().optional(),
+		prenom: z.string().max(200).optional(),
+		nom: z.string().max(200).optional(),
+		role_fonction: z.string().max(200).optional(),
+		telephone: z.string().max(50).optional(),
+		email: z.string().max(320).optional(),
+		notes: z.string().max(2000).optional(),
+	})
+	.refine(
+		(d) => Boolean(d.prenom?.trim() || d.nom?.trim() || d.telephone?.trim() || d.email?.trim()),
+		{ message: 'Au moins un identifiant requis (prénom, nom, téléphone ou email)' }
+	);
+
+/** Résolution desktop d'une suggestion : valider (créer/fusionner) ou rejeter. */
+export const ResolveContactSuggestionSchema = z.object({
+	action: z.enum(['valide', 'rejete']),
+	merged_contact_id: z.string().max(64).optional(),
+});
 
 export function validate<T>(schema: z.ZodSchema<T>, data: unknown): { success: true; data: T } | { success: false; error: string } {
 	const result = schema.safeParse(data);
