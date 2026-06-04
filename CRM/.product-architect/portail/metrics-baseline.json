@@ -1,0 +1,40 @@
+{
+  "name": "portail-filmpro-bascule-adresse",
+  "date": "2026-06-04",
+  "gate": "gate 5 (clôture bascule d'adresse portail)",
+  "commit_code": "1d298e1 + redirection de host dans hooks.server.ts",
+  "adresses": {
+    "prod_canonique": "https://filmpro-portail.vercel.app",
+    "ancienne": "https://filmpro-crm.vercel.app",
+    "ancienne_comportement": "redirige 308 -> nouvelle (favoris fondateurs préservés)",
+    "alias_legacy_redirige": "template-rho-three.vercel.app"
+  },
+  "perf_home": {
+    "lcp_ms": 1985,
+    "cls": 0,
+    "page": "home authentifiée",
+    "source": "Lighthouse prod QA Session 2 (2026-06-01), même build de rendu (la redirection de host n'altère pas le rendu de page)"
+  },
+  "bundle_client": {
+    "output_total": "11M",
+    "js_chunks_total": "1.7M",
+    "source": "npm run build local 2026-06-04 (.svelte-kit/output/client)"
+  },
+  "tests": {
+    "vitest_verts": 1488,
+    "vitest_rouges_baseline": 17,
+    "baseline_rouge_connue": "hooks.server.test.ts (fichier entier cassé depuis commit Sentry c442e59, Sentry paused) - hors scope, ne compte pas comme régression",
+    "svelte_check": "0 erreur / 28 warnings",
+    "smoke_bascule_runtime": "5/5 (ancien host -> 308 nouvelle, route CRM path préservé, nouveau host -> 200 sans boucle, /api/ cron exempté -> 401, alias legacy -> 308)"
+  },
+  "config": {
+    "PUBLIC_APP_URL_production": "https://filmpro-portail.vercel.app",
+    "vercel_domaine_projet_ajoute": "filmpro-portail.vercel.app (exempté SSO via all_except_custom_domains)",
+    "supabase_site_url": "https://filmpro-portail.vercel.app",
+    "supabase_redirect_urls": [
+      "https://filmpro-portail.vercel.app/**",
+      "https://template-rho-three.vercel.app/auth/callback (legacy, à retirer prochaine session)"
+    ]
+  },
+  "note": "Baseline figée à la clôture de la bascule d'adresse portail. Sert de référence drift pour les chantiers suivants (Devis chantier 2, Terrain V3)."
+}

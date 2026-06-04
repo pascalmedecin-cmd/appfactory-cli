@@ -36,7 +36,19 @@ const CRM_LEGACY_PREFIXES = [
 	'/dashboard/couts'
 ];
 
+// Anciens hosts de prod avant la bascule d'adresse portail (2026-06-04) :
+// le CRM est passe de filmpro-crm.vercel.app (+ alias template-rho-three) a
+// filmpro-portail.vercel.app. Redirect 308 (preserve methode + path + query) pour
+// que les favoris des fondateurs continuent de marcher. /api/* EST exempte plus bas
+// (les 5 crons Vercel + endpoints internes ne doivent jamais etre rediriges).
+const LEGACY_HOSTS = ['filmpro-crm.vercel.app', 'template-rho-three.vercel.app'];
+
 const baseHandle: Handle = async ({ event, resolve }) => {
+	// Bascule d'adresse portail : ancien host -> nouveau host (avant tout le reste).
+	if (LEGACY_HOSTS.includes(event.url.host) && !event.url.pathname.startsWith('/api/')) {
+		throw redirect(308, `https://filmpro-portail.vercel.app${event.url.pathname}${event.url.search}`);
+	}
+
 	// Redirects 308 des anciennes URLs internes -> /crm/* (reorg portail 2026-06-01).
 	// Match exact OU prefixe suivi de '/' (evite que '/login' matche '/log').
 	const path = event.url.pathname;
