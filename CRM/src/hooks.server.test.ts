@@ -30,14 +30,18 @@ vi.mock('$lib/server/supabase', () => ({
 	})
 }));
 
-type HandleFn = typeof import('./hooks.server').handle;
+// On teste baseHandle (la vraie logique du gate) en isolation, PAS `handle` (= sequence(Sentry, baseHandle)).
+// En kit >= 2.59, sequence() appelle get_request_store() (tracing) et sentryHandle() throw sur un event
+// mocke : invoquer `handle` hors runtime kit court-circuiterait les 17 tests avant la logique. baseHandle
+// porte tout le comportement teste ici (auth, rate-limit, expiration, headers). Voir hooks.server.ts.
+type HandleFn = typeof import('./hooks.server').baseHandle;
 let handle: HandleFn;
 
 beforeAll(async () => {
 	// setInterval de nettoyage est créé à l'import du module : on le neutralise
 	// via fake timers pour ne pas garder le process en vie après les tests.
 	vi.useFakeTimers();
-	handle = (await import('./hooks.server')).handle;
+	handle = (await import('./hooks.server')).baseHandle;
 	vi.useRealTimers();
 });
 
@@ -60,7 +64,10 @@ function makeEvent(
 	opts: { ip?: string; cookies?: ReturnType<typeof makeCookies>; method?: string } = {}
 ) {
 	return {
-		url: new URL(`https://filmpro-crm.vercel.app${pathname}`),
+		// Host courant (portail). NE PAS utiliser un ancien host (filmpro-crm / template-rho-three) :
+		// ce sont des legacy hosts 308-rediriges par baseHandle (legacy-redirects.ts), ce qui
+		// court-circuiterait la logique auth/rate-limit/headers exercee ici.
+		url: new URL(`https://filmpro-portail.vercel.app${pathname}`),
 		request: { method: opts.method ?? 'GET' },
 		getClientAddress: () => opts.ip ?? '10.0.0.1',
 		cookies: opts.cookies ?? makeCookies(),

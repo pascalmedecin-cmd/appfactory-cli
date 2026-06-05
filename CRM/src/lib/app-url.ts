@@ -1,9 +1,9 @@
 import { env } from '$env/dynamic/public';
 
 /**
- * URL publique de l'app FilmPro (origine). Externalisee via PUBLIC_APP_URL pour survivre a la
- * bascule d'adresse (filmpro-crm.vercel.app -> filmpro.vercel.app, chantier portail session 3).
- * Fallback = adresse actuelle, donc comportement inchange tant que la variable n'est pas posee.
- * A definir dans les env Vercel (preview + prod) au moment de la bascule.
+ * URL publique de l'app FilmPro (origine). Externalisee via PUBLIC_APP_URL, posee dans les env
+ * Vercel (preview + prod) depuis la bascule d'adresse portail (2026-06-04 : -> filmpro-portail.vercel.app).
+ * Fallback aligne sur le nouveau host : jamais atteint en prod (variable posee), et l'ancien host
+ * 308-redirige de toute facon (voir `legacy-redirects.ts`).
  */
-export const APP_URL = env.PUBLIC_APP_URL || 'https://filmpro-crm.vercel.app';
+export const APP_URL = env.PUBLIC_APP_URL || 'https://filmpro-portail.vercel.app';

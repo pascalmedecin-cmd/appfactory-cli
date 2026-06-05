@@ -20,7 +20,7 @@ import type { CostSummary, CostEntry } from './cost-tracker';
 import type { EmailRecapConfig } from './deps';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
-const CRM_URL = process.env.PUBLIC_APP_URL || 'https://filmpro-crm.vercel.app';
+const CRM_URL = process.env.PUBLIC_APP_URL || 'https://filmpro-portail.vercel.app';
 
 export interface SendRecapSuccess {
 	report: IntelligenceReport;

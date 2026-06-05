@@ -3,6 +3,7 @@ import { createSupabaseServerClient } from '$lib/server/supabase';
 import { isEmailAllowed, parseEnvList } from '$lib/server/auth';
 import { createRateLimiter } from '$lib/server/rate-limiter';
 import { isRateLimitedPath } from '$lib/server/rate-limit-paths';
+import { legacyHostRedirect } from '$lib/server/legacy-redirects';
 import { CRM_BASE } from '$lib/config';
 import { json, redirect, type Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
@@ -36,17 +37,16 @@ const CRM_LEGACY_PREFIXES = [
 	'/dashboard/couts'
 ];
 
-// Anciens hosts de prod avant la bascule d'adresse portail (2026-06-04) :
-// le CRM est passe de filmpro-crm.vercel.app (+ alias template-rho-three) a
-// filmpro-portail.vercel.app. Redirect 308 (preserve methode + path + query) pour
-// que les favoris des fondateurs continuent de marcher. /api/* EST exempte plus bas
-// (les 5 crons Vercel + endpoints internes ne doivent jamais etre rediriges).
-const LEGACY_HOSTS = ['filmpro-crm.vercel.app', 'template-rho-three.vercel.app'];
-
-const baseHandle: Handle = async ({ event, resolve }) => {
+// Exporte pour etre teste en isolation (hooks.server.test.ts). En kit >= 2.59, `sequence()`
+// appelle `get_request_store()` (tracing) : tester `handle` (= la sequence) hors runtime kit
+// throw « Could not get the request store ». On teste donc directement baseHandle, qui porte
+// toute la logique du gate (auth, rate-limit, headers). La composition prod reste `handle` ci-dessous.
+export const baseHandle: Handle = async ({ event, resolve }) => {
 	// Bascule d'adresse portail : ancien host -> nouveau host (avant tout le reste).
-	if (LEGACY_HOSTS.includes(event.url.host) && !event.url.pathname.startsWith('/api/')) {
-		throw redirect(308, `https://filmpro-portail.vercel.app${event.url.pathname}${event.url.search}`);
+	// Decision extraite en helper pur testable (audit sécu 2026-06-04 F-1).
+	const hostRedirect = legacyHostRedirect(event.url.host, event.url.pathname, event.url.search);
+	if (hostRedirect) {
+		throw redirect(308, hostRedirect);
 	}
 
 	// Redirects 308 des anciennes URLs internes -> /crm/* (reorg portail 2026-06-01).

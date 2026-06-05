@@ -67,7 +67,7 @@ describe('buildRecapPayload - mode success', () => {
 
 	it('html contient lien CRM /veille', () => {
 		const p = buildRecapPayload(input);
-		expect(p.html).toContain('https://filmpro-crm.vercel.app/crm/veille');
+		expect(p.html).toContain('https://filmpro-portail.vercel.app/crm/veille');
 	});
 
 	it('html contient le résumé exécutif', () => {
