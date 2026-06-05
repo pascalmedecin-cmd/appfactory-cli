@@ -150,6 +150,21 @@ test('optimisation : KPI, strip, liste de coupe, alertes et commande cohérents'
 	await expect(page.getByText('Sur-mesure fournisseur').first()).toBeVisible();
 });
 
+test('export PDF : le bouton génère et télécharge un vrai PDF (pipeline jsPDF + svg2pdf complet)', async ({ page }) => {
+	await gotoOk(page, `/decoupe/optimisation?chantiers=${chantierId}`);
+	const btn = page.getByRole('button', { name: /Exporter en PDF/ });
+	await expect(btn).toBeVisible();
+	// Le clic exécute le vrai moteur (flux + jsPDF + svg2pdf + polices + donut). Si svg2pdf
+	// échouait sur le donut, la promesse rejetterait → aucun téléchargement → ce test casserait.
+	const [download] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), btn.click()]);
+	expect(download.suggestedFilename()).toMatch(/^plan-decoupe-.*\.pdf$/);
+	const path = await download.path();
+	expect(path).toBeTruthy();
+	const buf = readFileSync(path!);
+	expect(buf.subarray(0, 5).toString('latin1')).toBe('%PDF-'); // en-tête PDF valide
+	expect(buf.length).toBeGreaterThan(20000); // document réel : polices embarquées + vecteurs
+});
+
 test('lancer la découpe : confirmation → chantier en statut lancée', async ({ page }) => {
 	await gotoOk(page, `/decoupe/optimisation?chantiers=${chantierId}`);
 	await page.getByRole('button', { name: /Lancer la découpe/ }).click();

@@ -72,6 +72,27 @@ export const PIECE_COLORS = [
 ] as const;
 
 /**
+ * Variante FONCÉE de chaque couleur de pièce pour le TEXTE du label posé dans le strip
+ * (le label est écrit sur un fond `tint(couleur, 0.14)`). Calibrée pour atteindre WCAG AA
+ * (≥ 4,5:1 du texte sur son fond teinté) — la couleur vive d'origine reste le contour du
+ * rectangle (identité couleur préservée). Ratios vérifiés (script _decoupe_pdf_audit calc).
+ * Cf. [[feedback_a11y_deep_tokens_with_axe_gate]].
+ */
+const PIECE_TEXT_DEEP: Record<string, string> = {
+	'#5A7190': '#556A87', // 4,62:1 sur #e8ebef
+	'#538B6B': '#447258', // 4,73:1 sur #e7efea
+	'#917548': '#7D653E', // 4,69:1 sur #f0ece5
+	'#7B6A9A': '#6F5F8B', // 4,79:1 sur #edeaf1
+	'#3F7C82': '#397075', // 4,71:1 sur #e4edee
+	'#B07A5A': '#895F46', // 4,75:1 sur #f4ece8
+	'#6F4F6E': '#6F4F6E' // 5,65:1 sur #ebe6eb (déjà conforme)
+};
+/** Couleur de TEXTE accessible pour le label d'une pièce (sur son fond teinté). */
+export function pieceTextColor(color: string): string {
+	return PIECE_TEXT_DEEP[color] ?? color;
+}
+
+/**
  * Fabrique un mapping `vitre_id → couleur` stable et déterministe.
  * `orderedIds` fixe l'ordre d'attribution (ordre de saisie des vitres) pour que la même
  * vitre garde la même couleur partout (strip, légende, liste de coupe). Les ids non
@@ -179,18 +200,41 @@ export function filmMetrics(plan: PlanProduit): FilmMetrics {
 // --- Géométrie du strip de remplissage (SVG, calcul pur) --------------------------------------
 export const STRIP_HEIGHT = 88; // hauteur d'affichage de la laize, px (rangées homogènes)
 
+// Métriques du label de pièce (DM Mono ≈ 0,6 em d'avance), en unités du viewBox du strip.
+export const STRIP_LABEL_FONT = 9; // font-size du label dans le viewBox
+const LABEL_CHAR_W = STRIP_LABEL_FONT * 0.6; // largeur estimée d'un caractère mono
+const LABEL_PAD = 6; // marge interne mini autour du texte
+const LABEL_MIN_SIDE = STRIP_LABEL_FONT + 2; // épaisseur mini de la pièce pour porter le texte
+
+/** Orientation du label dans une pièce : horizontal, vertical (pivoté), ou aucun. */
+export type LabelOrient = 'h' | 'v' | null;
+
 export interface StripRect {
 	x: number;
 	y: number;
 	w: number;
 	h: number;
 	color: string;
-	label: string | null; // dimensions affichées dans la pièce si assez grande
+	label: string | null; // dimensions de coupe, affichées seulement si elles tiennent SANS déborder
+	labelOrient: LabelOrient; // 'h' si tient en largeur, 'v' si tient une fois pivoté, null sinon
 }
 export interface StripGeometry {
 	width: number;
 	height: number;
 	rects: StripRect[];
+}
+/**
+ * Choisit l'orientation d'un label de dimensions pour qu'il NE DÉBORDE JAMAIS de la pièce :
+ *  - 'h' (horizontal) si le texte tient dans la largeur `w` et la pièce est assez épaisse,
+ *  - 'v' (pivoté -90°) si le texte tient le long de la hauteur `h` (pièce étroite mais haute),
+ *  - null si la pièce est trop petite dans les deux sens (repérage par couleur + liste de coupe).
+ * Logique pure et déterministe : reproduite à l'identique côté écran (SVG) et PDF.
+ */
+export function labelOrientation(textLen: number, w: number, h: number): LabelOrient {
+	const textW = textLen * LABEL_CHAR_W;
+	if (textW <= w - LABEL_PAD && h >= LABEL_MIN_SIDE) return 'h';
+	if (textW <= h - LABEL_PAD && w >= LABEL_MIN_SIDE) return 'v';
+	return null;
 }
 /**
  * Projette les placements du plan dans une bande SVG : la laize occupe la hauteur fixe
@@ -206,14 +250,16 @@ export function stripGeometry(plan: PlanProduit, colorOf: (vitreId: string) => s
 		const y = Math.round(pl.x_mm * s);
 		const w = Math.max(1, Math.round(pl.hauteur_placee_mm * s));
 		const h = Math.max(1, Math.round(pl.largeur_placee_mm * s));
-		const showLbl = w > 30 && h > 22;
+		const text = `${pl.largeur_placee_mm}×${pl.hauteur_placee_mm}`;
+		const orient = labelOrientation(text.length, w, h);
 		return {
 			x,
 			y,
 			w,
 			h,
 			color: colorOf(pl.vitre_id),
-			label: showLbl ? `${pl.largeur_placee_mm}×${pl.hauteur_placee_mm}${pl.pivotee ? ' ↻' : ''}` : null
+			label: orient ? text : null,
+			labelOrient: orient
 		};
 	});
 	return { width, height: H, rects };

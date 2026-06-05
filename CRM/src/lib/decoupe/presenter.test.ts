@@ -206,23 +206,47 @@ describe('stripGeometry (invariants visuels durs)', () => {
 			taux_chute: 0,
 			poses_en_les: [],
 			placements: [
-				// grand → label
+				// grand → label horizontal
 				{ vitre_id: 'a', piece_index: 0, x_mm: 0, y_mm: 0, largeur_placee_mm: 800, hauteur_placee_mm: 1500, pivotee: false },
 				// minuscule → pas de label
 				{ vitre_id: 'b', piece_index: 0, x_mm: 0, y_mm: 1900, largeur_placee_mm: 50, hauteur_placee_mm: 50, pivotee: false }
 			]
 		};
 		const geo = stripGeometry(plan, makeColorOf());
-		expect(geo.rects[0].label).toContain('800×1500');
+		expect(geo.rects[0].label).toBe('800×1500');
+		expect(geo.rects[0].labelOrient).toBe('h');
 		expect(geo.rects[1].label).toBeNull();
+		expect(geo.rects[1].labelOrient).toBeNull();
 	});
-	it('le symbole ↻ apparaît pour une pièce pivotée', () => {
+	it('le label NE DÉBORDE JAMAIS : pièce étroite et haute → label pivoté (vertical), pas de débordement', () => {
+		// Reproduit le cas réel « 1200×800 posée verticale » qui débordait : étroite le long du
+		// rouleau (hauteur_placee), haute en travers de la laize (largeur_placee).
+		const plan: PlanProduit = {
+			produit_id: 'p',
+			laize_mm: 1830,
+			longueur_consommee_mm: 800,
+			surface_pieces_mm2: 0,
+			taux_chute: 0,
+			poses_en_les: [],
+			placements: [
+				{ vitre_id: 'a', piece_index: 0, x_mm: 0, y_mm: 0, largeur_placee_mm: 1200, hauteur_placee_mm: 800, pivotee: true }
+			]
+		};
+		const geo = stripGeometry(plan, makeColorOf());
+		const r = geo.rects[0];
+		expect(r.label).toBe('1200×800');
+		// pièce étroite (w le long du rouleau) mais haute (h en travers laize) → vertical
+		expect(r.labelOrient).toBe('v');
+		expect(r.w).toBeLessThan(r.h);
+	});
+	it('le strip ne porte plus le symbole ↻ (le pivot est indiqué dans la liste de coupe)', () => {
 		const plan: PlanProduit = {
 			produit_id: 'p', laize_mm: 1000, longueur_consommee_mm: 1000, surface_pieces_mm2: 0, taux_chute: 0, poses_en_les: [],
 			placements: [{ vitre_id: 'a', piece_index: 0, x_mm: 0, y_mm: 0, largeur_placee_mm: 800, hauteur_placee_mm: 800, pivotee: true }]
 		};
 		const geo = stripGeometry(plan, makeColorOf());
-		expect(geo.rects[0].label).toContain('↻');
+		expect(geo.rects[0].label).not.toContain('↻');
+		expect(geo.rects[0].label).toBe('800×800');
 	});
 });
 

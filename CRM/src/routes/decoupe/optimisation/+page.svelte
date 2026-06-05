@@ -31,6 +31,7 @@
 		chuteColorVar
 	} from '$lib/decoupe/presenter';
 	import type { PageData } from './$types';
+	import type { DecoupePdfInput } from '$lib/decoupe/pdf-export';
 
 	let { data }: { data: PageData } = $props();
 
@@ -72,6 +73,33 @@
 	let confirmLancerOpen = $state(false);
 	let lancing = $state(false);
 	let lancerEl: HTMLFormElement | null = $state(null);
+
+	// Export PDF (ADR-0005, vectoriel, côté client). Le moteur de flux + jsPDF/svg2pdf + polices
+	// sont chargés en dynamic import → hors bundle initial (perf LCP). Cf. src/lib/decoupe/pdf-export.ts.
+	let exporting = $state(false);
+	async function exporterPdf() {
+		const d = data;
+		if (!d.ok || exporting) return;
+		const input: DecoupePdfInput = {
+			titre,
+			dateLabel: `${new Date().toLocaleDateString('fr-CH')} à ${d.calculeA}`,
+			nbVitres: d.nbVitres,
+			resultat: d.resultat,
+			produitsInfo: d.produitsInfo,
+			vitresInfo: d.vitresInfo,
+			vitreOrder: Object.keys(d.vitresInfo)
+		};
+		exporting = true;
+		try {
+			const { exportDecoupePdf } = await import('$lib/decoupe/pdf-export');
+			await exportDecoupePdf(input);
+		} catch (e) {
+			console.error('Export PDF Découpe échoué :', e);
+			toasts.error('Export PDF impossible. Réessayez.');
+		} finally {
+			exporting = false;
+		}
+	}
 </script>
 
 <svelte:head><title>Résultat · Découpe Films</title></svelte:head>
@@ -104,6 +132,9 @@
 {#snippet icChevron(size: number)}
 	<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
 {/snippet}
+{#snippet icDownload(size: number)}
+	<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>
+{/snippet}
 
 <a href={backHref} class="df-back"><span class="df-back-chevron">{@render icChevron(15)}</span>{backLabel}</a>
 
@@ -133,6 +164,11 @@
 				<span class="df-statepill df-statepill--ok">{@render icCheck(15)} Prêt à découper</span>
 			{:else}
 				<span class="df-statepill df-statepill--warn">{@render icAlert(15)} À vérifier</span>
+			{/if}
+			{#if data.resultat.plans.length > 0 || data.resultat.commandes_fournisseur.length > 0}
+				<button type="button" class="ws-btn ws-btn-secondary" onclick={exporterPdf} disabled={exporting} aria-busy={exporting}>
+					{@render icDownload(16)} {exporting ? 'Génération…' : 'Exporter en PDF'}
+				</button>
 			{/if}
 			{#if data.resultat.plans.length > 0}
 				{#if data.toutesLancees}
@@ -286,10 +322,12 @@
 							</defs>
 							<rect x="0" y="0" width={geo.width} height={geo.height} rx="4" fill={`url(#df-hatch-${plan.produit_id})`} stroke="#E5E7EB" stroke-width="1" />
 							{#each geo.rects as r, ri (ri)}
+								{@const cx = r.x + r.w / 2}
+								{@const cy = r.y + r.h / 2}
 								<g>
 									<rect x={r.x} y={r.y} width={r.w} height={r.h} rx="2.5" fill={r.color} fill-opacity="0.16" stroke={r.color} stroke-width="1.25" />
 									{#if r.label}
-										<text x={r.x + r.w / 2} y={r.y + r.h / 2} fill={r.color} font-size="9" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="var(--font-mono)">{r.label}</text>
+										<text x={cx} y={cy} transform={r.labelOrient === 'v' ? `rotate(-90 ${cx} ${cy})` : null} fill={r.color} font-size="9" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="var(--font-mono)">{r.label}</text>
 									{/if}
 								</g>
 							{/each}
