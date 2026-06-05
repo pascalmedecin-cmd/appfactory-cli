@@ -35,7 +35,7 @@
 			sentEmail = form.email ?? '';
 		}
 		if (form?.verified) {
-			// Post-login : home portail (choix outil CRM / Devis). Decision Pascal 2026-06-01 (AC-015 revisee).
+			// Post-login : home portail (choix outil CRM / Découpe Films). Decision Pascal 2026-06-01 (AC-015 revisee).
 			goto('/');
 		}
 	});

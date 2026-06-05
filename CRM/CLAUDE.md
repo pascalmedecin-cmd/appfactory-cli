@@ -6,7 +6,7 @@
 **Derniere mise a jour :** 2026-06-04 (bascule adresse prod → `filmpro-portail.vercel.app`, chantier 1 portail clos)
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session courante :** 2026-06-04 - **Bascule adresse prod livrée (gate 5, chantier 1 portail clos)** : prod publique = `filmpro-portail.vercel.app` (domaine de projet Vercel = voie C contournant le mur SSO ; un alias serait resté protégé). `PUBLIC_APP_URL` + Supabase alignés ; redirect 308 ancien host → nouveau (`/api/*` exempté). Login OTP validé, audit 0 H/C/M, baseline figée. Détail → Livré ci-dessous. Reste : finitions Bloc 0 puis chantier 2 Devis.
+**Session courante :** 2026-06-04 - **Bascule adresse prod livrée (gate 5, chantier 1 portail clos)** : prod publique = `filmpro-portail.vercel.app` (domaine de projet Vercel = voie C contournant le mur SSO ; un alias serait resté protégé). `PUBLIC_APP_URL` + Supabase alignés ; redirect 308 ancien host → nouveau (`/api/*` exempté). Login OTP validé, audit 0 H/C/M, baseline figée. Détail → Livré ci-dessous. Reste : finitions Bloc 0 puis chantier 2 Découpe Films (pivot 2026-06-05 : l'outil 2 n'est plus un devis mais un optimiseur de découpes de film).
 **Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175 : `2026-05-06-sessions.md` ; S122-S125 : `2026-04-28-sessions.md` ; S70-S107 : `decisions-sessions-*.md` + `Formation/CLAUDE.md`).
 
 
@@ -153,13 +153,13 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 1 - Chantier 2 portail, app Devis FilmPro (session dédiée, SUPERVISÉ). Bloc 0 (finitions post-bascule) clôturé 2026-06-05. Commencer par éponger la dette Session 1 (centraliser les call sites API référentiel), puis cadrage `/product`, puis build.
+**Prochaine attaque** : Bloc 1 - Chantier 2 portail, app **Découpe Films** (optimiseur de découpes de film ; **pivot 2026-06-05, ex-« Devis »**), session dédiée, SUPERVISÉ. Bloc 0 clôturé 2026-06-05 ; dette référentiel Session 1 **épongée 2026-06-05** (commit `e5a6cd4`). Prochain pas : cadrage `/product` du nouvel outil (le cadrage Devis entamé est caduc), puis specs, puis build.
 
-### 1. Chantier 2 portail - app Devis [SUPERVISÉ • high • session dédiée]
+### 1. Chantier 2 portail - app Découpe Films [SUPERVISÉ • xhigh • session dédiée]
 
-- **Pourquoi** : le portail chantier 1 (CRM sous `/crm` + bascule d'adresse) est livré et en prod ; le chantier 2 ajoute le 2e outil du portail (Devis chantier).
-- **Prérequis** : cadrage product-architect (`/product`) à lancer ; commencer par éponger la dette nommée Session 1 (centraliser les call sites API référentiel).
-- [ ] **[EXÉCUTABLE]** Construire l'app Devis du portail FilmPro : (1) centraliser les call sites API référentiel (dette Session 1), (2) cadrage + specs via `/product`, (3) build. → voir `memory/project_portail_filmpro_multi_outils.md` + `.product-architect/portail/delivery-plan.md`.
+- **Pourquoi** : le portail chantier 1 (CRM sous `/crm` + bascule d'adresse) est livré et en prod ; le chantier 2 ajoute le 2e outil du portail = **Découpe Films**, un optimiseur de découpes de film (réduction des chutes). **Pivot 2026-06-05** : ce n'est plus l'outil de devis initialement dimensionné — les fondations devis du pack `.product-architect/portail/` (catalogue/lignes/passerelles) sont caduques pour ce chantier.
+- **Prérequis** : ~~dette Session 1~~ épongée 2026-06-05 (commit `e5a6cd4`, refactor référentiel) ; reste à lancer le cadrage product-architect (`/product`) du nouvel outil.
+- [ ] **[EXÉCUTABLE]** Construire l'app **Découpe Films** du portail FilmPro : (1) cadrage `/product` de l'outil (périmètre d'optimisation des découpes à définir avec Pascal - le cadrage Devis est caduc), (2) specs, (3) build. → voir `memory/project_portail_filmpro_multi_outils.md`.
 
 ### Livré cette session
 

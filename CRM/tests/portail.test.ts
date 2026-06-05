@@ -70,12 +70,12 @@ test.describe('Home portail', () => {
 		await expect(page.getByRole('heading', { name: 'Bonjour, par où commencer ?' })).toBeVisible();
 	});
 
-	test('AC-001 : exactement 2 cards (CRM active + Devis bientot)', async ({ page }) => {
+	test('AC-001 : exactement 2 cards (CRM active + Découpe Films bientot)', async ({ page }) => {
 		await page.goto('/');
 		await expect(page.locator('.card')).toHaveCount(2);
 		// CRM = vrai lien navigable
 		await expect(page.getByRole('link', { name: /Ouvrir le CRM/ })).toBeVisible();
-		// Devis = conteneur non interactif, badge bientot
+		// Découpe Films = conteneur non interactif, badge bientot
 		await expect(page.getByText('Bientôt disponible')).toBeVisible();
 	});
 
@@ -96,16 +96,16 @@ test.describe('Home portail', () => {
 		await expect(page.locator('main')).toBeVisible();
 	});
 
-	test('AC-003 : la card Devis ne navigue pas (aria-disabled, aucun href)', async ({ page }) => {
+	test('AC-003 : la card Découpe Films ne navigue pas (aria-disabled, aucun href)', async ({ page }) => {
 		await page.goto('/');
-		const devis = page.locator('.card--disabled');
-		await expect(devis).toHaveCount(1);
-		await expect(devis).toHaveAttribute('aria-disabled', 'true');
-		// Pas de lien actif dans la card Devis
-		expect(await devis.locator('a').count()).toBe(0);
+		const decoupe = page.locator('.card--disabled');
+		await expect(decoupe).toHaveCount(1);
+		await expect(decoupe).toHaveAttribute('aria-disabled', 'true');
+		// Pas de lien actif dans la card Découpe Films
+		expect(await decoupe.locator('a').count()).toBe(0);
 		// Clic dans la zone (force : l'element est aria-disabled donc "disabled" pour
 		// Playwright) : aucune navigation possible faute de <a>, on reste sur la home.
-		await devis.click({ force: true, position: { x: 10, y: 10 } });
+		await decoupe.click({ force: true, position: { x: 10, y: 10 } });
 		await page.waitForTimeout(200);
 		await expect(page).toHaveURL(new RegExp('http://localhost:5173/$'));
 	});

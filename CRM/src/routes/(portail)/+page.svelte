@@ -1,6 +1,6 @@
 <!--
   PortailHome : page d'accueil du portail FilmPro à `/`. Écran statique (aucune donnée live).
-  Accroche + grille de cards (CRM actif / Devis bientôt) + footer signature.
+  Accroche + grille de cards (CRM actif / Découpe Films bientôt) + footer signature.
   Référence visuelle : .product-architect/portail/golden-standard.html (validé Pascal 2026-06-01).
 -->
 <script lang="ts">
@@ -35,17 +35,18 @@
 		</ToolCard>
 
 		<ToolCard
-			titre="Devis"
-			sousTitre="Chiffrez un traitement de vitrage en quelques clics."
+			titre="Découpe Films"
+			sousTitre="Optimisez les découpes de film, limitez les chutes."
 			state="soon"
-			ariaLabel="Devis : bientôt disponible"
+			ariaLabel="Découpe Films : bientôt disponible"
 		>
 			{#snippet icon()}
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-					<path d="M14 2v6h6" />
-					<path d="M8 13h8" />
-					<path d="M8 17h5" />
+					<circle cx="6" cy="6" r="3" />
+					<path d="M8.12 8.12 12 12" />
+					<path d="M20 4 8.12 15.88" />
+					<circle cx="6" cy="18" r="3" />
+					<path d="M14.8 14.8 20 20" />
 				</svg>
 			{/snippet}
 		</ToolCard>
