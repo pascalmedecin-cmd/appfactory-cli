@@ -318,6 +318,147 @@ export type Database = {
         }
         Relationships: []
       }
+      decoupe_chantiers: {
+        Row: {
+          client: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          nom: string
+          statut: string
+          updated_at: string
+        }
+        Insert: {
+          client?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nom: string
+          statut?: string
+          updated_at?: string
+        }
+        Update: {
+          client?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          nom?: string
+          statut?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      decoupe_produits: {
+        Row: {
+          actif: boolean
+          created_at: string
+          created_by: string | null
+          fabricant: string | null
+          famille: string
+          fournisseur: string | null
+          id: string
+          jointage_autorise: boolean
+          laizes_mm: number[]
+          marge_pose_mm: number
+          nestable: boolean
+          nom: string
+          notes: string | null
+          orientation_imposee: boolean
+          recouvrement_mm: number
+          reference: string
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          created_at?: string
+          created_by?: string | null
+          fabricant?: string | null
+          famille: string
+          fournisseur?: string | null
+          id?: string
+          jointage_autorise?: boolean
+          laizes_mm: number[]
+          marge_pose_mm?: number
+          nestable?: boolean
+          nom: string
+          notes?: string | null
+          orientation_imposee?: boolean
+          recouvrement_mm?: number
+          reference: string
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          created_at?: string
+          created_by?: string | null
+          fabricant?: string | null
+          famille?: string
+          fournisseur?: string | null
+          id?: string
+          jointage_autorise?: boolean
+          laizes_mm?: number[]
+          marge_pose_mm?: number
+          nestable?: boolean
+          nom?: string
+          notes?: string | null
+          orientation_imposee?: boolean
+          recouvrement_mm?: number
+          reference?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      decoupe_vitres: {
+        Row: {
+          chantier_id: string
+          created_at: string
+          hauteur_mm: number
+          id: string
+          largeur_mm: number
+          produit_id: string
+          quantite: number
+          sur_mesure_fournisseur: boolean
+          type_vitrage: string | null
+        }
+        Insert: {
+          chantier_id: string
+          created_at?: string
+          hauteur_mm: number
+          id?: string
+          largeur_mm: number
+          produit_id: string
+          quantite?: number
+          sur_mesure_fournisseur?: boolean
+          type_vitrage?: string | null
+        }
+        Update: {
+          chantier_id?: string
+          created_at?: string
+          hauteur_mm?: number
+          id?: string
+          largeur_mm?: number
+          produit_id?: string
+          quantite?: number
+          sur_mesure_fournisseur?: boolean
+          type_vitrage?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decoupe_vitres_chantier_id_fkey"
+            columns: ["chantier_id"]
+            isOneToOne: false
+            referencedRelation: "decoupe_chantiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decoupe_vitres_produit_id_fkey"
+            columns: ["produit_id"]
+            isOneToOne: false
+            referencedRelation: "decoupe_produits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       entreprises: {
         Row: {
           adresse_siege: string | null

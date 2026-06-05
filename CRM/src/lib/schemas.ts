@@ -433,3 +433,105 @@ export function validate<T>(schema: z.ZodSchema<T>, data: unknown): { success: t
 	const messages = result.error.issues.map((i) => i.message).join(', ');
 	return { success: false, error: messages };
 }
+
+// -- Découpe Films (chantier 2 portail) --
+// Schemas des form actions des 3 entités (produits / chantiers / vitres).
+// Unités : millimètres entiers (ADR-0003). Les preprocess acceptent à la fois la
+// chaîne de formulaire (via extractForm) et la valeur native (tests Vitest).
+
+/** Familles produit (miroir de FamilleProduit dans $lib/decoupe/types). */
+export const FAMILLES_PRODUIT = ['solaire', 'securite', 'discretion'] as const;
+/** Statuts d'un chantier de découpe. */
+export const STATUTS_CHANTIER = ['en_saisie', 'lancee'] as const;
+
+/** Booléen tolérant : checkbox `'on'`/`'true'`/`'1'`, valeur native, ou absence → false. */
+const formBoolean = z.preprocess(
+	(v) => (typeof v === 'boolean' ? v : coerceFormBoolean(v as FormDataEntryValue)),
+	z.boolean()
+);
+
+/** Entier mm positif (> 0) : dimension de vitre. */
+const mmStrictPositive = (label: string) =>
+	z.coerce.number({ error: `${label} doit être un nombre` })
+		.int(`${label} doit être un entier (mm)`)
+		.positive(`${label} doit être > 0`);
+
+/** Entier mm ≥ 0 : marge / recouvrement (0 autorisé). */
+const mmNonNegative = (label: string) =>
+	z.coerce.number({ error: `${label} doit être un nombre` })
+		.int(`${label} doit être un entier (mm)`)
+		.min(0, `${label} doit être ≥ 0`);
+
+/** Laizes : CSV `'1520, 1830'` OU tableau → number[] (chaque laize entière > 0, ≥ 1 laize). */
+const laizesField = z.preprocess(
+	(v) => {
+		if (Array.isArray(v)) return v.map((x) => Number(x));
+		if (typeof v === 'string') {
+			return v.split(/[\s,;]+/).map((s) => s.trim()).filter(Boolean).map(Number);
+		}
+		return v;
+	},
+	z.array(z.number().int('Chaque laize doit être un entier (mm)').positive('Chaque laize doit être > 0'))
+		.min(1, 'Au moins une laize (mm) est requise')
+);
+
+// Produits
+export const DecoupeProduitCreateSchema = z.object({
+	reference: z.string().min(1, 'La référence est requise').max(100),
+	nom: z.string().min(1, 'Le nom est requis').max(200),
+	famille: z.enum(FAMILLES_PRODUIT, { error: 'Famille invalide' }),
+	fabricant: optionalString,
+	fournisseur: optionalString,
+	laizes_mm: laizesField,
+	orientation_imposee: formBoolean,
+	jointage_autorise: formBoolean,
+	nestable: formBoolean,
+	marge_pose_mm: mmNonNegative('La marge de pose'),
+	recouvrement_mm: mmNonNegative('Le recouvrement'),
+	notes: optionalText,
+});
+export const DecoupeProduitUpdateSchema = DecoupeProduitCreateSchema.extend({ id: requiredUUID });
+/** Archive (soft-delete) / restauration : un produit référencé par une vitre ne peut être supprimé (FK RESTRICT). */
+export const DecoupeProduitArchiveSchema = z.object({ id: requiredUUID });
+
+// Chantiers (statut initial forcé 'en_saisie' par le builder, hors formulaire)
+export const DecoupeChantierCreateSchema = z.object({
+	nom: z.string().min(1, 'Le nom du chantier est requis').max(200),
+	client: optionalString,
+});
+export const DecoupeChantierUpdateSchema = DecoupeChantierCreateSchema.extend({ id: requiredUUID });
+export const DecoupeChantierDeleteSchema = z.object({ id: requiredUUID });
+
+// Vitres
+export const DecoupeVitreCreateSchema = z.object({
+	chantier_id: requiredUUID,
+	produit_id: requiredUUID,
+	largeur_mm: mmStrictPositive('La largeur'),
+	hauteur_mm: mmStrictPositive('La hauteur'),
+	quantite: z.coerce.number({ error: 'La quantité doit être un nombre' })
+		.int('La quantité doit être un entier').min(1, 'La quantité doit être ≥ 1'),
+	type_vitrage: optionalString,
+	sur_mesure_fournisseur: formBoolean,
+});
+/** Update vitre : on ne déplace pas une vitre de chantier (chantier_id absent). */
+export const DecoupeVitreUpdateSchema = z.object({
+	id: requiredUUID,
+	produit_id: requiredUUID,
+	largeur_mm: mmStrictPositive('La largeur'),
+	hauteur_mm: mmStrictPositive('La hauteur'),
+	quantite: z.coerce.number({ error: 'La quantité doit être un nombre' })
+		.int('La quantité doit être un entier').min(1, 'La quantité doit être ≥ 1'),
+	type_vitrage: optionalString,
+	sur_mesure_fournisseur: formBoolean,
+});
+export const DecoupeVitreDeleteSchema = z.object({ id: requiredUUID });
+
+// Field lists (extractForm, form actions étape 3)
+export const DECOUPE_PRODUIT_FIELDS = [
+	'reference', 'nom', 'famille', 'fabricant', 'fournisseur', 'laizes_mm',
+	'orientation_imposee', 'jointage_autorise', 'nestable', 'marge_pose_mm', 'recouvrement_mm', 'notes',
+] as const;
+export const DECOUPE_CHANTIER_FIELDS = ['nom', 'client'] as const;
+export const DECOUPE_VITRE_FIELDS = [
+	'chantier_id', 'produit_id', 'largeur_mm', 'hauteur_mm', 'quantite', 'type_vitrage', 'sur_mesure_fournisseur',
+] as const;
