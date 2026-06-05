@@ -17,6 +17,12 @@
 	let { data }: { data: PageData } = $props();
 	type Chantier = (typeof data.chantiers)[number];
 
+	const FAMILLE_LABEL: Record<string, string> = {
+		solaire: 'Solaire',
+		securite: 'Sécurité',
+		discretion: 'Discrétion'
+	};
+
 	let modalOpen = $state(false);
 	let saving = $state(false);
 	let nom = $state('');
@@ -25,11 +31,12 @@
 	const count = $derived(data.chantiers.length);
 
 	const columns = [
-		{ key: 'nom', label: 'Chantier', sortable: true, class: 'w-[34%]' },
-		{ key: 'client', label: 'Client', sortable: true, class: 'w-[22%] hidden md:table-cell' },
-		{ key: 'nb_vitres', label: 'Vitres', class: 'w-[12%]' },
-		{ key: 'statut', label: 'Statut', sortable: true, class: 'w-[16%]' },
-		{ key: 'updated_at', label: 'Modifié', sortable: true, class: 'w-[14%] hidden lg:table-cell' }
+		{ key: 'nom', label: 'Chantier', sortable: true, class: 'w-[28%]' },
+		{ key: 'client', label: 'Client', sortable: true, class: 'w-[18%] hidden md:table-cell' },
+		{ key: 'nb_vitres', label: 'Vitres', class: 'w-[10%]' },
+		{ key: 'familles', label: 'Familles', class: 'w-[20%] hidden md:table-cell' },
+		{ key: 'statut', label: 'Statut', sortable: true, class: 'w-[14%]' },
+		{ key: 'updated_at', label: 'Modifié', sortable: true, class: 'w-[12%] hidden lg:table-cell' }
 	];
 
 	function statutLabel(s: string): string {
@@ -60,7 +67,8 @@
 
 <section class="df-page-head">
 	<div>
-		<h1 class="df-page-title">Chantiers</h1>
+		<div class="df-kicker">Découpe Films</div>
+		<h1 class="df-title-xl">Chantiers</h1>
 		<p class="df-page-sub">
 			{count === 0
 				? 'Créez un chantier pour saisir vos vitres et optimiser la découpe.'
@@ -97,6 +105,17 @@
 				<td class="px-4 py-3"><span class="df-cell-strong">{c.nom}</span></td>
 				<td class="px-4 py-3 hidden md:table-cell df-cell-muted">{c.client || '—'}</td>
 				<td class="px-4 py-3"><span class="df-count">{c.nb_vitres}</span></td>
+				<td class="px-4 py-3 hidden md:table-cell">
+					{#if c.familles.length > 0}
+						<span class="fam-list">
+							{#each c.familles as f (f)}
+								<span class="df-pastille df-pastille--{f}">{FAMILLE_LABEL[f] ?? f}</span>
+							{/each}
+						</span>
+					{:else}
+						<span class="df-cell-muted">—</span>
+					{/if}
+				</td>
 				<td class="px-4 py-3">
 					<Badge label={statutLabel(c.statut)} variant={statutVariant(c.statut)} />
 				</td>
@@ -154,3 +173,11 @@
 		</div>
 	</form>
 </ModalForm>
+
+<style>
+	.fam-list {
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: 6px 12px;
+	}
+</style>

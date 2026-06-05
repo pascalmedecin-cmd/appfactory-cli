@@ -34,7 +34,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const { data: vitresRows } = await locals.supabase
 		.from('decoupe_vitres')
 		.select('id, chantier_id, produit_id, largeur_mm, hauteur_mm, quantite, sur_mesure_fournisseur')
-		.in('chantier_id', ids);
+		.in('chantier_id', ids)
+		.order('created_at', { ascending: true }); // ordre stable → couleurs de pièce déterministes
 	const vitres = vitresRows ?? [];
 
 	const produitIds = [...new Set(vitres.map((v) => v.produit_id))];
@@ -42,7 +43,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		? await locals.supabase
 				.from('decoupe_produits')
 				.select(
-					'id, reference, nom, famille, laizes_mm, orientation_imposee, jointage_autorise, nestable, marge_pose_mm, recouvrement_mm'
+					'id, reference, nom, famille, fabricant, laizes_mm, orientation_imposee, jointage_autorise, nestable, marge_pose_mm, recouvrement_mm'
 				)
 				.in('id', produitIds)
 		: { data: [] };
@@ -50,7 +51,10 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 	// Construit les entrées du cœur algo (types purs).
 	const produitMap = new Map<string, ProduitDecoupe>();
-	const produitsInfo: Record<string, { reference: string; nom: string; famille: string }> = {};
+	const produitsInfo: Record<
+		string,
+		{ reference: string; nom: string; famille: string; fabricant: string }
+	> = {};
 	const nestableInterneProduits = new Set<string>();
 	for (const p of produits) {
 		produitMap.set(p.id, {
@@ -62,7 +66,12 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			marge_pose_mm: p.marge_pose_mm,
 			recouvrement_mm: p.recouvrement_mm
 		});
-		produitsInfo[p.id] = { reference: p.reference, nom: p.nom, famille: p.famille };
+		produitsInfo[p.id] = {
+			reference: p.reference,
+			nom: p.nom,
+			famille: p.famille,
+			fabricant: p.fabricant ?? ''
+		};
 		if (p.nestable) nestableInterneProduits.add(p.id);
 	}
 
@@ -137,6 +146,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 		selection,
 		toutesLancees: selection.every((c) => c.statut === 'lancee'),
 		nbVitres: vitres.length,
+		calculeA: new Date().toLocaleTimeString('fr-CH', { hour: '2-digit', minute: '2-digit' }),
 		resultat,
 		produitsInfo,
 		vitresInfo,

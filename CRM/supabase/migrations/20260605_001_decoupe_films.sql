@@ -25,15 +25,16 @@ CREATE TABLE IF NOT EXISTS decoupe_produits (
   famille             TEXT    NOT NULL CHECK (famille IN ('solaire','securite','discretion')),
   fabricant           TEXT,
   fournisseur         TEXT,                                   -- transparence assumée (brief §3)
-  laizes_mm           INTEGER[] NOT NULL                      -- 1..n laizes disponibles
-                        CHECK (array_length(laizes_mm, 1) >= 1
+  laizes_mm           INTEGER[] NOT NULL                      -- 1..20 laizes disponibles (bornées)
+                        CHECK (array_length(laizes_mm, 1) BETWEEN 1 AND 20
                                AND array_position(laizes_mm, NULL) IS NULL
-                               AND 0 < ALL (laizes_mm)),
+                               AND 0 < ALL (laizes_mm)
+                               AND 20000 >= ALL (laizes_mm)),            -- borne haute defense-in-depth (audit sécu 2026-06-05)
   orientation_imposee BOOLEAN NOT NULL DEFAULT false,         -- true → rotation interdite au nesting
   jointage_autorise   BOOLEAN NOT NULL DEFAULT false,         -- true → pose en lés si vitre > laize
   nestable            BOOLEAN NOT NULL DEFAULT true,          -- garde-fou : false = jamais nesté (vernis, e-film)
-  marge_pose_mm       INTEGER NOT NULL DEFAULT 0 CHECK (marge_pose_mm >= 0),   -- ajoutée à L et H (brief §4.4)
-  recouvrement_mm     INTEGER NOT NULL DEFAULT 0 CHECK (recouvrement_mm >= 0), -- joint entre lés (Q4, défaut 0)
+  marge_pose_mm       INTEGER NOT NULL DEFAULT 0 CHECK (marge_pose_mm BETWEEN 0 AND 50000),   -- ajoutée à L et H (brief §4.4)
+  recouvrement_mm     INTEGER NOT NULL DEFAULT 0 CHECK (recouvrement_mm BETWEEN 0 AND 50000), -- joint entre lés (Q4, défaut 0)
   notes               TEXT,                                   -- champ libre (Q2 : pas d'attribut métier inventé)
   actif               BOOLEAN NOT NULL DEFAULT true,          -- soft-delete (préserve l'historique des vitres)
   created_by          UUID REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -79,9 +80,9 @@ CREATE TABLE IF NOT EXISTS decoupe_vitres (
   id                     UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chantier_id            UUID NOT NULL REFERENCES decoupe_chantiers(id) ON DELETE CASCADE,
   produit_id             UUID NOT NULL REFERENCES decoupe_produits(id) ON DELETE RESTRICT,
-  largeur_mm             INTEGER NOT NULL CHECK (largeur_mm > 0),    -- dimension VITRE (la marge de pose est
-  hauteur_mm             INTEGER NOT NULL CHECK (hauteur_mm > 0),    --   ajoutée au calcul, pas stockée ici)
-  quantite               INTEGER NOT NULL DEFAULT 1 CHECK (quantite >= 1),
+  largeur_mm             INTEGER NOT NULL CHECK (largeur_mm BETWEEN 1 AND 50000),  -- dimension VITRE (la marge de pose est
+  hauteur_mm             INTEGER NOT NULL CHECK (hauteur_mm BETWEEN 1 AND 50000),  --   ajoutée au calcul, pas stockée ici)
+  quantite               INTEGER NOT NULL DEFAULT 1 CHECK (quantite BETWEEN 1 AND 10000), -- bornes defense-in-depth (audit sécu 2026-06-05)
   type_vitrage           TEXT,                                       -- descriptif (information sur la vitre)
   sur_mesure_fournisseur BOOLEAN NOT NULL DEFAULT false,             -- LA COCHE (brief §2) : true → hors nesting
   created_at             TIMESTAMPTZ NOT NULL DEFAULT now()

@@ -95,9 +95,17 @@
 
 <svelte:head><title>Base produit · Découpe Films</title></svelte:head>
 
+{#snippet icScissors(size: number)}
+	<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3" /><path d="M8.12 8.12 12 12" /><path d="M20 4 8.12 15.88" /><circle cx="6" cy="18" r="3" /><path d="M14.8 14.8 20 20" /></svg>
+{/snippet}
+{#snippet icRotate(size: number)}
+	<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>
+{/snippet}
+
 <section class="df-page-head">
 	<div>
-		<h1 class="df-page-title">Base produit</h1>
+		<div class="df-kicker">Découpe Films</div>
+		<h1 class="df-title-xl">Base produit</h1>
 		<p class="df-page-sub">
 			Catalogue descriptif des films : laizes, sens de pose, jointage. Sert de référence à la saisie des vitres.
 		</p>
@@ -130,18 +138,35 @@
 			emptyMessage="Aucun produit"
 		>
 			{#snippet row(p: Produit)}
-				<td class="px-4 py-3"><span class="df-cell-strong df-num">{p.reference}</span></td>
+				<td class="px-4 py-3">
+					<span class="df-td-ref">
+						<span class="df-ref-tile df-fam-tile--{p.famille}">{@render icScissors(16)}</span>
+						<span class="df-cell-strong">{p.reference}</span>
+					</span>
+				</td>
 				<td class="px-4 py-3">{p.nom}</td>
 				<td class="px-4 py-3 hidden md:table-cell">
 					<span class="df-pastille df-pastille--{p.famille}">{FAMILLE_LABEL[p.famille] ?? p.famille}</span>
 				</td>
-				<td class="px-4 py-3 hidden lg:table-cell df-cell-muted df-num">{(p.laizes_mm ?? []).join(' · ')}</td>
+				<td class="px-4 py-3 hidden lg:table-cell">
+					<span class="df-laizechips">
+						{#each p.laizes_mm ?? [] as l (l)}<span class="df-lz">{l}</span>{/each}
+					</span>
+				</td>
 				<td class="px-4 py-3">
 					<div class="df-chips">
 						{#if !p.actif}<span class="df-chip">Archivé</span>{/if}
-						{#if !p.nestable}<span class="df-chip df-chip--warn">Non nesté</span>{/if}
-						{#if p.orientation_imposee}<span class="df-chip">Sens imposé</span>{/if}
-						{#if p.jointage_autorise}<span class="df-chip">Jointage</span>{/if}
+						{#if p.orientation_imposee}
+							<span class="df-chip">{@render icRotate(12)} orientation imposée</span>
+						{:else}
+							<span class="df-chip">rotation libre</span>
+						{/if}
+						{#if p.jointage_autorise}<span class="df-chip df-chip--les"><Icon name="layers" size={12} /> jointage</span>{/if}
+						{#if p.nestable}
+							<span class="df-chip df-chip--ok"><Icon name="check" size={12} /> nestable</span>
+						{:else}
+							<span class="df-chip df-chip--warn">non nestable</span>
+						{/if}
 						{#if p.marge_pose_mm > 0}<span class="df-chip">Marge {p.marge_pose_mm} mm</span>{/if}
 					</div>
 				</td>

@@ -109,9 +109,9 @@
 
 <section class="fiche-head">
 	<div class="fiche-title">
-		<h1 class="df-page-title">{data.chantier.nom}</h1>
+		<div class="df-kicker">{data.chantier.client || 'Fiche chantier'}</div>
+		<h1 class="df-title-xl fiche-title-xl">{data.chantier.nom}</h1>
 		<div class="fiche-meta">
-			{#if data.chantier.client}<span class="df-cell-muted">{data.chantier.client}</span>{/if}
 			<Badge label={lancee ? 'Lancée' : 'En saisie'} variant={lancee ? 'success' : 'muted'} />
 			<span class="df-cell-muted">{nbVitres} vitre{nbVitres > 1 ? 's' : ''}</span>
 		</div>
@@ -407,6 +407,9 @@
 		justify-content: space-between;
 		gap: 16px;
 		margin-bottom: 22px;
+	}
+	.fiche-title-xl {
+		font-size: 24px;
 	}
 	.fiche-meta {
 		display: flex;

@@ -450,19 +450,35 @@ const formBoolean = z.preprocess(
 	z.boolean()
 );
 
-/** Entier mm positif (> 0) : dimension de vitre. */
+// Borne haute défensive sur les dimensions (mm). 50 000 mm = 50 m : au-delà, aucune vitre
+// réelle - empêche un DoS algorithmique (boucle de nesting / pose en lés sur des valeurs
+// aberrantes) côté optimiser. Audit sécu 2026-06-05 (Low → fixé).
+const MM_MAX = 50_000;
+const QTE_MAX = 10_000;
+const LAIZE_MAX = 20_000; // 20 m : couvre toutes les laizes de rouleau réelles
+const LAIZES_MAX = 20; // nombre de laizes distinctes par produit
+
+/** Entier mm positif (> 0) borné : dimension de vitre. */
 const mmStrictPositive = (label: string) =>
 	z.coerce.number({ error: `${label} doit être un nombre` })
 		.int(`${label} doit être un entier (mm)`)
-		.positive(`${label} doit être > 0`);
+		.positive(`${label} doit être > 0`)
+		.max(MM_MAX, `${label} dépasse la limite (${MM_MAX} mm)`);
 
-/** Entier mm ≥ 0 : marge / recouvrement (0 autorisé). */
+/** Entier mm ≥ 0 borné : marge / recouvrement (0 autorisé). */
 const mmNonNegative = (label: string) =>
 	z.coerce.number({ error: `${label} doit être un nombre` })
 		.int(`${label} doit être un entier (mm)`)
-		.min(0, `${label} doit être ≥ 0`);
+		.min(0, `${label} doit être ≥ 0`)
+		.max(MM_MAX, `${label} dépasse la limite (${MM_MAX} mm)`);
 
-/** Laizes : CSV `'1520, 1830'` OU tableau → number[] (chaque laize entière > 0, ≥ 1 laize). */
+/** Quantité entière bornée (≥ 1). */
+const quantiteField = z.coerce.number({ error: 'La quantité doit être un nombre' })
+	.int('La quantité doit être un entier')
+	.min(1, 'La quantité doit être ≥ 1')
+	.max(QTE_MAX, `La quantité dépasse la limite (${QTE_MAX})`);
+
+/** Laizes : CSV `'1520, 1830'` OU tableau → number[] (chaque laize entière, bornée ; 1..20 laizes). */
 const laizesField = z.preprocess(
 	(v) => {
 		if (Array.isArray(v)) return v.map((x) => Number(x));
@@ -471,8 +487,14 @@ const laizesField = z.preprocess(
 		}
 		return v;
 	},
-	z.array(z.number().int('Chaque laize doit être un entier (mm)').positive('Chaque laize doit être > 0'))
+	z.array(
+		z.number()
+			.int('Chaque laize doit être un entier (mm)')
+			.positive('Chaque laize doit être > 0')
+			.max(LAIZE_MAX, `Une laize dépasse la limite (${LAIZE_MAX} mm)`)
+	)
 		.min(1, 'Au moins une laize (mm) est requise')
+		.max(LAIZES_MAX, `Maximum ${LAIZES_MAX} laizes par produit`)
 );
 
 // Produits
@@ -508,8 +530,7 @@ export const DecoupeVitreCreateSchema = z.object({
 	produit_id: requiredUUID,
 	largeur_mm: mmStrictPositive('La largeur'),
 	hauteur_mm: mmStrictPositive('La hauteur'),
-	quantite: z.coerce.number({ error: 'La quantité doit être un nombre' })
-		.int('La quantité doit être un entier').min(1, 'La quantité doit être ≥ 1'),
+	quantite: quantiteField,
 	type_vitrage: optionalString,
 	sur_mesure_fournisseur: formBoolean,
 });
@@ -519,8 +540,7 @@ export const DecoupeVitreUpdateSchema = z.object({
 	produit_id: requiredUUID,
 	largeur_mm: mmStrictPositive('La largeur'),
 	hauteur_mm: mmStrictPositive('La hauteur'),
-	quantite: z.coerce.number({ error: 'La quantité doit être un nombre' })
-		.int('La quantité doit être un entier').min(1, 'La quantité doit être ≥ 1'),
+	quantite: quantiteField,
 	type_vitrage: optionalString,
 	sur_mesure_fournisseur: formBoolean,
 });

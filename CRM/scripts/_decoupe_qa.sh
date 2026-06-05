@@ -26,11 +26,13 @@ check npm run build --silent
 
 if [ "$RUN_E2E" = 1 ]; then
   step "4-5. e2e Playwright + axe (Découpe)"
-  # Cible le spec Découpe quand il existera ; sinon lance la suite e2e complète.
-  if [ -f tests/decoupe.spec.ts ]; then
-    check npx playwright test tests/decoupe.spec.ts
+  # Convention repo : les e2e Playwright sont en *.test.ts (testMatch playwright.config.ts).
+  if [ -f tests/decoupe.test.ts ]; then
+    # Session OTP-free fraîche (ne consomme pas le quota OTP) avant le parcours authentifié.
+    node tests/mint-session.mjs >/dev/null 2>&1 || printf '\033[33mNOTE\033[0m mint-session a échoué (session existante réutilisée).\n'
+    check npx playwright test tests/decoupe.test.ts
   else
-    printf '\033[33mNOTE\033[0m tests/decoupe.spec.ts absent - à créer (barrière 4-5 non couverte).\n'
+    printf '\033[33mNOTE\033[0m tests/decoupe.test.ts absent - à créer (barrière 4-5 non couverte).\n'
     fail=1
   fi
 fi

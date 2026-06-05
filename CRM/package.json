@@ -44,6 +44,7 @@
 	"dependencies": {
 		"@anthropic-ai/sdk": "^0.95.1",
 		"@fontsource-variable/dm-sans": "^5.2.8",
+		"@fontsource/dm-mono": "^5.2.7",
 		"@sentry/sveltekit": "^10.53.1",
 		"@supabase/ssr": "0.10.0",
 		"@supabase/supabase-js": "2.101.1",
@@ -51,6 +52,7 @@
 		"@vercel/speed-insights": "^2.0.0",
 		"layerchart": "^1.0.13",
 		"lucide-svelte": "^1.0.1",
+		"pg": "^8.21.0",
 		"zod": "^4.3.6"
 	},
 	"overrides": {

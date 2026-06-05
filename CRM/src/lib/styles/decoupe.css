@@ -246,3 +246,746 @@
 		grid-template-columns: 1fr;
 	}
 }
+
+/* =============================================================================
+   Langage visuel PREMIUM (golden v4 validé, étape 3bis-b).
+   Issu du benchmark métier (CutTool, CutList, marker textile). Mappé sur les
+   tokens projet + variables d'appoint locales `--df-*` pour les teintes que le
+   design-system ne nomme pas (sunken, faint, tx/bd des status). Préfixe `df-`.
+   ============================================================================= */
+.decoupe-shell {
+	--df-surface-sunken: #f3f4f6;
+	/* text-faint = gris secondaire AA : #6B7280 (≥ 4.5:1 sur blanc ET surface-alt).
+	   Le #9CA3AF du golden échoue WCAG 1.4.3 sur les petits labels (axe). */
+	--df-text-faint: #6b7280;
+	--df-green-tx: #027a48;
+	--df-green-bd: #a6f4c5;
+	--df-amber: #f79009;
+	--df-amber-tx: #b54708;
+	--df-amber-bd: #fedf89;
+	--df-red-tx: #b42318;
+	--df-red-bd: #fecdca;
+	--df-fam-solaire: #d98a23;
+	--df-fam-securite: #3d6b8a;
+	--df-fam-discretion: #7b6a9a;
+	--df-dur: 240ms;
+}
+
+.df-mono {
+	font-family: var(--font-mono);
+}
+
+/* --- En-tête de page riche (kicker + grand titre + méta) --- */
+.df-back {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	color: var(--color-text-muted);
+	text-decoration: none;
+	margin-bottom: 18px;
+	transition: color var(--df-dur) var(--ease-out-expo);
+}
+.df-back:hover {
+	color: var(--color-primary);
+}
+.df-back :global(.df-back-chevron) {
+	transform: rotate(180deg);
+}
+.df-pagehead {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 24px;
+	flex-wrap: wrap;
+	margin-bottom: 26px;
+}
+.df-pagehead-l {
+	min-width: 0;
+}
+.df-kicker {
+	font-size: 11.5px;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--df-text-faint);
+	margin-bottom: 8px;
+}
+.df-title-xl {
+	font-size: 30px;
+	font-weight: 600;
+	letter-spacing: -0.025em;
+	color: var(--color-text);
+	line-height: 1.1;
+}
+.df-page-meta {
+	margin-top: 9px;
+	font-size: 14px;
+	color: var(--color-text-muted);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+.df-dot-sep {
+	width: 3px;
+	height: 3px;
+	border-radius: 50%;
+	background: var(--color-border-strong);
+	flex: none;
+}
+.df-pagehead-r {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+}
+
+/* --- Badge de statut global (prêt / à vérifier) --- */
+.df-statepill {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	height: 32px;
+	padding: 0 13px 0 11px;
+	border-radius: var(--radius-full);
+	font-size: 13px;
+	font-weight: 600;
+}
+.df-statepill--ok {
+	background: var(--color-success-light);
+	color: var(--df-green-tx);
+	box-shadow: inset 0 0 0 1px var(--df-green-bd);
+}
+.df-statepill--warn {
+	background: var(--color-warning-light);
+	color: var(--df-amber-tx);
+	box-shadow: inset 0 0 0 1px var(--df-amber-bd);
+}
+
+/* --- Bandeau KPI mis en scène --- */
+.df-kpis {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 14px;
+	margin-bottom: 28px;
+}
+.df-kpi {
+	background: var(--color-surface);
+	border-radius: var(--radius-2xl);
+	box-shadow: var(--shadow-card);
+	padding: 18px 20px 16px;
+	display: flex;
+	flex-direction: column;
+	position: relative;
+	overflow: hidden;
+}
+.df-kpi-lbl {
+	font-size: 12.5px;
+	font-weight: 500;
+	color: var(--color-text-muted);
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+.df-kpi-lbl :global(svg) {
+	color: var(--df-text-faint);
+	flex: none;
+}
+.df-kpi-val {
+	font-size: 32px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	line-height: 1.05;
+	color: var(--color-text);
+	margin-top: 6px;
+	display: flex;
+	align-items: baseline;
+	gap: 8px;
+}
+.df-kpi-val .df-kpi-unit {
+	font-size: 18px;
+	font-weight: 600;
+	color: var(--color-text-muted);
+}
+.df-kpi--chute .df-kpi-val {
+	color: var(--df-kpi-c);
+}
+.df-kpi-sub {
+	font-size: 12.5px;
+	color: var(--df-text-faint);
+	margin-top: 6px;
+	line-height: 1.45;
+}
+.df-kpi-sub b {
+	color: var(--color-text-body);
+	font-weight: 600;
+}
+.df-kpi-spark {
+	position: absolute;
+	right: 16px;
+	top: 16px;
+	width: 46px;
+	height: 46px;
+}
+
+/* --- Titre de section --- */
+.df-sec-h {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 12px;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--df-text-faint);
+	margin: 34px 0 14px;
+}
+.df-sec-h .df-sec-count {
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text-muted);
+}
+
+/* --- Callout alertes (jamais masquées) --- */
+.df-callout {
+	display: flex;
+	gap: 14px;
+	padding: 18px 20px;
+	border-radius: var(--radius-2xl);
+	background: var(--color-warning-light);
+	box-shadow: inset 0 0 0 1px var(--df-amber-bd);
+	border-left: 3px solid var(--df-amber);
+	margin-bottom: 14px;
+}
+.df-callout--high {
+	background: var(--color-danger-light);
+	box-shadow: inset 0 0 0 1px var(--df-red-bd);
+	border-left-color: var(--color-danger);
+}
+.df-callout-ico {
+	width: 34px;
+	height: 34px;
+	border-radius: 10px;
+	display: grid;
+	place-items: center;
+	background: var(--color-surface);
+	color: var(--df-amber-tx);
+	box-shadow: inset 0 0 0 1px var(--df-amber-bd);
+	flex: none;
+}
+.df-callout--high .df-callout-ico {
+	color: var(--df-red-tx);
+	box-shadow: inset 0 0 0 1px var(--df-red-bd);
+}
+.df-callout-body {
+	min-width: 0;
+}
+.df-callout-title {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--df-amber-tx);
+	margin-bottom: 8px;
+}
+.df-callout--high .df-callout-title {
+	color: var(--df-red-tx);
+}
+.df-callout-list {
+	list-style: none;
+	display: grid;
+	gap: 9px;
+	margin: 0;
+	padding: 0;
+}
+.df-callout-list li {
+	font-size: 13.5px;
+	line-height: 1.5;
+	color: var(--color-text-body);
+}
+.df-callout-list b {
+	color: var(--color-text);
+	font-weight: 600;
+}
+.df-tagvit {
+	display: inline-block;
+	font-size: 11.5px;
+	font-weight: 500;
+	color: var(--color-text-muted);
+	background: var(--color-surface);
+	border-radius: var(--radius-sm);
+	padding: 1px 7px;
+	box-shadow: inset 0 0 0 1px var(--color-border);
+	margin-left: 4px;
+	font-variant-numeric: tabular-nums;
+}
+
+/* --- Carte commande fournisseur --- */
+.df-ordercard {
+	background: var(--color-surface);
+	border-radius: var(--radius-2xl);
+	box-shadow: var(--shadow-card);
+	overflow: hidden;
+	margin-bottom: 14px;
+}
+.df-order-row {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 14px 20px;
+	border-bottom: 1px solid var(--color-border);
+}
+.df-order-row:last-child {
+	border-bottom: none;
+}
+.df-order-ico {
+	width: 34px;
+	height: 34px;
+	border-radius: 9px;
+	display: grid;
+	place-items: center;
+	flex: none;
+	color: #fff;
+}
+.df-order-main {
+	flex: 1;
+	min-width: 0;
+}
+.df-order-ref {
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--color-text);
+}
+.df-order-ref .df-order-nom {
+	font-weight: 400;
+	color: var(--color-text-muted);
+	margin-left: 6px;
+}
+.df-order-dim {
+	font-size: 12.5px;
+	color: var(--color-text-muted);
+	margin-top: 1px;
+	font-variant-numeric: tabular-nums;
+}
+.df-order-foot {
+	padding: 11px 20px;
+	font-size: 12.5px;
+	color: var(--color-text-muted);
+	background: var(--color-surface-alt);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+/* --- Chips d'attribut (variantes premium) --- */
+.df-chip--rot {
+	background: #eef2ff;
+	color: #4338ca;
+	box-shadow: inset 0 0 0 1px #c7d2fe;
+}
+.df-chip--les {
+	background: #f0ecf5;
+	color: #5c4e78;
+	box-shadow: inset 0 0 0 1px #d9cee8;
+}
+.df-chip--ok {
+	background: var(--color-success-light);
+	color: var(--df-green-tx);
+	box-shadow: inset 0 0 0 1px var(--df-green-bd);
+}
+.df-chip :global(svg) {
+	flex: none;
+}
+
+/* --- Carte film (cœur du résultat) --- */
+.df-film {
+	background: var(--color-surface);
+	border-radius: var(--radius-2xl);
+	box-shadow: var(--shadow-card);
+	padding: 22px 22px 8px;
+	margin-bottom: 14px;
+	transition: box-shadow var(--df-dur) var(--ease-out-expo);
+}
+.df-film:hover {
+	box-shadow: var(--shadow-card-hover);
+}
+.df-film-head {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	margin-bottom: 16px;
+}
+.df-film-tile {
+	width: 42px;
+	height: 42px;
+	border-radius: 11px;
+	display: grid;
+	place-items: center;
+	color: #fff;
+	flex: none;
+	box-shadow: 0 1px 2px rgba(17, 24, 39, 0.15);
+}
+.df-film-id {
+	flex: 1;
+	min-width: 0;
+}
+.df-film-ref {
+	font-size: 16px;
+	font-weight: 700;
+	letter-spacing: -0.01em;
+	color: var(--color-text);
+}
+.df-film-ref .df-film-fab {
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--df-text-faint);
+	margin-left: 8px;
+}
+.df-film-sub {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: 3px;
+}
+.df-film-nom {
+	font-size: 13px;
+	color: var(--color-text-muted);
+}
+
+/* Pastille de taux de chute (chiffre roi, feu tricolore) */
+.df-chute {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 28px;
+	padding: 0 12px;
+	border-radius: var(--radius-full);
+	font-size: 12.5px;
+	font-weight: 600;
+	white-space: nowrap;
+	flex: none;
+}
+.df-chute .df-chute-big {
+	font-size: 14px;
+	font-variant-numeric: tabular-nums;
+}
+.df-chute--good {
+	background: var(--color-success-light);
+	color: var(--df-green-tx);
+	box-shadow: inset 0 0 0 1px var(--df-green-bd);
+}
+.df-chute--mid {
+	background: var(--color-warning-light);
+	color: var(--df-amber-tx);
+	box-shadow: inset 0 0 0 1px var(--df-amber-bd);
+}
+.df-chute--high {
+	background: var(--color-danger-light);
+	color: var(--df-red-tx);
+	box-shadow: inset 0 0 0 1px var(--df-red-bd);
+}
+
+/* --- Strip de remplissage (la bande vue de dessus) --- */
+.df-strip-wrap {
+	margin-bottom: 14px;
+}
+.df-strip-top {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 12px;
+	margin-bottom: 7px;
+}
+.df-strip-verdict {
+	font-size: 13px;
+	color: var(--color-text-muted);
+}
+.df-strip-verdict b {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--color-text);
+	letter-spacing: -0.01em;
+	font-variant-numeric: tabular-nums;
+}
+.df-strip-fill {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--color-text-muted);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+.df-strip {
+	position: relative;
+	display: inline-block;
+	max-width: 100%;
+	background: var(--df-surface-sunken);
+	border-radius: var(--radius-xl);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+	padding: 8px;
+	overflow-x: auto;
+	vertical-align: top;
+}
+.df-strip svg {
+	display: block;
+	height: 96px;
+	width: auto;
+	border-radius: var(--radius-sm);
+	overflow: visible;
+}
+.df-strip-legend {
+	display: flex;
+	align-items: center;
+	gap: 16px;
+	margin-top: 9px;
+	font-size: 11.5px;
+	color: var(--df-text-faint);
+	flex-wrap: wrap;
+}
+.df-lg {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+.df-lg .df-sw {
+	width: 11px;
+	height: 11px;
+	border-radius: 3px;
+}
+.df-sw--chute {
+	background: repeating-linear-gradient(
+		45deg,
+		var(--color-surface),
+		var(--color-surface) 3px,
+		var(--df-surface-sunken) 3px,
+		var(--df-surface-sunken) 6px
+	);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+/* --- Pied métrique + liste de coupe --- */
+.df-film-foot {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	font-size: 12.5px;
+	color: var(--color-text-muted);
+	padding: 6px 0 14px;
+	border-top: 1px solid var(--color-border);
+	margin-top: 4px;
+	font-variant-numeric: tabular-nums;
+}
+.df-film-foot .df-strong {
+	color: var(--color-text-body);
+	font-weight: 600;
+}
+.df-cut {
+	border-top: 1px solid var(--color-border);
+}
+.df-cut summary {
+	list-style: none;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	padding: 14px 0;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--color-text-body);
+}
+.df-cut summary::-webkit-details-marker {
+	display: none;
+}
+.df-cut summary .df-chev {
+	color: var(--df-text-faint);
+	transition: transform var(--df-dur) var(--ease-out-expo);
+	flex: none;
+}
+.df-cut[open] summary .df-chev {
+	transform: rotate(90deg);
+}
+.df-cut summary .df-ct {
+	margin-left: auto;
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--color-text-muted);
+	background: var(--color-surface-alt);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+	border-radius: var(--radius-full);
+	padding: 1px 9px;
+	font-variant-numeric: tabular-nums;
+}
+.df-cuttable {
+	width: 100%;
+	border-collapse: collapse;
+	margin-bottom: 14px;
+}
+.df-cuttable th {
+	text-align: left;
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--df-text-faint);
+	padding: 0 0 8px;
+	border-bottom: 1px solid var(--color-border);
+}
+.df-cuttable td {
+	padding: 11px 0;
+	border-bottom: 1px solid var(--color-border);
+	font-size: 13.5px;
+	vertical-align: middle;
+	font-variant-numeric: tabular-nums;
+}
+.df-cuttable tr:last-child td {
+	border-bottom: none;
+}
+.df-cuttable .df-c-sw {
+	width: 26px;
+}
+.df-cuttable .df-sw {
+	width: 14px;
+	height: 14px;
+	border-radius: 4px;
+	display: inline-block;
+}
+.df-cuttable .df-c-qty {
+	font-weight: 700;
+	width: 54px;
+}
+.df-cuttable .df-c-dim {
+	font-weight: 500;
+}
+.df-cuttable .df-c-src {
+	color: var(--color-text-muted);
+}
+.df-cuttable .df-c-tag {
+	text-align: right;
+}
+
+/* --- Référence avec tuile (cellule de table) --- */
+.df-td-ref {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+}
+
+/* --- Tuile produit (devant la référence, base produit / commande) --- */
+.df-ref-tile {
+	width: 30px;
+	height: 30px;
+	border-radius: 8px;
+	display: grid;
+	place-items: center;
+	color: #fff;
+	flex: none;
+}
+.df-fam-tile--solaire {
+	background: var(--df-fam-solaire);
+}
+.df-fam-tile--securite {
+	background: var(--df-fam-securite);
+}
+.df-fam-tile--discretion {
+	background: var(--df-fam-discretion);
+}
+
+/* --- Chips de laizes (base produit) --- */
+.df-laizechips {
+	display: inline-flex;
+	gap: 5px;
+	flex-wrap: wrap;
+}
+.df-lz {
+	font-size: 11.5px;
+	font-weight: 500;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text-body);
+	background: var(--color-surface-alt);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+	border-radius: var(--radius-sm);
+	padding: 2px 7px;
+}
+
+/* --- Swatch couleur de pièce (liste vitres / légende) --- */
+.df-sw {
+	display: inline-block;
+	border-radius: 3px;
+	flex: none;
+	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+/* --- Consolidation suggérée --- */
+.df-suggest {
+	display: flex;
+	gap: 12px;
+	padding: 16px 18px;
+	border-radius: var(--radius-2xl);
+	background: var(--color-primary-light);
+	color: var(--color-primary);
+	margin-bottom: 18px;
+}
+.df-suggest-body {
+	flex: 1;
+	min-width: 0;
+}
+.df-suggest-title {
+	font-weight: 600;
+	font-size: 14px;
+	color: var(--color-text);
+}
+.df-suggest-text {
+	font-size: 13px;
+	color: var(--color-text-body);
+	margin: 3px 0 10px;
+}
+.df-suggest-links {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+.df-suggest-chip {
+	display: inline-flex;
+	flex-direction: column;
+	gap: 1px;
+	padding: 7px 12px;
+	border-radius: var(--radius-lg);
+	background: var(--color-surface);
+	box-shadow: var(--shadow-xs);
+	text-decoration: none;
+	transition:
+		box-shadow var(--df-dur) var(--ease-out-expo),
+		transform var(--df-dur) var(--ease-out-expo);
+}
+.df-suggest-chip:hover {
+	box-shadow: var(--shadow-sm);
+	transform: translateY(-1px);
+}
+.df-suggest-chip-nom {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--color-text);
+}
+.df-suggest-chip-ref {
+	font-size: 11.5px;
+	color: var(--color-text-muted);
+}
+
+@media (max-width: 880px) {
+	.df-kpis {
+		grid-template-columns: 1fr 1fr;
+	}
+}
+@media (max-width: 560px) {
+	.df-kpis {
+		grid-template-columns: 1fr;
+	}
+	.df-title-xl {
+		font-size: 25px;
+	}
+}
+@media (prefers-reduced-motion: reduce) {
+	.df-film,
+	.df-cut summary .df-chev,
+	.df-suggest-chip {
+		transition: none;
+	}
+}
