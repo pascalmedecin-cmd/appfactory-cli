@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { validate, ResolveContactSuggestionSchema } from '$lib/schemas';
 import { newId, now } from '$lib/server/db-helpers';
+import { buildContactInsertFromSuggestion } from '$lib/server/referentiel/contacts';
 
 /**
  * V3 — résolution desktop d'un brouillon de contact terrain (ADR-0003).
@@ -83,21 +84,11 @@ export const POST = async ({ params, request, locals }: RequestEvent) => {
 		contactId = newId();
 		merged = false;
 		createdNew = true;
-		const { error: insErr } = await locals.supabase.from('contacts').insert({
-			id: contactId,
-			prenom: sug.prenom ?? null,
-			nom: sug.nom ?? null,
-			role_fonction: sug.role_fonction ?? null,
-			telephone: sug.telephone ?? null,
-			email_professionnel: sug.email ?? null,
-			entreprise_id: sug.entreprise_id,
-			source: 'terrain_mobile',
-			statut_qualification: 'nouveau',
-			statut_archive: false,
-			est_prescripteur: false,
-			date_ajout: ts,
-			date_derniere_modification: ts,
-		});
+		// Référentiel partagé : la matérialisation d'un contact depuis un brouillon terrain
+		// passe par le module (id + ts conservés ici pour le nettoyage anti-race ci-dessous).
+		const { error: insErr } = await locals.supabase
+			.from('contacts')
+			.insert(buildContactInsertFromSuggestion(sug, contactId, ts));
 		if (insErr) return genericError(insErr, 'Erreur création contact');
 	}
 

@@ -5,7 +5,13 @@ import {
 	buildEntrepriseUpdate,
 	type EntrepriseUpsertInput
 } from './entreprises';
-import { buildContactInsert, buildContactUpdate, type ContactUpsertInput } from './contacts';
+import {
+	buildContactInsert,
+	buildContactUpdate,
+	buildContactInsertFromSuggestion,
+	type ContactUpsertInput,
+	type ContactSuggestionRow
+} from './contacts';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -114,5 +120,48 @@ describe('buildContactInsert / buildContactUpdate', () => {
 		expect('id' in row).toBe(false);
 		expect('statut_archive' in row).toBe(false);
 		expect(typeof row.date_derniere_modification).toBe('string');
+	});
+});
+
+describe('buildContactInsertFromSuggestion (resolve brouillon terrain, ADR-0003)', () => {
+	const sug: ContactSuggestionRow = {
+		entreprise_id: '550e8400-e29b-41d4-a716-446655440000',
+		prenom: 'Jean',
+		nom: 'Dupont',
+		role_fonction: 'Gérant',
+		telephone: '022 111 11 11',
+		email: 'jean@dupont.ch'
+	};
+	const CID = '11111111-2222-3333-4444-555555555555';
+	const TS = '2026-06-05T10:00:00.000Z';
+
+	it('utilise l’id et le timestamp fournis par l’appelant (anti-orphelin resolve)', () => {
+		const row = buildContactInsertFromSuggestion(sug, CID, TS);
+		expect(row.id).toBe(CID);
+		expect(row.date_ajout).toBe(TS);
+		expect(row.date_derniere_modification).toBe(TS);
+	});
+
+	it('source terrain_mobile + mapping email → email_professionnel + flags initiaux', () => {
+		const row = buildContactInsertFromSuggestion(sug, CID, TS);
+		expect(row.source).toBe('terrain_mobile');
+		expect(row.email_professionnel).toBe('jean@dupont.ch');
+		expect(row.entreprise_id).toBe(sug.entreprise_id);
+		expect(row.statut_qualification).toBe('nouveau');
+		expect(row.statut_archive).toBe(false);
+		expect(row.est_prescripteur).toBe(false);
+	});
+
+	it('champs optionnels null préservés (jamais undefined)', () => {
+		const row = buildContactInsertFromSuggestion(
+			{ ...sug, prenom: null, role_fonction: null, telephone: null, email: null },
+			CID,
+			TS
+		);
+		expect(row.prenom).toBeNull();
+		expect(row.role_fonction).toBeNull();
+		expect(row.telephone).toBeNull();
+		expect(row.email_professionnel).toBeNull();
+		expect(row.nom).toBe('Dupont');
 	});
 });

@@ -18,10 +18,12 @@
  * fusionnées. C'est un axe de désambiguïsation futur (le jour où un homonyme cross-canton
  * apparaît), pas un changement de ce chantier (il imposerait de refaire l'index UNIQUE).
  *
- * DETTE NOMMÉE (revue § G) : les écritures `entreprises` des endpoints API
- * (`/api/visits`, `/api/entreprises/search`, `/api/contact-suggestions`) ont encore leur
- * propre logique get-or-create. Leur migration vers ce module est tracée pour le chantier 2
- * (Devis), avec les call sites contacts/entreprises déjà passés ici comme gabarit.
+ * ÉTAT (chantier 2, 2026-06-05) : tous les call sites « formulaire » entreprises passent par
+ * ce module, et la lecture de dédup `/api/prospection/google-places` réutilise désormais
+ * `lookupEntrepriseByName` (escaping durci unifié). Restent volontairement hors module deux
+ * écritures spécialisées, qui ne sont PAS des get-or-create : l'enrichissement Zefix
+ * (`crm/entreprises` action `enrichir`, update partiel conditionnel préservant `notes_libres`)
+ * et le cron `nettoyage-crm` (maintenance). Les y forcer n'apporterait aucune mutualisation.
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { z } from 'zod';

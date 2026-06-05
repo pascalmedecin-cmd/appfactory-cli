@@ -5,6 +5,7 @@ import { calculerScore } from '$lib/scoring';
 import { API_LIMITS, googlePlacesQuotaStatus } from '$lib/api-limits';
 import { getMonthlyUsage, incrementUsage } from '$lib/server/quota';
 import { normalizeCompanyName } from '$lib/utils/contactsFormat';
+import { lookupEntrepriseByName } from '$lib/server/referentiel/entreprises';
 import { fetchIntelligenceSignalLookup } from '$lib/server/intelligence/signal-lookup';
 import { linkImportSignals } from '$lib/server/intelligence/link-import-signal';
 import {
@@ -173,9 +174,10 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	for (const e of entries) {
 		const normalized = normalizeCompanyName(e.name);
 		if (normalized.length < 3 || knownCompanyNames.has(normalized)) continue;
-		const { data: candidates } = await locals.supabase.rpc('entreprises_lookup_by_name' as never, { p_query: e.name.trim().replace(/[%_\\]/g, ' ').slice(0, 60) } as never);
-		const rows = (candidates ?? []) as Array<{ id: string; raison_sociale: string }>;
-		if (rows.some((r) => normalizeCompanyName(r.raison_sociale) === normalized)) knownCompanyNames.add(normalized);
+		// Référentiel partagé : même lookup dédup (RPC + filtre normalizeCompanyName, escaping
+		// LIKE durci) que le reste du CRM. Retourne un id si l'entreprise est déjà connue.
+		const matchedId = await lookupEntrepriseByName(locals.supabase, e.name.trim(), normalized);
+		if (matchedId) knownCompanyNames.add(normalized);
 	}
 
 	// 4) Signal Veille source (optionnel).
