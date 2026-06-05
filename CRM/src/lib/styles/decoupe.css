@@ -1,0 +1,248 @@
+/*
+  Primitives UI partagées de l'outil « Découpe Films ». Importé par le shell
+  (decoupe/+layout.svelte). Tokens projet uniquement, ton sobre atelier.
+  Préfixe `df-` (decoupe) pour éviter toute collision avec les classes globales.
+*/
+
+/* En-tête de page */
+.df-page-head {
+	display: flex;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 22px;
+}
+.df-page-title {
+	font-size: 24px;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+	color: var(--color-text);
+}
+.df-page-sub {
+	margin-top: 4px;
+	font-size: 14px;
+	color: var(--color-text-muted);
+	max-width: 64ch;
+}
+
+/* Carte qui enveloppe une DataTable (embedded) ou un bloc de contenu */
+.df-card {
+	background: var(--color-surface);
+	border-radius: var(--radius-xl);
+	box-shadow: var(--shadow-card);
+	overflow: hidden;
+}
+
+/* Cellules de table récurrentes */
+.df-cell-strong {
+	font-weight: 600;
+	color: var(--color-text);
+}
+.df-cell-muted {
+	color: var(--color-text-muted);
+}
+.df-num {
+	font-variant-numeric: tabular-nums;
+}
+.df-count {
+	display: inline-grid;
+	place-items: center;
+	min-width: 26px;
+	height: 22px;
+	padding: 0 7px;
+	border-radius: var(--radius-full);
+	background: var(--color-surface-alt);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--color-text-body);
+	font-variant-numeric: tabular-nums;
+}
+
+/* Pastille famille produit (texte toujours présent, couleur en appui) */
+.df-pastille {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--color-text-body);
+}
+.df-pastille::before {
+	content: '';
+	width: 8px;
+	height: 8px;
+	border-radius: var(--radius-full);
+	background: var(--df-pastille-color, var(--color-text-muted));
+	flex: none;
+}
+.df-pastille--solaire {
+	--df-pastille-color: #d98a23;
+}
+.df-pastille--securite {
+	--df-pastille-color: #3d6b8a;
+}
+.df-pastille--discretion {
+	--df-pastille-color: #7b6a9a;
+}
+
+/* Micro-chip d'attribut produit (orientation / jointage / non nesté) */
+.df-chips {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: 5px;
+}
+.df-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	height: 21px;
+	padding: 0 8px;
+	border-radius: var(--radius-full);
+	font-size: 11.5px;
+	font-weight: 500;
+	background: var(--color-surface-alt);
+	color: var(--color-text-body);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+	white-space: nowrap;
+}
+.df-chip--warn {
+	background: var(--color-warning-light);
+	color: #b54708;
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-warning) 30%, transparent);
+}
+
+/* Champs de formulaire (cohérents border-input WCAG du projet) */
+.df-field {
+	display: block;
+}
+.df-label {
+	display: block;
+	margin-bottom: 6px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--color-text-body);
+}
+.df-req {
+	color: var(--color-danger);
+}
+.df-opt {
+	color: var(--color-text-muted);
+	font-weight: 400;
+}
+.df-hint {
+	margin-top: 5px;
+	font-size: 12px;
+	color: var(--color-text-muted);
+}
+.df-input,
+.df-select,
+.df-textarea {
+	width: 100%;
+	padding: 0 12px;
+	border: 1px solid var(--color-border-input);
+	border-radius: var(--radius-md);
+	font-size: 14px;
+	font-family: inherit;
+	color: var(--color-text);
+	background: var(--color-surface);
+	transition: border-color 180ms var(--ease-out-expo), box-shadow 180ms var(--ease-out-expo);
+}
+.df-input,
+.df-select {
+	height: 40px;
+}
+.df-textarea {
+	padding: 10px 12px;
+	min-height: 72px;
+	resize: vertical;
+	line-height: 1.5;
+}
+.df-input:focus,
+.df-select:focus,
+.df-textarea:focus {
+	outline: none;
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent);
+}
+
+/* Grille de champs dans un modal */
+.df-form-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 14px 16px;
+}
+.df-col-span {
+	grid-column: 1 / -1;
+}
+
+/* Bloc de cases à cocher (attributs nesting) */
+.df-checks {
+	grid-column: 1 / -1;
+	display: grid;
+	gap: 10px;
+	padding: 14px;
+	border-radius: var(--radius-md);
+	background: var(--color-surface-alt);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+}
+.df-check {
+	display: flex;
+	align-items: flex-start;
+	gap: 10px;
+	cursor: pointer;
+}
+.df-check input {
+	margin-top: 2px;
+	width: 16px;
+	height: 16px;
+	accent-color: var(--color-primary);
+	flex: none;
+	cursor: pointer;
+}
+.df-check-text {
+	font-size: 13.5px;
+	color: var(--color-text-body);
+	line-height: 1.4;
+}
+.df-check-text b {
+	font-weight: 600;
+	color: var(--color-text);
+}
+.df-check-desc {
+	display: block;
+	font-size: 12px;
+	color: var(--color-text-muted);
+	margin-top: 1px;
+}
+
+/* Barre d'actions de modal */
+.df-modal-actions {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: 22px;
+}
+.df-modal-actions .df-spacer {
+	flex: 1;
+}
+
+/* Ligne archivée (produit soft-deleted) */
+.df-row-archived {
+	opacity: 0.62;
+}
+
+/* Action d'en-tête masquée < 768px (le FAB .ws-fab prend le relais, même seuil que .ws-page-actions). */
+@media (max-width: 768px) {
+	.df-head-action {
+		display: none;
+	}
+	.df-page-head {
+		margin-bottom: 16px;
+	}
+}
+@media (max-width: 640px) {
+	.df-form-grid {
+		grid-template-columns: 1fr;
+	}
+}

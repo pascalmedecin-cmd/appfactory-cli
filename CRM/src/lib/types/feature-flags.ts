@@ -9,11 +9,14 @@ export interface FeatureFlags {
 	ffCrmMobileV2: boolean;
 	/** V3 « outil terrain » : shell mobile PWA dédié (/terrain). ADR-0004. */
 	ffCrmMobileV3: boolean;
+	/** Outil « Découpe Films » (chantier 2 portail) : route /decoupe. ADR-0005 (decoupe). */
+	ffDecoupe: boolean;
 }
 
 export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
 	ffCrmMobileV2: false,
 	ffCrmMobileV3: false,
+	ffDecoupe: false,
 };
 
 /**
@@ -25,5 +28,6 @@ export function readFeatureFlags(appMetadata: Record<string, unknown> | null | u
 	return {
 		ffCrmMobileV2: appMetadata['ff_crm_mobile_v2'] === true,
 		ffCrmMobileV3: appMetadata['ff_crm_mobile_v3'] === true,
+		ffDecoupe: appMetadata['ff_decoupe'] === true,
 	};
 }

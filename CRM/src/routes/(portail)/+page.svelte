@@ -6,6 +6,10 @@
 <script lang="ts">
 	import ToolCardGrid from '$lib/components/portail/ToolCardGrid.svelte';
 	import ToolCard from '$lib/components/portail/ToolCard.svelte';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
+	const decoupeActif = $derived(data.featureFlags?.ffDecoupe === true);
 </script>
 
 <svelte:head>
@@ -37,8 +41,11 @@
 		<ToolCard
 			titre="Découpe Films"
 			sousTitre="Optimisez les découpes de film, limitez les chutes."
-			state="soon"
-			ariaLabel="Découpe Films : bientôt disponible"
+			href={decoupeActif ? '/decoupe' : undefined}
+			state={decoupeActif ? 'active' : 'soon'}
+			ariaLabel={decoupeActif
+				? 'Ouvrir Découpe Films : optimisez les découpes, limitez les chutes'
+				: 'Découpe Films : bientôt disponible'}
 		>
 			{#snippet icon()}
 				<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
