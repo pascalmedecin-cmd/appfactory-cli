@@ -25,7 +25,7 @@
 	<svg
 		class="plan-svg"
 		viewBox={`0 0 ${plan.longueur_consommee_mm} ${plan.laize_mm}`}
-		preserveAspectRatio="xMinYMin meet"
+		preserveAspectRatio="xMidYMid meet"
 		role="img"
 		aria-label={ariaLabel}
 	>
@@ -76,17 +76,15 @@
 <style>
 	.plan-wrap {
 		width: 100%;
-		max-height: 64vh;
-		overflow: auto;
 		border-radius: var(--radius-lg);
-		background:
-			linear-gradient(var(--color-surface-alt), var(--color-surface-alt)) padding-box;
-		padding: 10px;
+		background: var(--color-surface-alt);
+		padding: 12px;
 	}
 	.plan-svg {
 		display: block;
 		width: 100%;
 		height: auto;
+		max-height: 440px;
 	}
 	.plan-roll {
 		fill: var(--color-surface);
@@ -100,7 +98,7 @@
 	}
 	.plan-piece {
 		stroke: #ffffff;
-		stroke-width: 1.5;
+		stroke-width: 2;
 		transition: fill-opacity 160ms var(--ease-out-expo);
 	}
 	.plan-piece:hover {
