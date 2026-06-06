@@ -85,8 +85,6 @@
 	}
 	.toolbar-inner {
 		width: 100%;
-		max-width: 1120px;
-		margin: 0 auto;
 		padding: 0 24px;
 		height: 56px;
 		display: flex;
@@ -161,8 +159,6 @@
 	.decoupe-main {
 		flex: 1;
 		width: 100%;
-		max-width: 1120px;
-		margin: 0 auto;
 		padding: 28px 24px 64px;
 	}
 
