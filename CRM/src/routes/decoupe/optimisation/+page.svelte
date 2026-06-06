@@ -40,6 +40,10 @@
 	const spark = $derived(synth ? chuteSpark(synth.chuteMoy) : null);
 	const colorOf = $derived(makeColorOf(data.ok ? Object.keys(data.vitresInfo) : []));
 
+	// Hub « Découpe » (onglet atelier, URL sans sélection). Listes dérivées pour l'affichage.
+	const hubEnSaisie = $derived(data.hub ? data.hub.chantiers.filter((c) => c.statut === 'en_saisie') : []);
+	const hubLancees = $derived(data.hub ? data.hub.chantiers.filter((c) => c.statut === 'lancee') : []);
+
 	function refOf(pid: string): string {
 		return data.ok ? (data.produitsInfo[pid]?.reference ?? '—') : '—';
 	}
@@ -66,9 +70,9 @@
 			: ''
 	);
 	const backHref = $derived(
-		data.ok && data.selection.length === 1 ? `/decoupe/chantiers/${data.ids[0]}` : '/decoupe'
+		data.ok && data.selection.length === 1 ? `/decoupe/chantiers/${data.ids[0]}` : '/decoupe/optimisation'
 	);
-	const backLabel = $derived(data.ok && data.selection.length === 1 ? data.selection[0].nom : 'Chantiers');
+	const backLabel = $derived(data.ok && data.selection.length === 1 ? data.selection[0].nom : 'Découpe');
 
 	let confirmLancerOpen = $state(false);
 	let lancing = $state(false);
@@ -136,9 +140,96 @@
 	<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>
 {/snippet}
 
-<a href={backHref} class="df-back"><span class="df-back-chevron">{@render icChevron(15)}</span>{backLabel}</a>
+{#if !data.hub}
+	<a href={backHref} class="df-back"><span class="df-back-chevron">{@render icChevron(15)}</span>{backLabel}</a>
+{/if}
 
-{#if !data.ok}
+{#if data.hub}
+	<!-- Onglet « Découpe » : hub atelier (consolidations suggérées + accès direct par chantier). -->
+	<div class="df-pagehead">
+		<div class="df-pagehead-l">
+			<div class="df-kicker">Découpe Films</div>
+			<h1 class="df-title-xl">Optimisation atelier</h1>
+			<div class="df-page-meta">
+				<span>{hubEnSaisie.length} chantier{hubEnSaisie.length > 1 ? 's' : ''} à optimiser</span>
+				{#if data.hub.groupes.length > 0}
+					<span class="df-dot-sep"></span>
+					<span>{data.hub.groupes.length} consolidation{data.hub.groupes.length > 1 ? 's' : ''} suggérée{data.hub.groupes.length > 1 ? 's' : ''}</span>
+				{/if}
+			</div>
+		</div>
+	</div>
+
+	{#if data.hub.chantiers.length === 0}
+		<EmptyState
+			icon="layers"
+			title="Aucun chantier"
+			description="Créez un chantier et saisissez des vitres pour préparer une découpe."
+			actionLabel="Voir les chantiers"
+			onAction={() => (window.location.href = '/decoupe')}
+		/>
+	{:else}
+		{#if data.hub.groupes.length > 0}
+			<h2 class="df-sec-h">Consolidations suggérées<span class="df-sec-count">· {data.hub.groupes.length}</span></h2>
+			{#each data.hub.groupes as g (g.produit_id)}
+				<article class="df-consol">
+					<span class="df-consol-tile" style="background:{familleColor(g.famille)}">{@render icLayers(20)}</span>
+					<div class="df-consol-main">
+						<div class="df-film-ref">{g.reference}<span class="df-film-fab">{g.nom}</span></div>
+						<div class="df-consol-sub">
+							<span class="df-pastille df-pastille--{g.famille}">{FAMILLE_LABEL[g.famille] ?? g.famille}</span>
+							<span class="df-consol-text">{g.chantiers.length} chantiers partagent ce film</span>
+						</div>
+						<div class="df-consol-chantiers">
+							{#each g.chantiers as c (c.id)}<span class="df-consol-chip">{c.nom}</span>{/each}
+						</div>
+					</div>
+					<a class="ws-btn ws-btn-primary df-consol-cta" href={`/decoupe/optimisation?chantiers=${g.chantiers.map((c) => c.id).join(',')}`}>
+						{@render icScissors(16)} Optimiser ensemble
+					</a>
+				</article>
+			{/each}
+		{/if}
+
+		{#if hubEnSaisie.length > 0}
+			<h2 class="df-sec-h">Chantiers à optimiser<span class="df-sec-count">· {hubEnSaisie.length}</span></h2>
+			{#each hubEnSaisie as c (c.id)}
+				<a class="df-chrow" href={`/decoupe/optimisation?chantiers=${c.id}`}>
+					<span class="df-chrow-tile" style="background:{c.familles.length ? familleColor(c.familles[0]) : 'var(--df-fam-securite)'}">{@render icScissors(18)}</span>
+					<div class="df-chrow-main">
+						<div class="df-chrow-nom">{c.nom}{#if c.client}<span class="df-chrow-client">{c.client}</span>{/if}</div>
+						<div class="df-chrow-meta">
+							<span class="df-num">{c.nb_vitres} vitre{c.nb_vitres > 1 ? 's' : ''}</span>
+							{#if c.familles.length > 0}
+								<span class="df-dot-sep"></span>
+								{#each c.familles as f (f)}<span class="df-pastille df-pastille--{f}">{FAMILLE_LABEL[f] ?? f}</span>{/each}
+							{/if}
+						</div>
+					</div>
+					<span class="df-chrow-chev">{@render icChevron(16)}</span>
+				</a>
+			{/each}
+		{/if}
+
+		{#if hubLancees.length > 0}
+			<h2 class="df-sec-h">Déjà lancés<span class="df-sec-count">· {hubLancees.length}</span></h2>
+			{#each hubLancees as c (c.id)}
+				<a class="df-chrow df-chrow--done" href={`/decoupe/optimisation?chantiers=${c.id}`}>
+					<span class="df-chrow-tile" style="background:{c.familles.length ? familleColor(c.familles[0]) : 'var(--df-fam-securite)'}">{@render icScissors(18)}</span>
+					<div class="df-chrow-main">
+						<div class="df-chrow-nom">{c.nom}{#if c.client}<span class="df-chrow-client">{c.client}</span>{/if}</div>
+						<div class="df-chrow-meta">
+							<span class="df-num">{c.nb_vitres} vitre{c.nb_vitres > 1 ? 's' : ''}</span>
+							<span class="df-dot-sep"></span>
+							<span>plan recalculable</span>
+						</div>
+					</div>
+					<span class="df-chrow-chev">{@render icChevron(16)}</span>
+				</a>
+			{/each}
+		{/if}
+	{/if}
+{:else if !data.ok}
 	<EmptyState
 		icon="warning"
 		title="Aucun chantier à optimiser"

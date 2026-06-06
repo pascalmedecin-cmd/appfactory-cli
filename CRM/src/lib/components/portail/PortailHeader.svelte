@@ -9,7 +9,9 @@
 	import FilmProLogo from './FilmProLogo.svelte';
 	import type { User } from '@supabase/supabase-js';
 
-	let { user }: { user: User | null } = $props();
+	// `fluid` : header pleine largeur (logo aligné au bord gauche, déconnexion au bord
+	// droit) pour les outils en pleine largeur (Découpe). Défaut = centré 1120px (home).
+	let { user, fluid = false }: { user: User | null; fluid?: boolean } = $props();
 
 	const supabase = createSupabaseBrowserClient();
 
@@ -28,7 +30,7 @@
 </script>
 
 <header class="portail-header">
-	<div class="header-inner">
+	<div class="header-inner" class:fluid>
 		<a href="/" class="logo-link" aria-label="Accueil portail FilmPro">
 			<FilmProLogo class="logo" />
 		</a>
@@ -63,6 +65,11 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 12px;
+	}
+	/* Pleine largeur (outils sans plafond, ex. Découpe) : logo au bord gauche,
+	   déconnexion au bord droit, alignés sur le padding du contenu (24/16px). */
+	.header-inner.fluid {
+		max-width: none;
 	}
 
 	.logo-link {

@@ -180,11 +180,16 @@ test('lancer la découpe : confirmation → chantier en statut lancée', async (
 	await admin.from('decoupe_chantiers').update({ statut: 'en_saisie' }).eq('id', chantierId);
 });
 
-test('cas limites : chantier vide → empty state ; lien sans chantier → empty', async ({ page }) => {
+test('cas limites : chantier vide → empty ; hub liste ; sélection invalide → empty', async ({ page }) => {
 	await gotoOk(page, `/decoupe/chantiers/${chantierVideId}`);
 	await expect(page.getByText('Aucune vitre')).toBeVisible();
 
+	// Onglet « Découpe » (URL nue) = hub atelier : liste les chantiers, pas d'empty state.
 	await gotoOk(page, '/decoupe/optimisation');
+	await expect(page.getByRole('heading', { name: 'Optimisation atelier' })).toBeVisible();
+
+	// Sélection invalide (UUID inexistant) → guard empty state conservé.
+	await gotoOk(page, '/decoupe/optimisation?chantiers=00000000-0000-0000-0000-000000000000');
 	await expect(page.getByText('Aucun chantier à optimiser')).toBeVisible();
 });
 
@@ -192,6 +197,7 @@ test('cas limites : chantier vide → empty state ; lien sans chantier → empty
 const ECRANS = [
 	{ nom: 'Chantiers', url: '/decoupe' },
 	{ nom: 'Base produit', url: '/decoupe/produits' },
+	{ nom: 'Découpe (hub)', url: '/decoupe/optimisation' },
 	{ nom: 'Fiche chantier', url: () => `/decoupe/chantiers/${chantierId}` },
 	{ nom: 'Résultat', url: () => `/decoupe/optimisation?chantiers=${chantierId}` }
 ];

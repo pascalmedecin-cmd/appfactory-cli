@@ -3,6 +3,7 @@ import { fail } from '@sveltejs/kit';
 import { optimiserDecoupe } from '$lib/decoupe/optimiser';
 import type { Vitre as AlgoVitre, ProduitDecoupe } from '$lib/decoupe/types';
 import { buildChantierLancementUpdate } from '$lib/server/decoupe/builders';
+import { buildHub, type HubChantierRow } from '$lib/decoupe/hub';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -18,7 +19,16 @@ function parseIds(raw: string | null): string[] {
 export const load: PageServerLoad = async ({ url, locals }) => {
 	const ids = parseIds(url.searchParams.get('chantiers'));
 	if (ids.length === 0) {
-		return { ok: false as const };
+		// Onglet « Découpe » (hub atelier) : aucune sélection → on liste tous les chantiers
+		// et on suggère les consolidations (films nestable partagés). Voir lib/decoupe/hub.ts.
+		const { data: rows } = await locals.supabase
+			.from('decoupe_chantiers')
+			.select(
+				'id, nom, client, statut, updated_at, decoupe_vitres(produit_id, sur_mesure_fournisseur, decoupe_produits(reference, nom, famille, nestable))'
+			)
+			.order('updated_at', { ascending: false });
+		const hub = buildHub((rows ?? []) as unknown as HubChantierRow[]);
+		return { ok: false as const, hub };
 	}
 
 	const { data: chantiers } = await locals.supabase
@@ -28,7 +38,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 	const selection = chantiers ?? [];
 	if (selection.length === 0) {
-		return { ok: false as const };
+		return { ok: false as const, hub: null };
 	}
 
 	const { data: vitresRows } = await locals.supabase
@@ -142,6 +152,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 	return {
 		ok: true as const,
+		hub: null,
 		ids,
 		selection,
 		toutesLancees: selection.every((c) => c.statut === 'lancee'),

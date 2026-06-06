@@ -18,6 +18,7 @@
 
 	const nav = [
 		{ href: '/decoupe', label: 'Chantiers', exact: true },
+		{ href: '/decoupe/optimisation', label: 'Découpe', exact: false },
 		{ href: '/decoupe/produits', label: 'Base produit', exact: false }
 	];
 
@@ -27,7 +28,7 @@
 </script>
 
 <div class="decoupe-shell">
-	<PortailHeader user={data.user} />
+	<PortailHeader user={data.user} fluid />
 
 	<div class="decoupe-toolbar">
 		<div class="toolbar-inner">
