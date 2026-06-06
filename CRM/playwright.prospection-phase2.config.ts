@@ -1,6 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const BASE_URL = process.env.E2E_BASE_URL ?? 'https://filmpro-crm.vercel.app';
+const BASE_URL = process.env.E2E_BASE_URL ?? 'https://filmpro-portail.vercel.app';
 
 export default defineConfig({
 	testDir: 'tests',
