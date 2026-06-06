@@ -19,7 +19,7 @@ import { parseFlexibleDate, isWithinWindow } from './parse-date';
 import { isAllowedThemeSlug } from './theme-slug';
 import { costTracker, type CostSummary, type CostTracker } from './cost-tracker';
 
-const MODEL = 'claude-opus-4-7';
+const MODEL = 'claude-opus-4-8';
 // 32K : run prod S112 retry 1 a été coupé par max_tokens à 16K (12K thinking
 // + 13 web_search + emit_report partiel = items=[] alors que executive_summary
 // décrivait des signaux). 32K laisse marge pour adaptive thinking xhigh + 15
@@ -126,8 +126,9 @@ async function callModel(
 	const stream = client.messages.stream({
 		model: MODEL,
 		max_tokens: MAX_TOKENS,
-		// Opus 4.7 : adaptive thinking + effort xhigh. Sampling params (temperature/top_p/top_k)
-		// retirés : rejetés 400 sur 4.7. Cast via spread : output_config pas encore typé SDK 0.88.
+		// Opus 4.8 : adaptive thinking (seul mode supporté, budget_tokens manuel = 400) + effort xhigh.
+		// Sampling params (temperature/top_p/top_k) retirés : rejetés 400. Cast via spread : output_config
+		// pas encore typé SDK 0.88.
 		...({ thinking: { type: 'adaptive' }, output_config: { effort: 'xhigh' } } as Record<string, unknown>),
 		system: [
 			{

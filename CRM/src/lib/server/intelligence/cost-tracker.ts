@@ -19,6 +19,7 @@ import { sanitizeForLog } from './sanitize';
 
 /** Prix par million de tokens input (uncached). */
 const INPUT_USD_PER_M: Record<string, number> = {
+	'claude-opus-4-8': 5.0,
 	'claude-opus-4-7': 5.0,
 	'claude-opus-4-6': 5.0,
 	'claude-sonnet-4-6': 3.0,
@@ -27,6 +28,7 @@ const INPUT_USD_PER_M: Record<string, number> = {
 
 /** Prix par million de tokens output. */
 const OUTPUT_USD_PER_M: Record<string, number> = {
+	'claude-opus-4-8': 25.0,
 	'claude-opus-4-7': 25.0,
 	'claude-opus-4-6': 25.0,
 	'claude-sonnet-4-6': 15.0,

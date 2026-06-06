@@ -1,5 +1,5 @@
 // Veille FilmPro : prompt unique 1-phase (refonte LEAN S112).
-// Un seul appel claude-opus-4-7 + web_search + tool emit_report strict-mode.
+// Un seul appel claude-opus-4-8 + web_search + tool emit_report strict-mode.
 // Remplace les anciens prompt-phase1.ts (extraction) + prompt-phase2.ts (rédaction)
 // fusionnés en un prompt unique : explorer le web, sélectionner, rédiger en un passage.
 // Prompt stable → cachable (cache_control ephemeral côté appelant).
