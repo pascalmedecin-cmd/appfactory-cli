@@ -31,13 +31,13 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		locals.supabase
 			.from('decoupe_vitres')
 			.select(
-				'id, largeur_mm, hauteur_mm, quantite, type_vitrage, sur_mesure_fournisseur, produit_id, produit:decoupe_produits(id, reference, nom, famille)'
+				'id, largeur_mm, hauteur_mm, quantite, type_vitrage, sur_mesure_fournisseur, produit_id, produit:decoupe_produits(id, reference, nom, famille, fabricant)'
 			)
 			.eq('chantier_id', params.id)
 			.order('created_at', { ascending: true }),
 		locals.supabase
 			.from('decoupe_produits')
-			.select('id, reference, nom, famille, laizes_mm')
+			.select('id, reference, nom, famille, fabricant, laizes_mm')
 			.eq('actif', true)
 			.order('reference', { ascending: true })
 	]);

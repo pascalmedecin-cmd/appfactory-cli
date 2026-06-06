@@ -76,7 +76,9 @@
 
 	.decoupe-toolbar {
 		position: sticky;
-		top: 0;
+		/* Sous le PortailHeader sticky (72px desktop / 60px ≤640px) : header + barre
+		   d'outils restent empilés et visibles au scroll (au lieu de se chevaucher). */
+		top: 72px;
 		z-index: 15;
 		background: color-mix(in srgb, var(--color-surface) 88%, transparent);
 		backdrop-filter: saturate(180%) blur(8px);
@@ -163,6 +165,9 @@
 	}
 
 	@media (max-width: 640px) {
+		.decoupe-toolbar {
+			top: 60px;
+		}
 		.toolbar-inner {
 			padding: 0 16px;
 			gap: 16px;
