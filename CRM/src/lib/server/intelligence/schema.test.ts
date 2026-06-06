@@ -166,11 +166,22 @@ describe('IntelligenceItemSchema', () => {
 		).toBe(false);
 	});
 
-	it('rejette moins de 2 search_terms', () => {
+	// Depuis 2026-06-06 le plancher est min(1) (reclassé préférence produit, voir
+	// resilience-validation-spec.md §3a) : 1 chip est valide, 0 chip reste rejeté.
+	it('accepte 1 seul search_term', () => {
 		expect(
 			IntelligenceItemSchema.safeParse({
 				...validItem,
 				search_terms: [validItem.search_terms[0]]
+			}).success
+		).toBe(true);
+	});
+
+	it('rejette 0 search_term', () => {
+		expect(
+			IntelligenceItemSchema.safeParse({
+				...validItem,
+				search_terms: []
 			}).success
 		).toBe(false);
 	});

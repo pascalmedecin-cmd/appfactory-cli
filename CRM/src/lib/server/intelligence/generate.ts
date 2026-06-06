@@ -1,9 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
-import {
-	IntelligenceReportSchema,
-	type IntelligenceReport,
-	type IntelligenceItem
-} from './schema';
+import { type IntelligenceReport, type IntelligenceItem } from './schema';
+import { partitionReport, type DroppedArticle } from './report-validate';
 import {
 	buildSystemPrompt,
 	buildUserPrompt,
@@ -67,6 +64,8 @@ export interface GenerateResult {
 	rejected?: RejectedItem[];
 	/** Compteur d'URLs sanitizées (suffixes parasites strippés). */
 	sanitizedUrlsCount?: number;
+	/** Articles écartés à la validation de schéma (par-article), pour audit/dérive. */
+	schemaDropped?: DroppedArticle[];
 }
 
 async function callModel(
@@ -323,15 +322,27 @@ export async function generateIntelligenceReport(
 		};
 	}
 
-	const parsed = IntelligenceReportSchema.safeParse(emitBlock.input);
-	if (!parsed.success) {
+	// Validation résiliente par-article (refonte 2026-06-06, remplace le safeParse
+	// global tout-ou-rien) : meta/impacts stricts, articles validés un par un,
+	// fautifs écartés individuellement (jamais réparés), garde anti-dérive si trop
+	// d'articles tombent. Voir report-validate.ts + resilience-validation-spec.md.
+	const partition = partitionReport(emitBlock.input);
+	if (!partition.ok) {
 		return {
 			success: false,
-			error: `Validation Zod échouée : ${parsed.error.message}`,
+			error: partition.error,
 			raw: response,
-			costs: tracker.summary()
+			costs: tracker.summary(),
+			schemaDropped: partition.dropped
 		};
 	}
+	if (partition.dropped.length > 0) {
+		console.warn(
+			`[generate] ${partition.dropped.length} article(s) écarté(s) à la validation de schéma : ` +
+				partition.dropped.map((d) => `[${d.index}] ${d.violations}`).join(' ; ')
+		);
+	}
+	const report = partition.report;
 
 	// Theme allowlist post-Zod : Zod accepte string libre depuis S169 (theme
 	// dynamique DB). Si le modèle a sorti un thème inconnu malgré le JSON
@@ -341,7 +352,7 @@ export async function generateIntelligenceReport(
 	const fallbackTheme = isAllowedThemeSlug('autre', themes.allowedSlugs)
 		? 'autre'
 		: (themes.allowedSlugs[0] ?? 'autre');
-	for (const item of parsed.data.items ?? []) {
+	for (const item of report.items) {
 		if (!isAllowedThemeSlug(item.theme, themes.allowedSlugs)) {
 			console.warn(
 				`[generate] theme inconnu "${item.theme}" sur item rank=${item.rank}, fallback "${fallbackTheme}"`
@@ -355,7 +366,7 @@ export async function generateIntelligenceReport(
 	// 2. Filtre bloquant URL + date : items KO rejetés (pas dégradés).
 	// La cross-check verbatim (LLM second-pass sur le contenu de la page)
 	// est appliquée en aval dans run-generation.ts.
-	const { items: sanitizedItems, sanitizedCount } = sanitizeUrlsBatch(parsed.data.items);
+	const { items: sanitizedItems, sanitizedCount } = sanitizeUrlsBatch(report.items);
 
 	const windowStart = input.windowStart ?? input.dateStart;
 	const { kept, rejected } = await filterAndAnnotateItems(
@@ -365,7 +376,7 @@ export async function generateIntelligenceReport(
 	);
 
 	const enrichedReport: IntelligenceReport = {
-		...parsed.data,
+		...report,
 		items: kept
 	};
 
@@ -375,6 +386,7 @@ export async function generateIntelligenceReport(
 		raw: response,
 		costs: tracker.summary(),
 		rejected,
-		sanitizedUrlsCount: sanitizedCount
+		sanitizedUrlsCount: sanitizedCount,
+		schemaDropped: partition.dropped
 	};
 }

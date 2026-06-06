@@ -305,6 +305,9 @@ export async function runWeeklyGeneration(
 		logPhase(week.weekLabel, 'generate_done', {
 			success: gen.success,
 			items: gen.report?.items.length,
+			// Articles écartés à la validation de schéma (par-article) : suivi de
+			// dérive du modèle. 0 attendu en régime normal ; une hausse = signal.
+			schemaDropped: gen.schemaDropped?.length ?? 0,
 			error: gen.error
 		});
 	} catch (e) {
