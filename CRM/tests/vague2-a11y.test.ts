@@ -46,12 +46,13 @@ const STATUS_FG = new Set([
 
 // Règles axe graves PRÉ-EXISTANTES hors des 5 familles de l'audit live (dette tracée
 // CLAUDE.md, décision Pascal séparée). N'ont pas été introduites par la Vague 2 :
-//  - aria-required-children : structure ARIA du Kanban Pipeline (role list/listitem).
-//    Vague 4c : la colonne VIDE ne porte plus `role=list` (cause du fail sur DB quasi-vide).
-//    Maintenu hors périmètre tant que le cas PEUPLÉ (cartes + drop placeholder) n'a pas été
-//    validé en live → bascule à l'enforcement lors du re-audit seedé (tâche backlog).
-// Le filet anti-régression reste actif sur TOUTE autre règle serious/critical.
-const OUT_OF_SCOPE_RULES = new Set(['color-contrast', 'aria-required-children']);
+//  - color-contrast : capté finement par la projection ALLOWLIST `STATUS_FG` ci-dessous
+//    (on n'exclut pas les gris muted/décoratifs pré-existants du périmètre status/palette).
+// `aria-required-children` a quitté le hors-périmètre le 2026-06-07 (re-audit seedé) : le
+// Kanban Pipeline PEUPLÉ (30 opportunités sur les 6 étapes) passe la règle — colonnes avec
+// cartes = `role=list` + enfants `role=listitem`, colonne vide = pas de `role=list` (Vague 4c).
+// Désormais enforced par le filet anti-régression serious/critical ci-dessous.
+const OUT_OF_SCOPE_RULES = new Set(['color-contrast']);
 
 function fgOf(summary: string | undefined): string | null {
 	const m = summary?.match(/foreground color: (#[0-9a-f]+)/i);

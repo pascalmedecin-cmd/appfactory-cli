@@ -105,3 +105,38 @@ describe('pipeline form actions', () => {
 		expect(result.data.success).toBe(false);
 	});
 });
+
+/**
+ * Régression : embed `signaux_affaires` désambiguïsé dans le `load`.
+ * Il existe DEUX FK entre opportunites et signaux_affaires (signal_affaires_id →
+ * signaux_affaires.id ET signaux_affaires.opportunite_associee_id → opportunites.id).
+ * Un embed nu `signaux_affaires(...)` déclenche PGRST201 → data=null → pipeline vide
+ * quelles que soient les données (bug prod latent masqué par un pipeline vide).
+ * On garde la FK nommée et on interdit le retour à l'embed nu.
+ */
+function createLoadMock() {
+	const selects: Record<string, string> = {};
+	function from(table: string) {
+		const b: Record<string, unknown> = {};
+		b.select = (s: string) => {
+			selects[table] = s;
+			return b;
+		};
+		b.eq = () => b;
+		b.order = () => Promise.resolve({ data: [], error: null });
+		return b;
+	}
+	return { from, selects: () => selects };
+}
+
+describe('pipeline load — embed signaux_affaires', () => {
+	it('désambiguïse via la FK nommée (jamais l’embed nu ambigu)', async () => {
+		const supabase = createLoadMock();
+		const mod = await import('./+page.server');
+		await mod.load({ locals: { supabase } } as unknown as Parameters<typeof mod.load>[0]);
+		const sel = supabase.selects().opportunites;
+		expect(sel).toContain('signaux_affaires!opportunites_signal_affaires_id_fkey');
+		// l’embed nu `signaux_affaires(` (paren immédiate) = forme ambiguë interdite
+		expect(sel).not.toMatch(/signaux_affaires\(/);
+	});
+});

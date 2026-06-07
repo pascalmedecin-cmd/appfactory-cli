@@ -8,7 +8,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const [oppsRes, contactsRes, entreprisesRes] = await Promise.all([
 		locals.supabase
 			.from('opportunites')
-			.select('*, contacts(id, nom, prenom), entreprises(id, raison_sociale), signaux_affaires(id, type_signal, description_projet)')
+			// Désambiguïsation PostgREST : 2 FK existent entre opportunites et signaux_affaires
+			// (signal_affaires_id → signaux_affaires.id ET signaux_affaires.opportunite_associee_id → opportunites.id).
+			// On veut le signal d'origine de l'opp (many-to-one) → embed via la FK nommée, sinon PGRST201
+			// fait échouer TOUTE la requête (data=null → pipeline vide quelles que soient les données).
+			.select(
+				'*, contacts(id, nom, prenom), entreprises(id, raison_sociale), signaux_affaires!opportunites_signal_affaires_id_fkey(id, type_signal, description_projet)'
+			)
 			.order('date_derniere_modification', { ascending: false }),
 		locals.supabase
 			.from('contacts')
@@ -20,6 +26,16 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.select('id, raison_sociale')
 			.order('raison_sociale'),
 	]);
+
+	// Observabilité : une erreur PostgREST (ex. embed ambigu) renvoie data=null → pipeline
+	// silencieusement vide quelles que soient les données. On log fort au lieu de l'avaler.
+	for (const [label, res] of [
+		['opportunites', oppsRes],
+		['contacts', contactsRes],
+		['entreprises', entreprisesRes]
+	] as const) {
+		if (res.error) console.error(`[pipeline] load ${label} en erreur: ${res.error.message}`);
+	}
 
 	// Audit 360 M-16 : validation au boundary — on écarte (en loggant) une
 	// ligne `opportunites` dont les champs critiques sont absents/mal typés,
