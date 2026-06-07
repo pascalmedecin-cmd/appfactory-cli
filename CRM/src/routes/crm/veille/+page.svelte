@@ -35,10 +35,10 @@
 	};
 
 	const SEGMENT_STYLES: Record<Segment, string> = {
-		tertiaire: 'bg-prosp-import-bg text-prosp-import border-prosp-import/30',
-		residentiel: 'bg-prosp-qualify-bg text-prosp-qualify border-prosp-qualify/30',
-		commerces: 'bg-prosp-convert-bg text-prosp-convert border-prosp-convert/30',
-		erp: 'bg-prosp-enrich-bg text-prosp-enrich border-prosp-enrich/30',
+		tertiaire: 'bg-prosp-import-bg text-prosp-import-deep border-prosp-import/30',
+		residentiel: 'bg-prosp-qualify-bg text-prosp-qualify-deep border-prosp-qualify/30',
+		commerces: 'bg-prosp-convert-bg text-prosp-convert-deep border-prosp-convert/30',
+		erp: 'bg-prosp-enrich-bg text-prosp-enrich-deep border-prosp-enrich/30',
 		partenaires: 'bg-primary-light text-primary border-primary'
 	};
 

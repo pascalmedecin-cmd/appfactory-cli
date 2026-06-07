@@ -570,6 +570,10 @@
 					<input
 						id="entreprise_nom"
 						type="text"
+						role="combobox"
+						aria-expanded={showSuggestions && filteredSuggestions.length > 0}
+						aria-controls="entreprise-suggestions"
+						aria-autocomplete="list"
 						bind:value={entreprise_nom}
 						onfocus={() => {
 							showSuggestions = true;
@@ -592,9 +596,12 @@
 				</div>
 				{#if showSuggestions && filteredSuggestions.length > 0}
 					<div class="absolute z-10 mt-1 w-full bg-white border border-border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+						<div id="entreprise-suggestions" role="listbox" aria-label="Suggestions d'entreprises">
 						{#each filteredSuggestions as sug}
 							<button
 								type="button"
+								role="option"
+								aria-selected={entreprise_id === sug.id}
 								onclick={() => selectEntreprise(sug)}
 								class="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-surface cursor-pointer {entreprise_id === sug.id ? 'bg-primary-light font-medium' : ''}"
 							>
@@ -615,6 +622,7 @@
 								{sug.raison_sociale}
 							</button>
 						{/each}
+						</div>
 						{#if entreprise_nom.length >= 2 && !entreprise_id}
 							<div class="px-3 py-2 text-xs text-text-muted border-t border-border">
 								<Icon name="add" size={12} class="align-middle" />

@@ -54,23 +54,32 @@
 	   Audit live LIVE-H4. */
 	--color-info-deep: #4A5E78;
 
-	/* Prospection workflow : palette 4 étapes */
+	/* Prospection workflow : palette 4 étapes.
+	   Variantes -deep (Vague 4b, audit live LIVE-H4) : la teinte vive passe sous AA 4.5:1
+	   quand elle sert de TEXTE sur fond pâle de même teinte (badge/chip/label). Les -deep
+	   assombrissent la teinte jusqu'à AA pour les usages TEXTE uniquement ; fonds, bordures
+	   et icônes (graphiques, seuil 3:1) gardent la teinte vive. Ratios mesurés WCAG sur le -bg. */
 	--color-prosp-import: #5A7190;
 	--color-prosp-import-bg: #EDF1F5;
 	--color-prosp-import-border: #8B9DB6;
+	--color-prosp-import-deep: #546B8A; /* 4.81:1 sur -bg (vif 4.41 < AA) */
 	--color-prosp-enrich: #7B6A9A;
 	--color-prosp-enrich-bg: #F0ECF5;
 	--color-prosp-enrich-border: #9B8BB5;
+	--color-prosp-enrich-deep: #6F5E8E; /* 4.91:1 sur -bg (vif 4.12 < AA) */
 	--color-prosp-qualify: #917548;
 	--color-prosp-qualify-bg: #F5F0E8;
 	--color-prosp-qualify-border: #B5976E;
+	--color-prosp-qualify-deep: #85693C; /* 4.53:1 sur -bg (vif 3.82 < AA) */
 	--color-prosp-convert: #538B6B;
 	--color-prosp-convert-bg: #EBF3EF;
 	--color-prosp-convert-border: #7BAA8E;
+	--color-prosp-convert-deep: #417959; /* 4.53:1 sur -bg (vif 3.53 < AA) */
 	/* Source Google Places (entreprises locales) — teal sobre, registre FilmPro (pas le rouge/jaune Google) */
 	--color-prosp-place: #3F7C82;
 	--color-prosp-place-bg: #E9F1F2;
 	--color-prosp-place-border: #6BA3A8;
+	--color-prosp-place-deep: #39767C; /* 4.52:1 sur -bg (vif 4.15 < AA) ; aucun usage texte actuel (latent) */
 
 	/* Phase 2 2026-05-01 : tokens onglets prospection (palette segmentation subtile premium).
 	   4 natures de signal cartographiées, fond pastel + trait coloré pour distinction visuelle. */
@@ -80,6 +89,7 @@
 	/* RegBL chantiers : terracotta atténué (terre, bâti) */
 	--color-tab-regbl: #B07A5A;
 	--color-tab-regbl-bg: #F7EFE8;
+	--color-tab-regbl-deep: #925C3C; /* 4.84:1 sur -bg (vif 3.20 < AA) ; usage texte: aucun (icône/bordure seules, latent) */
 	/* Entreprises Zefix+search.ch : sauge profond (institution, registre) */
 	--color-tab-entreprises: #4F7252;
 	--color-tab-entreprises-bg: #EEF3EE;

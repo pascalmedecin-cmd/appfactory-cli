@@ -80,8 +80,17 @@
 						class="border-b border-border hover:bg-surface-secondary/40 cursor-pointer"
 						onclick={() => toggleExpand(entry.id)}
 					>
-						<td class="px-3 py-2 whitespace-nowrap text-text-muted" title={fullDate(entry.created_at)}>
-							{relativeDate(entry.created_at)}
+						<td class="px-3 py-2 whitespace-nowrap" title={fullDate(entry.created_at)}>
+							<button
+								type="button"
+								onclick={(e) => { e.stopPropagation(); toggleExpand(entry.id); }}
+								aria-expanded={expandedId === entry.id}
+								aria-controls="log-detail-{entry.id}"
+								class="flex items-center gap-1.5 text-text-muted hover:text-text cursor-pointer"
+							>
+								<Icon name="chevron_right" size={14} class="shrink-0 transition-transform {expandedId === entry.id ? 'rotate-90' : ''}" />
+								{relativeDate(entry.created_at)}
+							</button>
 						</td>
 						<td class="px-3 py-2 col-type">
 							<span class="badge {TYPE_BADGE_CLASSES[entry.type]}">{TYPE_LABELS[entry.type]}</span>
@@ -104,7 +113,7 @@
 					</tr>
 
 					{#if expandedId === entry.id}
-						<tr class="border-b border-border bg-surface-secondary/30" transition:slide={{ duration: 150 }}>
+						<tr id="log-detail-{entry.id}" class="border-b border-border bg-surface-secondary/30" transition:slide={{ duration: 150 }}>
 							<td colspan="7" class="px-4 py-4">
 								<div class="space-y-3 text-sm">
 									<div>

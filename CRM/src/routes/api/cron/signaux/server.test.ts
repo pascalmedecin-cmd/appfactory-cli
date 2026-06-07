@@ -21,6 +21,11 @@ vi.mock('$lib/server/supabase', () => ({
 	}),
 }));
 
+/** Réponse fetch fidèle : vraie Response (supporte arrayBuffer(), utilisé par parseJsonResilient
+ *  côté import Zefix). Un mock `{ json: async () => ... }` sans arrayBuffer ne suffit plus. */
+const okJson = (data: unknown) =>
+	new Response(JSON.stringify(data), { status: 200, headers: { 'content-type': 'application/json' } });
+
 async function callGet(authHeader: string | null) {
 	const mod = await import('./+server');
 	const event = {
@@ -35,7 +40,7 @@ describe('GET /api/cron/signaux', () => {
 		mockEnv.ZEFIX_USERNAME = 'u';
 		mockEnv.ZEFIX_PASSWORD = 'p';
 		// fetch renvoie systématiquement du vide → aucune création détectée.
-		vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => [] }));
+		vi.stubGlobal('fetch', vi.fn().mockImplementation(() => Promise.resolve(okJson([]))));
 	});
 	afterEach(() => {
 		vi.unstubAllGlobals();
@@ -92,11 +97,10 @@ describe('GET /api/cron/signaux', () => {
 				if (u.includes('zefix.admin.ch')) {
 					// On ne renvoie le payload de test que sur le premier appel (date today) ;
 					// les jours antérieurs renvoient du vide pour ne pas multiplier les erreurs.
-					if (!firstZefixCall) return Promise.resolve({ ok: true, json: async () => [] });
+					if (!firstZefixCall) return Promise.resolve(okJson([]));
 					firstZefixCall = false;
-					return Promise.resolve({
-						ok: true,
-						json: async () => [
+					return Promise.resolve(
+						okJson([
 							{
 								sogcPublication: {
 									sogcDate: 'pas-une-date',
@@ -117,10 +121,10 @@ describe('GET /api/cron/signaux', () => {
 								},
 								companyShort: { name: 'Valide SA', uid: 'CHE-222.222.222', legalSeat: 'Lausanne' },
 							},
-						],
-					});
+						])
+					);
 				}
-				return Promise.resolve({ ok: true, json: async () => [] }); // SIMAP
+				return Promise.resolve(okJson([])); // SIMAP
 			})
 		);
 		const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -183,7 +187,7 @@ describe('GET /api/cron/signaux', () => {
 
 	it('V5 : Zefix ON → importZefix exécuté (fetch zefix.admin.ch émis)', async () => {
 		mockEnv.SIGNAUX_ZEFIX_ENABLED = 'true';
-		const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => [] });
+		const fetchSpy = vi.fn().mockImplementation(() => Promise.resolve(okJson([])));
 		vi.stubGlobal('fetch', fetchSpy);
 
 		const res = await callGet('Bearer test-secret');

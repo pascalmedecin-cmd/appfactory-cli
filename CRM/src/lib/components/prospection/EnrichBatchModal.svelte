@@ -302,7 +302,7 @@
 						<div>
 							<div class="flex items-center justify-between mb-2">
 								<span class="text-sm font-medium text-text">{current} / {total}</span>
-								<span class="text-sm font-medium text-prosp-enrich">{progress}%</span>
+								<span class="text-sm font-medium text-prosp-enrich-deep">{progress}%</span>
 							</div>
 							<div class="w-full h-2 bg-surface-alt rounded-full overflow-hidden">
 								<div

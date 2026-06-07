@@ -93,7 +93,7 @@
 			<div class="p-4 rounded-xl space-y-4" style="background: var(--color-prosp-import-bg); border: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 80%)">
 				<div class="flex items-center gap-2">
 					<span style="color: var(--color-prosp-import)"><Icon name="tune" size={16} /></span>
-					<p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--color-prosp-import)">Critères de filtrage</p>
+					<p class="text-xs font-semibold uppercase tracking-wide" style="color: var(--color-prosp-import-deep)">Critères de filtrage</p>
 				</div>
 				<MultiSelectDropdown
 					bind:selected={sources}
@@ -129,9 +129,9 @@
 				{#if motsCles.length > 0}
 					<div class="flex flex-wrap gap-2 mb-3">
 						{#each motsCles as mot}
-							<span class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs rounded-full font-medium bg-prosp-enrich/12 text-prosp-enrich border border-prosp-enrich-border/40">
+							<span class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs rounded-full font-medium bg-prosp-enrich/12 text-prosp-enrich-deep border border-prosp-enrich-border/40">
 								{mot}
-								<button type="button" onclick={() => removeMotCle(mot)} class="flex items-center justify-center w-4 h-4 rounded-full cursor-pointer transition-colors text-prosp-enrich/60" aria-label="Supprimer {mot}">
+								<button type="button" onclick={() => removeMotCle(mot)} class="flex items-center justify-center w-4 h-4 rounded-full cursor-pointer transition-colors text-prosp-enrich-deep/70" aria-label="Supprimer {mot}">
 									<span class="text-[10px] leading-none font-bold">&times;</span>
 								</button>
 							</span>

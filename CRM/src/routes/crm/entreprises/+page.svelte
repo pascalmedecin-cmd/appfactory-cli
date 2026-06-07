@@ -363,7 +363,7 @@
 				searchable={false}
 				stickyLeftCols={2}
 				rowAriaLabel={rowAriaLabelFor}
-				emptyMessage={emptyMessageForTab(activeTab)}
+				emptyMessage={searchQuery.trim() ? `Aucun résultat pour « ${searchQuery.trim()} »` : emptyMessageForTab(activeTab)}
 			>
 				{#snippet row(entreprise, _i)}
 					{@const logo = logoUrlForSite(entreprise.site_web)}
@@ -402,7 +402,7 @@
 				entreprises={filteredEntreprises}
 				contacts={data.contacts}
 				onSelect={openDetail}
-				emptyMessage={emptyMessageForTab(activeTab)}
+				emptyMessage={searchQuery.trim() ? `Aucun résultat pour « ${searchQuery.trim()} »` : emptyMessageForTab(activeTab)}
 			/>
 		{/if}
 	</div>

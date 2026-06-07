@@ -362,6 +362,7 @@
 							class:dt-th-sorted-asc={sortKey === col.key && sortAsc}
 							class:dt-th-sorted-desc={sortKey === col.key && !sortAsc}
 							aria-sort={col.sortable ? ariaSort(col.key) : undefined}
+							aria-label={col.label ? undefined : col.srLabel}
 						>
 							{#if col.sortable}
 								<button

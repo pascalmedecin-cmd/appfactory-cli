@@ -625,7 +625,7 @@
 							>
 								<Icon name="auto_fix_high" size={18} class="text-prosp-enrich" />
 								<span class="flex-1">Enrichir cette page</span>
-								<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
+								<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich-deep">{enrichablesCount}</span>
 							</button>
 						{/if}
 						{#if alertsEnabled}
@@ -853,13 +853,13 @@
 					<button
 						type="button"
 						onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
-						class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich-border hover:bg-prosp-enrich-bg"
+						class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich-deep border-prosp-enrich-border hover:bg-prosp-enrich-bg"
 						title="Enrichit uniquement les {enrichablesCount} leads de cette page"
 						aria-label="Enrichir les {enrichablesCount} leads de cette page"
 					>
 						<Icon name="auto_fix_high" size={16} />
 						<span>Enrichir cette page</span>
-						<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
+						<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich-deep">{enrichablesCount}</span>
 					</button>
 				{/if}
 				<!-- V4 audit S163 (F-V4-01) + F-V4-07 verbes : CTA principal contextuel par onglet. -->

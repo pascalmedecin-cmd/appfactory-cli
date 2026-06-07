@@ -114,7 +114,7 @@
 		{#if batchEnrichEnabled}
 		<button
 			onclick={() => { enrichBatchIds = [...selectedIds]; enrichBatchOpen = true; }}
-			class="inline-flex items-center gap-1.5 h-10 px-4 box-border text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich hover:bg-prosp-enrich/10"
+			class="inline-flex items-center gap-1.5 h-10 px-4 box-border text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich-deep border-prosp-enrich hover:bg-prosp-enrich/10"
 		>
 			<Icon name="auto_fix_high" size={16} />
 			Enrichir

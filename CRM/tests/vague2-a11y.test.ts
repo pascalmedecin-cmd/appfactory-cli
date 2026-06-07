@@ -25,23 +25,31 @@ async function axeOf(page: import('@playwright/test').Page) {
 	return new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa']).analyze();
 }
 
-// Périmètre Vague 2 = les 4 familles status de l'audit LIVE-H4 (ambre/rouge + extension
-// vert/bleu). On asserte par ALLOWLIST des couleurs status (robuste : les couleurs hors
-// périmètre sont des dérivés color-mix/opacité aux hexes variables d'un run à l'autre).
-// Le gate échoue si une couleur status échoue le contraste — vivid (régression : non migrée
-// vers -deep) OU deep (token mal calibré). Hors périmètre (dette tracée CLAUDE.md, décision
-// Pascal séparée) : palette « prospection workflow » (--color-prosp-*/--color-tab-*, slate
-// #5a7190 partagé avec info, bronze, etc.) + gris muted/décoratifs pré-existants.
-// Info vivid #5a7190 est exclu (hex partagé avec --color-prosp-import) : info utilise
-// désormais le deep #4a5e78, vérifié AA — donc inutile et ambigu de surveiller le vivid.
+// Périmètre = familles status (Vague 2) + palette « prospection workflow » (Vague 4b).
+// On asserte par ALLOWLIST des hexes surveillés (robuste : les couleurs hors périmètre
+// sont des dérivés color-mix/opacité aux hexes variables d'un run à l'autre).
+// Le gate échoue si un hexe surveillé échoue le contraste — vivid (régression : usage texte
+// non migré vers -deep) OU deep (token mal calibré). Le complément data-indépendant qui
+// verrouille la calibration des tokens -deep eux-mêmes : src/lib/palette-contrast.test.ts.
+// Note collision : #5a7190 = vivid de --color-info ET de --color-prosp-import. Les deux
+// usages texte sont migrés vers leur -deep (#4a5e78 info, #546b8a prosp-import), donc #5a7190
+// ne doit plus apparaître en texte sur une page scannée — il est ici surveillé (interdit en texte).
+// Hors périmètre (dette tracée CLAUDE.md) : gris muted/décoratifs pré-existants.
 const STATUS_FG = new Set([
+	// Status (Vague 2)
 	'#f79009', '#f04438', '#12b76a', // status vivid (ne doivent plus apparaître en texte)
-	'#b54708', '#b42318', '#067647', '#4a5e78' // status -deep (doivent passer AA)
+	'#b54708', '#b42318', '#067647', '#4a5e78', // status -deep (doivent passer AA)
+	// Palette prospection workflow (Vague 4b) — vivids interdits en texte, deeps AA
+	'#5a7190', '#7b6a9a', '#917548', '#538b6b', '#3f7c82', '#b07a5a', // prosp/tab vivid
+	'#546b8a', '#6f5e8e', '#85693c', '#417959', '#39767c', '#925c3c' // prosp/tab -deep
 ]);
 
 // Règles axe graves PRÉ-EXISTANTES hors des 5 familles de l'audit live (dette tracée
 // CLAUDE.md, décision Pascal séparée). N'ont pas été introduites par la Vague 2 :
 //  - aria-required-children : structure ARIA du Kanban Pipeline (role list/listitem).
+//    Vague 4c : la colonne VIDE ne porte plus `role=list` (cause du fail sur DB quasi-vide).
+//    Maintenu hors périmètre tant que le cas PEUPLÉ (cartes + drop placeholder) n'a pas été
+//    validé en live → bascule à l'enforcement lors du re-audit seedé (tâche backlog).
 // Le filet anti-régression reste actif sur TOUTE autre règle serious/critical.
 const OUT_OF_SCOPE_RULES = new Set(['color-contrast', 'aria-required-children']);
 

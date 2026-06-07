@@ -169,7 +169,7 @@
 	.card-signal {
 		position: relative;
 		background: var(--color-surface);
-		border-radius: var(--radius-xl);
+		border-radius: var(--radius-lg); /* Vague 4b : 12→10px, hiérarchie radius golden (carte < modale) */
 		box-shadow: var(--shadow-card);
 		/* V4 : padding 16 → 20, gap 16 → 20 — densité texte plus généreuse pour
 		   line-clamp 4 (vs 2 en V3). Plus respirable, plus lisible. */

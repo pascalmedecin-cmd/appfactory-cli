@@ -74,7 +74,7 @@
 	<!-- En-tête (kicker / titre / tagline) -->
 	<header class="mb-6">
 		<div class="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Retours</div>
-		<h1 class="text-2xl font-semibold text-text">Log des retours et améliorations</h1>
+		<h2 class="text-2xl font-semibold text-text">Log des retours et améliorations</h2>
 		<p class="mt-2 text-sm text-text-muted max-w-2xl">
 			Tout ce qui est signalé pendant l'usage du CRM, par toi ou par n'importe quel utilisateur.
 			Triable, exportable, traçable jusqu'à la livraison.

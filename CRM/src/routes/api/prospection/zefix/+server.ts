@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { calculerScore } from '$lib/scoring';
+import { parseJsonResilient } from '$lib/server/decode-response';
 import { fetchIntelligenceSignalLookup } from '$lib/server/intelligence/signal-lookup';
 import { linkImportSignals } from '$lib/server/intelligence/link-import-signal';
 import { sanitizeError, sanitizeForLog } from '$lib/server/intelligence/sanitize';
@@ -108,7 +109,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			return json({ error: `Erreur API Zefix (${resp.status}). Réessayez plus tard.` }, { status: 502 });
 		}
 
-		companies = await resp.json();
+		// Zefix peut renvoyer du Windows-1252/Latin-1 -> décodage tolérant (sinon accents
+		// détruits en U+FFFD, cause racine du mojibake Zefix LIVE-M3). Voir lib/server/decode-response.
+		companies = await parseJsonResilient<ZefixCompany[]>(resp);
 	} catch (err) {
 		// Audit 360 M-01 : sanitize l'exception (cas `TypeError: fetch failed` Node 20+
 		// peut stringify l'URL fetch, defense-in-depth).

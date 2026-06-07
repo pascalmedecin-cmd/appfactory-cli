@@ -104,7 +104,7 @@
 		{/if}
 	</header>
 
-	<div class="col-body" role="list">
+	<div class="col-body" role={opps.length > 0 ? 'list' : undefined}>
 		{#if opps.length === 0}
 			<PipelineEmptyState {etape} onAdd={showCta ? onAddClick : undefined} />
 		{:else}

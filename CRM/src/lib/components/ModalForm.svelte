@@ -61,7 +61,7 @@
 	<!-- Modal -->
 	<div class="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 pointer-events-none">
 		<div
-			class="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full {maxWidth} pointer-events-auto flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden {headerVariant === 'accent' ? '' : 'border border-border/30'}"
+			class="bg-white rounded-t-xl md:rounded-xl shadow-2xl w-full {maxWidth} pointer-events-auto flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden {headerVariant === 'accent' ? '' : 'border border-border/30'}"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby={titleId}

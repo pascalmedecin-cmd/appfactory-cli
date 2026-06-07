@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
+import { parseJsonResilient } from '$lib/server/decode-response';
 import { isSignauxZefixEnabled } from '$lib/server/flags';
 import { calculerScore } from '$lib/scoring';
 import type { KeywordRow } from '$lib/scoring/keywords';
@@ -149,7 +150,9 @@ async function importZefix(
 				if (resp.status !== 404) errors.push(`Zefix ${date}: HTTP ${resp.status}`);
 				continue;
 			}
-			entries = await resp.json();
+			// SOGC renvoie du Windows-1252/Latin-1 -> décodage tolérant (sinon accents détruits
+			// en U+FFFD, cause racine du mojibake Zefix LIVE-M3). Voir lib/server/decode-response.
+			entries = await parseJsonResilient<ZefixSogcEntry[]>(resp);
 		} catch (err) {
 			errors.push(`Zefix ${date}: ${String(err)}`);
 			continue;

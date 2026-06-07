@@ -48,10 +48,10 @@
 	};
 
 	const SEGMENT_STYLES: Record<Segment, string> = {
-		tertiaire: 'bg-prosp-import-bg text-prosp-import border-prosp-import/30',
-		residentiel: 'bg-prosp-qualify-bg text-prosp-qualify border-prosp-qualify/30',
-		commerces: 'bg-prosp-convert-bg text-prosp-convert border-prosp-convert/30',
-		erp: 'bg-prosp-enrich-bg text-prosp-enrich border-prosp-enrich/30',
+		tertiaire: 'bg-prosp-import-bg text-prosp-import-deep border-prosp-import/30',
+		residentiel: 'bg-prosp-qualify-bg text-prosp-qualify-deep border-prosp-qualify/30',
+		commerces: 'bg-prosp-convert-bg text-prosp-convert-deep border-prosp-convert/30',
+		erp: 'bg-prosp-enrich-bg text-prosp-enrich-deep border-prosp-enrich/30',
 		partenaires: 'bg-primary-light text-primary border-primary'
 	};
 
@@ -102,7 +102,7 @@
 	}
 </script>
 
-<div class="max-w-5xl mx-auto px-4 md:px-12 py-8 md:py-12">
+<article class="max-w-5xl mx-auto px-4 md:px-12 py-8 md:py-12">
 	<!-- Breadcrumb -->
 	<a href="/crm/veille" class="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4">
 		<Icon name="arrow_back" size={18} />
@@ -111,7 +111,7 @@
 
 	<!-- Meta -->
 	<div class="flex items-center gap-3 text-xs text-text-muted mb-3 flex-wrap">
-		<span class="font-semibold text-text">{formatDateLong(data.report.generated_at)}</span>
+		<time class="font-semibold text-text" datetime={data.report.generated_at}>{formatDateLong(data.report.generated_at)}</time>
 		<span>·</span>
 		<span>Édition {data.report.week_label}</span>
 		<span>·</span>
@@ -224,4 +224,4 @@
 			</p>
 		</section>
 	{/if}
-</div>
+</article>
