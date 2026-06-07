@@ -134,7 +134,7 @@
 	];
 </script>
 
-<svelte:head><title>Thèmes veille - FilmPro</title></svelte:head>
+<svelte:head><title>Thèmes veille · FilmPro</title></svelte:head>
 
 <div class="px-6 py-6 md:px-8 md:py-8 space-y-6">
 	<header class="flex items-center justify-between gap-4">

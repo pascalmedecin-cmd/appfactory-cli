@@ -55,7 +55,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <svelte:head>
-	<title>Log des retours - FilmPro</title>
+	<title>Log des retours · FilmPro</title>
 </svelte:head>
 
 <!-- Encart mobile : page invisible sauf message d'indisponibilité. -->

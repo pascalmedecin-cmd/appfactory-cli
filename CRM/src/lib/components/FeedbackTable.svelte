@@ -159,6 +159,7 @@
 															<input type="hidden" name="status" value={st} />
 															<button
 																type="submit"
+																aria-pressed={entry.status === st}
 																class="px-3 py-1.5 text-xs rounded-lg border transition-colors cursor-pointer
 																	{entry.status === st
 																		? 'bg-primary text-white border-primary'

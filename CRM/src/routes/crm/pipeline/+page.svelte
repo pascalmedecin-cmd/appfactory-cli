@@ -88,7 +88,7 @@
 		},
 		{
 			key: 'closed' as PipelineTab,
-			label: 'Closed',
+			label: 'Conclues',
 			count: (totals['gagne']?.count ?? 0) + (totals['perdu']?.count ?? 0),
 		},
 		{

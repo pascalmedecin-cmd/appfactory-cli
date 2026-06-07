@@ -45,7 +45,7 @@ describe('calculerScore v2 - keywords actif (Cœur / Bonus / Éviter)', () => {
 		);
 		// V5 : +5 (Cœur vitrage) seul. Le booster +2 simap a été retiré.
 		expect(r.total).toBe(5);
-		expect(r.criteres).toContainEqual(expect.stringContaining('Coeur'));
+		expect(r.criteres).toContainEqual(expect.stringContaining('Cœur'));
 		expect(r.criteres).not.toContainEqual(expect.stringContaining('Secteur'));
 	});
 
@@ -60,7 +60,7 @@ describe('calculerScore v2 - keywords actif (Cœur / Bonus / Éviter)', () => {
 		);
 		// V5 : +2 (canton GE prio) + 5 (Cœur vitrage) + 2 (Bonus régie) - 3 (Éviter route) = 6 (plus de +2 simap)
 		expect(r.total).toBe(6);
-		expect(r.criteres.some((c) => c.includes('Coeur'))).toBe(true);
+		expect(r.criteres.some((c) => c.includes('Cœur'))).toBe(true);
 		expect(r.criteres.some((c) => c.includes('Bonus'))).toBe(true);
 		expect(r.criteres.some((c) => c.includes('Éviter'))).toBe(true);
 	});

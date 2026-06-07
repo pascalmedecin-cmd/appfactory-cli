@@ -116,8 +116,8 @@ export function scoreKeywords(text: string | null | undefined, keywords: Keyword
 	if (coeurApplied > 0) {
 		out.criteres.push(
 			coeurRaw <= KEYWORD_CAPS.coeur
-				? `Coeur ${coeurDetail.join(', ')} (+${coeurApplied})`
-				: `Coeur ${coeurDetail.join(', ')} plafonné (+${coeurApplied}/${coeurRaw})`,
+				? `Cœur ${coeurDetail.join(', ')} (+${coeurApplied})`
+				: `Cœur ${coeurDetail.join(', ')} plafonné (+${coeurApplied}/${coeurRaw})`,
 		);
 	}
 	if (bonusApplied > 0) {

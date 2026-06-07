@@ -40,7 +40,7 @@ describe('scoreKeywords - bases', () => {
 		expect(r.total).toBe(5);
 		expect(r.matches).toHaveLength(1);
 		expect(r.matches[0].count).toBe(1);
-		expect(r.criteres[0]).toContain('Coeur');
+		expect(r.criteres[0]).toContain('Cœur');
 	});
 
 	it('1 match Bonus = +2', () => {

@@ -120,7 +120,7 @@
 	}
 </script>
 
-<svelte:head><title>Aide - FilmPro</title></svelte:head>
+<svelte:head><title>Aide · FilmPro</title></svelte:head>
 
 <div class="aide">
 	<!-- En-tête de page (le H1 « Aide » est porté par Header.svelte ; ici on ouvre en H2). -->
@@ -198,6 +198,7 @@
 							href={`#${sectionAnchor(sec)}`}
 							class="aide-toc-link"
 							class:active={activeSectionId === sec.id}
+							aria-current={activeSectionId === sec.id ? 'location' : undefined}
 							onclick={(e) => {
 								e.preventDefault();
 								syncUrl(activeKey, sec.id);
