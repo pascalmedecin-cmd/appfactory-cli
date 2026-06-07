@@ -128,7 +128,7 @@
 				tabindex="-1"
 				use:focusOnMount
 			>
-				<Icon name="warning" size={18} class="text-warning mt-0.5" />
+				<Icon name="warning" size={18} class="text-warning-deep mt-0.5" />
 				<p class="text-sm text-text-body leading-snug">
 					Plusieurs prospects existent déjà sous ce nom. Choisissez le bon, ou créez quand même un nouveau lead (chaîne, multi-sites).
 				</p>
@@ -154,7 +154,7 @@
 			</ul>
 
 			{#if errorMsg}
-				<div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-danger/30 bg-danger-light text-danger text-sm" role="alert">
+				<div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-danger/30 bg-danger-light text-danger-deep text-sm" role="alert">
 					<Icon name="error" size={16} class="shrink-0" />
 					<span>{errorMsg}</span>
 				</div>
@@ -194,7 +194,7 @@
 
 				<div class="space-y-1">
 					<label for="lx-raison" class="block text-sm font-medium text-text">
-						Entreprise <span class="text-danger">*</span>
+						Entreprise <span class="text-danger-deep">*</span>
 					</label>
 					<input
 						id="lx-raison"
@@ -254,7 +254,7 @@
 				</div>
 
 				{#if errorMsg}
-					<div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-danger/30 bg-danger-light text-danger text-sm" role="alert">
+					<div class="flex items-center gap-2 px-3 py-2 rounded-lg border border-danger/30 bg-danger-light text-danger-deep text-sm" role="alert">
 						<Icon name="error" size={16} class="shrink-0" />
 						<span>{errorMsg}</span>
 					</div>

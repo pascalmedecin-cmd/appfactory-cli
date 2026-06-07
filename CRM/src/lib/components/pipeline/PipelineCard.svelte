@@ -210,7 +210,7 @@
 		color: var(--color-text-muted);
 	}
 	.card-relance.overdue {
-		color: var(--color-danger);
+		color: var(--color-danger-deep);
 		font-weight: 600;
 	}
 	.card-footer {
@@ -225,7 +225,7 @@
 		height: 18px;
 		border-radius: var(--radius-full);
 		background: var(--color-info-light);
-		color: var(--color-info);
+		color: var(--color-info-deep);
 		display: grid;
 		place-items: center;
 		font-size: 9px;
@@ -243,7 +243,7 @@
 		white-space: nowrap;
 	}
 	.card-signal {
-		color: var(--color-warning);
+		color: var(--color-warning-deep);
 		flex-shrink: 0;
 		display: grid;
 		place-items: center;

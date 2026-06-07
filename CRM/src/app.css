@@ -33,12 +33,26 @@
 	/* Status */
 	--color-success: #12B76A;
 	--color-success-light: #ECFDF3;
+	/* Variante AA pour le texte porteur d'info : #12B76A en texte échoue (2.49:1 sur
+	   success-light). #067647 = 5.40:1 / 5.69:1, hue verte préservée. Audit live LIVE-H4. */
+	--color-success-deep: #067647;
 	--color-warning: #F79009;
 	--color-warning-light: #FFFAEB;
+	/* Variante AA pour le texte porteur d'info (badges, libellés) : #F79009 en texte
+	   échoue (2.25:1 sur warning-light, 2.35:1 sur blanc). #B54708 = 5.20:1 / 5.43:1,
+	   hue ambre préservée. Audit live LIVE-H4, cf. feedback_a11y_deep_tokens_with_axe_gate. */
+	--color-warning-deep: #B54708;
 	--color-danger: #F04438;
 	--color-danger-light: #FEF3F2;
+	/* Variante AA pour le texte porteur d'info : #F04438 en texte échoue (3.46:1 sur
+	   danger-light). #B42318 = 6.05:1 / 6.57:1, hue rouge préservée. Audit live LIVE-H4. */
+	--color-danger-deep: #B42318;
 	--color-info: #5A7190;
 	--color-info-light: #EDF1F5;
+	/* Variante AA pour le texte porteur d'info : #5A7190 en texte échoue d'un cheveu
+	   (4.41:1 sur info-light, < 4.5 AA). #4A5E78 = 5.85:1 / 6.64:1, hue ardoise préservée.
+	   Audit live LIVE-H4. */
+	--color-info-deep: #4A5E78;
 
 	/* Prospection workflow : palette 4 étapes */
 	--color-prosp-import: #5A7190;

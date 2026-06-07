@@ -499,7 +499,7 @@
 						type="button"
 						onclick={() => confirmDeleteOpen = true}
 						disabled={deleting}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
 					>
 						<Icon name="delete" size={16} />
 						{deleting ? 'Suppression…' : 'Supprimer'}

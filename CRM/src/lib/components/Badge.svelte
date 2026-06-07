@@ -11,10 +11,10 @@
 
 	const classes: Record<string, string> = {
 		default: 'bg-primary-light text-primary border border-primary',
-		info: 'bg-info-light text-info border border-info/15',
-		success: 'bg-success-light text-success border border-success/15',
-		warning: 'bg-warning-light text-warning border border-warning/15',
-		danger: 'bg-danger-light text-danger border border-danger/15',
+		info: 'bg-info-light text-info-deep border border-info/15',
+		success: 'bg-success-light text-success-deep border border-success/15',
+		warning: 'bg-warning-light text-warning-deep border border-warning/15',
+		danger: 'bg-danger-light text-danger-deep border border-danger/15',
 		muted: 'bg-surface-alt text-text-muted border border-border',
 	};
 

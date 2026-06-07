@@ -289,7 +289,7 @@
 		background: var(--color-primary-hover, var(--color-primary));
 	}
 	.mobile-card-action[data-variant='danger'] {
-		color: var(--color-danger);
+		color: var(--color-danger-deep);
 		border-color: color-mix(in srgb, var(--color-danger) 30%, transparent);
 	}
 	.mobile-card-action[data-variant='danger']:hover {

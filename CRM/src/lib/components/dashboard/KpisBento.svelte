@@ -198,8 +198,9 @@
 		margin-top: 6px;
 	}
 	.kpi-trend-flat { color: var(--color-text-muted); }
-	.kpi-trend-success { color: var(--color-success); }
-	.kpi-trend-warn { color: var(--color-warning); }
+	/* Variantes AA (texte tendance porteur d'info) : tokens -deep, audit live LIVE-H4. */
+	.kpi-trend-success { color: var(--color-success-deep); }
+	.kpi-trend-warn { color: var(--color-warning-deep); }
 
 	.kpi-cta {
 		display: inline-flex;

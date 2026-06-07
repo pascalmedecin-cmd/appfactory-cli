@@ -415,7 +415,7 @@
 				<div>
 					<label for="zefix-name" class="block text-sm font-semibold text-text mb-2">
 						Mot-clé secteur ou raison sociale
-						<span class="font-normal text-danger ml-0.5">*</span>
+						<span class="font-normal text-danger-deep ml-0.5">*</span>
 					</label>
 					<div class="relative">
 						<Icon name="search" size={18} class="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
@@ -429,7 +429,7 @@
 						/>
 					</div>
 					{#if zefixNameInvalid}
-						<p class="text-xs text-danger mt-1.5 flex items-center gap-1.5">
+						<p class="text-xs text-danger-deep mt-1.5 flex items-center gap-1.5">
 							<Icon name="error" size={13} />
 							Saisir au moins 2 caractères. L'API Zefix exige un filtre par nom.
 						</p>
@@ -491,7 +491,7 @@
 				<div>
 					<label for="searchch-term" class="block text-sm font-semibold text-text mb-2">
 						Mot-clé métier ou raison sociale
-						<span class="font-normal text-danger ml-0.5">*</span>
+						<span class="font-normal text-danger-deep ml-0.5">*</span>
 					</label>
 					<div class="relative">
 						<Icon name="search" size={18} class="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
@@ -505,12 +505,12 @@
 						/>
 					</div>
 					{#if searchchTermTooShort}
-						<p class="text-xs text-danger mt-1.5 flex items-center gap-1.5">
+						<p class="text-xs text-danger-deep mt-1.5 flex items-center gap-1.5">
 							<Icon name="error" size={13} />
 							Saisir au moins 3 caractères pour économiser le quota mensuel.
 						</p>
 					{:else if searchchTermGeneric}
-						<p class="text-xs text-danger mt-1.5 flex items-center gap-1.5">
+						<p class="text-xs text-danger-deep mt-1.5 flex items-center gap-1.5">
 							<Icon name="error" size={13} />
 							Terme trop générique. Préciser un secteur (vitrerie, façade, architecte, …).
 						</p>
@@ -524,7 +524,7 @@
 					<div>
 						<label for="searchch-canton" class="block text-sm font-medium text-text mb-1.5">
 							Canton
-							<span class="font-normal text-danger ml-0.5">*</span>
+							<span class="font-normal text-danger-deep ml-0.5">*</span>
 						</label>
 						<select id="searchch-canton" bind:value={importCanton} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
 							{#each cantons as c}
@@ -611,7 +611,7 @@
 							class="w-full h-10 px-3 text-sm box-border border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {simapSearchInvalid ? 'border-danger' : 'border-border'}"
 						/>
 						{#if simapSearchInvalid}
-							<p class="text-xs text-danger mt-1">Min. 3 caractères ou laisser vide.</p>
+							<p class="text-xs text-danger-deep mt-1">Min. 3 caractères ou laisser vide.</p>
 						{/if}
 					</div>
 				</div>
@@ -700,7 +700,7 @@
 				<div>
 					<label for="gp-activity" class="block text-sm font-semibold text-text mb-2">
 						Type d'activité
-						<span class="font-normal text-danger ml-0.5">*</span>
+						<span class="font-normal text-danger-deep ml-0.5">*</span>
 					</label>
 					<select id="gp-activity" bind:value={importGpActivityType} class="w-full h-12 px-3 text-base box-border border-2 border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
 						{#each GP_ACTIVITY_OPTIONS as opt}
@@ -715,7 +715,7 @@
 					<div>
 						<label for="gp-keyword" class="block text-sm font-medium text-text mb-1.5">
 							Mot-clé complémentaire
-							{#if gpRequiresKeyword}<span class="font-normal text-danger ml-0.5">*</span>{:else}<span class="font-normal text-text-muted">(optionnel)</span>{/if}
+							{#if gpRequiresKeyword}<span class="font-normal text-danger-deep ml-0.5">*</span>{:else}<span class="font-normal text-text-muted">(optionnel)</span>{/if}
 						</label>
 						<input
 							id="gp-keyword"
@@ -726,15 +726,15 @@
 							class="w-full h-10 px-3 text-sm box-border border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {(gpKeywordTooShort || gpKeywordGeneric || (gpRequiresKeyword && gpKeywordTrimmed.length < 3 && gpKeywordTrimmed.length > 0)) ? 'border-danger' : 'border-border'}"
 						/>
 						{#if gpKeywordTooShort || (gpRequiresKeyword && gpKeywordTrimmed.length > 0 && gpKeywordTrimmed.length < 3)}
-							<p class="text-xs text-danger mt-1">Min. 3 caractères.</p>
+							<p class="text-xs text-danger-deep mt-1">Min. 3 caractères.</p>
 						{:else if gpKeywordGeneric}
-							<p class="text-xs text-danger mt-1">Trop générique (forme juridique seule).</p>
+							<p class="text-xs text-danger-deep mt-1">Trop générique (forme juridique seule).</p>
 						{/if}
 					</div>
 					<div>
 						<label for="gp-canton" class="block text-sm font-medium text-text mb-1.5">
 							Canton
-							<span class="font-normal text-danger ml-0.5">*</span>
+							<span class="font-normal text-danger-deep ml-0.5">*</span>
 						</label>
 						<select id="gp-canton" bind:value={importCanton} class="w-full h-10 px-3 text-sm box-border border border-border rounded-lg bg-white">
 							{#each cantons as c}
@@ -764,7 +764,7 @@
 
 		<!-- Résultat import (succès / erreur) -->
 		{#if importResult}
-			<div role="alert" class="flex items-center gap-3 p-4 rounded-lg text-sm {importResult.type === 'success' ? 'bg-success-light text-success' : 'bg-danger-light text-danger'}">
+			<div role="alert" class="flex items-center gap-3 p-4 rounded-lg text-sm {importResult.type === 'success' ? 'bg-success-light text-success-deep' : 'bg-danger-light text-danger-deep'}">
 				<Icon name={importResult.type === 'success' ? 'check_circle' : 'error'} />
 				<span class="font-medium">{importResult.message}</span>
 			</div>

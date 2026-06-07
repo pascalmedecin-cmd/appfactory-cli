@@ -540,7 +540,7 @@
 	<dl class="hidden md:grid grid-cols-3 gap-0 border-y border-border m-0">
 		<div class="flex items-center gap-4 px-5 py-4">
 			<div class="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
-				<Icon name="users" size={20} class="text-info" />
+				<Icon name="users" size={20} class="text-info-deep" />
 			</div>
 			<div class="flex flex-col gap-0.5 min-w-0">
 				<dd class="text-[30px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.leadsActifsCount}</dd>
@@ -549,7 +549,7 @@
 		</div>
 		<div class="flex items-center gap-4 px-5 py-4 border-l border-border">
 			<div class="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
-				<Icon name="landmark" size={20} class="text-info" />
+				<Icon name="landmark" size={20} class="text-info-deep" />
 			</div>
 			<div class="flex flex-col gap-0.5 min-w-0">
 				<dd class="text-[30px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.marchesOuvertsCount}</dd>
@@ -558,7 +558,7 @@
 		</div>
 		<div class="flex items-center gap-4 px-5 py-4 border-l border-border">
 			<div class="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
-				<Icon name="repeat" size={20} class="text-info" />
+				<Icon name="repeat" size={20} class="text-info-deep" />
 			</div>
 			<div class="flex flex-col gap-0.5 min-w-0">
 				<dd class="text-[30px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.transferresMoisCount}</dd>
@@ -661,7 +661,7 @@
 		</button>
 		{#if activeFilterCount > 0}
 			<span class="text-xs text-text-muted">{data.totalLeads} résultat{data.totalLeads > 1 ? 's' : ''}</span>
-			<button onclick={resetFilters} class="flex items-center gap-1 ml-auto px-2 py-2 text-xs text-text-muted hover:text-danger cursor-pointer transition-colors">
+			<button onclick={resetFilters} class="flex items-center gap-1 ml-auto px-2 py-2 text-xs text-text-muted hover:text-danger-deep cursor-pointer transition-colors">
 				<Icon name="close" size={14} />
 				Réinitialiser
 			</button>
@@ -701,7 +701,7 @@
 			<div class="flex items-center gap-2 ml-auto">
 				{#if activeFilterCount > 0}
 					<span class="text-xs text-text-muted">{data.totalLeads} résultat{data.totalLeads > 1 ? 's' : ''}</span>
-					<button onclick={resetFilters} class="flex items-center gap-1 px-2 py-1 text-xs text-text-muted hover:text-danger cursor-pointer transition-colors">
+					<button onclick={resetFilters} class="flex items-center gap-1 px-2 py-1 text-xs text-text-muted hover:text-danger-deep cursor-pointer transition-colors">
 						<Icon name="close" size={14} />
 						Réinitialiser
 					</button>
@@ -766,7 +766,7 @@
 
 	<!-- Notification import/enrichissement -->
 	{#if importResult}
-		<div class="flex items-center justify-between p-3 rounded-xl border shadow-xs {importResult.type === 'success' ? 'bg-success-light border-success/30 text-success' : 'bg-danger-light border-danger/30 text-danger'}">
+		<div class="flex items-center justify-between p-3 rounded-xl border shadow-xs {importResult.type === 'success' ? 'bg-success-light border-success/30 text-success-deep' : 'bg-danger-light border-danger/30 text-danger-deep'}">
 			<div class="flex items-center gap-2">
 				<Icon name={importResult.type === 'success' ? 'check_circle' : 'error'} size={18} />
 				<span class="text-sm font-medium">{importResult.message}</span>
@@ -793,7 +793,7 @@
 	{/if}
 	{#if selectAllNotice}
 		<div
-			class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-sm {selectAllNotice.type === 'error' ? 'border-danger bg-danger-light text-danger' : 'border-primary bg-primary-light text-text'}"
+			class="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-sm {selectAllNotice.type === 'error' ? 'border-danger bg-danger-light text-danger-deep' : 'border-primary bg-primary-light text-text'}"
 			role={selectAllNotice.type === 'error' ? 'alert' : 'status'}
 		>
 			<div class="flex items-center gap-2">
@@ -879,7 +879,7 @@
 		<!-- V2.1 audit S160 : tabpanel ARIA wrapper. Lié à #tab-{key} via aria-labelledby. -->
 		<div role="tabpanel" id="tabpanel-{data.tab}" aria-labelledby="tab-{data.tab}" class="flex flex-1 flex-col min-h-0">
 		{#if data.sourceFilterIncompatible}
-			<div class="flex items-start gap-2 px-4 py-3 border-b border-warning/30 bg-warning-light text-warning text-sm" role="status">
+			<div class="flex items-start gap-2 px-4 py-3 border-b border-warning/30 bg-warning-light text-warning-deep text-sm" role="status">
 				<Icon name="info" size={18} class="shrink-0 mt-0.5" />
 				<div class="flex-1">
 					<strong class="font-semibold">Filtre source incompatible avec l'onglet actif.</strong>

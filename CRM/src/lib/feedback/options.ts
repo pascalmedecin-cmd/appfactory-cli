@@ -28,22 +28,22 @@ export const STATUS_LABELS: Record<FeedbackStatus, string> = {
 
 // Classes Tailwind tokens du design system CRM (cohérent app.css).
 export const TYPE_BADGE_CLASSES: Record<FeedbackType, string> = {
-	bug: 'bg-danger-light text-danger',
-	suggestion: 'bg-info-light text-info',
+	bug: 'bg-danger-light text-danger-deep',
+	suggestion: 'bg-info-light text-info-deep',
 	question: 'bg-surface-secondary text-text-muted',
 };
 
 export const SEVERITY_BADGE_CLASSES: Record<FeedbackSeverity, string> = {
-	bloquant: 'bg-danger-light text-danger',
-	genant: 'bg-warning-light text-warning',
+	bloquant: 'bg-danger-light text-danger-deep',
+	genant: 'bg-warning-light text-warning-deep',
 	mineur: 'bg-surface-secondary text-text-muted',
 };
 
 export const STATUS_BADGE_CLASSES: Record<FeedbackStatus, string> = {
 	nouveau: 'bg-surface-secondary text-text',
-	a_actionner: 'bg-warning-light text-warning',
-	traite: 'bg-success-light text-success',
-	logge: 'bg-info-light text-info',
+	a_actionner: 'bg-warning-light text-warning-deep',
+	traite: 'bg-success-light text-success-deep',
+	logge: 'bg-info-light text-info-deep',
 };
 
 export const TYPE_ICONS: Record<FeedbackType, string> = {

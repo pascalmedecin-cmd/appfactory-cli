@@ -156,9 +156,9 @@
 		position: relative;
 		flex-shrink: 0;
 	}
-	.timeline-icon-success { background: var(--color-success-light); color: var(--color-success); }
-	.timeline-icon-warning { background: var(--color-warning-light); color: var(--color-warning); }
-	.timeline-icon-info { background: var(--color-info-light); color: var(--color-info); }
+	.timeline-icon-success { background: var(--color-success-light); color: var(--color-success-deep); }
+	.timeline-icon-warning { background: var(--color-warning-light); color: var(--color-warning-deep); }
+	.timeline-icon-info { background: var(--color-info-light); color: var(--color-info-deep); }
 
 	.timeline-content { min-width: 0; }
 	.timeline-title {

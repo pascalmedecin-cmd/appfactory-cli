@@ -30,6 +30,9 @@
 
 	let showExtra = $state(false);
 
+	// Nom accessible du dialog (WCAG 4.1.2) : lie le <h2> titre via aria-labelledby.
+	const titleId = $props.id();
+
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') open = false;
 	}
@@ -61,6 +64,7 @@
 			class="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full {maxWidth} pointer-events-auto flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden {headerVariant === 'accent' ? '' : 'border border-border/30'}"
 			role="dialog"
 			aria-modal="true"
+			aria-labelledby={titleId}
 			use:trapFocus
 			transition:scale={{ start: 0.95, duration: 200 }}
 		>
@@ -69,7 +73,7 @@
 					{#if icon}
 						<Icon name={icon} size={22} class="{headerVariant === 'accent' ? 'text-white/80' : 'text-primary'}" />
 					{/if}
-					<h2 class="text-lg font-semibold {headerVariant === 'accent' ? 'text-white' : 'text-text'}">{title}</h2>
+					<h2 id={titleId} class="text-lg font-semibold {headerVariant === 'accent' ? 'text-white' : 'text-text'}">{title}</h2>
 				</div>
 				<button type="button" aria-label="Fermer" onclick={() => open = false} class="{headerVariant === 'accent' ? 'text-white/70 hover:text-white' : 'text-text-muted hover:text-text'} cursor-pointer">
 					<Icon name="close" />
@@ -104,7 +108,7 @@
 								type="button"
 								onclick={onDelete}
 								disabled={saving}
-								class="min-h-11 inline-flex items-center px-2 text-sm text-danger hover:text-danger/80 cursor-pointer disabled:opacity-50"
+								class="min-h-11 inline-flex items-center px-2 text-sm text-danger-deep hover:text-danger-deep/80 cursor-pointer disabled:opacity-50"
 							>
 								Supprimer
 							</button>

@@ -63,7 +63,7 @@
 							</span>
 						{/if}
 						{#if rech.nb_nouveaux && rech.nb_nouveaux > 0}
-							<span class="text-xs px-2 py-0.5 rounded-full bg-danger/10 text-danger font-semibold">{rech.nb_nouveaux} nouveau{rech.nb_nouveaux > 1 ? 'x' : ''}</span>
+							<span class="text-xs px-2 py-0.5 rounded-full bg-danger/10 text-danger-deep font-semibold">{rech.nb_nouveaux} nouveau{rech.nb_nouveaux > 1 ? 'x' : ''}</span>
 						{/if}
 					</div>
 					<form method="POST" action="?/deleteRecherche" use:enhance={() => {
@@ -74,7 +74,7 @@
 						};
 					}}>
 						<input type="hidden" name="id" value={rech.id} />
-						<button type="submit" aria-label="Supprimer la recherche {rech.nom}" class="text-text-muted hover:text-danger cursor-pointer transition-colors" title="Supprimer cette recherche">
+						<button type="submit" aria-label="Supprimer la recherche {rech.nom}" class="text-text-muted hover:text-danger-deep cursor-pointer transition-colors" title="Supprimer cette recherche">
 							<Icon name="delete" size={16} />
 						</button>
 					</form>

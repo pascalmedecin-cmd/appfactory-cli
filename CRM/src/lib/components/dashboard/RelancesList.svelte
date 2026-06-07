@@ -167,8 +167,8 @@
 		font-variant-numeric: tabular-nums;
 		white-space: nowrap;
 	}
-	.rel-date-retard { color: var(--color-danger); }
-	.rel-date-today { color: var(--color-warning); }
+	.rel-date-retard { color: var(--color-danger-deep); }
+	.rel-date-today { color: var(--color-warning-deep); }
 	.rel-date-demain { color: var(--color-text-body); }
 	.rel-date-futur { color: var(--color-text-muted); }
 

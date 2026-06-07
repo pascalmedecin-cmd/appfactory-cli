@@ -24,7 +24,7 @@
 	{#if label}
 		<label for={id} class="block text-sm font-medium text-text">
 			{label}
-			{#if required}<span class="text-danger">*</span>{/if}
+			{#if required}<span class="text-danger-deep">*</span>{/if}
 		</label>
 	{/if}
 	<select

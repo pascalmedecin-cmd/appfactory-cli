@@ -133,15 +133,15 @@
 	};
 
 	const COMPLIANCE_STYLES: Record<string, string> = {
-		'OK FilmPro': 'bg-success-light text-success border-success/20',
-		'Adjacent pertinent': 'bg-info-light text-info border-info/20',
-		'À surveiller': 'bg-warning-light text-warning border-warning/20',
+		'OK FilmPro': 'bg-success-light text-success-deep border-success/20',
+		'Adjacent pertinent': 'bg-info-light text-info-deep border-info/20',
+		'À surveiller': 'bg-warning-light text-warning-deep border-warning/20',
 		'Non exploitable': 'bg-surface-alt text-text-muted border-border'
 	};
 
 	const MATURITY_STYLES: Record<string, string> = {
-		etabli: 'bg-success-light text-success',
-		emergent: 'bg-warning-light text-warning',
+		etabli: 'bg-success-light text-success-deep',
+		emergent: 'bg-warning-light text-warning-deep',
 		speculatif: 'bg-surface-alt text-text-muted'
 	};
 
@@ -373,7 +373,7 @@
 							<div
 								class="border-l-4 border-warning bg-warning-light pl-4 py-3 mb-4 rounded-r"
 							>
-								<div class="mag-kicker text-warning mb-1">Pour FilmPro</div>
+								<div class="mag-kicker text-warning-deep mb-1">Pour FilmPro</div>
 								<p class="text-sm text-text-body leading-relaxed">
 									{item.filmpro_relevance}
 								</p>
@@ -546,7 +546,7 @@
 >
 	<div class="space-y-4">
 		{#if addItemError}
-			<div class="px-3 py-2 rounded-md bg-danger-light text-danger text-sm" role="alert">
+			<div class="px-3 py-2 rounded-md bg-danger-light text-danger-deep text-sm" role="alert">
 				{addItemError}
 			</div>
 		{/if}

@@ -11,10 +11,10 @@
 	};
 
 	const styles: Record<ToastVariant, string> = {
-		success: 'bg-success-light border-success text-success',
-		error: 'bg-danger-light border-danger text-danger',
-		warning: 'bg-warning-light border-warning text-warning',
-		info: 'bg-info-light border-info text-info',
+		success: 'bg-success-light border-success text-success-deep',
+		error: 'bg-danger-light border-danger text-danger-deep',
+		warning: 'bg-warning-light border-warning text-warning-deep',
+		info: 'bg-info-light border-info text-info-deep',
 	};
 </script>
 

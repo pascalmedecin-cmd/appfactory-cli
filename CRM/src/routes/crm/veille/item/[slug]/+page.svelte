@@ -42,8 +42,8 @@
 	};
 
 	const ACTIONABILITY_STYLES: Record<Actionability, string> = {
-		action_directe: 'bg-danger-light text-danger border-danger/20',
-		veille_active: 'bg-warning-light text-warning border-warning/20',
+		action_directe: 'bg-danger-light text-danger-deep border-danger/20',
+		veille_active: 'bg-warning-light text-warning-deep border-warning/20',
 		a_surveiller: 'bg-surface-alt text-text-muted border-border'
 	};
 

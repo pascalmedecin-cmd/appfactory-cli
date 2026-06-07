@@ -29,8 +29,8 @@
 	};
 
 	const ACTIONABILITY_STYLES: Record<Actionability, string> = {
-		action_directe: 'bg-danger-light text-danger border-danger/20',
-		veille_active: 'bg-warning-light text-warning border-warning/20',
+		action_directe: 'bg-danger-light text-danger-deep border-danger/20',
+		veille_active: 'bg-warning-light text-warning-deep border-warning/20',
 		a_surveiller: 'bg-surface-alt text-text-muted border-border'
 	};
 
@@ -138,7 +138,7 @@
 					<div class="relative flex flex-wrap items-center gap-2">
 						{#if featured.is_unread}
 							<span
-								class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-warning text-white text-[11px] font-bold uppercase tracking-wider"
+								class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-warning-deep text-white text-[11px] font-bold uppercase tracking-wider"
 							>
 								<span
 									class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"
@@ -195,7 +195,7 @@
 											</span>
 											{#if item.is_update}
 												<span
-													class="inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-medium bg-info-light text-info border-info/20"
+													class="inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-medium bg-info-light text-info-deep border-info/20"
 													title="Mise à jour d'un sujet déjà couvert"
 												>
 													Mise à jour
@@ -263,7 +263,7 @@
 								<div class="relative space-y-1">
 									{#if ed.is_unread}
 										<span
-											class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-warning text-white text-[9px] font-bold uppercase tracking-wider"
+											class="inline-flex items-center px-1.5 py-0.5 rounded-full bg-warning-deep text-white text-[9px] font-bold uppercase tracking-wider"
 										>
 											Nouveau
 										</span>

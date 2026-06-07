@@ -80,7 +80,7 @@ export type ScoreStyle = {
 };
 
 // V4 (S189) : ScorePill saturée premium. Les anciennes classes pâles
-// (`bg-danger/10 text-danger`) cédaient sous le bruit visuel d'une liste dense :
+// (`bg-danger/10 text-danger-deep`) cédaient sous le bruit visuel d'une liste dense :
 // impossible de repérer un Chaud du premier coup d'œil. Nouvelles classes
 // `signal-score-pill--*` (dans SignauxCards.svelte + SlideOut) : fond saturé, texte
 // blanc, ring 1px inset, shadow douce. Le différencier devient instantané.

@@ -649,7 +649,7 @@
 
 			{#if selectedSignal.opportunite_associee_id}
 				<div class="text-sm p-3 bg-success/10 rounded-lg">
-					<span class="text-success font-medium">Converti en opportunité</span>
+					<span class="text-success-deep font-medium">Converti en opportunité</span>
 					<a href="/crm/pipeline" class="block text-primary hover:underline text-sm mt-1">Voir dans le pipeline</a>
 				</div>
 			{/if}
@@ -691,7 +691,7 @@
 						<input type="hidden" name="statut_traitement" value="ecarte" />
 						<button
 							type="submit"
-							class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-danger cursor-pointer"
+							class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-danger-deep cursor-pointer"
 						>
 							<Icon name="close" size={16} />
 							Écarter
@@ -720,7 +720,7 @@
 						type="button"
 						onclick={() => (confirmDeleteOpen = true)}
 						disabled={deleting}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
 					>
 						<Icon name="delete" size={16} />
 						{deleting ? 'Suppression…' : 'Supprimer'}
@@ -1102,7 +1102,7 @@
 		font-weight: 400;
 	}
 	.toggle-out-count.has-out {
-		color: var(--color-warning);
+		color: var(--color-warning-deep);
 		font-weight: 600;
 	}
 

@@ -365,21 +365,21 @@
 	   (repos = variante atténuée via color-mix, hover = token saturé). Aucun hex hardcodé. */
 	.ab-yes { color: color-mix(in srgb, var(--color-success) 62%, var(--color-text-muted)); }
 	.ab-no { color: color-mix(in srgb, var(--color-danger) 58%, var(--color-text-muted)); }
-	.ab-later { color: var(--color-info); }
+	.ab-later { color: var(--color-info-deep); }
 	.ab-view { color: color-mix(in srgb, var(--color-primary) 68%, var(--color-text-muted)); }
 	.ab-yes:hover:not(:disabled) {
 		background: var(--color-success-light);
-		color: var(--color-success);
+		color: var(--color-success-deep);
 		box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--color-success) 22%, transparent);
 	}
 	.ab-no:hover:not(:disabled) {
 		background: var(--color-danger-light);
-		color: var(--color-danger);
+		color: var(--color-danger-deep);
 		box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--color-danger) 22%, transparent);
 	}
 	.ab-later:hover:not(:disabled) {
 		background: var(--color-info-light);
-		color: var(--color-info);
+		color: var(--color-info-deep);
 		box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--color-info) 20%, transparent);
 	}
 	.ab-view:hover:not(:disabled) {

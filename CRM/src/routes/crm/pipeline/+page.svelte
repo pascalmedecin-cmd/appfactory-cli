@@ -382,7 +382,7 @@
 			{#if selectedOpp.motif_perte}
 				<div class="text-sm">
 					<span class="text-text-muted">Motif de perte</span>
-					<p class="font-medium text-danger">{selectedOpp.motif_perte}</p>
+					<p class="font-medium text-danger-deep">{selectedOpp.motif_perte}</p>
 				</div>
 			{/if}
 
@@ -423,7 +423,7 @@
 							type="button"
 							onclick={() => (confirmArchiveOpen = true)}
 							disabled={archiving}
-							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
+							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
 						>
 							<Icon name="block" size={16} />
 							{archiving ? 'En cours…' : 'Marquer perdu'}

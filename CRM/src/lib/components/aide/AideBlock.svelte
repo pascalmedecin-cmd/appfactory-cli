@@ -187,21 +187,21 @@
 		border-color: color-mix(in srgb, var(--color-success) 28%, var(--color-border));
 	}
 	.callout-tip .aide-callout-icon {
-		color: var(--color-success);
+		color: var(--color-success-deep);
 	}
 	.callout-warning {
 		background: var(--color-warning-light);
 		border-color: color-mix(in srgb, var(--color-warning) 32%, var(--color-border));
 	}
 	.callout-warning .aide-callout-icon {
-		color: var(--color-warning);
+		color: var(--color-warning-deep);
 	}
 	.callout-note {
 		background: var(--color-info-light);
 		border-color: color-mix(in srgb, var(--color-info) 28%, var(--color-border));
 	}
 	.callout-note .aide-callout-icon {
-		color: var(--color-info);
+		color: var(--color-info-deep);
 	}
 
 	.aide-code {

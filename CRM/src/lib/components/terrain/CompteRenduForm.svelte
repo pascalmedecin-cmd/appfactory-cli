@@ -413,7 +413,7 @@
 		color: var(--color-text-muted);
 	}
 	.count.over {
-		color: var(--color-danger);
+		color: var(--color-danger-deep);
 	}
 	.grid {
 		display: grid;

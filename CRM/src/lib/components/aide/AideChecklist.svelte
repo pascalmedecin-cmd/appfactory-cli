@@ -223,7 +223,7 @@
 		margin: 12px 0 0;
 		font-size: 13px;
 		font-weight: 600;
-		color: var(--color-success);
+		color: var(--color-success-deep);
 	}
 
 	@media (prefers-reduced-motion: reduce) {

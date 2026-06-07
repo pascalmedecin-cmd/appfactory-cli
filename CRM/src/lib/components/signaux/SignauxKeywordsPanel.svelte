@@ -362,7 +362,7 @@
 	}
 	.kw-section-coeur .kw-section-weight {
 		background: var(--color-success-light);
-		color: var(--color-success);
+		color: var(--color-success-deep);
 	}
 	.kw-section-bonus .kw-section-weight {
 		background: var(--color-primary-light);
@@ -370,7 +370,7 @@
 	}
 	.kw-section-eviter .kw-section-weight {
 		background: var(--color-danger-light);
-		color: var(--color-danger);
+		color: var(--color-danger-deep);
 	}
 	.kw-chips {
 		list-style: none;
@@ -395,7 +395,7 @@
 	}
 	.kw-section-coeur .kw-chip {
 		background: var(--color-success-light);
-		color: var(--color-success);
+		color: var(--color-success-deep);
 		border-color: color-mix(in srgb, var(--color-success) 20%, transparent);
 	}
 	.kw-section-bonus .kw-chip {
@@ -405,7 +405,7 @@
 	}
 	.kw-section-eviter .kw-chip {
 		background: var(--color-danger-light);
-		color: var(--color-danger);
+		color: var(--color-danger-deep);
 		border-color: color-mix(in srgb, var(--color-danger) 20%, transparent);
 	}
 	.kw-chip-text {

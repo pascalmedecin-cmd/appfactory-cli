@@ -65,13 +65,13 @@
 		<table class="feedback-table w-full text-sm">
 			<thead>
 				<tr class="text-left text-xs uppercase tracking-wide text-text-muted border-b border-border">
-					<th class="px-3 py-2">Date</th>
-					<th class="px-3 py-2 col-type">Type</th>
-					<th class="px-3 py-2 col-sev">Sévérité</th>
-					<th class="px-3 py-2 col-page">Page</th>
-					<th class="px-3 py-2 col-author">Auteur</th>
-					<th class="px-3 py-2">Description</th>
-					<th class="px-3 py-2 text-right">Statut</th>
+					<th scope="col" class="px-3 py-2">Date</th>
+					<th scope="col" class="px-3 py-2 col-type">Type</th>
+					<th scope="col" class="px-3 py-2 col-sev">Sévérité</th>
+					<th scope="col" class="px-3 py-2 col-page">Page</th>
+					<th scope="col" class="px-3 py-2 col-author">Auteur</th>
+					<th scope="col" class="px-3 py-2">Description</th>
+					<th scope="col" class="px-3 py-2 text-right">Statut</th>
 				</tr>
 			</thead>
 			<tbody>
@@ -129,7 +129,7 @@
 												</summary>
 												<ul class="mt-1 space-y-1 text-xs font-mono">
 													{#each entry.context.recentErrors as err}
-														<li class="text-danger truncate" title={err.stack ?? err.message}>{err.message}</li>
+														<li class="text-danger-deep truncate" title={err.stack ?? err.message}>{err.message}</li>
 													{/each}
 												</ul>
 											</details>

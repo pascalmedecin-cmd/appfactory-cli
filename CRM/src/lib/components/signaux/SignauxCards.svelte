@@ -324,7 +324,7 @@
 	}
 	.card-signal-desc :global(mark.kw-eviter) {
 		background: none;
-		color: var(--color-danger);
+		color: var(--color-danger-deep);
 		text-decoration: line-through;
 		text-decoration-thickness: 1px;
 		text-decoration-color: rgba(240, 68, 56, 0.55);

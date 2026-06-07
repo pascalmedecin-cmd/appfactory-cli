@@ -38,7 +38,15 @@ export function trapFocus(node: HTMLElement) {
 	return {
 		destroy() {
 			node.removeEventListener('keydown', handleKeydown);
-			previouslyFocused?.focus();
+			// Restitution du focus au déclencheur (WCAG 2.4.3). Différée d'une frame :
+			// Svelte retire le nœud transitionné (fly/scale) autour de ce destroy, ce qui
+			// renvoie le focus sur <body> ; une restitution synchrone serait écrasée. Le
+			// rAF garantit le retour sur le déclencheur, et seulement s'il est toujours
+			// dans le DOM (un re-render à la fermeture peut l'avoir détaché). Bug LIVE-H2.
+			const target = previouslyFocused;
+			requestAnimationFrame(() => {
+				if (target && target.isConnected) target.focus();
+			});
 		}
 	};
 }

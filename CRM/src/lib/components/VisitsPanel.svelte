@@ -237,7 +237,7 @@
 			<span class="font-medium">Adresse de référence :</span> {parentAddressRaw}
 		</p>
 	{:else if !parentAddressRaw && visits.length > 0 && !loading}
-		<p class="text-xs text-warning">
+		<p class="text-xs text-warning-deep">
 			Adresse de référence absente en base. La distance ne peut pas être calculée tant que la fiche n'est pas enrichie.
 		</p>
 	{/if}

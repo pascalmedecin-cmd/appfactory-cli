@@ -272,7 +272,7 @@
 	.reject {
 		background: var(--color-surface);
 		border-color: var(--color-border-input);
-		color: var(--color-danger);
+		color: var(--color-danger-deep);
 	}
 	.merge-picker {
 		margin-top: 12px;

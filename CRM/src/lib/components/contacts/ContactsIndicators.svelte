@@ -97,7 +97,7 @@
 	}
 	.indicator.warning .indicator-icon {
 		background: radial-gradient(circle at 30% 30%, rgba(247, 144, 9, 0.12), rgba(247, 144, 9, 0.02));
-		color: var(--color-warning);
+		color: var(--color-warning-deep);
 	}
 	.indicator-body {
 		flex: 1;
@@ -112,7 +112,7 @@
 		line-height: 1;
 	}
 	.indicator.warning .indicator-value {
-		color: var(--color-warning);
+		color: var(--color-warning-deep);
 	}
 	.indicator-label {
 		font-size: 13px;
@@ -126,7 +126,7 @@
 		margin-top: 4px;
 	}
 	.indicator-trend.warning {
-		color: var(--color-warning);
+		color: var(--color-warning-deep);
 	}
 
 	@media (max-width: 1024px) {

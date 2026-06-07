@@ -187,10 +187,10 @@
 
 	function statusColor(status: string): string {
 		switch (status) {
-			case 'enriched': return 'text-success';
+			case 'enriched': return 'text-success-deep';
 			case 'already_complete': return 'text-text-muted';
-			case 'not_found': return 'text-warning';
-			case 'error': return 'text-danger';
+			case 'not_found': return 'text-warning-deep';
+			case 'error': return 'text-danger-deep';
 			default: return 'text-text-muted';
 		}
 	}
@@ -263,9 +263,9 @@
 						{@const critical = pct >= 95}
 						{@const warn = pct >= 50}
 						<div class="flex items-start gap-3 p-3 rounded-lg {critical ? 'bg-danger-light border border-danger/20' : warn ? 'bg-warning-light border border-warning/20' : 'bg-surface-alt border border-border'}">
-							<Icon name={critical || warn ? 'warning' : 'info'} size={18} class="mt-0.5 {critical ? 'text-danger' : warn ? 'text-warning' : 'text-text-muted'}" />
+							<Icon name={critical || warn ? 'warning' : 'info'} size={18} class="mt-0.5 {critical ? 'text-danger-deep' : warn ? 'text-warning-deep' : 'text-text-muted'}" />
 							<div>
-								<p class="text-sm font-medium {critical ? 'text-danger' : warn ? 'text-warning' : 'text-text'}">
+								<p class="text-sm font-medium {critical ? 'text-danger-deep' : warn ? 'text-warning-deep' : 'text-text'}">
 									{searchChEstimate.requests} requête{searchChEstimate.requests > 1 ? 's' : ''} search.ch ({pct.toFixed(1)}% du quota mensuel de 1000)
 								</p>
 								{#if batchTooLarge}
@@ -314,20 +314,20 @@
 						<!-- Compteurs en temps reel -->
 						<div class="grid grid-cols-4 gap-2 text-center">
 							<div class="p-2 rounded-lg bg-success-light">
-								<span class="text-lg font-bold text-success">{enrichedCount}</span>
-								<p class="text-[10px] text-success font-medium">Enrichis</p>
+								<span class="text-lg font-bold text-success-deep">{enrichedCount}</span>
+								<p class="text-[10px] text-success-deep font-medium">Enrichis</p>
 							</div>
 							<div class="p-2 rounded-lg bg-surface-alt">
 								<span class="text-lg font-bold text-text-muted">{alreadyCompleteCount}</span>
 								<p class="text-[10px] text-text-muted font-medium">Complets</p>
 							</div>
 							<div class="p-2 rounded-lg bg-warning-light">
-								<span class="text-lg font-bold text-warning">{notFoundCount}</span>
-								<p class="text-[10px] text-warning font-medium">Non trouvés</p>
+								<span class="text-lg font-bold text-warning-deep">{notFoundCount}</span>
+								<p class="text-[10px] text-warning-deep font-medium">Non trouvés</p>
 							</div>
 							<div class="p-2 rounded-lg bg-danger-light">
-								<span class="text-lg font-bold text-danger">{errorCount}</span>
-								<p class="text-[10px] text-danger font-medium">Erreurs</p>
+								<span class="text-lg font-bold text-danger-deep">{errorCount}</span>
+								<p class="text-[10px] text-danger-deep font-medium">Erreurs</p>
 							</div>
 						</div>
 
@@ -346,7 +346,7 @@
 							<button
 								type="button"
 								onclick={() => { abortController?.abort(); }}
-								class="inline-flex items-center gap-1.5 h-10 px-4 box-border text-sm text-danger border border-danger/30 rounded-lg hover:bg-danger-light cursor-pointer transition-colors"
+								class="inline-flex items-center gap-1.5 h-10 px-4 box-border text-sm text-danger-deep border border-danger/30 rounded-lg hover:bg-danger-light cursor-pointer transition-colors"
 							>
 								<Icon name="stop" size={16} />
 								Annuler
@@ -361,19 +361,19 @@
 						<!-- Resume -->
 						{#if quotaWarning}
 							<div class="flex items-start gap-3 p-3 rounded-lg bg-danger-light border border-danger/20">
-								<Icon name="error" size={18} class="mt-0.5 text-danger" />
-								<p class="text-sm text-danger font-medium">{quotaWarning}</p>
+								<Icon name="error" size={18} class="mt-0.5 text-danger-deep" />
+								<p class="text-sm text-danger-deep font-medium">{quotaWarning}</p>
 							</div>
 						{/if}
 
 						<div class="p-4 rounded-xl" style="background: linear-gradient(135deg, var(--color-prosp-enrich-bg), var(--color-prosp-import-bg))">
 							<div class="flex items-center gap-2 mb-3">
-								<Icon name={quotaWarning ? 'warning' : 'task_alt'} size={24} class="{quotaWarning ? 'text-warning' : 'text-success'}" />
+								<Icon name={quotaWarning ? 'warning' : 'task_alt'} size={24} class="{quotaWarning ? 'text-warning-deep' : 'text-success-deep'}" />
 								<h3 class="text-base font-semibold text-text">{quotaWarning ? 'Enrichissement interrompu' : 'Enrichissement terminé'}</h3>
 							</div>
 							<div class="grid grid-cols-2 gap-3">
 								<div class="flex items-center gap-2">
-									<Icon name="check_circle" size={16} class="text-success" />
+									<Icon name="check_circle" size={16} class="text-success-deep" />
 									<span class="text-sm text-text">{enrichedCount} enrichi{enrichedCount > 1 ? 's' : ''}</span>
 								</div>
 								<div class="flex items-center gap-2">
@@ -381,12 +381,12 @@
 									<span class="text-sm text-text">{alreadyCompleteCount} déjà complet{alreadyCompleteCount > 1 ? 's' : ''}</span>
 								</div>
 								<div class="flex items-center gap-2">
-									<Icon name="search_off" size={16} class="text-warning" />
+									<Icon name="search_off" size={16} class="text-warning-deep" />
 									<span class="text-sm text-text">{notFoundCount} non trouvé{notFoundCount > 1 ? 's' : ''}</span>
 								</div>
 								{#if errorCount > 0}
 									<div class="flex items-center gap-2">
-										<Icon name="error" size={16} class="text-danger" />
+										<Icon name="error" size={16} class="text-danger-deep" />
 										<span class="text-sm text-text">{errorCount} erreur{errorCount > 1 ? 's' : ''}</span>
 									</div>
 								{/if}

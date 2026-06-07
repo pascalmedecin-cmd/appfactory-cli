@@ -176,7 +176,7 @@
 	{#if isUnknownStage}
 		<div class="rounded-lg border border-warning/40 bg-warning-light/60 px-3 py-2 text-sm text-text">
 			<div class="flex items-start gap-2">
-				<Icon name="error" size={16} class="text-warning mt-0.5 shrink-0" />
+				<Icon name="error" size={16} class="text-warning-deep mt-0.5 shrink-0" />
 				<div>
 					<p class="font-medium">Étape inconnue : <code class="font-mono text-xs">{currentRawKey}</code></p>
 					<p class="text-xs text-text-muted mt-0.5">Avancement désactivé. Ouvrir le pipeline pour corriger.</p>

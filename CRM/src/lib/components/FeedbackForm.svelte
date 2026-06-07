@@ -168,10 +168,10 @@
 			required
 		></textarea>
 		<div class="mt-1 flex justify-between text-xs text-text-muted">
-			<span class:text-danger={descLength > 0 && descLength < 10}>
+			<span class:text-danger-deep={descLength > 0 && descLength < 10}>
 				{descLength < 10 ? `${10 - descLength} caractère(s) min restants` : 'Longueur OK'}
 			</span>
-			<span class:text-danger={descLength > 1000}>{descLength}/1000</span>
+			<span class:text-danger-deep={descLength > 1000}>{descLength}/1000</span>
 		</div>
 	</div>
 

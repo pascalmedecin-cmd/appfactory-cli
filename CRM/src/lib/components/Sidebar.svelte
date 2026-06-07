@@ -111,7 +111,7 @@
 
 		<button
 			onclick={signOut}
-			class="flex items-center gap-3 px-3 py-2 min-h-11 md:min-h-0 text-sm rounded-lg text-white/50 hover:bg-white/8 hover:text-danger transition-colors w-full cursor-pointer"
+			class="flex items-center gap-3 px-3 py-2 min-h-11 md:min-h-0 text-sm rounded-lg text-white/50 hover:bg-white/8 hover:text-danger-deep transition-colors w-full cursor-pointer"
 			title={collapsed ? 'Déconnexion' : undefined}
 		>
 			<Icon name="logout" class="shrink-0" />

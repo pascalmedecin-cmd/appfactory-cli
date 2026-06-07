@@ -223,7 +223,7 @@
 >
 	<div class="space-y-4">
 		{#if formError}
-			<div class="px-3 py-2 rounded-md bg-danger-light text-danger text-sm" role="alert">
+			<div class="px-3 py-2 rounded-md bg-danger-light text-danger-deep text-sm" role="alert">
 				{formError}
 			</div>
 		{/if}

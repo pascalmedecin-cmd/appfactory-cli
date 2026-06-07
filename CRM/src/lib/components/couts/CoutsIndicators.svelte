@@ -105,11 +105,11 @@
 	}
 	.indicator.warning .indicator-icon {
 		background: radial-gradient(circle at 30% 30%, rgba(247, 144, 9, 0.12), rgba(247, 144, 9, 0.02));
-		color: var(--color-warning);
+		color: var(--color-warning-deep);
 	}
 	.indicator.success .indicator-icon {
 		background: radial-gradient(circle at 30% 30%, rgba(16, 185, 129, 0.12), rgba(16, 185, 129, 0.02));
-		color: var(--color-success);
+		color: var(--color-success-deep);
 	}
 	.indicator-body {
 		flex: 1;
@@ -124,10 +124,10 @@
 		line-height: 1.1;
 	}
 	.indicator.warning .indicator-value {
-		color: var(--color-warning);
+		color: var(--color-warning-deep);
 	}
 	.indicator.success .indicator-value {
-		color: var(--color-success);
+		color: var(--color-success-deep);
 	}
 	.indicator-label {
 		font-size: 13px;

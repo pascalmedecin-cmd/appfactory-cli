@@ -505,7 +505,7 @@
 						type="button"
 						onclick={() => (confirmArchiveOpen = true)}
 						disabled={archiving}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-danger rounded-lg hover:bg-danger/5 cursor-pointer disabled:opacity-50 transition-colors"
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-danger-deep rounded-lg hover:bg-danger/5 cursor-pointer disabled:opacity-50 transition-colors"
 					>
 						<Icon name="archive" size={16} />
 						{archiving ? 'Archivage…' : 'Archiver'}

@@ -129,12 +129,12 @@
 			<div class="p-3 rounded-xl bg-gradient-to-r from-surface-alt to-surface">
 				<div class="flex items-center justify-between mb-2">
 					<span class="text-sm font-semibold text-text">Scoring détaillé</span>
-					<span class="text-xs font-medium px-2 py-1 rounded-full {scoreBadgeVariant(scoreDetail.total) === 'danger' ? 'bg-danger/10 text-danger' : scoreBadgeVariant(scoreDetail.total) === 'warning' ? 'bg-warning/10 text-warning' : 'bg-surface-alt text-text-muted'}">{scoreDetail.total}/13 pts</span>
+					<span class="text-xs font-medium px-2 py-1 rounded-full {scoreBadgeVariant(scoreDetail.total) === 'danger' ? 'bg-danger/10 text-danger-deep' : scoreBadgeVariant(scoreDetail.total) === 'warning' ? 'bg-warning/10 text-warning-deep' : 'bg-surface-alt text-text-muted'}">{scoreDetail.total}/13 pts</span>
 				</div>
 				<div class="space-y-1.5">
 					{#each scoreDetail.criteres as critere}
 						<div class="flex items-center gap-2 text-xs">
-							<Icon name="check_circle" size={14} class="text-success" />
+							<Icon name="check_circle" size={14} class="text-success-deep" />
 							<span class="text-text-body">{critere}</span>
 						</div>
 					{/each}
@@ -242,7 +242,7 @@
 				<button
 					onclick={() => enrichirTelephone(lead!.id)}
 					disabled={enriching}
-					class="inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium text-warning bg-warning-light border border-warning/20 rounded-lg hover:bg-warning-light/80 disabled:opacity-50 cursor-pointer transition-colors"
+					class="inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium text-warning-deep bg-warning-light border border-warning/20 rounded-lg hover:bg-warning-light/80 disabled:opacity-50 cursor-pointer transition-colors"
 				>
 					<Icon name="phone_forwarded" size={16} />
 					{enriching ? 'Recherche en cours…' : 'Enrichir le téléphone (search.ch)'}
@@ -291,7 +291,7 @@
 					</div>
 				</div>
 			{:else}
-				<div class="flex items-center gap-2 pt-4 border-t border-border text-sm text-success font-medium">
+				<div class="flex items-center gap-2 pt-4 border-t border-border text-sm text-success-deep font-medium">
 					<Icon name="check_circle" size={18} />
 					Ce prospect a été converti en entreprise
 				</div>

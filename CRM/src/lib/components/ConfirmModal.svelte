@@ -30,12 +30,12 @@
 
 	const variantClasses = $derived(
 		variant === 'danger'
-			? 'bg-danger text-white hover:bg-danger/90'
-			: 'bg-warning text-white hover:bg-warning/90'
+			? 'bg-danger-deep text-white hover:bg-danger-deep/90'
+			: 'bg-warning-deep text-white hover:bg-warning-deep/90'
 	);
 
 	const iconName = $derived(variant === 'danger' ? 'warning' : 'help');
-	const iconColor = $derived(variant === 'danger' ? 'text-danger' : 'text-warning');
+	const iconColor = $derived(variant === 'danger' ? 'text-danger-deep' : 'text-warning-deep');
 </script>
 
 <svelte:window onkeydown={handleKeydown} />

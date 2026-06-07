@@ -159,7 +159,7 @@
 		font-size: 11.5px;
 		font-weight: 500;
 		letter-spacing: 0.01em;
-		color: var(--color-info);
+		color: var(--color-info-deep);
 		background: var(--color-info-light);
 		padding: 4px 10px;
 		border-radius: var(--radius-full);

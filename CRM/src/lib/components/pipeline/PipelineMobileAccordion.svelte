@@ -238,7 +238,7 @@
 		color: var(--color-border-soft);
 	}
 	.opp-relance.overdue {
-		color: var(--color-danger);
+		color: var(--color-danger-deep);
 		font-weight: 500;
 	}
 </style>

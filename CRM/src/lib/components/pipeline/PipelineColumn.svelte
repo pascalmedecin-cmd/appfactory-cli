@@ -171,7 +171,7 @@
 	}
 	.col-icon--identification {
 		background: var(--color-info-light);
-		color: var(--color-info);
+		color: var(--color-info-deep);
 	}
 	.col-icon--qualification {
 		background: var(--color-primary-light);
@@ -179,19 +179,19 @@
 	}
 	.col-icon--proposition {
 		background: var(--color-warning-light);
-		color: var(--color-warning);
+		color: var(--color-warning-deep);
 	}
 	.col-icon--negociation {
 		background: var(--color-success-light);
-		color: var(--color-success);
+		color: var(--color-success-deep);
 	}
 	.col-icon--gagne {
 		background: var(--color-success-light);
-		color: var(--color-success);
+		color: var(--color-success-deep);
 	}
 	.col-icon--perdu {
 		background: var(--color-danger-light);
-		color: var(--color-danger);
+		color: var(--color-danger-deep);
 	}
 
 	.col-title {
