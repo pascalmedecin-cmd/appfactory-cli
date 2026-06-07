@@ -1,4 +1,5 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
+import { isProspectionSourceEnabled } from '$lib/prospection-flags';
 import { calculerScore } from '$lib/scoring';
 import { fetchIntelligenceSignalLookup } from '$lib/server/intelligence/signal-lookup';
 import { linkImportSignals } from '$lib/server/intelligence/link-import-signal';
@@ -28,6 +29,12 @@ interface SimapProject {
 export const POST = async ({ request, locals }: RequestEvent) => {
 	const { session } = await locals.safeGetSession();
 	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
+
+	// V5 (2026-06-07) : import de masse SIMAP retiré de la Prospection (redondant avec le radar
+	// Signaux). Réversible via `config.prospection.sources.simap.enabled`.
+	if (!isProspectionSourceEnabled('simap')) {
+		return json({ error: 'Source désactivée (recentrage Prospection V5 — voir le radar Signaux).' }, { status: 403 });
+	}
 
 	const body = await request.json();
 	const canton: string = body.canton;

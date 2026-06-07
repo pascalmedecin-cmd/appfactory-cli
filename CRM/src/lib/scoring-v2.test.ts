@@ -17,10 +17,10 @@ const KW_SEED: KeywordRow[] = [
 ];
 
 describe('calculerScore v2 - rétro-compat (keywords absent ou vide)', () => {
-	it('golden : keywords undefined → comportement v1 identique (Zefix seul → +1)', () => {
+	it('golden : keywords undefined → comportement v1 identique (V5 : Zefix seul → 0)', () => {
 		const r = calculerScore({ source: 'zefix' });
-		expect(r.total).toBe(1);
-		expect(r.criteres).toContainEqual(expect.stringContaining('Entreprise identifiee'));
+		expect(r.total).toBe(0);
+		expect(r.criteres.every((c) => !c.includes('Entreprise identifiee'))).toBe(true);
 	});
 
 	it('golden : keywords [] → comportement v1 identique (config.secteursCibles utilisé)', () => {
@@ -43,8 +43,8 @@ describe('calculerScore v2 - keywords actif (Cœur / Bonus / Éviter)', () => {
 			{ source: 'simap', description: 'rénovation du vitrage de l\'école' },
 			KW_SEED,
 		);
-		// Composants : +5 (Cœur vitrage) + 2 (sourcesChaudes simap = +2) = 7
-		expect(r.total).toBe(7);
+		// V5 : +5 (Cœur vitrage) seul. Le booster +2 simap a été retiré.
+		expect(r.total).toBe(5);
 		expect(r.criteres).toContainEqual(expect.stringContaining('Coeur'));
 		expect(r.criteres).not.toContainEqual(expect.stringContaining('Secteur'));
 	});
@@ -58,8 +58,8 @@ describe('calculerScore v2 - keywords actif (Cœur / Bonus / Éviter)', () => {
 			},
 			KW_SEED,
 		);
-		// +2 (canton GE prio) + 5 (Cœur vitrage) + 2 (Bonus régie) - 3 (Éviter route) + 2 (simap) = 8
-		expect(r.total).toBe(8);
+		// V5 : +2 (canton GE prio) + 5 (Cœur vitrage) + 2 (Bonus régie) - 3 (Éviter route) = 6 (plus de +2 simap)
+		expect(r.total).toBe(6);
 		expect(r.criteres.some((c) => c.includes('Coeur'))).toBe(true);
 		expect(r.criteres.some((c) => c.includes('Bonus'))).toBe(true);
 		expect(r.criteres.some((c) => c.includes('Éviter'))).toBe(true);
@@ -86,13 +86,14 @@ describe('calculerScore v2 - keywords actif (Cœur / Bonus / Éviter)', () => {
 	});
 
 	it('tri par score : signaux ordonnés correctement', () => {
-		const lead1 = { source: 'simap', description: 'vitrage rénové' }; // +5 +2 = 7
-		const lead2 = { source: 'simap', description: 'banale notice' }; // +2
-		const lead3 = { source: 'simap', description: 'réfection de route' }; // +2 -3 = -1
+		// V5 : plus de +2 simap. L'ordre relatif est préservé (c'est ce qui importe pour le tri).
+		const lead1 = { source: 'simap', description: 'vitrage rénové' }; // +5
+		const lead2 = { source: 'simap', description: 'banale notice' }; // 0
+		const lead3 = { source: 'simap', description: 'réfection de route' }; // -3
 		const scores = [lead1, lead2, lead3].map((l) => calculerScore(l, KW_SEED).total);
-		expect(scores).toEqual([7, 2, -1]);
+		expect(scores).toEqual([5, 0, -3]);
 		const sorted = [...scores].sort((a, b) => b - a);
-		expect(sorted).toEqual([7, 2, -1]);
+		expect(sorted).toEqual([5, 0, -3]);
 	});
 
 	it('match accents-insensible : Régie / régie / REGIE tous +2 Bonus', () => {

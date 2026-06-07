@@ -2,6 +2,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import { config } from '$lib/config';
+	import { isProspectionSourceEnabled } from '$lib/prospection-flags';
 	import { invalidateAll } from '$app/navigation';
 	import { API_LIMITS } from '$lib/api-limits';
 	import { cantonNoms } from '$lib/prospection-utils';
@@ -44,11 +45,12 @@
 		defaultSource ?? (allowedSources && allowedSources.length > 0 ? allowedSources[0] : 'zefix')
 	);
 
-	// Resync activeTab si allowedSources change (ex: utilisateur change d'onglet /prospection
-	// pendant que la modale est ouverte = edge case, mais on re-ancre proprement).
+	// Resync activeTab si la liste des sources visibles change (changement d'onglet, ou source
+	// désactivée par flag V5). On re-ancre sur la 1re source visible pour ne jamais rester sur
+	// un onglet masqué.
 	$effect(() => {
-		if (allowed && allowed.length > 0 && !allowed.includes(activeTab)) {
-			activeTab = fallback ?? allowed[0];
+		if (visibleTabs.length > 0 && !visibleTabs.includes(activeTab)) {
+			activeTab = fallback && visibleTabs.includes(fallback) ? fallback : visibleTabs[0];
 		}
 	});
 
@@ -215,11 +217,12 @@
 
 	const allTabs: ImportSourceKey[] = ['zefix', 'search_ch', 'simap', 'regbl', 'google_places'];
 
-	// Filtrage déterministe par allowedSources (préserve l'ordre canonique).
+	// Filtrage déterministe par allowedSources (préserve l'ordre canonique), puis par flag V5 :
+	// une source désactivée (config.prospection.sources.*.enabled=false) n'apparaît jamais,
+	// même si le parent l'a listée dans allowedSources (defense-in-depth).
 	let visibleTabs = $derived(
-		allowed && allowed.length > 0
-			? allTabs.filter((k) => allowed.includes(k))
-			: allTabs
+		(allowed && allowed.length > 0 ? allTabs.filter((k) => allowed.includes(k)) : allTabs)
+			.filter((k) => isProspectionSourceEnabled(k))
 	);
 
 	let activeMeta = $derived(sourceMeta[activeTab]);

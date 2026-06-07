@@ -1,6 +1,16 @@
 import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('$app/environment', () => ({ browser: false, dev: true, building: false }));
+// V5 : la feature « recherches sauvegardées » est coupée en prod (config). On la force ON ici
+// pour tester la LOGIQUE dormante-mais-réversible (refus source payante, happy path) ; le gate
+// OFF a son test dédié plus bas.
+vi.mock('$lib/prospection-flags', () => ({
+	isProspectionFeatureEnabled: vi.fn(() => true),
+	isProspectionSourceEnabled: vi.fn(() => true),
+	filterEnabledSources: (s: readonly string[]) => [...s],
+}));
+
+import { isProspectionFeatureEnabled } from '$lib/prospection-flags';
 
 /**
  * Spec google-places-2026-05-12 A5 : la source payante `google_places` est interdite dans
@@ -41,5 +51,15 @@ describe('saveRecherche : refus de la source payante google_places', () => {
 			mockSupabaseInsertOk(),
 		)) as { success?: boolean };
 		expect(res.success).toBe(true);
+	});
+
+	it('V5 : feature désactivée → 403 sans toucher la DB', async () => {
+		vi.mocked(isProspectionFeatureEnabled).mockReturnValueOnce(false);
+		const res = (await callSaveRecherche(
+			{ nom: 'BTP Genève', sources: JSON.stringify(['zefix', 'search_ch']) },
+			mockSupabaseInsertOk(),
+		)) as { status?: number; data?: { success?: boolean; error?: string } };
+		expect(res.status).toBe(403);
+		expect(res.data?.success).toBe(false);
 	});
 });

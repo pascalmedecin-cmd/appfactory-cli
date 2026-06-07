@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
+import { isSignauxZefixEnabled } from '$lib/server/flags';
 import { calculerScore } from '$lib/scoring';
 import type { KeywordRow } from '$lib/scoring/keywords';
 import { timingSafeEqual } from 'crypto';
@@ -369,7 +370,11 @@ export async function GET(event: RequestEvent) {
 	}
 	const keywords = (kwData ?? []) as KeywordRow[];
 
-	// Zefix
+	// Zefix — V5 (2026-06-07) : ingestion débranchée par défaut (flag produit OFF).
+	// Le radar Signaux est centré SIMAP ; une création d'entreprise n'a pas de lien causal
+	// avec un besoin vitrage (spec V5 §1). Réactivable via la variable d'env
+	// SIGNAUX_ZEFIX_ENABLED='true' sans redéploiement de code. Le code d'import reste en
+	// place (`importZefix`), seul l'appel est court-circuité.
 	const zefixAuth = (() => {
 		const u = env.ZEFIX_USERNAME;
 		const p = env.ZEFIX_PASSWORD;
@@ -377,9 +382,14 @@ export async function GET(event: RequestEvent) {
 		return 'Basic ' + Buffer.from(`${u}:${p}`).toString('base64');
 	})();
 
-	const zefix = zefixAuth
-		? await importZefix(supabase, zefixAuth, keywords)
-		: { imported: 0, skipped: 0, errors: ['Credentials Zefix non configurés'] };
+	let zefix: { imported: number; skipped: number; errors: string[] };
+	if (!isSignauxZefixEnabled()) {
+		zefix = { imported: 0, skipped: 0, errors: [] };
+	} else if (zefixAuth) {
+		zefix = await importZefix(supabase, zefixAuth, keywords);
+	} else {
+		zefix = { imported: 0, skipped: 0, errors: ['Credentials Zefix non configurés'] };
+	}
 
 	const simap = await importSimap(supabase, keywords);
 

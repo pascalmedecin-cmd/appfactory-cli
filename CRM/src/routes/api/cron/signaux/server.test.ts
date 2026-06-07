@@ -68,6 +68,8 @@ describe('GET /api/cron/signaux', () => {
 	});
 
 	it('creds Zefix absents → branche dégradée comptée en erreur (toujours 200)', async () => {
+		// V5 : la branche Zefix n'est exercée que flag ON (OFF par défaut depuis 2026-06-07).
+		mockEnv.SIGNAUX_ZEFIX_ENABLED = 'true';
 		delete mockEnv.ZEFIX_USERNAME;
 		const res = await callGet('Bearer test-secret');
 		expect(res.status).toBe(200);
@@ -77,6 +79,8 @@ describe('GET /api/cron/signaux', () => {
 	});
 
 	it('audit 360 V3b L-11 : une sogcDate Zefix malformée est skippée + tracée en erreur (pas de drop silencieux)', async () => {
+		// V5 : la branche Zefix n'est exercée que flag ON (OFF par défaut depuis 2026-06-07).
+		mockEnv.SIGNAUX_ZEFIX_ENABLED = 'true';
 		const today = new Date().toISOString().slice(0, 10);
 		// fetch : Zefix /sogc/bydate renvoie 1 création avec date pourrie + 1 valide ;
 		// SIMAP renvoie vide. Format = [{sogcPublication, companyShort}] depuis 2026-05-13.
@@ -135,5 +139,56 @@ describe('GET /api/cron/signaux', () => {
 		delete mockEnv.CRON_SECRET;
 		const res = await callGet('Bearer test-secret');
 		expect(res.status).toBe(401);
+	});
+
+	it('V5 : Zefix OFF par défaut → importZefix non exécuté (aucun fetch zefix.admin.ch), SIMAP intact', async () => {
+		// Flag absent = OFF (radar centré SIMAP). Même si Zefix renverrait des créations,
+		// rien n'est importé et aucun appel réseau Zefix n'est émis.
+		delete mockEnv.SIGNAUX_ZEFIX_ENABLED;
+		const fetchSpy = vi.fn((url: string) => {
+			const u = String(url);
+			if (u.includes('zefix.admin.ch')) {
+				return Promise.resolve({
+					ok: true,
+					json: async () => [
+						{
+							sogcPublication: {
+								sogcDate: new Date().toISOString().slice(0, 10),
+								sogcId: 9,
+								registryOfCommerceCanton: 'GE',
+								message: 'But: conseil',
+								mutationTypes: [{ id: 2, key: 'status.neu' }],
+							},
+							companyShort: { name: 'NeDoitPasEntrer SA', uid: 'CHE-999.999.999', legalSeat: 'Genève' },
+						},
+					],
+				});
+			}
+			return Promise.resolve({ ok: true, json: async () => [] }); // SIMAP
+		});
+		vi.stubGlobal('fetch', fetchSpy);
+
+		const res = await callGet('Bearer test-secret');
+		expect(res.status).toBe(200);
+		const body = (await res.json()) as { zefix: { imported: number }; errors: number };
+		expect(body.zefix.imported).toBe(0);
+		expect(body.errors).toBe(0);
+		// Aucun appel réseau vers Zefix : la branche est court-circuitée avant le fetch.
+		const zefixCalls = fetchSpy.mock.calls.filter((c) => String(c[0]).includes('zefix.admin.ch'));
+		expect(zefixCalls.length).toBe(0);
+		// SIMAP reste interrogé (radar conservé).
+		const simapCalls = fetchSpy.mock.calls.filter((c) => String(c[0]).includes('simap.ch'));
+		expect(simapCalls.length).toBeGreaterThan(0);
+	});
+
+	it('V5 : Zefix ON → importZefix exécuté (fetch zefix.admin.ch émis)', async () => {
+		mockEnv.SIGNAUX_ZEFIX_ENABLED = 'true';
+		const fetchSpy = vi.fn().mockResolvedValue({ ok: true, json: async () => [] });
+		vi.stubGlobal('fetch', fetchSpy);
+
+		const res = await callGet('Bearer test-secret');
+		expect(res.status).toBe(200);
+		const zefixCalls = fetchSpy.mock.calls.filter((c) => String(c[0]).includes('zefix.admin.ch'));
+		expect(zefixCalls.length).toBeGreaterThan(0);
 	});
 });

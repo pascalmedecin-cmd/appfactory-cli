@@ -12,6 +12,14 @@ import { describe, it, expect, vi } from 'vitest';
  */
 
 vi.mock('$app/environment', () => ({ browser: false, dev: true, building: false }));
+// V5 : la feature « recherches sauvegardées » est coupée en prod. On la force ON ici pour
+// tester le contrat ActionResult de saveRecherche (logique dormante-mais-réversible). Le gate
+// OFF (403) est couvert par `prospection/saveRecherche-paid-source.test.ts`.
+vi.mock('$lib/prospection-flags', () => ({
+	isProspectionFeatureEnabled: () => true,
+	isProspectionSourceEnabled: () => true,
+	filterEnabledSources: (s: readonly string[]) => [...s],
+}));
 
 function makeFormData(values: Record<string, string>): FormData {
 	const fd = new FormData();

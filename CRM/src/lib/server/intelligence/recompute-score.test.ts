@@ -88,8 +88,9 @@ describe('recomputeLeadScore', () => {
 		]) as unknown as Parameters<typeof recomputeLeadScore>[0];
 
 		const r = await recomputeLeadScore(supabase, 'lead-1');
-		// canton GE (+2) + secteur construction (+3) + simap (+2) + bonus Veille (+2) = 9
-		expect(r).toBe(9);
+		// V5 : canton GE (+2) + secteur construction (+3) + bonus Veille (+2) = 7. Le booster
+		// +2 simap a été retiré du scoring (recentrage Signaux 2026-06-07).
+		expect(r).toBe(7);
 	});
 
 	it('retourne 0 si update échoue', async () => {

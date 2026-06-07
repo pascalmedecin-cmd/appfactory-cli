@@ -70,10 +70,11 @@ export const config = {
 	},
 
 	scoring: {
-		// V4 (S189) : maxPoints réduit de 12 → 10 après retrait de la temporalité
-		// (bloc `recence` supprimé). Plafond théorique = canton prio (2) + entreprise
-		// identifiée (1) + secteur (3) + simap (2) + regbl (1) [exclusif] + tel (1)
-		// + montant (1). Veille (max +4) est un bonus cross-table non comptabilisé ici.
+		// V5 (2026-06-07) : retrait des boosters `entrepriseIdentifiee` (+1 zefix/google_places)
+		// et `sourcesChaudes` (+2 simap) — voir spec V5 §1. `maxPoints` reste le plafond
+		// d'AFFICHAGE de la jauge score (X/maxPoints) : la DB peut stocker un score supérieur
+		// (mots-clés Cœur cap +10), clampé à l'affichage. Composants courants : canton prio (2)
+		// + secteur/mots-clés vitrage + montant (1) + tel (1) [+ regbl (1) dormant].
 		maxPoints: 10,
 		cantonsPrioritaires: {
 			points: 2,
@@ -83,19 +84,9 @@ export const config = {
 			points: 1,
 			values: ['NE', 'FR', 'JU'],
 		},
-		entrepriseIdentifiee: {
-			points: 1,
-			// Sources qui identifient une entreprise réelle et active : Zefix (inscription RC + UID)
-			// et Google Places (établissement opérationnel avec adresse + tél vérifiés par Google).
-			sources: ['zefix', 'google_places'],
-		},
 		secteursCibles: {
 			points: 3,
 			keywords: ['construction', 'architecte', 'architecture', 'hvac', 'chauffage', 'ventilation', 'climatisation', 'regie', 'facility', 'batiment', 'menuiserie', 'charpente', 'electricite', 'plomberie', 'peinture', 'renovation', 'genie civil', 'bureau technique', 'ingenieur'],
-		},
-		sourcesChaudes: {
-			points: 2,
-			values: ['simap'],
 		},
 		sourcesIntervention: {
 			points: 1,
@@ -121,6 +112,11 @@ export const config = {
 	},
 
 	prospection: {
+		// V5 (2026-06-07) : la Prospection redevient un outil de recherche de contact à la
+		// demande (qualité, pas quantité). Les imports de MASSE sortent du CRM (acquisition =
+		// projet Marketing). Réversible : repasser `enabled: true` réactive la source.
+		// Gardées : zefix + search_ch (recherche nominale), lead_express (terrain), veille.
+		// Coupées : simap (redondant avec le radar Signaux), regbl, google_places (payante).
 		sources: {
 			zefix: {
 				label: 'Registre du commerce',
@@ -128,7 +124,7 @@ export const config = {
 			},
 			simap: {
 				label: 'SIMAP (marchés publics)',
-				enabled: true,
+				enabled: false,
 				cantons: ['GE', 'VD', 'VS', 'NE', 'FR', 'JU'],
 			},
 			search_ch: {
@@ -137,11 +133,11 @@ export const config = {
 			},
 			regbl: {
 				label: 'RegBL (registre des bâtiments)',
-				enabled: true,
+				enabled: false,
 			},
 			google_places: {
 				label: 'Google Places (entreprises locales)',
-				enabled: true,
+				enabled: false,
 				cantons: ['GE', 'VD', 'VS', 'NE', 'FR', 'JU'],
 			},
 			lead_express: {
@@ -152,6 +148,14 @@ export const config = {
 				label: 'Veille sectorielle',
 				enabled: true,
 			},
+		},
+		// V5 : machinerie d'acquisition de masse coupée (réversible par flag).
+		// savedSearches/alerts = moteur de prospection de masse ; batchEnrichment = enrichissement
+		// en lot. Le lookup unitaire d'une fiche reste possible (hors de ce flag).
+		features: {
+			savedSearches: false,
+			alerts: false,
+			batchEnrichment: false,
 		},
 		secteurKeywords: {
 			construction: ['construction', 'batiment', 'bau', 'genie civil'],

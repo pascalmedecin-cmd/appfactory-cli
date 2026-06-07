@@ -3,8 +3,12 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.mock('$env/dynamic/private', () => ({ env: { GOOGLE_PLACES_API_KEY: 'test-key' } }));
 vi.mock('$lib/server/intelligence/signal-lookup', () => ({ fetchIntelligenceSignalLookup: vi.fn(async () => null) }));
 vi.mock('$lib/server/intelligence/link-import-signal', () => ({ linkImportSignals: vi.fn(async () => undefined) }));
+// V5 : la source google_places est désactivée dans la config réelle. Pour tester la LOGIQUE
+// d'import (toujours présente, réversible), on force le flag à ON ; le gate OFF a son test dédié.
+vi.mock('$lib/prospection-flags', () => ({ isProspectionSourceEnabled: vi.fn(() => true) }));
 
 import { POST } from './+server';
+import { isProspectionSourceEnabled } from '$lib/prospection-flags';
 
 type Behavior = {
 	quotaUsed?: number;
@@ -183,5 +187,14 @@ describe('POST /api/prospection/google-places', () => {
 		const inserted = ev.captured.current as Array<Record<string, unknown>>;
 		expect(inserted[0].source_intelligence_id).toBe('11111111-2222-3333-4444-555555555555');
 		expect(inserted[0].source_intelligence_term).toBe('régie');
+	});
+
+	it('V5 : source désactivée → 403 sans aucun appel Google (0 quota consommé)', async () => {
+		vi.mocked(isProspectionSourceEnabled).mockReturnValueOnce(false);
+		const fetchSpy = vi.fn();
+		global.fetch = fetchSpy as never;
+		const res = await POST(makeEvent({ activityType: 'cvc_hvac', canton: 'GE' }).event);
+		expect(res.status).toBe(403);
+		expect(fetchSpy).not.toHaveBeenCalled();
 	});
 });

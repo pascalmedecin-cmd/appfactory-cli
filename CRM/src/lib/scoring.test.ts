@@ -2,13 +2,18 @@ import { describe, it, expect } from 'vitest';
 import { calculerScore, calculerBonusVeille, SIGNAL_VEILLE_SCORING } from './scoring';
 
 describe('calculerScore', () => {
-	it('retourne +1 pour un lead Zefix seul (entreprise identifiee)', () => {
+	// V5 (2026-06-07) : retrait des deux boosters constants `entrepriseIdentifiee` (+1
+	// zefix/google_places) et `sourcesChaudes` (+2 simap). Le score discrimine désormais
+	// sur la pertinence métier (mots-clés vitrage / secteur), le canton, le téléphone et
+	// le montant. Les seuils chaud≥7 / tiède≥4 sont conservés (validés par mesure).
+
+	it('retourne 0 pour un lead Zefix seul (entreprise identifiée retirée V5)', () => {
 		const result = calculerScore({
 			source: 'zefix',
 		});
-		expect(result.total).toBe(1);
+		expect(result.total).toBe(0);
 		expect(result.label).toBe('froid');
-		expect(result.criteres).toContainEqual(expect.stringContaining('Entreprise identifiee'));
+		expect(result.criteres.every((c) => !c.includes('Entreprise identifiee'))).toBe(true);
 	});
 
 	it('retourne 0 pour un lead sans critere (source non Zefix)', () => {
@@ -55,20 +60,20 @@ describe('calculerScore', () => {
 		expect(result.total).toBe(3);
 	});
 
-	it('donne +2 pour source chaude SIMAP', () => {
+	it('ne crédite plus la source SIMAP (booster +2 retiré V5)', () => {
 		const result = calculerScore({
 			source: 'simap',
 		});
-		expect(result.total).toBe(2);
-		expect(result.criteres).toContainEqual(expect.stringContaining('SIMAP'));
+		expect(result.total).toBe(0);
+		expect(result.criteres.every((c) => !c.includes('SIMAP'))).toBe(true);
 	});
 
-	it('donne +1 entreprise identifiee pour source zefix', () => {
+	it('ne crédite plus une source zefix (entreprise identifiée retirée V5)', () => {
 		const result = calculerScore({
 			source: 'zefix',
 		});
-		expect(result.total).toBe(1);
-		expect(result.criteres).toContainEqual(expect.stringContaining('Entreprise identifiee'));
+		expect(result.total).toBe(0);
+		expect(result.criteres.every((c) => !c.includes('Entreprise identifiee'))).toBe(true);
 	});
 
 	// V4 (S189) : la temporalité a été retirée du scoring. Un signal ancien ou récent
@@ -120,30 +125,27 @@ describe('calculerScore', () => {
 		expect(result.total).toBe(0);
 	});
 
-	it('cumule tous les criteres pour un lead chaud', () => {
-		const recent = new Date();
-		recent.setDate(recent.getDate() - 5);
+	it('cumule tous les criteres pour un lead chaud (sans booster source V5)', () => {
 		const result = calculerScore({
 			canton: 'GE',
 			description: 'Renovation de facade et construction',
 			source: 'simap',
-			date_publication: recent.toISOString(),
 			telephone: '+41 22 000 00 00',
 			montant: 500000,
 		});
-		// V4 : canton GE (2) + secteur (3) + simap (2) + tel (1) + montant (1) = 9.
-		// La temporalité a été retirée (anciennement +2 pour recent < 30j → 11).
-		expect(result.total).toBe(9);
+		// V5 : canton GE (2) + secteur (3) + tel (1) + montant (1) = 7. Le +2 simap a été retiré.
+		expect(result.total).toBe(7);
 		expect(result.label).toBe('chaud');
 	});
 
 	it('label tiede pour score 4-6', () => {
 		const result = calculerScore({
 			canton: 'GE',
-			source: 'simap',
+			source: 'search_ch',
+			description: 'travaux de construction',
 		});
-		// 2 + 2 = 4
-		expect(result.total).toBe(4);
+		// canton GE (2) + secteur (3) = 5
+		expect(result.total).toBe(5);
 		expect(result.label).toBe('tiede');
 	});
 
@@ -151,19 +153,20 @@ describe('calculerScore', () => {
 		const result = calculerScore({
 			source: 'simap',
 		});
-		// 2
-		expect(result.total).toBe(2);
+		// V5 : 0 (plus de booster source)
+		expect(result.total).toBe(0);
 		expect(result.label).toBe('froid');
 	});
 
 	it('label chaud pour score >=7', () => {
 		const result = calculerScore({
 			canton: 'GE',
-			source: 'zefix',
+			source: 'search_ch',
 			raison_sociale: 'Construction SA',
 			telephone: '+41 22 000 00 00',
+			montant: 200000,
 		});
-		// canton GE (2) + secteur (3) + entreprise identifiee zefix (1) + tel (1) = 7
+		// canton GE (2) + secteur (3) + tel (1) + montant (1) = 7
 		expect(result.total).toBe(7);
 		expect(result.label).toBe('chaud');
 	});
@@ -193,6 +196,8 @@ describe('calculerScore : fixes bimodalité scoring (audit 2026-05-01)', () => {
 	});
 
 	// Bug 2 historique : RegBL n'était pondéré nulle part comme source signal.
+	// V5 : sourcesIntervention (regbl +1) conservé (hors-scope du retrait V5) ; devient
+	// dormant car l'import RegBL est coupé, mais reste correct si une source regbl réapparaît.
 	it('pondère regbl comme source intervention (+1)', () => {
 		const result = calculerScore({
 			source: 'regbl',
@@ -225,8 +230,6 @@ describe('calculerScore : fixes bimodalité scoring (audit 2026-05-01)', () => {
 	});
 
 	// Cas réel observé en prod : RegBL canton GE avec description "Bâtiment autorisé".
-	// Avant fix : score = 2 (canton GE) + 0 (secteur raté accent) + 0 (regbl pas pondéré) = 2-3.
-	// Après fix : score = 2 + 3 + 1 = 6 (sans récence).
 	it('lead RegBL canton GE avec description accentuée scoré correctement (cas prod)', () => {
 		const result = calculerScore({
 			canton: 'GE',
@@ -352,7 +355,7 @@ describe('calculerScore avec intelligenceSignal (Bloc 3)', () => {
 			source: 'simap',
 			intelligenceSignal: null
 		});
-		expect(result.total).toBe(2); // juste signal simap
+		expect(result.total).toBe(0); // V5 : plus de booster source simap
 	});
 });
 
@@ -387,8 +390,8 @@ describe('calculerScore avec intelligenceSignals (Phase C+D : agrégation cross-
 				{ maturity: 'etabli', complianceTag: 'OK FilmPro', weeksSince: 2 }
 			]
 		});
-		// baseline simap (+2) + plafond cumul Veille (+4) = 6
-		expect(result.total).toBe(6);
+		// V5 : plus de booster source → plafond cumul Veille (+4) seul = 4
+		expect(result.total).toBe(4);
 		expect(result.criteres.some((c) => c.includes('plafonné'))).toBe(true);
 		expect(result.criteres.some((c) => c.includes('+4/6'))).toBe(true);
 	});
@@ -401,7 +404,7 @@ describe('calculerScore avec intelligenceSignals (Phase C+D : agrégation cross-
 				{ maturity: 'etabli', complianceTag: 'OK FilmPro', weeksSince: 10 } // 0 (hors fenêtre)
 			]
 		});
-		expect(result.total).toBe(2 + 2); // simap + 1 signal valide
+		expect(result.total).toBe(2); // V5 : 1 signal valide (+2), plus de booster simap
 		expect(result.criteres.some((c) => c.includes('Veille cumul 1 signal'))).toBe(true);
 	});
 
@@ -414,8 +417,7 @@ describe('calculerScore avec intelligenceSignals (Phase C+D : agrégation cross-
 				{ maturity: 'emergent', complianceTag: 'Adjacent pertinent', weeksSince: 0 }
 			]
 		});
-		// simap (+2) + array seul (emergent +1) = 3
-		expect(result.total).toBe(3);
+		expect(result.total).toBe(1); // V5 : array seul (emergent +1), plus de booster simap
 	});
 
 	it('array vide → fallback sur signal legacy si présent', () => {
@@ -426,7 +428,7 @@ describe('calculerScore avec intelligenceSignals (Phase C+D : agrégation cross-
 		});
 		// L'array vide active le bloc agrégation mais sans signal → 0 bonus.
 		// Fallback sur intelligenceSignal n'a PAS lieu (cohérent : si caller passe array vide, c'est qu'il a interrogé la table de jointure et n'a rien trouvé).
-		expect(result.total).toBe(2); // juste simap
+		expect(result.total).toBe(0); // V5 : plus de booster simap
 	});
 
 	it('array null → fallback sur signal legacy', () => {
@@ -435,7 +437,7 @@ describe('calculerScore avec intelligenceSignals (Phase C+D : agrégation cross-
 			intelligenceSignal: { maturity: 'etabli', complianceTag: 'OK FilmPro', weeksSince: 0 },
 			intelligenceSignals: null
 		});
-		expect(result.total).toBe(2 + 2); // simap + bonus legacy
+		expect(result.total).toBe(2); // V5 : bonus legacy (+2) seul, plus de booster simap
 	});
 
 	it('speculatif ne modifie pas le score', () => {

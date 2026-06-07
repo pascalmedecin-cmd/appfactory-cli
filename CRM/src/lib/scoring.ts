@@ -143,22 +143,17 @@ export function calculerScore(lead: LeadScoring, keywords?: KeywordRow[]): Score
 		}
 	}
 
-	// Signal chaud (appel d'offres explicite, budgété)
-	if (scoring.sourcesChaudes.values.includes(lead.source as typeof scoring.sourcesChaudes.values[number])) {
-		total += scoring.sourcesChaudes.points;
-		criteres.push(`Signal ${lead.source.toUpperCase()} (+${scoring.sourcesChaudes.points})`);
-	}
+	// V5 (2026-06-07) : boosters de source retirés du scoring Signaux.
+	// - `sourcesChaudes` (+2 simap) : constant sur un flux 100 % SIMAP → ne discrimine plus rien.
+	// - `entrepriseIdentifiee` (+1 zefix/google_places) : sans le robinet Zefix, n'identifie
+	//   plus une affaire vitrage (cadre métier : pertinence faible). Voir spec V5 §1.
+	// Le score discrimine désormais sur mots-clés vitrage + canton + montant + téléphone.
 
-	// Source intervention (signal indirect d'opportunité vitrage : permis bâtiment, autorisation construire)
+	// Source intervention (signal indirect d'opportunité vitrage : permis bâtiment, autorisation construire).
+	// V5 : conservé (hors-scope du retrait) mais dormant tant que l'import RegBL reste coupé.
 	if (scoring.sourcesIntervention.values.includes(lead.source as typeof scoring.sourcesIntervention.values[number])) {
 		total += scoring.sourcesIntervention.points;
 		criteres.push(`Source ${lead.source.toUpperCase()} (+${scoring.sourcesIntervention.points})`);
-	}
-
-	// Entreprise identifiee (Zefix = inscription RC avec UID)
-	if (scoring.entrepriseIdentifiee.sources.includes(lead.source as typeof scoring.entrepriseIdentifiee.sources[number])) {
-		total += scoring.entrepriseIdentifiee.points;
-		criteres.push(`Entreprise identifiee (+${scoring.entrepriseIdentifiee.points})`);
 	}
 
 	// V4 (S189) : la temporalité (récence) a été retirée du scoring. Pascal,

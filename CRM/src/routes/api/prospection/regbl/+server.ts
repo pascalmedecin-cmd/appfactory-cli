@@ -1,4 +1,5 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
+import { isProspectionSourceEnabled } from '$lib/prospection-flags';
 import { calculerScore } from '$lib/scoring';
 import { fetchIntelligenceSignalLookup } from '$lib/server/intelligence/signal-lookup';
 import { linkImportSignals } from '$lib/server/intelligence/link-import-signal';
@@ -46,6 +47,12 @@ interface RegblFeature {
 export const POST = async ({ request, locals }: RequestEvent) => {
 	const { session } = await locals.safeGetSession();
 	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
+
+	// V5 (2026-06-07) : import de masse RegBL retiré de la Prospection (acquisition de masse =
+	// projet Marketing). Réversible via `config.prospection.sources.regbl.enabled`.
+	if (!isProspectionSourceEnabled('regbl')) {
+		return json({ error: 'Source désactivée (recentrage Prospection V5).' }, { status: 403 });
+	}
 
 	const body = await request.json();
 	const cantons: string[] = body.cantons ?? ['GE', 'VD'];

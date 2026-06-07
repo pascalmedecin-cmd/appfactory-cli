@@ -1,5 +1,6 @@
 import type { RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
+import { isProspectionFeatureEnabled } from '$lib/prospection-flags';
 import { calculerScore } from '$lib/scoring';
 import {
 	parseSearchChResponse,
@@ -78,6 +79,15 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	if (!session) {
 		return new Response(JSON.stringify({ error: 'Non authentifié' }), {
 			status: 401,
+			headers: { 'Content-Type': 'application/json' },
+		});
+	}
+
+	// V5 (2026-06-07) : enrichissement par lot désactivé (acquisition de masse).
+	// Réversible via `config.prospection.features.batchEnrichment`. Le lookup unitaire reste possible.
+	if (!isProspectionFeatureEnabled('batchEnrichment')) {
+		return new Response(JSON.stringify({ error: 'Enrichissement par lot désactivé (recentrage Prospection V5).' }), {
+			status: 403,
 			headers: { 'Content-Type': 'application/json' },
 		});
 	}

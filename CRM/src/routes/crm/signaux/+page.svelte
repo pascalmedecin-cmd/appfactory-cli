@@ -164,7 +164,9 @@
 		{ key: 'ecarte' as SignauxTab, label: 'Écarté', count: counts.ecarte },
 	]);
 
-	const filteredByTab = $derived(filterSignauxByTab(data.signaux, activeTab));
+	// V5 : en vue « archivées » on affiche toutes les fiches chargées (toutes statut=archive),
+	// les onglets par statut ne s'appliquent pas. Sinon filtrage par onglet habituel.
+	const filteredByTab = $derived(data.showArchived ? data.signaux : filterSignauxByTab(data.signaux, activeTab));
 
 	// V4 (S189) : on isole la chaîne « tab + type + canton + search » dans une derived
 	// dédiée pour pouvoir calculer le compteur `outOfScopeCount` (= nombre de signaux
@@ -212,6 +214,25 @@
 		return out;
 	});
 
+	// V5 (file courte) : sur l'onglet « Nouveau » sans filtre, la page ouvre sur la tête de file
+	// triée par score (les chaudes / à décider), pas sur les centaines de fiches froides. Le bouton
+	// « Voir plus » déplie le reste. Toute recherche / filtre / autre onglet / vue archivées
+	// désactive le cap (on montre tout le sous-ensemble). queueCap = config.scoring.triage.
+	const QUEUE_CAP = config.scoring.triage.queueCap;
+	let queueExpanded = $state(false);
+	const queueCapActive = $derived(
+		!data.showArchived &&
+		activeTab === 'nouveau' &&
+		!queueExpanded &&
+		!searchDebounced.trim() &&
+		!filterType &&
+		!filterCanton &&
+		!hideOutOfScope &&
+		filteredSignaux.length > QUEUE_CAP
+	);
+	const visibleSignaux = $derived(queueCapActive ? filteredSignaux.slice(0, QUEUE_CAP) : filteredSignaux);
+	const queueHiddenCount = $derived(filteredSignaux.length - visibleSignaux.length);
+
 	const cantons = $derived(
 		[...new Set(data.signaux.map((s: Signal) => s.canton).filter(Boolean) as string[])].sort()
 	);
@@ -229,10 +250,11 @@
 	}
 
 	function toggleSelectAll() {
-		if (selectedIds.size === filteredSignaux.length) {
+		// V5 : sélectionne ce qui est visible (file courte capée), pas les fiches masquées.
+		if (selectedIds.size === visibleSignaux.length) {
 			selectedIds = new Set();
 		} else {
-			selectedIds = new Set(filteredSignaux.map((s: Signal) => s.id));
+			selectedIds = new Set(visibleSignaux.map((s: Signal) => s.id));
 		}
 	}
 
@@ -300,10 +322,30 @@
 				</button>
 			{/if}
 		{/if}
+		<!-- V5 : accès aux fiches archivées (Zefix soft-archivées), masquées de la file par défaut. -->
+		{#if !data.showArchived && data.archivedCount > 0}
+			<button type="button" class="ws-btn ws-btn-secondary" onclick={() => goto('?vue=archivees')}>
+				<Icon name="inventory_2" size={18} />
+				Archivées ({data.archivedCount})
+			</button>
+		{/if}
 	</div>
+
+	<!-- V5 : bannière de la vue archivées (lecture/consultation, restaurables côté admin). -->
+	{#if data.showArchived}
+		<div class="archive-banner" role="status">
+			<Icon name="inventory_2" size={18} />
+			<span>Vue des signaux archivés ({data.archivedCount}) — hors de la file de triage par défaut.</span>
+			<button type="button" class="ws-btn-ghost" onclick={() => goto('?')}>
+				<Icon name="arrow_back" size={16} />
+				Retour aux signaux actifs
+			</button>
+		</div>
+	{/if}
 
 	<SignauxIndicators values={indicators} />
 
+	{#if !data.showArchived}
 	<SignauxTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)}>
 		{#snippet actions()}
 			<select
@@ -340,6 +382,7 @@
 			{/if}
 		{/snippet}
 	</SignauxTabs>
+	{/if}
 
 	<div class="signaux-search" class:filled={search.length > 0}>
 		<Icon name="search" size={16} class="search-icon" />
@@ -421,7 +464,7 @@
 		{#if data.signaux.length === 0}
 			<div class="empty-simple">
 				<Icon name="schedule" size={32} class="empty-simple-icon" />
-				<p>Pas encore de signaux. Le scanner Zefix + SIMAP remplit cette page chaque matin à 6 h.</p>
+				<p>Pas encore de signaux. Le radar SIMAP (marchés publics construction Romandie) remplit cette page chaque matin à 6 h.</p>
 			</div>
 		{:else}
 			{#if selectMode}
@@ -431,8 +474,8 @@
 						class="batch-link"
 						onclick={toggleSelectAll}
 					>
-						<Icon name={selectedIds.size === filteredSignaux.length ? 'deselect' : 'select_all'} size={18} />
-						{selectedIds.size === filteredSignaux.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+						<Icon name={selectedIds.size === visibleSignaux.length ? 'deselect' : 'select_all'} size={18} />
+						{selectedIds.size === visibleSignaux.length ? 'Tout désélectionner' : 'Tout sélectionner'}
 					</button>
 					<span class="batch-count">
 						{selectedIds.size} sélectionné{selectedIds.size > 1 ? 's' : ''}
@@ -472,7 +515,7 @@
 			{/if}
 
 			<SignauxCards
-				signaux={filteredSignaux}
+				signaux={visibleSignaux}
 				{selectMode}
 				{selectedIds}
 				onSelect={openDetail}
@@ -481,6 +524,17 @@
 				keywords={data.keywords}
 				searchTerm={searchDebounced}
 			/>
+			{#if queueCapActive && queueHiddenCount > 0}
+				<button type="button" class="queue-more" onclick={() => (queueExpanded = true)}>
+					<Icon name="expand_more" size={18} />
+					Voir les {queueHiddenCount} autre{queueHiddenCount > 1 ? 's' : ''} signal{queueHiddenCount > 1 ? 'aux' : ''} (score plus faible)
+				</button>
+			{:else if queueExpanded && activeTab === 'nouveau' && !searchDebounced.trim() && !filterType && !filterCanton && !hideOutOfScope && filteredSignaux.length > QUEUE_CAP}
+				<button type="button" class="queue-more" onclick={() => (queueExpanded = false)}>
+					<Icon name="expand_less" size={18} />
+					Réduire à la file courte (tête de file)
+				</button>
+			{/if}
 		{/if}
 	</div>
 </div>
@@ -1102,6 +1156,43 @@
 		color: var(--color-text-muted);
 	}
 	.batch-spacer {
+		flex: 1;
+	}
+
+	/* V5 : bouton « Voir plus » de la file courte (dépliage de la tête de file). */
+	.queue-more {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		margin: 12px auto 0;
+		padding: 8px 16px;
+		background: var(--color-surface-alt);
+		border: 1px solid var(--color-border);
+		border-radius: 8px;
+		font-family: inherit;
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--color-text-body);
+		cursor: pointer;
+		transition: background 0.15s ease;
+	}
+	.queue-more:hover {
+		background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface-alt));
+	}
+
+	/* V5 : bannière de la vue archivées. */
+	.archive-banner {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		padding: 10px 14px;
+		background: var(--color-surface-alt);
+		border: 1px solid var(--color-border);
+		border-radius: 8px;
+		font-size: 13px;
+		color: var(--color-text-body);
+	}
+	.archive-banner > span {
 		flex: 1;
 	}
 

@@ -4,6 +4,7 @@ import { LeadCreateSchema, LeadExpressCreateSchema, LeadUpdateStatutSchema, Lead
 import { calculerScore } from '$lib/scoring';
 import { dbFail, escapeIlike, newId, now } from '$lib/server/db-helpers';
 import { PROSPECTION_TABS, TAB_SOURCE_MAP, VALID_SORT_KEYS, type ProspectionTabKey } from '$lib/prospection-utils';
+import { isProspectionFeatureEnabled } from '$lib/prospection-flags';
 
 const DEFAULT_PAGE_SIZE = 25;
 const ALLOWED_PAGE_SIZES = new Set([25, 50, 100]);
@@ -234,7 +235,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		showTransferred,
 		search,
 		entreprises: entreprisesRes.data ?? [],
-		recherches: recherchesRes.data ?? [],
+		// V5 (2026-06-07) : recherches sauvegardées coupées → liste vide côté UI (masque les
+		// boutons « Mes recherches » et le panneau, sans supprimer la table). Réversible via
+		// `config.prospection.features.savedSearches`.
+		recherches: isProspectionFeatureEnabled('savedSearches') ? (recherchesRes.data ?? []) : [],
 		fromIntelligence,
 		fromTerm,
 	};
@@ -403,6 +407,12 @@ export const actions: Actions = {
 	},
 
 	saveRecherche: async ({ request, locals }) => {
+		// V5 (2026-06-07) : recherches sauvegardées (acquisition de masse) désactivées.
+		// Gate serveur (defense-in-depth, l'UI masque déjà l'entrée). Réversible via
+		// `config.prospection.features.savedSearches`.
+		if (!isProspectionFeatureEnabled('savedSearches')) {
+			return fail(403, { success: false as const, error: 'Recherches sauvegardées désactivées (recentrage Prospection V5).' });
+		}
 		const form = await request.formData();
 
 		function safeJsonParse(val: FormDataEntryValue | null): unknown {

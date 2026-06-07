@@ -29,11 +29,18 @@
 		scoreToCategory,
 		type ProspectionTabKey,
 	} from '$lib/prospection-utils';
+	import { filterEnabledSources, isProspectionFeatureEnabled } from '$lib/prospection-flags';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
 	type Lead = (typeof data.leads)[number];
+
+	// V5 (2026-06-07) : flags produit (statiques, lus depuis config.prospection). Coupent les
+	// entrées d'acquisition de masse dans l'UI (les endpoints sont aussi gatés côté serveur).
+	const savedSearchesEnabled = isProspectionFeatureEnabled('savedSearches');
+	const alertsEnabled = isProspectionFeatureEnabled('alerts');
+	const batchEnrichEnabled = isProspectionFeatureEnabled('batchEnrichment');
 
 	$effect(() => { $pageSubtitle = `${data.totalLeads} prospect${data.totalLeads > 1 ? 's' : ''}`; });
 
@@ -302,21 +309,33 @@
 		title: string | null;
 	};
 	const importScope = $derived.by((): ImportScope => {
-		switch (data.tab) {
-			case 'simap':
-				return { allowedSources: ['simap'], defaultSource: 'simap', title: 'Importer depuis les marchés publics' };
-			case 'regbl':
-				return { allowedSources: ['regbl'], defaultSource: 'regbl', title: 'Importer depuis le registre des bâtiments' };
-			case 'entreprises':
-				return {
-					allowedSources: ['zefix', 'search_ch', 'google_places'],
-					defaultSource: 'zefix',
-					title: 'Importer des entreprises',
-				};
-			default:
-				return { allowedSources: null, defaultSource: null, title: null };
-		}
+		// Périmètre brut par onglet, puis filtrage V5 : on ne garde que les sources actives
+		// (config.prospection.sources.*.enabled). google_places/simap/regbl coupés → l'onglet
+		// entreprises ne propose plus que la recherche nominale zefix/search.ch.
+		const raw: ImportScope = (() => {
+			switch (data.tab) {
+				case 'simap':
+					return { allowedSources: ['simap'], defaultSource: 'simap', title: 'Importer depuis les marchés publics' };
+				case 'regbl':
+					return { allowedSources: ['regbl'], defaultSource: 'regbl', title: 'Importer depuis le registre des bâtiments' };
+				case 'entreprises':
+					return {
+						allowedSources: ['zefix', 'search_ch', 'google_places'],
+						defaultSource: 'zefix',
+						title: 'Importer des entreprises',
+					};
+				default:
+					return { allowedSources: null, defaultSource: null, title: null };
+			}
+		})();
+		if (!raw.allowedSources) return raw;
+		const enabled = filterEnabledSources(raw.allowedSources) as ImportScope['allowedSources'];
+		return { ...raw, allowedSources: enabled, defaultSource: enabled?.[0] ?? null };
 	});
+
+	// V5 : le CTA d'import n'est montré que si l'onglet a au moins une source active. L'onglet
+	// terrain garde son CTA propre (lead express, pas un import). simap/regbl → CTA masqué.
+	const showImportCta = $derived(data.tab === 'terrain' || (importScope.allowedSources?.length ?? 0) > 0);
 
 	type EmptyStateCopy = { icon: string; title: string; body: string; ctaLabel: string; ctaIcon: string; ctaAction: () => void };
 	const emptyStateCopy = $derived.by((): EmptyStateCopy => {
@@ -561,7 +580,9 @@
 			<Icon name="bolt" size={18} />
 			<span>Lead express</span>
 		</button>
-		<!-- V4 audit S163 (F-V4-01) + F-V4-07 verbes : CTA contextuel par onglet via headerCTA. -->
+		<!-- V4 audit S163 (F-V4-01) + F-V4-07 verbes : CTA contextuel par onglet via headerCTA.
+		     V5 : masqué sur les onglets sans source d'import active (simap/regbl). -->
+		{#if showImportCta}
 		<button
 			onclick={headerCTA.action}
 			aria-label={headerCTA.ariaLabel}
@@ -571,6 +592,7 @@
 			<span class="sm:hidden">{headerCTA.labelMobile}</span>
 			<span class="hidden sm:inline">{headerCTA.label}</span>
 		</button>
+		{/if}
 		<!-- Kebab mobile : actions secondaires -->
 			<div class="md:hidden relative" bind:this={mobileMenuRef}>
 				<button
@@ -595,7 +617,7 @@
 								<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{data.recherches.length}</span>
 							</button>
 						{/if}
-						{#if enrichablesCount > 0}
+						{#if batchEnrichEnabled && enrichablesCount > 0}
 							<button
 								role="menuitem"
 								onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; mobileMenuOpen = false; }}
@@ -606,6 +628,7 @@
 								<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich">{enrichablesCount}</span>
 							</button>
 						{/if}
+						{#if alertsEnabled}
 						<button
 							role="menuitem"
 							onclick={() => { alerteModalOpen = true; mobileMenuOpen = false; }}
@@ -614,6 +637,7 @@
 							<Icon name="notifications_active" size={18} class="text-primary" />
 							<span class="flex-1">Créer une alerte</span>
 						</button>
+						{/if}
 					</div>
 				{/if}
 			</div>
@@ -681,7 +705,8 @@
 						<Icon name="close" size={14} />
 						Réinitialiser
 					</button>
-					<!-- V3.4 audit S160 : sauvegarder la recherche courante en 1 clic. -->
+					<!-- V3.4 audit S160 : sauvegarder la recherche courante. V5 : masque si recherches sauvegardees coupees. -->
+					{#if savedSearchesEnabled}
 					<button
 						onclick={() => savePanelOpen = !savePanelOpen}
 						class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-text border border-border rounded-lg box-border bg-white hover:bg-surface-alt cursor-pointer transition-colors"
@@ -689,7 +714,9 @@
 						<Icon name="bookmark_add" size={16} />
 						Sauvegarder cette recherche
 					</button>
+					{/if}
 				{/if}
+				{#if alertsEnabled}
 				<button
 					onclick={() => alerteModalOpen = true}
 					class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-primary border border-primary rounded-lg box-border hover:bg-primary/5 cursor-pointer transition-colors"
@@ -697,6 +724,7 @@
 					<Icon name="notifications_active" size={16} />
 					Créer une alerte
 				</button>
+				{/if}
 			</div>
 		</div>
 	</div>
@@ -821,7 +849,7 @@
 						<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-primary-light text-primary">{data.recherches.length}</span>
 					</button>
 				{/if}
-				{#if enrichablesCount > 0}
+				{#if batchEnrichEnabled && enrichablesCount > 0}
 					<button
 						type="button"
 						onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
@@ -835,6 +863,7 @@
 					</button>
 				{/if}
 				<!-- V4 audit S163 (F-V4-01) + F-V4-07 verbes : CTA principal contextuel par onglet. -->
+				{#if showImportCta}
 				<button
 					type="button"
 					onclick={headerCTA.action}
@@ -844,6 +873,7 @@
 					<Icon name={headerCTA.icon} size={16} />
 					<span>{headerCTA.label}</span>
 				</button>
+				{/if}
 			{/snippet}
 		</ProspectionTabs>
 		<!-- V2.1 audit S160 : tabpanel ARIA wrapper. Lié à #tab-{key} via aria-labelledby. -->
@@ -882,6 +912,7 @@
 							<Icon name="close" size={16} />
 							Réinitialiser les filtres
 						</button>
+						{#if showImportCta}
 						<button
 							onclick={headerCTA.action}
 							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-md transition-colors"
@@ -889,10 +920,12 @@
 							<Icon name={headerCTA.icon} size={16} />
 							{headerCTA.labelMobile}
 						</button>
+						{/if}
 					</div>
 				{:else}
 					<h3 class="text-base font-semibold text-text mb-1">{emptyStateCopy.title}</h3>
 					<p class="text-sm text-text-muted text-center max-w-md mb-5">{emptyStateCopy.body}</p>
+					{#if showImportCta}
 					<button
 						onclick={emptyStateCopy.ctaAction}
 						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-md transition-colors"
@@ -900,6 +933,7 @@
 						<Icon name={emptyStateCopy.ctaIcon} size={16} />
 						{emptyStateCopy.ctaLabel}
 					</button>
+					{/if}
 				{/if}
 			</div>
 		{:else}

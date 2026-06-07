@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
+import { isProspectionFeatureEnabled } from '$lib/prospection-flags';
 import { matchMotsCles } from '$lib/text-utils';
 import { config } from '$lib/config';
 import { timingSafeEqual } from 'crypto';
@@ -59,6 +60,12 @@ export async function GET(event: RequestEvent) {
 	const authHeader = event.request.headers.get('authorization');
 	if (!verifyCronSecret(authHeader)) {
 		return json({ error: 'Non autorise' }, { status: 401 });
+	}
+
+	// V5 (2026-06-07) : alertes (machinerie d'acquisition de masse) désactivées. Court-circuit
+	// avant tout accès DB. Réversible via `config.prospection.features.alerts`.
+	if (!isProspectionFeatureEnabled('alerts')) {
+		return json({ message: 'Alertes désactivées (recentrage Prospection V5)', checked: 0 });
 	}
 
 	const supabase = createSupabaseServiceClient();

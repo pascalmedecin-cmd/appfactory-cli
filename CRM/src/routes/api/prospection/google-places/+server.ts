@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { randomUUID } from 'crypto';
+import { isProspectionSourceEnabled } from '$lib/prospection-flags';
 import { calculerScore } from '$lib/scoring';
 import { API_LIMITS, googlePlacesQuotaStatus } from '$lib/api-limits';
 import { getMonthlyUsage, incrementUsage } from '$lib/server/quota';
@@ -41,6 +42,15 @@ const FIELD_MASK = [
 export const POST = async ({ request, locals }: RequestEvent) => {
 	const { session } = await locals.safeGetSession();
 	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
+
+	// V5 (2026-06-07) : import de masse Google Places retiré de la Prospection (source payante,
+	// acquisition de masse = projet Marketing). Le gate renvoie « désactivée » AVANT tout appel
+	// Google et AVANT la réservation de quota (0 coût, 0 quota). La clé GOOGLE_PLACES_API_KEY
+	// reste configurée (les scripts Marketing la lisent). Réversible via
+	// `config.prospection.sources.google_places.enabled`.
+	if (!isProspectionSourceEnabled(SOURCE_KEY)) {
+		return json({ error: 'Source désactivée (recentrage Prospection V5).' }, { status: 403 });
+	}
 
 	const apiKey = env.GOOGLE_PLACES_API_KEY;
 	if (!apiKey) {

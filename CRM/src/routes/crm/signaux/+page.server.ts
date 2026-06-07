@@ -53,17 +53,27 @@ async function rescoreActiveSignaux(supabase: App.Locals['supabase'], keywords: 
 	await Promise.all(updates);
 }
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const [signauxRes, keywordsRes, sessionRes] = await Promise.all([
-		locals.supabase
-			.from('signaux_affaires')
-			.select('*, contacts:contact_maitre_ouvrage_id(id, nom, prenom)')
-			.order('date_detection', { ascending: false }),
+export const load: PageServerLoad = async ({ locals, url }) => {
+	// V5 (2026-06-07) : par défaut on EXCLUT les fiches archivées (les ~1227 Zefix soft-archivées
+	// + tout futur archivage). Elles restent consultables via `?vue=archivees`. Évite d'envoyer
+	// 1500+ lignes au client (le « mur » qui décourageait l'usage) — radar centré SIMAP.
+	const showArchived = url.searchParams.get('vue') === 'archivees';
+	const SELECT = '*, contacts:contact_maitre_ouvrage_id(id, nom, prenom)';
+	const signauxQuery = showArchived
+		? locals.supabase.from('signaux_affaires').select(SELECT).eq('statut_traitement', 'archive').order('date_detection', { ascending: false })
+		: locals.supabase.from('signaux_affaires').select(SELECT).neq('statut_traitement', 'archive').order('date_detection', { ascending: false });
+
+	const [signauxRes, keywordsRes, sessionRes, archivedCountRes] = await Promise.all([
+		signauxQuery,
 		locals.supabase
 			.from('signaux_mots_cles' as never)
 			.select('id, terme, terme_norm, categorie, poids')
 			.order('cree_le', { ascending: false }),
 		locals.safeGetSession(),
+		locals.supabase
+			.from('signaux_affaires')
+			.select('*', { count: 'exact', head: true })
+			.eq('statut_traitement', 'archive'),
 	]);
 
 	if (signauxRes.error) {
@@ -80,6 +90,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		signaux: signauxRes.data ?? [],
 		keywords,
 		canEditKeywords,
+		showArchived,
+		archivedCount: archivedCountRes.count ?? 0,
 	};
 };
 

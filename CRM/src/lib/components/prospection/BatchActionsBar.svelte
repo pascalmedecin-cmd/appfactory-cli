@@ -4,6 +4,10 @@
 	import { enhance } from '$app/forms';
 	import { toasts } from '$lib/stores/toast';
 	import { invalidateAll } from '$app/navigation';
+	import { isProspectionFeatureEnabled } from '$lib/prospection-flags';
+
+	// V5 (2026-06-07) : enrichissement par lot désactivé (acquisition de masse coupée).
+	const batchEnrichEnabled = isProspectionFeatureEnabled('batchEnrichment');
 
 	let {
 		selectedIds = $bindable(new Set<string>()),
@@ -107,6 +111,7 @@
 				Écarter
 			</button>
 		</form>
+		{#if batchEnrichEnabled}
 		<button
 			onclick={() => { enrichBatchIds = [...selectedIds]; enrichBatchOpen = true; }}
 			class="inline-flex items-center gap-1.5 h-10 px-4 box-border text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich border-prosp-enrich hover:bg-prosp-enrich/10"
@@ -114,6 +119,7 @@
 			<Icon name="auto_fix_high" size={16} />
 			Enrichir
 		</button>
+		{/if}
 		<button
 			onclick={() => selectedIds = new Set()}
 			class="md:ml-auto text-sm text-text-muted hover:text-text cursor-pointer"
