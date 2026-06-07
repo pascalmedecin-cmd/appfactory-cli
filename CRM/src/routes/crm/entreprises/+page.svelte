@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
-	import { enhance } from '$app/forms';
+	import { enhance, deserialize } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import type { ActionResult } from '@sveltejs/kit';
 	import DataTable from '$lib/components/DataTable.svelte';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import PhotoGallery from '$lib/components/PhotoGallery.svelte';
@@ -8,6 +10,7 @@
 	import PipelineQuickAdvance from '$lib/components/PipelineQuickAdvance.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
+	import DependencyBlockModal from '$lib/components/DependencyBlockModal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
@@ -48,8 +51,98 @@
 	let saving = $state(false);
 	let deleting = $state(false);
 	let confirmDeleteOpen = $state(false);
-	let deleteFormEl: HTMLFormElement | null = $state(null);
 	let enriching = $state(false);
+
+	// REG-01 : modale « suppression bloquée » alimentée par le payload serveur
+	// (contacts/opportunités rattachés) quand la garde dépendances s'active.
+	let depsModalOpen = $state(false);
+	let depsBlock = $state<{
+		nom: string;
+		contacts: { id: string; nom?: string | null; prenom?: string | null }[];
+		opportunites: { id: string; titre?: string | null }[];
+	}>({ nom: '', contacts: [], opportunites: [] });
+
+	// REG-01 + I-2 : suppression en deux temps. Le 1er appel (sans `force`) ne
+	// supprime jamais : le serveur renvoie soit `blocked` (contacts/opportunités
+	// détachables → DependencyBlockModal), soit `needsConfirm` + le décompte des
+	// données terrain effacées en cascade → ConfirmModal qui chiffre la perte. Sur
+	// confirmation, on resoumet avec `force=true` (pattern fetch + deserialize, cf.
+	// memory feedback_sveltekit_force_resubmit_deserialize).
+	let cascadeInfo = $state<{ photos: number; visites: number; suggestions: number }>({
+		photos: 0,
+		visites: 0,
+		suggestions: 0,
+	});
+
+	const cascadeMessage = $derived.by(() => {
+		const parts: string[] = [];
+		if (cascadeInfo.photos > 0) parts.push(`${cascadeInfo.photos} photo${cascadeInfo.photos > 1 ? 's' : ''}`);
+		if (cascadeInfo.visites > 0) parts.push(`${cascadeInfo.visites} visite${cascadeInfo.visites > 1 ? 's' : ''} terrain`);
+		if (cascadeInfo.suggestions > 0)
+			parts.push(`${cascadeInfo.suggestions} suggestion${cascadeInfo.suggestions > 1 ? 's' : ''} de contact`);
+		if (parts.length === 0) {
+			return "Cette action est irréversible. L'entreprise sera définitivement supprimée.";
+		}
+		const liste = parts.length > 1 ? `${parts.slice(0, -1).join(', ')} et ${parts.at(-1)}` : parts[0];
+		return `Cette action est irréversible. ${liste} seront aussi définitivement supprimés avec l'entreprise.`;
+	});
+
+	async function submitDelete(force: boolean) {
+		if (!selectedEntreprise) return;
+		const nom = selectedEntreprise.raison_sociale;
+		deleting = true;
+		try {
+			const fd = new FormData();
+			fd.set('id', selectedEntreprise.id);
+			if (force) fd.set('force', 'true');
+			const res = await fetch('?/delete', {
+				method: 'POST',
+				body: fd,
+				headers: { 'x-sveltekit-action': 'true' },
+			});
+			const result: ActionResult = deserialize(await res.text());
+
+			if (result.type === 'success') {
+				confirmDeleteOpen = false;
+				slideOutOpen = false;
+				selectedEntreprise = null;
+				toasts.success('Entreprise supprimée');
+				await invalidateAll();
+				return;
+			}
+			if (result.type === 'failure') {
+				const d = result.data as
+					| {
+							blocked?: boolean;
+							needsConfirm?: boolean;
+							cascade?: { photos: number; visites: number; suggestions: number };
+							contacts?: { id: string; nom?: string | null; prenom?: string | null }[];
+							opportunites?: { id: string; titre?: string | null }[];
+							error?: string;
+					  }
+					| undefined;
+				if (d?.blocked) {
+					confirmDeleteOpen = false;
+					depsBlock = { nom, contacts: d.contacts ?? [], opportunites: d.opportunites ?? [] };
+					depsModalOpen = true;
+				} else if (d?.needsConfirm) {
+					cascadeInfo = d.cascade ?? { photos: 0, visites: 0, suggestions: 0 };
+					confirmDeleteOpen = true;
+				} else {
+					confirmDeleteOpen = false;
+					slideOutOpen = false;
+					selectedEntreprise = null;
+					toasts.error(d?.error ? String(d.error) : 'Erreur lors de la suppression');
+				}
+				return;
+			}
+			toasts.error('Erreur lors de la suppression');
+		} catch {
+			toasts.error('Erreur lors de la suppression');
+		} finally {
+			deleting = false;
+		}
+	}
 
 	// Form fields
 	let raison_sociale = $state('');
@@ -483,28 +576,15 @@
 					</button>
 				</form>
 
-				<form bind:this={deleteFormEl} method="POST" action="?/delete" use:enhance={() => {
-					deleting = true;
-					return async ({ result, update }) => {
-						deleting = false;
-						slideOutOpen = false;
-						selectedEntreprise = null;
-						if (result.type === 'success') toasts.success('Entreprise supprimée');
-						else toasts.error(result.type === 'failure' && result.data?.error ? String(result.data.error) : 'Erreur lors de la suppression');
-						await update();
-					};
-				}}>
-					<input type="hidden" name="id" value={selectedEntreprise.id} />
-					<button
-						type="button"
-						onclick={() => confirmDeleteOpen = true}
-						disabled={deleting}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
-					>
-						<Icon name="delete" size={16} />
-						{deleting ? 'Suppression…' : 'Supprimer'}
-					</button>
-				</form>
+				<button
+					type="button"
+					onclick={() => submitDelete(false)}
+					disabled={deleting}
+					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
+				>
+					<Icon name="delete" size={16} />
+					{deleting ? 'Suppression…' : 'Supprimer'}
+				</button>
 			</div>
 		</div>
 	{/if}
@@ -582,11 +662,18 @@
 <ConfirmModal
 	bind:open={confirmDeleteOpen}
 	title="Supprimer cette entreprise ?"
-	message="Cette action est irréversible. L'entreprise et toutes ses données seront définitivement supprimées."
+	message={cascadeMessage}
 	confirmLabel="Supprimer"
 	variant="danger"
 	loading={deleting}
-	onConfirm={() => { confirmDeleteOpen = false; deleteFormEl?.requestSubmit(); }}
+	onConfirm={() => submitDelete(true)}
+/>
+
+<DependencyBlockModal
+	bind:open={depsModalOpen}
+	entrepriseNom={depsBlock.nom}
+	contacts={depsBlock.contacts}
+	opportunites={depsBlock.opportunites}
 />
 
 <style>

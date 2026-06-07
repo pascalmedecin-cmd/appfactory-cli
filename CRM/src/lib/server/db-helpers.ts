@@ -5,10 +5,16 @@ import { randomUUID } from 'crypto';
 // (`{success:false, error}`). Le frontend SvelteKit consomme déjà
 // `result.data.error` via `applyAction`, donc ajouter `success:false` ne
 // régresse aucun consumer ; il documente le contract pour les form actions.
-export function dbFail(error: { message: string } | null) {
+export function dbFail(error: { message: string; code?: string } | null) {
 	if (!error) return null;
 	console.error('Supabase error:', error.message);
-	return fail(400, { success: false as const, error: "Erreur lors de l'operation" });
+	// REG-01 cause 2 : 23503 = foreign_key_violation. Message explicite plutôt
+	// que le générique (l'utilisateur comprend que la donnée est encore liée).
+	const message =
+		error.code === '23503'
+			? "Action impossible : cet élément est encore référencé par d'autres données."
+			: "Erreur lors de l'operation";
+	return fail(400, { success: false as const, error: message });
 }
 
 export function newId() {

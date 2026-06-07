@@ -80,26 +80,81 @@ export const actions: Actions = {
 		const form = await request.formData();
 		const parsed = validate(EntrepriseDeleteSchema, extractForm(form, ['id']));
 		if (!parsed.success) return fail(400, { error: parsed.error });
+		// `force` = l'utilisateur a confirmé la perte des données terrain (étape 2).
+		const force = form.get('force') === 'true';
 
-		// Verifier les dependances avant suppression
+		// REG-01 cause 1 : garde dépendances DÉTACHABLES (contacts/opportunités)
+		// CONSERVÉE (décision Pascal 2026-06-07). On charge la LISTE (pas le compte)
+		// pour alimenter la modale UI qui invite à les détacher d'abord. JAMAIS
+		// contournée par `force` : ces entités ne sont pas des données filles de
+		// l'entreprise (FK SET NULL côté DB), on refuse de les orpheliner en masse.
 		const [contactsRes, oppsRes] = await Promise.all([
-			locals.supabase.from('contacts').select('id', { count: 'exact', head: true }).eq('entreprise_id', parsed.data.id),
-			locals.supabase.from('opportunites').select('id', { count: 'exact', head: true }).eq('entreprise_id', parsed.data.id),
+			locals.supabase.from('contacts').select('id, nom, prenom').eq('entreprise_id', parsed.data.id),
+			locals.supabase.from('opportunites').select('id, titre').eq('entreprise_id', parsed.data.id),
 		]);
 
-		const deps: string[] = [];
-		if ((contactsRes.count ?? 0) > 0) deps.push(`${contactsRes.count} contact(s)`);
-		if ((oppsRes.count ?? 0) > 0) deps.push(`${oppsRes.count} opportunite(s)`);
-		if (deps.length > 0) {
-			return fail(400, { error: `Impossible de supprimer : ${deps.join(' et ')} rattache(s)` });
+		// I-1 (fail-secure) : une erreur de lecture des dépendances ne doit JAMAIS
+		// laisser filer le DELETE (sinon suppression décidée sur une garde incomplète).
+		if (contactsRes.error || oppsRes.error) return dbFail(contactsRes.error ?? oppsRes.error);
+		const contacts = contactsRes.data ?? [];
+		const opportunites = oppsRes.data ?? [];
+		if (contacts.length > 0 || opportunites.length > 0) {
+			const deps: string[] = [];
+			if (contacts.length > 0) deps.push(`${contacts.length} contact(s)`);
+			if (opportunites.length > 0) deps.push(`${opportunites.length} opportunite(s)`);
+			return fail(409, {
+				success: false as const,
+				blocked: true as const,
+				contacts,
+				opportunites,
+				error: `Impossible de supprimer : ${deps.join(' et ')} rattache(s)`,
+			});
 		}
 
+		// I-2 (décision Pascal 2026-06-07) : les données TERRAIN (photos, visites,
+		// suggestions de contact) ont une FK `ON DELETE CASCADE` → elles seraient
+		// effacées AVEC l'entreprise. Comme elles lui appartiennent (pas
+		// « détachables »), on ne BLOQUE pas, mais on exige une confirmation qui
+		// chiffre la perte (zéro effacement silencieux). Tant que l'utilisateur n'a
+		// pas confirmé (`force`), on ne supprime rien et on renvoie le décompte.
+		const [photosRes, visitsRes, suggestionsRes] = await Promise.all([
+			locals.supabase.from('prospect_photos').select('id', { count: 'exact', head: true }).eq('entreprise_id', parsed.data.id),
+			locals.supabase.from('prospect_visits').select('id', { count: 'exact', head: true }).eq('entreprise_id', parsed.data.id),
+			locals.supabase.from('contact_suggestions').select('id', { count: 'exact', head: true }).eq('entreprise_id', parsed.data.id),
+		]);
+		// I-1 (fail-secure) : un échec de comptage cascade bloque aussi le DELETE.
+		if (photosRes.error || visitsRes.error || suggestionsRes.error) {
+			return dbFail(photosRes.error ?? visitsRes.error ?? suggestionsRes.error);
+		}
+		const cascade = {
+			photos: photosRes.count ?? 0,
+			visites: visitsRes.count ?? 0,
+			suggestions: suggestionsRes.count ?? 0,
+		};
+
+		// Étape 1 : tant que l'utilisateur n'a pas confirmé, on renvoie le décompte
+		// sans rien supprimer (la modale chiffre la perte terrain).
+		if (!force) {
+			return fail(409, { success: false as const, needsConfirm: true as const, cascade });
+		}
+
+		// Étape 2 (confirmé) : suppression. La cascade DB efface les données terrain.
 		const { error } = await locals.supabase
 			.from('entreprises')
 			.delete()
 			.eq('id', parsed.data.id);
+		const failed = dbFail(error);
+		if (failed) return failed;
 
-		return dbFail(error) ?? { success: true };
+		// I-3 : traçabilité applicative de la perte cascade (cohérence avec les
+		// DELETE photos/visits déjà journalisés côté endpoints terrain).
+		const totalCascade = cascade.photos + cascade.visites + cascade.suggestions;
+		if (totalCascade > 0) {
+			console.log(
+				`[REG-01] Entreprise ${parsed.data.id} supprimée avec ${cascade.photos} photo(s), ${cascade.visites} visite(s), ${cascade.suggestions} suggestion(s) terrain en cascade.`
+			);
+		}
+		return { success: true };
 	},
 
 	enrichir: async ({ request, locals }) => {
