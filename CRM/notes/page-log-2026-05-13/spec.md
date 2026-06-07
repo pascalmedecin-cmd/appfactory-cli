@@ -318,7 +318,7 @@ Smoke server-side (si possible sans intégration Supabase) : validation actions 
 - **Risque RLS update via `auth.jwt() ->> 'email'`** : si Supabase ne propage pas `email` dans le JWT par défaut, l'UPDATE échouera silencieusement. Mitigation : ajouter un check `isAdminEmail(user.email)` côté form action en plus de la RLS (defense in depth) ; si JWT n'a pas l'email, retomber sur check serveur uniquement et marquer la RLS en TODO. À vérifier dans la 1re session de code par un test live.
 - **Bouton flottant masqué par modales existantes** : si une modale `ConfirmModal` (z-60) ou un slide-out panel s'ouvre, le bouton flottant z-90 reste visible mais n'est pas cliquable depuis l'intérieur de la modale (backdrop le couvre). Comportement acceptable.
 - **Toast vs Bouton flottant superposition visuelle** : toast en bas-droite z-100 peut chevaucher le bouton z-90. Mitigation : ajouter `bottom-20` au toast quand le bouton est visible, ou positionner le bouton `bottom-20` pour laisser place au toast standard. Choix à trancher en code (reco : bouton à `bottom-6 right-6`, toast reste à `bottom-4 right-4`, ils se côtoient sans masquage critique).
-- **Capture erreurs JS via `window.onerror`** : peut polluer les erreurs Sentry futures. Mitigation : ne pas `preventDefault()` dans le listener (laisser propager).
+- **Capture erreurs JS via `window.onerror`** : Mitigation : ne pas `preventDefault()` dans le listener (laisser les erreurs se propager normalement).
 - **`created_by_email` redondant avec `created_by` + jointure auth.users** : volontairement dénormalisé pour simplifier l'export JSON (pas de jointure côté client) et survivre au cas où un user est supprimé (`ON DELETE SET NULL`).
 
 ---

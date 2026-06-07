@@ -1,8 +1,7 @@
 // Spec : notes/page-log-2026-05-13/spec.md § 6 capture contexte auto.
 // Singleton léger qui collecte les 3 dernières erreurs JS dans une fenêtre glissante
 // de 60 secondes. Utilisé par le form pour pré-remplir context.recentErrors. Aucun
-// preventDefault sur le listener (laisse propager pour une éventuelle intégration Sentry
-// future, cf. § 11 risques).
+// preventDefault sur le listener (laisse les erreurs se propager normalement).
 
 import { browser } from '$app/environment';
 import type { FeedbackContext } from './types';

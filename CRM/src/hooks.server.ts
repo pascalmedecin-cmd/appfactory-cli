@@ -1,4 +1,3 @@
-import * as Sentry from '@sentry/sveltekit';
 import { createSupabaseServerClient } from '$lib/server/supabase';
 import { isEmailAllowed, parseEnvList } from '$lib/server/auth';
 import { createRateLimiter } from '$lib/server/rate-limiter';
@@ -6,7 +5,6 @@ import { isRateLimitedPath } from '$lib/server/rate-limit-paths';
 import { legacyHostRedirect } from '$lib/server/legacy-redirects';
 import { CRM_BASE } from '$lib/config';
 import { json, redirect, type Handle } from '@sveltejs/kit';
-import { sequence } from '@sveltejs/kit/hooks';
 import { env } from '$env/dynamic/private';
 import { RATE_LIMIT_WINDOW_MS, SESSION_MAX_AGE_MS } from '$lib/utils/time-constants';
 
@@ -37,10 +35,9 @@ const CRM_LEGACY_PREFIXES = [
 	'/dashboard/couts'
 ];
 
-// Exporte pour etre teste en isolation (hooks.server.test.ts). En kit >= 2.59, `sequence()`
-// appelle `get_request_store()` (tracing) : tester `handle` (= la sequence) hors runtime kit
-// throw « Could not get the request store ». On teste donc directement baseHandle, qui porte
-// toute la logique du gate (auth, rate-limit, headers). La composition prod reste `handle` ci-dessous.
+// Toute la logique du gate (auth, rate-limit, headers) vit dans baseHandle, exporte pour
+// etre teste en isolation (hooks.server.test.ts). `handle` ci-dessous est l'export consomme
+// par SvelteKit en prod.
 export const baseHandle: Handle = async ({ event, resolve }) => {
 	// Bascule d'adresse portail : ancien host -> nouveau host (avant tout le reste).
 	// Decision extraite en helper pur testable (audit sécu 2026-06-04 F-1).
@@ -152,6 +149,4 @@ export const baseHandle: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-export const handle: Handle = sequence(Sentry.sentryHandle(), baseHandle);
-
-export const handleError = Sentry.handleErrorWithSentry();
+export const handle: Handle = baseHandle;

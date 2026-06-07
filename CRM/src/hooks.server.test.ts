@@ -30,10 +30,8 @@ vi.mock('$lib/server/supabase', () => ({
 	})
 }));
 
-// On teste baseHandle (la vraie logique du gate) en isolation, PAS `handle` (= sequence(Sentry, baseHandle)).
-// En kit >= 2.59, sequence() appelle get_request_store() (tracing) et sentryHandle() throw sur un event
-// mocke : invoquer `handle` hors runtime kit court-circuiterait les 17 tests avant la logique. baseHandle
-// porte tout le comportement teste ici (auth, rate-limit, expiration, headers). Voir hooks.server.ts.
+// On teste baseHandle (la vraie logique du gate) en isolation. baseHandle porte tout le
+// comportement teste ici (auth, rate-limit, expiration, headers). Voir hooks.server.ts.
 type HandleFn = typeof import('./hooks.server').baseHandle;
 let handle: HandleFn;
 

@@ -22,8 +22,8 @@
   },
   "tests": {
     "vitest_verts": 1488,
-    "vitest_rouges_baseline": 17,
-    "baseline_rouge_connue": "hooks.server.test.ts (fichier entier cassé depuis commit Sentry c442e59, Sentry paused) - hors scope, ne compte pas comme régression",
+    "vitest_rouges_baseline": 0,
+    "baseline_rouge_connue": "RÉSOLU 2026-06-07 : hooks.server.test.ts (jadis cassé, commit c442e59) repassé vert après découplage baseHandle puis retrait de Sentry - plus de baseline rouge",
     "svelte_check": "0 erreur / 28 warnings",
     "smoke_bascule_runtime": "5/5 (ancien host -> 308 nouvelle, route CRM path préservé, nouveau host -> 200 sans boucle, /api/ cron exempté -> 401, alias legacy -> 308)"
   },

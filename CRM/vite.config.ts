@@ -1,13 +1,9 @@
-import { sentrySvelteKit } from "@sentry/sveltekit";
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
-	plugins: [sentrySvelteKit({
-        org: "pascal-medecin",
-        project: "crm-filmpro"
-    }), tailwindcss(), sveltekit()],
+	plugins: [tailwindcss(), sveltekit()],
 	test: {
 		include: ['src/**/*.test.ts'],
 		// Audit 360 V3b I-12 : `npm run coverage` → rapport texte + HTML local (coverage/index.html).
