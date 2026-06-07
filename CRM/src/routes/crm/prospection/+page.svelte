@@ -268,10 +268,10 @@
 				};
 			case 'entreprises':
 				return {
-					label: 'Importer des entreprises',
-					labelMobile: 'Importer',
-					icon: 'cloud_download',
-					ariaLabel: 'Importer des entreprises depuis le registre du commerce (Zefix)',
+					label: 'Rechercher une entreprise',
+					labelMobile: 'Rechercher',
+					icon: 'search',
+					ariaLabel: 'Rechercher une entreprise dans le registre du commerce (Zefix)',
 					action: () => (importModalOpen = true),
 				};
 			case 'regbl':
@@ -322,7 +322,7 @@
 					return {
 						allowedSources: ['zefix', 'search_ch', 'google_places'],
 						defaultSource: 'zefix',
-						title: 'Importer des entreprises',
+						title: 'Rechercher une entreprise',
 					};
 				default:
 					return { allowedSources: null, defaultSource: null, title: null };
@@ -352,10 +352,10 @@
 			case 'entreprises':
 				return {
 					icon: 'business',
-					title: 'Aucune entreprise importée',
-					body: 'Importez depuis le registre du commerce (Zefix) ou l\'annuaire pro (search.ch) pour prospecter à froid par canton et secteur d\'activité.',
-					ctaLabel: 'Importer des entreprises',
-					ctaIcon: 'cloud_download',
+					title: 'Aucune entreprise pour l\'instant',
+					body: 'Recherchez une entreprise dans le registre du commerce (Zefix) ou l\'annuaire pro (search.ch) pour la qualifier et la suivre dans votre CRM.',
+					ctaLabel: 'Rechercher une entreprise',
+					ctaIcon: 'search',
 					ctaAction: () => (importModalOpen = true),
 				};
 			case 'regbl':
@@ -817,14 +817,14 @@
 			</div>
 			<h3 class="text-lg font-semibold text-text mb-2">Trouvez vos premiers prospects</h3>
 			<p class="text-sm text-text-muted text-center max-w-lg mb-6">
-				Importez des entreprises depuis les sources publiques suisses (registre du commerce, marchés publics, registre des bâtiments). Qualifiez-les, puis convertissez les plus pertinentes en entreprises dans votre CRM.
+				Recherchez une entreprise dans le registre du commerce (Zefix) ou l'annuaire pro (search.ch), qualifiez-la, puis convertissez les plus pertinentes en entreprises dans votre CRM.
 			</p>
 			<button
 				onclick={() => importModalOpen = true}
 				class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-md transition-colors"
 			>
-				<Icon name="cloud_download" size={18} />
-				Lancer un import
+				<Icon name="search" size={18} />
+				Rechercher une entreprise
 			</button>
 		</div>
 	{:else}
@@ -902,7 +902,7 @@
 				{#if activeFilterCount > 0 || data.search}
 					<h3 class="text-base font-semibold text-text mb-1">Aucun prospect ne correspond à ces filtres</h3>
 					<p class="text-sm text-text-muted text-center max-w-md mb-5">
-						Réinitialisez les filtres pour réafficher l'onglet, changez de nature de signal, ou importez de nouveaux prospects.
+						Réinitialisez les filtres pour réafficher l'onglet, ou changez de nature de signal.
 					</p>
 					<div class="flex flex-wrap items-center justify-center gap-2">
 						<button
