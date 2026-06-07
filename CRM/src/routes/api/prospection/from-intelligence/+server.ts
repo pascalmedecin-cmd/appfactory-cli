@@ -150,5 +150,5 @@ function buildRedirect(source: 'simap' | 'zefix' | 'regbl', canton: string, repo
 	params.set('from_term', fromTerm);
 	params.set('sort', 'date_import');
 	params.set('dir', 'desc');
-	return `/prospection?${params.toString()}`;
+	return `/crm/prospection?${params.toString()}`;
 }

@@ -20,7 +20,7 @@
 	let { triageTotal, triageVisible, signauxCount, relances }: Props = $props();
 
 	const remaining = $derived(Math.max(0, triageTotal - triageVisible));
-	const triageQueueLink = '/prospection?statut=nouveau';
+	const triageQueueLink = '/crm/prospection?statut=nouveau';
 
 	const trendSignaux = $derived(signauxCount > 0 ? `${signauxCount} ${signauxCount === 1 ? 'à analyser' : 'à analyser'}` : 'Aucun nouveau');
 

@@ -26,7 +26,7 @@
 
 	function pipelineHref(_id: string): string {
 		// Fiche opportunité directe non disponible aujourd'hui : on renvoie sur le pipeline.
-		return '/pipeline';
+		return '/crm/pipeline';
 	}
 </script>
 

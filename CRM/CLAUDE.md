@@ -3,10 +3,10 @@
 **Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; le container racine est un stub pointant vers les sous-projets. Contexte migration complet → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_appfactory_restructure.md`.
 
 **Statut :** Clean state 2026-05-28 — refonte mobile V2 **abandonnée** après smoke iPhone (overscope, lisibilité) → pivot **V3 outil terrain only** (`archive/2026-05-28-pivot-mobile-v3.md`). **Antérieur en prod** (Signaux V4, Log CRM, Aide, audit 360, Google Places, golden v9, migration restructure S173-S174) → détail `archive/2026-05-06-sessions.md` + Livré ci-dessous. **Portail FilmPro multi-outils : CRM (`/crm`) + Découpe Films (`/decoupe`) en prod sur `filmpro-portail.vercel.app` (2026-06-05).** Formation IA = sous-projet autonome `Formation/`, `cc` option 5.
-**Derniere mise a jour :** 2026-06-07 (veille : bump modèle génération `opus-4-7` → `opus-4-8` validé sur run réel + mergé `main` ; deep dive 360 pages Signaux & Prospection préparé pour challenge council prochaine session).
+**Derniere mise a jour :** 2026-06-07 (V5 recentrage Signaux & Prospection LIVRÉ EN PROD : Zefix coupé par flag + radar SIMAP, scoring recalibré, imports de masse Prospection coupés, file courte + archivées ; migration prod + audit sécu 0 H/C + déploiement).
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session courante :** 2026-06-07 - (1) bump modèle veille opus-4-8 (run réel W23, ~10 % moins cher, qualité équivalente+, mergé `main`) ; (2) deep dive 360 critique des pages Signaux (robinet : 1517 fiches, 99 % non triées, 0 conversion) & Prospection (185 leads, 0 opportunité) → livrable `docs/AUDIT_SIGNAUX_PROSPECTION_2026-06-07.md` prêt pour council. Détail « Livré cette session ».
+**Session courante :** 2026-06-07 - **exécution V5 recentrage Signaux & Prospection** (4 lots TDD, 1682 Vitest, audit Opus 0 H/C/M/L, migration prod 1227 Zefix archivées + 276 SIMAP re-notées, déployé prod alias canonique vérifié). Commit `364bd1f`. Détail « Livré cette session ».
 **Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175 : `2026-05-06-sessions.md` ; S122-S125 : `2026-04-28-sessions.md` ; S70-S107 : `decisions-sessions-*.md` + `Formation/CLAUDE.md`).
 
 
@@ -14,20 +14,13 @@
 
 ## SOUS-PROJETS
 
-L'arborescence d'AppFactory héberge des sous-projets autonomes (chacun a son propre repo Git, sa propre stack, son propre CLAUDE.md). Pascal navigue par thème depuis ce dossier.
+Depuis la restructuration `~/Claude/Projets` (2026-06-01), ce repo héberge le **CRM FilmPro** (app principale). Formation (ex sous-projet) est désormais top-level (`~/Claude/Projets/Formation`) ; Consulting est sous LED Studio. Mapping complet : `~/.claude/CLAUDE.md`.
 
-| Dossier | Repo Git | Statut | URL prod | CLAUDE.md |
-|---------|----------|--------|----------|-----------|
-| `CRM/` (CRM FilmPro) | `pascalmedecin-cmd/appfactory-cli` (=racine actuelle) | Production | <https://filmpro-portail.vercel.app> (ancienne `filmpro-crm` conservée → 308) | (ce fichier) |
-| `Formation/` | `pascalmedecin-cmd/onboarding-ia` (séparé, ignoré dans `.gitignore`) | S1→S7 livrés (12/12 modules en prod) | <https://onboarding-ia.vercel.app> | `Formation/CLAUDE.md` |
+| Dossier | Repo Git | Statut | URL prod |
+|---------|----------|--------|----------|
+| `CRM/` | `pascalmedecin-cmd/appfactory-cli` (=racine) | Production | <https://filmpro-portail.vercel.app> (ex `filmpro-crm` → 308) |
 
-> Consulting est sibling autonome depuis 2026-05-07 (S175 Bloc 0 PLAN_ATTAQUE) : path `~/Claude/Projets/Consulting/`, repo Git séparé. Voir son `CLAUDE.md` propre dans `~/Claude/Projets/Consulting/CLAUDE.md`. `cc 4` cd vers ce path.
-
-Pour travailler sur un sous-projet : taper `cc` au terminal et choisir `5. Formation IA` (ou `4. Consulting` qui pointe vers le sibling autonome). Claude Code atterrit directement dans le sous-dossier, charge son `CLAUDE.md` propre (plus léger), et les tâches sont scopées. Les tâches du sous-projet sont tracées dans son CLAUDE.md, pas dans celui-ci.
-
-**`/start` à la racine AppFactory = scope CRM FilmPro** (slug=appfactory, subproject=crm). Affiche les tâches `transmitted` du sous-projet CRM uniquement. Formation IA a sa propre entrée au menu terminal `cc` (cd Formation/ → /start scope Formation IA). Source : `~/.claude/cockpit/projets/appfactory/entries.jsonl` filtré par subproject.
-
-**Extensibilité pédago** (Formation IA) : l'ingestion d'une deep research markdown (marketing aujourd'hui, opération/commercial/autres demain) suit un workflow conversationnel Claude Code CLI piloté par **Opus 4.6**. Règles pédago dans `Formation/docs/PEDAGOGIE.md`, protocole d'ingestion dans `Formation/docs/INGESTION.md`.
+**`/start` ici = scope CRM FilmPro** (slug=`filmpro`, subproject=`crm` ; ex-`appfactory`, migré 2026-06-01). Source : `~/.claude/cockpit/projets/filmpro/entries.jsonl` filtré par subproject.
 
 ---
 
@@ -153,27 +146,48 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 1 - **challenge critique Signaux & Prospection** (council + simplification), deep dive 360 déjà fait et prêt. Sinon pistes non cadrées : **chantier 3 portail** (non cadré) ; durcissement RLS si 4e user non-fondateur (conditionnel) ; corpus golden optimiseur (bloqué). Mobile V3 terrain = **LIVRÉ EN PROD** (shell `/terrain` + file validation desktop `/crm/contacts` + smoke iPhone validé), retiré des pistes.
+**Prochaine attaque** : Bloc 2 batch a11y (fort ROI : 4 familles H corrigées par composant/token partagé). **Vague 1 nav = CODE FAIT + verts (commit branche), DÉPLOIEMENT PROD EN ATTENTE go Pascal** (cf. ci-dessous). Audit live complet figé + validé Pascal le 2026-06-07 (`docs/QA_FINDINGS_CRM_2026-06-07.md`).
 
-### 1. Challenge critique pages Signaux & Prospection [SUPERVISÉ • xhigh • ~2-3h / session dédiée]
-- **Pourquoi** : Pascal veut challenger l'existant de façon productive - tout ce qui est inclus est-il pertinent ? Simplifier, se concentrer sur la valeur réelle. Constat : Signaux = robinet (1517 fiches, 99 % non triées, 0 conversion, 81 % Zefix brut) ; Prospection = machinerie lourde pour 0 opportunité. Deep dive 360 factuel fait 2026-06-07.
-- **Prérequis** : deep dive TERMINÉ. Matière prête : `CRM/docs/AUDIT_SIGNAUX_PROSPECTION_2026-06-07.md` (inventaire + chiffres DB + 6 questions cadrées Q1-Q6 + procédure démarrage). Payload mémoire : [[project_audit_signaux_prospection_2026-06-07]].
-- [ ] **[EXÉCUTABLE]** lancer `council` sur Q1 (filtrer Zefix à l'ingestion ?) + Q2 (fusionner les 2 pipelines ?) + `simplification-cascades` sur Q2/Q3/Q4 → sortir une cible V5 par page (garder/couper/fusionner + justif valeur). **Spec écrite AVANT tout code, périmètre validé Pascal d'abord** (décision produit, ne rien coder tant que non validé). Charger aussi [[project_filmpro_metier]] (cadre dur pertinence). → voir `CRM/docs/AUDIT_SIGNAUX_PROSPECTION_2026-06-07.md`.
+### 1. Vague 1 - correctifs liens nav `/crm` (LIVE-H1 + ANO-02 + 2 bugs même famille) [MIXTE • medium] - CODE FAIT, RESTE DÉPLOIEMENT (gate)
+- **Pourquoi** : l'audit live a trouvé des liens internes sans préfixe `/crm`. Lot complet corrigé en local, tests + build verts ; **reste uniquement le déploiement prod + smoke (gate Pascal)**.
+- [x] ~~LIVE-H1~~ (KPI dashboard `KpisBento.svelte` → `/crm/prospection?...`) + ~~ANO-02~~ (3 liens liste Veille template-literal `veille/+page.svelte` → `/crm/veille/...`).
+- [x] ~~+2 bugs même famille débusqués par la garde durcie~~ (l'audit live ne les avait pas exercés, DB vide) : `RelancesList.pipelineHref()` retournait `/pipeline` (rendu en `href`), `buildRedirect()` (`from-intelligence/+server.ts`) retournait `/prospection?...` (consommé par `goto(result.redirect)` des 2 pages veille) → préfixés `/crm/`.
+- [x] ~~Garde `no-root-crm-links` durcie~~ : ajout `TPL_LINK` (binding template literal `href={`/page/${x}`}`) + `RETURN_LINK` (`return '/page'`), dents prouvées (sanity check avant/après + map 308 non touchée). 1682 Vitest verts, svelte-check 0 erreur, build exit 0.
+- [ ] **[EXÉCUTABLE - gate]** déploiement prod du lot (`vercel deploy --prod` racine FilmPro/) + vérif alias canonique (`vercel inspect filmpro-portail.vercel.app`) + smoke (cliquer KPI dashboard + édition Veille → atterrissage direct `/crm/...` sans 308). → [[feedback_smoke_prod_feature_flag_livraison]], [[feedback_filmpro_vercel_deploy_cli]].
+
+### 2. Vague 2 - batch a11y composants & tokens partagés [SUPERVISÉ • xhigh • 1 session]
+- **Pourquoi** : 4 des 5 familles High de l'audit live sont des défauts a11y portés par des composants/tokens **partagés** → 1 fix règle plusieurs pages (fort ROI). Modèles conformes identifiés en live.
+- [ ] **[EXÉCUTABLE]** aligner `SlideOut`/`ModalForm` sur les modèles : nom accessible `aria-labelledby` (LIVE-H3, modèle = `FeedbackForm`/drawer mots-clés) + return focus au déclencheur (LIVE-H2, modèle = `LeadSlideOut` Prospection) ; `scope` sur la table Log (LIVE-H5) ; variante token AA pour l'ambre `#F79009` / rouge `#F04438` utilisés comme texte (LIVE-H4, variante `--deep` + gate axe-core, cf. [[feedback_a11y_deep_tokens_with_axe_gate]]). → voir `docs/QA_FINDINGS_CRM_2026-06-07.md` §E/E.2.
+
+### 3. Fixer REG-01 - suppression entreprise (décision tranchée) [SUPERVISÉ • high • ~1h]
+- **Pourquoi** : bug prod confirmé live. **Décision Pascal 2026-06-07** : GARDER le blocage quand des contacts/opportunités sont rattachés, MAIS remplacer le message générique par une **modale UI explicite** (liste N contacts / M opportunités rattachés + invite à les détacher d'abord).
+- [ ] **[EXÉCUTABLE]** (a) migration prod `ON DELETE SET NULL` sur FK `prospect_leads.transfere_vers_entreprise_id` (cause 2 = le vrai bug) ; (b) discriminer le code `23503` dans `dbFail` → message explicite ; (c) modale UI explicite sur la garde appli (cause 1, décision = garder le blocage mais l'expliciter) ; (d) audit sécu (migration). → voir `docs/QA_FINDINGS_CRM_2026-06-07.md` §A REG-01.
+
+### 4. Vague 4 - dette M/L audit live [MIXTE • high • ~2h]
+- **Pourquoi** : findings moyens/cosmétiques de l'audit live, non bloquants.
+- [ ] **[EXÉCUTABLE]** M : empty contextuels (LIVE-M1), H1 sémantique (LIVE-M6), vue Archivées paginée (LIVE-M2), **mojibake Zefix archivés** (LIVE-M3, corruption migration V5, à investiguer), autocomplete combobox (LIVE-M4). L : radius cards 12→10, coquilles, « Closed » EN, séparateurs `<title>`, doc cron périmée ANO-03. → voir `docs/QA_FINDINGS_CRM_2026-06-07.md` §E/E.2 (détail complet).
+
+### 5. Re-audit live avec données seedées [MIXTE • high • ~2h]
+- **Pourquoi** : la DB prod est quasi vide (Contacts 0, Pipeline 0, Entreprises 2) → l'audit live n'a PAS validé les comportements sur données peuplées (tri, pagination serveur, slide-out détail rempli, drag&drop kanban, counts d'onglets).
+- [ ] **[EXÉCUTABLE]** seed sur preview branch + session mintée (`tests/mint-session.mjs`, [[feedback_test_session_otp_free_mint]]), re-dérouler les stories liste/tri/pagination/slide-out/drag&drop des pages concernées (Entreprises/Contacts/Pipeline). → voir `docs/QA_USER_STORIES_CRM.md` + `docs/QA_FINDINGS_CRM_2026-06-07.md` §C (limite de couverture).
+
+### Réserve (retirée du backlog actif le 2026-06-07)
+- Chantier 3 portail = non cadré, pas voulu maintenant (observer l'usage V5 d'abord). Durcissement RLS 4e user = conditionnel non déclenché (tracé §RISQUES OUVERTS + [[feedback_rls_multitenant_durcissement_si_4_users]], redéclenche au 4e user non-fondateur). Corpus golden optimiseur Découpe = déjà livré (5 cas gelés, `68c4965`/`99476f1`).
 
 ### Livré cette session
 
-- [x] ~~**Veille : bump modèle de génération opus-4-7 → opus-4-8**~~ - Livré 2026-06-06 (SUPERVISÉ). `MODEL` (`generate.ts:22`) → `claude-opus-4-8` + tarif opus-4-8 ajouté au cost-tracker (`5.0/25.0 $/1M` ; sinon coût compté à `0` via fallback `?? 0` sur modèle inconnu). Thinking `adaptive` + `effort xhigh` déjà en place = compatible 4.8 (4.8 rejette `budget_tokens` manuel en 400, non utilisé). **Validé run réel** W23 (`workflow_dispatch` sur `portail-session-1`, snapshot W23 réversible avant régen) : 6m05, 3 items, cross-check 3/3 gardés, `schemaDropped:0`, anti-hallu intact. **Coût $2,11/€1,94 vs $2,35 opus-4-7 (~10 % moins, plus rapide)** ; coût correctement imputé à opus-4-8 (fix cost-tracker prouvé). Qualité équivalente+ (plus transparent sur la fenêtre, impacts chiffrés). Pascal a tranché : **figer opus-4-8** (mergé `main`, commit `aa306fa`) + garder l'édition W23 opus-4-8 publiée. 343 tests intelligence, svelte-check 0.
-
-- [x] ~~**Veille : validation résiliente par-article** (anti-perte d'édition)~~ - Livré 2026-06-06 (xhigh, TDD). `safeParse` global tout-ou-rien remplacé par validation article-par-article (`report-validate.ts`, 13 tests) : conformes gardés, fautifs écartés jamais réparés, garde anti-dérive + compteur `schemaDropped`. 0 protection anti-hallu défaite (blindage aval inchangé). Smoke W23 vert. Commit `e0aef36` (main). Spec `.product-architect/veille/resilience-validation-spec.md`. → [[feedback_splitter_deterministe_post_llm]].
-- [x] ~~**Renommage projet Vercel** `filmpro-crm` → `filmpro-portail`~~ - Fait 2026-06-06. Aligne nom de projet et URL prod. Vérifié : prod intacte (l'alias custom `filmpro-portail.vercel.app` est indépendant du nom), aucun usage OIDC federation concerné, 3 configs Playwright re-pointées sur le domaine canonique. Commit `d274a1d` (mergé `main`).
-- [x] ~~Découpe Films **onglet « Découpe » (hub atelier) + header pleine largeur**~~ - Livré 2026-06-06 (xhigh, SUPERVISÉ, **EN PROD**). Nouvel onglet **Découpe** → page « Optimisation atelier » : liste cliquable de tous les chantiers + **consolidations suggérées** (chantiers partageant un film nestable). Logique extraite en `lib/decoupe/hub.ts` (pure, 10 tests). `PortailHeader` prop `fluid`. QA : 1646 Vitest, svelte-check 0, build OK, 11 e2e + **axe 0**, audit sécu Opus **0 H/C/M/L**. **Déployé prod** + alias vérifié. Commit `60bf9a0`. → [[project_portail_filmpro_multi_outils]].
-- [x] ~~Découpe Films **filet de vérification de l'optimiseur** (certitude « zéro bug » + qualité)~~ - Livré 2026-06-06 (xhigh, TDD strict). **20 000 cas fuzzés** (fast-check) sans violation des règles dures + déterminisme + indépendance à l'ordre ; **oracle qualité** (écart au meilleur ordre force-brute : médian **1.000**, max **1.392**) ; 10 tests négatifs ; **corpus golden** 5 cas validés Pascal et gelés. **L'algo de prod est passé sans correction**. Commits `68c4965` + `99476f1`. Spec `.product-architect/decoupe/optimiser-verification-spec.md` (local).
-→ Livré antérieur (Découpe refonte fiche chantier `69c9618` → `archive/2026-06-06-sessions.md` ; Découpe pages pleine largeur `8c46e06`, Phase 5 livraison prod, Phase 3 étapes 1-3 + amont portail/V3) → `archive/2026-06-05-decoupe-films.md` + `archive/2026-06-01-sessions.md`.
+- [x] ~~**Audit live UX/UI CRM - 13 surfaces (~135 stories)**~~ - Fait 2026-06-07 (xhigh, zéro-fix sauf LIVE-H1 validé Pascal). Chrome MCP rétabli (`cc` option 3) → 10 agents `ui-auditor` séquentiels sur prod, **non destructif**. 0 story bloquante. 5 familles H : LIVE-H1 lien KPI hors `/crm` (**✅ corrigé local**, garde renforcée + test vert) ; H2 return focus ; H3 dialog sans nom ; H4 contrastes tokens ambre/rouge ; H5 th sans scope (Log). V5 8/8 reconfirmé live, Aide impeccable. Décision REG-01 (garder blocage + modale). → [[feedback_chrome_mcp_subagents_inherit_browser]] + catalogue `docs/QA_FINDINGS_CRM_2026-06-07.md` §C/E/E.2.
+- [x] ~~**QA CRM - bloc prioritaire figé** (statique + runtime)~~ - Fait 2026-06-07 (xhigh, zéro-fix). 3 agents statiques + confirmation runtime : REG-01 = bug prod confirmé (lead transféré → `23503` masqué) ; V5 8/8 conformes ; 11 anomalies qualifiées (7 confirmées, 2 réfutées ANO-06/10, 1 M ANO-07). Catalogue `docs/QA_FINDINGS_CRM_2026-06-07.md`.
+- [x] ~~**V5 recentrage Signaux & Prospection**~~ - Livré 2026-06-07 (xhigh, TDD, **EN PROD**, commit `364bd1f`). Zefix coupé par flag env + scoring SIMAP recalibré + imports masse Prospection coupés (gates 403 defense-in-depth) + Signaux file courte + Archivées. Migration prod (1227 Zefix archivés, 276 SIMAP re-notés, aucun DELETE). 1682 Vitest, audit sécu Opus 0 H/C/M/L. → [[project_audit_signaux_prospection_2026-06-07]] + `memory/audit_secu_2026-06-07_v5_signaux_prospection.md`.
+- [x] ~~**Challenge critique Signaux & Prospection → décision produit + spec V5**~~ - Livré 2026-06-07 (xhigh). `council` 4 voix + `simplification-cascades` + scan Marketing → décision Pascal « le CRM n'est pas un outil marketing ». Spec figée `docs/SPEC_V5_SIGNAUX_PROSPECTION_2026-06-07.md`. → [[project_audit_signaux_prospection_2026-06-07]].
+- [x] ~~**Veille : bump modèle de génération opus-4-7 → opus-4-8**~~ - Livré 2026-06-06 (SUPERVISÉ). `MODEL` → `claude-opus-4-8` + tarif cost-tracker. Run réel W23 : $2,11 vs $2,35 (~10 % moins), qualité équivalente+. Commit `aa306fa` (main).
+→ Livré antérieur (Veille validation résiliente par-article `e0aef36` → [[feedback_splitter_deterministe_post_llm]] ; Découpe onglet hub atelier `60bf9a0` → [[project_portail_filmpro_multi_outils]] ; Découpe filet vérif optimiseur 20k fuzz `68c4965`+`99476f1` → [[feedback_verifier_optimisation_heuristic_fuzzing]] ; Découpe fiche chantier `69c9618`, pages pleine largeur `8c46e06`, Phase 5 prod, Phase 3) → `archive/2026-06-06-sessions.md` + `archive/2026-06-05-decoupe-films.md` + `archive/2026-06-01-sessions.md`.
 
 ### Watch list active après pivot
 
 - **[WATCH] Svelte 5 — `onDestroy` s'exécute en SSR (Vercel) mais pas en `vite preview`** : toute référence à `window`/`document`/`localStorage`/`setInterval` à cleanup DOIT passer par `$effect(() => { ...; return () => cleanup; })`. Toujours tester en preview branch Vercel pour les composants qui touchent window. Mémoire `feedback_svelte5_ondestroy_ssr_window_undefined.md`.
 - **[WATCH] Trap Vercel `rollback` → alias prod verrouillé** : après `vercel rollback`, les `git push` suivants buildent mais ne promeuvent PAS automatiquement. Toujours vérifier via `vercel inspect filmpro-portail.vercel.app` (domaine canonique depuis la bascule 2026-06-04) que l'alias pointe bien sur le nouveau deploy.
+- **[WATCH] Réactivation d'une source coupée en V5 (2026-06-07)** : flip de flag (`SIGNAUX_ZEFIX_ENABLED=true`, ou `config.prospection.sources.*.enabled=true` / `features.*=true`) → re-vérifier que les contrôles d'origine (Zod, quota, rate-limit, anti-hallu) sont bien ceux validés S189/S192 AVANT de rallumer en prod. Le moment du risque = la réactivation, pas la coupure. Réf audit `memory/audit_secu_2026-06-07_v5_signaux_prospection.md` § I-3.
 
 → Watch list complète (Signaux V4 perf/contrats S189, S188, S186, S178, S171) déplacée dans `archive/2026-05-28-pivot-mobile-v3.md`. Restent triables si l'objet redevient actuel.
 

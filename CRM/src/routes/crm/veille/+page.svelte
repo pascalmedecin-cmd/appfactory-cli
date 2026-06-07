@@ -173,7 +173,7 @@
 									</span>
 									<div class="flex-1 min-w-0">
 										<a
-											href={`/veille/item/${featured.id}-${item.rank}`}
+											href={`/crm/veille/item/${featured.id}-${item.rank}`}
 											class="text-base font-semibold text-text hover:text-primary transition-colors leading-snug block"
 										>
 											{item.title}
@@ -209,7 +209,7 @@
 					{/if}
 
 					<a
-						href={`/veille/${featured.id}`}
+						href={`/crm/veille/${featured.id}`}
 						aria-label={`Lire l'édition complète n°${editionNumber(featured.week_label)} ${featured.week_label}`}
 						class="inline-flex self-start items-center gap-2 h-11 px-4 box-border rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-colors mt-auto group"
 					>
@@ -241,7 +241,7 @@
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 					{#each archives as ed (ed.id)}
 						<a
-							href={`/veille/${ed.id}`}
+							href={`/crm/veille/${ed.id}`}
 							aria-label={`Lire l'édition n°${editionNumber(ed.week_label)} ${ed.week_label}, ${ed.items_total} signal${ed.items_total > 1 ? 's' : ''}, publiée le ${formatDateLong(ed.generated_at)}${ed.is_unread ? ', nouvelle' : ''}`}
 							class="mag-archive-card group bg-white rounded-xl border border-border shadow-xs hover:shadow-md hover:border-primary/40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary transition-all overflow-hidden grid grid-cols-[112px_1fr] sm:grid-cols-[128px_1fr]"
 						>
