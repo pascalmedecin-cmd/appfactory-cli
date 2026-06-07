@@ -3,10 +3,10 @@
 **Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; le container racine est un stub pointant vers les sous-projets. Contexte migration complet → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_appfactory_restructure.md`.
 
 **Statut :** Clean state 2026-05-28 — refonte mobile V2 **abandonnée** après smoke iPhone (overscope, lisibilité) → pivot **V3 outil terrain only** (`archive/2026-05-28-pivot-mobile-v3.md`). **Antérieur en prod** (Signaux V4, Log CRM, Aide, audit 360, Google Places, golden v9, migration restructure S173-S174) → détail `archive/2026-05-06-sessions.md` + Livré ci-dessous. **Portail FilmPro multi-outils : CRM (`/crm`) + Découpe Films (`/decoupe`) en prod sur `filmpro-portail.vercel.app` (2026-06-05).** Formation IA = sous-projet autonome `Formation/`, `cc` option 5.
-**Derniere mise a jour :** 2026-06-07 (V5 recentrage Signaux & Prospection LIVRÉ EN PROD : Zefix coupé par flag + radar SIMAP, scoring recalibré, imports de masse Prospection coupés, file courte + archivées ; migration prod + audit sécu 0 H/C + déploiement).
+**Derniere mise a jour :** 2026-06-07 (Vague 1 nav LIVRÉE EN PROD : 5 liens internes recentrés sous `/crm` [LIVE-H1 + ANO-02 + 2 bugs même famille], garde `no-root-crm-links` durcie, smoke prod authentifié OK, commit `c51309c`. Avant : V5 recentrage Signaux & Prospection LIVRÉ EN PROD commit `364bd1f`).
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session courante :** 2026-06-07 - **exécution V5 recentrage Signaux & Prospection** (4 lots TDD, 1682 Vitest, audit Opus 0 H/C/M/L, migration prod 1227 Zefix archivées + 276 SIMAP re-notées, déployé prod alias canonique vérifié). Commit `364bd1f`. Détail « Livré cette session ».
+**Session courante :** 2026-06-07 - **Vague 1 nav livrée en prod** (correctifs liens internes `/crm` : LIVE-H1 + ANO-02 + 2 bugs même famille débusqués par la garde durcie ; 1682 Vitest, build exit 0 ; déployé + smoke prod authentifié, alias canonique vérifié). Commit `c51309c` (branche `portail-session-1`). Détail « Livré cette session ».
 **Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175 : `2026-05-06-sessions.md` ; S122-S125 : `2026-04-28-sessions.md` ; S70-S107 : `decisions-sessions-*.md` + `Formation/CLAUDE.md`).
 
 
@@ -146,28 +146,21 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 2 batch a11y (fort ROI : 4 familles H corrigées par composant/token partagé). **Vague 1 nav = CODE FAIT + verts (commit branche), DÉPLOIEMENT PROD EN ATTENTE go Pascal** (cf. ci-dessous). Audit live complet figé + validé Pascal le 2026-06-07 (`docs/QA_FINDINGS_CRM_2026-06-07.md`).
+**Prochaine attaque** : Bloc 1 (Vague 1 nav) = **LIVRÉ EN PROD 2026-06-07** (cf. Livré). Suivant : Bloc 2 batch a11y (fort ROI : 4 familles H corrigées par composant/token partagé). Audit live complet figé + validé Pascal le 2026-06-07 (`docs/QA_FINDINGS_CRM_2026-06-07.md`).
 
-### 1. Vague 1 - correctifs liens nav `/crm` (LIVE-H1 + ANO-02 + 2 bugs même famille) [MIXTE • medium] - CODE FAIT, RESTE DÉPLOIEMENT (gate)
-- **Pourquoi** : l'audit live a trouvé des liens internes sans préfixe `/crm`. Lot complet corrigé en local, tests + build verts ; **reste uniquement le déploiement prod + smoke (gate Pascal)**.
-- [x] ~~LIVE-H1~~ (KPI dashboard `KpisBento.svelte` → `/crm/prospection?...`) + ~~ANO-02~~ (3 liens liste Veille template-literal `veille/+page.svelte` → `/crm/veille/...`).
-- [x] ~~+2 bugs même famille débusqués par la garde durcie~~ (l'audit live ne les avait pas exercés, DB vide) : `RelancesList.pipelineHref()` retournait `/pipeline` (rendu en `href`), `buildRedirect()` (`from-intelligence/+server.ts`) retournait `/prospection?...` (consommé par `goto(result.redirect)` des 2 pages veille) → préfixés `/crm/`.
-- [x] ~~Garde `no-root-crm-links` durcie~~ : ajout `TPL_LINK` (binding template literal `href={`/page/${x}`}`) + `RETURN_LINK` (`return '/page'`), dents prouvées (sanity check avant/après + map 308 non touchée). 1682 Vitest verts, svelte-check 0 erreur, build exit 0.
-- [ ] **[EXÉCUTABLE - gate]** déploiement prod du lot (`vercel deploy --prod` racine FilmPro/) + vérif alias canonique (`vercel inspect filmpro-portail.vercel.app`) + smoke (cliquer KPI dashboard + édition Veille → atterrissage direct `/crm/...` sans 308). → [[feedback_smoke_prod_feature_flag_livraison]], [[feedback_filmpro_vercel_deploy_cli]].
-
-### 2. Vague 2 - batch a11y composants & tokens partagés [SUPERVISÉ • xhigh • 1 session]
+### 1. Vague 2 - batch a11y composants & tokens partagés [SUPERVISÉ • xhigh • 1 session]
 - **Pourquoi** : 4 des 5 familles High de l'audit live sont des défauts a11y portés par des composants/tokens **partagés** → 1 fix règle plusieurs pages (fort ROI). Modèles conformes identifiés en live.
 - [ ] **[EXÉCUTABLE]** aligner `SlideOut`/`ModalForm` sur les modèles : nom accessible `aria-labelledby` (LIVE-H3, modèle = `FeedbackForm`/drawer mots-clés) + return focus au déclencheur (LIVE-H2, modèle = `LeadSlideOut` Prospection) ; `scope` sur la table Log (LIVE-H5) ; variante token AA pour l'ambre `#F79009` / rouge `#F04438` utilisés comme texte (LIVE-H4, variante `--deep` + gate axe-core, cf. [[feedback_a11y_deep_tokens_with_axe_gate]]). → voir `docs/QA_FINDINGS_CRM_2026-06-07.md` §E/E.2.
 
-### 3. Fixer REG-01 - suppression entreprise (décision tranchée) [SUPERVISÉ • high • ~1h]
+### 2. Fixer REG-01 - suppression entreprise (décision tranchée) [SUPERVISÉ • high • ~1h]
 - **Pourquoi** : bug prod confirmé live. **Décision Pascal 2026-06-07** : GARDER le blocage quand des contacts/opportunités sont rattachés, MAIS remplacer le message générique par une **modale UI explicite** (liste N contacts / M opportunités rattachés + invite à les détacher d'abord).
 - [ ] **[EXÉCUTABLE]** (a) migration prod `ON DELETE SET NULL` sur FK `prospect_leads.transfere_vers_entreprise_id` (cause 2 = le vrai bug) ; (b) discriminer le code `23503` dans `dbFail` → message explicite ; (c) modale UI explicite sur la garde appli (cause 1, décision = garder le blocage mais l'expliciter) ; (d) audit sécu (migration). → voir `docs/QA_FINDINGS_CRM_2026-06-07.md` §A REG-01.
 
-### 4. Vague 4 - dette M/L audit live [MIXTE • high • ~2h]
+### 3. Vague 4 - dette M/L audit live [MIXTE • high • ~2h]
 - **Pourquoi** : findings moyens/cosmétiques de l'audit live, non bloquants.
 - [ ] **[EXÉCUTABLE]** M : empty contextuels (LIVE-M1), H1 sémantique (LIVE-M6), vue Archivées paginée (LIVE-M2), **mojibake Zefix archivés** (LIVE-M3, corruption migration V5, à investiguer), autocomplete combobox (LIVE-M4). L : radius cards 12→10, coquilles, « Closed » EN, séparateurs `<title>`, doc cron périmée ANO-03. → voir `docs/QA_FINDINGS_CRM_2026-06-07.md` §E/E.2 (détail complet).
 
-### 5. Re-audit live avec données seedées [MIXTE • high • ~2h]
+### 4. Re-audit live avec données seedées [MIXTE • high • ~2h]
 - **Pourquoi** : la DB prod est quasi vide (Contacts 0, Pipeline 0, Entreprises 2) → l'audit live n'a PAS validé les comportements sur données peuplées (tri, pagination serveur, slide-out détail rempli, drag&drop kanban, counts d'onglets).
 - [ ] **[EXÉCUTABLE]** seed sur preview branch + session mintée (`tests/mint-session.mjs`, [[feedback_test_session_otp_free_mint]]), re-dérouler les stories liste/tri/pagination/slide-out/drag&drop des pages concernées (Entreprises/Contacts/Pipeline). → voir `docs/QA_USER_STORIES_CRM.md` + `docs/QA_FINDINGS_CRM_2026-06-07.md` §C (limite de couverture).
 
@@ -176,6 +169,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ### Livré cette session
 
+- [x] ~~**Vague 1 - liens nav internes centralisés sous `/crm`**~~ - Livré 2026-06-07 (xhigh, **EN PROD**, commit `c51309c`, branche `portail-session-1`). 5 liens corrigés : LIVE-H1 (KPI dashboard `KpisBento`), ANO-02 (3 liens Veille template-literal), + **2 bugs même famille** que l'audit live n'avait pas exercés (DB vide) : `RelancesList.pipelineHref()` (`/pipeline`→`/crm/pipeline`, rendu en href) et `buildRedirect()` from-intelligence (`/prospection?...`→`/crm/...`, consommé par `goto(result.redirect)`). Garde `no-root-crm-links` durcie (`TPL_LINK` template literal + `RETURN_LINK` return, dents prouvées, map 308 non touchée). 1682 Vitest, svelte-check 0, build exit 0. **Déployé + smoke prod authentifié (session mintée OTP-free)** : `/crm/veille` + `/crm` dashboard rendent tous les liens en `/crm/...`, zéro lien racine résiduel, alias canonique vérifié. → [[feedback_smoke_prod_feature_flag_livraison]], [[feedback_test_session_otp_free_mint]].
 - [x] ~~**Audit live UX/UI CRM - 13 surfaces (~135 stories)**~~ - Fait 2026-06-07 (xhigh, zéro-fix sauf LIVE-H1 validé Pascal). Chrome MCP rétabli (`cc` option 3) → 10 agents `ui-auditor` séquentiels sur prod, **non destructif**. 0 story bloquante. 5 familles H : LIVE-H1 lien KPI hors `/crm` (**✅ corrigé local**, garde renforcée + test vert) ; H2 return focus ; H3 dialog sans nom ; H4 contrastes tokens ambre/rouge ; H5 th sans scope (Log). V5 8/8 reconfirmé live, Aide impeccable. Décision REG-01 (garder blocage + modale). → [[feedback_chrome_mcp_subagents_inherit_browser]] + catalogue `docs/QA_FINDINGS_CRM_2026-06-07.md` §C/E/E.2.
 - [x] ~~**QA CRM - bloc prioritaire figé** (statique + runtime)~~ - Fait 2026-06-07 (xhigh, zéro-fix). 3 agents statiques + confirmation runtime : REG-01 = bug prod confirmé (lead transféré → `23503` masqué) ; V5 8/8 conformes ; 11 anomalies qualifiées (7 confirmées, 2 réfutées ANO-06/10, 1 M ANO-07). Catalogue `docs/QA_FINDINGS_CRM_2026-06-07.md`.
 - [x] ~~**V5 recentrage Signaux & Prospection**~~ - Livré 2026-06-07 (xhigh, TDD, **EN PROD**, commit `364bd1f`). Zefix coupé par flag env + scoring SIMAP recalibré + imports masse Prospection coupés (gates 403 defense-in-depth) + Signaux file courte + Archivées. Migration prod (1227 Zefix archivés, 276 SIMAP re-notés, aucun DELETE). 1682 Vitest, audit sécu Opus 0 H/C/M/L. → [[project_audit_signaux_prospection_2026-06-07]] + `memory/audit_secu_2026-06-07_v5_signaux_prospection.md`.
