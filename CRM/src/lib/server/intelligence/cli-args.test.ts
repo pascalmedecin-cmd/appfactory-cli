@@ -43,4 +43,24 @@ describe('parseArgv - run-veille standalone', () => {
 		expect(() => parseArgv(['--week', '$(whoami)'])).toThrow(/format invalide/);
 		expect(() => parseArgv(['--week', '2026-W18 | cat'])).toThrow(/format invalide/);
 	});
+
+	it('--only-if-absent → opts.onlyIfAbsent=true (rattrapage anti-skip scheduler)', () => {
+		expect(parseArgv(['--only-if-absent'])).toEqual({ onlyIfAbsent: true });
+	});
+
+	it('sans --only-if-absent → onlyIfAbsent absent (run normal)', () => {
+		expect(parseArgv([]).onlyIfAbsent).toBeUndefined();
+		expect(parseArgv(['--week', '2026-W18']).onlyIfAbsent).toBeUndefined();
+	});
+
+	it('--only-if-absent combinable avec --week', () => {
+		expect(parseArgv(['--week', '2026-W18', '--only-if-absent'])).toEqual({
+			weekLabel: '2026-W18',
+			onlyIfAbsent: true
+		});
+		expect(parseArgv(['--only-if-absent', '--week', '2026-W18'])).toEqual({
+			weekLabel: '2026-W18',
+			onlyIfAbsent: true
+		});
+	});
 });

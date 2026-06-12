@@ -321,6 +321,107 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 		expect(stored).toMatch(/api_key=\[REDACTED\]/i);
 	});
 
+	it('skipIfErrored : skip si la semaine est déjà en status=error (rattrapage ne retente pas une semaine déjà alertée)', async () => {
+		const fresh = makeCapturingSupabase([
+			// idempotence check : édition error trouvée (le run du matin a échoué + alerté)
+			{ data: { id: 'rep-errored', status: 'error' }, error: null }
+		]);
+
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client),
+			{ skipIfErrored: true }
+		);
+
+		expect(result.ok).toBe(true);
+		expect(result.skipped).toBe(true);
+		expect(result.reportId).toBe('rep-errored');
+		expect(generateMock).not.toHaveBeenCalled();
+		// Aucun upsert : ni running, ni error (on ne touche pas la ligne existante)
+		expect(fresh.upserts).toHaveLength(0);
+	});
+
+	it('skipIfErrored : tourne normalement si aucune édition (cas skip scheduler, raison d\'être du rattrapage)', async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: null, error: null }, // idempotence : rien
+			{ data: null, error: null }, // markRunning
+			{ data: [], error: null }, // previousItems
+			{ data: { id: 'rep-catchup' }, error: null } // markError .single
+		]);
+		generateMock.mockResolvedValue({
+			success: false,
+			error: 'erreur quelconque',
+			raw: null,
+			costs: { breakdown: [], total_usd: 0, total_eur: 0 }
+		});
+
+		await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client),
+			{ skipIfErrored: true }
+		);
+
+		expect(generateMock).toHaveBeenCalledTimes(1);
+	});
+
+	it('skipIfErrored : tourne si status=running orphelin (crash dur du runner sans trace error)', async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: { id: 'rep-orphan', status: 'running' }, error: null }, // idempotence : orphelin
+			{ data: null, error: null }, // markRunning (réécrit l'orphelin)
+			{ data: [], error: null }, // previousItems
+			{ data: { id: 'rep-orphan' }, error: null } // markError .single
+		]);
+		generateMock.mockResolvedValue({
+			success: false,
+			error: 'erreur quelconque',
+			raw: null,
+			costs: { breakdown: [], total_usd: 0, total_eur: 0 }
+		});
+
+		await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client),
+			{ skipIfErrored: true }
+		);
+
+		expect(generateMock).toHaveBeenCalledTimes(1);
+	});
+
+	it('sans skipIfErrored : une semaine en status=error est retentée (comportement historique préservé)', async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: { id: 'rep-errored', status: 'error' }, error: null }, // idempotence : error
+			{ data: null, error: null }, // markRunning
+			{ data: [], error: null }, // previousItems
+			{ data: { id: 'rep-errored' }, error: null } // markError .single
+		]);
+		generateMock.mockResolvedValue({
+			success: false,
+			error: 'erreur quelconque',
+			raw: null,
+			costs: { breakdown: [], total_usd: 0, total_eur: 0 }
+		});
+
+		await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'), makeMockDeps(fresh.client));
+
+		expect(generateMock).toHaveBeenCalledTimes(1);
+	});
+
+	it('skipIfErrored + published : skip idempotent inchangé', async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: { id: 'rep-pub', status: 'published' }, error: null }
+		]);
+
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client),
+			{ skipIfErrored: true }
+		);
+
+		expect(result.ok).toBe(true);
+		expect(result.skipped).toBe(true);
+		expect(generateMock).not.toHaveBeenCalled();
+	});
+
 	it("convertit gen.success=false en upsert status=error sans appeler generateIntelligenceReport deux fois", async () => {
 		const fresh = makeCapturingSupabase([
 			{ data: null, error: null }, // idempotence

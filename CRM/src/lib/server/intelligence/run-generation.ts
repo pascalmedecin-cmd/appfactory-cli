@@ -22,6 +22,17 @@ export interface RunResult {
 	error?: string;
 }
 
+export interface RunOptions {
+	/**
+	 * Mode rattrapage (cron du vendredi soir) : skip aussi si la semaine est déjà
+	 * en status=error. Le run du matin a tourné et alerté par email ; le retenter
+	 * automatiquement re-paierait la génération et masquerait la dérive (décision
+	 * council 2026-06-06 : pas de retry auto sur échec). Un status=running orphelin
+	 * (crash dur du runner, aucune alerte partie) est en revanche retenté.
+	 */
+	skipIfErrored?: boolean;
+}
+
 /** Seuil items en-dessous duquel on déclenche l'alerte « semaine creuse ». */
 const SPARSE_WEEK_THRESHOLD = 2;
 /** Seuil items en-dessous duquel on logge un warning low-volume (sans bloquer). */
@@ -212,7 +223,8 @@ function antiDoublonsActive(currentWeek: string, seuil: string | undefined): boo
  */
 export async function runWeeklyGeneration(
 	now: Date = new Date(),
-	deps: VeilleDeps
+	deps: VeilleDeps,
+	options: RunOptions = {}
 ): Promise<RunResult> {
 	const week = currentWeekRange(now);
 	const { supabase } = deps;
@@ -232,6 +244,11 @@ export async function runWeeklyGeneration(
 
 	if (existing && existing.status === 'published') {
 		logPhase(week.weekLabel, 'idempotent_skip', { reportId: existing.id });
+		return { ok: true, weekLabel: week.weekLabel, reportId: existing.id, skipped: true };
+	}
+
+	if (options.skipIfErrored && existing && existing.status === 'error') {
+		logPhase(week.weekLabel, 'catchup_skip_errored', { reportId: existing.id });
 		return { ok: true, weekLabel: week.weekLabel, reportId: existing.id, skipped: true };
 	}
 

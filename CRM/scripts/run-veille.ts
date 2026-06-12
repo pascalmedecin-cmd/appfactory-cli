@@ -40,10 +40,13 @@ const HELP = `
 Usage: npx tsx CRM/scripts/run-veille.ts [--week YYYY-Www]
 
 Options:
-  --week YYYY-Www   Force la semaine cible (rattrapage manuel).
-                    Exemple : --week 2026-W18
-                    Sans ce flag : utilise la semaine ISO de la date système.
-  --help, -h        Affiche cette aide.
+  --week YYYY-Www    Force la semaine cible (rattrapage manuel).
+                     Exemple : --week 2026-W18
+                     Sans ce flag : utilise la semaine ISO de la date système.
+  --only-if-absent   Mode rattrapage planifié : skip (exit 0) si la semaine a
+                     déjà une édition published OU error. Ne couvre que le cas
+                     « le run du matin n'a jamais tourné » (skip scheduler).
+  --help, -h         Affiche cette aide.
 
 Exit code : 0 succès, 1 échec attendu, 2 erreur non capturée.
 `.trim();
@@ -82,17 +85,21 @@ async function main(): Promise<number> {
 	}
 
 	const mode = opts.weekLabel ? `rattrapage ${opts.weekLabel}` : 'semaine en cours';
-	console.log(`[run-veille] démarrage pipeline veille (${mode})`);
+	console.log(
+		`[run-veille] démarrage pipeline veille (${mode}${opts.onlyIfAbsent ? ', only-if-absent' : ''})`
+	);
 	const startedAt = Date.now();
 
 	try {
-		const result = await runWeeklyGeneration(now, deps);
+		const result = await runWeeklyGeneration(now, deps, {
+			skipIfErrored: opts.onlyIfAbsent === true
+		});
 		const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
 
 		if (result.ok) {
 			if (result.skipped) {
 				console.log(
-					`[run-veille] idempotent_skip ${result.weekLabel} (déjà publiée, reportId=${result.reportId}) en ${elapsed}s`
+					`[run-veille] skip ${result.weekLabel} (édition déjà traitée, reportId=${result.reportId}) en ${elapsed}s`
 				);
 			} else {
 				console.log(

@@ -21,6 +21,10 @@ import type { EmailRecapConfig } from './deps';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
 const CRM_URL = process.env.PUBLIC_APP_URL || 'https://filmpro-portail.vercel.app';
+// Le pipeline tourne sur GitHub Actions depuis S167 (plus sur Vercel) : les logs
+// d'échec vivent dans les runs du workflow, pas dans les logs Vercel.
+const CRON_RUNS_URL =
+	'https://github.com/pascalmedecin-cmd/appfactory-cli/actions/workflows/cron-veille.yml';
 
 export interface SendRecapSuccess {
 	report: IntelligenceReport;
@@ -291,7 +295,7 @@ function renderFailureHtml(data: SendRecapFailure): string {
 			</table>
 
 			<div style="margin-top:20px;font-size:13px;">
-				<a href="https://vercel.com/pascalmedecin-cmds-projects/filmpro-crm/logs" style="color:#2563eb;">Ouvrir les logs Vercel</a>
+				<a href="${CRON_RUNS_URL}" style="color:#2563eb;">Ouvrir les runs GitHub Actions</a>
 			</div>
 		</div>
 	</div>
@@ -319,7 +323,7 @@ function renderFailureText(data: SendRecapFailure): string {
 	lines.push('');
 	lines.push(`Total : ${fmtEur(costs.total_eur)}`);
 	lines.push('');
-	lines.push('Logs : https://vercel.com/pascalmedecin-cmds-projects/filmpro-crm/logs');
+	lines.push(`Logs : ${CRON_RUNS_URL}`);
 	return lines.join('\n');
 }
 

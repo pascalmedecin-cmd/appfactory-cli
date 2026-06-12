@@ -206,13 +206,14 @@ describe('buildRecapPayload - mode failure', () => {
 		expect(p.html).toContain('Aucun coût mesuré avant l');
 	});
 
-	it('html contient lien Vercel logs', () => {
+	it('html contient lien vers les runs GitHub Actions (le pipeline tourne sur GHA depuis S167)', () => {
 		const p = buildRecapPayload({
 			mode: 'failure',
 			data: { weekLabel: '16-2026', errorMessage: 'test', costs: mockCosts(0) }
 		});
-		expect(p.html).toContain('vercel.com');
-		expect(p.html).toContain('logs');
+		expect(p.html).toContain('github.com/pascalmedecin-cmd/appfactory-cli/actions/workflows/cron-veille.yml');
+		expect(p.text).toContain('github.com/pascalmedecin-cmd/appfactory-cli/actions/workflows/cron-veille.yml');
+		expect(p.html).not.toContain('vercel.com');
 	});
 
 	it('escape XSS dans errorMessage', () => {

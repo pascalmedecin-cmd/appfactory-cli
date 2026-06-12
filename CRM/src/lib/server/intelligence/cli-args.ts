@@ -5,6 +5,12 @@
  */
 export interface CliOptions {
 	weekLabel?: string;
+	/**
+	 * Mode rattrapage (2e cron du vendredi soir) : ne tourne que si la semaine
+	 * n'a AUCUNE édition aboutie (ni published, ni error). Couvre le skip du
+	 * scheduler GitHub sans retenter une semaine déjà alertée par email.
+	 */
+	onlyIfAbsent?: boolean;
 }
 
 export class HelpRequestedError extends Error {
@@ -33,6 +39,10 @@ export function parseArgv(argv: string[]): CliOptions {
 			}
 			opts.weekLabel = value;
 			i++;
+			continue;
+		}
+		if (arg === '--only-if-absent') {
+			opts.onlyIfAbsent = true;
 			continue;
 		}
 		if (arg === '--help' || arg === '-h') {
