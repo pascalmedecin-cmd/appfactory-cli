@@ -146,12 +146,9 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 0 - surveillance run rattrapage veille W24 ce soir (12/06 ≥ 19:30) - décision Pascal 2026-06-12 : surveillance manuelle, pas de schedule automatique.
+**Prochaine attaque** : pas de gros chantier en attente - observer l'usage V5 en prod. Seul reliquat = re-cadrage métier du périmètre Prospection post-V5 (tâche globale `~/.claude/CLAUDE.md`).
 
-### 0. Surveillance run rattrapage veille W24 [SUPERVISÉ • low • ~10 min]
-
-- **Pourquoi** : durcissement cron veille livré 2026-06-12 (`e2daee8`) ; trou résiduel connu = si le scheduler GitHub saute les 2 crons du vendredi (06:27 + 17:27 UTC), silence total (aucun email). Décision Pascal : surveiller manuellement ce soir.
-- [ ] **[EXÉCUTABLE]** Vendredi 12/06 soir ≥ 19:30 (heure suisse) : vérifier que le run rattrapage veille W24 a tourné - email récap reçu OU page Actions du workflow cron-veille. Si aucun run du jour → ouvrir une session CLI et dispatcher manuellement (`gh workflow run cron-veille.yml`). Contexte → entrée « Durcissement cron veille » dans Livré cette session.
+Aucun bloc actionnable côté CRM.
 
 **Sinon** : pas de gros chantier en attente. Les 2 blocs du backlog (merge `portail-session-1` → `main`, copy empty Prospection V5) sont livrés + déployés prod le 2026-06-07 (`main` = prod). Seul reliquat = re-cadrage métier du périmètre Prospection post-V5 (onglets SIMAP/RegBL encore affichés, finding ci-dessous), porté par la tâche globale « Cascade gabarit /prospection [à re-cadrer post-V5] » (`~/.claude/CLAUDE.md`). Sinon, observer l'usage V5 en prod.
 
@@ -162,6 +159,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ### Livré cette session
 
+- [x] ~~**Surveillance run rattrapage veille W24**~~ - Livré 2026-06-13 (low, ~10 min). Run schedule `27438039787` du 2026-06-12 19:26 UTC : **completed success**, 9m46s, `phase=published` reportId `a7524df9` (2 items, semaine calme sous le seuil 8), email récap actif vers `pascal@filmpro.ch`. Le filet anti-skip (`e2daee8`) a tenu : déclenchement auto, aucun dispatch manuel requis. Seul bémol mineur : `costs_persisted status=partial` (persistance coûts API partielle, rapport complet - non bloquant).
 - [x] ~~**Durcissement cron veille hebdo (audit + revue 360 + 3 fix)**~~ - Livré 2026-06-12 (xhigh, `e2daee8`, poussé `main` = effectif au prochain déclenchement GHA). Audit factuel : cause racine W23 déjà fixée (`e0aef36`), W20 = crédit API (opérationnel). Fix : double cron anti-skip (`27 6` + rattrapage `27 17` `--only-if-absent`, skip si `published` OU `error`, retente l'orphelin `running`), actions v4→v6 (deadline 16/06), lien email échec → runs GHA. `skipIfErrored` dans `runWeeklyGeneration` (RunOptions), flag strict `cli-args.ts`. +8 tests, 1719 verts, smoke réel skip W23 0,9s. **À vérifier vendredi 12/06 soir ≥ 19:30 (heure suisse) : run rattrapage W24 sur la page Actions (email récap attendu)** - si AUCUN run ce soir = GitHub a sauté les 2 crons (trou résiduel connu : silence total, aucun email) → dispatch manuel W24.
 - [x] ~~**Bloc 2 - copy empty Prospection alignée V5**~~ - Livré 2026-06-07 (xhigh, `a2dbe62`, **DÉPLOYÉ PROD** deploy `n7qrsvi6f`, smoke authentifié OK : HTTP 200 + « Rechercher une entreprise » live, 0 résidu). Blocage soft levé (périmètre V5 défini dans `config.ts`), wording validé Pascal avant ship (zéro invention, chaque mot mappe sur `config.ts`). 6 surfaces « import masse → recherche à la demande » : bodies empty l.356/820/905 (retrait sources coupées SIMAP/RegBL), titre « importée »→« pour l'instant », CTA+icône `search`, titre modale (déjà search-first en interne). 1711 Vitest, svelte-check 0. Finding SIMAP/RegBL tracé hors scope (ci-dessus).
 - [x] ~~**Bloc 1 - merge `portail-session-1` → `main`**~~ - Livré 2026-06-07 (fast-forward `aa306fa`..`810f2e6`, 18 commits, 0 conflit, poussé GitHub). `main` = prod.
