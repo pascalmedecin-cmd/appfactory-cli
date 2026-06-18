@@ -12,6 +12,7 @@
 		isResultatVisite,
 	} from '$lib/types/visit-result';
 	import { formatRelativeDate } from '$lib/components/terrain/relative-date';
+	import { etapeLabel } from '$lib/utils/pipelineFormat';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -92,7 +93,7 @@
 					<li class="opp">
 						<span class="text-base text-[var(--color-text)] truncate">{o.titre}</span>
 						{#if o.etape_pipeline}
-							<span class="etape">{o.etape_pipeline}</span>
+							<span class="etape">{etapeLabel(o.etape_pipeline)}</span>
 						{/if}
 					</li>
 				{/each}

@@ -30,6 +30,8 @@
 		type ProspectionTabKey,
 	} from '$lib/prospection-utils';
 	import { filterEnabledSources, isProspectionFeatureEnabled } from '$lib/prospection-flags';
+	import SearchInput from '$lib/components/SearchInput.svelte';
+	import { SEARCH_DEBOUNCE_MS } from '$lib/utils/searchMatch';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -43,6 +45,29 @@
 	const batchEnrichEnabled = isProspectionFeatureEnabled('batchEnrichment');
 
 	$effect(() => { $pageSubtitle = `${data.totalLeads} prospect${data.totalLeads > 1 ? 's' : ''}`; });
+
+	// Recherche prospect (serveur, ?q=) — Vague 1 : primitive SearchInput VISIBLE desktop ET
+	// mobile. Corrige A1 « caché sur mobile » : quand `ffCrmMobileV2` affiche les cards mobiles
+	// (et masque la DataTable < 1024px), la recherche de la DataTable disparaissait. On la sort
+	// donc de la DataTable (searchable=false) pour un seul champ au-dessus des deux vues.
+	let searchQuery = $state(data.search);
+	let searchTimer: ReturnType<typeof setTimeout> | null = null;
+	// Resync quand data.search change côté serveur (reset filtres, lien externe ?q=). Ne clobbe
+	// pas la frappe : l'effet ne se redéclenche que sur changement de data.search, qui n'arrive
+	// qu'après navigation (où data.search === la valeur tapée). Même pattern que DataTable serverMode.
+	$effect(() => { searchQuery = data.search; });
+	function onSearchInput(value: string) {
+		searchQuery = value;
+		if (searchTimer) clearTimeout(searchTimer);
+		searchTimer = setTimeout(() => {
+			goto(buildUrl({ q: value, page: 0 }), { keepFocus: true, noScroll: true });
+		}, SEARCH_DEBOUNCE_MS);
+	}
+	function onSearchClear() {
+		searchQuery = '';
+		if (searchTimer) clearTimeout(searchTimer);
+		goto(buildUrl({ q: '', page: 0 }), { keepFocus: true, noScroll: true });
+	}
 
 	let slideOutOpen = $state(false);
 	let selectedLead = $state<Lead | null>(null);
@@ -526,7 +551,7 @@
 		const parts: string[] = [`Prospect ${lead.raison_sociale}`];
 		if (lead.canton) parts.push(`canton ${lead.canton}`);
 		if (typeof lead.score_pertinence === 'number') parts.push(`score ${lead.score_pertinence}`);
-		if (lead.statut) parts.push(`statut ${lead.statut}`);
+		if (lead.statut) parts.push(`statut ${statutLabel(lead.statut)}`);
 		return parts.join(', ');
 	}
 </script>
@@ -884,6 +909,16 @@
 		</ProspectionTabs>
 		<!-- V2.1 audit S160 : tabpanel ARIA wrapper. Lié à #tab-{key} via aria-labelledby. -->
 		<div role="tabpanel" id="tabpanel-{data.tab}" aria-labelledby="tab-{data.tab}" class="flex flex-1 flex-col min-h-0">
+		<!-- Vague 1 : recherche visible desktop ET mobile (au-dessus des cards mobiles ET de la
+		     DataTable). Câblée sur la recherche serveur ?q= (stratégie de données inchangée). -->
+		<div class="prospection-search-wrap px-4 pt-3 pb-1">
+			<SearchInput
+				value={searchQuery}
+				oninput={onSearchInput}
+				onclear={onSearchClear}
+				placeholder="Rechercher un prospect…"
+			/>
+		</div>
 		{#if data.sourceFilterIncompatible}
 			<div class="flex items-start gap-2 px-4 py-3 border-b border-warning/30 bg-warning-light text-warning-deep text-sm" role="status">
 				<Icon name="info" size={18} class="shrink-0 mt-0.5" />
@@ -978,21 +1013,19 @@
 			const parts: string[] = [`Lead ${lead.raison_sociale}`];
 			if (lead.canton) parts.push(`canton ${lead.canton}`);
 			if (typeof lead.score_pertinence === 'number') parts.push(`score ${lead.score_pertinence} sur 12`);
-			if (lead.statut) parts.push(`statut ${lead.statut}`);
+			if (lead.statut) parts.push(`statut ${statutLabel(lead.statut)}`);
 			return parts.join(', ');
 		}}
-		searchPlaceholder="Rechercher un prospect…"
+		searchable={false}
 		emptyMessage="Aucun prospect correspondant aux filtres."
 		serverMode={true}
 		totalCount={data.totalLeads}
 		currentServerPage={data.page}
 		serverSortKey={data.sort}
 		serverSortAsc={data.sortAsc}
-		serverSearch={data.search}
 		pageSize={data.pageSize}
 		onPageChange={(p) => goto(buildUrl({ page: p }), { keepFocus: true, noScroll: true })}
 		onSortChange={(key, asc) => goto(buildUrl({ sort: key, dir: asc ? 'asc' : 'desc', page: 0 }), { keepFocus: true, noScroll: true })}
-		onSearchChange={(q) => goto(buildUrl({ q, page: 0 }), { keepFocus: true, noScroll: true })}
 	>
 		{#snippet row(lead, _i)}
 			{#each columns as col}

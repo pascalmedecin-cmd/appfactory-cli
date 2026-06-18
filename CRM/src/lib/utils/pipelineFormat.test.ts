@@ -5,6 +5,7 @@ import {
 	progressByEtape,
 	totalsByEtape,
 	etapesVisibleForTab,
+	etapeLabel,
 	pipelineIndicators,
 	PipelineOpportuniteRowSchema,
 	type OppLite,
@@ -172,5 +173,24 @@ describe('pipelineIndicators', () => {
 	it('liste vide → tous zéros', () => {
 		const r = pipelineIndicators([], NOW);
 		expect(r).toEqual({ active: 0, valueActive: 0, wonThisMonthCount: 0, wonThisMonthValue: 0, overdue: 0 });
+	});
+});
+
+describe('etapeLabel (Vague 1 cohérence — source unique config.pipeline.etapes)', () => {
+	it('traduit chaque étape en libellé FR', () => {
+		expect(etapeLabel('negociation')).toBe('Négociation');
+		expect(etapeLabel('identification')).toBe('Identification');
+		expect(etapeLabel('gagne')).toBe('Gagné');
+		expect(etapeLabel('perdu')).toBe('Perdu');
+	});
+
+	it('null/undefined/vide → chaîne vide', () => {
+		expect(etapeLabel(null)).toBe('');
+		expect(etapeLabel(undefined)).toBe('');
+		expect(etapeLabel('')).toBe('');
+	});
+
+	it('clé inconnue → fallback sur la clé brute (jamais de crash)', () => {
+		expect(etapeLabel('etape_inexistante')).toBe('etape_inexistante');
 	});
 });

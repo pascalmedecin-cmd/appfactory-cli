@@ -13,10 +13,12 @@
 	import {
 		formatMontantCompact,
 		etapesVisibleForTab,
+		etapeLabel,
 		pipelineIndicators,
 		totalsByEtape,
 		type PipelineTab,
 	} from '$lib/utils/pipelineFormat';
+	import { formatTypeLabel } from '$lib/utils/signauxFormat';
 	import PipelineIndicators from '$lib/components/pipeline/PipelineIndicators.svelte';
 	import PipelineTabs from '$lib/components/pipeline/PipelineTabs.svelte';
 	import PipelineColumn from '$lib/components/pipeline/PipelineColumn.svelte';
@@ -199,11 +201,6 @@
 		}
 	}
 
-	function etapeLabel(key: string | null): string {
-		if (!key) return '';
-		return ETAPE_BY_KEY[key]?.label ?? key;
-	}
-
 	// Drag & drop
 	function onCardDragStart(e: DragEvent, opp: { id: string }) {
 		if (!e.dataTransfer) return;
@@ -374,7 +371,7 @@
 				<div class="text-sm">
 					<span class="text-text-muted">Signal d'affaires lié</span>
 					<p class="font-medium text-text">
-						{selectedOpp.signaux_affaires.type_signal} -- {selectedOpp.signaux_affaires.description_projet ?? ''}
+						{formatTypeLabel(selectedOpp.signaux_affaires.type_signal)} -- {selectedOpp.signaux_affaires.description_projet ?? ''}
 					</p>
 				</div>
 			{/if}

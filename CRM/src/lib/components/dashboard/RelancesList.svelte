@@ -5,6 +5,7 @@
 	 * Lien vers /pipeline (fiche opportunité quand route disponible).
 	 */
 	import { formatRelanceDate } from '$lib/utils/dateFormat';
+	import { etapeLabel } from '$lib/utils/pipelineFormat';
 
 	type Relance = {
 		id: string;
@@ -53,7 +54,7 @@
 					<a class="relance-card" href={pipelineHref(relance.id)}>
 						<div class="relance-text">
 							<p class="rel-title">{relance.titre}</p>
-							<p class="rel-meta">{relance.etape_pipeline ?? '—'}</p>
+							<p class="rel-meta">{etapeLabel(relance.etape_pipeline) || '—'}</p>
 						</div>
 						<span class="rel-date rel-date-{meta.urgency} tabular-nums">{meta.label}</span>
 					</a>

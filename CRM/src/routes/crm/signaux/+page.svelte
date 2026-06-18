@@ -34,6 +34,8 @@
 	import SignauxKeywordsPanel from '$lib/components/signaux/SignauxKeywordsPanel.svelte';
 	import { KW_SEARCH_MIN_LEN } from '$lib/scoring/keywords';
 	import { normalizeNFD } from '$lib/utils/text-normalize';
+	import SearchInput from '$lib/components/SearchInput.svelte';
+	import { matchesAnyField, SEARCH_DEBOUNCE_MS } from '$lib/utils/searchMatch';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -58,7 +60,12 @@
 	let batchDeleteConfirmOpen = $state(false);
 	let batchDeleteFormEl: HTMLFormElement | null = $state(null);
 
-	// Filtres secondaires (type, canton)
+	// Filtres secondaires (canton ; type retiré en Vague 1).
+	// `filterType` conservé dormant (toujours '') : Signaux est mono-type (`appel_offres`)
+	// depuis V5, le <select> Type a été retiré (cohérence, SPEC_VAGUE1_COHERENCE § 3).
+	// Réintroduction sans dette si une source rouvre d'autres types : re-ajouter un
+	// <select bind:value={filterType}> dérivé de `config.signaux.types` dans les actions
+	// de SignauxTabs (cf. § 8 date d'expiration 2026-09-18).
 	let filterType = $state('');
 	let filterCanton = $state('');
 
@@ -89,8 +96,9 @@
 		}
 	});
 
-	// Debounce 200ms + persistance localStorage (clé `signaux.search`). Se relance à chaque
-	// frappe ; cleanup auto via $effect quand search re-change avant la fin du timer.
+	// Debounce SEARCH_DEBOUNCE_MS (250ms, contrat commun Vague 1) + persistance localStorage
+	// (clé `signaux.search`). Se relance à chaque frappe ; cleanup auto via $effect quand
+	// search re-change avant la fin du timer.
 	$effect(() => {
 		const value = search;
 		const t = setTimeout(() => {
@@ -101,7 +109,7 @@
 			} catch {
 				// ignore
 			}
-		}, 200);
+		}, SEARCH_DEBOUNCE_MS);
 		return () => clearTimeout(t);
 	});
 
@@ -177,14 +185,12 @@
 		if (filterType) out = out.filter((s: Signal) => s.type_signal === filterType);
 		if (filterCanton) out = out.filter((s: Signal) => s.canton === filterCanton);
 		// V3 spec § 4 C6 : filtre search client (case + accent insensitive) sur 3 champs.
+		// Vague 1 : matching factorisé dans `matchesAnyField` (searchMatch.ts, source unique).
 		const searchNorm = normalizeNFD(searchDebounced.trim());
 		if (searchNorm.length >= KW_SEARCH_MIN_LEN) {
-			out = out.filter((s: Signal) => {
-				const d = normalizeNFD(s.description_projet ?? '');
-				const mo = normalizeNFD(s.maitre_ouvrage ?? '');
-				const co = normalizeNFD(s.commune ?? '');
-				return d.includes(searchNorm) || mo.includes(searchNorm) || co.includes(searchNorm);
-			});
+			out = out.filter((s: Signal) =>
+				matchesAnyField([s.description_projet, s.maitre_ouvrage, s.commune], searchDebounced)
+			);
 		}
 		return out;
 	});
@@ -348,16 +354,10 @@
 	{#if !data.showArchived}
 	<SignauxTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)}>
 		{#snippet actions()}
-			<select
-				bind:value={filterType}
-				class="ws-filter-select"
-				aria-label="Filtrer par type"
-			>
-				<option value="">Tous les types</option>
-				{#each config.signaux.types as t}
-					<option value={t.key}>{t.label}</option>
-				{/each}
-			</select>
+			<!-- Vague 1 (SPEC_VAGUE1_COHERENCE § 3) : filtre Type retiré (Signaux mono-type
+			     `appel_offres` depuis V5 ; les 6 autres types venaient de sources coupées).
+			     Seul Canton discrimine réellement. Réintroduction : re-ajouter ici un
+			     <select bind:value={filterType}> dérivé de `config.signaux.types`. -->
 			<select
 				bind:value={filterCanton}
 				class="ws-filter-select"
@@ -368,12 +368,11 @@
 					<option value={c}>{c}</option>
 				{/each}
 			</select>
-			{#if filterType || filterCanton}
+			{#if filterCanton}
 				<button
 					type="button"
 					class="ws-btn-ghost"
 					onclick={() => {
-						filterType = '';
 						filterCanton = '';
 					}}
 				>
@@ -384,25 +383,14 @@
 	</SignauxTabs>
 	{/if}
 
-	<div class="signaux-search" class:filled={search.length > 0}>
-		<Icon name="search" size={16} class="search-icon" />
-		<input
-			type="search"
-			bind:value={search}
+	<div class="signaux-search-wrap">
+		<SearchInput
+			value={search}
+			oninput={(v) => (search = v)}
+			onclear={clearSearch}
 			placeholder="Rechercher dans description, maître d'ouvrage, commune…"
-			class="search-input"
-			aria-label="Rechercher dans les signaux"
+			ariaLabel="Rechercher dans les signaux"
 		/>
-		{#if search.length > 0}
-			<button
-				type="button"
-				class="search-clear"
-				onclick={clearSearch}
-				aria-label="Effacer la recherche"
-			>
-				<Icon name="close" size={16} />
-			</button>
-		{/if}
 	</div>
 
 	<div class="signaux-toolbar">
@@ -912,65 +900,10 @@
 	 * « Mots-clés » de la toolbar. La page utilise désormais le flex column standard
 	 * de `.ws-page` sans override, ce qui libère 100 % de la largeur pour les cards. */
 
-	/* Input search V3 (spec § 4 C5-C9) : recherche client sur description / maître / commune. */
-	.signaux-search {
-		position: relative;
-		display: flex;
-		align-items: center;
-		background: var(--color-surface);
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-lg);
-		padding: 8px 12px;
-		gap: 8px;
+	/* Recherche (Vague 1) : la primitive SearchInput porte désormais le style ;
+	   ce wrapper ne garde que la marge de séparation avec la toolbar. */
+	.signaux-search-wrap {
 		margin: 8px 0 0;
-		transition: border-color 150ms, box-shadow 150ms;
-	}
-	.signaux-search:focus-within {
-		border-color: var(--color-primary);
-		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
-	}
-	.signaux-search.filled {
-		border-color: var(--color-border-strong);
-	}
-	.signaux-search :global(.search-icon) {
-		color: var(--color-text-muted);
-		flex-shrink: 0;
-	}
-	.search-input {
-		flex: 1;
-		min-width: 0;
-		border: none;
-		outline: none;
-		background: transparent;
-		font-size: 14px;
-		color: var(--color-text);
-		font-family: inherit;
-	}
-	.search-input::placeholder {
-		color: var(--color-text-muted);
-	}
-	/* Retire la croix native du type=search (WebKit) car on a notre propre bouton clear. */
-	.search-input::-webkit-search-decoration,
-	.search-input::-webkit-search-cancel-button,
-	.search-input::-webkit-search-results-button,
-	.search-input::-webkit-search-results-decoration {
-		appearance: none;
-	}
-	.search-clear {
-		background: none;
-		border: none;
-		padding: 4px;
-		border-radius: var(--radius-full);
-		color: var(--color-text-muted);
-		cursor: pointer;
-		display: grid;
-		place-items: center;
-		flex-shrink: 0;
-		font-family: inherit;
-	}
-	.search-clear:hover {
-		color: var(--color-text);
-		background: var(--color-surface-alt);
 	}
 
 	/* Toolbar tri + bouton mots-clés + toggle hors-scope */

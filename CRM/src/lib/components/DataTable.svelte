@@ -1,6 +1,8 @@
 <script lang="ts" generics="T extends Record<string, any>">
 	import Icon from '$lib/components/Icon.svelte';
 	import Tooltip from '$lib/components/Tooltip.svelte';
+	import SearchInput from '$lib/components/SearchInput.svelte';
+	import { SEARCH_DEBOUNCE_MS } from '$lib/utils/searchMatch';
 	import { onDestroy } from 'svelte';
 	import type { Snippet } from 'svelte';
 
@@ -314,7 +316,7 @@
 			searchTimer = setTimeout(() => {
 				currentPage = 0;
 				onSearchChange?.(search);
-			}, 300);
+			}, SEARCH_DEBOUNCE_MS);
 		} else {
 			currentPage = 0;
 		}
@@ -334,14 +336,14 @@
 <div class="flex flex-1 flex-col min-h-0 {embedded ? '' : 'bg-white rounded-xl border border-border shadow-sm overflow-hidden'}">
 	{#if searchable}
 		<div class="sticky top-0 z-20 px-4 py-3 border-b border-border bg-white {embedded ? '' : 'rounded-t-xl'} flex items-center gap-3">
-			<input
-				type="search"
-				value={search}
-				oninput={(e) => handleSearchInput((e.target as HTMLInputElement).value)}
-				placeholder={searchPlaceholder}
-				aria-label={searchPlaceholder}
-				class="w-full md:max-w-sm px-3 py-2 md:py-1.5 text-sm border border-[var(--color-border-input)] rounded-md bg-surface focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-			/>
+			<div class="w-full md:max-w-sm">
+				<SearchInput
+					value={search}
+					oninput={handleSearchInput}
+					placeholder={searchPlaceholder}
+					ariaLabel={searchPlaceholder}
+				/>
+			</div>
 		</div>
 	{/if}
 

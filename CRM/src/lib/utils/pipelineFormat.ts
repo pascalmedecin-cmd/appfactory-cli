@@ -5,6 +5,20 @@
  * - Helpers totals/progress/indicators pour Kanban + bandeau indicateurs
  */
 import { z } from 'zod';
+import { config } from '$lib/config';
+
+/**
+ * Libellé FR d'une étape de pipeline (source unique : `config.pipeline.etapes`).
+ * Vague 1 cohérence : promu depuis pipeline/+page.svelte pour être partagé sans
+ * dupliquer le mapping (terrain entreprise, dashboard relances). `null`/`undefined` → ''.
+ */
+const ETAPE_LABEL_BY_KEY: Record<string, string> = Object.fromEntries(
+	config.pipeline.etapes.map((e) => [e.key, e.label])
+);
+export function etapeLabel(key: string | null | undefined): string {
+	if (!key) return '';
+	return ETAPE_LABEL_BY_KEY[key] ?? key;
+}
 
 /**
  * Audit 360 M-16 : forme attendue d'une ligne `opportunites` (avec jointures)
