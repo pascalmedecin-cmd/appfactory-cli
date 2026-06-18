@@ -2,11 +2,11 @@
 
 **Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; le container racine est un stub pointant vers les sous-projets. Contexte migration complet → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_appfactory_restructure.md`.
 
-**Statut :** Clean state 2026-05-28 — refonte mobile V2 **abandonnée** après smoke iPhone (overscope, lisibilité) → pivot **V3 outil terrain only** (`archive/2026-05-28-pivot-mobile-v3.md`). **Antérieur en prod** (Signaux V4, Log CRM, Aide, audit 360, Google Places, golden v9, migration restructure S173-S174) → détail `archive/2026-05-06-sessions.md` + Livré ci-dessous. **Portail FilmPro multi-outils : CRM (`/crm`) + Découpe Films (`/decoupe`) en prod sur `filmpro-portail.vercel.app` (2026-06-05).** Formation IA = sous-projet autonome `Formation/`, `cc` option 5.
-**Derniere mise a jour :** 2026-06-18 (refonte UX/UI CRM cadrée : audit 360 + **10 bugs corrigés à la racine et déployés prod `6b9f6e1`** (alias `filmpro-portail.vercel.app` vérifié, smoke 303), 1725 tests verts, audit sécu 0 H/C/M/L ; doc de cadrage validé Pascal, Pipeline confirmé gardé. Avant : 2026-06-12 durcissement cron veille `e2daee8` poussé `main` : double schedule anti-skip + actions v6 + lien email. Avant : **`main` mergée = prod** `810f2e6`, copy empty Prospection V5 déployée `a2dbe62`/deploy `n7qrsvi6f` (alias canonique `filmpro-portail.vercel.app`). EN PROD avant : Vagues 4a→4d, retrait Sentry `e561747`, fix Pipeline HIGH `8c74885`, REG-01 `dd99ae8`, V5 `364bd1f`).
+**Statut :** Clean state 2026-05-28 - refonte mobile V2 **abandonnée** après smoke iPhone (overscope) → pivot **V3 outil terrain only** (`archive/2026-05-28-pivot-mobile-v3.md`). **Portail FilmPro multi-outils : CRM (`/crm`) + Découpe Films (`/decoupe`) en prod sur `filmpro-portail.vercel.app` (2026-06-05).** Formation IA = sous-projet autonome `Formation/`, `cc` option 5. Antérieur en prod (Signaux V4, Log, audit 360, golden v9, restructure S173-S174) → `archive/2026-05-06-sessions.md`.
+**Derniere mise a jour :** 2026-06-18 (cadrage refonte CRM : 2 specs Vague 1 + mini-projet Prospection ; avant : 10 bugs racine déployés prod `6b9f6e1`, 1725 verts, audit sécu 0 H/C/M/L). Prod = alias `filmpro-portail.vercel.app` sur `810f2e6` (dernière promotion ; `6b9f6e1` les 10 bugs mergé `main`, déployé prod via CLI manuel). Historique deploys (cron veille `e2daee8`, copy Prospection V5 `a2dbe62`, Vagues 4a→4d, V5 `364bd1f`) → « Livré » + archives.
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session courante :** 2026-06-12 - **Audit cron veille hebdo + revue 360 + durcissement LIVRÉS** (`e2daee8` sur `main`). Audit factuel : cause racine W23 déjà fixée 06/06 (`e0aef36` validation par-article, vérifiée conforme spec) ; échec 15/05 = crédit API épuisé (opérationnel, rechargé 20 $ par Pascal le 12/06 ; coût mesuré 2,10-2,90 $/run). 3 fragilités corrigées : (1) cron `27 6 * * 5` + rattrapage `27 17 * * 5` `--only-if-absent` (anti-skip scheduler GitHub, retards 2-4h mesurés ; ne retente PAS une semaine en `error` - décision council préservée ; orphelin `running` retenté), (2) actions checkout/setup-node v4→v6 (deadline Node 20 forcé 16/06), (3) lien email échec Vercel→GitHub Actions. +8 tests (1719 verts), svelte-check 0, smoke réel `--only-if-absent` W23 : skip 0,9s exit 0 zéro appel. PAS de deploy Vercel (code non exécuté par la prod Vercel : runner GHA + module appelé par aucun cron vercel.json) - prochaine livraison CRM l'embarquera.
+**Session courante :** 2026-06-18 - **Cadrage refonte CRM** : 2 specs écrites (Vague 1 cohérence + mini-projet Prospection 3 blocs), facturation Google vérifiée, quota cap posé. Détail → « Livré cette session ». NB cron veille (durcissement `e2daee8` 12/06, anti-skip + actions v6) : code non exécuté par la prod Vercel (runner GHA), prochaine livraison CRM l'embarquera.
 **Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175 : `2026-05-06-sessions.md` ; S122-S125 : `2026-04-28-sessions.md` ; S70-S107 : `decisions-sessions-*.md` + `Formation/CLAUDE.md`).
 
 
@@ -102,7 +102,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 - **Auth** : OTP email 6 chiffres @filmpro.ch + session 7 jours httpOnly ; SMTP Resend (domaine verifié, free plan)
 - **APIs** : Zefix REST + search.ch + fal.ai Flux 1.1 Pro Ultra (partage clé avec Enseignement) — Pexels/Unsplash supprimés S67
 - **Crons** : `/api/cron/{signaux,alertes,nettoyage-crm,intelligence,intelligence-archive}` tous sécurisés `CRON_SECRET` + service role (Cron `media-enrich` supprimé S67)
-- **Tests** : Vitest 1711 (118 fichiers) + Playwright e2e 34. Accessibilité : focus trap + ConfirmModal partout. Sécurité : Zod sur 19 form actions, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
+- **Tests** : Vitest 1725 (dernier run vérifié 2026-06-18) + Playwright e2e 34. Accessibilité : focus trap + ConfirmModal partout. Sécurité : Zod sur 19 form actions, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
 
 → Détail intégral (env vars, BDD exhaustive, liste tests, liste crons, headers sécurité, pagination serveur) : `archive/infra-crm-detail.md`
 
@@ -146,26 +146,51 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 1 - écrire la spec détaillée **Vague 1** de la refonte CRM - cadrage validé, gain pur sans prérequis.
+**Prochaine attaque** : Bloc 1 - Vague 1 cohérence - spec écrite et tranchée, exécution sans prérequis, gain pur (le Bloc 2 P1 Prospection est l'alternative aussi sans risque).
 
-### 1. Refonte UX/UI CRM - specs détaillées par vagues [SUPERVISÉ • xhigh • cascade par vagues]
+> Cadrage commun (refonte UX/UI CRM, validé Pascal 2026-06-18 : audit 360 + benchmark 9 outils + réflexion adverse) → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_refonte_crm_cadrage_2026-06-18.md` + doc HTML `CRM/.product-architect/cadrage-refonte-crm-2026-06-18.html`.
 
-- **Pourquoi** : cadrage validé Pascal 2026-06-18 (audit 360 + benchmark 9 outils + réflexion adverse). Seul le cadrage est écrit ; les specs détaillées (user stories + critères testables) restent à produire, vague par vague.
-- **Payload** (7 décisions tranchées + garde-fous réflexion 360 + ordre des 4 vagues + doc HTML `CRM/.product-architect/cadrage-refonte-crm-2026-06-18.html`) → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_refonte_crm_cadrage_2026-06-18.md`.
-- [ ] **[EXÉCUTABLE]** Poser 2-3 critères de succès binaires globaux, puis écrire la spec **Vague 1** (cohérence : recherche unique **visible**, statuts FR, onglets morts SIMAP/RegBL masqués) : user stories + critères testables + hors-scope. NB : la Vague 1 absorbe le re-cadrage métier des onglets SIMAP/RegBL (sources coupées V5, états vides sans bouton) - ne plus traiter à part.
-- [ ] **[BLOQUÉ - spec Vague 1 validée]** Vagues 2-4 (listes/fiches premium page par page ; Signaux condensés + Prospection campagne/CSV + Dashboard façon Capsule ; emailing individuel → conformité nLPD → groupé). Garde-fous durs : golden « ligne premium **riche** » avant cascade, recherche **visible** pas Cmd+K, **sous-domaine d'envoi + base légale nLPD du stock** avant 1er email, réunion 3 fondateurs pour les retraits.
+### 1. Vague 1 - cohérence CRM [MIXTE • high • session dédiée]
+
+- **Pourquoi** : 3 maux transverses diagnostiqués (recherche en 5 implémentations, libellés techniques affichés, filtre mort). Spec écrite et tranchée 2026-06-18.
+- **Payload** → `docs/SPEC_VAGUE1_COHERENCE_2026-06-18.md` (3 critères globaux G1/G2/G3 + chantiers A/B/C).
+- [ ] **[EXÉCUTABLE]** SearchInput partagé + `searchMatch` (Prospection + Signaux, visible mobile), 3 fuites enum→helpers FR + garde anti-régression, retrait du filtre Type Signaux (mono-type). Skill design : aucun.
+
+### 2. Prospection Bloc P1 - Entreprises + Terrain [AUTO • medium • ~1 session]
+
+- **Pourquoi** : V5 confirmée, page recentrée sur la recherche de contact à la demande. Sans risque.
+- **Payload** → `docs/SPEC_MINIPROJET_PROSPECTION_SOURCES_2026-06-18.md` Bloc P1.
+- [ ] **[EXÉCUTABLE]** Retrait onglets SIMAP/RegBL (réversible par flag dérivé + garde de route `?tab=`), page = Entreprises + Terrain.
+
+### 3. Prospection Bloc P2 - Google Places + garde-fou quota [SUPERVISÉ • high • ~1 session]
+
+- **Pourquoi** : rétablir Google comme source de recherche, avec compteur quota visible et zéro débit garanti.
+- **Prérequis LEVÉ 2026-06-18** : Pascal a posé `SearchTextRequest per day = 30` dans Google Cloud Console (930/mois max < 1000 gratuits ; garant principal = cap applicatif 900 déjà codé). Re-confirmer visuellement au go prod.
+- **Payload** → même spec, Bloc P2.
+- [ ] **[EXÉCUTABLE]** Réactiver flag Google, compteur « X/900 restantes » avant recherche, blocage dur 429, audit sécu clé API.
+
+### 4. Prospection Bloc P3 - sélecteur de source premium [SUPERVISÉ • xhigh • session dédiée]
+
+- **Pourquoi** : présenter les 3 sources (search.ch/Google/Zefix) en 3 cartes claires, une active à la fois, champ adaptatif, résultats à cocher. Pas de consolidation (décision Pascal).
+- **Payload** → même spec, Bloc P3.
+- [ ] **[BLOQUÉ - golden validé + P1 + P2 livrés]** Golden HTML validé Pascal AVANT code, puis portage. Skills nommés : `redesign-skill` + `soft-skill` + `ui-ux-pro-max` + `anydesign` + `golden-standard`.
+
+### 5. Vagues 2-4 refonte CRM [SUPERVISÉ • xhigh • cascade par vagues]
+
+- **Pourquoi** : listes/fiches premium, Signaux condensés, Dashboard temporel, emailing. Cadrées, à spécifier vague par vague après la Vague 1.
+- **Payload** → mémoire cadrage (ordre des vagues + garde-fous).
+- [ ] **[BLOQUÉ - Vague 1 + mini-projet Prospection livrés]** Listes/fiches premium page par page ; Signaux condensés + Prospection CSV + Dashboard façon Capsule ; emailing individuel → nLPD → groupé. Garde-fous : golden « ligne premium riche » avant cascade, recherche visible pas Cmd+K, sous-domaine d'envoi + base légale nLPD du stock avant 1er email, réunion 3 fondateurs pour les retraits.
 
 ### Réserve (retirée du backlog actif le 2026-06-07)
 - Chantier 3 portail = non cadré, pas voulu maintenant (observer l'usage V5 d'abord). Durcissement RLS 4e user = conditionnel non déclenché (tracé §RISQUES OUVERTS + [[feedback_rls_multitenant_durcissement_si_4_users]], redéclenche au 4e user non-fondateur). Corpus golden optimiseur Découpe = déjà livré (5 cas gelés, `68c4965`/`99476f1`).
 
 ### Livré cette session
 
-- [x] ~~**Audit 360 CRM + 10 bugs corrigés racine déployés prod + cadrage refonte validé**~~ - Livré 2026-06-18 (ultracode/xhigh, **DÉPLOYÉ PROD `6b9f6e1`**, alias vérifié, smoke 303 ; suppression « Film » confirmée OK par Pascal en prod). Audit UX/UI/code 360 (18 agents) + benchmark 9 outils + council/premortem + 5 passes réflexion → doc cadrage HTML validé Pascal (Pipeline confirmé gardé). **10 bugs corrigés racine** (1 H garde suppression comptait les contacts/opps archivés invisibles = bug « Film » ; 4 M ; 5 L), 2 faux positifs écartés, **1725 tests verts** (+6), svelte-check 0, **audit sécu 0 H/C/M/L**. Détail + décisions + garde-fous → [[project-refonte-crm-cadrage-2026-06-18]] + [[audit-secu-2026-06-18-corrections-bugs-360]].
-- [x] ~~**Surveillance run rattrapage veille W24**~~ - Livré 2026-06-13 (low). Run schedule du 12/06 19:26 UTC : completed success, `phase=published` (2 items, semaine calme). Le filet anti-skip `e2daee8` a tenu (déclenchement auto, aucun dispatch manuel). Bémol mineur : `costs_persisted status=partial` (non bloquant).
-- [x] ~~**Durcissement cron veille hebdo (audit + revue 360 + 3 fix)**~~ - Livré 2026-06-12 (xhigh, `e2daee8`, poussé `main`). Audit factuel : cause racine W23 déjà fixée (`e0aef36`), W20 = crédit API (opérationnel). Fix : double cron anti-skip (`27 6` + rattrapage `27 17` `--only-if-absent`, skip si `published` OU `error`, retente l'orphelin `running`), actions v4→v6, lien email échec → runs GHA. +8 tests, 1719 verts, smoke réel skip W23 0,9s. (Run rattrapage W24 confirmé OK le 13/06, ci-dessus.)
-- [x] ~~**Bloc 2 - copy empty Prospection alignée V5**~~ - Livré 2026-06-07 (xhigh, `a2dbe62`, **DÉPLOYÉ PROD** deploy `n7qrsvi6f`, smoke authentifié OK : HTTP 200 + « Rechercher une entreprise » live, 0 résidu). Blocage soft levé (périmètre V5 défini dans `config.ts`), wording validé Pascal avant ship (zéro invention, chaque mot mappe sur `config.ts`). 6 surfaces « import masse → recherche à la demande » : bodies empty l.356/820/905 (retrait sources coupées SIMAP/RegBL), titre « importée »→« pour l'instant », CTA+icône `search`, titre modale (déjà search-first en interne). 1711 Vitest, svelte-check 0. Finding SIMAP/RegBL tracé hors scope (ci-dessus).
-- [x] ~~**Bloc 1 - merge `portail-session-1` → `main`**~~ - Livré 2026-06-07 (fast-forward `aa306fa`..`810f2e6`, 18 commits, 0 conflit, poussé GitHub). `main` = prod.
-→ Livrés 2026-06-07 archivés (Bloc 1 re-audit + bug prod HIGH pipeline, Vague 4d mojibake Zefix, Vague 4c a11y) → `archive/claude-md-crm-livre-2026-06-18.md`. Vagues 4a/4b + REG-01 suppression + Vagues 1/2 + V5 + audit live 13 surfaces → `archive/2026-06-07-sessions.md` + `memory/project_vague4_palette_deep_2026-06-07.md` + [[project_audit_signaux_prospection_2026-06-07]] + `memory/audit_secu_2026-06-07_reg01_suppression_entreprise.md`.
+- [x] ~~**Cadrage refonte CRM : spec Vague 1 + mini-projet Prospection (3 blocs) + vérif facturation Google**~~ - Livré 2026-06-18 (xhigh). 2 specs écrites et tranchées : `docs/SPEC_VAGUE1_COHERENCE_2026-06-18.md` (3 critères globaux + chantiers A recherche unique visible / B 3 fuites enum→FR / C Signaux mono-type) + `docs/SPEC_MINIPROJET_PROSPECTION_SOURCES_2026-06-18.md` (P1 Entreprises+Terrain, P2 Google+quota, P3 sélecteur source premium). Décisions Pascal : RegBL retiré (0 contact actionnable), SIMAP→Signaux only, Google rétabli sans consolidation, sélecteur 3 cartes. Facturation Google vérifiée (sources officielles) : SKU Enterprise 1000 gratuits/mois, garant zéro débit = cap applicatif 900 + quota `SearchTextRequest per day=30` posé par Pascal. 3 skills design lus (ui-ux-pro-max, anydesign, algorithmic-art). → [[project-refonte-crm-cadrage-2026-06-18]].
+- [x] ~~**Audit 360 CRM + 10 bugs corrigés racine déployés prod + cadrage refonte validé**~~ - Livré 2026-06-18 (ultracode/xhigh, **DÉPLOYÉ PROD `6b9f6e1`**, alias vérifié, smoke 303). Audit UX/UI/code 360 (18 agents) + benchmark 9 outils + council/premortem + 5 passes réflexion → doc cadrage HTML validé Pascal. **10 bugs corrigés racine** (1 H bug « Film » ; 4 M ; 5 L), 2 faux positifs écartés, **1725 tests verts**, svelte-check 0, **audit sécu 0 H/C/M/L**. → [[project-refonte-crm-cadrage-2026-06-18]] + [[audit-secu-2026-06-18-corrections-bugs-360]].
+- [x] ~~**Surveillance run rattrapage veille W24**~~ - Livré 2026-06-13 (low). Run 12/06 19:26 UTC : completed success, `phase=published` (2 items). Filet anti-skip `e2daee8` a tenu. Bémol : `costs_persisted status=partial` (non bloquant).
+- [x] ~~**Durcissement cron veille hebdo (audit + revue 360 + 3 fix)**~~ - Livré 2026-06-12 (xhigh, `e2daee8`, `main`). Double cron anti-skip (`27 6` + rattrapage `27 17` `--only-if-absent`), actions v4→v6, lien email échec → runs GHA. +8 tests, 1719 verts.
+→ Livrés antérieurs (Bloc 2 copy empty Prospection V5 `a2dbe62`, Bloc 1 merge `main` `810f2e6`, re-audit + bug HIGH pipeline, Vague 4d mojibake, 4c a11y) → `archive/claude-md-crm-livre-2026-06-18.md` + `archive/2026-06-07-sessions.md` + `memory/project_vague4_palette_deep_2026-06-07.md`.
 
 ### Watch list active après pivot
 
