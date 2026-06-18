@@ -68,11 +68,14 @@ export const POST = async ({ params, request, locals }: RequestEvent) => {
 	if (merged_contact_id) {
 		const { data: contact, error: cErr } = await locals.supabase
 			.from('contacts')
-			.select('id, entreprise_id')
+			.select('id, entreprise_id, statut_archive')
 			.eq('id', merged_contact_id)
 			.maybeSingle();
 		if (cErr) return genericError(cErr, 'Erreur recherche contact');
-		if (!contact) return json({ error: 'Contact cible introuvable' }, { status: 404 });
+		// Un contact archivé (soft-delete) est invisible dans le CRM : le traiter
+		// comme introuvable empêche de fusionner un brouillon terrain sur une ligne
+		// morte (perte silencieuse du contact) sans révéler son existence archivée.
+		if (!contact || contact.statut_archive) return json({ error: 'Contact cible introuvable' }, { status: 404 });
 		// Intégrité référentiel (audit V3 Low) : la fusion ne peut viser qu'un contact
 		// de la MÊME entreprise que la suggestion (sinon merged_contact_id incohérent).
 		if (contact.entreprise_id !== sug.entreprise_id) {

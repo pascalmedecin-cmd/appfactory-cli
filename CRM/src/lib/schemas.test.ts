@@ -164,6 +164,15 @@ describe('LeadBatchStatutSchema', () => {
 		});
 		expect(r.success).toBe(false);
 	});
+
+	it('rejette un lot de plus de 500 ids (cap anti-DoS, parité avec SignalBatchDeleteSchema)', () => {
+		const uuid = '550e8400-e29b-41d4-a716-446655440000';
+		const tooMany = Array.from({ length: 501 }, () => uuid);
+		expect(validate(LeadBatchStatutSchema, { ids: tooMany, statut: 'interesse' }).success).toBe(false);
+		// 500 pile passe (borne inclusive).
+		const exactly500 = Array.from({ length: 500 }, () => uuid);
+		expect(validate(LeadBatchStatutSchema, { ids: exactly500, statut: 'interesse' }).success).toBe(true);
+	});
 });
 
 describe('SignalBatchDeleteSchema (audit 360 V3b L-28)', () => {

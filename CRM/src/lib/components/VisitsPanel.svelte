@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount, onDestroy } from 'svelte';
+	import { onDestroy } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
@@ -52,7 +52,11 @@
 		return null;
 	});
 
-	onMount(() => {
+	// Réagit au changement d'owner (leadId/entrepriseId) via ownerQuery, pas
+	// seulement au montage : recharge si le composant est réutilisé pour une autre
+	// entité sans démontage (défense-in-depth vs le remontage actuel du SlideOut).
+	$effect(() => {
+		void ownerQuery;
 		void loadVisits();
 	});
 

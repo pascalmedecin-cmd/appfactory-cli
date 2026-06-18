@@ -32,6 +32,7 @@ function makeMockSupabase(opts: {
 	updateError?: { message: string } | null;
 	deleteError?: { message: string } | null;
 	candidates?: unknown[];
+	reserved?: unknown[] | null; // lignes renvoyées par l'UPDATE conditionnel d'idempotence (signaux)
 } = {}) {
 	const builder = {
 		select() { return builder; },
@@ -43,9 +44,22 @@ function makeMockSupabase(opts: {
 		limit() { return Promise.resolve({ data: opts.candidates ?? [], error: null }); },
 		insert() { return Promise.resolve({ error: opts.insertError ?? null }); },
 		update() {
-			return {
-				eq() { return Promise.resolve({ error: opts.updateError ?? null }); }
+			// Supporte 2 formes : `update().eq()` awaité (→ {error}) ET la chaîne
+			// d'idempotence signaux `update().eq().is().select()` (→ {data: reserved, error}).
+			const ub = {
+				eq() { return ub; },
+				is() { return ub; },
+				select() {
+					return Promise.resolve({
+						data: opts.reserved === undefined ? [{ id: 'sig' }] : opts.reserved,
+						error: opts.updateError ?? null,
+					});
+				},
+				then(resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) {
+					return Promise.resolve({ error: opts.updateError ?? null }).then(resolve, reject);
+				},
 			};
+			return ub;
 		},
 		delete() {
 			return {

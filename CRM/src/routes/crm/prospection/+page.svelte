@@ -174,6 +174,12 @@
 		if (!filterMounted) { filterMounted = true; return; }
 		if (filterDebounce) clearTimeout(filterDebounce);
 		filterDebounce = setTimeout(() => applyFilters(), 200);
+		// Cleanup au démontage (et avant chaque re-run) : un timer en vol ne doit pas
+		// déclencher un goto/navigation parasite après que l'utilisateur a quitté la page.
+		return () => {
+			if (filterDebounce) clearTimeout(filterDebounce);
+			filterDebounce = null;
+		};
 	});
 
 	// Phase 2 2026-05-01 : columns par onglet (colonne signature distincte par nature de signal).

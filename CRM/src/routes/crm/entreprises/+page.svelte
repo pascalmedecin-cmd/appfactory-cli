@@ -428,7 +428,7 @@
 					<img src={logo} alt="" class="w-16 h-16 rounded-lg object-contain bg-white border border-border" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
 				{:else}
 					<span class="flex items-center justify-center w-16 h-16 rounded-lg bg-primary-light text-primary font-bold text-2xl">
-						{selectedEntreprise.raison_sociale[0].toUpperCase()}
+						{selectedEntreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
 					</span>
 				{/if}
 				<div>

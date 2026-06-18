@@ -253,6 +253,30 @@ export const actions: Actions = {
 
 		const ts = now();
 		const oppId = newId();
+
+		// Idempotence serveur : on RÉSERVE d'abord le signal via un UPDATE conditionnel
+		// (le filtre `.is('opportunite_associee_id', null)` joue le rôle de verrou
+		// logique). Si 0 ligne revient, le signal est déjà converti (double-clic, page
+		// stale, requête forgée) → on s'arrête AVANT tout insert, donc aucune
+		// opportunité orpheline n'est créée.
+		const { data: reserved, error: lockError } = await locals.supabase
+			.from('signaux_affaires')
+			.update({
+				statut_traitement: 'converti',
+				opportunite_associee_id: oppId,
+			})
+			.eq('id', parsed.data.signal_id)
+			.is('opportunite_associee_id', null)
+			.select('id');
+
+		const lockFail = dbFail(lockError);
+		if (lockFail) return lockFail;
+
+		if (!reserved || reserved.length === 0) {
+			// Déjà converti : réponse idempotente (pas une erreur), on renvoie au pipeline.
+			return { success: true as const, redirectTo: '/crm/pipeline', alreadyConverted: true as const };
+		}
+
 		const { error: oppError } = await locals.supabase.from('opportunites').insert({
 			id: oppId,
 			titre: parsed.data.titre,
@@ -265,18 +289,16 @@ export const actions: Actions = {
 		});
 
 		const oppFail = dbFail(oppError);
-		if (oppFail) return oppFail;
-
-		const { error: sigError } = await locals.supabase
-			.from('signaux_affaires')
-			.update({
-				statut_traitement: 'converti',
-				opportunite_associee_id: oppId,
-			})
-			.eq('id', parsed.data.signal_id);
-
-		const sigFail = dbFail(sigError);
-		if (sigFail) return sigFail;
+		if (oppFail) {
+			// L'insert a échoué après la réservation : on libère le signal pour qu'un
+			// nouvel essai soit possible (sinon il pointerait vers un oppId inexistant).
+			await locals.supabase
+				.from('signaux_affaires')
+				.update({ statut_traitement: 'en_analyse', opportunite_associee_id: null })
+				.eq('id', parsed.data.signal_id)
+				.eq('opportunite_associee_id', oppId);
+			return oppFail;
+		}
 
 		return { success: true as const, redirectTo: '/crm/pipeline' };
 	},

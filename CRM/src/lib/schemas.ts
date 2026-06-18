@@ -246,7 +246,10 @@ export const LeadUpdateStatutSchema = z.object({
 });
 
 export const LeadBatchStatutSchema = z.object({
-	ids: z.array(z.string().uuid()).min(1, 'Selectionnez au moins un lead'),
+	ids: z
+		.array(z.string().uuid())
+		.min(1, 'Selectionnez au moins un lead')
+		.max(500, 'Maximum 500 leads par lot'),
 	statut: z.enum(STATUTS_LEAD),
 });
 

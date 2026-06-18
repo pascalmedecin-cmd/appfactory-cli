@@ -69,6 +69,14 @@
 	let searchTimer: ReturnType<typeof setTimeout> | null = null;
 	const SEARCH_DEBOUNCE_MS = 250;
 
+	// Clear le timer de debounce au démontage : sinon un setTimeout en vol
+	// déclenche un fetch + des writes $state sur un composant démonté.
+	$effect(() => {
+		return () => {
+			if (searchTimer) clearTimeout(searchTimer);
+		};
+	});
+
 	const indicators = $derived(contactsIndicators(data.contacts));
 	const counts = $derived(contactsCountsByTab(data.contacts));
 	const filteredContacts = $derived(filterContactsByTab(data.contacts, activeTab));
@@ -408,7 +416,7 @@
 						/>
 					{:else}
 						<span class="flex items-center justify-center w-10 h-10 rounded-md bg-primary-light text-primary font-bold text-sm">
-							{(selectedContact.entreprises?.raison_sociale ?? '?')[0].toUpperCase()}
+							{selectedContact.entreprises?.raison_sociale?.[0]?.toUpperCase() ?? '?'}
 						</span>
 					{/if}
 					<div>

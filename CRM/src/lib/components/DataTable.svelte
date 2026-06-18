@@ -280,8 +280,20 @@
 		}
 	}
 
+	// Vrai quand toutes les lignes de la page visible sont sélectionnées, même si
+	// `selectedIds` contient EN PLUS des ids hors page (cas select-all-matching côté
+	// parent, ex. /prospection : 185 ids sélectionnés alors que la page n'en montre 25).
+	// Sans ce dérivé, `selectedIds.size === paged.length` retombe à false et la case
+	// d'en-tête se décoche à tort après un select-all-matching.
+	const allPageSelected = $derived(
+		paged.length > 0 && paged.every((r) => selectedIds.has(r.id))
+	);
+
 	function toggleSelectAll() {
-		if (selectedIds.size === paged.length) {
+		// Si quoi que ce soit est sélectionné (page seule OU sur-ensemble cross-page),
+		// un clic désélectionne tout (pattern Gmail/Linear). Ne JAMAIS réduire un
+		// sur-ensemble à la seule page : ce collapse détruisait la sélection complète.
+		if (selectedIds.size > 0) {
 			selectedIds = new Set();
 		} else {
 			selectedIds = new Set(paged.map((r) => r.id));
@@ -349,7 +361,7 @@
 					{#if selectable}
 						<th class="dt-th-checkbox" scope="col">
 							<label class="relative inline-flex items-center justify-center w-5 h-5 cursor-pointer before:absolute before:content-[''] before:-inset-3">
-								<input type="checkbox" class="w-4 h-4 cursor-pointer" checked={selectedIds.size === paged.length && paged.length > 0} onchange={toggleSelectAll} aria-label="Tout sélectionner" />
+								<input type="checkbox" class="w-4 h-4 cursor-pointer" checked={allPageSelected} onchange={toggleSelectAll} aria-label="Tout sélectionner" />
 							</label>
 						</th>
 					{/if}

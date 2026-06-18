@@ -27,7 +27,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const [contactsRes, entreprisesRes, opportunitesRes, relancesRes, activitesRes, signauxRes, alertesRes, triageRes] = await Promise.all([
 		locals.supabase.from('contacts').select('*', { count: 'exact', head: true }).eq('statut_archive', false),
-		locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }),
+		// Aligné sur l'invariant « les accès métier excluent les archivés » (comme
+		// le compteur contacts ci-dessus) : le cron nettoyage-crm archive les
+		// entreprises radiées/dissoutes → elles ne doivent pas gonfler le KPI.
+		// NB : opportunites/signaux n'ont PAS de colonne statut_archive (ne pas filtrer).
+		locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }).eq('statut_archive', false),
 		locals.supabase.from('opportunites').select('*', { count: 'exact', head: true }),
 		// Audit 360 M-06 : exclure les deals clos (gagné/perdu) des relances en retard.
 		// `etape_pipeline` est nullable : `NOT IN (...)` exclurait les NULL en logique

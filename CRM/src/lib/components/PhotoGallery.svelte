@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import { toasts } from '$lib/stores/toast';
@@ -39,7 +38,11 @@
 		return null;
 	});
 
-	onMount(() => {
+	// Réagit au changement d'owner (leadId/entrepriseId) via ownerQuery, pas
+	// seulement au montage : recharge si le composant est réutilisé pour une autre
+	// entité sans démontage (défense-in-depth vs le remontage actuel du SlideOut).
+	$effect(() => {
+		void ownerQuery;
 		void loadPhotos();
 	});
 

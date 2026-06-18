@@ -9,7 +9,7 @@ const ENT = '25087e61-0d78-4e2c-b990-1c9e014dc413';
 
 type MockOpts = {
 	suggestion?: Record<string, unknown> | null; // undefined → défaut en_attente
-	contact?: { id: string; entreprise_id?: string } | null; // pour le merge : contact cible
+	contact?: { id: string; entreprise_id?: string; statut_archive?: boolean } | null; // pour le merge : contact cible
 	updateRace?: boolean; // l'update conditionnel ne matche aucune ligne (race perdue)
 	insertError?: { message: string } | null;
 };
@@ -133,6 +133,19 @@ describe('POST /api/contact-suggestions/[id]/resolve', () => {
 	it('valide avec merged_contact_id introuvable → 404', async () => {
 		const { event } = makeEvent(SID, { action: 'valide', merged_contact_id: 'c-fantome' }, { contact: null });
 		expect((await POST(event)).status).toBe(404);
+	});
+
+	it('valide avec merged_contact_id ARCHIVÉ (même entreprise) → 404, pas de fusion sur ligne morte', async () => {
+		// Un contact soft-deleted est invisible dans le CRM : le fusionner perdrait
+		// silencieusement le brouillon terrain. Traité comme introuvable.
+		const { event, supabase } = makeEvent(
+			SID,
+			{ action: 'valide', merged_contact_id: 'c-archive' },
+			{ contact: { id: 'c-archive', entreprise_id: ENT, statut_archive: true } }
+		);
+		const res = await POST(event);
+		expect(res.status).toBe(404);
+		expect(supabase._calls.contactInsert).toBeNull(); // aucune création non plus
 	});
 
 	it('valide avec merged_contact_id d\'une AUTRE entreprise → 409 (audit V3 Low, intégrité référentiel)', async () => {

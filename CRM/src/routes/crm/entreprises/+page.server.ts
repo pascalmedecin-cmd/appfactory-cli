@@ -18,6 +18,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const { data: entreprises, error } = await locals.supabase
 		.from('entreprises')
 		.select('*')
+		.eq('statut_archive', false)
 		.order('date_derniere_modification', { ascending: false });
 
 	if (error) {
@@ -88,9 +89,26 @@ export const actions: Actions = {
 		// pour alimenter la modale UI qui invite à les détacher d'abord. JAMAIS
 		// contournée par `force` : ces entités ne sont pas des données filles de
 		// l'entreprise (FK SET NULL côté DB), on refuse de les orpheliner en masse.
+		//
+		// REG-01bis (fix bug « contact inexistant attaché ») : la garde ne compte que
+		// les dépendances réellement DÉTACHABLES PAR L'UTILISATEUR, c.-à-d. visibles
+		// dans la fiche. Le `load` n'affiche que les contacts non archivés (l.32) et
+		// les opportunités actives (SlideOut exclut `gagne`/`perdu`). Compter ici un
+		// contact archivé ou une opportunité clôturée — invisibles donc impossibles à
+		// détacher depuis l'UI — produisait un blocage fantôme (« un contact inexistant
+		// est attaché », entreprise « Film »). On aligne donc la garde sur l'UI : la FK
+		// `ON DELETE SET NULL` détache proprement ces archives à la suppression.
 		const [contactsRes, oppsRes] = await Promise.all([
-			locals.supabase.from('contacts').select('id, nom, prenom').eq('entreprise_id', parsed.data.id),
-			locals.supabase.from('opportunites').select('id, titre').eq('entreprise_id', parsed.data.id),
+			locals.supabase
+				.from('contacts')
+				.select('id, nom, prenom')
+				.eq('entreprise_id', parsed.data.id)
+				.eq('statut_archive', false),
+			locals.supabase
+				.from('opportunites')
+				.select('id, titre')
+				.eq('entreprise_id', parsed.data.id)
+				.not('etape_pipeline', 'in', '(gagne,perdu)'),
 		]);
 
 		// I-1 (fail-secure) : une erreur de lecture des dépendances ne doit JAMAIS
