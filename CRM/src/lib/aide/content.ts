@@ -631,7 +631,7 @@ const niveau3: AideLevel = {
 				},
 				{
 					type: 'paragraph',
-					text: 'Procédure 4 - Lancer la veille manuellement. La veille est produite par le cron « intelligence ». Pour la déclencher hors planning, appeler la route /api/cron/intelligence avec le secret de cron en en-tête (la même que le planning Vercel utilise). Vérifier ensuite l\'édition produite dans l\'écran Veille avant de la considérer publiée.'
+					text: 'Procédure 4 - Lancer la veille manuellement. La veille hebdomadaire est produite par un workflow GitHub Actions (« Cron veille hebdomadaire FilmPro », vendredi matin), et non plus par une route de l\'application. Pour la relancer hors planning, déclencher le workflow manuellement dans l\'onglet Actions du dépôt GitHub (bouton « Run workflow », champ semaine ISO optionnel). Vérifier ensuite l\'édition produite dans l\'écran Veille avant de la considérer publiée.'
 				},
 				{
 					type: 'callout',
