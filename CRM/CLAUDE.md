@@ -3,10 +3,10 @@
 **Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; le container racine est un stub pointant vers les sous-projets. Contexte migration complet → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_appfactory_restructure.md`.
 
 **Statut :** Clean state 2026-05-28 - refonte mobile V2 **abandonnée** après smoke iPhone (overscope) → pivot **V3 outil terrain only** (`archive/2026-05-28-pivot-mobile-v3.md`). **Portail FilmPro multi-outils : CRM (`/crm`) + Découpe Films (`/decoupe`) en prod sur `filmpro-portail.vercel.app` (2026-06-05).** Formation IA = sous-projet autonome `Formation/`, `cc` option 5. Antérieur en prod (Signaux V4, Log, audit 360, golden v9, restructure S173-S174) → `archive/2026-05-06-sessions.md`.
-**Derniere mise a jour :** 2026-06-18 (**Vague 1 cohérence LIVRÉE** : SearchInput+searchMatch, 4 fuites enum→FR+garde, retrait filtre Type Signaux ; 1746 verts, svelte-check 0, build vert, e2e 3/3+cross-app, audit sécu 0 H/C/M ; commité `676a9d4` poussé `main`, **pas encore déployé** `vercel deploy --prod`. Avant : cadrage refonte CRM 2 specs ; 10 bugs racine déployés prod `6b9f6e1`). Prod = alias `filmpro-portail.vercel.app` sur `810f2e6` (dernière promotion ; `6b9f6e1` les 10 bugs mergé `main`, déployé prod via CLI manuel). Historique deploys (cron veille `e2daee8`, copy Prospection V5 `a2dbe62`, Vagues 4a→4d, V5 `364bd1f`) → « Livré » + archives.
+**Derniere mise a jour :** 2026-06-19 (**Vague 2 refonte CRM - cascade 2/5** : Entreprises + Contacts premium livrés [commit `60a583c`, flag `ffCrmListesV2` OFF, **non déployé**, 1827 Vitest, audit 0 H/C/M/L]. Avant 18/06 : **Mini-projet Prospection CLOS** P1/P2/P3 [code pas déployé], Vague 1 `676a9d4`, cadrage 2 specs, 10 bugs `6b9f6e1`). Prod = alias `filmpro-portail.vercel.app` sur `810f2e6`. Détail → « Livré cette session » + archives.
 **Derniere revue /optimize :** 2026-04-05
 **Prochain bug :** #001
-**Session courante :** 2026-06-18 - **Vague 1 cohérence LIVRÉE** (commité `676a9d4`, poussé `main`, pas déployé). 5 nouveaux fichiers + 9 modifiés. Détail → « Livré cette session ». NB cron veille (durcissement `e2daee8` 12/06, anti-skip + actions v6) : code non exécuté par la prod Vercel (runner GHA), prochaine livraison CRM l'embarquera.
+**Session courante :** 2026-06-19 - **Vague 2 refonte CRM : Entreprises + Contacts premium livrés** (cascade 2/5, commit `60a583c`, flag `ffCrmListesV2` OFF, **non déployé**). Golden validé Chrome, design-system partagé (KpiStrip/StagePill/SourcePill, `crm-*` app.css). Reste cascade : Signaux → Prospection → Pipeline. Détail → « Livré cette session ». NB : rien de cette refonte n'est déployé (`vercel deploy --prod` au prochain go prod ; embarquera aussi mini-projet Prospection + Vague 1 + durcissement cron veille `e2daee8`).
 **Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175 : `2026-05-06-sessions.md` ; S122-S125 : `2026-04-28-sessions.md` ; S70-S107 : `decisions-sessions-*.md` + `Formation/CLAUDE.md`).
 
 
@@ -102,7 +102,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 - **Auth** : OTP email 6 chiffres @filmpro.ch + session 7 jours httpOnly ; SMTP Resend (domaine verifié, free plan)
 - **APIs** : Zefix REST + search.ch + fal.ai Flux 1.1 Pro Ultra (partage clé avec Enseignement) — Pexels/Unsplash supprimés S67
 - **Crons** : `/api/cron/{signaux,alertes,nettoyage-crm,intelligence,intelligence-archive}` tous sécurisés `CRON_SECRET` + service role (Cron `media-enrich` supprimé S67)
-- **Tests** : Vitest 1725 (dernier run vérifié 2026-06-18) + Playwright e2e 34. Accessibilité : focus trap + ConfirmModal partout. Sécurité : Zod sur 19 form actions, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
+- **Tests** : Vitest 1802 (dernier run vérifié 2026-06-18) + Playwright e2e (suite + P1/P2/P3 Prospection). Accessibilité : focus trap + ConfirmModal partout, axe-core 0 violation modale P3. Sécurité : Zod sur 20 form actions/endpoints, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
 
 → Détail intégral (env vars, BDD exhaustive, liste tests, liste crons, headers sécurité, pagination serveur) : `archive/infra-crm-detail.md`
 
@@ -146,51 +146,27 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 2 - Prospection P1 (Entreprises + Terrain, retrait onglets SIMAP/RegBL par flag) - sans prérequis, sans risque. La **Vague 1 cohérence est LIVRÉE** 2026-06-18 (voir « Livré cette session »).
+**Prochaine attaque** : Bloc 1 - Vague 2 cascade, page **Signaux** - golden « ligne premium riche » validé en Chrome, Entreprises & Contacts livrés (commit `60a583c`, flag `ffCrmListesV2` OFF, primitives partagées en place). Décliner Signaux → Prospection → Pipeline. NB : Signaux recoupe la Vague 3 « Signaux condensés » du cadrage - rester sur la ligne/fiche premium, ne pas empiéter sur la condensation Vague 3.
 
-> Cadrage commun (refonte UX/UI CRM, validé Pascal 2026-06-18 : audit 360 + benchmark 9 outils + réflexion adverse) → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_refonte_crm_cadrage_2026-06-18.md` + doc HTML `CRM/.product-architect/cadrage-refonte-crm-2026-06-18.html`.
+> Cadrage commun (refonte UX/UI CRM, validé Pascal 2026-06-18) → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_refonte_crm_cadrage_2026-06-18.md` + doc HTML `CRM/.product-architect/cadrage-refonte-crm-2026-06-18.html`.
 
-### 1. Vague 1 - cohérence CRM [MIXTE • high • session dédiée]
+### 1. Vagues 2-4 refonte CRM [SUPERVISÉ • xhigh • cascade par vagues]
 
-- **Pourquoi** : 3 maux transverses diagnostiqués (recherche en 5 implémentations, libellés techniques affichés, filtre mort). Spec écrite et tranchée 2026-06-18.
-- **Payload** → `docs/SPEC_VAGUE1_COHERENCE_2026-06-18.md` (3 critères globaux G1/G2/G3 + chantiers A/B/C).
-- [x] ~~**[EXÉCUTABLE]** SearchInput partagé + `searchMatch` (Prospection + Signaux, visible mobile), 3 fuites enum→helpers FR + garde anti-régression, retrait du filtre Type Signaux (mono-type)~~ - **Livré 2026-06-18** (voir « Livré cette session »).
-
-### 2. Prospection Bloc P1 - Entreprises + Terrain [AUTO • medium • ~1 session]
-
-- **Pourquoi** : V5 confirmée, page recentrée sur la recherche de contact à la demande. Sans risque.
-- **Payload** → `docs/SPEC_MINIPROJET_PROSPECTION_SOURCES_2026-06-18.md` Bloc P1.
-- [ ] **[EXÉCUTABLE]** Retrait onglets SIMAP/RegBL (réversible par flag dérivé + garde de route `?tab=`), page = Entreprises + Terrain.
-
-### 3. Prospection Bloc P2 - Google Places + garde-fou quota [SUPERVISÉ • high • ~1 session]
-
-- **Pourquoi** : rétablir Google comme source de recherche, avec compteur quota visible et zéro débit garanti.
-- **Prérequis LEVÉ 2026-06-18** : Pascal a posé `SearchTextRequest per day = 30` dans Google Cloud Console (930/mois max < 1000 gratuits ; garant principal = cap applicatif 900 déjà codé). Re-confirmer visuellement au go prod.
-- **Payload** → même spec, Bloc P2.
-- [ ] **[EXÉCUTABLE]** Réactiver flag Google, compteur « X/900 restantes » avant recherche, blocage dur 429, audit sécu clé API.
-
-### 4. Prospection Bloc P3 - sélecteur de source premium [SUPERVISÉ • xhigh • session dédiée]
-
-- **Pourquoi** : présenter les 3 sources (search.ch/Google/Zefix) en 3 cartes claires, une active à la fois, champ adaptatif, résultats à cocher. Pas de consolidation (décision Pascal).
-- **Payload** → même spec, Bloc P3.
-- [ ] **[BLOQUÉ - golden validé + P1 + P2 livrés]** Golden HTML validé Pascal AVANT code, puis portage. Skills nommés : `redesign-skill` + `soft-skill` + `ui-ux-pro-max` + `anydesign` + `golden-standard`.
-
-### 5. Vagues 2-4 refonte CRM [SUPERVISÉ • xhigh • cascade par vagues]
-
-- **Pourquoi** : listes/fiches premium, Signaux condensés, Dashboard temporel, emailing. Cadrées, à spécifier vague par vague après la Vague 1.
-- **Payload** → mémoire cadrage (ordre des vagues + garde-fous).
-- [ ] **[BLOQUÉ - Vague 1 + mini-projet Prospection livrés]** Listes/fiches premium page par page ; Signaux condensés + Prospection CSV + Dashboard façon Capsule ; emailing individuel → nLPD → groupé. Garde-fous : golden « ligne premium riche » avant cascade, recherche visible pas Cmd+K, sous-domaine d'envoi + base légale nLPD du stock avant 1er email, réunion 3 fondateurs pour les retraits.
+- **Pourquoi** : listes/fiches premium, Signaux condensés, Dashboard temporel, emailing. Cadrées, à décliner vague par vague.
+- **Payload** → cadrage : [[project-refonte-crm-cadrage-2026-06-18]] + golden `CRM/.product-architect/refonte-vague2/golden-listes-fiches-v1.html` + audit [[audit-secu-2026-06-19-vague2-listes-premium]].
+- **Fait** : golden validé Chrome ; Vague 2 **Entreprises + Contacts** livrés (commit `60a583c`, non déployé, flag OFF) ; design-system partagé (KpiStrip, StagePill, SourcePill, `crm-*` dans app.css) + helpers purs fuzzés (20k cas). Revues 0 H/C/M.
+- [ ] **[EXÉCUTABLE]** Cascade Vague 2 premium (même flag `ffCrmListesV2`) sur les 3 pages restantes : **Signaux → Prospection → Pipeline** (réutiliser StagePill/SourcePill/KpiStrip/`crm-*` ; sur Signaux la ScorePill existe déjà ; n'afficher que des signaux réellement chargés). Puis Vague 3 (Signaux condensés + actions, Prospection colonne Campagne + CSV, Dashboard Capsule) et Vague 4 (emailing individuel → nLPD → groupé). Garde-fous : golden avant toute nouvelle direction visuelle, recherche visible pas Cmd+K, sous-domaine d'envoi + base légale nLPD du stock avant 1er email, réunion 3 fondateurs pour les retraits.
+- [ ] **[EXÉCUTABLE - optionnel]** Polir les fiches Entreprises + Contacts au niveau golden complet (grille de faits bordée + timeline historique) si souhaité.
 
 ### Réserve (retirée du backlog actif le 2026-06-07)
-- Chantier 3 portail = non cadré, pas voulu maintenant (observer l'usage V5 d'abord). Durcissement RLS 4e user = conditionnel non déclenché (tracé §RISQUES OUVERTS + [[feedback_rls_multitenant_durcissement_si_4_users]], redéclenche au 4e user non-fondateur). Corpus golden optimiseur Découpe = déjà livré (5 cas gelés, `68c4965`/`99476f1`).
+- Chantier 3 portail = non cadré (observer l'usage V5 d'abord). Durcissement RLS 4e user = conditionnel ([[feedback_rls_multitenant_durcissement_si_4_users]], redéclenche au 4e user non-fondateur). Corpus golden optimiseur Découpe = livré (`68c4965`/`99476f1`).
 
 ### Livré cette session
 
-- [x] ~~**Vague 1 cohérence CRM (3 chantiers A/B/C)**~~ - Livré 2026-06-18 (ultracode/xhigh, commité `676a9d4` poussé `main`, **pas déployé** - `vercel deploy --prod` à faire). **A** : primitive `SearchInput.svelte` + helper pur `searchMatch.ts` (sur `normalizeNFD`), debounce unifié 250ms, câblée dans `DataTable` (Contacts/Découpe/veille) + Signaux + Prospection standalone visible desktop ET mobile (Option B - corrige le vrai bug A1 « caché mobile » sous `ffCrmMobileV2`, prouvé e2e). **B** : 4 fuites enum→helpers FR (B1-B3 spec + B4 RelancesList) ; `etapeLabel` promu dans `pipelineFormat.ts` ; garde Vitest `no-brute-enum-render`. **C** : filtre Type Signaux retiré (mono-type), Canton gardé, réversible. Preuves : svelte-check 0, 1746 Vitest verts, build vert, e2e 3/3 + cross-app `decoupe/produits`, revue 12 agents 0 H/C/M. **Dette tracée (vague ultérieure)** : 3 recherches non migrées (Entreprises/Aide/terrain), accent-insensible Prospection serveur différé (exige migration `unaccent`). → [[project-refonte-crm-cadrage-2026-06-18]] + audit [[audit-secu-2026-06-18-vague1-coherence]].
-
-- [x] ~~**Cadrage refonte CRM : spec Vague 1 + mini-projet Prospection (3 blocs) + vérif facturation Google**~~ - Livré 2026-06-18 (xhigh). 2 specs écrites et tranchées : `docs/SPEC_VAGUE1_COHERENCE_2026-06-18.md` (3 critères globaux + chantiers A recherche unique visible / B 3 fuites enum→FR / C Signaux mono-type) + `docs/SPEC_MINIPROJET_PROSPECTION_SOURCES_2026-06-18.md` (P1 Entreprises+Terrain, P2 Google+quota, P3 sélecteur source premium). Décisions Pascal : RegBL retiré (0 contact actionnable), SIMAP→Signaux only, Google rétabli sans consolidation, sélecteur 3 cartes. Facturation Google vérifiée (sources officielles) : SKU Enterprise 1000 gratuits/mois, garant zéro débit = cap applicatif 900 + quota `SearchTextRequest per day=30` posé par Pascal. 3 skills design lus (ui-ux-pro-max, anydesign, algorithmic-art). → [[project-refonte-crm-cadrage-2026-06-18]].
-- [x] ~~**Audit 360 CRM + 10 bugs corrigés racine déployés prod + cadrage refonte validé**~~ - Livré 2026-06-18 (ultracode/xhigh, **DÉPLOYÉ PROD `6b9f6e1`**, alias vérifié, smoke 303). Audit UX/UI/code 360 (18 agents) + benchmark 9 outils + council/premortem + 5 passes réflexion → doc cadrage HTML validé Pascal. **10 bugs corrigés racine** (1 H bug « Film » ; 4 M ; 5 L), 2 faux positifs écartés, **1725 tests verts**, svelte-check 0, **audit sécu 0 H/C/M/L**. → [[project-refonte-crm-cadrage-2026-06-18]] + [[audit-secu-2026-06-18-corrections-bugs-360]].
-→ Livrés antérieurs (Surveillance W24, durcissement cron veille `e2daee8`, copy empty Prospection V5 `a2dbe62`, merge `main` `810f2e6`, re-audit + bug HIGH pipeline, Vague 4d mojibake, 4c a11y) → `archive/claude-md-crm-livre-2026-06-18.md` + `archive/2026-06-07-sessions.md` + `memory/project_vague4_palette_deep_2026-06-07.md`.
+- [x] ~~**Vague 2 refonte - listes/fiches premium (Entreprises + Contacts)**~~ - Livré 2026-06-19 (ultracode/xhigh, commit `60a583c`, **non déployé**, flag `ffCrmListesV2` OFF). Golden « ligne premium riche » validé Chrome → cascade : **Entreprises** (ligne riche logo/localisation/contacts/pipeline/statut/source+activité, chips KPI, cartes enrichies, fiche hero) + **Contacts** (avatar, entreprise, email/tél, badge prescripteur, source+activité, fiche hero ; pas de pill pipeline = opportunités non chargées, aucun signal inventé). Design-system partagé `KpiStrip`/`StagePill`/`SourcePill` + classes `crm-*` dans `app.css` ; 5 helpers purs **fuzzés (20k cas)**. svelte-check 0, **1827 Vitest**, build vert, captures réelles validées, **OFF byte-identique prouvé**. Revues adversariales : security 0 H/C/M/L + bug-hunter 0 C/H/M (1 Low emoji corrigé). → [[audit-secu-2026-06-19-vague2-listes-premium]] + golden `CRM/.product-architect/refonte-vague2/golden-listes-fiches-v1.html`.
+- [x] ~~**Mini-projet Prospection P1+P2+P3 (recentrage sources)**~~ - Livré 2026-06-18 (ultracode/xhigh, **pas déployé**). Retrait onglets SIMAP/RegBL par flag (P1) + Google Places rétabli avec compteur quota cap 900/mois (P2) + portage golden Svelte sélecteur 3 sources aperçu→cocher→import sélectif durci Zod par-ligne (P3, golden validé Chrome, bug critique bug-hunter corrigé). 1802 Vitest, audits **0 H/C/M**. → spec `docs/SPEC_MINIPROJET_PROSPECTION_SOURCES_2026-06-18.md` + [[audit-secu-2026-06-18-p2-google-places-quota]] + [[audit-secu-2026-06-18-p3-import-selectif]].
+- [x] ~~**Vague 1 cohérence CRM**~~ - Livré 2026-06-18 (`676a9d4` poussé `main`, **pas déployé**). SearchInput partagé + `searchMatch.ts`, 4 fuites enum→FR + garde, retrait filtre Type Signaux. 1746 Vitest, audit 0 H/C/M. → [[project-refonte-crm-cadrage-2026-06-18]] + [[audit-secu-2026-06-18-vague1-coherence]].
+→ Livrés antérieurs (Cadrage refonte 2 specs, Audit 360 + 10 bugs `6b9f6e1`, Surveillance W24, cron veille `e2daee8`, copy Prospection V5 `a2dbe62`, merge `810f2e6`, Vague 4) → `archive/claude-md-crm-livre-2026-06-18.md` + `archive/2026-06-07-sessions.md`.
 
 ### Watch list active après pivot
 
