@@ -516,44 +516,89 @@
 				</div>
 			{/if}
 
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-				{#if !selectedContact.entreprises?.raison_sociale}
+			{#if premium}
+				<div class="crm-facts">
+					{#if !selectedContact.entreprises?.raison_sociale}
+						<div class="crm-fact crm-fact--wide">
+							<div class="crm-fact-k">Fonction</div>
+							<div class="crm-fact-v">{selectedContact.role_fonction ?? '–'}</div>
+						</div>
+					{/if}
+					<div class="crm-fact">
+						<div class="crm-fact-k">Email</div>
+						<div class="crm-fact-v">
+							{#if selectedContact.email_professionnel}<a href={`mailto:${selectedContact.email_professionnel}`}>{selectedContact.email_professionnel}</a>{:else}–{/if}
+						</div>
+					</div>
+					<div class="crm-fact">
+						<div class="crm-fact-k">Téléphone</div>
+						<div class="crm-fact-v">
+							{#if selectedContact.telephone}<a href={`tel:${selectedContact.telephone.replace(/\s/g, '')}`}>{selectedContact.telephone}</a>{:else}–{/if}
+						</div>
+					</div>
+					<div class="crm-fact">
+						<div class="crm-fact-k">Canton</div>
+						<div class="crm-fact-v">{selectedContact.canton ?? '–'}</div>
+					</div>
+					<div class="crm-fact">
+						<div class="crm-fact-k">Segment</div>
+						<div class="crm-fact-v">{selectedContact.segment ?? '–'}</div>
+					</div>
+					<div class="crm-fact">
+						<div class="crm-fact-k">Source</div>
+						<div class="crm-fact-v">{selectedContact.source ?? '–'}</div>
+					</div>
+					<div class="crm-fact">
+						<div class="crm-fact-k">Score</div>
+						<div class="crm-fact-v">{selectedContact.score_priorite ?? '–'}</div>
+					</div>
+					{#if selectedContact.adresse}
+						<div class="crm-fact crm-fact--wide">
+							<div class="crm-fact-k">Adresse</div>
+							<div class="crm-fact-v">{selectedContact.adresse}</div>
+						</div>
+					{/if}
+				</div>
+			{:else}
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+					{#if !selectedContact.entreprises?.raison_sociale}
+						<div>
+							<span class="text-text-muted">Fonction</span>
+							<p class="font-medium text-text">{selectedContact.role_fonction ?? '–'}</p>
+						</div>
+					{/if}
 					<div>
-						<span class="text-text-muted">Fonction</span>
-						<p class="font-medium text-text">{selectedContact.role_fonction ?? '–'}</p>
+						<span class="text-text-muted">Email</span>
+						<p class="font-medium text-text">{selectedContact.email_professionnel ?? '–'}</p>
+					</div>
+					<div>
+						<span class="text-text-muted">Téléphone</span>
+						<p class="font-medium text-text">{selectedContact.telephone ?? '–'}</p>
+					</div>
+					<div>
+						<span class="text-text-muted">Canton</span>
+						<p class="font-medium text-text">{selectedContact.canton ?? '–'}</p>
+					</div>
+					<div>
+						<span class="text-text-muted">Segment</span>
+						<p class="font-medium text-text">{selectedContact.segment ?? '–'}</p>
+					</div>
+					<div>
+						<span class="text-text-muted">Source</span>
+						<p class="font-medium text-text">{selectedContact.source ?? '–'}</p>
+					</div>
+					<div>
+						<span class="text-text-muted">Score</span>
+						<p class="font-medium text-text">{selectedContact.score_priorite ?? '–'}</p>
+					</div>
+				</div>
+
+				{#if selectedContact.adresse}
+					<div class="text-sm">
+						<span class="text-text-muted">Adresse</span>
+						<p class="font-medium text-text">{selectedContact.adresse}</p>
 					</div>
 				{/if}
-				<div>
-					<span class="text-text-muted">Email</span>
-					<p class="font-medium text-text">{selectedContact.email_professionnel ?? '–'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Téléphone</span>
-					<p class="font-medium text-text">{selectedContact.telephone ?? '–'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Canton</span>
-					<p class="font-medium text-text">{selectedContact.canton ?? '–'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Segment</span>
-					<p class="font-medium text-text">{selectedContact.segment ?? '–'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Source</span>
-					<p class="font-medium text-text">{selectedContact.source ?? '–'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Score</span>
-					<p class="font-medium text-text">{selectedContact.score_priorite ?? '–'}</p>
-				</div>
-			</div>
-
-			{#if selectedContact.adresse}
-				<div class="text-sm">
-					<span class="text-text-muted">Adresse</span>
-					<p class="font-medium text-text">{selectedContact.adresse}</p>
-				</div>
 			{/if}
 
 			{#if selectedContact.notes_libres}

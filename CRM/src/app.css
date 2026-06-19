@@ -361,3 +361,87 @@ textarea:focus-visible,
 	text-align: right;
 	color: var(--color-text-muted);
 }
+
+/* Fiche premium « golden complet » : grille de faits bordée + timeline d'historique.
+   Rendues dans le slot SlideOut (scope parent) -> globales comme les .crm-* ci-dessus.
+   Étiquettes en --color-text-muted (AA), jamais le gris faint du golden (échoue le contraste). */
+.crm-facts {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1px;
+	background: var(--color-border);
+	border-radius: var(--radius-lg);
+	overflow: hidden;
+	box-shadow: inset 0 0 0 1px var(--color-border);
+}
+.crm-fact {
+	background: var(--color-surface);
+	padding: 12px 14px;
+	min-width: 0;
+}
+.crm-fact--wide {
+	grid-column: 1 / -1;
+}
+.crm-fact-k {
+	font-size: 11px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--color-text-muted);
+}
+.crm-fact-v {
+	font-size: 13.5px;
+	font-weight: 600;
+	color: var(--color-text);
+	margin-top: 3px;
+	overflow-wrap: anywhere;
+}
+.crm-fact-v a {
+	color: var(--color-primary);
+	text-decoration: none;
+}
+.crm-fact-v a:hover {
+	text-decoration: underline;
+}
+
+.crm-timeline {
+	position: relative;
+	padding-left: 22px;
+}
+.crm-timeline::before {
+	content: '';
+	position: absolute;
+	left: 6px;
+	top: 4px;
+	bottom: 4px;
+	width: 2px;
+	background: var(--color-border);
+}
+.crm-tl-item {
+	position: relative;
+	padding-bottom: 14px;
+}
+.crm-tl-item:last-child {
+	padding-bottom: 0;
+}
+.crm-tl-item::before {
+	content: '';
+	position: absolute;
+	left: -19px;
+	top: 4px;
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: var(--color-surface);
+	box-shadow: 0 0 0 2px var(--color-primary);
+}
+.crm-tl-t {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--color-text);
+}
+.crm-tl-d {
+	font-size: 11.5px;
+	color: var(--color-text-muted);
+	margin-top: 1px;
+}

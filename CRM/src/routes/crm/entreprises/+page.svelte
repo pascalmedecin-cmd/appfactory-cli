@@ -522,44 +522,85 @@
 				{/if}
 			</div>
 
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-				<div>
-					<span class="text-text-muted">Secteur</span>
-					<p class="font-medium text-text">{selectedEntreprise.secteur_activite ?? '–'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Canton</span>
-					<p class="font-medium text-text">{selectedEntreprise.canton ?? '–'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">Taille</span>
-					<p class="font-medium text-text">{selectedEntreprise.taille_estimee ?? '–'}</p>
-				</div>
-				<div>
-					<span class="text-text-muted">IDE</span>
-					<p class="font-medium text-text">{selectedEntreprise.numero_ide ?? '–'}</p>
-				</div>
-			</div>
-
-			{#if selectedEntreprise.adresse_siege}
-				{@const maps = mapsUrl(selectedEntreprise.adresse_siege)}
-				<div class="text-sm">
-					<span class="text-text-muted">Adresse</span>
-					<p class="font-medium text-text">{selectedEntreprise.adresse_siege}</p>
-					{#if maps}
-						<a href={maps} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
-							<Icon name="map" size={14} />
-							Voir sur Google Maps
-						</a>
+			{#if premium}
+				<div class="crm-facts">
+					<div class="crm-fact">
+						<div class="crm-fact-k">Secteur</div>
+						<div class="crm-fact-v">{selectedEntreprise.secteur_activite ?? '–'}</div>
+					</div>
+					<div class="crm-fact">
+						<div class="crm-fact-k">Canton</div>
+						<div class="crm-fact-v">{selectedEntreprise.canton ?? '–'}</div>
+					</div>
+					<div class="crm-fact">
+						<div class="crm-fact-k">Taille</div>
+						<div class="crm-fact-v">{selectedEntreprise.taille_estimee ?? '–'}</div>
+					</div>
+					<div class="crm-fact">
+						<div class="crm-fact-k">No IDE</div>
+						<div class="crm-fact-v">{selectedEntreprise.numero_ide ?? '–'}</div>
+					</div>
+					{#if selectedEntreprise.adresse_siege}
+						{@const maps = mapsUrl(selectedEntreprise.adresse_siege)}
+						<div class="crm-fact crm-fact--wide">
+							<div class="crm-fact-k">Adresse</div>
+							<div class="crm-fact-v">
+								{selectedEntreprise.adresse_siege}
+								{#if maps}
+									<a href={maps} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 ml-1.5">
+										<Icon name="map" size={13} />Voir sur la carte
+									</a>
+								{/if}
+							</div>
+						</div>
+					{/if}
+					{#if selectedEntreprise.site_web}
+						<div class="crm-fact crm-fact--wide">
+							<div class="crm-fact-k">Site web</div>
+							<div class="crm-fact-v"><a href={selectedEntreprise.site_web} target="_blank" rel="noopener noreferrer">{selectedEntreprise.site_web}</a></div>
+						</div>
 					{/if}
 				</div>
-			{/if}
-
-			{#if selectedEntreprise.site_web}
-				<div class="text-sm">
-					<span class="text-text-muted">Site web</span>
-					<p><a href={selectedEntreprise.site_web} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">{selectedEntreprise.site_web}</a></p>
+			{:else}
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+					<div>
+						<span class="text-text-muted">Secteur</span>
+						<p class="font-medium text-text">{selectedEntreprise.secteur_activite ?? '–'}</p>
+					</div>
+					<div>
+						<span class="text-text-muted">Canton</span>
+						<p class="font-medium text-text">{selectedEntreprise.canton ?? '–'}</p>
+					</div>
+					<div>
+						<span class="text-text-muted">Taille</span>
+						<p class="font-medium text-text">{selectedEntreprise.taille_estimee ?? '–'}</p>
+					</div>
+					<div>
+						<span class="text-text-muted">IDE</span>
+						<p class="font-medium text-text">{selectedEntreprise.numero_ide ?? '–'}</p>
+					</div>
 				</div>
+
+				{#if selectedEntreprise.adresse_siege}
+					{@const maps = mapsUrl(selectedEntreprise.adresse_siege)}
+					<div class="text-sm">
+						<span class="text-text-muted">Adresse</span>
+						<p class="font-medium text-text">{selectedEntreprise.adresse_siege}</p>
+						{#if maps}
+							<a href={maps} target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1">
+								<Icon name="map" size={14} />
+								Voir sur Google Maps
+							</a>
+						{/if}
+					</div>
+				{/if}
+
+				{#if selectedEntreprise.site_web}
+					<div class="text-sm">
+						<span class="text-text-muted">Site web</span>
+						<p><a href={selectedEntreprise.site_web} target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">{selectedEntreprise.site_web}</a></p>
+					</div>
+				{/if}
 			{/if}
 
 			{#if selectedEntreprise.notes_libres}
@@ -597,7 +638,7 @@
 
 			<!-- Visites terrain (V2 mobile F2) -->
 			<div class="border-t border-border pt-4">
-				<VisitsPanel entrepriseId={selectedEntreprise.id} />
+				<VisitsPanel entrepriseId={selectedEntreprise.id} timeline={premium} />
 			</div>
 
 			<!-- Contacts rattachés -->

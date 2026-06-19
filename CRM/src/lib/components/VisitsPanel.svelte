@@ -19,7 +19,8 @@
 	let {
 		leadId = null,
 		entrepriseId = null,
-	}: { leadId?: string | null; entrepriseId?: string | null } = $props();
+		timeline = false,
+	}: { leadId?: string | null; entrepriseId?: string | null; timeline?: boolean } = $props();
 
 	const GEOLOC_TIMEOUT_MS = 15_000;
 	const DISTANCE_FLAG_THRESHOLD_M = 100;
@@ -250,6 +251,47 @@
 		<p class="text-sm text-text-muted">Chargement de l'historique…</p>
 	{:else if visits.length === 0}
 		<p class="text-sm text-text-muted">Aucune visite enregistrée pour l'instant.</p>
+	{:else if timeline}
+		<div class="crm-timeline">
+			{#each visits as visit (visit.id)}
+				<div class="crm-tl-item">
+					<div class="flex items-start justify-between gap-3">
+						<div class="min-w-0 flex-1">
+							<div class="crm-tl-t flex items-center gap-2 flex-wrap">
+								<span>{formatDate(visit.visited_at)}</span>
+								<Badge
+									variant={distanceVariant(visit.distance_from_zefix_m)}
+									label={distanceLabel(visit.distance_from_zefix_m)}
+								/>
+							</div>
+							{#if visit.address_resolved}
+								<p class="crm-tl-d truncate" title={visit.address_resolved}>{visit.address_resolved}</p>
+							{/if}
+							<a
+								href={`https://www.google.com/maps?q=${visit.lat},${visit.lng}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="inline-flex items-center gap-1 mt-0.5 text-xs text-primary hover:underline"
+							>
+								<Icon name="map" size={12} />
+								{visit.lat.toFixed(5)}, {visit.lng.toFixed(5)}
+								{#if visit.accuracy_m != null}
+									<span class="text-text-muted">(±{Math.round(visit.accuracy_m)} m)</span>
+								{/if}
+							</a>
+						</div>
+						<button
+							type="button"
+							onclick={() => askDelete(visit)}
+							aria-label="Supprimer cette visite"
+							class="flex-shrink-0 inline-flex items-center justify-center w-8 h-8 rounded-md text-error hover:bg-error/10 transition-colors"
+						>
+							<Icon name="delete" size={16} />
+						</button>
+					</div>
+				</div>
+			{/each}
+		</div>
 	{:else}
 		<ul class="space-y-2">
 			{#each visits as visit (visit.id)}
