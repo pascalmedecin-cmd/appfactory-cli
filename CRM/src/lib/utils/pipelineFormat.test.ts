@@ -7,6 +7,8 @@ import {
 	etapesVisibleForTab,
 	etapeLabel,
 	pipelineIndicators,
+	etapeAccent,
+	entrepriseInitials,
 	PipelineOpportuniteRowSchema,
 	type OppLite,
 } from './pipelineFormat';
@@ -192,5 +194,64 @@ describe('etapeLabel (Vague 1 cohérence — source unique config.pipeline.etape
 
 	it('clé inconnue → fallback sur la clé brute (jamais de crash)', () => {
 		expect(etapeLabel('etape_inexistante')).toBe('etape_inexistante');
+	});
+});
+
+describe('etapeAccent (Vague 2 — accent palette workflow, sans invention)', () => {
+	it('mappe les 4 étapes actives sur leur variante', () => {
+		expect(etapeAccent('identification')).toBe('import');
+		expect(etapeAccent('qualification')).toBe('enrich');
+		expect(etapeAccent('proposition')).toBe('qualify');
+		expect(etapeAccent('negociation')).toBe('convert');
+	});
+
+	it('étapes closes / inconnues / vides → null (pas d’accent inventé)', () => {
+		expect(etapeAccent('gagne')).toBeNull();
+		expect(etapeAccent('perdu')).toBeNull();
+		expect(etapeAccent('etape_inexistante')).toBeNull();
+		expect(etapeAccent(null)).toBeNull();
+		expect(etapeAccent(undefined)).toBeNull();
+		expect(etapeAccent('')).toBeNull();
+	});
+});
+
+describe('entrepriseInitials (Vague 2 — avatar logo carte premium)', () => {
+	it('saute les connecteurs minuscules pour des initiales parlantes', () => {
+		expect(entrepriseInitials('Clinique de Genolier')).toBe('CG');
+		expect(entrepriseInitials('Ville de Nyon')).toBe('VN');
+		expect(entrepriseInitials('Régie Naef & Cie')).toBe('RN');
+		expect(entrepriseInitials('Banque Gonet')).toBe('BG');
+	});
+
+	it('un seul mot → 2 premières lettres ; vide / non-string → "–"', () => {
+		expect(entrepriseInitials('Foncia')).toBe('FO');
+		expect(entrepriseInitials('')).toBe('–');
+		expect(entrepriseInitials('   ')).toBe('–');
+		expect(entrepriseInitials(null)).toBe('–');
+		expect(entrepriseInitials(undefined)).toBe('–');
+		// que des connecteurs → retombe sur les mots bruts (jamais vide)
+		expect(entrepriseInitials('de la')).toBe('DL');
+	});
+
+	it('fuzz : toujours 1-2 caractères, jamais throw', () => {
+		// PRNG seedé (mulberry32) : reproductible, sans Math.random.
+		let s = 0x9e3779b9 >>> 0;
+		const rng = () => {
+			s = (s + 0x6d2b79f5) >>> 0;
+			let t = s;
+			t = Math.imul(t ^ (t >>> 15), t | 1);
+			t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+			return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+		};
+		const alphabet = ' abcdeéè&.-\'ABCDE0123  ';
+		for (let run = 0; run < 5000; run++) {
+			const len = Math.floor(rng() * 24);
+			let str = '';
+			for (let i = 0; i < len; i++) str += alphabet[Math.floor(rng() * alphabet.length)];
+			let out = '';
+			expect(() => (out = entrepriseInitials(str))).not.toThrow();
+			expect(out.length).toBeGreaterThanOrEqual(1);
+			expect(out.length).toBeLessThanOrEqual(2);
+		}
 	});
 });

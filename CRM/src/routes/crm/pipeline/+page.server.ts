@@ -13,7 +13,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			// On veut le signal d'origine de l'opp (many-to-one) → embed via la FK nommée, sinon PGRST201
 			// fait échouer TOUTE la requête (data=null → pipeline vide quelles que soient les données).
 			.select(
-				'*, contacts(id, nom, prenom), entreprises(id, raison_sociale), signaux_affaires!opportunites_signal_affaires_id_fkey(id, type_signal, description_projet)'
+				'*, contacts(id, nom, prenom), entreprises(id, raison_sociale), signaux_affaires!opportunites_signal_affaires_id_fkey(id, type_signal, description_projet, source_officielle)'
 			)
 			.order('date_derniere_modification', { ascending: false }),
 		locals.supabase

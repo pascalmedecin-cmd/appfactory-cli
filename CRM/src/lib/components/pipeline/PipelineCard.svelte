@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
-	import { formatRelancePipeline, formatMontantCompact } from '$lib/utils/pipelineFormat';
+	import SourcePill from '$lib/components/SourcePill.svelte';
+	import { formatRelancePipeline, formatMontantCompact, etapeAccent, entrepriseInitials } from '$lib/utils/pipelineFormat';
+	import { sourceMetaFor } from '$lib/utils/entreprisesFormat';
 
 	type OppContact = {
 		id: string;
@@ -17,6 +19,7 @@
 		id: string;
 		type_signal: string | null;
 		description_projet: string | null;
+		source_officielle?: string | null;
 	} | null;
 
 	type Opp = {
@@ -36,16 +39,24 @@
 		opp: Opp;
 		dragging: boolean;
 		index?: number;
+		/** Vague 2 (flag ffCrmListesV2) : carte premium (accent d'étape + logo + source). OFF → carte actuelle. */
+		premium?: boolean;
 		onClick: (opp: Opp) => void;
 		onDragStart: (e: DragEvent, opp: Opp) => void;
 		onDragEnd: () => void;
 	};
 
-	let { opp, dragging, index = 0, onClick, onDragStart, onDragEnd }: Props = $props();
+	let { opp, dragging, index = 0, premium = false, onClick, onDragStart, onDragEnd }: Props = $props();
 
 	const relance = $derived(formatRelancePipeline(opp.date_relance_prevue));
 	const amountLabel = $derived(formatMontantCompact(opp.montant_estime));
 	const company = $derived(opp.entreprises?.raison_sociale ?? '');
+
+	// Vague 2 : accent palette workflow de l'étape + initiales logo + source réelle (signal lié).
+	// Tout dérive de champs chargés — aucune invention (etapeAccent/sourceMetaFor renvoient null si inconnu).
+	const accent = $derived(etapeAccent(opp.etape_pipeline));
+	const logoInitials = $derived(entrepriseInitials(company));
+	const src = $derived(sourceMetaFor(opp.signaux_affaires?.source_officielle));
 	const contactName = $derived(
 		opp.contacts ? `${opp.contacts.prenom ?? ''} ${opp.contacts.nom ?? ''}`.trim() || '(sans nom)' : opp.responsable ?? ''
 	);
@@ -69,12 +80,14 @@
 
 <article
 	class="card"
+	class:premium
 	role="listitem"
 	tabindex="0"
 	draggable="true"
 	style="--i:{staggerIndex}"
 	aria-label={ariaLabel}
 	data-dragging={dragging ? 'true' : null}
+	data-accent={premium ? accent : null}
 	onclick={() => onClick(opp)}
 	onkeydown={(e: KeyboardEvent) => {
 		if (e.key === 'Enter' || e.key === ' ') {
@@ -85,9 +98,19 @@
 	ondragstart={(e: DragEvent) => onDragStart(e, opp)}
 	ondragend={onDragEnd}
 >
-	<div class="card-title">{opp.titre ?? 'Opportunité sans titre'}</div>
-	{#if company}
-		<div class="card-company">{company}</div>
+	{#if premium}
+		<div class="card-head">
+			<span class="card-logo" aria-hidden="true">{logoInitials}</span>
+			<div class="card-head-id">
+				<div class="card-title">{opp.titre ?? 'Opportunité sans titre'}</div>
+				<div class="card-company">{company}</div>
+			</div>
+		</div>
+	{:else}
+		<div class="card-title">{opp.titre ?? 'Opportunité sans titre'}</div>
+		{#if company}
+			<div class="card-company">{company}</div>
+		{/if}
 	{/if}
 
 	<div class="card-meta">
@@ -107,7 +130,7 @@
 		</span>
 	</div>
 
-	{#if contactName || hasSignal}
+	{#if premium || contactName || hasSignal}
 		<div class="card-footer">
 			{#if contactName}
 				<span class="card-avatar" aria-hidden="true">{initials}</span>
@@ -115,7 +138,11 @@
 			{:else}
 				<span class="card-contact">&nbsp;</span>
 			{/if}
-			{#if hasSignal}
+			{#if premium}
+				{#if src}
+					<span class="card-src"><SourcePill label={src.label} variant={src.variant} /></span>
+				{/if}
+			{:else if hasSignal}
 				<span class="card-signal" title="Issu d'un signal d'affaires" aria-label="Issu d'un signal">
 					<Icon name="bolt" size={14} />
 				</span>
@@ -247,6 +274,65 @@
 		flex-shrink: 0;
 		display: grid;
 		place-items: center;
+	}
+
+	/* ====== Vague 2 (flag ffCrmListesV2) : carte premium ======
+	   Accent de couleur d'etape (gauche, palette workflow) + logo initiales +
+	   hauteur egale (titre 2 lignes + entreprise 1 ligne reservees). OFF (pas de
+	   classe .premium) -> aucune de ces regles ne s'applique : carte identique. */
+	.card.premium {
+		padding-left: 16px;
+		overflow: hidden; /* clippe l'accent dans le border-radius */
+	}
+	.card.premium::before {
+		content: '';
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 3px;
+		background: var(--accent, var(--color-border-strong));
+	}
+	.card.premium[data-accent='import'] { --accent: var(--color-prosp-import); }
+	.card.premium[data-accent='enrich'] { --accent: var(--color-prosp-enrich); }
+	.card.premium[data-accent='qualify'] { --accent: var(--color-prosp-qualify); }
+	.card.premium[data-accent='convert'] { --accent: var(--color-prosp-convert); }
+
+	.card-head {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		margin-bottom: 11px;
+	}
+	.card-logo {
+		width: 30px;
+		height: 30px;
+		border-radius: var(--radius-md);
+		flex-shrink: 0;
+		display: grid;
+		place-items: center;
+		background: var(--color-primary-light);
+		color: var(--color-primary);
+		font-weight: 700;
+		font-size: 12px;
+		box-shadow: inset 0 0 0 1px rgba(47, 90, 158, 0.10);
+	}
+	.card-head-id {
+		min-width: 0;
+		flex: 1;
+	}
+	/* Hauteur egale : titre 2 lignes + entreprise 1 ligne toujours reserves. */
+	.card.premium .card-title {
+		min-height: 2.6em;
+		margin-bottom: 2px;
+	}
+	.card.premium .card-company {
+		min-height: 1.3em;
+		margin-bottom: 0;
+	}
+	.card-src {
+		flex-shrink: 0;
+		display: inline-flex;
 	}
 
 	@media (prefers-reduced-motion: reduce) {

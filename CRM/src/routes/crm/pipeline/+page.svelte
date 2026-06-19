@@ -16,9 +16,15 @@
 		etapeLabel,
 		pipelineIndicators,
 		totalsByEtape,
+		etapeAccent,
+		entrepriseInitials,
 		type PipelineTab,
 	} from '$lib/utils/pipelineFormat';
 	import { formatTypeLabel } from '$lib/utils/signauxFormat';
+	import { sourceMetaFor, relativeTimeFr } from '$lib/utils/entreprisesFormat';
+	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
+	import SourcePill from '$lib/components/SourcePill.svelte';
+	import StagePill from '$lib/components/StagePill.svelte';
 	import PipelineIndicators from '$lib/components/pipeline/PipelineIndicators.svelte';
 	import PipelineTabs from '$lib/components/pipeline/PipelineTabs.svelte';
 	import PipelineColumn from '$lib/components/pipeline/PipelineColumn.svelte';
@@ -81,6 +87,17 @@
 
 	const totals = $derived(totalsByEtape(data.opportunites));
 	const indicators = $derived(pipelineIndicators(data.opportunites));
+
+	// Vague 2 « listes premium » (même flag JWT que les autres pages). OFF → rendu actuel,
+	// zéro régression. Delta kanban : bande géante → strip de chips, cartes à accent d'étape
+	// + logo, hero fiche premium. Valeurs issues de `pipelineIndicators` (helper pur testé).
+	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+	const kpiItems = $derived<KpiItem[]>([
+		{ icon: 'business', value: indicators.active, label: indicators.active === 1 ? 'Opportunité active' : 'Opportunités actives', tone: 'primary' },
+		{ icon: 'trending_up', value: formatMontantCompact(indicators.valueActive) ?? '0 CHF', label: 'Valeur pipeline', tone: 'convert' },
+		{ icon: 'emoji_events', value: indicators.wonThisMonthCount, label: 'Gagné ce mois', tone: 'success' },
+		{ icon: 'schedule', value: indicators.overdue, label: 'Relances en retard', tone: 'warn', highlight: indicators.overdue > 0 },
+	]);
 
 	const tabsSpec = $derived([
 		{
@@ -268,7 +285,11 @@
 		</button>
 	</div>
 
-	<PipelineIndicators values={indicators} />
+	{#if premium}
+		<KpiStrip items={kpiItems} ariaLabel="Indicateurs pipeline" />
+	{:else}
+		<PipelineIndicators values={indicators} />
+	{/if}
 
 	<PipelineTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)} />
 
@@ -289,6 +310,7 @@
 						{etape}
 						{opps}
 						{total}
+						{premium}
 						dragOver={dragOverEtape === etape.key}
 						{draggedId}
 						onCardClick={openDetail}
@@ -317,8 +339,29 @@
 <!-- SlideOut detail opportunité -->
 <SlideOut bind:open={slideOutOpen} title={selectedOpp?.titre ?? ''}>
 	{#if selectedOpp}
+		{@const fStage = etapeAccent(selectedOpp.etape_pipeline)}
+		{@const fSrc = sourceMetaFor(selectedOpp.signaux_affaires?.source_officielle)}
+		{@const fActivite = relativeTimeFr(selectedOpp.date_derniere_modification)}
 		<div class="space-y-6">
-			<Badge label={etapeLabel(selectedOpp.etape_pipeline)} variant={etapeBadgeVariant(selectedOpp.etape_pipeline)} />
+			{#if premium}
+				<div class="flex items-start gap-4">
+					<span class="crm-avatar crm-avatar--lg">{entrepriseInitials(selectedOpp.entreprises?.raison_sociale)}</span>
+					<div class="min-w-0">
+						<p class="font-semibold text-text">{selectedOpp.titre ?? 'Opportunité'}</p>
+						<div class="flex flex-wrap items-center gap-2 mt-1.5">
+							{#if fStage}
+								<StagePill label={etapeLabel(selectedOpp.etape_pipeline)} variant={fStage} />
+							{:else}
+								<Badge label={etapeLabel(selectedOpp.etape_pipeline)} variant={etapeBadgeVariant(selectedOpp.etape_pipeline)} />
+							{/if}
+							{#if fSrc}<SourcePill label={fSrc.label} variant={fSrc.variant} />{/if}
+						</div>
+						{#if fActivite}<p class="text-xs text-text-muted mt-2">Dernière activité : {fActivite}</p>{/if}
+					</div>
+				</div>
+			{:else}
+				<Badge label={etapeLabel(selectedOpp.etape_pipeline)} variant={etapeBadgeVariant(selectedOpp.etape_pipeline)} />
+			{/if}
 
 			<div class="grid grid-cols-2 gap-4 text-sm">
 				<div>

@@ -13,7 +13,7 @@
 
 	type OppContact = { id: string; nom: string | null; prenom: string | null } | null;
 	type OppEntreprise = { id: string; raison_sociale: string } | null;
-	type OppSignal = { id: string; type_signal: string | null; description_projet: string | null } | null;
+	type OppSignal = { id: string; type_signal: string | null; description_projet: string | null; source_officielle?: string | null } | null;
 	type Opp = {
 		id: string;
 		titre: string | null;
@@ -33,6 +33,8 @@
 		total: number;
 		dragOver: boolean;
 		draggedId: string | null;
+		/** Vague 2 (flag ffCrmListesV2) : transmis aux cartes (accent + logo + source). */
+		premium?: boolean;
 		onCardClick: (opp: Opp) => void;
 		onCardDragStart: (e: DragEvent, opp: Opp) => void;
 		onCardDragEnd: () => void;
@@ -48,6 +50,7 @@
 		total,
 		dragOver,
 		draggedId,
+		premium = false,
 		onCardClick,
 		onCardDragStart,
 		onCardDragEnd,
@@ -111,6 +114,7 @@
 			{#each opps as opp, i (opp.id)}
 				<PipelineCard
 					{opp}
+					{premium}
 					dragging={draggedId === opp.id}
 					index={i}
 					onClick={onCardClick}

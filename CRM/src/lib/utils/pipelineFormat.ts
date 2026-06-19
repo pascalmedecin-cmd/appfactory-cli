@@ -96,6 +96,48 @@ export type EtapeKey = 'identification' | 'qualification' | 'proposition' | 'neg
 
 const ETAPES_ACTIVES: ReadonlyArray<EtapeKey> = ['identification', 'qualification', 'proposition', 'negociation'];
 
+/* ============================================================================
+ * Vague 2 - kanban premium (flag ffCrmListesV2). Helpers PURS, stress-testables.
+ * ========================================================================== */
+
+/** Accent palette workflow d'une carte (aligne sur StageVariant entreprises). */
+export type StageAccent = 'import' | 'enrich' | 'qualify' | 'convert';
+
+const STAGE_ACCENT_BY_ETAPE: Record<string, StageAccent> = {
+	identification: 'import',
+	qualification: 'enrich',
+	proposition: 'qualify',
+	negociation: 'convert',
+};
+
+/**
+ * Accent de couleur d'une etape ACTIVE (carte premium + pill de fiche). Les etapes
+ * closes (gagne/perdu) et inconnues -> null : pas d'accent invente (la fiche retombe
+ * sur le Badge success/danger). Jamais throw.
+ */
+export function etapeAccent(etape: string | null | undefined): StageAccent | null {
+	if (!etape) return null;
+	return STAGE_ACCENT_BY_ETAPE[etape] ?? null;
+}
+
+const INITIALS_CONNECTORS = new Set(['de', 'du', 'des', 'la', 'le', 'les', 'et', '&', 'a', 'à', 'd', 'l', 'aux', 'au']);
+
+/**
+ * Initiales d'une entreprise pour l'avatar logo de la carte premium (1-2 lettres
+ * majuscules). Saute les connecteurs minuscules ("de", "&", "la"...) pour des
+ * initiales parlantes ("Clinique de Genolier" -> "CG"). Entree vide/non-string ->
+ * "-". Jamais throw (invariant stress test).
+ */
+export function entrepriseInitials(name: string | null | undefined): string {
+	if (typeof name !== 'string') return '–';
+	const words = name.trim().split(/[\s'’.-]+/).filter(Boolean);
+	if (words.length === 0) return '–';
+	const significant = words.filter((w) => !INITIALS_CONNECTORS.has(w.toLowerCase()));
+	const pick = significant.length > 0 ? significant : words;
+	if (pick.length === 1) return pick[0].slice(0, 2).toUpperCase();
+	return (pick[0][0] + pick[1][0]).toUpperCase();
+}
+
 /**
  * Progress visuelle 0-1 par étape active uniquement (pour la barre fine en col-head).
  * Étapes closed (gagne/perdu) → 0 (la barre n'est pas rendue côté composant).
