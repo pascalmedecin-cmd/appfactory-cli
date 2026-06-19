@@ -22,10 +22,10 @@
 	let { items, ariaLabel = 'Indicateurs' }: { items: KpiItem[]; ariaLabel?: string } = $props();
 </script>
 
-<section class="kpi-strip" aria-label={ariaLabel}>
+<section class="kpi-strip" role="list" aria-label={ariaLabel}>
 	{#each items as item (item.label)}
-		<div class="kpi" class:warn={item.highlight}>
-			<span class="kpi-ic {item.tone ?? 'primary'}"><Icon name={item.icon} size={18} /></span>
+		<div class="kpi" class:warn={item.highlight} role="listitem">
+			<span class="kpi-ic {item.tone ?? 'primary'}" aria-hidden="true"><Icon name={item.icon} size={18} /></span>
 			<span class="kpi-body">
 				<span class="kpi-val tabular-nums">{item.value}</span>
 				<span class="kpi-lab">{item.label}</span>
