@@ -32,6 +32,9 @@
 	import SignauxTabs from '$lib/components/signaux/SignauxTabs.svelte';
 	import SignauxCards from '$lib/components/signaux/SignauxCards.svelte';
 	import SignauxKeywordsPanel from '$lib/components/signaux/SignauxKeywordsPanel.svelte';
+	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
+	import SourcePill from '$lib/components/SourcePill.svelte';
+	import { sourceMetaFor, relativeTimeFr } from '$lib/utils/entreprisesFormat';
 	import { KW_SEARCH_MIN_LEN } from '$lib/scoring/keywords';
 	import { normalizeNFD } from '$lib/utils/text-normalize';
 	import SearchInput from '$lib/components/SearchInput.svelte';
@@ -161,6 +164,18 @@
 
 	const indicators = $derived(signauxIndicators(data.signaux));
 	const counts = $derived(signauxCountsByTab(data.signaux));
+
+	// Vague 2 « listes premium » (même flag JWT que les autres pages). OFF → rendu actuel,
+	// zéro régression. Sur Signaux le delta = bande d'indicateurs géante → strip de chips
+	// compacte (les cartes étaient déjà premium depuis V4 / S189). Valeurs issues du helper
+	// pur `signauxIndicators` déjà testé : aucun signal inventé.
+	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+	const kpiItems = $derived<KpiItem[]>([
+		{ icon: 'radar', value: indicators.total, label: indicators.total === 1 ? 'Signal' : 'Signaux', tone: 'primary' },
+		{ icon: 'fiber_new', value: indicators.nouveaux, label: 'À triager', tone: 'warn', highlight: indicators.nouveaux > 0 },
+		{ icon: 'track_changes', value: indicators.aConvertir, label: 'À convertir', tone: 'convert' },
+		{ icon: 'check_circle', value: indicators.convertis, label: indicators.convertis === 1 ? 'Converti' : 'Convertis', tone: 'success' },
+	]);
 
 	// V4 (S189) : tab "Tous" retiré. La page commence sur "Nouveau" (cf. activeTab
 	// default). L'intégralité est lisible en cumulant les autres tabs si besoin.
@@ -349,7 +364,11 @@
 		</div>
 	{/if}
 
-	<SignauxIndicators values={indicators} />
+	{#if premium}
+		<KpiStrip items={kpiItems} ariaLabel="Indicateurs signaux" />
+	{:else}
+		<SignauxIndicators values={indicators} />
+	{/if}
 
 	{#if !data.showArchived}
 	<SignauxTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)}>
@@ -538,6 +557,8 @@
 <SlideOut bind:open={slideOutOpen} title="Signal d'affaires">
 	{#if selectedSignal}
 		{@const sStyle = scoreStyle(selectedSignal.score_pertinence)}
+		{@const fSrc = sourceMetaFor(selectedSignal.source_officielle)}
+		{@const fActivite = relativeTimeFr(selectedSignal.date_detection)}
 		<div class="space-y-6">
 			<!-- En-tête : type + statut + score -->
 			<div class="flex items-start justify-between gap-3">
@@ -548,6 +569,12 @@
 					<div>
 						<p class="font-semibold text-text">{formatTypeLabel(selectedSignal.type_signal)}</p>
 						<Badge label={statutLabel(selectedSignal.statut_traitement)} variant={statutVariant(selectedSignal.statut_traitement)} />
+						{#if premium && (fSrc || fActivite)}
+							<div class="flex flex-wrap items-center gap-2 mt-1.5">
+								{#if fSrc}<SourcePill label={fSrc.label} variant={fSrc.variant} />{/if}
+								{#if fActivite}<span class="crm-activity">Détecté {fActivite}</span>{/if}
+							</div>
+						{/if}
 					</div>
 				</div>
 				<span class="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold {sStyle.bgClass} {sStyle.colorClass}">
