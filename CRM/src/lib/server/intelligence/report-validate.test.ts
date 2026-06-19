@@ -96,24 +96,54 @@ describe('partitionReport', () => {
 		expect(r.report.items[0].source.published_at).toBe('2026-04-10T00:00:00Z');
 	});
 
-	// Critère 6a : part majoritaire écartée (ratio) => échec bruyant. 4/6 = 66% > 30%.
-	it('échoue si une part majoritaire est écartée (ratio > 30%)', () => {
+	// Critère 6a (révisé 06-19, incident W25) : ratio élevé MAIS ≥1 valide => on PUBLIE
+	// ce qui est bon. Le ratio n'est plus bloquant (il ne protégeait pas le zéro-hallu,
+	// les articles gardés repassent url-verify + cross-check) : juste un warning loggé.
+	// 4/6 = 66% écartés, 2 valides restent → édition publiée avec 2 articles.
+	it('publie les articles valides même si le ratio dépasse 30% (publier ce qui est bon)', () => {
 		const r = partitionReport(report([badUrl(1), badUrl(2), badUrl(3), badUrl(4), item(5), item(6)]));
-		expect(r.ok).toBe(false);
-		if (r.ok) return;
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.report.items).toHaveLength(2);
 		expect(r.dropped).toHaveLength(4);
 	});
 
-	// Critère 6b : seuil ratio — plus de 30 % écartés (mais <= 3 en absolu) => échec.
-	it('échoue si plus de 30 % des articles sont écartés', () => {
+	// Critère 6b (révisé 06-19) : 2/5 = 40 % écartés mais 3 valides restent → publié.
+	it('publie les 3 valides quand 40 % sont écartés (ratio non bloquant)', () => {
 		const r = partitionReport(report([badUrl(1), badUrl(2), item(3), item(4), item(5)]));
-		expect(r.ok).toBe(false); // 2/5 = 40 %
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.report.items).toHaveLength(3);
+		expect(r.dropped).toHaveLength(2);
 	});
 
-	// Critère 6c : tous écartés (0 article valide) => échec.
-	it('échoue si tous les articles sont écartés', () => {
+	// Critère 6c (révisé 06-19) : « 0 valide » est désormais la SEULE garde bloquante
+	// (le modèle a émis des candidats mais aucun n'est exploitable) => échec.
+	it('échoue uniquement si tous les articles sont écartés (0 valide)', () => {
 		const r = partitionReport(report([badUrl(1)]));
 		expect(r.ok).toBe(false);
+	});
+
+	// Régression incident W25 (cron 2026-06-19) : 1 bon article complet SANS chips
+	// (0 search_term) + 1 coquille (summary vide, source factice) → l'édition doit
+	// PUBLIER le bon article. Avant le fix : 1/2 = 50% > 30% faisait tout échouer, et
+	// le bon article était lui-même rejeté pour 0 chip (search_terms min(1)).
+	it('publie le bon article malgré une coquille restante (régression W25)', () => {
+		const bon = item(1, { search_terms: [] });
+		const coquille = {
+			...item(2),
+			title: 'x',
+			summary: '',
+			filmpro_relevance: '',
+			source: { name: 'x', url: 'https://x.test/a', published_at: '2026-04-10' },
+			search_terms: []
+		};
+		const r = partitionReport(report([bon, coquille]));
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.report.items).toHaveLength(1);
+		expect(r.report.items[0].rank).toBe(1);
+		expect(r.dropped).toHaveLength(1);
 	});
 
 	// Critère 6d : sous le seuil => édition produite (1 écarté sur 10).

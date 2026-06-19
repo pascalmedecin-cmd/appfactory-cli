@@ -166,8 +166,10 @@ describe('IntelligenceItemSchema', () => {
 		).toBe(false);
 	});
 
-	// Depuis 2026-06-06 le plancher est min(1) (reclassé préférence produit, voir
-	// resilience-validation-spec.md §3a) : 1 chip est valide, 0 chip reste rejeté.
+	// Depuis 2026-06-19 (incident W25) le plancher est min(0) : les chips sont une
+	// préférence produit, pas un invariant (min(2)→min(1) le 06-06, →min(0) le 06-19).
+	// 1 chip valide, 0 chip valide aussi (un bon article sans angle de prospection
+	// direct ne doit jamais être rejeté). Voir resilience-validation-spec.md §3a.
 	it('accepte 1 seul search_term', () => {
 		expect(
 			IntelligenceItemSchema.safeParse({
@@ -177,13 +179,13 @@ describe('IntelligenceItemSchema', () => {
 		).toBe(true);
 	});
 
-	it('rejette 0 search_term', () => {
+	it('accepte 0 search_term (chips optionnels depuis incident W25)', () => {
 		expect(
 			IntelligenceItemSchema.safeParse({
 				...validItem,
 				search_terms: []
 			}).success
-		).toBe(false);
+		).toBe(true);
 	});
 
 	it('rejette plus de 4 search_terms', () => {

@@ -121,14 +121,15 @@ export const IntelligenceItemSchema = z.object({
 	// Attribution commerciale par item (refonte /veille, remplace search_terms globaux).
 	segment: SegmentEnum,
 	actionability: ActionabilityEnum,
-	// 1 à 4 chips structurés par item (Bloc 4). Union accepte legacy string pour rétro-compat
+	// 0 à 4 chips structurés par item (Bloc 4). Union accepte legacy string pour rétro-compat
 	// (items pré-Bloc 4 en DB). Chaque chip cliqué → auto-exécute prospection (SIMAP/Zefix).
-	// Plancher `min(1)` (était min(2) jusqu'à 2026-06-06) : reclassé "préférence produit",
-	// pas un invariant. Le LLM génère parfois 1 seul chip pertinent ; l'aval (apply-signals)
-	// tolère déjà 1 chip. Faire échouer toute l'édition pour ça (incident cron W23) était
-	// une fragilité, pas une protection anti-hallucination. Voir
-	// .product-architect/veille/resilience-validation-spec.md §3a.
-	search_terms: z.array(SearchChipOrLegacySchema).min(1).max(4),
+	// Plancher `min(0)` (min(2)→min(1) le 2026-06-06, →min(0) le 2026-06-19) : les chips sont
+	// une PRÉFÉRENCE produit, pas un invariant. Incident W25 (cron du 2026-06-19) : un bon
+	// article RTS sans angle de prospection direct (0 chip) faisait échouer toute l'édition,
+	// puis la coquille restante l'achevait. Un item éditorialement complet ne doit JAMAIS
+	// être rejeté faute de chips (l'aval apply-signals + l'UI item/[slug] tolèrent déjà []).
+	// Voir .product-architect/veille/resilience-validation-spec.md §3a.
+	search_terms: z.array(SearchChipOrLegacySchema).max(4),
 	// Anti-doublons intelligent (refonte LEAN S112) : true si l'item est une mise
 	// à jour récente d'un sujet déjà couvert dans une édition antérieure (article
 	// plus récent que le précédent). previous_url pointe vers l'item antérieur.

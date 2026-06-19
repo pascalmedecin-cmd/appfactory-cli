@@ -509,4 +509,110 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 		// Email d'alerte échec déclenché.
 		expect(sendRecapMock.mock.calls[0][0]).toMatchObject({ mode: 'failure' });
 	});
+
+	// --- Régression W25 (intégration) : un item SANS chips (search_terms vide) ne
+	// court-circuite JAMAIS le cross-check. Verrouille l'invariant zéro-hallu contre
+	// un futur refactor du chemin de publication (bug-hunter Low-2, 2026-06-19). ---
+	const itemZeroChip = {
+		rank: 1,
+		title: 'item de test au moins 10 chars',
+		summary: 'a'.repeat(80),
+		filmpro_relevance: 'b'.repeat(50),
+		maturity: 'etabli',
+		theme: 'films_solaires',
+		geo_scope: 'suisse_romande',
+		source: {
+			name: 'Source',
+			url: 'https://example.com/x',
+			published_at: '2026-04-30T00:00:00Z'
+		},
+		deep_dive: null,
+		segment: 'tertiaire',
+		actionability: 'action_directe',
+		search_terms: []
+	};
+	const metaOk = {
+		week_label: '2026-W18',
+		generated_at: '2026-05-01T06:00:00Z',
+		compliance_tag: 'OK FilmPro',
+		executive_summary: 'a'.repeat(100)
+	};
+
+	it('item SANS chips : passe par cross-check et est publié si cross-check le garde (régression W25)', async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: null, error: null }, // idempotence
+			{ data: null, error: null }, // markRunning
+			{ data: [], error: null }, // previousItems
+			{ data: { id: 'rep-zerochip' }, error: null } // publish
+		]);
+		generateMock.mockResolvedValue({
+			success: true,
+			report: { meta: metaOk, items: [itemZeroChip], impacts_filmpro: [] },
+			raw: { mock: true },
+			costs: { breakdown: [], total_usd: 1, total_eur: 1 }
+		});
+		(crossCheckBatch as Mock).mockResolvedValueOnce({
+			kept: [itemZeroChip],
+			rejected: [],
+			unverifiable: [],
+			apiErrorCount: 0
+		});
+
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client)
+		);
+
+		expect(result.ok).toBe(true);
+		// L'item 0-chip a bien été SOUMIS au cross-check (aucun court-circuit).
+		expect((crossCheckBatch as Mock).mock.calls[0][0]).toHaveLength(1);
+		// Publié, avec ses 0 chips intacts (plus de rejet pour search_terms vide).
+		const published = fresh.upserts.find((u) => u.values.status === 'published');
+		expect(published).toBeDefined();
+		const publishedItems = published!.values.items as Array<{ search_terms: unknown }>;
+		expect(publishedItems).toHaveLength(1);
+		expect(publishedItems[0].search_terms).toEqual([]);
+	});
+
+	it("item SANS chips : rejeté par cross-check => JAMAIS publié (zéro-hallu)", async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: null, error: null }, // idempotence
+			{ data: null, error: null }, // markRunning
+			{ data: [], error: null }, // previousItems
+			{ data: { id: 'rep-zerochip-rej' }, error: null } // publish (édition vide)
+		]);
+		generateMock.mockResolvedValue({
+			success: true,
+			report: { meta: metaOk, items: [itemZeroChip], impacts_filmpro: [] },
+			raw: { mock: true },
+			costs: { breakdown: [], total_usd: 1, total_eur: 1 }
+		});
+		// Cross-check rejette l'item (verbatim KO), sans systemicError : l'édition est
+		// publiée mais NE contient PAS l'item non vérifié.
+		(crossCheckBatch as Mock).mockResolvedValueOnce({
+			kept: [],
+			rejected: [
+				{
+					url: 'https://example.com/x',
+					title: 't',
+					verdict: { verbatim_ok: false, divergences: [], confidence: 'low' }
+				}
+			],
+			unverifiable: [],
+			apiErrorCount: 0
+		});
+
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client)
+		);
+
+		// L'item 0-chip est passé par cross-check...
+		expect((crossCheckBatch as Mock).mock.calls[0][0]).toHaveLength(1);
+		// ...et comme il a été rejeté, l'édition publiée ne le contient pas (zéro-hallu).
+		expect(result.ok).toBe(true);
+		const published = fresh.upserts.find((u) => u.values.status === 'published');
+		expect(published).toBeDefined();
+		expect(published!.values.items).toHaveLength(0);
+	});
 });

@@ -25,8 +25,12 @@ import { z } from 'zod';
  *    bloquant (avant : strict tout-ou-rien).
  *  - `items` : parse ARTICLE PAR ARTICLE. Conformes gardés, fautifs écartés
  *    individuellement (jamais réparés — aucune donnée fabriquée).
- *  - Garde anti-dérive : seul le RATIO (>30%) + le « 0 valide » subsistent (le
- *    seuil absolu >3 a été retiré, il ne scalait pas avec la sur-génération 12-15).
+ *  - Garde anti-dérive : seul le « 0 valide » (kept===0 alors que des candidats
+ *    ont été émis) fait échouer l'édition. Le RATIO (>30%) est devenu NON BLOQUANT
+ *    le 2026-06-19 (incident W25) : il ne protégeait pas le zéro-hallu (les articles
+ *    gardés repassent url-verify + cross-check verbatim) ; il n'est plus qu'un
+ *    signal de dérive loggé. Tant qu'il reste ≥1 article valide, on publie. Le seuil
+ *    absolu >3 avait déjà été retiré le 06-19 (ne scalait pas avec la sur-génération).
  *
  * Les articles gardés sont validés par `IntelligenceItemSchema` à l'identique :
  * aucune contrainte d'intégrité (URL https, date, enums) n'est relâchée, donc le
@@ -172,23 +176,33 @@ export function partitionReport(rawInput: unknown): PartitionResult {
 	const total = shell.data.items.length;
 	const droppedCount = dropped.length;
 
-	// Garde anti-dérive (décision Pascal 2026-06-19 « publier ce qui est bon ») :
-	// le seuil ABSOLU >3 a été RETIRÉ (ne scalait pas avec la sur-génération 12-15 :
-	// 4 écarts sur 15 = 27% faisaient échouer 11 bons articles). On garde le RATIO
-	// (>30% = vraie dérive du modèle → échec bruyant) et le « 0 valide ».
-	// total === 0 = semaine creuse légitime (aucun article émis) → NON bloquant.
-	const tooManyRatio = total > 0 && droppedCount / total > MAX_DROPPED_RATIO;
+	// Garde anti-dérive (décision Pascal 2026-06-19 « publier ce qui est bon »,
+	// poussée à son terme après l'incident W25) :
+	//  - Seul « 0 valide » fait échouer (kept===0 alors que des candidats existaient).
+	//  - Le RATIO (>30%) n'est PLUS bloquant : il ne protégeait pas le zéro-hallu (les
+	//    articles gardés repassent url-verify + cross-check verbatim en aval), et il
+	//    faisait planter une édition à 1 bon article + 1 coquille (1/2 = 50% > 30% →
+	//    échec pour 1 coquille, incident W25). Il devient un WARNING de dérive loggé.
+	//  - total === 0 = semaine creuse légitime (aucun article émis) → NON bloquant.
 	const allDropped = total > 0 && kept.length === 0;
 
-	if (tooManyRatio || allDropped) {
+	if (allDropped) {
 		return {
 			ok: false,
 			error:
-				`Trop d'articles non conformes : ${droppedCount}/${total} écartés ` +
-				`(seuil : >${Math.round(MAX_DROPPED_RATIO * 100)}% ou 0 valide). ` +
+				`Aucun article exploitable : ${droppedCount}/${total} candidats écartés (0 valide). ` +
 				`Détail : ${dropped.map((d) => `[${d.index}] ${d.violations}`).join(' ; ')}`,
 			dropped
 		};
+	}
+
+	// Dérive possible (beaucoup d'écarts) mais il reste ≥1 article valide : on PUBLIE
+	// ce qui est bon et on logge le signal de dérive (jamais bloquant).
+	if (total > 0 && droppedCount / total > MAX_DROPPED_RATIO) {
+		console.warn(
+			`[report-validate] dérive possible : ${droppedCount}/${total} candidats écartés ` +
+				`(>${Math.round(MAX_DROPPED_RATIO * 100)}%), publication des ${kept.length} article(s) valide(s).`
+		);
 	}
 
 	return {

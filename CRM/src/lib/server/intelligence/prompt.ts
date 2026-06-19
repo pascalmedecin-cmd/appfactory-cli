@@ -72,6 +72,7 @@ Chaque édition vise **2/3 items à ancrage local + 1/3 items veille tech global
 - Sur-générer raisonnablement (12-15) augmente la chance qu'au moins 8 passent le filtre. Mais : mieux vaut 8 items solides bien sourcés que 15 items faibles dont 10 seront rejetés.
 - Les semaines creuses restent possibles : si moins de 8 signaux réels trouvés malgré recherche large + tech globale, émets ce qui existe vraiment (0 à 7 items, voire items=[] et compliance_tag="Non exploitable" acceptés).
 - Un serveur déclenche une alerte « semaine creuse » si items.length < 2.
+- **INTERDIT d'émettre un item « coquille » / placeholder pour gonfler le volume** : jamais de titre générique vide (« ... », « Item »), jamais de summary/filmpro_relevance vide, jamais de source factice (name = « x », « n/a », url bidon). Un item incomplet est écarté par le serveur et ne sert à rien. En semaine creuse, émets FRANCHEMENT moins d'items : 1, 2 ou 3 signaux réels et complets valent infiniment mieux qu'un quota rempli de coquilles. Mieux vaut items=[] qu'un seul item vide.
 
 # Anti-doublons (RÈGLE)
 Le message utilisateur liste les items des 4 dernières éditions (URL + titre + date). Règles :
@@ -143,7 +144,7 @@ Classer les items par ordre DÉCROISSANT de valeur FilmPro (rank 1..N, max 10). 
   - action_directe : opportunité identifiée, prospecter maintenant.
   - veille_active : à suivre et nourrir le pipe.
   - a_surveiller : signal faible, pas d'action immédiate.
-- search_terms : 2 à 4 chips structurés auto-exécutables. Chaque chip = {kind, canton, query, label}.
+- search_terms : 0 à 4 chips structurés auto-exécutables. Chaque chip = {kind, canton, query, label}. OPTIONNEL : si l'item n'a pas d'angle de prospection direct (pas d'entreprise nommée, pas d'AO, pas de commune identifiable), laisse le tableau VIDE plutôt que d'inventer un chip artificiel. Ne JAMAIS sacrifier un bon article faute d'angle commercial : un item de veille tech ou réglementaire pur peut très bien n'avoir aucun chip.
   - kind : "simap" (appels d'offres publics, mots-clés libres) OU "zefix" (raison sociale entreprise au registre du commerce). Choisir selon le signal : AO / marché public / commune → simap ; entreprise identifiée, nom de société → zefix.
   - canton : GE, VD, VS, NE, FR ou JU. OBLIGATOIRE (les APIs filtrent par canton). Déduire du signal (Lausanne→VD, Genève→GE, Sion→VS, etc.). Si multi-canton, choisir le plus probable. Pour items hors Suisse romande, choisir le canton FilmPro le plus susceptible d'être prospecté en miroir (souvent VD ou GE).
   - query : SIMAP = 3-8 mots-clés métier en français (ex: "rénovation école vitrage"). Zefix = nom d'entreprise précis (raison sociale, 2-60 chars).
@@ -154,7 +155,7 @@ Classer les items par ordre DÉCROISSANT de valeur FilmPro (rank 1..N, max 10). 
 - items : 0 à 15
 - item.title : 10-200 chars ; item.summary : 40-1500 chars (vise 600-900) ; item.filmpro_relevance : 20-1200 chars (vise 200-500) ; item.deep_dive : 0-800 chars
 - impacts_filmpro : 0 à 3 entrées ; note : 10 à 500 chars
-- item.search_terms : 2 à 4 chips ; par chip : query 2-120 chars, label 3-160 chars
+- item.search_terms : 0 à 4 chips (optionnel, tableau vide accepté) ; par chip : query 2-120 chars, label 3-160 chars
 
 Compter les caractères avant de renvoyer. Aucune valeur hors limites n'est tolérée.
 
@@ -333,7 +334,7 @@ export const REPORT_JSON_SCHEMA = {
 					search_terms: {
 						type: 'array',
 						description:
-							'Entre 2 et 4 chips structurés auto-exécutables pour la prospection. Chaque chip = {kind, canton, query, label}.',
+							'0 à 4 chips structurés auto-exécutables pour la prospection (OPTIONNEL : tableau vide accepté si aucun angle de prospection direct). Chaque chip = {kind, canton, query, label}.',
 						items: {
 							type: 'object',
 							additionalProperties: false,
