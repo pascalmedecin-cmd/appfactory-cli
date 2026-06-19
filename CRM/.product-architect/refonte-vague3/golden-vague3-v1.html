@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Golden Vague 3 - Signaux condensés, Prospection campagne, Dashboard temporel (CRM FilmPro)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..800;1,9..40,400..600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ====== Tokens charte CRM FilmPro (extrait app.css, source de vérité - identique au golden Vague 2) ====== */
+  :root {
+    --color-primary: #2F5A9E;
+    --color-primary-light: #F0F4F8;
+    --color-primary-hover: #264C85;
+    --color-primary-dark: #0A1628;
+
+    --color-surface: #FFFFFF;
+    --color-surface-alt: #F9FAFB;
+    --color-shell: #F4F6F9;
+
+    --color-border: #E5E7EB;
+    --color-border-strong: #D1D5DB;
+    --color-border-input: #ADB5BD;
+
+    --color-text: #111827;
+    --color-text-body: #374151;
+    --color-text-muted: #6B7280;
+    --color-text-faint: #9CA3AF;
+    --color-text-inverse: #FFFFFF;
+
+    --color-success: #12B76A;
+    --color-success-light: #ECFDF3;
+    --color-success-deep: #067647;
+    --color-warning: #F79009;
+    --color-warning-light: #FFFAEB;
+    --color-warning-deep: #B54708;
+    --color-danger: #F04438;
+    --color-danger-light: #FEF3F2;
+    --color-danger-deep: #B42318;
+    --color-info: #5A7190;
+    --color-info-light: #EDF1F5;
+    --color-info-deep: #4A5E78;
+
+    /* Pipeline workflow (4 étapes) */
+    --color-prosp-import: #5A7190;   --color-prosp-import-bg: #EDF1F5;   --color-prosp-import-deep: #546B8A;
+    --color-prosp-enrich: #7B6A9A;   --color-prosp-enrich-bg: #F0ECF5;   --color-prosp-enrich-deep: #6F5E8E;
+    --color-prosp-qualify: #917548;  --color-prosp-qualify-bg: #F5F0E8;  --color-prosp-qualify-deep: #85693C;
+    --color-prosp-convert: #538B6B;  --color-prosp-convert-bg: #EBF3EF;  --color-prosp-convert-deep: #417959;
+    --color-prosp-place: #3F7C82;    --color-prosp-place-bg: #E9F1F2;    --color-prosp-place-deep: #39767C;
+
+    --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'DM Mono', 'Consolas', monospace;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
+    --radius-full: 9999px;
+
+    --shadow-xs: 0 1px 2px rgba(16,24,40,0.05);
+    --shadow-card: 0 1px 0 rgba(17,24,39,0.02), 0 0 0 1px rgba(17,24,39,0.04), 0 8px 20px -12px rgba(17,24,39,0.10);
+    --shadow-card-hover: 0 1px 3px rgba(17,24,39,0.05), 0 20px 40px -15px rgba(17,24,39,0.08);
+    --shadow-card-active: 0 1px 0 rgba(17,24,39,0.02), 0 0 0 1px rgba(47,90,158,0.16), 0 16px 28px -16px rgba(17,24,39,0.14);
+    --shadow-panel: 0 24px 48px -12px rgba(16,24,40,0.18);
+    --shadow-menu: 0 12px 32px -8px rgba(16,24,40,0.22), 0 0 0 1px rgba(17,24,39,0.05);
+
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(47,90,158,0.06), transparent 60%),
+      var(--color-shell);
+    color: var(--color-text);
+    line-height: 1.5;
+  }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  /* ====== Cadre documentaire (annotations) ====== */
+  .doc { max-width: 1320px; margin: 0 auto; padding: 56px 28px 120px; }
+  .doc-head { margin-bottom: 44px; }
+  .doc-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: var(--radius-full);
+    background: var(--color-surface); box-shadow: var(--shadow-card);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--color-primary);
+  }
+  .doc-eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-prosp-convert); box-shadow: 0 0 0 3px rgba(83,139,107,0.18); }
+  .doc-title { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; margin: 20px 0 10px; color: var(--color-primary-dark); }
+  .doc-sub { font-size: 16px; color: var(--color-text-muted); max-width: 820px; }
+
+  .section-label {
+    display: flex; align-items: center; gap: 14px;
+    margin: 64px 0 22px; padding-bottom: 14px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .section-num {
+    width: 30px; height: 30px; flex-shrink: 0;
+    border-radius: var(--radius-md);
+    display: grid; place-items: center;
+    background: var(--color-primary-dark); color: #fff;
+    font-size: 13px; font-weight: 700;
+  }
+  .section-label h2 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin: 0; color: var(--color-text); }
+  .section-label p { margin: 2px 0 0; font-size: 13px; color: var(--color-text-muted); }
+
+  .callout {
+    margin: 0 0 24px; padding: 14px 18px;
+    background: var(--color-surface); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    font-size: 13.5px; color: var(--color-text-body);
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .callout svg { flex-shrink: 0; margin-top: 1px; color: var(--color-primary); }
+  .callout b { color: var(--color-text); }
+  .callout.warn { box-shadow: inset 0 0 0 1px rgba(247,144,9,0.25), var(--shadow-card); }
+  .callout.warn svg { color: var(--color-warning-deep); }
+
+  /* ====== Cadre "écran" CRM ====== */
+  .screen {
+    background: var(--color-surface-alt);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+  }
+  .screen-topbar {
+    height: 52px; display: flex; align-items: center; gap: 12px;
+    padding: 0 18px; background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .brand-dot { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 14px; color: var(--color-primary-dark); letter-spacing: -0.01em; }
+  .brand-dot .sq { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, #2F5A9E, #0A1628); }
+  .crumb { font-size: 13px; color: var(--color-text-muted); margin-left: 4px; }
+  .crumb b { color: var(--color-text); font-weight: 600; }
+  .topbar-spacer { flex: 1; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--color-primary-light); color: var(--color-primary); display: grid; place-items: center; font-weight: 700; font-size: 12px; }
+
+  /* corps borné à 1200px (garde-fou bornage) */
+  .workspace { padding: 0; }
+  .ws-bound { max-width: 1200px; margin: 0 auto; }
+
+  /* ---- bande 1 : titre + action ---- */
+  .ws-toolbar-top {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+    padding: 26px 32px 18px;
+  }
+  .ws-titleblock h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-text); }
+  .ws-titleblock .meta { margin-top: 4px; font-size: 13px; color: var(--color-text-muted); }
+  .top-actions { display: flex; align-items: center; gap: 10px; }
+
+  /* primitive : chip KPI (compact, premium) */
+  .kpi-strip { display: flex; gap: 10px; flex-wrap: wrap; padding: 0 32px 18px; }
+  .kpi {
+    display: inline-flex; align-items: center; gap: 11px;
+    padding: 9px 14px 9px 10px; background: var(--color-surface);
+    border-radius: var(--radius-xl); box-shadow: var(--shadow-card);
+    transition: box-shadow 220ms var(--ease), transform 220ms var(--ease);
+  }
+  .kpi:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px); }
+  .kpi-ic { width: 32px; height: 32px; border-radius: var(--radius-md); display: grid; place-items: center; flex-shrink: 0; }
+  .kpi-ic.primary { background: radial-gradient(circle at 30% 30%, rgba(47,90,158,0.12), rgba(47,90,158,0.02)); color: var(--color-primary); }
+  .kpi-ic.success { background: radial-gradient(circle at 30% 30%, rgba(18,183,106,0.14), rgba(18,183,106,0.02)); color: var(--color-success-deep); }
+  .kpi-ic.warn    { background: radial-gradient(circle at 30% 30%, rgba(247,144,9,0.14), rgba(247,144,9,0.02)); color: var(--color-warning-deep); }
+  .kpi-ic.danger  { background: radial-gradient(circle at 30% 30%, rgba(240,68,56,0.14), rgba(240,68,56,0.02)); color: var(--color-danger-deep); }
+  .kpi-ic.convert { background: radial-gradient(circle at 30% 30%, rgba(83,139,107,0.16), rgba(83,139,107,0.02)); color: var(--color-prosp-convert-deep); }
+  .kpi-body { display: flex; flex-direction: column; line-height: 1.1; }
+  .kpi-val { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-primary-dark); }
+  .kpi-lab { font-size: 11.5px; color: var(--color-text-muted); font-weight: 500; margin-top: 2px; }
+
+  /* ---- bande 2 : tabs segmentés + recherche VISIBLE + filtres ---- */
+  .ws-toolbar {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 6px 32px 20px;
+  }
+  .segtabs { display: inline-flex; gap: 2px; padding: 4px; background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-card); }
+  .segtab {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px; border: none; background: transparent; cursor: pointer;
+    border-radius: var(--radius-lg); font-family: inherit; font-size: 13px; font-weight: 600; color: var(--color-text-muted);
+    transition: background 200ms var(--ease), color 200ms var(--ease);
+  }
+  .segtab:hover { color: var(--color-text); }
+  .segtab.active { background: var(--color-primary); color: #fff; }
+  .segtab .ct { font-size: 11.5px; padding: 1px 7px; border-radius: var(--radius-full); background: rgba(17,24,39,0.06); color: var(--color-text-muted); font-weight: 700; }
+  .segtab.active .ct { background: rgba(255,255,255,0.22); color: #fff; }
+
+  .toolbar-spacer { flex: 1; }
+
+  /* primitive : recherche (visible, persistante - jamais Cmd+K) */
+  .crm-search { position: relative; width: 280px; }
+  .crm-search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .crm-search input {
+    width: 100%; height: 40px; padding: 0 14px 0 40px;
+    border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+    background: var(--color-surface); font: 14px var(--font-sans); color: var(--color-text);
+    box-shadow: var(--shadow-xs);
+  }
+  .crm-search input::placeholder { color: var(--color-text-faint); }
+  .crm-search input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(47,90,158,0.16); }
+
+  /* primitive : dropdown filtre (Canton, Campagne...) */
+  .filterchip {
+    display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 13px;
+    border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+    background: var(--color-surface); box-shadow: var(--shadow-xs);
+    font: 600 13px var(--font-sans); color: var(--color-text-body); cursor: pointer;
+  }
+  .filterchip:hover { border-color: var(--color-border-strong); }
+  .filterchip .fc-ic { color: var(--color-text-muted); }
+  .filterchip.set { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-light); }
+  .filterchip .fc-ct { font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: var(--radius-full); background: var(--color-primary); color: #fff; }
+
+  /* boutons */
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px;
+    border: none; border-radius: var(--radius-lg); background: var(--color-primary); color: #fff;
+    font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    box-shadow: 0 1px 2px rgba(16,24,40,0.12), inset 0 1px 0 rgba(255,255,255,0.14);
+    transition: background 200ms var(--ease), transform 120ms var(--ease);
+  }
+  .btn-primary:hover { background: var(--color-primary-hover); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 15px;
+    border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+    background: var(--color-surface); color: var(--color-text-body);
+    font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: var(--shadow-xs);
+    transition: border-color 200ms var(--ease), background 200ms var(--ease);
+  }
+  .btn-secondary:hover { border-color: var(--color-border-strong); background: var(--color-surface-alt); }
+  .btn-secondary svg { color: var(--color-text-muted); }
+
+  /* ====== primitive : crm-row (la LIGNE premium riche) ====== */
+  .listcard {
+    margin: 0 32px 8px; background: var(--color-surface);
+    border-radius: var(--radius-xl); box-shadow: var(--shadow-card);
+    overflow: visible;
+  }
+  .list-head, .crm-row { align-items: center; gap: 16px; padding: 0 18px; }
+  .list-head {
+    height: 42px; border-bottom: 1px solid var(--color-border);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-faint);
+  }
+  .list-head .sortable { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+  .crm-row {
+    min-height: 68px; padding-top: 12px; padding-bottom: 12px;
+    border-bottom: 1px solid rgba(17,24,39,0.05); cursor: pointer;
+    position: relative; transition: background 180ms var(--ease);
+  }
+  .crm-row:last-child { border-bottom: none; }
+  .crm-row::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--color-primary); opacity: 0; transition: opacity 180ms var(--ease);
+  }
+  .crm-row:hover { background: linear-gradient(90deg, rgba(47,90,158,0.035), rgba(47,90,158,0) 40%); }
+  .crm-row:hover::before { opacity: 1; }
+  .crm-row:hover .row-chevron { color: var(--color-primary); transform: translateX(2px); }
+
+  /* grille Prospection (avec colonne Campagne) */
+  /* Statut et Source = 2 colonnes distinctes (1 chip par cellule) → grille propre, pas d'empilement. */
+  .list-head.prosp, .crm-row.prosp { display: grid; grid-template-columns: 44px minmax(180px, 1.8fr) 1fr 1.05fr 78px 116px 96px 28px; }
+
+  .logo {
+    width: 40px; height: 40px; border-radius: var(--radius-lg); flex-shrink: 0;
+    display: grid; place-items: center; overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(17,24,39,0.08);
+    background: #fff;
+  }
+  .logo.ph { background: var(--color-primary-light); color: var(--color-primary); font-weight: 700; font-size: 15px; }
+
+  .id-cell { min-width: 0; }
+  .id-name { font-size: 14.5px; font-weight: 600; color: var(--color-text); letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .id-sec { font-size: 12.5px; color: var(--color-text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* primitive : pill */
+  .pill { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; padding: 4px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .pill svg { flex-shrink: 0; }
+  .pill span { overflow: hidden; text-overflow: ellipsis; }
+  .pill-loc { background: var(--color-info-light); color: var(--color-info-deep); }
+
+  /* primitive NOUVELLE : pill campagne (étiquette de regroupement, posée à l'import) */
+  .camp { display: inline-flex; align-items: center; gap: 6px; padding: 4px 11px 4px 8px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; background: var(--color-prosp-enrich-bg); color: var(--color-prosp-enrich-deep); white-space: nowrap; max-width: 100%; }
+  .camp svg { flex-shrink: 0; }
+  .camp span { overflow: hidden; text-overflow: ellipsis; }
+  .camp-none { color: var(--color-text-faint); font-size: 13px; padding-left: 4px; }
+
+  /* score pill (signaux + prospection) */
+  .score { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: var(--radius-full); font-size: 12px; font-weight: 700; }
+  .score svg { flex-shrink: 0; }
+  .score-chaud { background: #FCEDEA; color: var(--color-danger-deep); }
+  .score-tiede { background: var(--color-prosp-qualify-bg); color: var(--color-prosp-qualify-deep); }
+  .score-froid { background: var(--color-surface-alt); color: var(--color-text-muted); box-shadow: inset 0 0 0 1px var(--color-border); }
+
+  /* source pill */
+  .src { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: var(--radius-md); font-size: 11.5px; font-weight: 600; }
+  .src-zefix { background: #EEF3EE; color: #3C5840; }
+  .src-google { background: var(--color-prosp-place-bg); color: var(--color-prosp-place-deep); }
+  .src-terrain{ background: #F2ECF1; color: #6F4F6E; }
+  .src-searchch { background: var(--color-info-light); color: var(--color-info-deep); }
+
+  /* badge statut */
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--radius-lg); font-size: 12px; font-weight: 600; }
+  .badge .bdot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge-success { background: var(--color-success-light); color: var(--color-success-deep); box-shadow: inset 0 0 0 1px rgba(18,183,106,0.18); }
+  .badge-success .bdot { background: var(--color-success); }
+  .badge-info { background: var(--color-info-light); color: var(--color-info-deep); box-shadow: inset 0 0 0 1px rgba(90,113,144,0.18); }
+  .badge-info .bdot { background: var(--color-info); }
+  .badge-warning { background: var(--color-warning-light); color: var(--color-warning-deep); box-shadow: inset 0 0 0 1px rgba(247,144,9,0.18); }
+  .badge-warning .bdot { background: var(--color-warning); }
+  .badge-muted { background: var(--color-surface-alt); color: var(--color-text-muted); box-shadow: inset 0 0 0 1px var(--color-border); }
+  .badge-muted .bdot { background: var(--color-text-faint); }
+
+  .activity { font-size: 12px; color: var(--color-text-faint); white-space: nowrap; }
+  .row-chevron { color: var(--color-text-faint); transition: color 180ms var(--ease), transform 180ms var(--ease); justify-self: end; }
+  .list-foot { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-top: 1px solid var(--color-border); font-size: 12.5px; color: var(--color-text-muted); }
+  .pager { display: inline-flex; gap: 6px; }
+  .pager button { height: 30px; min-width: 30px; padding: 0 9px; border: 1px solid var(--color-border); background: var(--color-surface); border-radius: var(--radius-md); font: 12.5px var(--font-sans); color: var(--color-text-body); cursor: pointer; }
+  .pager button.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+
+  /* ====== SIGNAUX : cartes condensées ====== */
+  .sig-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; padding: 4px 32px 28px; }
+  .sigcard {
+    position: relative; background: var(--color-surface); border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card); padding: 16px 18px 14px; cursor: pointer; overflow: hidden;
+    transition: transform 220ms var(--ease), box-shadow 220ms var(--ease);
+  }
+  .sigcard:hover { transform: translateY(-2px); box-shadow: var(--shadow-card-active); }
+  .sigcard::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--color-prosp-convert); }
+  .sigcard.coeur::before { background: var(--color-danger); }
+  .sigcard.bonus::before { background: var(--color-prosp-qualify); }
+  .sig-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .sig-type { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 700; color: var(--color-text-body); }
+  .sig-type .ti { width: 26px; height: 26px; border-radius: var(--radius-md); display: grid; place-items: center; background: var(--color-primary-light); color: var(--color-primary); flex-shrink: 0; }
+  .sig-when { margin-left: auto; font-size: 11.5px; color: var(--color-text-faint); white-space: nowrap; }
+  .sig-title { font-size: 14.5px; font-weight: 600; color: var(--color-text); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .sig-foot { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(17,24,39,0.06); }
+  .sig-foot .src { margin-left: auto; }
+  mark.kw { background: rgba(240,68,56,0.14); color: var(--color-danger-deep); border-radius: 3px; padding: 0 2px; font-weight: 600; }
+
+  /* ====== Menu d'actions (kebab ...) ====== */
+  .act-menu { position: relative; }
+  .kebab { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--color-border); background: var(--color-surface); border-radius: var(--radius-md); color: var(--color-text-muted); cursor: pointer; box-shadow: var(--shadow-xs); }
+  .kebab:hover { background: var(--color-surface-alt); color: var(--color-text); }
+  .menu {
+    position: absolute; right: 0; top: calc(100% + 8px); z-index: 5;
+    min-width: 196px; padding: 6px; background: var(--color-surface);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-menu);
+  }
+  .menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 11px; border: none; background: transparent; border-radius: var(--radius-md); font: 600 13px var(--font-sans); color: var(--color-text-body); cursor: pointer; text-align: left; }
+  .menu-item:hover { background: var(--color-surface-alt); }
+  .menu-item svg { color: var(--color-text-muted); flex-shrink: 0; }
+  .menu-item.danger { color: var(--color-danger-deep); }
+  .menu-item.danger svg { color: var(--color-danger); }
+  .menu-sep { height: 1px; background: var(--color-border); margin: 5px 4px; }
+
+  /* ====== Fiche SlideOut ====== */
+  .fiche-stage { position: relative; background: repeating-linear-gradient(135deg, rgba(17,24,39,0.015) 0 2px, transparent 2px 9px), var(--color-surface-alt); border-radius: var(--radius-2xl); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); overflow: hidden; min-height: 540px; display: flex; }
+  .fiche-stage .dim { flex: 1; background: rgba(10,22,40,0.18); }
+  .fiche { width: 560px; max-width: 94%; background: var(--color-surface); box-shadow: var(--shadow-panel); display: flex; flex-direction: column; border-left: 1px solid var(--color-border); }
+  .fiche-head { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; border-bottom: 1px solid var(--color-border); }
+  .fiche-head h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--color-text); letter-spacing: -0.01em; }
+  .icon-btn { width: 38px; height: 38px; display: grid; place-items: center; border: none; background: transparent; color: var(--color-text-muted); border-radius: var(--radius-md); cursor: pointer; }
+  .icon-btn:hover { background: var(--color-surface-alt); color: var(--color-text); }
+  .fiche-body { flex: 1; overflow-y: auto; padding: 22px; display: grid; gap: 20px; }
+  .fiche-hero { display: flex; gap: 16px; align-items: flex-start; }
+  .fiche-hero .ic { width: 52px; height: 52px; border-radius: var(--radius-xl); display: grid; place-items: center; background: var(--color-primary-light); color: var(--color-primary); flex-shrink: 0; }
+  .fiche-hero-meta { min-width: 0; }
+  .fiche-hero-name { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-text); line-height: 1.35; }
+  .fiche-hero-tags { display: flex; gap: 7px; margin-top: 9px; flex-wrap: wrap; }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--color-border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: inset 0 0 0 1px var(--color-border); }
+  .fact { background: var(--color-surface); padding: 12px 14px; }
+  .fact .k { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-faint); }
+  .fact .v { font-size: 13.5px; font-weight: 600; color: var(--color-text); margin-top: 3px; }
+  .fact .v a { color: var(--color-primary); text-decoration: none; }
+  .fsection-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+  .fsection-h h4 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-muted); }
+  .chips { display: flex; gap: 7px; flex-wrap: wrap; }
+  .chip { font-size: 12px; font-weight: 600; color: var(--color-text-body); background: var(--color-surface-alt); box-shadow: inset 0 0 0 1px var(--color-border); padding: 5px 11px; border-radius: var(--radius-full); }
+
+  /* barre d'actions fiche : primaires + kebab */
+  .fiche-foot { border-top: 1px solid var(--color-border); padding: 14px 22px; display: flex; gap: 10px; align-items: center; background: var(--color-surface); }
+  .fbtn { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 16px; border-radius: var(--radius-lg); font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; border: none; }
+  .fbtn-primary { background: var(--color-primary); color: #fff; }
+  .fbtn-primary:hover { background: var(--color-primary-hover); }
+  .fbtn-ghost { background: var(--color-primary-light); color: var(--color-primary); }
+  .fiche-foot .act-menu { margin-left: auto; }
+
+  /* ====== DASHBOARD temporel (façon Capsule) ====== */
+  .dash-hero { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 28px 32px 16px; }
+  .dash-hello h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.025em; color: var(--color-primary-dark); }
+  .dash-hello p { margin: 5px 0 0; font-size: 14px; color: var(--color-text-muted); }
+  .dash-grid { display: grid; grid-template-columns: 1.55fr 1fr; gap: 18px; padding: 8px 32px 30px; align-items: start; }
+  @media (max-width: 980px) { .dash-grid { grid-template-columns: 1fr; } }
+
+  .panel { background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-card); overflow: hidden; }
+  .panel-h { display: flex; align-items: center; gap: 10px; padding: 16px 18px 12px; }
+  .panel-h h3 { margin: 0; font-size: 14px; font-weight: 700; color: var(--color-text); letter-spacing: -0.01em; }
+  .panel-h .pcount { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--color-text-faint); }
+  .panel-h .hdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+
+  /* groupes d'urgence */
+  .urg { padding: 0 8px 8px; }
+  .urg-band { display: flex; align-items: center; gap: 9px; padding: 12px 12px 8px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .urg-band.late { color: var(--color-danger-deep); }
+  .urg-band.today { color: var(--color-primary); }
+  .urg-band.week { color: var(--color-text-muted); }
+  .urg-band .ub-ct { margin-left: auto; font-size: 11px; padding: 1px 8px; border-radius: var(--radius-full); }
+  .urg-band.late .ub-ct { background: var(--color-danger-light); color: var(--color-danger-deep); }
+  .urg-band.today .ub-ct { background: var(--color-primary-light); color: var(--color-primary); }
+  .urg-band.week .ub-ct { background: var(--color-surface-alt); color: var(--color-text-muted); box-shadow: inset 0 0 0 1px var(--color-border); }
+
+  .task { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: var(--radius-lg); cursor: pointer; transition: background 160ms var(--ease); }
+  .task:hover { background: var(--color-surface-alt); }
+  .task-ic { width: 36px; height: 36px; border-radius: var(--radius-lg); display: grid; place-items: center; flex-shrink: 0; background: var(--color-primary-light); color: var(--color-primary); }
+  .task-ic.late { background: var(--color-danger-light); color: var(--color-danger-deep); }
+  .task-main { min-width: 0; flex: 1; }
+  .task-t { font-size: 13.5px; font-weight: 600; color: var(--color-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .task-s { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; }
+  .task-due { font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+  .task-due.late { color: var(--color-danger-deep); }
+  .task-due.today { color: var(--color-primary); }
+  .task-due.week { color: var(--color-text-faint); }
+  .task-cta { width: 34px; height: 34px; border-radius: var(--radius-md); display: grid; place-items: center; background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-xs); flex-shrink: 0; }
+
+  /* feed d'activité */
+  .feed { padding: 4px 18px 16px; position: relative; }
+  .feed-line { position: relative; padding-left: 26px; }
+  .feed-line::before { content: ''; position: absolute; left: 9px; top: 6px; bottom: 6px; width: 2px; background: var(--color-border); }
+  .fi { position: relative; padding: 8px 0; }
+  .fi::before { content: ''; position: absolute; left: -21px; top: 11px; width: 12px; height: 12px; border-radius: 50%; background: var(--color-surface); box-shadow: 0 0 0 2px var(--color-prosp-convert); }
+  .fi.visit::before { box-shadow: 0 0 0 2px var(--color-prosp-place); }
+  .fi.signal::before { box-shadow: 0 0 0 2px var(--color-primary); }
+  .fi.photo::before { box-shadow: 0 0 0 2px var(--color-prosp-qualify); }
+  .fi-t { font-size: 13px; color: var(--color-text-body); }
+  .fi-t b { color: var(--color-text); font-weight: 600; }
+  .fi-d { font-size: 11.5px; color: var(--color-text-faint); margin-top: 1px; }
+
+  /* état vide chaleureux */
+  .warm { display: flex; align-items: center; gap: 12px; margin: 4px 8px 10px; padding: 14px 16px; border-radius: var(--radius-lg); background: var(--color-success-light); }
+  .warm svg { color: var(--color-success-deep); flex-shrink: 0; }
+  .warm .wt { font-size: 13px; font-weight: 600; color: var(--color-success-deep); }
+  .warm .ws { font-size: 12px; color: var(--color-success-deep); opacity: 0.85; }
+
+  /* ====== Modale import (champ campagne) ====== */
+  .modal-stage { background: var(--color-surface-alt); border-radius: var(--radius-2xl); border: 1px solid var(--color-border); box-shadow: var(--shadow-card); padding: 26px; display: grid; place-items: center; }
+  .modal { width: 520px; max-width: 100%; background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-panel); overflow: hidden; }
+  .modal-h { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid var(--color-border); }
+  .modal-h h3 { margin: 0; font-size: 15px; font-weight: 700; color: var(--color-text); }
+  .modal-b { padding: 20px; display: grid; gap: 16px; }
+  .field label { display: block; font-size: 12.5px; font-weight: 600; color: var(--color-text-body); margin-bottom: 6px; }
+  .field label .opt { font-weight: 500; color: var(--color-text-faint); }
+  .field input { width: 100%; height: 42px; padding: 0 13px; border: 1px solid var(--color-border-input); border-radius: var(--radius-lg); font: 14px var(--font-sans); color: var(--color-text); }
+  .field input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(47,90,158,0.16); }
+  .field .help { font-size: 12px; color: var(--color-text-muted); margin-top: 6px; display: flex; align-items: center; gap: 6px; }
+  .field .help svg { color: var(--color-prosp-enrich); flex-shrink: 0; }
+  .camp-suggest { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 9px; }
+  .camp-suggest .cs { font-size: 12px; font-weight: 600; color: var(--color-prosp-enrich-deep); background: var(--color-prosp-enrich-bg); padding: 5px 11px; border-radius: var(--radius-full); cursor: pointer; }
+  .modal-f { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px; border-top: 1px solid var(--color-border); background: var(--color-surface-alt); }
+
+  /* légende primitives */
+  .prims { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .prim { background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-card); padding: 18px 20px; }
+  .prim-name { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12.5px; font-weight: 600; color: var(--color-prosp-enrich-deep); background: var(--color-prosp-enrich-bg); padding: 4px 10px; border-radius: var(--radius-md); }
+  .prim p { margin: 11px 0 0; font-size: 13px; color: var(--color-text-body); }
+  .prim .where { margin-top: 7px; font-size: 12px; color: var(--color-text-faint); }
+
+  @media (max-width: 920px) {
+    .list-head { display: none; }
+    .sig-grid, .dash-grid { grid-template-columns: 1fr; }
+    .prims { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <div class="doc-head">
+    <span class="doc-eyebrow"><span class="dot"></span> Refonte CRM - Vague 3 - Golden v1</span>
+    <h1 class="doc-title">Signaux condensés, Prospection campagne, Dashboard temporel</h1>
+    <p class="doc-sub">Les 3 chantiers de la Vague 3, dans le système premium déjà validé en Vague 2 (mêmes tokens, mêmes primitives). À valider dans Chrome avant toute ligne de code production. Garde-fous respectés : recherche visible (jamais Cmd+K), bornage 1200px, couleur porteuse de sens (palette workflow), états vides soignés.</p>
+  </div>
+
+  <div class="callout">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16" r=".5" fill="currentColor"/></svg>
+    <div><b>Décisions tranchées avec toi :</b> Signaux = <b>condenser le haut</b> (2 bandes) + action <b>Archiver</b> (réversible) regroupée dans un menu <b>...</b> ; Prospection = colonne <b>Campagne</b> (étiquette posée à l'import, optionnelle, cumulative) + filtre par campagne + <b>export CSV</b> (déjà livré) ; Dashboard = accueil organisé <b>par urgence dans le temps</b> (en retard / aujourd'hui / cette semaine) + fil d'activité, plutôt qu'un mur de chiffres.</div>
+  </div>
+
+  <!-- ============ SECTION 1 : SIGNAUX CONDENSÉS + ACTIONS ============ -->
+  <div class="section-label">
+    <span class="section-num">1</span>
+    <div><h2>Signaux - condensés + actions</h2><p>Moins d'empilement avant le 1er signal. Cartes resserrées. Le panneau de détail gagne l'action Archiver, et range les actions secondaires dans un menu pour rester lisible.</p></div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-topbar">
+      <span class="brand-dot"><span class="sq"></span> FilmPro CRM</span>
+      <span class="crumb">/ <b>Signaux</b></span>
+      <span class="topbar-spacer"></span>
+      <span class="avatar">PM</span>
+    </div>
+    <div class="workspace">
+      <div class="ws-bound">
+
+        <!-- bande 1 : titre + KPI compacts (avant : KPI géants + bannière + indicateurs empilés) -->
+        <div class="ws-toolbar-top">
+          <div class="ws-titleblock">
+            <h1>Signaux</h1>
+            <div class="meta">Radar des appels d'offres et chantiers - 23 à traiter</div>
+          </div>
+        </div>
+        <div class="kpi-strip">
+          <div class="kpi"><span class="kpi-ic primary"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">23</span><span class="kpi-lab">Nouveaux</span></span></div>
+          <div class="kpi"><span class="kpi-ic warn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">8</span><span class="kpi-lab">En analyse</span></span></div>
+          <div class="kpi"><span class="kpi-ic convert"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">5</span><span class="kpi-lab">Convertis</span></span></div>
+        </div>
+
+        <!-- bande 2 : tabs statut + recherche visible + filtre canton -->
+        <div class="ws-toolbar">
+          <div class="segtabs">
+            <button class="segtab active">Nouveaux <span class="ct">23</span></button>
+            <button class="segtab">En analyse <span class="ct">8</span></button>
+            <button class="segtab">Intéressé <span class="ct">3</span></button>
+            <button class="segtab">Convertis <span class="ct">5</span></button>
+            <button class="segtab">Écartés <span class="ct">11</span></button>
+          </div>
+          <span class="toolbar-spacer"></span>
+          <div class="crm-search">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" placeholder="Rechercher un projet, un maître d'ouvrage..." />
+          </div>
+          <button class="filterchip"><svg class="fc-ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> Canton <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg></button>
+        </div>
+
+        <!-- cartes signaux condensées -->
+        <div class="sig-grid">
+          <div class="sigcard coeur">
+            <div class="sig-top">
+              <span class="sig-type"><span class="ti"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 21h18M6 21V8l6-4 6 4v13"/><path d="M10 21v-5h4v5"/></svg></span> Appel d'offres</span>
+              <span class="score score-chaud"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-2 5-2 8a4 4 0 0 0 8 0c0-1-.5-2-1-3 2 1 3 3 3 6a8 8 0 0 1-16 0c0-5 5-7 6-11Z"/></svg> 11</span>
+              <span class="sig-when">il y a 2 h</span>
+            </div>
+            <div class="sig-title">Rénovation énergétique - <mark class="kw">façades vitrées</mark> du collège de Malagnou (GE)</div>
+            <div class="sig-foot">
+              <span class="badge badge-muted"><span class="bdot"></span> Nouveau</span>
+              <span class="pill pill-loc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> GE</span>
+              <span class="src src-zefix">SIMAP</span>
+            </div>
+          </div>
+          <div class="sigcard bonus">
+            <div class="sig-top">
+              <span class="sig-type"><span class="ti"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3"/></svg></span> Permis de construire</span>
+              <span class="score score-tiede"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg> 6</span>
+              <span class="sig-when">hier</span>
+            </div>
+            <div class="sig-title">Surélévation immeuble de bureaux - <mark class="kw">protection solaire</mark> avenue de la Gare (VD)</div>
+            <div class="sig-foot">
+              <span class="badge badge-info"><span class="bdot"></span> En analyse</span>
+              <span class="pill pill-loc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> VD</span>
+              <span class="src src-zefix">SIMAP</span>
+            </div>
+          </div>
+          <div class="sigcard">
+            <div class="sig-top">
+              <span class="sig-type"><span class="ti"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 21h18M6 21V8l6-4 6 4v13"/></svg></span> Marché public</span>
+              <span class="score score-froid"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M1 12h3M20 12h3"/></svg> 3</span>
+              <span class="sig-when">il y a 4 j</span>
+            </div>
+            <div class="sig-title">Entretien des bâtiments communaux - lot menuiserie extérieure (FR)</div>
+            <div class="sig-foot">
+              <span class="badge badge-muted"><span class="bdot"></span> Nouveau</span>
+              <span class="pill pill-loc"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> FR</span>
+              <span class="src src-zefix">SIMAP</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:24px">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+    <div><b>Condensation :</b> avant, 5+ zones empilées (KPI géants, bannière, indicateurs, onglets, recherche, tri) avant le 1er signal. Après, <b>2 bandes</b> : titre + 3 chips KPI, puis onglets + recherche + canton. Le tri passe dans un menu discret. Score, type et statut restent visibles d'un coup d'oeil sur chaque carte.</div>
+  </div>
+
+  <!-- détail signal : barre d'actions avec Archiver + menu -->
+  <div class="section-label" style="margin-top:48px">
+    <span class="section-num" style="background:var(--color-surface);color:var(--color-text-muted);box-shadow:inset 0 0 0 1px var(--color-border)">1b</span>
+    <div><h2>Panneau de détail - actions</h2><p>Actions primaires en clair (Modifier, Créer une opportunité). Le reste (Archiver, Écarter, Supprimer) dans le menu ... pour ne pas saturer la barre.</p></div>
+  </div>
+
+  <div class="fiche-stage">
+    <div class="dim"></div>
+    <div class="fiche">
+      <div class="fiche-head">
+        <h3>Détail du signal</h3>
+        <button class="icon-btn" aria-label="Fermer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="fiche-body">
+        <div class="fiche-hero">
+          <span class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 21h18M6 21V8l6-4 6 4v13"/><path d="M10 21v-5h4v5"/></svg></span>
+          <div class="fiche-hero-meta">
+            <div class="fiche-hero-name">Rénovation énergétique - façades vitrées du collège de Malagnou</div>
+            <div class="fiche-hero-tags">
+              <span class="badge badge-muted"><span class="bdot"></span> Nouveau</span>
+              <span class="score score-chaud"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-2 5-2 8a4 4 0 0 0 8 0c0-1-.5-2-1-3 2 1 3 3 3 6a8 8 0 0 1-16 0c0-5 5-7 6-11Z"/></svg> Prioritaire 11</span>
+              <span class="src src-zefix">SIMAP</span>
+            </div>
+          </div>
+        </div>
+        <div class="facts">
+          <div class="fact"><div class="k">Type</div><div class="v">Appel d'offres</div></div>
+          <div class="fact"><div class="k">Canton</div><div class="v">Genève (GE)</div></div>
+          <div class="fact"><div class="k">Maître d'ouvrage</div><div class="v">Ville de Genève</div></div>
+          <div class="fact"><div class="k">Détecté</div><div class="v">il y a 2 h</div></div>
+          <div class="fact" style="grid-column:1 / -1"><div class="k">Référence</div><div class="v"><a href="#">Voir sur SIMAP</a></div></div>
+        </div>
+        <div class="fsection">
+          <div class="fsection-h"><h4>Critères de scoring</h4></div>
+          <div class="chips">
+            <span class="chip">Façade vitrée</span>
+            <span class="chip">Bâtiment public</span>
+            <span class="chip">Canton cible (GE)</span>
+            <span class="chip">Confort thermique</span>
+          </div>
+        </div>
+      </div>
+      <div class="fiche-foot">
+        <button class="fbtn fbtn-ghost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Modifier</button>
+        <button class="fbtn fbtn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg> Créer une opportunité</button>
+        <div class="act-menu">
+          <button class="kebab" aria-label="Plus d'actions"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg></button>
+          <div class="menu">
+            <button class="menu-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg> Archiver (réversible)</button>
+            <button class="menu-item"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg> Écarter</button>
+            <div class="menu-sep"></div>
+            <button class="menu-item danger"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Supprimer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SECTION 2 : PROSPECTION CAMPAGNE + EXPORT CSV ============ -->
+  <div class="section-label">
+    <span class="section-num">2</span>
+    <div><h2>Prospection - colonne Campagne + export CSV</h2><p>Une étiquette de campagne posée à l'import (optionnelle, plusieurs imports peuvent partager la même), une colonne et un filtre pour s'y retrouver, et l'export CSV de la vue filtrée.</p></div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-topbar">
+      <span class="brand-dot"><span class="sq"></span> FilmPro CRM</span>
+      <span class="crumb">/ <b>Prospection</b></span>
+      <span class="topbar-spacer"></span>
+      <span class="avatar">PM</span>
+    </div>
+    <div class="workspace">
+      <div class="ws-bound">
+
+        <div class="ws-toolbar-top">
+          <div class="ws-titleblock">
+            <h1>Prospection</h1>
+            <div class="meta">62 prospects - onglet Entreprises</div>
+          </div>
+          <div class="top-actions">
+            <!-- export CSV (déjà livré cette session) -->
+            <button class="btn-secondary"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 21h14"/></svg> Exporter CSV</button>
+            <button class="btn-primary"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg> Rechercher une entreprise</button>
+          </div>
+        </div>
+
+        <div class="ws-toolbar">
+          <div class="segtabs">
+            <button class="segtab active">Entreprises <span class="ct">62</span></button>
+            <button class="segtab">Terrain <span class="ct">14</span></button>
+          </div>
+          <span class="toolbar-spacer"></span>
+          <div class="crm-search">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" placeholder="Rechercher un prospect..." />
+          </div>
+          <!-- filtre campagne (séparation) -->
+          <button class="filterchip set"><svg class="fc-ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 22V4M4 4l11 1.5L4 13"/></svg> Régies GE - T3 <span class="fc-ct">18</span></button>
+        </div>
+
+        <div class="listcard">
+          <div class="list-head prosp">
+            <span></span>
+            <span class="sortable">Raison sociale <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg></span>
+            <span>Localisation</span>
+            <span>Campagne</span>
+            <span>Score</span>
+            <span>Statut</span>
+            <span>Source</span>
+            <span></span>
+          </div>
+
+          <div class="crm-row prosp">
+            <span class="logo ph">R</span>
+            <div class="id-cell"><div class="id-name">Régie du Rhône SA</div><div class="id-sec">Gérance immobilière</div></div>
+            <span class="pill pill-loc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>GE - Genève</span></span>
+            <span class="camp"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22V4M4 4l11 1.5L4 13"/></svg><span>Régies GE - T3</span></span>
+            <span class="score score-chaud"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-2 5-2 8a4 4 0 0 0 8 0c0-1-.5-2-1-3 2 1 3 3 3 6a8 8 0 0 1-16 0c0-5 5-7 6-11Z"/></svg> 9</span>
+            <span class="badge badge-muted"><span class="bdot"></span> Nouveau</span>
+            <span class="src src-google">Google</span>
+            <svg class="row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+
+          <div class="crm-row prosp">
+            <span class="logo ph" style="background:#EEF3EE;color:#3C5840">F</span>
+            <div class="id-cell"><div class="id-name">Foncia Genève</div><div class="id-sec">Administration de biens</div></div>
+            <span class="pill pill-loc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>GE - Carouge</span></span>
+            <span class="camp"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22V4M4 4l11 1.5L4 13"/></svg><span>Régies GE - T3</span></span>
+            <span class="score score-tiede"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg> 6</span>
+            <span class="badge badge-info"><span class="bdot"></span> Intéressé</span>
+            <span class="src src-zefix">Zefix</span>
+            <svg class="row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+
+          <div class="crm-row prosp" style="background:linear-gradient(90deg, rgba(47,90,158,0.045), rgba(47,90,158,0) 40%)">
+            <span class="logo ph" style="background:var(--color-prosp-place-bg);color:var(--color-prosp-place-deep)">M</span>
+            <div class="id-cell"><div class="id-name">Moser Vernet & Cie</div><div class="id-sec">Régie immobilière</div></div>
+            <span class="pill pill-loc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>GE - Genève</span></span>
+            <span class="camp"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22V4M4 4l11 1.5L4 13"/></svg><span>Régies GE - T3</span></span>
+            <span class="score score-chaud"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1 4-2 5-2 8a4 4 0 0 0 8 0c0-1-.5-2-1-3 2 1 3 3 3 6a8 8 0 0 1-16 0c0-5 5-7 6-11Z"/></svg> 10</span>
+            <span class="badge badge-muted"><span class="bdot"></span> Nouveau</span>
+            <span class="src src-google">Google</span>
+            <svg class="row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" style="transform:translateX(2px)"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+
+          <div class="crm-row prosp">
+            <span class="logo ph" style="background:#F2ECF1;color:#6F4F6E">V</span>
+            <div class="id-cell"><div class="id-name">Vitrerie du Lac Sàrl</div><div class="id-sec">Prospect terrain</div></div>
+            <span class="pill pill-loc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>VD - Morges</span></span>
+            <span class="camp-none">-</span>
+            <span class="score score-froid"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="3"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3"/></svg> 2</span>
+            <span class="badge badge-muted"><span class="bdot"></span> Nouveau</span>
+            <span class="src src-terrain">Terrain</span>
+            <svg class="row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+
+          <div class="list-foot">
+            <span>1 - 4 sur 18 (campagne « Régies GE - T3 »)</span>
+            <span class="pager"><button>Précédent</button><button class="active">1</button><button>2</button><button>Suivant</button></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- modale import : champ campagne -->
+  <div class="section-label" style="margin-top:48px">
+    <span class="section-num" style="background:var(--color-surface);color:var(--color-text-muted);box-shadow:inset 0 0 0 1px var(--color-border)">2b</span>
+    <div><h2>À l'import - étiquette de campagne</h2><p>Un champ optionnel au moment d'importer un lot. Cumulative : on peut taper le même nom sur plusieurs imports pour les regrouper.</p></div>
+  </div>
+
+  <div class="modal-stage">
+    <div class="modal">
+      <div class="modal-h">
+        <h3>Importer les résultats (8 entreprises sélectionnées)</h3>
+        <button class="icon-btn" aria-label="Fermer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="modal-b">
+        <div class="field">
+          <label>Étiquette de campagne <span class="opt">- optionnel</span></label>
+          <input type="text" value="Régies GE - T3" />
+          <div class="help"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="8" r=".5" fill="currentColor"/></svg> Plusieurs imports peuvent partager la même campagne. Laisser vide si ce lot n'appartient à aucune campagne.</div>
+          <div class="camp-suggest">
+            <span class="cs">Régies GE - T3</span>
+            <span class="cs">Architectes Vaud</span>
+            <span class="cs">Facility 2026</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-f">
+        <button class="btn-secondary">Annuler</button>
+        <button class="btn-primary">Importer 8 entreprises</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout warn" style="margin-top:24px">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M10.3 3.6 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+    <div><b>Export CSV - déjà livré cette session.</b> Le bouton « Exporter CSV » télécharge exactement la vue filtrée (onglet + recherche + filtres, dont la campagne). La <b>colonne Campagne</b> et son <b>filtre</b> arriveront avec le code de cette Vague 3 (migration légère : une colonne texte sur les leads, posée à l'import). Rien n'est encore déployé.</div>
+  </div>
+
+  <!-- ============ SECTION 3 : DASHBOARD TEMPOREL ============ -->
+  <div class="section-label">
+    <span class="section-num">3</span>
+    <div><h2>Dashboard - façon Capsule (temporel)</h2><p>L'accueil ouvre sur « ce qu'il faut faire » organisé dans le temps (en retard / aujourd'hui / cette semaine) et « ce qui s'est passé », au lieu d'un mur de chiffres par type d'objet.</p></div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-topbar">
+      <span class="brand-dot"><span class="sq"></span> FilmPro CRM</span>
+      <span class="crumb">/ <b>Accueil</b></span>
+      <span class="topbar-spacer"></span>
+      <span class="avatar">PM</span>
+    </div>
+    <div class="workspace">
+      <div class="ws-bound">
+
+        <div class="dash-hero">
+          <div class="dash-hello">
+            <h1>Bonjour Pascal</h1>
+            <p>Jeudi 19 juin - 3 relances en retard, 4 à faire aujourd'hui.</p>
+          </div>
+        </div>
+
+        <div class="kpi-strip">
+          <div class="kpi"><span class="kpi-ic danger"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">3</span><span class="kpi-lab">Relances en retard</span></span></div>
+          <div class="kpi"><span class="kpi-ic primary"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">4</span><span class="kpi-lab">À faire aujourd'hui</span></span></div>
+          <div class="kpi"><span class="kpi-ic convert"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">9</span><span class="kpi-lab">Affaires en cours</span></span></div>
+          <div class="kpi"><span class="kpi-ic warn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">23</span><span class="kpi-lab">Signaux à trier</span></span></div>
+        </div>
+
+        <div class="dash-grid">
+
+          <!-- colonne gauche : à faire, par urgence temporelle -->
+          <div class="panel">
+            <div class="panel-h"><span class="hdot" style="background:var(--color-primary)"></span><h3>À faire</h3><span class="pcount">7 actions</span></div>
+            <div class="urg">
+              <div class="urg-band late">En retard <span class="ub-ct">3</span></div>
+              <div class="task">
+                <span class="task-ic late"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.4 2.1L8 9.5a16 16 0 0 0 6 6l1.1-1.3a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z"/></svg></span>
+                <div class="task-main"><div class="task-t">Rappeler Martine Blanc - Clinique de la Source</div><div class="task-s">Négociation - devis CHF 48'000</div></div>
+                <span class="task-due late">il y a 4 j</span>
+                <span class="task-cta"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+              </div>
+              <div class="task">
+                <span class="task-ic late"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M4 4h16v16H4z"/><path d="M22 6 12 13 2 6"/></svg></span>
+                <div class="task-main"><div class="task-t">Relancer le devis - Régie du Rhône SA</div><div class="task-s">Devis envoyé, sans réponse</div></div>
+                <span class="task-due late">il y a 2 j</span>
+                <span class="task-cta"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+              </div>
+
+              <div class="urg-band today">Aujourd'hui <span class="ub-ct">2</span></div>
+              <div class="task">
+                <span class="task-ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span>
+                <div class="task-main"><div class="task-t">Visite de relevé - Migros Vaud, Ecublens</div><div class="task-s">3 façades sud à mesurer</div></div>
+                <span class="task-due today">14 h 00</span>
+                <span class="task-cta"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+              </div>
+              <div class="task">
+                <span class="task-ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg></span>
+                <div class="task-main"><div class="task-t">Qualifier le signal Malagnou (GE)</div><div class="task-s">Appel d'offres - score 11</div></div>
+                <span class="task-due today">Aujourd'hui</span>
+                <span class="task-cta"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+              </div>
+
+              <div class="urg-band week">Cette semaine <span class="ub-ct">2</span></div>
+              <div class="task">
+                <span class="task-ic"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.4 2.1L8 9.5a16 16 0 0 0 6 6l1.1-1.3a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z"/></svg></span>
+                <div class="task-main"><div class="task-t">Suivi - Atelier d'architecture Vionnet</div><div class="task-s">Visite planifiée</div></div>
+                <span class="task-due week">ven. 20</span>
+                <span class="task-cta"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- colonne droite : fil d'activité + état vide chaleureux -->
+          <div style="display:grid; gap:18px;">
+            <div class="panel">
+              <div class="panel-h"><span class="hdot" style="background:var(--color-prosp-convert)"></span><h3>Ce qui s'est passé</h3><span class="pcount">7 j</span></div>
+              <div class="feed">
+                <div class="feed-line">
+                  <div class="fi convert"><div class="fi-t"><b>Migros Vaud</b> - opportunité passée en « Gagnée »</div><div class="fi-d">il y a 2 h</div></div>
+                  <div class="fi visit"><div class="fi-t">Visite terrain - <b>Clinique de la Source</b> (3 photos)</div><div class="fi-d">hier - Pascal M.</div></div>
+                  <div class="fi signal"><div class="fi-t">5 nouveaux signaux SIMAP détectés</div><div class="fi-d">hier</div></div>
+                  <div class="fi photo"><div class="fi-t">Devis transmis - <b>Régie du Rhône SA</b></div><div class="fi-d">il y a 2 j</div></div>
+                  <div class="fi"><div class="fi-t">18 prospects importés - campagne <b>Régies GE - T3</b></div><div class="fi-d">il y a 3 j</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-h"><span class="hdot" style="background:var(--color-prosp-qualify)"></span><h3>Pipeline</h3><span class="pcount">9 affaires</span></div>
+              <div class="warm">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+                <div><div class="wt">Aucune affaire bloquée</div><div class="ws">Les 9 affaires en cours avancent. Prochaine échéance : vendredi.</div></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:24px">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg>
+    <div><b>Pourquoi temporel :</b> le matin, la question n'est pas « combien j'ai d'entreprises » mais « qu'est-ce qui presse ». L'accueil répond d'abord à ça (en retard, aujourd'hui, cette semaine), puis montre ce qui a bougé. Les chiffres restent, en chips compacts. États vides chaleureux quand tout est sous contrôle (jamais une zone vide muette).</div>
+  </div>
+
+  <!-- ============ PRIMITIVES NOUVELLES ============ -->
+  <div class="section-label">
+    <span class="section-num">P</span>
+    <div><h2>Primitives ajoutées par la Vague 3</h2><p>Réutilisables, nommées, pour que le rendu reste cohérent quand on code.</p></div>
+  </div>
+
+  <div class="prims">
+    <div class="prim"><span class="prim-name">.camp (CampagnePill)</span><p>Étiquette de campagne sur une ligne de prospect. Tonalité violette sourde de la palette workflow. « - » discret quand le lead n'a pas de campagne.</p><div class="where">Prospection - colonne Campagne</div></div>
+    <div class="prim"><span class="prim-name">ActionMenu (...)</span><p>Menu d'actions secondaires (Archiver, Écarter, Supprimer) pour ne pas saturer la barre. Action destructive isolée en rouge sous un séparateur.</p><div class="where">Détail Signaux, et réutilisable sur les fiches</div></div>
+    <div class="prim"><span class="prim-name">UrgencyGroup</span><p>Groupe temporel (En retard / Aujourd'hui / Cette semaine) avec bande colorée et compteur. Le rouge ne sert qu'au retard.</p><div class="where">Dashboard - panneau À faire</div></div>
+    <div class="prim"><span class="prim-name">ActivityFeed</span><p>Fil vertical « ce qui s'est passé », pastille colorée par type (conversion, visite, signal, photo).</p><div class="where">Dashboard - panneau Ce qui s'est passé</div></div>
+  </div>
+
+</div>
+</body>
+</html>

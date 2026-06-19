@@ -258,3 +258,12 @@ describe('clampDisplayScore', () => {
 		expect(clampDisplayScore(0, 10)).toBe(0);
 	});
 });
+
+describe("statut 'archive' (Vague 3 - valeur write-only hors enum)", () => {
+	it("statutLabel('archive') → 'Archivé' (jamais le fallback 'Nouveau')", () => {
+		expect(statutLabel('archive')).toBe('Archivé');
+	});
+	it("statutVariant('archive') → 'muted' (pas le warning de 'nouveau')", () => {
+		expect(statutVariant('archive')).toBe('muted');
+	});
+});

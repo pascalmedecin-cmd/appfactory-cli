@@ -40,6 +40,9 @@ const STATUT_LABELS: Record<string, string> = {
 	interesse: 'Intéressé',
 	ecarte: 'Écarté',
 	converti: 'Converti',
+	// 'archive' = valeur write-only (hors STATUTS_TRAITEMENT) : soft-archive Zefix +
+	// archivage Vague 3. Doit figurer ici, sinon une fiche/carte archivée s'affiche « Nouveau ».
+	archive: 'Archivé',
 };
 
 const STATUT_VARIANTS: Record<string, 'default' | 'info' | 'success' | 'warning' | 'muted'> = {
@@ -48,6 +51,7 @@ const STATUT_VARIANTS: Record<string, 'default' | 'info' | 'success' | 'warning'
 	interesse: 'success',
 	ecarte: 'muted',
 	converti: 'default',
+	archive: 'muted',
 };
 
 const TYPE_LABELS: Record<string, string> = {

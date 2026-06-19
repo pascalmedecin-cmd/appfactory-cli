@@ -170,6 +170,12 @@ export const SignalDeleteSchema = z.object({
 	id: requiredUUID,
 });
 
+// Vague 3 : archivage réversible d'un signal (statut_traitement = 'archive', valeur
+// write-only hors STATUTS_TRAITEMENT, déjà utilisée par le soft-archive Zefix). id seul.
+export const SignalArchiveSchema = z.object({
+	id: requiredUUID,
+});
+
 export const SignalBatchDeleteSchema = z.object({
 	ids: z
 		.string()

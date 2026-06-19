@@ -1,7 +1,7 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
-import { SignalUpdateSchema, SignalUpdateStatutSchema, SignalDeleteSchema, SignalBatchDeleteSchema, SignalCreateOpportuniteSchema, SIGNAL_FIELDS, extractForm, validate } from '$lib/schemas';
+import { SignalUpdateSchema, SignalUpdateStatutSchema, SignalDeleteSchema, SignalArchiveSchema, SignalBatchDeleteSchema, SignalCreateOpportuniteSchema, SIGNAL_FIELDS, extractForm, validate } from '$lib/schemas';
 import { dbFail, newId, now } from '$lib/server/db-helpers';
 import { isAdminEmail } from '$lib/feedback/admin';
 import { POIDS_PAR_CATEGORIE, type KeywordRow } from '$lib/scoring/keywords';
@@ -211,6 +211,39 @@ export const actions: Actions = {
 			.from('signaux_affaires')
 			.update({ statut_traitement: parsed.data.statut_traitement })
 			.eq('id', parsed.data.id);
+
+		return dbFail(error) ?? { success: true };
+	},
+
+	// Vague 3 : archivage réversible (range hors-vue). statut_traitement='archive' = même
+	// valeur que le soft-archive Zefix, masquée de la file par le load V5. Garde serveur :
+	// on n'archive pas un signal converti (il vit dans le pipeline).
+	archive: async ({ request, locals }) => {
+		const form = await request.formData();
+		const parsed = validate(SignalArchiveSchema, extractForm(form, ['id']));
+		if (!parsed.success) return fail(400, { error: parsed.error });
+
+		const { error } = await locals.supabase
+			.from('signaux_affaires')
+			.update({ statut_traitement: 'archive' })
+			.eq('id', parsed.data.id)
+			.neq('statut_traitement', 'converti');
+
+		return dbFail(error) ?? { success: true };
+	},
+
+	// Vague 3 : restauration depuis la vue archivées → repasse en 'nouveau'. Garde serveur :
+	// ne touche que les signaux réellement archivés (defense-in-depth).
+	unarchive: async ({ request, locals }) => {
+		const form = await request.formData();
+		const parsed = validate(SignalArchiveSchema, extractForm(form, ['id']));
+		if (!parsed.success) return fail(400, { error: parsed.error });
+
+		const { error } = await locals.supabase
+			.from('signaux_affaires')
+			.update({ statut_traitement: 'nouveau' })
+			.eq('id', parsed.data.id)
+			.eq('statut_traitement', 'archive');
 
 		return dbFail(error) ?? { success: true };
 	},

@@ -57,6 +57,11 @@
 	let confirmDeleteOpen = $state(false);
 	let deleting = $state(false);
 	let deleteFormEl: HTMLFormElement | null = $state(null);
+	// Vague 3 : menu d'actions secondaires (...) du slideout premium.
+	let menuOpen = $state(false);
+	let menuEl: HTMLElement | null = $state(null);
+	let kebabEl: HTMLButtonElement | null = $state(null);
+	let menuActing = $state(false);
 	let selectMode = $state(false);
 	let selectedIds = $state<Set<string>>(new Set());
 	let batchDeleting = $state(false);
@@ -288,7 +293,34 @@
 	function openDetail(signal: Signal) {
 		selectedSignal = signal;
 		slideOutOpen = true;
+		menuOpen = false;
 	}
+
+	// Vague 3 : menu d'actions secondaires (...) du slideout premium. Fermeture au clic
+	// hors menu (pattern $effect + listener document, comme la barre mobile prospection).
+	$effect(() => {
+		if (!menuOpen) return;
+		function onDocClick(e: MouseEvent) {
+			if (menuEl && !menuEl.contains(e.target as Node)) menuOpen = false;
+		}
+		function onKey(e: KeyboardEvent) {
+			if (e.key === 'Escape') {
+				menuOpen = false;
+				kebabEl?.focus(); // restitue le focus au déclencheur (a11y).
+			}
+		}
+		// Ferme au scroll : le menu est positionné en absolute dans le slideout scrollable ;
+		// sans ça il resterait figé/désancré au défilement du contenu.
+		function onScroll() { menuOpen = false; }
+		document.addEventListener('click', onDocClick);
+		document.addEventListener('keydown', onKey);
+		window.addEventListener('scroll', onScroll, true); // capture : attrape le scroll du conteneur interne.
+		return () => {
+			document.removeEventListener('click', onDocClick);
+			document.removeEventListener('keydown', onKey);
+			window.removeEventListener('scroll', onScroll, true);
+		};
+	});
 
 	function openEdit() {
 		if (!selectedSignal) return;
@@ -669,79 +701,230 @@
 				</div>
 			{/if}
 
-			<div class="flex flex-wrap gap-3 pt-4 border-t border-border">
-				<button
-					type="button"
-					onclick={openEdit}
-					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
-				>
-					<Icon name="edit" size={16} />
-					Modifier
-				</button>
-
-				{#if selectedSignal.statut_traitement !== 'converti' && selectedSignal.statut_traitement !== 'ecarte'}
+			{#if premium}
+				<!-- Vague 3 : actions primaires en clair + secondaires (Archiver / Restaurer /
+				     Écarter / Supprimer) dans un menu ... pour ne pas saturer la barre. -->
+				{@const st = selectedSignal.statut_traitement}
+				{@const canAct = st !== 'converti' && st !== 'ecarte' && st !== 'archive'}
+				{@const isArchived = st === 'archive'}
+				<div class="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
 					<button
 						type="button"
-						onclick={openConvertModal}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-primary bg-primary-light hover:bg-primary/20 rounded-lg cursor-pointer"
+						onclick={openEdit}
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 					>
-						<Icon name="arrow_forward" size={16} />
-						Créer opportunité
+						<Icon name="edit" size={16} />
+						Modifier
 					</button>
+					{#if canAct}
+						<button
+							type="button"
+							onclick={openConvertModal}
+							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-primary bg-primary-light hover:bg-primary/20 rounded-lg cursor-pointer"
+						>
+							<Icon name="arrow_forward" size={16} />
+							Créer opportunité
+						</button>
+					{/if}
 
+					<div bind:this={menuEl} class="relative ml-auto">
+						<button
+							bind:this={kebabEl}
+							type="button"
+							onclick={(e) => { e.stopPropagation(); menuOpen = !menuOpen; }}
+							aria-haspopup="true"
+							aria-controls="signal-actions-menu"
+							aria-expanded={menuOpen}
+							aria-label="Plus d'actions"
+							class="flex items-center justify-center w-10 h-10 box-border rounded-lg border border-border text-text-muted hover:bg-surface-alt cursor-pointer"
+						>
+							<Icon name="more_vert" size={18} />
+						</button>
+						{#if menuOpen}
+							<div id="signal-actions-menu" class="absolute right-0 bottom-full mb-2 min-w-[208px] p-1.5 bg-surface rounded-xl shadow-lg border border-border z-20">
+								{#if canAct}
+									<form
+										method="POST"
+										action="?/archive"
+										use:enhance={() => {
+											menuActing = true;
+											return async ({ result, update }) => {
+												menuActing = false;
+												menuOpen = false;
+												slideOutOpen = false;
+												selectedSignal = null;
+												if (result.type === 'success') toasts.success('Signal archivé');
+												else toasts.error("Erreur lors de l'archivage");
+												await update();
+											};
+										}}
+									>
+										<input type="hidden" name="id" value={selectedSignal.id} />
+										<button type="submit" disabled={menuActing} class="flex items-center gap-2.5 w-full px-2.5 py-2 text-sm font-medium text-text-body rounded-lg hover:bg-surface-alt cursor-pointer text-left disabled:opacity-50">
+											<Icon name="archive" size={16} /> Archiver
+										</button>
+									</form>
+								{/if}
+								{#if isArchived}
+									<form
+										method="POST"
+										action="?/unarchive"
+										use:enhance={() => {
+											menuActing = true;
+											return async ({ result, update }) => {
+												menuActing = false;
+												menuOpen = false;
+												if (result.type === 'success') {
+													toasts.success('Signal restauré');
+													slideOutOpen = false;
+													selectedSignal = null;
+													// Restauré → il vit dans la file active, plus dans la vue archivées.
+													await goto('?');
+												} else {
+													toasts.error('Erreur lors de la restauration');
+													await update();
+												}
+											};
+										}}
+									>
+										<input type="hidden" name="id" value={selectedSignal.id} />
+										<button type="submit" disabled={menuActing} class="flex items-center gap-2.5 w-full px-2.5 py-2 text-sm font-medium text-text-body rounded-lg hover:bg-surface-alt cursor-pointer text-left disabled:opacity-50">
+											<Icon name="arrow_back" size={16} /> Restaurer
+										</button>
+									</form>
+								{/if}
+								{#if canAct}
+									<form
+										method="POST"
+										action="?/updateStatut"
+										use:enhance={() => {
+											menuActing = true;
+											return async ({ result, update }) => {
+												menuActing = false;
+												menuOpen = false;
+												slideOutOpen = false;
+												selectedSignal = null;
+												if (result.type === 'success') toasts.success('Signal écarté');
+												else toasts.error('Erreur lors de la mise à jour');
+												await update();
+											};
+										}}
+									>
+										<input type="hidden" name="id" value={selectedSignal.id} />
+										<input type="hidden" name="statut_traitement" value="ecarte" />
+										<button type="submit" disabled={menuActing} class="flex items-center gap-2.5 w-full px-2.5 py-2 text-sm font-medium text-text-body rounded-lg hover:bg-surface-alt cursor-pointer text-left disabled:opacity-50">
+											<Icon name="close" size={16} /> Écarter
+										</button>
+									</form>
+								{/if}
+								<div class="h-px bg-border my-1.5 mx-1"></div>
+								<button
+									type="button"
+									onclick={() => { menuOpen = false; confirmDeleteOpen = true; }}
+									class="flex items-center gap-2.5 w-full px-2.5 py-2 text-sm font-medium text-danger-deep rounded-lg hover:bg-danger/5 cursor-pointer text-left"
+								>
+									<Icon name="delete" size={16} /> Supprimer
+								</button>
+							</div>
+						{/if}
+					</div>
+
+					<!-- Form delete (caché) soumis par la ConfirmModal via deleteFormEl. -->
 					<form
+						bind:this={deleteFormEl}
 						method="POST"
-						action="?/updateStatut"
+						action="?/delete"
+						class="hidden"
 						use:enhance={() => {
+							deleting = true;
 							return async ({ result, update }) => {
+								deleting = false;
 								slideOutOpen = false;
 								selectedSignal = null;
-								if (result.type === 'success') toasts.success('Signal écarté');
-								else toasts.error('Erreur lors de la mise à jour');
+								if (result.type === 'success') toasts.success('Signal supprimé');
+								else toasts.error('Erreur lors de la suppression');
 								await update();
 							};
 						}}
 					>
 						<input type="hidden" name="id" value={selectedSignal.id} />
-						<input type="hidden" name="statut_traitement" value="ecarte" />
-						<button
-							type="submit"
-							class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-danger-deep cursor-pointer"
-						>
-							<Icon name="close" size={16} />
-							Écarter
-						</button>
 					</form>
-				{/if}
-
-				<form
-					bind:this={deleteFormEl}
-					method="POST"
-					action="?/delete"
-					use:enhance={() => {
-						deleting = true;
-						return async ({ result, update }) => {
-							deleting = false;
-							slideOutOpen = false;
-							selectedSignal = null;
-							if (result.type === 'success') toasts.success('Signal supprimé');
-							else toasts.error('Erreur lors de la suppression');
-							await update();
-						};
-					}}
-				>
-					<input type="hidden" name="id" value={selectedSignal.id} />
+				</div>
+			{:else}
+				<div class="flex flex-wrap gap-3 pt-4 border-t border-border">
 					<button
 						type="button"
-						onclick={() => (confirmDeleteOpen = true)}
-						disabled={deleting}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
+						onclick={openEdit}
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 					>
-						<Icon name="delete" size={16} />
-						{deleting ? 'Suppression…' : 'Supprimer'}
+						<Icon name="edit" size={16} />
+						Modifier
 					</button>
-				</form>
-			</div>
+
+					{#if selectedSignal.statut_traitement !== 'converti' && selectedSignal.statut_traitement !== 'ecarte'}
+						<button
+							type="button"
+							onclick={openConvertModal}
+							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-primary bg-primary-light hover:bg-primary/20 rounded-lg cursor-pointer"
+						>
+							<Icon name="arrow_forward" size={16} />
+							Créer opportunité
+						</button>
+
+						<form
+							method="POST"
+							action="?/updateStatut"
+							use:enhance={() => {
+								return async ({ result, update }) => {
+									slideOutOpen = false;
+									selectedSignal = null;
+									if (result.type === 'success') toasts.success('Signal écarté');
+									else toasts.error('Erreur lors de la mise à jour');
+									await update();
+								};
+							}}
+						>
+							<input type="hidden" name="id" value={selectedSignal.id} />
+							<input type="hidden" name="statut_traitement" value="ecarte" />
+							<button
+								type="submit"
+								class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-danger-deep cursor-pointer"
+							>
+								<Icon name="close" size={16} />
+								Écarter
+							</button>
+						</form>
+					{/if}
+
+					<form
+						bind:this={deleteFormEl}
+						method="POST"
+						action="?/delete"
+						use:enhance={() => {
+							deleting = true;
+							return async ({ result, update }) => {
+								deleting = false;
+								slideOutOpen = false;
+								selectedSignal = null;
+								if (result.type === 'success') toasts.success('Signal supprimé');
+								else toasts.error('Erreur lors de la suppression');
+								await update();
+							};
+						}}
+					>
+						<input type="hidden" name="id" value={selectedSignal.id} />
+						<button
+							type="button"
+							onclick={() => (confirmDeleteOpen = true)}
+							disabled={deleting}
+							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
+						>
+							<Icon name="delete" size={16} />
+							{deleting ? 'Suppression…' : 'Supprimer'}
+						</button>
+					</form>
+				</div>
+			{/if}
 		</div>
 	{/if}
 </SlideOut>
