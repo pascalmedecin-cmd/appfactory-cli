@@ -107,8 +107,13 @@ export const IntelligenceItemSchema = z.object({
 			.string()
 			.max(40, 'Date trop longue')
 			.regex(
-				/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?Z?)?$/,
-				'Format attendu : YYYY-MM-DD ou YYYY-MM-DDTHH:MM:SSZ'
+				// Accepte aussi les offsets numériques ISO 8601 (+HH:MM / -HH:MM), pas
+				// seulement Z : le modèle émet parfois des dates avec fuseau (ex.
+				// 2026-06-19T10:00:00+02:00), valides mais autrefois droppées → elles
+				// empilaient vers le seuil de garde anti-dérive. La date reste vérifiée
+				// en aval (filterAndAnnotateItems via parseFlexibleDate + isWithinWindow).
+				/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?$/,
+				'Format attendu : YYYY-MM-DD ou ISO 8601 (Z ou offset +HH:MM)'
 			)
 			.transform((s) => (s.includes('T') ? s : `${s}T00:00:00Z`))
 	}),

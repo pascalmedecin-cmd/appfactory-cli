@@ -20,11 +20,22 @@ import { isAllowedThemeSlug } from './theme-slug';
 import { costTracker, type CostSummary, type CostTracker } from './cost-tracker';
 
 const MODEL = 'claude-opus-4-8';
-// 32K : run prod S112 retry 1 a été coupé par max_tokens à 16K (12K thinking
-// + 13 web_search + emit_report partiel = items=[] alors que executive_summary
-// décrivait des signaux). 32K laisse marge pour adaptive thinking xhigh + 15
-// web_search + emit_report avec 5-10 items pleins.
-const MAX_TOKENS = 32000;
+// Fenêtre de SORTIE = thinking adaptive + texte + tool_use emit_report. La doc
+// Anthropic est explicite : « Use max_tokens as a hard limit on total output
+// (thinking + response text) » (platform.claude.com/docs/en/build-with-claude/adaptive-thinking).
+// À effort xhigh, le repère officiel est 64k : « set a large max_tokens... Starting
+// at 64k tokens... is a reasonable default » (.../build-with-claude/effort).
+// 16K puis 32K SOUS-dimensionnaient : le thinking xhigh dévorait la fenêtre et
+// coupait l'emit_report (items=[] alors que l'executive_summary décrivait des
+// signaux) — récidive prouvée (coupé à 16K S112, re-coupé à 32K W25 2026-06-19).
+// On dimensionne à 64K ; adaptive ne consomme PAS le plafond (on ne paie que les
+// tokens réellement émis), donc 64K = marge, pas surcoût garanti.
+const MAX_TOKENS = 64000;
+// Relance unique si le 1er appel déborde quand même (semaine exceptionnellement
+// dense) : 128K = plafond output d'Opus 4.8 (API synchrone). Un bloc tool_use
+// tronqué n'est PAS récupérable partiellement (doc /handling-stop-reasons :
+// « retry with higher max_tokens, not continuation »), d'où la relance complète.
+const MAX_TOKENS_RETRY = 128000;
 const WEB_SEARCH_MAX_USES = 15;
 
 export interface GenerateInput {
@@ -71,7 +82,8 @@ export interface GenerateResult {
 async function callModel(
 	client: Anthropic,
 	input: GenerateInput,
-	themes: ThemeBundle
+	themes: ThemeBundle,
+	maxTokens: number
 ): Promise<Anthropic.Message> {
 	const themesSection = buildThemesPromptSection(themes);
 	const systemPrompt = buildSystemPrompt(themesSection);
@@ -120,15 +132,20 @@ async function callModel(
 	];
 
 	// Anthropic SDK refuse l'appel non-streaming si la prédiction de durée
-	// dépasse 10 min (max_tokens 32K + adaptive thinking xhigh + 15 web_search
+	// dépasse 10 min (max_tokens élevé + adaptive thinking xhigh + 15 web_search
 	// = >> 10 min projetés). On passe en streaming et on récupère le message
 	// final accumulé. Comportement identique côté output (Anthropic.Message).
 	const stream = client.messages.stream({
 		model: MODEL,
-		max_tokens: MAX_TOKENS,
-		// Opus 4.8 : adaptive thinking (seul mode supporté, budget_tokens manuel = 400) + effort xhigh.
-		// Sampling params (temperature/top_p/top_k) retirés : rejetés 400. Cast via spread : output_config
-		// pas encore typé SDK 0.88.
+		max_tokens: maxTokens,
+		// Opus 4.8 : seul l'adaptive thinking est supporté ; thinking.budget_tokens
+		// est REJETÉ (400). Les SEULS leviers sur la part de réflexion sont `effort`
+		// (soft) et `max_tokens` (hard cap total) — il n'y a PAS de budget_tokens ici
+		// (l'ancien commentaire « budget_tokens manuel = 400 » était faux et trompeur).
+		// effort xhigh CONSERVÉ : la garantie anti-hallucination ne dépend pas de
+		// l'effort (elle est en aval, cross-check verbatim Sonnet) ; xhigh sert la
+		// qualité éditoriale. Sampling params (temperature/top_p/top_k) retirés :
+		// rejetés 400. Cast via spread : output_config pas encore typé SDK 0.88.
 		...({ thinking: { type: 'adaptive' }, output_config: { effort: 'xhigh' } } as Record<string, unknown>),
 		system: [
 			{
@@ -152,6 +169,49 @@ async function callModel(
 		]
 	});
 	return stream.finalMessage();
+}
+
+/**
+ * Lit le COMPTE de tokens de thinking. Sur Opus 4.8, `thinking.display='omitted'`
+ * par défaut (texte du bloc vide, signature conservée) mais la facturation et le
+ * compte restent exacts dans `usage.output_tokens_details.thinking_tokens`. Champ
+ * non typé SDK 0.88 → accès défensif. Sert à mesurer empiriquement combien de la
+ * fenêtre part en réflexion (calibrage de MAX_TOKENS sans deviner).
+ */
+function thinkingTokensOf(usage: Anthropic.Message['usage']): number | null {
+	const details = (usage as { output_tokens_details?: { thinking_tokens?: number } | null })
+		.output_tokens_details;
+	return details?.thinking_tokens ?? null;
+}
+
+/**
+ * Appelle le modèle avec une fenêtre de sortie MAX_TOKENS, puis RELANCE une seule
+ * fois à MAX_TOKENS_RETRY si le 1er appel a été coupé par max_tokens.
+ *
+ * Pourquoi relancer (et non « continuer ») : la coupure tronque le bloc tool_use
+ * emit_report, qui n'est PAS récupérable partiellement (doc Anthropic
+ * /handling-stop-reasons). effort xhigh est conservé sur les deux appels.
+ *
+ * Chaque appel RÉEL est tracé dans le cost-tracker (le 1er, coûteux en web_search,
+ * est facturé même s'il a débordé). Exporté pour test unitaire ciblé.
+ */
+export async function callModelWithOverflowRetry(
+	client: Anthropic,
+	input: GenerateInput,
+	themes: ThemeBundle,
+	tracker: CostTracker
+): Promise<Anthropic.Message> {
+	const first = await callModel(client, input, themes, MAX_TOKENS);
+	tracker.addClaudeCall(MODEL, first.usage, 'Claude veille (1-phase)');
+	if (first.stop_reason !== 'max_tokens') return first;
+
+	console.warn(
+		`[generate] stop_reason=max_tokens à ${MAX_TOKENS} tokens ` +
+			`(thinking_tokens=${thinkingTokensOf(first.usage) ?? 'n/a'}) — relance à ${MAX_TOKENS_RETRY}.`
+	);
+	const second = await callModel(client, input, themes, MAX_TOKENS_RETRY);
+	tracker.addClaudeCall(MODEL, second.usage, 'Claude veille (relance max_tokens)');
+	return second;
 }
 
 /**
@@ -294,17 +354,19 @@ export async function generateIntelligenceReport(
 	// Themes bundle : fourni par run-generation.ts (chargé via theme-loader).
 	// Fallback explicite vers la liste hardcoded si l'appelant l'omet (tests).
 	const themes = opts.themes ?? getFallbackBundle();
-	const response = await callModel(client, input, themes);
-	tracker.addClaudeCall(MODEL, response.usage, 'Claude veille (1-phase)');
+	// callModelWithOverflowRetry trace lui-même chaque appel réel dans le tracker
+	// et relance à 128K si le 1er appel à 64K déborde (stop_reason=max_tokens).
+	const response = await callModelWithOverflowRetry(client, input, themes, tracker);
 
-	// Garde stop_reason : si le modèle a été coupé par max_tokens, l'éventuel
-	// emit_report final est probablement tronqué (items vides alors que la
-	// recherche web a produit du signal). On échoue explicitement plutôt que
-	// d'enregistrer une édition incomplète + alerte semaine creuse trompeuse.
+	// Garde stop_reason : si le modèle a été coupé par max_tokens MÊME après la
+	// relance à 128K, l'emit_report final est tronqué (non récupérable). On échoue
+	// explicitement plutôt que d'enregistrer une édition incomplète + alerte semaine
+	// creuse trompeuse. À ce stade = semaine exceptionnellement dense (le rattrapage
+	// / la relance manuelle prennent le relais).
 	if (response.stop_reason === 'max_tokens') {
 		return {
 			success: false,
-			error: `Modèle coupé par max_tokens (${MAX_TOKENS} tokens consommés). Output partiel.`,
+			error: `Modèle coupé par max_tokens même après relance à ${MAX_TOKENS_RETRY} tokens (semaine exceptionnellement dense). Output partiel.`,
 			raw: response,
 			costs: tracker.summary()
 		};

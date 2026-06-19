@@ -386,6 +386,88 @@ describe('crossCheckBatch', () => {
 		expect(r.rejected[0].verdict.divergences[0].severity).toBe('fatal');
 	});
 
+	// --- Bloc 4 (audit 360 racine 2026-06-19) : résilience par-item du second-pass ---
+
+	const longHtml =
+		'<html><body>' +
+		'Contenu réel suffisamment long pour dépasser le seuil de 200 caractères du cross-check pipeline anti-hallucination. '.repeat(
+			4
+		) +
+		'</body></html>';
+
+	it("une exception API sur UN item ne fait plus échouer tout le batch (résilience par-item)", async () => {
+		// item0 : page OK puis verifier lève un 400 (non-retryable) → capturé, pas propagé.
+		// item1 : page OK puis verdict OK → gardé. Le batch NE throw PAS.
+		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+			ok: true,
+			status: 200,
+			text: async () => longHtml
+		});
+		__mockCreate
+			.mockRejectedValueOnce(Object.assign(new Error('400 bad request'), { status: 400 }))
+			.mockResolvedValueOnce({
+				content: [
+					{
+						type: 'tool_use',
+						name: 'emit_verdict',
+						input: { verbatim_ok: true, divergences: [], confidence: 'high' }
+					}
+				],
+				usage: { input_tokens: 100, output_tokens: 30 }
+			});
+		const item0 = { ...baseItem, source: { ...baseItem.source, url: 'https://example.com/a' } };
+		const item1 = { ...baseItem, source: { ...baseItem.source, url: 'https://example.com/b' } };
+		// concurrency 1 → ordre déterministe (item0 d'abord).
+		const r = await crossCheckBatch([item0, item1], {
+			anthropicApiKey: 'sk-test',
+			rejectUnfetchable: true,
+			concurrency: 1
+		});
+		expect(r.kept).toHaveLength(1); // item1 sauvé
+		expect(r.apiErrorCount).toBe(1); // item0 en erreur API
+		expect(r.rejected).toHaveLength(1); // item0 rejeté (jamais publié = zéro-hallu)
+		expect(r.systemicError).toBeUndefined(); // 1/2 → pas systémique
+	});
+
+	it("crédit API épuisé sur TOUS les items → systemicError (kind=request), pas un échec contenu", async () => {
+		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+			ok: true,
+			status: 200,
+			text: async () => longHtml
+		});
+		// 400 'credit balance too low' (non-retryable) sur l'unique item.
+		__mockCreate.mockRejectedValue(
+			Object.assign(new Error('400 {"type":"error","error":{"type":"invalid_request_error","message":"credit balance too low"}}'), {
+				status: 400
+			})
+		);
+		const r = await crossCheckBatch([baseItem], {
+			anthropicApiKey: 'sk-test',
+			rejectUnfetchable: true
+		});
+		expect(r.apiErrorCount).toBe(1);
+		expect(r.systemicError).toBeDefined();
+		expect(r.systemicError?.kind).toBe('request');
+		expect(r.kept).toHaveLength(0); // rien publié sans vérification (zéro-hallu)
+	});
+
+	it("erreur réseau (sans status HTTP) classée 'network' — pas de retry, pas de blocage", async () => {
+		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+			ok: true,
+			status: 200,
+			text: async () => longHtml
+		});
+		// Erreur de connexion sans status : non-retryable côté boucle manuelle
+		// (seuls 429/529/503 le sont) → throw immédiat → classé 'network', rapide.
+		__mockCreate.mockRejectedValue(new Error('socket hang up'));
+		const r = await crossCheckBatch([baseItem], {
+			anthropicApiKey: 'sk-test',
+			rejectUnfetchable: true
+		});
+		expect(r.systemicError?.kind).toBe('network');
+		expect(r.kept).toHaveLength(0);
+	});
+
 	it("rejette verdict avec severity manquant (Zod safeParse)", async () => {
 		const create = __mockCreate;
 		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({

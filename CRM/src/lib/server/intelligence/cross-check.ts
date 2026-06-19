@@ -46,6 +46,52 @@ export interface CrossCheckResult {
 	rejected: CrossCheckRejectedItem[];
 	/** Items pour lesquels la page n'a pas pu être fetchée → conservés (pas de raison de rejeter). */
 	unverifiable: IntelligenceItem[];
+	/**
+	 * Nombre d'items dont la VÉRIFICATION a échoué côté API (exception du modèle
+	 * vérificateur : crédit épuisé, auth, surcharge, réseau) — distinct d'une page
+	 * morte (unfetchable) qui est un problème de contenu. Sert à distinguer un
+	 * échec systémique d'un rejet de contenu.
+	 */
+	apiErrorCount: number;
+	/**
+	 * Présent UNIQUEMENT si TOUS les items ont échoué côté API verifier (aucune
+	 * vérification possible). Signal d'un incident systémique (crédit dédié épuisé,
+	 * clé invalide, API down) à remonter en alerte distincte — surtout PAS publier
+	 * une édition vide en silence (la génération coûteuse a déjà réussi).
+	 */
+	systemicError?: { kind: ApiErrorKind; message: string };
+}
+
+/** Classe d'erreur de l'API verifier (par statut HTTP, jamais par string-matching). */
+export type ApiErrorKind = 'request' | 'auth' | 'overloaded' | 'network';
+
+interface ClassifiedApiError {
+	kind: ApiErrorKind;
+	status: number | null;
+	message: string;
+}
+
+/**
+ * Classe une exception de l'appel verifier par sa CLASSE typée (statut HTTP),
+ * conformément à la doc SDK Anthropic (« catch typed error classes, not message
+ * string-matching »). 400 = requête rejetée (crédit dédié épuisé « credit balance
+ * too low » OU payload) ; 401/403 = auth ; 429/529/5xx = surcharge transitoire ;
+ * sinon = réseau. Le message brut est conservé (sanitizé par l'appelant avant
+ * stockage/email) pour qu'une cause précise comme le crédit épuisé soit lisible.
+ */
+function classifyApiError(e: unknown): ClassifiedApiError {
+	const status =
+		typeof e === 'object' && e !== null && 'status' in e && typeof (e as { status: unknown }).status === 'number'
+			? ((e as { status: number }).status)
+			: null;
+	const message = e instanceof Error ? e.message : String(e);
+	let kind: ApiErrorKind;
+	if (status === 400) kind = 'request';
+	else if (status === 401 || status === 403) kind = 'auth';
+	else if (status === 429 || status === 529 || (typeof status === 'number' && status >= 500))
+		kind = 'overloaded';
+	else kind = 'network';
+	return { kind, status, message };
 }
 
 /**
@@ -210,7 +256,10 @@ export interface CrossCheckOptions {
 }
 
 const DEFAULT_CONCURRENCY = 4;
-const ANTHROPIC_MAX_RETRIES = 2;
+// 4 tentatives (audit 360 quick-win) : 2 pouvaient ne pas absorber un pic de
+// surcharge 529 sur un batch de 12-15 items ; 4 est sans risque et documenté
+// (la 1re tentative + 3 relances espacées par backoff exponentiel).
+const ANTHROPIC_MAX_RETRIES = 4;
 const ANTHROPIC_RETRY_BASE_MS = 1500;
 
 /**
@@ -306,7 +355,7 @@ export async function crossCheckBatch(
 	opts: CrossCheckOptions
 ): Promise<CrossCheckResult> {
 	if (items.length === 0) {
-		return { kept: [], rejected: [], unverifiable: [] };
+		return { kept: [], rejected: [], unverifiable: [], apiErrorCount: 0 };
 	}
 	const client = new Anthropic({ apiKey: opts.anthropicApiKey });
 	const concurrency = opts.concurrency ?? DEFAULT_CONCURRENCY;
@@ -314,16 +363,47 @@ export async function crossCheckBatch(
 
 	// Pool de concurrence (audit Medium #2) : limite N appels Anthropic en parallèle
 	// pour éviter rate-limit 429 + DoS amplification fetch sortants.
-	const verdicts = await runWithConcurrency(items, concurrency, async (item) => ({
-		item,
-		verdict: await crossCheckItem(client, item, tracker)
-	}));
+	//
+	// RÉSILIENCE PAR-ITEM (audit 360 racine 2026-06-19) : une exception de la
+	// vérification d'UN item (crédit épuisé, 400, réseau, auth...) ne fait PLUS
+	// échouer tout le batch (anti-pattern tout-ou-rien W23 déplacé au second-pass).
+	// Elle est capturée et classée. L'item non vérifié n'est JAMAIS publié
+	// (garantie zéro-hallu préservée) : il est rejeté/unverifiable comme une page
+	// morte, selon rejectUnfetchable.
+	const outcomes = await runWithConcurrency(items, concurrency, async (item) => {
+		try {
+			const verdict = await crossCheckItem(client, item, tracker);
+			return { item, verdict, apiError: null as ClassifiedApiError | null };
+		} catch (e) {
+			return { item, verdict: null as CrossCheckVerdict | null, apiError: classifyApiError(e) };
+		}
+	});
 
 	const kept: IntelligenceItem[] = [];
 	const rejected: CrossCheckRejectedItem[] = [];
 	const unverifiable: IntelligenceItem[] = [];
+	let apiErrorCount = 0;
+	let firstApiError: ClassifiedApiError | null = null;
 
-	for (const { item, verdict } of verdicts) {
+	for (const { item, verdict, apiError } of outcomes) {
+		// Cas 1 : exception côté API verifier → impossible de vérifier. Jamais publié
+		// (zéro-hallu). Traité comme non-vérifiable, comptabilisé pour le diagnostic
+		// systémique.
+		if (apiError) {
+			apiErrorCount++;
+			if (!firstApiError) firstApiError = apiError;
+			if (opts.rejectUnfetchable) {
+				rejected.push({
+					url: item.source.url,
+					title: item.title,
+					verdict: { verbatim_ok: false, divergences: [], confidence: 'low' }
+				});
+			} else {
+				unverifiable.push(item);
+			}
+			continue;
+		}
+		// Cas 2 : page non fetchable (contenu mort).
 		if (verdict === null) {
 			if (opts.rejectUnfetchable) {
 				rejected.push({
@@ -336,10 +416,10 @@ export async function crossCheckBatch(
 			}
 			continue;
 		}
-		// Audit 360 H-04 (zéro hallu strict) : rejet dès que verbatim_ok=false,
-		// indépendamment des divergences (peut être [] ou minor uniquement). Le
-		// LLM cross-check signale verbatim_ok=false quand le contenu source ne
-		// confirme pas l'item, même sans divergence détaillée → brèche fermée.
+		// Cas 3 : vérifié. Audit 360 H-04 (zéro hallu strict) : rejet dès que
+		// verbatim_ok=false, indépendamment des divergences (peut être [] ou minor
+		// uniquement). Le LLM cross-check signale verbatim_ok=false quand le contenu
+		// source ne confirme pas l'item, même sans divergence détaillée → brèche fermée.
 		if (!verdict.verbatim_ok) {
 			rejected.push({ url: item.source.url, title: item.title, verdict });
 		} else {
@@ -347,5 +427,14 @@ export async function crossCheckBatch(
 		}
 	}
 
-	return { kept, rejected, unverifiable };
+	// Échec SYSTÉMIQUE : TOUS les items ont échoué côté API verifier (aucune
+	// vérification possible). Ce n'est pas un problème de contenu mais
+	// d'infrastructure (crédit dédié épuisé, clé invalide, API down). L'appelant
+	// alerte distinctement plutôt que de publier une édition vide en silence.
+	const systemicError =
+		apiErrorCount === items.length && firstApiError
+			? { kind: firstApiError.kind, message: firstApiError.message }
+			: undefined;
+
+	return { kept, rejected, unverifiable, apiErrorCount, systemicError };
 }

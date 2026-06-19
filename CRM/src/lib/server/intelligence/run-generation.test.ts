@@ -67,6 +67,14 @@ vi.mock('./apply-signals', () => ({
 	applySignalsFromReport: (...args: unknown[]) => applySignalsMock(...args)
 }));
 
+// Cross-check mocké au niveau orchestration : ce fichier teste run-generation, pas
+// les internes du cross-check (couverts par cross-check.test.ts). Défaut = aucun
+// item gardé (équivaut à l'ancien comportement « page example.com non vérifiable »),
+// surchargeable par-test (ex. systemicError).
+vi.mock('./cross-check', () => ({
+	crossCheckBatch: vi.fn()
+}));
+
 // S169 : run-generation appelle loadThemeBundle(supabase) avant generate. Pour
 // ne pas perturber la séquence du mock supabase capturant les upserts (qui est
 // purement séquentiel), on mocke theme-loader pour retourner directement le
@@ -80,6 +88,8 @@ vi.mock('./theme-loader', async () => {
 });
 
 import { runWeeklyGeneration } from './run-generation';
+import { crossCheckBatch } from './cross-check';
+import type { Mock } from 'vitest';
 
 /**
  * Construit un objet `VeilleDeps` complet à partir d'un client supabase mock.
@@ -105,6 +115,15 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 		generateMock.mockReset();
 		sendRecapMock.mockReset();
 		applySignalsMock.mockReset();
+		(crossCheckBatch as Mock).mockReset();
+		// Défaut : cross-check ne garde aucun item (comportement neutre). Les tests
+		// qui ont besoin d'un cas précis (systemicError) surchargent via mockResolvedValueOnce.
+		(crossCheckBatch as Mock).mockResolvedValue({
+			kept: [],
+			rejected: [],
+			unverifiable: [],
+			apiErrorCount: 0
+		});
 		sendRecapMock.mockResolvedValue({ ok: true });
 		applySignalsMock.mockResolvedValue({
 			insertedSignals: 0,
@@ -321,27 +340,31 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 		expect(stored).toMatch(/api_key=\[REDACTED\]/i);
 	});
 
-	it('skipIfErrored : skip si la semaine est déjà en status=error (rattrapage ne retente pas une semaine déjà alertée)', async () => {
+	// Rattrapage du soir (décision Pascal 2026-06-19, renverse council 06-06) :
+	// une semaine en status=error est RETENTÉE (plus de skip). L'email du matin a
+	// déjà alerté ; la garde idempotente « published » est le seul court-circuit.
+	it('rattrapage : RETENTE une semaine en status=error (renverse le skip 06-06)', async () => {
 		const fresh = makeCapturingSupabase([
-			// idempotence check : édition error trouvée (le run du matin a échoué + alerté)
-			{ data: { id: 'rep-errored', status: 'error' }, error: null }
+			{ data: { id: 'rep-errored', status: 'error' }, error: null }, // idempotence : error du matin
+			{ data: null, error: null }, // markRunning (réécrit la ligne error)
+			{ data: [], error: null }, // previousItems
+			{ data: { id: 'rep-errored' }, error: null } // markError .single (re-échec possible)
 		]);
+		generateMock.mockResolvedValue({
+			success: false,
+			error: 'erreur transitoire',
+			raw: null,
+			costs: { breakdown: [], total_usd: 0, total_eur: 0 }
+		});
 
-		const result = await runWeeklyGeneration(
-			new Date('2026-05-01T06:00:00Z'),
-			makeMockDeps(fresh.client),
-			{ skipIfErrored: true }
-		);
+		await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'), makeMockDeps(fresh.client));
 
-		expect(result.ok).toBe(true);
-		expect(result.skipped).toBe(true);
-		expect(result.reportId).toBe('rep-errored');
-		expect(generateMock).not.toHaveBeenCalled();
-		// Aucun upsert : ni running, ni error (on ne touche pas la ligne existante)
-		expect(fresh.upserts).toHaveLength(0);
+		// La génération EST relancée (plus de skip sur status=error).
+		expect(generateMock).toHaveBeenCalledTimes(1);
+		expect(fresh.upserts.map((u) => u.values.status)).toContain('running');
 	});
 
-	it('skipIfErrored : tourne normalement si aucune édition (cas skip scheduler, raison d\'être du rattrapage)', async () => {
+	it('tourne si aucune édition (anti-skip scheduler)', async () => {
 		const fresh = makeCapturingSupabase([
 			{ data: null, error: null }, // idempotence : rien
 			{ data: null, error: null }, // markRunning
@@ -355,16 +378,12 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 			costs: { breakdown: [], total_usd: 0, total_eur: 0 }
 		});
 
-		await runWeeklyGeneration(
-			new Date('2026-05-01T06:00:00Z'),
-			makeMockDeps(fresh.client),
-			{ skipIfErrored: true }
-		);
+		await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'), makeMockDeps(fresh.client));
 
 		expect(generateMock).toHaveBeenCalledTimes(1);
 	});
 
-	it('skipIfErrored : tourne si status=running orphelin (crash dur du runner sans trace error)', async () => {
+	it('tourne si status=running orphelin (crash dur du runner sans trace error)', async () => {
 		const fresh = makeCapturingSupabase([
 			{ data: { id: 'rep-orphan', status: 'running' }, error: null }, // idempotence : orphelin
 			{ data: null, error: null }, // markRunning (réécrit l'orphelin)
@@ -378,43 +397,19 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 			costs: { breakdown: [], total_usd: 0, total_eur: 0 }
 		});
 
-		await runWeeklyGeneration(
-			new Date('2026-05-01T06:00:00Z'),
-			makeMockDeps(fresh.client),
-			{ skipIfErrored: true }
-		);
-
-		expect(generateMock).toHaveBeenCalledTimes(1);
-	});
-
-	it('sans skipIfErrored : une semaine en status=error est retentée (comportement historique préservé)', async () => {
-		const fresh = makeCapturingSupabase([
-			{ data: { id: 'rep-errored', status: 'error' }, error: null }, // idempotence : error
-			{ data: null, error: null }, // markRunning
-			{ data: [], error: null }, // previousItems
-			{ data: { id: 'rep-errored' }, error: null } // markError .single
-		]);
-		generateMock.mockResolvedValue({
-			success: false,
-			error: 'erreur quelconque',
-			raw: null,
-			costs: { breakdown: [], total_usd: 0, total_eur: 0 }
-		});
-
 		await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'), makeMockDeps(fresh.client));
 
 		expect(generateMock).toHaveBeenCalledTimes(1);
 	});
 
-	it('skipIfErrored + published : skip idempotent inchangé', async () => {
+	it('published : skip idempotent (le rattrapage ne re-paie jamais un succès)', async () => {
 		const fresh = makeCapturingSupabase([
 			{ data: { id: 'rep-pub', status: 'published' }, error: null }
 		]);
 
 		const result = await runWeeklyGeneration(
 			new Date('2026-05-01T06:00:00Z'),
-			makeMockDeps(fresh.client),
-			{ skipIfErrored: true }
+			makeMockDeps(fresh.client)
 		);
 
 		expect(result.ok).toBe(true);
@@ -447,5 +442,71 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 		expect(statuses).toContain('running');
 		expect(statuses).toContain('error');
 		expect(generateMock).toHaveBeenCalledTimes(1);
+	});
+
+	it('systemicError du cross-check (crédit API épuisé) → markError distinct, rien publié (zéro-hallu)', async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: null, error: null }, // idempotence
+			{ data: null, error: null }, // markRunning
+			{ data: [], error: null }, // previousItems
+			{ data: { id: 'rep-sys' }, error: null } // markError .single
+		]);
+		// La génération RÉUSSIT (la partie chère), mais la vérification anti-hallu est
+		// systémiquement impossible (crédit dédié épuisé) → on ne publie rien + alerte distincte.
+		generateMock.mockResolvedValue({
+			success: true,
+			report: {
+				meta: {
+					week_label: '2026-W18',
+					generated_at: '2026-05-01T06:00:00Z',
+					compliance_tag: 'OK FilmPro',
+					executive_summary: 'a'.repeat(100)
+				},
+				items: [
+					{
+						rank: 1,
+						title: 'item de test au moins 10 chars',
+						summary: 'a'.repeat(80),
+						filmpro_relevance: 'b'.repeat(50),
+						maturity: 'etabli',
+						theme: 'films_solaires',
+						geo_scope: 'suisse_romande',
+						source: {
+							name: 'Source',
+							url: 'https://example.com/x',
+							published_at: '2026-04-30T00:00:00Z'
+						},
+						deep_dive: null,
+						segment: 'tertiaire',
+						actionability: 'action_directe',
+						search_terms: [{ kind: 'simap', canton: 'VD', query: 'test', label: 'SIMAP VD test' }]
+					}
+				],
+				impacts_filmpro: []
+			},
+			raw: { mock: true },
+			costs: { breakdown: [], total_usd: 1.5, total_eur: 1.4 }
+		});
+		(crossCheckBatch as Mock).mockResolvedValueOnce({
+			kept: [],
+			rejected: [{ url: 'https://example.com/x', title: 't', verdict: { verbatim_ok: false, divergences: [], confidence: 'low' } }],
+			unverifiable: [],
+			apiErrorCount: 1,
+			systemicError: { kind: 'request', message: 'credit balance too low' }
+		});
+
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client)
+		);
+
+		expect(result.ok).toBe(false);
+		expect(result.error).toMatch(/Vérification anti-hallucination impossible/);
+		// Rien publié (zéro-hallu) : status passe à error, jamais published.
+		const statuses = fresh.upserts.map((u) => u.values.status);
+		expect(statuses).toContain('error');
+		expect(statuses).not.toContain('published');
+		// Email d'alerte échec déclenché.
+		expect(sendRecapMock.mock.calls[0][0]).toMatchObject({ mode: 'failure' });
 	});
 });

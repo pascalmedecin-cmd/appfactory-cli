@@ -11,12 +11,14 @@
 # le scheduler GitHub est saturé à l'heure pile (retards mesurés de 2-4h sur ce
 # workflow entre le 08/05 et le 05/06/2026 avec '0 6'), GitHub recommande
 # d'éviter le début d'heure.
-# Cron rattrapage : vendredi 17:27 UTC, avec --only-if-absent. Filet anti-skip
-# scheduler (le 12/06/2026, le run du matin n'était toujours pas parti à 09:00
-# UTC) : ne tourne QUE si la semaine n'a aucune édition (ni published ni error).
-# Si le run du matin a réussi → skip idempotent ; s'il a échoué → skip aussi
-# (l'alerte email est déjà partie, pas de retry auto - décision council
-# 2026-06-06). Coût du skip : 1 SELECT Supabase, zéro appel Anthropic.
+# Cron rattrapage : vendredi 17:27 UTC. Filet anti-skip scheduler (le 12/06/2026,
+# le run du matin n'était toujours pas parti à 09:00 UTC) ET retry des échecs
+# (décision Pascal 2026-06-19, renverse le council 06-06) : si le run du matin a
+# réussi → skip idempotent (1 SELECT Supabase, zéro appel Anthropic) ; s'il a
+# échoué OU n'a pas tourné → RETENTE. L'alerte email du matin est déjà partie
+# (aucun masquage de dérive) ; coût marginal et rare grâce au fix racine
+# débordement + résilience par-item (2026-06-19). La garde idempotente
+# « déjà published » côté run-generation suffit, le flag --only-if-absent est retiré.
 # workflow_dispatch : permet à Pascal de re-lancer manuellement une semaine
 # arbitraire (rattrapage W18, force-publish W19, etc.).
 name: Cron veille hebdomadaire FilmPro
@@ -71,9 +73,6 @@ jobs:
         # re-validé par regex stricte côté Node (`parseArgv` dans cli-args.ts).
         env:
           WEEK_INPUT: ${{ inputs.week }}
-          # Expression cron qui a déclenché ce run (vide pour workflow_dispatch).
-          # Sert à distinguer le run principal du rattrapage du soir.
-          SCHEDULE_EXPR: ${{ github.event.schedule }}
           PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -84,12 +83,8 @@ jobs:
           VEILLE_ANTI_DOUBLONS_FROM: ${{ vars.VEILLE_ANTI_DOUBLONS_FROM || '' }}
           VEILLE_WINDOW_DAYS: ${{ vars.VEILLE_WINDOW_DAYS || '30' }}
         run: |
-          EXTRA=""
-          if [ "$SCHEDULE_EXPR" = "27 17 * * 5" ]; then
-            EXTRA="--only-if-absent"
-          fi
           if [ -n "$WEEK_INPUT" ]; then
-            npx tsx scripts/run-veille.ts --week "$WEEK_INPUT" $EXTRA
+            npx tsx scripts/run-veille.ts --week "$WEEK_INPUT"
           else
-            npx tsx scripts/run-veille.ts $EXTRA
+            npx tsx scripts/run-veille.ts
           fi

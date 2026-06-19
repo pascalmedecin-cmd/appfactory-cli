@@ -22,17 +22,6 @@ export interface RunResult {
 	error?: string;
 }
 
-export interface RunOptions {
-	/**
-	 * Mode rattrapage (cron du vendredi soir) : skip aussi si la semaine est déjà
-	 * en status=error. Le run du matin a tourné et alerté par email ; le retenter
-	 * automatiquement re-paierait la génération et masquerait la dérive (décision
-	 * council 2026-06-06 : pas de retry auto sur échec). Un status=running orphelin
-	 * (crash dur du runner, aucune alerte partie) est en revanche retenté.
-	 */
-	skipIfErrored?: boolean;
-}
-
 /** Seuil items en-dessous duquel on déclenche l'alerte « semaine creuse ». */
 const SPARSE_WEEK_THRESHOLD = 2;
 /** Seuil items en-dessous duquel on logge un warning low-volume (sans bloquer). */
@@ -223,8 +212,7 @@ function antiDoublonsActive(currentWeek: string, seuil: string | undefined): boo
  */
 export async function runWeeklyGeneration(
 	now: Date = new Date(),
-	deps: VeilleDeps,
-	options: RunOptions = {}
+	deps: VeilleDeps
 ): Promise<RunResult> {
 	const week = currentWeekRange(now);
 	const { supabase } = deps;
@@ -247,10 +235,12 @@ export async function runWeeklyGeneration(
 		return { ok: true, weekLabel: week.weekLabel, reportId: existing.id, skipped: true };
 	}
 
-	if (options.skipIfErrored && existing && existing.status === 'error') {
-		logPhase(week.weekLabel, 'catchup_skip_errored', { reportId: existing.id });
-		return { ok: true, weekLabel: week.weekLabel, reportId: existing.id, skipped: true };
-	}
+	// Rattrapage du soir (décision Pascal 2026-06-19, renverse council 06-06) :
+	// une semaine en status=error est RETENTÉE (pas skippée). Le run du matin a déjà
+	// envoyé l'email d'alerte → aucun masquage de dérive ; le re-paiement est marginal
+	// et désormais rare (fix racine débordement + résilience par-item). Seul `published`
+	// court-circuite (garde idempotente ci-dessus). Un status=running orphelin (crash
+	// dur du runner, aucune alerte partie) est lui aussi retenté en tombant ici.
 
 	// Trace running AVANT tout appel coûteux. Si la suite crash / timeout,
 	// la ligne running reste comme preuve factuelle du démarrage. Sans ça,
@@ -338,11 +328,11 @@ export async function runWeeklyGeneration(
 			week.weekLabel,
 			`Exception: ${message}`,
 			null,
-			{
-				breakdown: [],
-				total_usd: 0,
-				total_eur: 0
-			},
+			// Fidélité coût (revue 2026-06-19) : passer le coût RÉEL déjà accumulé
+			// avant l'exception (ex. 1er appel génération qui a payé des web_search
+			// puis timeout réseau) plutôt qu'un zéro — important sur le crédit dédié
+			// plafonné. persistRunCosts utilise déjà le tracker ; on aligne l'email.
+			tracker.summary(),
 			deps.email
 		);
 		await persistRunCosts(supabase, week.weekLabel, {
@@ -410,6 +400,7 @@ export async function runWeeklyGeneration(
 		logPhase(week.weekLabel, 'cross_check_done', {
 			kept: ccResult.kept.length,
 			rejected: ccResult.rejected.length,
+			apiErrors: ccResult.apiErrorCount,
 			fatalDivergences: ccResult.rejected.flatMap((r) =>
 				r.verdict.divergences.filter((d) => d.severity === 'fatal').map((d) => ({
 					url: r.url,
@@ -418,6 +409,42 @@ export async function runWeeklyGeneration(
 				}))
 			)
 		});
+
+		// Échec SYSTÉMIQUE de la vérification (audit 360 racine) : TOUS les items ont
+		// échoué côté API verifier (crédit dédié épuisé, clé invalide, API down) — la
+		// génération coûteuse a RÉUSSI mais on ne peut rien vérifier. On alerte
+		// distinctement (cause infra, pas contenu) et on NE publie PAS d'items non
+		// vérifiés (garantie zéro-hallu). Distinct de l'ancien échec « cross-check
+		// global » : ici la cause est identifiée (kind) et la génération est sauvée
+		// pour une relance manuelle quand l'API est rétablie.
+		if (ccResult.systemicError) {
+			const sysMsg =
+				`Vérification anti-hallucination impossible (${ccResult.systemicError.kind}) : ` +
+				`${ccResult.systemicError.message}. Génération réussie mais non publiée ` +
+				`(garantie zéro-hallucination). Relance manuelle quand l'API est rétablie.`;
+			logPhase(week.weekLabel, 'cross_check_systemic', { kind: ccResult.systemicError.kind });
+			const errId = await markError(
+				supabase,
+				week.weekLabel,
+				sysMsg,
+				gen.raw,
+				gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 },
+				deps.email
+			);
+			await persistRunCosts(
+				supabase,
+				week.weekLabel,
+				{
+					runId: buildVeilleRunId(week.weekLabel, startedAt),
+					feature: 'veille',
+					status: 'error',
+					startedAt,
+					errorMessage: `Cross-check systemic (${ccResult.systemicError.kind})`
+				},
+				tracker
+			);
+			return { ok: false, weekLabel: week.weekLabel, reportId: errId, error: sysMsg };
+		}
 	} catch (e) {
 		// Échec global cross-check (Sonnet API down, network total, etc.) :
 		// on ne publie PAS d'items non vérifiés. Garantie zéro hallu prime sur
@@ -471,8 +498,13 @@ export async function runWeeklyGeneration(
 	// Strip <cite>...</cite> sur tous les champs textuels avant publish DB :
 	// le SDK Anthropic web_search annote certains passages avec ces marqueurs
 	// non filtrés, qui pollueraient l'affichage CRM (rendu HTML brut).
+	// generated_at SERVEUR-autoritatif (audit 360 racine) : on pose startedAt plutôt
+	// que la valeur émise par le modèle (décorative, jamais fiable sur le format).
+	// Couplé à la pré-normalisation de report-validate, un generated_at off ne peut
+	// plus faire échouer l'édition.
 	const report: IntelligenceReport = stripCitationsFromReport({
 		...gen.report,
+		meta: { ...gen.report.meta, generated_at: startedAt },
 		items: rerankedItems
 	});
 	const { data: inserted, error: insertError } = await supabase

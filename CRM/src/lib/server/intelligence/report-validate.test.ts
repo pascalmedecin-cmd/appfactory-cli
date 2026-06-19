@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { partitionReport, MAX_DROPPED_ABSOLUTE, MAX_DROPPED_RATIO } from './report-validate';
+import { partitionReport, MAX_DROPPED_RATIO } from './report-validate';
 
 // Article conforme de référence (même forme que schema.test.ts).
 const validItem = {
@@ -96,8 +96,8 @@ describe('partitionReport', () => {
 		expect(r.report.items[0].source.published_at).toBe('2026-04-10T00:00:00Z');
 	});
 
-	// Critère 6a : seuil absolu — plus de 3 articles écartés => échec bruyant.
-	it('échoue si plus de 3 articles sont écartés', () => {
+	// Critère 6a : part majoritaire écartée (ratio) => échec bruyant. 4/6 = 66% > 30%.
+	it('échoue si une part majoritaire est écartée (ratio > 30%)', () => {
 		const r = partitionReport(report([badUrl(1), badUrl(2), badUrl(3), badUrl(4), item(5), item(6)]));
 		expect(r.ok).toBe(false);
 		if (r.ok) return;
@@ -126,18 +126,45 @@ describe('partitionReport', () => {
 		expect(r.dropped).toHaveLength(1);
 	});
 
-	// Critère 7a : meta invalide => échec global (garde-fou niveau édition).
-	it('échoue si meta est invalide', () => {
+	// Critère 7a (révisé 06-19) : week_label mal formé est DÉCORATIF (réécrit serveur)
+	// → ne fait plus échouer l'édition (« publier ce qui est bon »).
+	it('ne fait pas échouer l édition si week_label est mal formé (décoratif, réécrit serveur)', () => {
 		const r = partitionReport(report([item(1)], { meta: { ...validMeta, week_label: 'BAD' } }));
-		expect(r.ok).toBe(false);
-		if (r.ok) return;
-		expect(r.error).toMatch(/meta|structure|édition/i);
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.report.items).toHaveLength(1);
 	});
 
-	// Critère 7b : impacts_filmpro invalide => échec global.
-	it('échoue si impacts_filmpro est invalide', () => {
-		const r = partitionReport(report([item(1)], { impacts_filmpro: [{ axis: 'AXE_INEXISTANT', note: 'x' }] }));
-		expect(r.ok).toBe(false);
+	// La SEULE fatalité restante : emit_report qui n'est même pas un objet exploitable.
+	it('échoue si l emit_report n est même pas un objet', () => {
+		expect(partitionReport('pas un objet').ok).toBe(false);
+		expect(partitionReport(null).ok).toBe(false);
+		expect(partitionReport(42).ok).toBe(false);
+	});
+
+	// Critère 7b (révisé 06-19) : impact non conforme écarté INDIVIDUELLEMENT, l'édition survit.
+	it('écarte un impact non conforme individuellement sans faire échouer l édition', () => {
+		const r = partitionReport(
+			report([item(1)], { impacts_filmpro: [{ axis: 'AXE_INEXISTANT', note: 'x' }] })
+		);
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.report.impacts_filmpro).toHaveLength(0);
+	});
+
+	it('garde les impacts valides et écarte les invalides (cap 3)', () => {
+		const r = partitionReport(
+			report([item(1)], {
+				impacts_filmpro: [
+					{ axis: 'diagnostic', note: 'Note valide pour le diagnostic ERP scolaire.' },
+					{ axis: 'AXE_INEXISTANT', note: 'invalide' }
+				]
+			})
+		);
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.report.impacts_filmpro).toHaveLength(1);
+		expect(r.report.impacts_filmpro[0].axis).toBe('diagnostic');
 	});
 
 	// Critère 8 : semaine creuse légitime (0 article émis) => succès, pas d'échec.
@@ -149,8 +176,90 @@ describe('partitionReport', () => {
 		expect(r.dropped).toHaveLength(0);
 	});
 
-	it('expose les seuils validés', () => {
-		expect(MAX_DROPPED_ABSOLUTE).toBe(3);
+	it('expose le seuil ratio validé', () => {
 		expect(MAX_DROPPED_RATIO).toBeCloseTo(0.3);
+	});
+
+	// --- Décision Pascal 2026-06-19 « publier ce qui est bon » : seuil absolu retiré ---
+
+	it('publie 11 bons articles malgré 4 écarts sur 15 candidats (seuil absolu retiré)', () => {
+		const items: unknown[] = [];
+		for (let i = 1; i <= 11; i++) items.push(item(i));
+		items.push(badUrl(12), badUrl(13), badUrl(14), badUrl(15)); // 4/15 = 27% < 30%
+		const r = partitionReport(report(items));
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.report.items).toHaveLength(11);
+		expect(r.dropped).toHaveLength(4);
+	});
+
+	it('clampe un executive_summary trop court (5 chars) au lieu d échouer', () => {
+		const r = partitionReport(
+			report([item(1)], { meta: { ...validMeta, executive_summary: 'court' } })
+		);
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.report.meta.executive_summary).toBe('court');
+	});
+
+	it('remplace un executive_summary vide par un placeholder non vide', () => {
+		const r = partitionReport(
+			report([item(1)], { meta: { ...validMeta, executive_summary: '   ' } })
+		);
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.report.meta.executive_summary.length).toBeGreaterThan(0);
+	});
+
+	it('tronque un executive_summary trop long à 2000 caractères', () => {
+		const r = partitionReport(
+			report([item(1)], { meta: { ...validMeta, executive_summary: 'a'.repeat(3000) } })
+		);
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.report.meta.executive_summary.length).toBe(2000);
+	});
+
+	it('fallback compliance_tag invalide vers Non exploitable sans échouer', () => {
+		const r = partitionReport(
+			report([item(1)], { meta: { ...validMeta, compliance_tag: 'TAG_INEXISTANT' } })
+		);
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.report.meta.compliance_tag).toBe('Non exploitable');
+	});
+
+	// --- Bloc 3 (audit 360 racine 2026-06-19) : generated_at ré-écrit serveur,
+	// donc un format off ne doit plus faire échouer toute l'édition (pré-normalisé).
+	it('ne fait pas échouer l édition si generated_at a un offset (+02:00) au lieu de Z', () => {
+		const r = partitionReport(
+			report([item(1)], { meta: { ...validMeta, generated_at: '2026-04-10T08:00:00+02:00' } })
+		);
+		expect(r.ok).toBe(true);
+	});
+
+	it('ne fait pas échouer l édition si generated_at est une date seule (YYYY-MM-DD)', () => {
+		const r = partitionReport(
+			report([item(1)], { meta: { ...validMeta, generated_at: '2026-04-10' } })
+		);
+		expect(r.ok).toBe(true);
+	});
+
+	it('ne fait pas échouer l édition si generated_at est absurde (sera réécrit serveur)', () => {
+		const r = partitionReport(
+			report([item(1)], { meta: { ...validMeta, generated_at: 'pas une date' } })
+		);
+		expect(r.ok).toBe(true);
+	});
+
+	it('garde un article dont la date a un offset ISO (+02:00) au lieu de Z', () => {
+		const r = partitionReport(
+			report([
+				item(1, { source: { ...validItem.source, published_at: '2026-04-10T08:00:00+02:00' } })
+			])
+		);
+		expect(r.ok).toBe(true);
+		if (!r.ok) return;
+		expect(r.report.items).toHaveLength(1);
 	});
 });

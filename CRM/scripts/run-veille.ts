@@ -43,9 +43,6 @@ Options:
   --week YYYY-Www    Force la semaine cible (rattrapage manuel).
                      Exemple : --week 2026-W18
                      Sans ce flag : utilise la semaine ISO de la date système.
-  --only-if-absent   Mode rattrapage planifié : skip (exit 0) si la semaine a
-                     déjà une édition published OU error. Ne couvre que le cas
-                     « le run du matin n'a jamais tourné » (skip scheduler).
   --help, -h         Affiche cette aide.
 
 Exit code : 0 succès, 1 échec attendu, 2 erreur non capturée.
@@ -85,15 +82,11 @@ async function main(): Promise<number> {
 	}
 
 	const mode = opts.weekLabel ? `rattrapage ${opts.weekLabel}` : 'semaine en cours';
-	console.log(
-		`[run-veille] démarrage pipeline veille (${mode}${opts.onlyIfAbsent ? ', only-if-absent' : ''})`
-	);
+	console.log(`[run-veille] démarrage pipeline veille (${mode})`);
 	const startedAt = Date.now();
 
 	try {
-		const result = await runWeeklyGeneration(now, deps, {
-			skipIfErrored: opts.onlyIfAbsent === true
-		});
+		const result = await runWeeklyGeneration(now, deps);
 		const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
 
 		if (result.ok) {
