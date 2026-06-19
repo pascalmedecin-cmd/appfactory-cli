@@ -1,13 +1,11 @@
 # CRM FilmPro : CLAUDE.md
 
-**Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; le container racine est un stub pointant vers les sous-projets. Contexte migration complet → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_appfactory_restructure.md`.
+**Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; container racine = stub. Contexte → `memory/project_appfactory_restructure.md`.
 
-**Statut :** Clean state 2026-05-28 - refonte mobile V2 **abandonnée** après smoke iPhone (overscope) → pivot **V3 outil terrain only** (`archive/2026-05-28-pivot-mobile-v3.md`). **Portail FilmPro multi-outils : CRM (`/crm`) + Découpe Films (`/decoupe`) en prod sur `filmpro-portail.vercel.app` (2026-06-05).** Formation IA = sous-projet autonome `Formation/`, `cc` option 5. Antérieur en prod (Signaux V4, Log, audit 360, golden v9, restructure S173-S174) → `archive/2026-05-06-sessions.md`.
-**Derniere mise a jour :** 2026-06-19 (**Vague 3 démarrée** : chantier 3.1 Signaux condensés + actions `5e0c369` + export CSV Prospection `6626818` ; golden Vague 3 validé Chrome. Vague 2 CLOSE 5/5 antérieurement. Flag `ffCrmListesV2` OFF, **non déployé**, 1850 Vitest, revues 0 C/H/M/L). Prod = alias `filmpro-portail.vercel.app` sur `810f2e6`. Détail → « Livré cette session » + archives.
-**Derniere revue /optimize :** 2026-04-05
-**Prochain bug :** #001
-**Session courante :** 2026-06-19 - **Vague 3 démarrée** (golden 3 écrans validé Chrome après 1 itération) : **chantier 3.1 Signaux condensés + actions** (`5e0c369` : Archiver réversible + slideout premium menu `...`, OFF byte-identique, 6 bugs bug-hunter corrigés) + **export CSV Prospection filtré** (`6626818` : miroir du load, cap non-silencieux). Flag `ffCrmListesV2` OFF, **non déployé**. Revues adversariales 0 C/H/M/L. Reste cascade : 3.2 Campagne (migration), 3.3 Dashboard, Vague 4 emailing (bloquée). Détail → « Livré cette session » + audits 19/06 ([[audit-secu-2026-06-19-vague3-signaux-actions]], [[audit-secu-2026-06-19-vague3-export-csv]]). NB : non déployé, cf. tâche Déployer.
-**Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175 : `2026-05-06-sessions.md` ; S122-S125 : `2026-04-28-sessions.md` ; S70-S107 : `decisions-sessions-*.md` + `Formation/CLAUDE.md`).
+**Statut :** Portail FilmPro multi-outils en prod : CRM (`/crm`) + Découpe Films (`/decoupe`) sur `filmpro-portail.vercel.app`. Formation IA = projet autonome `Formation/` (`cc` option 5). Historique (V3 terrain, Signaux V4, golden v9, restructure S173-S174) → `archive/`.
+**Derniere mise a jour :** 2026-06-19. Prod = alias `filmpro-portail.vercel.app` sur `810f2e6`. **Derniere revue /optimize :** 2026-04-05. **Prochain bug :** #001.
+**Session courante :** 2026-06-19 - **fix racine veille hebdo** (échecs récurrents ~1 sem/3 : appel LLM monolithique, fenêtre 32K saturée par thinking `xhigh` + emit_report → tronqué). Fix : 64K + relance auto 128K + cross-check résilient par-item + tolérance en-tête + retry du soir. **`xhigh` + anti-hallu intacts**. 1866 Vitest, 0 type-err, bug-hunter 0 bug + sécu 0 C/H/M, poussé `main` (`5d0d8db`). **W25 (cette semaine) PAS encore relancé → Bloc 0.** Antérieur ce jour : Vague 3 démarrée (3.1 + export CSV, flag OFF non déployé). → [[project_veille_fix_racine_max_tokens_2026-06-19]] + « Livré cette session ».
+**Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175, S122-S125, S70-S107).
 
 
 ---
@@ -70,15 +68,9 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## DECISIONS STRUCTURELLES
 
-- Repo separe `appfactory-cli` (ancien `appfactory` reste consultable)
-- Workflow prioritaire : construire le cycle core avant d'attaquer FilmPro
-- FilmPro = premier projet reel du nouveau workflow (dogfooding)
-- Figma Pro abandonne (deep research 2026-04-04 : ratio cout/benefice defavorable pour solopreneur code-first)
-- Design = approche code-first : composants custom + kits Figma Community gratuits comme inspiration
-- Validation client = prototypes Vercel preview (pas de maquettes Figma)
-- CSS scoped obligatoire pour le layout structurel (sidebar, header, nav) : Tailwind responsive (md:hidden, md:block) ne fonctionne pas avec Tailwind v4 pour ce cas
-- HTML temporaires pour previsualisations client a chaque etape cle
-- Ancien projet AppFactory v1 (Apps Script) = archive consultable, pas de migration
+- Repo `appfactory-cli` (ancien `appfactory` reste consultable)
+- Design code-first : composants custom + kits Figma Community gratuits (Figma Pro abandonné, deep research 2026-04-04). Validation client = prototypes Vercel preview.
+- CSS scoped obligatoire pour le layout structurel (sidebar, header, nav) : Tailwind responsive (md:hidden/md:block) ne marche pas en Tailwind v4 pour ce cas.
 
 ### Decisions UX + Prospection (G36)
 
@@ -102,24 +94,19 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 - **Auth** : OTP email 6 chiffres @filmpro.ch + session 7 jours httpOnly ; SMTP Resend (domaine verifié, free plan)
 - **APIs** : Zefix REST + search.ch + fal.ai Flux 1.1 Pro Ultra (partage clé avec Enseignement) — Pexels/Unsplash supprimés S67
 - **Crons** : `/api/cron/{signaux,alertes,nettoyage-crm,intelligence,intelligence-archive}` tous sécurisés `CRON_SECRET` + service role (Cron `media-enrich` supprimé S67)
-- **Tests** : Vitest 1850 (dernier run vérifié 2026-06-19) + Playwright e2e (suite + P1/P2/P3 Prospection). Accessibilité : focus trap + ConfirmModal partout, axe-core 0 violation modale P3. Sécurité : Zod sur 20 form actions/endpoints, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
+- **Tests** : Vitest 1866 (dernier run vérifié 2026-06-19) + Playwright e2e (suite + P1/P2/P3 Prospection). Accessibilité : focus trap + ConfirmModal partout, axe-core 0 violation modale P3. Sécurité : Zod sur 20 form actions/endpoints, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
 
 → Détail intégral (env vars, BDD exhaustive, liste tests, liste crons, headers sécurité, pagination serveur) : `archive/infra-crm-detail.md`
 
 ## DOCUMENTATION
 
-- `docs/SPECS_PROSPECTION.md` : Specs completes module prospection (sources, modele, scoring, UI, dedup)
+- `docs/SPECS_PROSPECTION.md` : specs module prospection (sources, scoring, UI, dedup).
 
-→ Inventaire composants EN PLACE (11 composants, 6 pages, 4 API, scripts) archive dans archive/inventaire-composants.md : consulter si besoin de lister les composants existants avant d'en creer de nouveaux
+→ Inventaire composants EN PLACE → `archive/inventaire-composants.md` (consulter avant d'en créer de nouveaux).
 
 ### Historique condensé (archives)
 
-- Sessions 1-8 : UX 6 écrans, design premium Untitled UI/SnowUI, wizards 5 étapes → `archive/decisions-sessions-1-8.md`
-- Sessions 9-16 : auth OTP+MFA, Vercel root `template`, PWA, refonte prospection → `archive/decisions-sessions-9-16.md`
-- Sessions 70-77 (formation-ia shared) : cadrage parcours + S1-S5 ingestion → `archive/decisions-sessions-70-77.md`
-- Sessions 78-79 (formation-ia shared) : S6-S7 ingestion critère sortie → `archive/decisions-sessions-78-79.md`
-- Sessions 122-125 (CRM, V1 mobile) : Lighthouse + Playwright mobile + V1 MOBILE CLOS → `archive/2026-04-28-sessions.md`
-- Audit CRM 2026-04-04 (méthodo 5 agents, 4 sprints correctifs) → `archive/audit-crm-2026-04-04.md`
+- Détail S1-16 (UX 6 écrans, auth OTP+MFA, PWA, prospection), S70-79 (formation-ia ingestion), S122-125 (V1 mobile clos), audit CRM 2026-04-04 → `archive/decisions-sessions-*.md` + `archive/2026-04-28-sessions.md` + `archive/audit-crm-2026-04-04.md`.
 
 ---
 
@@ -146,9 +133,15 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : Bloc 1 - **Vague 3.2 Prospection Campagne** : fusionner d'abord les 3 filtres leads dupliqués (`prospection-query.ts`), puis migration `campagne TEXT` + import + colonne + filtre + colonne CSV. Golden Vague 3 validé, chantier 3.1 Signaux + export CSV déjà livrés. Reste ensuite 3.3 Dashboard temporel ; Vague 4 emailing **bloquée** (prérequis externes Pascal).
+**Prochaine attaque** : Bloc 0 - **Vérifier/rattraper la veille W25** (rapide, édition de cette semaine non publiée ; le fix cron est sur main, le rattrapage du soir devrait l'avoir reprise) ; puis Bloc 1 - **Vague 3.2 Prospection Campagne** : fusionner d'abord les 3 filtres leads dupliqués (`prospection-query.ts`), puis migration `campagne TEXT` + import + colonne + filtre + colonne CSV. Golden Vague 3 validé, chantier 3.1 Signaux + export CSV déjà livrés. Reste ensuite 3.3 Dashboard temporel ; Vague 4 emailing **bloquée** (prérequis externes Pascal).
 
 > Cadrage commun (refonte UX/UI CRM, validé Pascal 2026-06-18) → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_refonte_crm_cadrage_2026-06-18.md` + golden Vague 3 `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html` (validé Chrome).
+
+### 0. Vérifier/rattraper la veille hebdo W25 [SUPERVISÉ • low • ~10 min]
+
+- **Pourquoi** : le run veille du matin 2026-06-19 (W25) a échoué (débordement max_tokens). Le fix racine est livré + poussé sur `main` (`5d0d8db`). Le cron du soir (17:27 UTC) retente désormais les erreurs automatiquement (nouveau comportement) → W25 devrait s'auto-rattraper le soir même, à vérifier.
+- **Payload** → [[project_veille_fix_racine_max_tokens_2026-06-19]] + `audit_secu_2026-06-19_veille_fix_racine_max_tokens.md`.
+- [ ] **[EXÉCUTABLE]** Vérifier le statut W25 : si une édition `published` existe (cron du soir l'a rattrapée avec le fix) → rien à faire, confirmer juste 0 `stop_reason=max_tokens` dans les logs. Si toujours `error` → relancer manuellement `gh workflow run cron-veille.yml -f week=2026-W25` (repo FilmPro) puis surveiller le run = **preuve réelle du fix en prod** + lire `thinking_tokens` loggé pour calibrer 64K.
 
 ### 1. Vague 3 (suite) + Vague 4 refonte CRM [SUPERVISÉ • xhigh • cascade par chantiers]
 
@@ -166,22 +159,23 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 - [ ] **[EXÉCUTABLE]** Passe de tri du working tree : catégoriser puis trancher par catégorie (committer / `.gitignore` / supprimer), grep cross-ref avant toute suppression, STOP au moindre doute. Ne PAS faire `git add -A`. Périmètre = repo FilmPro (`CRM/` + racine container). Distinguer ce qui est livrable de ce qui est scratch/débris de sessions passées.
 
 ### Réserve (retirée du backlog actif le 2026-06-07)
-- Chantier 3 portail = non cadré (observer l'usage V5 d'abord). Durcissement RLS 4e user = conditionnel ([[feedback_rls_multitenant_durcissement_si_4_users]], redéclenche au 4e user non-fondateur). Corpus golden optimiseur Découpe = livré (`68c4965`/`99476f1`).
+- Chantier 3 portail (non cadré, observer V5 d'abord) ; durcissement RLS 4e user (conditionnel, [[feedback_rls_multitenant_durcissement_si_4_users]]).
 
 ### Livré cette session
 
-- [x] ~~**Vague 3.1 Signaux condensés + actions**~~ - 2026-06-19 (`5e0c369`, flag OFF, non déployé). Archiver réversible (`?/archive`/`?/unarchive`, gardes défensives) + slideout premium menu `...` (Archiver/Restaurer/Écarter/Supprimer, clic-hors/Échap/scroll) ; OFF byte-identique ; fix label statut `archive`. Revue sécu **0 C/H/M/L** + 6 bugs bug-hunter corrigés no-debt. → [[audit-secu-2026-06-19-vague3-signaux-actions]].
-- [x] ~~**Vague 3.2 (partiel) - export CSV Prospection filtré**~~ - 2026-06-19 (`6626818`, non déployé). Bouton « Exporter CSV » = miroir exact des filtres du load ; colonnes partagées (/reporting byte-identique) ; cap non-silencieux (X-Export-Truncated + label). Dette tracée : fusionner les 3 filtres dupliqués avant la colonne Campagne. → [[audit-secu-2026-06-19-vague3-export-csv]].
-- [x] ~~**Vague 2 cascade 5/5 - Prospection premium**~~ - 2026-06-19 (`8c5d84d`, flag OFF). KpiStrip agrégats globaux + ligne premium + fiche crm-facts. 1832 Vitest, **0 C/H/M**, 1 Low a11y corrigé `98f017d`. → [[audit-secu-2026-06-19-vague2-prospection-premium]].
-- [x] ~~**Rattrapage commit Prospection P1/P2/P3**~~ - 2026-06-19 (`6c4230a`). Travail 18/06 commité (lot Prospection) → débloque la cascade.
+- [x] ~~**Fix racine veille hebdo (échecs récurrents ~1 sem/3)**~~ - 2026-06-19 (`5d0d8db`, poussé `main`, cron actif W26 ; PAS encore relancé W25 → Bloc 0). Audit 360 (validé doc Anthropic) : cause = un appel LLM monolithique, fenêtre 32K partagée thinking `xhigh`+15 web_search+emit_report 12-15 items → tronqué (`stop_reason=max_tokens`). Fix : **64K + relance auto 128K** + cross-check **résilient par-item** (1 page qui plante ≠ run mort, item en erreur jamais publié = zéro-hallu) + alerte **crédit API épuisé** distincte + **tolérance en-tête** (resilientMeta, seuil garde absolu retiré) + **retry du soir** (renverse council 06-06). **`xhigh` + anti-hallu intacts**. 1866 Vitest verts, 0 type-err, bug-hunter **0 bug** (2 passes) + sécu **0 C/H/M** (zéro-hallu prouvé préservé). → [[project_veille_fix_racine_max_tokens_2026-06-19]] + [[audit_secu_2026-06-19_veille_fix_racine_max_tokens]].
+- [x] ~~**Vague 3.1 Signaux condensés + actions**~~ - 2026-06-19 (`5e0c369`, flag OFF, non déployé). Archiver réversible + slideout premium menu `...` ; OFF byte-identique. Revue sécu **0 C/H/M/L** + 6 bugs bug-hunter corrigés. → [[audit-secu-2026-06-19-vague3-signaux-actions]].
+- [x] ~~**Vague 3.2 (partiel) - export CSV Prospection filtré**~~ - 2026-06-19 (`6626818`, non déployé). Miroir exact des filtres du load ; cap non-silencieux. Dette tracée : fusionner les 3 filtres dupliqués avant la colonne Campagne. → [[audit-secu-2026-06-19-vague3-export-csv]].
+- [x] ~~**Vague 2 cascade 5/5 - Prospection premium**~~ - 2026-06-19 (`8c5d84d`, flag OFF). KpiStrip agrégats globaux + ligne premium + fiche crm-facts. **0 C/H/M**, 1 Low a11y corrigé `98f017d`. → [[audit-secu-2026-06-19-vague2-prospection-premium]].
 - [x] ~~**Fiches Entreprises+Contacts « golden complet »**~~ - 2026-06-19 (`87a1842`, flag OFF). Grille bordée + timeline ; revue **0 C/H/M/L**. → [[audit-secu-2026-06-19-vague2-fiches-golden-complet]].
-→ Livrés antérieurs : Vague 2 Pipeline (`35d7df7`) + Signaux premium (`0800b03`), listes/fiches Entreprises+Contacts (`60a583c`), mini-projet Prospection P1/P2/P3 (18/06), Vague 1 cohérence (`676a9d4`) → `archive/claude-md-crm-livre-2026-06-19.md`. Plus anciens (Cadrage refonte, Audit 360 + 10 bugs `6b9f6e1`, cron veille, copy V5, Vague 4) → `archive/claude-md-crm-livre-2026-06-18.md` + `archive/2026-06-07-sessions.md`.
+→ Livrés antérieurs : Rattrapage commit Prospection P1/P2/P3 (`6c4230a`), Vague 2 Pipeline (`35d7df7`) + Signaux premium (`0800b03`), listes/fiches Entreprises+Contacts (`60a583c`), Vague 1 cohérence (`676a9d4`) → `archive/claude-md-crm-livre-2026-06-19.md`. Plus anciens (Cadrage refonte, Audit 360 + 10 bugs `6b9f6e1`, cron veille, copy V5, Vague 4) → `archive/claude-md-crm-livre-2026-06-18.md` + `archive/2026-06-07-sessions.md`.
 
 ### Watch list active après pivot
 
+- **[WATCH] 1er run prod du fix veille = W26 (prochain vendredi)** : vérifier 0 `stop_reason=max_tokens` ; lire `thinking_tokens` loggé (64K suffit-il ? sinon la relance 128K couvre). Surveiller `cost_audit_runs` (relance 128K + retry du soir re-paient ponctuellement). Plan B 2-phases documenté si insuffisant. → [[project_veille_fix_racine_max_tokens_2026-06-19]].
 - **[WATCH] Svelte 5 — `onDestroy` s'exécute en SSR (Vercel) mais pas en `vite preview`** : toute référence à `window`/`document`/`localStorage`/`setInterval` à cleanup DOIT passer par `$effect(() => { ...; return () => cleanup; })`. Toujours tester en preview branch Vercel pour les composants qui touchent window. Mémoire `feedback_svelte5_ondestroy_ssr_window_undefined.md`.
-- **[WATCH] Trap Vercel `rollback` → alias prod verrouillé** : après `vercel rollback`, les `git push` suivants buildent mais ne promeuvent PAS automatiquement. Toujours vérifier via `vercel inspect filmpro-portail.vercel.app` (domaine canonique depuis la bascule 2026-06-04) que l'alias pointe bien sur le nouveau deploy.
-- **[WATCH] Réactivation d'une source coupée en V5 (2026-06-07)** : flip de flag (`SIGNAUX_ZEFIX_ENABLED=true`, ou `config.prospection.sources.*.enabled=true` / `features.*=true`) → re-vérifier que les contrôles d'origine (Zod, quota, rate-limit, anti-hallu) sont bien ceux validés S189/S192 AVANT de rallumer en prod. Le moment du risque = la réactivation, pas la coupure. **Encodage Zefix : corrigé 2026-06-07** (`lib/server/decode-response.ts`, fallback Windows-1252) → la réactivation ne re-corrompt plus les accents (cf. Livré 4d-mojibake). Réf audit `memory/audit_secu_2026-06-07_v5_signaux_prospection.md` § I-3.
+- **[WATCH] Trap Vercel `rollback` → alias prod verrouillé** : après `vercel rollback`, les `git push` buildent mais ne promeuvent PAS automatiquement. Vérifier via `vercel inspect filmpro-portail.vercel.app` (domaine canonique) que l'alias pointe sur le nouveau deploy.
+- **[WATCH] Réactivation d'une source coupée en V5 (2026-06-07)** : flip de flag (`SIGNAUX_ZEFIX_ENABLED`, `config.prospection.sources.*.enabled`, `features.*`) → re-vérifier les contrôles d'origine (Zod, quota, rate-limit, anti-hallu) AVANT de rallumer en prod (le risque = la réactivation). Encodage Zefix corrigé (`decode-response.ts`). Réf `memory/audit_secu_2026-06-07_v5_signaux_prospection.md` § I-3.
 
 → Watch list complète (Signaux V4 perf/contrats S189, S188, S186, S178, S171) déplacée dans `archive/2026-05-28-pivot-mobile-v3.md`. Restent triables si l'objet redevient actuel.
 
