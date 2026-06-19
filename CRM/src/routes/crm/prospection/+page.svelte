@@ -17,6 +17,9 @@
 	import RecherchesPanel from '$lib/components/prospection/RecherchesPanel.svelte';
 	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
 	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
+	import SourcePill from '$lib/components/SourcePill.svelte';
+	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
+	import { sourceMetaFor } from '$lib/utils/entreprisesFormat';
 	import ProspectionTabs from '$lib/components/prospection/ProspectionTabs.svelte';
 	import MobileEntityCard from '$lib/components/mobile/MobileEntityCard.svelte';
 	import type {
@@ -48,6 +51,16 @@
 	const savedSearchesEnabled = isProspectionFeatureEnabled('savedSearches');
 	const alertsEnabled = isProspectionFeatureEnabled('alerts');
 	const batchEnrichEnabled = isProspectionFeatureEnabled('batchEnrichment');
+
+	// Vague 2 « listes/fiches premium » (flag JWT, même que les 4 autres pages). OFF → rendu
+	// actuel byte-identique. Chips KPI sur les agrégats GLOBAUX du load (totalLeads paginé →
+	// jamais de distribution calculée sur la page partielle ; on ne montre que des comptes exacts).
+	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+	const premiumKpiItems = $derived<KpiItem[]>([
+		{ icon: 'users', value: data.leadsActifsCount, label: 'Leads actifs', tone: 'primary' },
+		{ icon: 'landmark', value: data.marchesOuvertsCount, label: 'Marchés publics ouverts', tone: 'convert' },
+		{ icon: 'repeat', value: data.transferresMoisCount, label: 'Transférés ce mois', tone: 'success' },
+	]);
 
 	$effect(() => { $pageSubtitle = `${data.totalLeads} prospect${data.totalLeads > 1 ? 's' : ''}`; });
 
@@ -589,36 +602,44 @@
 		<span class="text-text-muted">{data.transferresMoisCount} transféré{data.transferresMoisCount > 1 ? 's' : ''} ce mois</span>
 	</div>
 	<!-- V3.6 audit S160 (M-29) : indicateurs flat sémantiquement listés via dl/dt/dd.
-	     F-V4-07 : compression header (px/py 7 → 5/4, icône 11 → 10, count 36px → 30px). -->
-	<dl class="hidden md:grid grid-cols-3 gap-0 border-y border-border m-0">
-		<div class="flex items-center gap-4 px-5 py-4">
-			<div class="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
-				<Icon name="users" size={20} class="text-info-deep" />
-			</div>
-			<div class="flex flex-col gap-0.5 min-w-0">
-				<dd class="text-[30px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.leadsActifsCount}</dd>
-				<dt class="text-[12px] font-medium text-text-muted">Leads actifs</dt>
-			</div>
+	     F-V4-07 : compression header (px/py 7 → 5/4, icône 11 → 10, count 36px → 30px).
+	     Vague 2 premium : les « KPI géants » 30px (mal « empilement ») cèdent la place à la
+	     strip de chips KpiStrip partagée. Comptes globaux exacts (load), pas de distribution. -->
+	{#if premium}
+		<div class="hidden md:block">
+			<KpiStrip items={premiumKpiItems} ariaLabel="Indicateurs prospection" />
 		</div>
-		<div class="flex items-center gap-4 px-5 py-4 border-l border-border">
-			<div class="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
-				<Icon name="landmark" size={20} class="text-info-deep" />
+	{:else}
+		<dl class="hidden md:grid grid-cols-3 gap-0 border-y border-border m-0">
+			<div class="flex items-center gap-4 px-5 py-4">
+				<div class="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
+					<Icon name="users" size={20} class="text-info-deep" />
+				</div>
+				<div class="flex flex-col gap-0.5 min-w-0">
+					<dd class="text-[30px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.leadsActifsCount}</dd>
+					<dt class="text-[12px] font-medium text-text-muted">Leads actifs</dt>
+				</div>
 			</div>
-			<div class="flex flex-col gap-0.5 min-w-0">
-				<dd class="text-[30px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.marchesOuvertsCount}</dd>
-				<dt class="text-[12px] font-medium text-text-muted">Marchés publics ouverts</dt>
+			<div class="flex items-center gap-4 px-5 py-4 border-l border-border">
+				<div class="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
+					<Icon name="landmark" size={20} class="text-info-deep" />
+				</div>
+				<div class="flex flex-col gap-0.5 min-w-0">
+					<dd class="text-[30px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.marchesOuvertsCount}</dd>
+					<dt class="text-[12px] font-medium text-text-muted">Marchés publics ouverts</dt>
+				</div>
 			</div>
-		</div>
-		<div class="flex items-center gap-4 px-5 py-4 border-l border-border">
-			<div class="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
-				<Icon name="repeat" size={20} class="text-info-deep" />
+			<div class="flex items-center gap-4 px-5 py-4 border-l border-border">
+				<div class="flex h-10 w-10 items-center justify-center rounded-xl shrink-0" style="background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));">
+					<Icon name="repeat" size={20} class="text-info-deep" />
+				</div>
+				<div class="flex flex-col gap-0.5 min-w-0">
+					<dd class="text-[30px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.transferresMoisCount}</dd>
+					<dt class="text-[12px] font-medium text-text-muted">Transférés ce mois</dt>
+				</div>
 			</div>
-			<div class="flex flex-col gap-0.5 min-w-0">
-				<dd class="text-[30px] leading-none font-bold tabular-nums text-primary-dark tracking-tight m-0">{data.transferresMoisCount}</dd>
-				<dt class="text-[12px] font-medium text-text-muted">Transférés ce mois</dt>
-			</div>
-		</div>
-	</dl>
+		</dl>
+	{/if}
 
 	<!-- Actions principales : DESKTOP descendues dans le slot `actions` de ProspectionTabs (F-V4-07).
 	     MOBILE conservé ici en barre dédiée (kebab + leadExpress + headerCTA), au-dessus des filtres mobile.
@@ -1057,11 +1078,24 @@
 					{:else if col.key === 'raison_sociale'}
 						<span class="font-medium text-text truncate block" title={lead.raison_sociale}>{lead.raison_sociale}</span>
 					{:else if col.key === 'canton'}
-						<span class="text-text">{lead.canton ? (cantonNoms[lead.canton] ?? lead.canton) : '–'}</span>
+						{#if premium && lead.canton}
+							<span class="crm-loc"><Icon name="location_on" size={13} />{cantonNoms[lead.canton] ?? lead.canton}</span>
+						{:else}
+							<span class="text-text">{lead.canton ? (cantonNoms[lead.canton] ?? lead.canton) : '–'}</span>
+						{/if}
 					{:else if col.key === 'localite'}
 						<span class="text-text truncate block" title={lead.localite ?? ''}>{lead.localite ?? '–'}</span>
 					{:else if col.key === 'source'}
-						<span class="text-text-muted text-xs">{sourceLabel(lead.source)}</span>
+						{#if premium}
+							{@const sm = sourceMetaFor(lead.source)}
+							{#if sm}
+								<SourcePill label={sm.label} variant={sm.variant} />
+							{:else}
+								<span class="text-text-muted text-xs">{sourceLabel(lead.source)}</span>
+							{/if}
+						{:else}
+							<span class="text-text-muted text-xs">{sourceLabel(lead.source)}</span>
+						{/if}
 					{:else if col.key === 'statut'}
 						<Badge label={statutLabel(lead.statut)} variant={statutBadgeVariant(lead.statut)} dot={true} />
 					{:else if col.key === 'date_import' || col.key === 'date_publication'}
@@ -1088,7 +1122,7 @@
 </div>
 
 <!-- Lead detail slide-out -->
-<LeadSlideOut bind:open={slideOutOpen} bind:lead={selectedLead} bind:importResult leads={data.leads} />
+<LeadSlideOut bind:open={slideOutOpen} bind:lead={selectedLead} bind:importResult leads={data.leads} {premium} />
 
 <!-- Lead express modale (F3 V2 mobile terrain) -->
 <LeadExpress bind:open={leadExpressOpen} redirectAfterCreate={false} />

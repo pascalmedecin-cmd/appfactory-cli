@@ -5,6 +5,8 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
+	import SourcePill from '$lib/components/SourcePill.svelte';
+	import { sourceMetaFor } from '$lib/utils/entreprisesFormat';
 	import PhotoGallery from '$lib/components/PhotoGallery.svelte';
 	import VisitsPanel from '$lib/components/VisitsPanel.svelte';
 	import { toasts } from '$lib/stores/toast';
@@ -37,11 +39,12 @@
 		date_publication: string | null;
 	};
 
-	let { open = $bindable(false), lead = $bindable<Lead | null>(null), importResult = $bindable<{ message: string; type: 'success' | 'error' } | null>(null), leads }: {
+	let { open = $bindable(false), lead = $bindable<Lead | null>(null), importResult = $bindable<{ message: string; type: 'success' | 'error' } | null>(null), leads, premium = false }: {
 		open: boolean;
 		lead: Lead | null;
 		importResult: { message: string; type: 'success' | 'error' } | null;
 		leads: Lead[];
+		premium?: boolean;
 	} = $props();
 
 	let enriching = $state(false);
@@ -122,7 +125,16 @@
 			<div class="flex flex-wrap items-center gap-2">
 				<ScorePill score={lead.score_pertinence} compact />
 				<Badge label={statutLabel(lead.statut)} variant={statutBadgeVariant(lead.statut)} dot={true} />
-				<Badge label={sourceLabel(lead.source)} variant="default" />
+				{#if premium}
+					{@const sm = sourceMetaFor(lead.source)}
+					{#if sm}
+						<SourcePill label={sm.label} variant={sm.variant} />
+					{:else}
+						<Badge label={sourceLabel(lead.source)} variant="default" />
+					{/if}
+				{:else}
+					<Badge label={sourceLabel(lead.source)} variant="default" />
+				{/if}
 			</div>
 
 			<!-- Score detail (remonté juste après les badges) -->
@@ -151,38 +163,70 @@
 			<!-- Coordonnées -->
 			<div>
 				<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Coordonnées</h4>
-				<div class="grid grid-cols-2 gap-4 text-sm">
-					<div>
-						<span class="text-xs text-text-muted">Adresse</span>
-						<p class="font-medium text-text">
-							{[lead.adresse, lead.npa, lead.localite].filter(Boolean).join(', ') || '–'}
-						</p>
-					</div>
-					<div>
-						<span class="text-xs text-text-muted">Canton</span>
-						<p class="font-medium text-text">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '–'}</p>
-					</div>
-					<div>
-						<span class="text-xs text-text-muted">Téléphone</span>
-						<p class="font-medium text-text">{lead.telephone ?? '–'}</p>
-					</div>
-					<div>
-						<span class="text-xs text-text-muted">Email</span>
-						<p class="font-medium text-text">{lead.email ?? '–'}</p>
-					</div>
-					{#if lead.nom_contact}
-						<div>
-							<span class="text-xs text-text-muted">Contact</span>
-							<p class="font-medium text-text">{lead.nom_contact}</p>
+				{#if premium}
+					<div class="crm-facts">
+						<div class="crm-fact crm-fact--wide">
+							<div class="crm-fact-k">Adresse</div>
+							<div class="crm-fact-v">{[lead.adresse, lead.npa, lead.localite].filter(Boolean).join(', ') || '–'}</div>
 						</div>
-					{/if}
-					{#if lead.site_web}
-						<div>
-							<span class="text-xs text-text-muted">Site web</span>
-							<p class="font-medium text-text">{lead.site_web}</p>
+						<div class="crm-fact">
+							<div class="crm-fact-k">Canton</div>
+							<div class="crm-fact-v">{lead.canton ? (cantonNoms[lead.canton] ?? lead.canton) : '–'}</div>
 						</div>
-					{/if}
-				</div>
+						<div class="crm-fact">
+							<div class="crm-fact-k">Téléphone</div>
+							<div class="crm-fact-v">{#if lead.telephone}<a href={`tel:${lead.telephone.replace(/\s/g, '')}`}>{lead.telephone}</a>{:else}–{/if}</div>
+						</div>
+						<div class="crm-fact">
+							<div class="crm-fact-k">Email</div>
+							<div class="crm-fact-v">{#if lead.email}<a href={`mailto:${lead.email}`}>{lead.email}</a>{:else}–{/if}</div>
+						</div>
+						<div class="crm-fact">
+							<div class="crm-fact-k">Contact</div>
+							<div class="crm-fact-v">{lead.nom_contact ?? '–'}</div>
+						</div>
+						{#if lead.site_web}
+							{@const webHref = safeHttpUrl(lead.site_web)}
+							<div class="crm-fact crm-fact--wide">
+								<div class="crm-fact-k">Site web</div>
+								<div class="crm-fact-v">{#if webHref}<a href={webHref} target="_blank" rel="noopener noreferrer">{lead.site_web}</a>{:else}{lead.site_web}{/if}</div>
+							</div>
+						{/if}
+					</div>
+				{:else}
+					<div class="grid grid-cols-2 gap-4 text-sm">
+						<div>
+							<span class="text-xs text-text-muted">Adresse</span>
+							<p class="font-medium text-text">
+								{[lead.adresse, lead.npa, lead.localite].filter(Boolean).join(', ') || '–'}
+							</p>
+						</div>
+						<div>
+							<span class="text-xs text-text-muted">Canton</span>
+							<p class="font-medium text-text">{lead.canton ? `${cantonNoms[lead.canton] ?? lead.canton}` : '–'}</p>
+						</div>
+						<div>
+							<span class="text-xs text-text-muted">Téléphone</span>
+							<p class="font-medium text-text">{lead.telephone ?? '–'}</p>
+						</div>
+						<div>
+							<span class="text-xs text-text-muted">Email</span>
+							<p class="font-medium text-text">{lead.email ?? '–'}</p>
+						</div>
+						{#if lead.nom_contact}
+							<div>
+								<span class="text-xs text-text-muted">Contact</span>
+								<p class="font-medium text-text">{lead.nom_contact}</p>
+							</div>
+						{/if}
+						{#if lead.site_web}
+							<div>
+								<span class="text-xs text-text-muted">Site web</span>
+								<p class="font-medium text-text">{lead.site_web}</p>
+							</div>
+						{/if}
+					</div>
+				{/if}
 			</div>
 
 			<!-- Détails métier -->
