@@ -1,9 +1,8 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
-import { calculerScore } from '$lib/scoring';
 import { fetchIntelligenceSignalLookup } from '$lib/server/intelligence/signal-lookup';
 import { linkImportSignals } from '$lib/server/intelligence/link-import-signal';
-import { randomUUID } from 'crypto';
+import { isProspectionSourceEnabled } from '$lib/prospection-flags';
 import {
 	validateSearchChImportInput,
 	buildSearchChQueryParams,
@@ -12,6 +11,17 @@ import {
 	detectSecteurFromEntry,
 	sanitizeApiKeyInLogs,
 } from './helpers';
+import {
+	type CandidateCore,
+	type PublicCandidate,
+	fetchDedupSets,
+	statusFor,
+	isImportable,
+	scoreCandidate,
+	candidateToInsertRow,
+	toPublicCandidate,
+	normalizeNpa,
+} from '$lib/server/prospection/candidate';
 
 const SEARCH_CH_ENDPOINT = 'https://search.ch/tel/api/';
 // Valeur canonique imposée par la check constraint prospect_leads_source_check
@@ -28,6 +38,11 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const { session } = await locals.safeGetSession();
 	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
 
+	// Gate flag (defense-in-depth : la coupe d'une source n'est pas seulement UI).
+	if (!isProspectionSourceEnabled(SOURCE_KEY)) {
+		return json({ error: 'Source désactivée.' }, { status: 403 });
+	}
+
 	const apiKey = env.SEARCH_CH_API_KEY;
 	if (!apiKey) {
 		return json(
@@ -37,6 +52,8 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	}
 
 	const body = await request.json().catch(() => null);
+	// P3 : mode aperçu (preview:true) = parse + dédup, 0 insert. Sinon import direct (rétro-compat).
+	const preview = !!body && typeof body === 'object' && (body as { preview?: unknown }).preview === true;
 	const validation = validateSearchChImportInput(body);
 	if (!validation.valid) {
 		return json({ error: validation.error }, { status: 400 });
@@ -119,6 +136,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	// 2) Parse Atom feed → entries.
 	const entries = parseSearchChImportFeed(xml);
 	if (entries.length === 0) {
+		if (preview) {
+			return json({ candidates: [], total_results: 0, message: `Aucun résultat search.ch pour « ${term} » dans ${ville ?? canton}.` });
+		}
 		return json({
 			imported: 0,
 			skipped: 0,
@@ -127,75 +147,33 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		});
 	}
 
-	// 3) Construction des source_id (tel:id stable si présent, sinon synthétique) + dédup intra-source.
-	const sourceIds = entries.map((e) =>
-		buildSourceId({ telId: e.telId, name: e.name, npa: e.npa }),
-	);
+	// 3) source_id stable (tel:id sinon synthétique) + dédup serveur.
+	const sourceIds = entries.map((e) => buildSourceId({ telId: e.telId, name: e.name, npa: e.npa }));
+	const dedup = await fetchDedupSets(locals.supabase, SOURCE_KEY, sourceIds);
 
-	const existingIds = new Set<string>();
-	if (sourceIds.length > 0) {
-		const { data: existing } = await locals.supabase
-			.from('prospect_leads')
-			.select('source_id')
-			.eq('source', SOURCE_KEY)
-			.in('source_id', sourceIds);
-		if (existing) for (const e of existing) if (e.source_id) existingIds.add(e.source_id);
-	}
-
-	// 4) Dédup leads écartés/transférés (mêmes règles que Zefix).
-	const dismissedIds = new Set<string>();
-	const { data: dismissed } = await locals.supabase
-		.from('prospect_leads')
-		.select('source_id, statut')
-		.eq('source', SOURCE_KEY)
-		.in('statut', ['ecarte', 'transfere']);
-	if (dismissed) for (const d of dismissed) if (d.source_id) dismissedIds.add(d.source_id);
-
-	// 5) Lookup signal Veille source (optionnel) pour bonus scoring.
+	// 4) Lookup signal Veille source (optionnel) pour bonus scoring.
 	const signalLookup = from_intelligence
 		? await fetchIntelligenceSignalLookup(locals.supabase, from_intelligence, fromItemRank)
 		: null;
 	const intelligenceSignal = signalLookup?.forScoring ?? null;
 
-	// 6) Construction batch insert.
-	const now = new Date().toISOString();
-	const inserts: Array<Record<string, unknown>> = [];
-	let skipped = 0;
-
-	entries.forEach((entry, idx) => {
+	// 5) Construction des candidats (cœur + statut + score serveur).
+	const candidates: PublicCandidate[] = entries.map((entry, idx) => {
 		const sourceId = sourceIds[idx];
-		if (existingIds.has(sourceId) || dismissedIds.has(sourceId)) {
-			skipped++;
-			return;
-		}
 		const secteur = detectSecteurFromEntry(entry);
-
-		const scoreResult = calculerScore({
-			canton,
-			description: entry.occupation,
-			raison_sociale: entry.name,
-			secteur_detecte: secteur,
-			source: SOURCE_KEY,
-			date_publication: null,
-			telephone: entry.telephone,
-			montant: null,
-			intelligenceSignal,
-		});
-
 		// Description riche : occupation + catégories (souvent vides individuellement, complémentaires).
 		const description = [entry.occupation, entry.categories.join(' / ')]
 			.filter((s) => s && s.length > 0)
 			.join(' — ') || null;
-
-		inserts.push({
-			id: randomUUID(),
+		const core: CandidateCore = {
 			source: SOURCE_KEY,
 			source_id: sourceId,
 			source_url: entry.sourceUrl ?? 'https://tel.search.ch/',
 			raison_sociale: entry.name,
-			nom_contact: null,
 			adresse: entry.adresse,
-			npa: entry.npa,
+			// NPA normalisé `^\d{4}$|null` (search.ch peut renvoyer un zip frontalier/parasite) :
+			// garantit qu'un candidat d'aperçu satisfait toujours CandidateImportSchema à l'import.
+			npa: normalizeNpa(entry.npa),
 			localite: entry.localite,
 			// canton officiel search.ch si présent et romand connu, sinon canton choisi par l'utilisateur.
 			canton: entry.canton && /^(GE|VD|VS|NE|FR|JU)$/.test(entry.canton) ? entry.canton : canton,
@@ -204,25 +182,27 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			email: entry.email,
 			secteur_detecte: secteur,
 			description,
-			montant: null,
 			date_publication: null,
-			score_pertinence: scoreResult.total,
-			statut: 'nouveau',
-			date_import: now,
-			date_modification: now,
-			source_intelligence_id: from_intelligence,
-			source_intelligence_term: from_term,
-		});
+		};
+		const score = scoreCandidate(core, { intelligenceSignal });
+		const status = statusFor(sourceId, dedup);
+		return toPublicCandidate(core, score, status);
 	});
 
-	// 7) Insertion. Erreur DB → message générique côté client (évite leak schéma/contraintes).
+	// Mode aperçu : 0 insert.
+	if (preview) {
+		return json({ candidates, total_results: entries.length });
+	}
+
+	// Mode direct (rétro-compat) : insert des importables via le builder partagé.
+	const now = new Date().toISOString();
+	const importables = candidates.filter((c) => isImportable(c.status_hint));
+	const inserts = importables.map((c) => candidateToInsertRow(c, c.score_pertinence, { now, fromIntelligence: from_intelligence, fromTerm: from_term }));
+	const skipped = entries.length - importables.length;
+
 	let imported = 0;
 	if (inserts.length > 0) {
-		// Cast minimal : `inserts` est typé Record<string, unknown>[] (construit dynamiquement
-		// via forEach + spread). Audit 360 V3a M-19 traitera la refonte Zod côté construction.
-		const { error } = await locals.supabase
-			.from('prospect_leads')
-			.insert(inserts as never);
+		const { error } = await locals.supabase.from('prospect_leads').insert(inserts as never);
 		if (error) {
 			console.error(`searchch insert error: ${error.message}`);
 			return json(

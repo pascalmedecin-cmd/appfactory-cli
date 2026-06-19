@@ -115,8 +115,9 @@ export const config = {
 		// V5 (2026-06-07) : la Prospection redevient un outil de recherche de contact à la
 		// demande (qualité, pas quantité). Les imports de MASSE sortent du CRM (acquisition =
 		// projet Marketing). Réversible : repasser `enabled: true` réactive la source.
-		// Gardées : zefix + search_ch (recherche nominale), lead_express (terrain), veille.
-		// Coupées : simap (redondant avec le radar Signaux), regbl, google_places (payante).
+		// Gardées : zefix + search_ch (recherche nominale), lead_express (terrain), veille,
+		// google_places (rétablie P2 2026-06-18, garde-fou quota visible cap 900/mois = 0 débit).
+		// Coupées : simap (redondant avec le radar Signaux), regbl.
 		sources: {
 			zefix: {
 				label: 'Registre du commerce',
@@ -137,7 +138,9 @@ export const config = {
 			},
 			google_places: {
 				label: 'Google Places (entreprises locales)',
-				enabled: false,
+				// P2 (2026-06-18) : rétablie. Garde-fou quota visible (cap applicatif 900/mois +
+				// blocage 429 sans appel API) = 0 débit. Réversible : repasser à false.
+				enabled: true,
 				cantons: ['GE', 'VD', 'VS', 'NE', 'FR', 'JU'],
 			},
 			lead_express: {

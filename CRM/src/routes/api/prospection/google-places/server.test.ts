@@ -3,12 +3,14 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.mock('$env/dynamic/private', () => ({ env: { GOOGLE_PLACES_API_KEY: 'test-key' } }));
 vi.mock('$lib/server/intelligence/signal-lookup', () => ({ fetchIntelligenceSignalLookup: vi.fn(async () => null) }));
 vi.mock('$lib/server/intelligence/link-import-signal', () => ({ linkImportSignals: vi.fn(async () => undefined) }));
-// V5 : la source google_places est désactivée dans la config réelle. Pour tester la LOGIQUE
-// d'import (toujours présente, réversible), on force le flag à ON ; le gate OFF a son test dédié.
+// On pin le flag de source à ON (déterminisme, indépendant de la config réelle) pour tester la
+// LOGIQUE d'import. Le gate OFF (403 source désactivée) a son test dédié plus bas (mockReturnValueOnce).
+// NB P2 (2026-06-18) : google_places est désormais rétabli en config réelle (cap quota 900/mois).
 vi.mock('$lib/prospection-flags', () => ({ isProspectionSourceEnabled: vi.fn(() => true) }));
 
 import { POST } from './+server';
 import { isProspectionSourceEnabled } from '$lib/prospection-flags';
+import { CandidateImportSchema } from '$lib/schemas';
 
 type Behavior = {
 	quotaUsed?: number;
@@ -187,6 +189,38 @@ describe('POST /api/prospection/google-places', () => {
 		const inserted = ev.captured.current as Array<Record<string, unknown>>;
 		expect(inserted[0].source_intelligence_id).toBe('11111111-2222-3333-4444-555555555555');
 		expect(inserted[0].source_intelligence_term).toBe('régie');
+	});
+
+	// P3 : mode aperçu (preview:true) — parse + dédup, AUCUN insert. Le quota reste débité (conforme).
+	it('aperçu (preview:true) : candidats cochables, 0 insert, quota débité', async () => {
+		mockFetch([PLACE('p1', 'Régie Alpha SA', 'GE', '022 111 11 11'), PLACE('p2', 'Régie Beta', 'GE')]);
+		const incrementCalls = { count: 0 };
+		const ev = makeEvent({ activityType: 'regies_syndics', canton: 'GE', preview: true }, { behavior: { quotaUsed: 10, incrementCalls } });
+		const res = await POST(ev.event);
+		expect(res.status).toBe(200);
+		const data = await res.json();
+		expect(Array.isArray(data.candidates)).toBe(true);
+		expect(data.candidates).toHaveLength(2);
+		expect(data.imported).toBeUndefined();
+		expect(ev.captured.current).toBeNull(); // AUCUN insert pendant l'aperçu
+		expect(incrementCalls.count).toBe(1); // quota débité à l'aperçu (1 recherche = 1 crédit)
+		expect(data.quota_remaining).toBeTypeOf('number');
+		expect(data.candidates[0].importable).toBe(true);
+		// Round-trip : chaque candidat Google satisfait CandidateImportSchema (npa déjà normalisé).
+		for (const c of data.candidates) expect(CandidateImportSchema.safeParse(c).success).toBe(true);
+	});
+
+	it('aperçu : une entreprise déjà connue (Zefix) → status known_zefix mais importable', async () => {
+		mockFetch([PLACE('p1', 'Vitrerie Lausanne SA', 'VD')]);
+		const ev = makeEvent({ activityType: 'regies_syndics', canton: 'VD', preview: true }, {
+			behavior: { entreprisesLookup: [{ id: 'e1', raison_sociale: 'Vitrerie Lausanne SA' }] },
+		});
+		const res = await POST(ev.event);
+		const data = await res.json();
+		expect(data.candidates[0].status_hint).toBe('known_zefix');
+		expect(data.candidates[0].importable).toBe(true);
+		expect(data.already_known).toBe(1);
+		expect(ev.captured.current).toBeNull();
 	});
 
 	it('V5 : source désactivée → 403 sans aucun appel Google (0 quota consommé)', async () => {

@@ -14,6 +14,10 @@
 	// Valeur 'search_ch' (avec underscore) imposée par la check constraint DB prospect_leads_source_check.
 	type ImportSourceKey = 'zefix' | 'search_ch' | 'simap' | 'regbl' | 'google_places';
 
+	// P2 (2026-06-18) : statut quota Google Places (compteur « X/900 restantes », seuils 80/95/100).
+	// Forme alignée sur `googlePlacesQuotaStatus` (api-limits.ts) + l'endpoint GET /quota.
+	type GoogleQuotaStatus = { used: number; cap: number; remaining: number; exhausted: boolean; warning: string | null };
+
 	let {
 		open = $bindable(false),
 		importResult = $bindable<{ message: string; type: 'success' | 'error' } | null>(null),
@@ -27,6 +31,9 @@
 		defaultSource = null,
 		// Titre modale custom (sinon "Importer des prospects").
 		title = null,
+		// P2 : quota Google Places fourni par le load serveur (compteur visible avant recherche,
+		// sans round-trip). Mis à jour en live après chaque recherche Google via refreshGpQuota().
+		googleQuota = null,
 	}: {
 		open: boolean;
 		importResult: { message: string; type: 'success' | 'error' } | null;
@@ -35,6 +42,7 @@
 		allowedSources?: ImportSourceKey[] | null;
 		defaultSource?: ImportSourceKey | null;
 		title?: string | null;
+		googleQuota?: GoogleQuotaStatus | null;
 	} = $props();
 
 	let importing = $state(false);
@@ -64,7 +72,9 @@
 	let importSearchchVille = $state('');
 	let importGpActivityType = $state<string>('regies_syndics');
 	let importGpKeyword = $state('');
-	let gpQuota = $state<{ used: number; cap: number; remaining: number; exhausted: boolean } | null>(null);
+	// Seed depuis le load (affichage immédiat) ; refreshGpQuota() le réactualise après chaque recherche.
+	// svelte-ignore state_referenced_locally
+	let gpQuota = $state<GoogleQuotaStatus | null>(googleQuota);
 
 	// Types d'activite proposes (miroir de helpers.ts ACTIVITY_TYPES, libelles uniquement).
 	const GP_ACTIVITY_OPTIONS = [
@@ -744,15 +754,23 @@
 					</div>
 				</div>
 
-				<!-- Compteur quota mensuel -->
+				<!-- Compteur quota mensuel (P2 : « X/900 restantes ce mois », seuils 80/95/100) -->
 				<div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg" style={`background: var(${activeMeta.bgCssVar}); border: 1px solid color-mix(in srgb, var(${activeMeta.borderCssVar}), transparent 70%);`}>
 					<Icon name="payments" size={16} class="shrink-0" />
 					<p class="text-xs text-text-body leading-relaxed">
 						{#if gpQuota}
-							{#if gpQuota.exhausted}Quota mensuel épuisé ({gpQuota.used}/{gpQuota.cap}). Réessayez le mois prochain.{:else}Il reste <strong>{gpQuota.remaining}</strong> recherche{gpQuota.remaining > 1 ? 's' : ''} ce mois (gratuit jusqu'à {gpQuota.cap}).{/if}
+							{#if gpQuota.exhausted}Quota mensuel épuisé ({gpQuota.used}/{gpQuota.cap}). Réessayez le mois prochain.{:else}<strong>{gpQuota.remaining}/{gpQuota.cap}</strong> recherches restantes ce mois (gratuit).{/if}
 						{:else}Quota mensuel : gratuit jusqu'à 900 recherches.{/if}
 					</p>
 				</div>
+				<!-- P2 : bandeau d'avertissement aux seuils 80 % / 95 % (pas affiché à 100 %,
+				     l'épuisement étant déjà signalé par le compteur + le bouton désactivé). -->
+				{#if gpQuota?.warning && !gpQuota.exhausted}
+					<div role="status" class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-warning-light text-warning-deep border border-warning/30">
+						<Icon name="warning" size={16} class="shrink-0" />
+						<p class="text-xs leading-relaxed font-medium">{gpQuota.warning}</p>
+					</div>
+				{/if}
 			</div>
 		{/if}
 

@@ -7,6 +7,6 @@ export const GET = async ({ locals }: RequestEvent) => {
 	const { session } = await locals.safeGetSession();
 	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
 	const used = await getMonthlyUsage(locals.supabase, 'google_places');
-	const { cap, remaining, exhausted } = googlePlacesQuotaStatus(used);
-	return json({ used, cap, remaining, exhausted });
+	// Statut complet (used/cap/remaining/exhausted + warning 80/95 %) pour le compteur UI.
+	return json(googlePlacesQuotaStatus(used));
 };

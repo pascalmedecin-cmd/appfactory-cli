@@ -14,6 +14,7 @@ vi.mock('$lib/server/intelligence/link-import-signal', () => ({
 }));
 
 import { POST } from './+server';
+import { CandidateImportSchema } from '$lib/schemas';
 
 /**
  * Mock Supabase chainable via Proxy : gère les chains arbitraires
@@ -398,5 +399,73 @@ describe('POST /api/prospection/searchch', () => {
 		await POST(event as unknown as Parameters<typeof POST>[0]);
 		const url = new URL(mockFetch.mock.calls[0][0] as string);
 		expect(url.searchParams.get('wo')).toBe('Jura');
+	});
+
+	// P3 : mode aperçu (preview:true) — parse + dédup, AUCUN insert.
+	it('aperçu (preview:true) : renvoie des candidats cochables, 0 insert', async () => {
+		mockFetch.mockResolvedValueOnce({ ok: true, status: 200, text: async () => FEED_2_RESULTS });
+		const { event, captured } = makeEvent({ term: 'vitrerie', canton: 'GE', preview: true });
+		const resp = await POST(event as unknown as Parameters<typeof POST>[0]);
+		expect(resp.status).toBe(200);
+		const body = await resp.json();
+		expect(Array.isArray(body.candidates)).toBe(true);
+		expect(body.candidates).toHaveLength(2);
+		expect(body.total_results).toBe(2);
+		expect(body.imported).toBeUndefined(); // pas un import
+		expect(captured.current).toBeNull(); // AUCUN insert pendant l'aperçu
+		// Le candidat porte un statut + score serveur + drapeau importable.
+		expect(body.candidates[0].status_hint).toBe('new');
+		expect(body.candidates[0].importable).toBe(true);
+		expect(body.candidates[0].score_pertinence).toBeTypeOf('number');
+		expect(body.candidates[0].tempId).toBe('id:aaaaaaaaaaaaaaa1');
+	});
+
+	it('aperçu : un lead déjà présent est renvoyé marqué « exists » + non importable', async () => {
+		mockFetch.mockResolvedValueOnce({ ok: true, status: 200, text: async () => FEED_2_RESULTS });
+		const { event, captured } = makeEvent(
+			{ term: 'vitrerie', canton: 'GE', preview: true },
+			true,
+			{ existing: [{ source_id: 'id:aaaaaaaaaaaaaaa1' }] },
+		);
+		const resp = await POST(event as unknown as Parameters<typeof POST>[0]);
+		const body = await resp.json();
+		const exists = body.candidates.find((c: { tempId: string }) => c.tempId === 'id:aaaaaaaaaaaaaaa1');
+		expect(exists.status_hint).toBe('exists');
+		expect(exists.importable).toBe(false);
+		expect(captured.current).toBeNull();
+	});
+
+	// Invariant ROUND-TRIP (bug-hunter 2026-06-18) : tout candidat émis par l'aperçu DOIT satisfaire
+	// `CandidateImportSchema` — sinon il ferait perdre la sélection à l'import (all-or-nothing).
+	it('round-trip : chaque candidat d’aperçu satisfait CandidateImportSchema', async () => {
+		mockFetch.mockResolvedValueOnce({ ok: true, status: 200, text: async () => FEED_2_RESULTS });
+		const { event } = makeEvent({ term: 'vitrerie', canton: 'GE', preview: true });
+		const resp = await POST(event as unknown as Parameters<typeof POST>[0]);
+		const body = await resp.json();
+		expect(body.candidates.length).toBeGreaterThan(0);
+		for (const c of body.candidates) {
+			expect(CandidateImportSchema.safeParse(c).success, `candidat ${c.raison_sociale} doit round-tripper`).toBe(true);
+		}
+	});
+
+	it('aperçu : un zip search.ch non-4-chiffres est normalisé à null (et round-trippe)', async () => {
+		const FEED_BAD_ZIP = `<?xml version="1.0" encoding="utf-8" ?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:tel="http://tel.search.ch/api/spec/result/1.0/">
+	<entry>
+		<title type="text">Vitrerie Frontalière SA</title>
+		<tel:id>cccccccccccccc3</tel:id>
+		<tel:name>Vitrerie Frontalière SA</tel:name>
+		<tel:phone>+41229999999</tel:phone>
+		<tel:zip>01200</tel:zip>
+		<tel:city>Genève</tel:city>
+		<tel:canton>GE</tel:canton>
+	</entry>
+</feed>`;
+		mockFetch.mockResolvedValueOnce({ ok: true, status: 200, text: async () => FEED_BAD_ZIP });
+		const { event } = makeEvent({ term: 'vitrerie', canton: 'GE', preview: true });
+		const resp = await POST(event as unknown as Parameters<typeof POST>[0]);
+		const body = await resp.json();
+		expect(body.candidates[0].npa).toBeNull(); // 5 chiffres → normalisé null
+		expect(CandidateImportSchema.safeParse(body.candidates[0]).success).toBe(true);
 	});
 });

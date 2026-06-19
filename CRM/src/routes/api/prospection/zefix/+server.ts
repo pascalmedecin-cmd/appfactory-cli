@@ -1,13 +1,23 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
-import { calculerScore } from '$lib/scoring';
 import { parseJsonResilient } from '$lib/server/decode-response';
 import { fetchIntelligenceSignalLookup } from '$lib/server/intelligence/signal-lookup';
 import { linkImportSignals } from '$lib/server/intelligence/link-import-signal';
 import { sanitizeError, sanitizeForLog } from '$lib/server/intelligence/sanitize';
-import { randomUUID } from 'crypto';
+import { isProspectionSourceEnabled } from '$lib/prospection-flags';
+import {
+	type CandidateCore,
+	type PublicCandidate,
+	fetchDedupSets,
+	statusFor,
+	isImportable,
+	scoreCandidate,
+	candidateToInsertRow,
+	toPublicCandidate,
+} from '$lib/server/prospection/candidate';
 
 const ZEFIX_BASE = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
+const SOURCE_KEY = 'zefix' as const;
 
 // Zefix company search response (partial : fields we use)
 interface ZefixCompany {
@@ -53,25 +63,34 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const { session } = await locals.safeGetSession();
 	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
 
+	// Gate flag (defense-in-depth : la coupe d'une source n'est pas seulement UI).
+	if (!isProspectionSourceEnabled(SOURCE_KEY)) {
+		return json({ error: 'Source désactivée.' }, { status: 403 });
+	}
+
 	const username = env.ZEFIX_USERNAME;
 	const password = env.ZEFIX_PASSWORD;
 	if (!username || !password) {
 		return json({ error: 'Credentials Zefix non configures (ZEFIX_USERNAME, ZEFIX_PASSWORD)' }, { status: 503 });
 	}
 
-	const body = await request.json();
-	const canton: string = body.canton;
-	const name: string = body.name ?? '';
-	const activeOnly: boolean = body.activeOnly ?? true;
-	const limit: number = Math.min(body.limit ?? 100, 250);
+	const body = await request.json().catch(() => null);
+	if (!body || typeof body !== 'object') return json({ error: 'Payload invalide.' }, { status: 400 });
+	const b = body as Record<string, unknown>;
+	// P3 : mode aperçu (preview:true) = parse + dédup, 0 insert. Sinon import direct (rétro-compat).
+	const preview = b.preview === true;
+	const canton: string = typeof b.canton === 'string' ? b.canton : '';
+	const name: string = typeof b.name === 'string' ? b.name : '';
+	const activeOnly: boolean = b.activeOnly !== false;
+	const limit: number = Math.min(typeof b.limit === 'number' ? b.limit : 100, 250);
 
 	// Tracabilite Veille -> Prospection (optionnelle).
 	const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-	const fromIntelligence = typeof body.from_intelligence === 'string' && UUID_RE.test(body.from_intelligence) ? body.from_intelligence : null;
-	const fromTerm = typeof body.from_term === 'string' ? body.from_term.slice(0, 200) || null : null;
+	const fromIntelligence = typeof b.from_intelligence === 'string' && UUID_RE.test(b.from_intelligence) ? b.from_intelligence : null;
+	const fromTerm = typeof b.from_term === 'string' ? b.from_term.slice(0, 200) || null : null;
 	// Bloc 3 : from_item_rank permet le lookup de l'item Veille source pour bonus scoring.
-	const fromItemRank = typeof body.from_item_rank === 'number' && body.from_item_rank >= 1 && body.from_item_rank <= 10
-		? body.from_item_rank
+	const fromItemRank = typeof b.from_item_rank === 'number' && b.from_item_rank >= 1 && b.from_item_rank <= 10
+		? b.from_item_rank
 		: null;
 
 	if (!canton || !CANTON_MAP[canton]) {
@@ -119,80 +138,36 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	}
 
 	if (!Array.isArray(companies) || companies.length === 0) {
+		if (preview) return json({ candidates: [], total_results: 0, message: 'Aucun resultat Zefix pour ces criteres.' });
 		return json({ imported: 0, skipped: 0, message: 'Aucun resultat Zefix pour ces criteres.' });
 	}
 
-	// Check existing UIDs
+	// Dédup serveur (leads existants même UID + leads écartés/transférés).
 	const uids = companies.map((c) => c.uid).filter(Boolean);
-	const existingIds = new Set<string>();
-	if (uids.length > 0) {
-		const { data: existing } = await locals.supabase
-			.from('prospect_leads')
-			.select('source_id')
-			.eq('source', 'zefix')
-			.in('source_id', uids);
-		if (existing) {
-			for (const e of existing) {
-				if (e.source_id) existingIds.add(e.source_id);
-			}
-		}
-	}
-
-	// Check dismissed leads
-	const { data: dismissed } = await locals.supabase
-		.from('prospect_leads')
-		.select('source_id, statut')
-		.eq('source', 'zefix')
-		.in('statut', ['ecarte', 'transfere']);
-	const dismissedIds = new Set<string>();
-	if (dismissed) {
-		for (const d of dismissed) if (d.source_id) dismissedIds.add(d.source_id);
-	}
-
-	const now = new Date().toISOString();
-	let imported = 0;
-	let skipped = 0;
-
-	const inserts = [];
+	const dedup = await fetchDedupSets(locals.supabase, SOURCE_KEY, uids);
 
 	// The Zefix search endpoint only returns identity fields : canton/address/purpose/capital
-	// come from the detail endpoint (/company/uid/{uid}) via the enrichment feature.
-	// Since we filter by canton in the search request, all results belong to `canton`.
+	// come from the detail endpoint. Since we filter by canton in the search request, all results
+	// belong to `canton`.
 	const cantonCode = cantonToLead(canton);
 
 	// Bloc 3 : fetch du signal Veille source (si from_intelligence + from_item_rank fournis).
-	// Un seul lookup pour toute la batch = pas d'impact perf.
 	const signalLookup = fromIntelligence
 		? await fetchIntelligenceSignalLookup(locals.supabase, fromIntelligence, fromItemRank)
 		: null;
 	const intelligenceSignal = signalLookup?.forScoring ?? null;
 
+	// Construction des candidats (cœur + statut + score serveur). Les entrées sans nom/uid/canton
+	// exploitable ne sont pas des candidats (inutilisables) — comptées en « skipped » côté direct.
+	const candidates: PublicCandidate[] = [];
 	for (const company of companies) {
-		if (!company.name || !company.uid) { skipped++; continue; }
-		if (existingIds.has(company.uid) || dismissedIds.has(company.uid)) { skipped++; continue; }
-		if (!cantonCode) { skipped++; continue; }
-
+		if (!company.name || !company.uid || !cantonCode) continue;
 		const secteur = detectSecteur(company.name);
-
-		const scoreResult = calculerScore({
-			canton: cantonCode,
-			description: '',
-			raison_sociale: company.name,
-			secteur_detecte: secteur,
-			source: 'zefix',
-			date_publication: company.sogcDate ?? null,
-			telephone: null,
-			montant: null,
-			intelligenceSignal
-		});
-
-		inserts.push({
-			id: randomUUID(),
-			source: 'zefix' as const,
+		const core: CandidateCore = {
+			source: SOURCE_KEY,
 			source_id: company.uid,
 			source_url: `https://www.zefix.admin.ch/fr/search/entity/list/firm/${company.ehraid}`,
 			raison_sociale: company.name,
-			nom_contact: null,
 			adresse: null,
 			npa: null,
 			localite: company.legalSeat ?? null,
@@ -202,44 +177,47 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			email: null,
 			secteur_detecte: secteur,
 			description: null,
-			montant: null,
 			date_publication: company.sogcDate ?? null,
-			score_pertinence: scoreResult.total,
-			statut: 'nouveau',
-			date_import: now,
-			date_modification: now,
-			source_intelligence_id: fromIntelligence,
-			source_intelligence_term: fromTerm,
-		});
+		};
+		const score = scoreCandidate(core, { intelligenceSignal });
+		const status = statusFor(core.source_id, dedup);
+		candidates.push(toPublicCandidate(core, score, status));
 	}
 
-	// Batch insert
+	// Mode aperçu : 0 insert, on renvoie les candidats à cocher.
+	if (preview) {
+		return json({ candidates, total_results: companies.length });
+	}
+
+	// Mode direct (rétro-compat) : insert des importables via le builder partagé.
+	const now = new Date().toISOString();
+	const importables = candidates.filter((c) => isImportable(c.status_hint));
+	const inserts = importables.map((c) => candidateToInsertRow(c, c.score_pertinence, { now, fromIntelligence, fromTerm }));
+
+	let imported = 0;
 	if (inserts.length > 0) {
 		const batchSize = 500;
 		for (let i = 0; i < inserts.length; i += batchSize) {
 			const batch = inserts.slice(i, i + batchSize);
-			const { error } = await locals.supabase.from('prospect_leads').insert(batch);
+			const { error } = await locals.supabase.from('prospect_leads').insert(batch as never);
 			if (error) {
-				return json({
-					error: `Erreur insertion: ${error.message}`,
-					imported,
-					skipped,
-				}, { status: 500 });
+				return json({ error: `Erreur insertion: ${error.message}`, imported, skipped: companies.length - imported }, { status: 500 });
 			}
 			imported += batch.length;
 		}
 	}
+	const skipped = companies.length - imported;
 
 	// Phase C : lier les leads importés au signal Veille source.
 	if (signalLookup && fromIntelligence && fromItemRank && inserts.length > 0) {
 		await linkImportSignals(locals.supabase, {
-			leadIds: inserts.map((i) => i.id),
+			leadIds: inserts.map((i) => i.id as string),
 			reportId: fromIntelligence,
 			itemRank: fromItemRank,
 			fromTerm,
 			maturity: signalLookup.snapshot.maturity,
 			complianceTag: signalLookup.snapshot.complianceTag,
-			signalGeneratedAt: signalLookup.snapshot.generatedAt
+			signalGeneratedAt: signalLookup.snapshot.generatedAt,
 		});
 	}
 

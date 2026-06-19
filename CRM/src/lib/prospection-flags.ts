@@ -1,4 +1,5 @@
 import { config } from '$lib/config';
+import { PROSPECTION_TABS, TAB_SOURCE_MAP, type ProspectionTabKey } from '$lib/prospection-utils';
 
 /**
  * Flags V5 (2026-06-07) de la Prospection — source de vérité : `config.prospection`.
@@ -25,6 +26,26 @@ export function isProspectionSourceEnabled(source: string): boolean {
  */
 export function filterEnabledSources(sources: readonly string[]): string[] {
 	return sources.filter((s) => isProspectionSourceEnabled(s));
+}
+
+/**
+ * Un onglet Prospection est-il visible ? Vrai dès qu'au moins une de ses sources est active.
+ * La visibilité dérive donc de l'état des flags de source (réversible : réactiver une source
+ * dans `config.ts` réaffiche l'onglet sans autre modification). SIMAP/RegBL ayant toutes leurs
+ * sources coupées en V5, leurs onglets sont masqués (mini-projet Prospection P1, 2026-06-18).
+ */
+export function isProspectionTabVisible(tab: ProspectionTabKey): boolean {
+	return (TAB_SOURCE_MAP[tab] ?? []).some((s) => isProspectionSourceEnabled(s));
+}
+
+/** Liste ordonnée des onglets Prospection visibles (ordre canonique `PROSPECTION_TABS`). */
+export function visibleProspectionTabs(): ProspectionTabKey[] {
+	return PROSPECTION_TABS.filter(isProspectionTabVisible);
+}
+
+/** Onglet par défaut = premier onglet visible (fallback `entreprises` si tout est coupé). */
+export function defaultProspectionTab(): ProspectionTabKey {
+	return visibleProspectionTabs()[0] ?? 'entreprises';
 }
 
 /**

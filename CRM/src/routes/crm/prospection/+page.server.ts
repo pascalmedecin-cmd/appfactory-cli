@@ -1,10 +1,12 @@
 import type { PageServerLoad, Actions } from './$types';
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { LeadCreateSchema, LeadExpressCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema, RechercheCreateSchema, RechercheDeleteSchema, LEAD_FIELDS, LEAD_EXPRESS_FIELDS, extractForm, validate, coerceFormBoolean } from '$lib/schemas';
 import { calculerScore } from '$lib/scoring';
 import { dbFail, escapeIlike, newId, now } from '$lib/server/db-helpers';
 import { PROSPECTION_TABS, TAB_SOURCE_MAP, VALID_SORT_KEYS, type ProspectionTabKey } from '$lib/prospection-utils';
-import { isProspectionFeatureEnabled } from '$lib/prospection-flags';
+import { isProspectionFeatureEnabled, isProspectionTabVisible, defaultProspectionTab, isProspectionSourceEnabled } from '$lib/prospection-flags';
+import { getMonthlyUsage } from '$lib/server/quota';
+import { googlePlacesQuotaStatus } from '$lib/api-limits';
 
 const DEFAULT_PAGE_SIZE = 25;
 const ALLOWED_PAGE_SIZES = new Set([25, 50, 100]);
@@ -17,11 +19,22 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		: ('score_pertinence' as const);
 	const sortAsc = url.searchParams.get('dir') === 'asc';
 
-	// Phase 2 2026-05-01 : onglet actif (par défaut SIMAP, signal le plus actionnable).
-	const rawTab = url.searchParams.get('tab') ?? 'simap';
-	const tab: ProspectionTabKey = (PROSPECTION_TABS as readonly string[]).includes(rawTab)
-		? (rawTab as ProspectionTabKey)
-		: 'simap';
+	// Onglet actif. V5/P1 (2026-06-18) : SIMAP et RegBL sont masqués (sources coupées par flag).
+	// Le défaut ET le fallback pointent sur le premier onglet VISIBLE (plus 'simap', sinon écran
+	// fantôme). Garde de route : un ?tab= explicite vers un onglet masqué/inconnu redirige (303)
+	// vers l'URL canonique du défaut. Comme la cible est toujours un onglet visible, pas de boucle.
+	const fallbackTab = defaultProspectionTab();
+	const requestedTab = url.searchParams.get('tab');
+	const rawTab = requestedTab ?? fallbackTab;
+	const tab: ProspectionTabKey =
+		(PROSPECTION_TABS as readonly string[]).includes(rawTab) && isProspectionTabVisible(rawTab as ProspectionTabKey)
+			? (rawTab as ProspectionTabKey)
+			: fallbackTab;
+	if (requestedTab !== null && requestedTab !== tab) {
+		const target = new URL(url);
+		target.searchParams.set('tab', tab);
+		throw redirect(303, target.pathname + target.search);
+	}
 
 	// Phase 2 : entrées par page configurable, whitelist stricte (anti-DOS via URL).
 	const rawPerPage = parseInt(url.searchParams.get('perPage') ?? '', 10);
@@ -181,6 +194,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		tabRegblRes,
 		tabEntreprisesRes,
 		tabTerrainRes,
+		gpUsedRaw,
 	] = await Promise.all([
 		runMainQuery(),
 		locals.supabase
@@ -209,6 +223,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		runTabCount(TAB_SOURCE_MAP.regbl),
 		runTabCount(TAB_SOURCE_MAP.entreprises),
 		runTabCount(TAB_SOURCE_MAP.terrain),
+		// P2 : usage quota Google du mois (lecture seule), uniquement si la source est active.
+		isProspectionSourceEnabled('google_places')
+			? getMonthlyUsage(locals.supabase, 'google_places')
+			: Promise.resolve(null),
 	]);
 
 	return {
@@ -226,6 +244,9 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			terrain: tabTerrainRes.count ?? 0,
 		},
 		tab,
+		// P2 (2026-06-18) : statut quota Google Places exposé à la page (compteur « X/900 restantes
+		// ce mois », seuils 80/95 %). null si la source est coupée. Foundation pour la carte Google P3.
+		googlePlacesQuota: gpUsedRaw === null ? null : googlePlacesQuotaStatus(gpUsedRaw),
 		page,
 		pageSize,
 		sort: sortKey,

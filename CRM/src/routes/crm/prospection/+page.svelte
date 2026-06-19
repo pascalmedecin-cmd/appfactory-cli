@@ -7,6 +7,8 @@
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import Badge from '$lib/components/Badge.svelte';
 	import ImportModal from '$lib/components/prospection/ImportModal.svelte';
+	import EntrepriseSearchModal from '$lib/components/prospection/EntrepriseSearchModal.svelte';
+	import type { EntrepriseSource } from '$lib/components/prospection/source-meta';
 	import LeadSlideOut from '$lib/components/prospection/LeadSlideOut.svelte';
 	import LeadExpress from '$lib/components/prospection/LeadExpress.svelte';
 	import EnrichBatchModal from '$lib/components/prospection/EnrichBatchModal.svelte';
@@ -29,12 +31,15 @@
 		scoreToCategory,
 		type ProspectionTabKey,
 	} from '$lib/prospection-utils';
-	import { filterEnabledSources, isProspectionFeatureEnabled } from '$lib/prospection-flags';
+	import { filterEnabledSources, isProspectionFeatureEnabled, isProspectionTabVisible, visibleProspectionTabs, defaultProspectionTab } from '$lib/prospection-flags';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import { SEARCH_DEBOUNCE_MS } from '$lib/utils/searchMatch';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	// V5/P1 (2026-06-18) : onglet par défaut = premier onglet visible (SIMAP/RegBL masqués par flag).
+	const defaultProspTab = defaultProspectionTab();
 
 	type Lead = (typeof data.leads)[number];
 
@@ -72,6 +77,10 @@
 	let slideOutOpen = $state(false);
 	let selectedLead = $state<Lead | null>(null);
 	let importModalOpen = $state(false);
+	// P3 : nouvelle modale de recherche entreprises (aperçu → cocher → import sélectif). Remplace
+	// le flux import-direct de ImportModal sur l'onglet Entreprises. ImportModal reste pour
+	// SIMAP/RegBL (dormant tant que leurs flags sont coupés).
+	let entrepriseSearchOpen = $state(false);
 	let importResult = $state<{ message: string; type: 'success' | 'error' } | null>(null);
 	let selectedIds = $state<Set<string>>(new Set());
 	let selectAllLoading = $state(false);
@@ -165,7 +174,7 @@
 		const tab = (overrides.tab as string) ?? data.tab;
 		const perPage = overrides.perPage !== undefined ? Number(overrides.perPage) : data.pageSize;
 
-		if (tab && tab !== 'simap') params.set('tab', tab);
+		if (tab && tab !== defaultProspTab) params.set('tab', tab);
 		if (pg > 0) params.set('page', String(pg));
 		if (sort !== 'score_pertinence') params.set('sort', sort);
 		if (dir === 'asc') params.set('dir', 'asc');
@@ -282,7 +291,13 @@
 			count: data.tabCounts.terrain,
 			colorVar: 'terrain',
 		},
-	]);
+	// V5/P1 : ne rend que les onglets dont ≥1 source est active (simap/regbl masqués, réversible).
+	].filter((t) => isProspectionTabVisible(t.key)));
+
+	// Empty-state global : ne compte QUE les onglets visibles (simap/regbl exclus en V5/P1).
+	const allVisibleTabsEmpty = $derived(
+		visibleProspectionTabs().every((t) => data.tabCounts[t] === 0)
+	);
 
 	// V4 audit S163 (F-V4-01/02/03) : CTA + empty state contextuels par scope d'onglet.
 	// Terrain = saisie sur place (RDV chantier), pas import. Entreprises = scope sémantique.
@@ -302,8 +317,8 @@
 					label: 'Rechercher une entreprise',
 					labelMobile: 'Rechercher',
 					icon: 'search',
-					ariaLabel: 'Rechercher une entreprise dans le registre du commerce (Zefix)',
-					action: () => (importModalOpen = true),
+					ariaLabel: 'Rechercher des entreprises (annuaire, Google, registre du commerce)',
+					action: () => (entrepriseSearchOpen = true),
 				};
 			case 'regbl':
 				return {
@@ -368,6 +383,13 @@
 	// terrain garde son CTA propre (lead express, pas un import). simap/regbl → CTA masqué.
 	const showImportCta = $derived(data.tab === 'terrain' || (importScope.allowedSources?.length ?? 0) > 0);
 
+	// P3 : sources « entreprises » du flux aperçu → import (Annuaire / Google / Registre), filtrées
+	// par flag. Pilotent la nouvelle EntrepriseSearchModal (ordre canonique appliqué dans la modale).
+	const PREVIEW_SOURCES: EntrepriseSource[] = ['search_ch', 'google_places', 'zefix'];
+	const entrepriseSources = $derived(
+		filterEnabledSources(PREVIEW_SOURCES).filter((s): s is EntrepriseSource => PREVIEW_SOURCES.includes(s as EntrepriseSource)),
+	);
+
 	type EmptyStateCopy = { icon: string; title: string; body: string; ctaLabel: string; ctaIcon: string; ctaAction: () => void };
 	const emptyStateCopy = $derived.by((): EmptyStateCopy => {
 		switch (data.tab) {
@@ -387,7 +409,7 @@
 					body: 'Recherchez une entreprise dans le registre du commerce (Zefix) ou l\'annuaire pro (search.ch) pour la qualifier et la suivre dans votre CRM.',
 					ctaLabel: 'Rechercher une entreprise',
 					ctaIcon: 'search',
-					ctaAction: () => (importModalOpen = true),
+					ctaAction: () => (entrepriseSearchOpen = true),
 				};
 			case 'regbl':
 				return {
@@ -839,9 +861,9 @@
 	<BatchActionsBar bind:selectedIds bind:enrichBatchIds bind:enrichBatchOpen />
 
 	<div class="flex-1 min-h-0 flex flex-col">
-	<!-- Empty state global UNIQUEMENT si tous les onglets sont vides (système jamais peuplé).
-	     Sinon les onglets restent visibles (sinon impossible de revenir sur SIMAP depuis Terrain à 0). -->
-	{#if data.tabCounts.simap === 0 && data.tabCounts.regbl === 0 && data.tabCounts.entreprises === 0 && data.tabCounts.terrain === 0 && activeFilterCount === 0}
+	<!-- Empty state global UNIQUEMENT si tous les onglets VISIBLES sont vides (système jamais peuplé).
+	     Sinon les onglets restent visibles (sinon impossible de revenir sur Entreprises depuis Terrain à 0). -->
+	{#if allVisibleTabsEmpty && activeFilterCount === 0}
 		<div class="flex flex-col items-center justify-center py-16 px-6">
 			<div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-6" style="background: linear-gradient(135deg, var(--color-prosp-import-bg), var(--color-prosp-enrich-bg))">
 				<Icon name="search" size={32} class="text-prosp-import" />
@@ -1074,7 +1096,17 @@
 <!-- Modal création alerte -->
 <AlerteModal bind:open={alerteModalOpen} />
 
-<!-- Modal import sources -->
+<!-- P3 : Modal recherche entreprises (aperçu → cocher → import sélectif) — onglet Entreprises. -->
+<EntrepriseSearchModal
+	bind:open={entrepriseSearchOpen}
+	bind:importResult
+	fromIntelligence={data.fromIntelligence}
+	fromTerm={data.fromTerm}
+	allowedSources={entrepriseSources}
+	googleQuota={data.googlePlacesQuota}
+/>
+
+<!-- Modal import sources (SIMAP/RegBL — dormant tant que leurs flags sont coupés). -->
 <ImportModal
 	bind:open={importModalOpen}
 	bind:importResult
@@ -1083,6 +1115,7 @@
 	allowedSources={importScope.allowedSources}
 	defaultSource={importScope.defaultSource}
 	title={importScope.title}
+	googleQuota={data.googlePlacesQuota}
 />
 
 <!-- Modal enrichissement batch -->

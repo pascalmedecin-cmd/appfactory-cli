@@ -1,8 +1,6 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
-import { randomUUID } from 'crypto';
 import { isProspectionSourceEnabled } from '$lib/prospection-flags';
-import { calculerScore } from '$lib/scoring';
 import { API_LIMITS, googlePlacesQuotaStatus } from '$lib/api-limits';
 import { getMonthlyUsage, incrementUsage } from '$lib/server/quota';
 import { normalizeCompanyName } from '$lib/utils/contactsFormat';
@@ -19,6 +17,16 @@ import {
 	placeMapsUrl,
 	detectSecteurFromPlace,
 } from './helpers';
+import {
+	type CandidateCore,
+	type PublicCandidate,
+	fetchDedupSets,
+	statusFor,
+	isImportable,
+	scoreCandidate,
+	candidateToInsertRow,
+	toPublicCandidate,
+} from '$lib/server/prospection/candidate';
 
 const PLACES_ENDPOINT = 'https://places.googleapis.com/v1/places:searchText';
 const SOURCE_KEY = 'google_places' as const;
@@ -58,6 +66,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	}
 
 	const body = await request.json().catch(() => null);
+	// P3 : mode aperçu (preview:true) = parse + dédup, 0 insert. Le quota Google reste débité
+	// à l'aperçu (1 recherche = 1 crédit, même sans import) — conforme spec P3 §0.
+	const preview = !!body && typeof body === 'object' && (body as { preview?: unknown }).preview === true;
 	const validation = validateGooglePlacesImportInput(body);
 	if (!validation.valid) return json({ error: validation.error }, { status: 400 });
 	const { activityType, keyword, canton, from_intelligence, from_term } = validation.input;
@@ -152,31 +163,16 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		clearTimeout(timeoutHandle);
 	}
 
+	const quotaRemaining = Math.max(0, quota.cap - (reserved ?? quota.used + 1));
+
 	// 2) Parse + dédup.
 	const entries = parsePlacesResponse(payload);
 	if (entries.length === 0) {
-		return json({ imported: 0, skipped: 0, total_results: 0, message: 'Aucun résultat Google Places pour cette recherche.' });
+		if (preview) return json({ candidates: [], total_results: 0, quota_remaining: quotaRemaining, message: 'Aucun résultat Google Places pour cette recherche.' });
+		return json({ imported: 0, skipped: 0, total_results: 0, quota_remaining: quotaRemaining, message: 'Aucun résultat Google Places pour cette recherche.' });
 	}
 	const sourceIds = entries.map((e) => buildSourceId(e.placeId));
-
-	const existingIds = new Set<string>();
-	{
-		const { data: existing } = await locals.supabase
-			.from('prospect_leads')
-			.select('source_id')
-			.eq('source', SOURCE_KEY)
-			.in('source_id', sourceIds);
-		if (existing) for (const e of existing) if (e.source_id) existingIds.add(e.source_id);
-	}
-	const dismissedIds = new Set<string>();
-	{
-		const { data: dismissed } = await locals.supabase
-			.from('prospect_leads')
-			.select('source_id, statut')
-			.eq('source', SOURCE_KEY)
-			.in('statut', ['ecarte', 'transfere']);
-		if (dismissed) for (const d of dismissed) if (d.source_id) dismissedIds.add(d.source_id);
-	}
+	const dedup = await fetchDedupSets(locals.supabase, SOURCE_KEY, sourceIds);
 
 	// 3) Dédup cross-source : raison sociale déjà connue dans la table entreprises (Zefix & co).
 	//    On ne supprime pas le lead, on le marque pour éviter une re-prospection inutile.
@@ -184,8 +180,6 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	for (const e of entries) {
 		const normalized = normalizeCompanyName(e.name);
 		if (normalized.length < 3 || knownCompanyNames.has(normalized)) continue;
-		// Référentiel partagé : même lookup dédup (RPC + filtre normalizeCompanyName, escaping
-		// LIKE durci) que le reste du CRM. Retourne un id si l'entreprise est déjà connue.
 		const matchedId = await lookupEntrepriseByName(locals.supabase, e.name.trim(), normalized);
 		if (matchedId) knownCompanyNames.add(normalized);
 	}
@@ -196,35 +190,17 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		: null;
 	const intelligenceSignal = signalLookup?.forScoring ?? null;
 
-	// 5) Construction du batch.
-	const now = new Date().toISOString();
-	const inserts: Array<Record<string, unknown>> = [];
-	let skipped = 0;
+	// 5) Construction des candidats. Le statut « known_zefix » prime visuellement (la description
+	//    porte la mention) mais reste importable (le lead Google a des coordonnées que la fiche
+	//    Zefix n'a pas). canton null = lead conservé avec mention « canton non déterminé ».
 	let alreadyKnown = 0;
 	let cantonMissing = 0;
-
-	entries.forEach((entry, idx) => {
+	const candidates: PublicCandidate[] = entries.map((entry, idx) => {
 		const sourceId = sourceIds[idx];
-		if (existingIds.has(sourceId) || dismissedIds.has(sourceId)) {
-			skipped++;
-			return;
-		}
 		const secteur = detectSecteurFromPlace(entry);
 		const knownEntreprise = knownCompanyNames.has(normalizeCompanyName(entry.name));
 		if (knownEntreprise) alreadyKnown++;
 		if (!entry.canton) cantonMissing++;
-
-		const scoreResult = calculerScore({
-			canton: entry.canton ?? canton, // si canton Google illisible, on retombe sur le canton choisi pour le scoring
-			description: entry.types.join(' '),
-			raison_sociale: entry.name,
-			secteur_detecte: secteur,
-			source: SOURCE_KEY,
-			date_publication: null,
-			telephone: entry.telephone,
-			montant: null,
-			intelligenceSignal,
-		});
 
 		const descriptionParts = [
 			entry.formattedAddress,
@@ -234,13 +210,11 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		if (!entry.canton) descriptionParts.push('canton non déterminé');
 		const description = descriptionParts.length > 0 ? descriptionParts.join(' — ') : null;
 
-		inserts.push({
-			id: randomUUID(),
+		const core: CandidateCore = {
 			source: SOURCE_KEY,
 			source_id: sourceId,
 			source_url: entry.googleMapsUri ?? placeMapsUrl(entry.placeId),
 			raison_sociale: entry.name,
-			nom_contact: null,
 			adresse: entry.adresse,
 			npa: entry.npa,
 			localite: entry.localite,
@@ -250,18 +224,35 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			email: null,
 			secteur_detecte: secteur,
 			description,
-			montant: null,
 			date_publication: null,
-			score_pertinence: scoreResult.total,
-			statut: 'nouveau',
-			date_import: now,
-			date_modification: now,
-			source_intelligence_id: from_intelligence,
-			source_intelligence_term: from_term,
-		});
+		};
+		// Score serveur sur le canton RÉEL (null si Google n'a pas su classer le lieu dans un
+		// canton cible → pas de bonus canton, plus honnête qu'un repli sur le canton choisi qui
+		// pourrait être faux). Garantit aperçu == import (même canton stocké, même score).
+		const score = scoreCandidate(core, { intelligenceSignal });
+		const baseStatus = statusFor(sourceId, dedup);
+		// known_zefix uniquement si le candidat est par ailleurs « new » (sinon exists/dismissed prime).
+		const status = baseStatus === 'new' && knownEntreprise ? 'known_zefix' : baseStatus;
+		return toPublicCandidate(core, score, status);
 	});
 
-	// 6) Insertion.
+	// Mode aperçu : 0 insert. Le quota a déjà été débité (conforme).
+	if (preview) {
+		return json({
+			candidates,
+			total_results: entries.length,
+			already_known: alreadyKnown,
+			canton_missing: cantonMissing,
+			quota_remaining: quotaRemaining,
+		});
+	}
+
+	// 6) Mode direct (rétro-compat) : insert des importables via le builder partagé.
+	const now = new Date().toISOString();
+	const importables = candidates.filter((c) => isImportable(c.status_hint));
+	const inserts = importables.map((c) => candidateToInsertRow(c, c.score_pertinence, { now, fromIntelligence: from_intelligence, fromTerm: from_term }));
+	const skipped = entries.length - importables.length;
+
 	let imported = 0;
 	if (inserts.length > 0) {
 		const { error } = await locals.supabase.from('prospect_leads').insert(inserts as never);
@@ -298,7 +289,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		already_known: alreadyKnown,
 		canton_missing: cantonMissing,
 		total_results: entries.length,
-		quota_remaining: Math.max(0, quota.cap - (reserved ?? quota.used + 1)),
+		quota_remaining: quotaRemaining,
 		message: bits.join(', ') + '.',
 	});
 };

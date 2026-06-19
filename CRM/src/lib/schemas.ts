@@ -257,6 +257,59 @@ export const LeadTransfertSchema = z.object({
 	id: z.string().uuid(),
 });
 
+// -- Prospection P3 : aperçu (preview) + import sélectif --
+// Les 3 sources « entreprises » qui supportent le flux aperçu → cocher → importer.
+// SIMAP/RegBL retirés de la Prospection (P1) : hors de ce flux.
+export const SOURCES_LEAD_PREVIEW = ['zefix', 'search_ch', 'google_places'] as const;
+export type LeadPreviewSource = (typeof SOURCES_LEAD_PREVIEW)[number];
+
+/**
+ * Un candidat d'aperçu re-soumis à l'import sélectif. Le payload client n'est JAMAIS
+ * fait confiance (règle dure, spec P3 §1.2) : tous les champs sont bornés/validés ici,
+ * le score est RE-calculé serveur (calculerScore), la dédup est RE-vérifiée serveur.
+ * `score_pertinence`/`status_hint` côté client sont volontairement absents du schéma
+ * → ignorés (jamais lus à l'insert). Entrée JSON (pas FormData) : nulls réels tolérés.
+ */
+export const CandidateImportSchema = z.object({
+	source_id: z.string().min(1, 'source_id requis').max(120),
+	source_url: z.string().max(500).nullable().optional(),
+	raison_sociale: z.string().min(1, 'Raison sociale requise').max(500),
+	adresse: z.string().max(500).nullable().optional(),
+	npa: z.string().regex(/^\d{4}$/, 'NPA invalide (4 chiffres)').nullable().optional(),
+	localite: z.string().max(200).nullable().optional(),
+	canton: z.enum(CANTONS_LEAD).nullable().optional(),
+	telephone: z.string().max(40).nullable().optional(),
+	site_web: z.string().max(500).nullable().optional(),
+	email: z.string().max(320).nullable().optional(),
+	secteur_detecte: z.string().max(120).nullable().optional(),
+	description: z.string().max(5000).nullable().optional(),
+	date_publication: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide (YYYY-MM-DD)').nullable().optional(),
+});
+export type CandidateImport = z.infer<typeof CandidateImportSchema>;
+
+/**
+ * Body de POST /api/prospection/import-selected. `source` enum fermée (gate flag serveur),
+ * `candidates` = ENVELOPPE bornée 1..250 d'objets (cap zefix maxResultsPerQuery=250),
+ * traçabilité Veille optionnelle.
+ *
+ * IMPORTANT : `candidates` est volontairement validé en `z.unknown()` au niveau enveloppe, PAS
+ * en `CandidateImportSchema` strict. Chaque candidat est re-validé INDIVIDUELLEMENT côté serveur
+ * (boucle `import-selected`) : un candidat mal formé est ignoré (compté), il ne fait PAS échouer
+ * tout le lot. Sinon un seul NPA hors bornes (ex. résultat search.ch frontalier 5 chiffres)
+ * détruirait la sélection entière de l'utilisateur (bug all-or-nothing). La validation stricte
+ * par-ligne préserve la garde sécu (toute ligne insérée passe `CandidateImportSchema`).
+ */
+export const ImportSelectedSchema = z.object({
+	source: z.enum(SOURCES_LEAD_PREVIEW),
+	candidates: z
+		.array(z.unknown())
+		.min(1, 'Aucun candidat sélectionné')
+		.max(250, 'Trop de candidats (max 250)'),
+	from_intelligence: z.string().uuid().nullable().optional(),
+	from_term: z.string().max(200).nullable().optional(),
+	from_item_rank: z.number().int().min(1).max(10).nullable().optional(),
+});
+
 // -- Feedback entries (page /log) --
 // Spec : notes/page-log-2026-05-13/spec.md § 4 + § 8.
 

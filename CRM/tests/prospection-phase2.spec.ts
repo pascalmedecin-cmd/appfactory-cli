@@ -11,23 +11,26 @@ import { test, expect, type Page } from '@playwright/test';
  * (Pascal a découvert le bug sélecteur entrées/page via clic UI manuel,
  * fixé commit a48a9c1 sans test régression).
  *
- * Stratégie : zéro mutation données. Lecture-seule sur SIMAP par défaut.
+ * Stratégie : zéro mutation données. Lecture-seule sur l'onglet Entreprises (défaut P1).
  * Toute interaction (drag, switch, sélecteur) est rétractable au reload.
+ *
+ * MISE À JOUR P1 (2026-06-18) : les onglets SIMAP/RegBL sont retirés de la Prospection
+ * (sources coupées par flag). Le défaut est désormais Entreprises. Ce test PROD valide donc
+ * la prod APRÈS déploiement de P1 (avant déploiement, la prod expose encore les 4 onglets).
  */
 
 const PROSPECTION_PATH = '/prospection';
 
-async function gotoProspectionSimap(page: Page) {
-	// On force tab=simap pour avoir le scope avec le plus de chances d'avoir
-	// des résultats en prod (le storageKey resizable est `prospection-simap`).
-	await page.goto(`${PROSPECTION_PATH}?tab=simap`, { waitUntil: 'networkidle' });
+async function gotoProspectionEntreprises(page: Page) {
+	// P1 : l'onglet par défaut est Entreprises (SIMAP/RegBL retirés ; storageKey `prospection-entreprises`).
+	await page.goto(`${PROSPECTION_PATH}?tab=entreprises`, { waitUntil: 'networkidle' });
 	// Attendre que la table soit montée (au moins le wrapper, même si 0 résultat).
 	await page.waitForSelector('table', { timeout: 10_000 });
 }
 
 test.describe('Phase 2 prospection — tests E2E', () => {
 	test('(a) sélecteur entrées par page : URL ?perPage=50 + select reflète + reload', async ({ page, isMobile }) => {
-		await gotoProspectionSimap(page);
+		await gotoProspectionEntreprises(page);
 
 		const select = page.locator('select[aria-label="Nombre d\'entrées par page"]');
 		// Le sélecteur n'apparaît que si le footer est rendu (totalPages > 1 OU pageSizeOptions présentes).
@@ -58,9 +61,9 @@ test.describe('Phase 2 prospection — tests E2E', () => {
 		// Le drag pointer suppose un device avec mouse. Sur iPhone (touch), le
 		// handle n'est pas exposé visuellement (cf. CSS .col-resizer hover-only).
 		// On skip le scénario drag sur mobile mais on garde un check structurel.
-		await gotoProspectionSimap(page);
+		await gotoProspectionEntreprises(page);
 
-		const STORAGE_KEY = 'datatable.col-widths.prospection-simap';
+		const STORAGE_KEY = 'datatable.col-widths.prospection-entreprises';
 
 		// Reset état localStorage au cas où une exécution précédente a laissé des largeurs.
 		await page.evaluate((k) => window.localStorage.removeItem(k), STORAGE_KEY);
@@ -104,7 +107,7 @@ test.describe('Phase 2 prospection — tests E2E', () => {
 		expect(finalBox, 'colonne mesurable après drag').not.toBeNull();
 		expect(finalBox!.width).toBeGreaterThan(initialWidth + 30);
 
-		// localStorage doit contenir la nouvelle largeur (clé scope = prospection-simap).
+		// localStorage doit contenir la nouvelle largeur (clé scope = prospection-entreprises).
 		const stored = await page.evaluate((k) => window.localStorage.getItem(k), STORAGE_KEY);
 		expect(stored, 'colWidths persisté en localStorage').not.toBeNull();
 		const parsed = JSON.parse(stored!);
@@ -127,33 +130,33 @@ test.describe('Phase 2 prospection — tests E2E', () => {
 		await page.evaluate((k) => window.localStorage.removeItem(k), STORAGE_KEY);
 	});
 
-	test('(c) switch onglet Terrain (potentiellement vide) puis retour SIMAP', async ({ page, isMobile }) => {
-		await gotoProspectionSimap(page);
+	test('(c) P1 : seuls Entreprises + Terrain ; SIMAP/RegBL retirés ; switch Terrain puis retour', async ({ page, isMobile }) => {
+		await gotoProspectionEntreprises(page);
 
 		if (isMobile) {
 			// Mobile : tabs deviennent un <select> avec id #tabs-mobile-select.
 			const mobileSelect = page.locator('#tabs-mobile-select');
 			await expect(mobileSelect).toBeVisible();
-			// Vérifier que les 4 onglets sont présents en options.
+			// P1 : seules les sources actives → onglets Entreprises + Terrain. SIMAP/RegBL absents.
 			const options = await mobileSelect.locator('option').allTextContents();
-			expect(options.some((o) => o.startsWith('Marchés publics'))).toBe(true);
-			expect(options.some((o) => o.startsWith('Chantiers RegBL'))).toBe(true);
 			expect(options.some((o) => o.startsWith('Entreprises'))).toBe(true);
 			expect(options.some((o) => o.startsWith('Terrain'))).toBe(true);
+			expect(options.some((o) => o.startsWith('Marchés publics'))).toBe(false);
+			expect(options.some((o) => o.startsWith('Chantiers'))).toBe(false);
 
 			// Switch vers Terrain (peut être vide).
 			await mobileSelect.selectOption('terrain');
 			await page.waitForURL((url) => url.searchParams.get('tab') === 'terrain', { timeout: 5_000 });
 			await expect(mobileSelect).toHaveValue('terrain');
 			// Le dropdown reste actionnable même si Terrain count=0 (régression Pascal :
-			// les tabs disparaissaient quand les 4 tabCounts étaient à 0, fixé commit 7fa7829).
+			// les tabs disparaissaient quand les tabCounts étaient à 0, fixé commit 7fa7829).
 			await expect(mobileSelect).toBeVisible();
 
-			// Retour SIMAP : `simap` est le défaut, donc l'URL ne contient PAS ?tab=
-			// (cf. buildUrl : `if (tab && tab !== 'simap') params.set('tab', tab);`).
-			await mobileSelect.selectOption('simap');
+			// Retour Entreprises : `entreprises` est le défaut P1, donc l'URL ne contient PAS ?tab=
+			// (cf. buildUrl : `if (tab && tab !== defaultProspTab) params.set('tab', tab);`).
+			await mobileSelect.selectOption('entreprises');
 			await page.waitForURL((url) => !url.searchParams.has('tab'), { timeout: 5_000 });
-			await expect(mobileSelect).toHaveValue('simap');
+			await expect(mobileSelect).toHaveValue('entreprises');
 			return;
 		}
 
@@ -161,9 +164,13 @@ test.describe('Phase 2 prospection — tests E2E', () => {
 		const tablist = page.locator('[role="tablist"][aria-label*="prospection"]');
 		await expect(tablist).toBeVisible();
 
+		const entreprisesTab = page.locator('button[role="tab"]', { hasText: 'Entreprises' });
 		const terrainTab = page.locator('button[role="tab"]', { hasText: 'Terrain' });
-		const simapTab = page.locator('button[role="tab"]', { hasText: 'Marchés publics' });
-		await expect(simapTab).toHaveAttribute('aria-selected', 'true');
+		// P1 : SIMAP/RegBL retirés des onglets.
+		await expect(page.locator('button[role="tab"]', { hasText: 'Marchés publics' })).toHaveCount(0);
+		await expect(page.locator('button[role="tab"]', { hasText: 'Chantiers' })).toHaveCount(0);
+		// Défaut P1 = Entreprises sélectionné.
+		await expect(entreprisesTab).toHaveAttribute('aria-selected', 'true');
 
 		// Cliquer Terrain (count peut être 0 — important : doit rester cliquable).
 		await terrainTab.click();
@@ -172,12 +179,16 @@ test.describe('Phase 2 prospection — tests E2E', () => {
 
 		// Tablist toujours présente même si Terrain est vide.
 		await expect(tablist).toBeVisible();
-		await expect(simapTab).toBeVisible();
+		await expect(entreprisesTab).toBeVisible();
 
-		// Retour SIMAP : `simap` est le défaut, donc l'URL ne contient PAS ?tab=
-		// (cf. buildUrl : `if (tab && tab !== 'simap') params.set('tab', tab);`).
-		await simapTab.click();
+		// Retour Entreprises : défaut P1, donc l'URL ne contient PAS ?tab=.
+		await entreprisesTab.click();
 		await page.waitForURL((url) => !url.searchParams.has('tab'), { timeout: 5_000 });
-		await expect(simapTab).toHaveAttribute('aria-selected', 'true');
+		await expect(entreprisesTab).toHaveAttribute('aria-selected', 'true');
+	});
+
+	test('(d) P1 : ?tab=simap redirige vers Entreprises (pas d\'écran fantôme)', async ({ page }) => {
+		await page.goto(`${PROSPECTION_PATH}?tab=simap`, { waitUntil: 'networkidle' });
+		await expect(page).toHaveURL(/\/prospection\?tab=entreprises/);
 	});
 });
