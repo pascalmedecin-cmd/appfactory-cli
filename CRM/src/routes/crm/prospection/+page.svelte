@@ -31,7 +31,7 @@
 		cantonNoms,
 		statutLabel, statutBadgeVariant, sourceLabel, relativeDate,
 		sourceOptions, cantonOptions, temperatureOptions, statutOptions,
-		scoreToCategory,
+		scoreToCategory, PROSPECTION_EXPORT_CAP,
 		type ProspectionTabKey,
 	} from '$lib/prospection-utils';
 	import { filterEnabledSources, isProspectionFeatureEnabled, isProspectionTabVisible, visibleProspectionTabs, defaultProspectionTab } from '$lib/prospection-flags';
@@ -935,6 +935,23 @@
 						<span>Enrichir cette page</span>
 						<span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-prosp-enrich-bg text-prosp-enrich-deep">{enrichablesCount}</span>
 					</button>
+				{/if}
+				<!-- Vague 3.2 : export CSV de la vue filtrée (onglet + filtres + recherche).
+				     Lien direct (data-sveltekit-reload) → /api/export/prospection avec la
+				     querystring courante, donc l'export = ce que tu vois. -->
+				{#if data.totalLeads > 0}
+					<a
+						href="/api/export/prospection{$page.url.search}"
+						data-sveltekit-reload
+						class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors"
+						title={data.totalLeads > PROSPECTION_EXPORT_CAP
+							? `Export limité aux ${PROSPECTION_EXPORT_CAP} premiers prospects (sur ${data.totalLeads}). Affinez les filtres pour tout exporter.`
+							: `Exporter en CSV les ${data.totalLeads} prospects qui correspondent aux filtres actuels`}
+						aria-label="Exporter les prospects filtrés en CSV"
+					>
+						<Icon name="download" size={16} />
+						<span>Exporter CSV</span>
+					</a>
 				{/if}
 				<!-- V4 audit S163 (F-V4-01) + F-V4-07 verbes : CTA principal contextuel par onglet. -->
 				{#if showImportCta}

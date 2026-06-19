@@ -34,6 +34,11 @@ export const SORT_FIELDS = [
 ] as const;
 export const VALID_SORT_KEYS = SORT_FIELDS.map((s) => s.value);
 
+// Plafond de l'export CSV filtré (/api/export/prospection). Partagé serveur (cap réel
+// des lignes) ET client (le bouton « Exporter CSV » avertit quand la vue dépasse ce
+// plafond). « No silent caps » : au-delà, l'export signale la troncature (header + log).
+export const PROSPECTION_EXPORT_CAP = 5000;
+
 
 const { labels: scoreLabels } = config.scoring;
 

@@ -9,6 +9,7 @@
 import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { toCsv, csvFilename, csvResponseHeaders, type CsvColumn } from '$lib/server/csv-export';
+import { formatDateShort, LEADS_EXPORT_COLUMNS } from '$lib/server/export-columns';
 
 type ExportTable = 'contacts' | 'entreprises' | 'prospect_leads';
 
@@ -40,14 +41,6 @@ function formatJoined(path: string[]): (v: unknown, row: Record<string, unknown>
 		}
 		return current == null ? '' : String(current);
 	};
-}
-
-/** Helper : date ISO raccourcie (YYYY-MM-DD) ou string vide. */
-function formatDateShort(v: unknown): string {
-	if (!v) return '';
-	const s = String(v);
-	// Supabase renvoie ISO 8601 ; on coupe à la date.
-	return s.slice(0, 10);
 }
 
 const ENTITIES: Record<string, EntityConfig> = {
@@ -98,26 +91,8 @@ const ENTITIES: Record<string, EntityConfig> = {
 		table: 'prospect_leads',
 		select: '*',
 		orderBy: 'date_import',
-		columns: [
-			{ key: 'source', label: 'Source' },
-			{ key: 'source_id', label: 'Source ID' },
-			{ key: 'source_url', label: 'Source URL' },
-			{ key: 'raison_sociale', label: 'Raison sociale' },
-			{ key: 'nom_contact', label: 'Contact' },
-			{ key: 'adresse', label: 'Adresse' },
-			{ key: 'npa', label: 'NPA' },
-			{ key: 'localite', label: 'Localité' },
-			{ key: 'canton', label: 'Canton' },
-			{ key: 'telephone', label: 'Téléphone' },
-			{ key: 'email', label: 'Email' },
-			{ key: 'site_web', label: 'Site web' },
-			{ key: 'secteur_detecte', label: 'Secteur' },
-			{ key: 'montant', label: 'Montant' },
-			{ key: 'statut', label: 'Statut' },
-			{ key: 'score_pertinence', label: 'Score' },
-			{ key: 'date_publication', label: 'Publié le', transform: formatDateShort },
-			{ key: 'date_import', label: 'Créé le', transform: formatDateShort }
-		]
+		// Source unique partagée avec /api/export/prospection (export filtré).
+		columns: LEADS_EXPORT_COLUMNS
 	}
 };
 
