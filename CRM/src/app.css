@@ -246,3 +246,118 @@ textarea:focus-visible,
 	outline-offset: 2px;
 	border-radius: var(--radius-sm);
 }
+
+/* ============================================================================
+ * Vague 2 - primitives partagées de la « ligne premium riche » (flag ffCrmListesV2).
+ * Globales (cascade Entreprises/Contacts/Signaux/Prospection/Pipeline). Rendues dans
+ * les snippets DataTable (scope parent) -> non scopables, vivent ici comme signal-score-pill.
+ * Textes en --color-text-muted (AA), jamais un gris faint qui échouerait le contraste.
+ * ========================================================================== */
+.crm-avatar {
+	width: 40px;
+	height: 40px;
+	border-radius: var(--radius-lg);
+	flex-shrink: 0;
+	display: grid;
+	place-items: center;
+	background: var(--color-primary-light);
+	color: var(--color-primary);
+	font-weight: 700;
+	font-size: 14px;
+	box-shadow: inset 0 0 0 1px rgba(47, 90, 158, 0.10);
+}
+.crm-avatar--lg {
+	width: 60px;
+	height: 60px;
+	border-radius: var(--radius-xl);
+	font-size: 22px;
+}
+.crm-name {
+	font-size: 14.5px;
+	font-weight: 600;
+	color: var(--color-text);
+	letter-spacing: -0.01em;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
+}
+/* Cellule identité : nom (ellipsé) + marqueur optionnel (ex. Prescripteur) sans clipping. */
+.crm-id {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.crm-sec {
+	font-size: 12.5px;
+	color: var(--color-text-muted);
+	margin-top: 2px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.crm-loc {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: var(--radius-full);
+	font-size: 12px;
+	font-weight: 600;
+	background: var(--color-info-light);
+	color: var(--color-info-deep);
+	white-space: nowrap;
+}
+.crm-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	max-width: 100%;
+	padding: 4px 10px;
+	border-radius: var(--radius-full);
+	font-size: 12px;
+	font-weight: 600;
+	background: var(--color-surface-alt);
+	color: var(--color-text-body);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+}
+.crm-chip span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	min-width: 0;
+}
+.crm-contacts {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 4px 10px;
+	border-radius: var(--radius-full);
+	font-size: 12px;
+	font-weight: 600;
+	background: var(--color-surface-alt);
+	color: var(--color-text-body);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+	font-variant-numeric: tabular-nums;
+}
+.crm-contacts.zero {
+	color: var(--color-text-muted);
+}
+.crm-muted {
+	font-size: 13px;
+	color: var(--color-text-muted);
+}
+.crm-srcline {
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+.crm-activity {
+	font-size: 12px;
+	color: var(--color-text-muted);
+	white-space: nowrap;
+}
+.crm-chev-cell {
+	text-align: right;
+	color: var(--color-text-muted);
+}

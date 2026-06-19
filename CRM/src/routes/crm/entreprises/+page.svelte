@@ -26,13 +26,20 @@
 		persistView,
 		logoUrlForSite,
 		contactCountForEntreprise,
+		buildActiveStageByEntreprise,
+		entreprisesPremiumIndicators,
+		sourceMetaFor,
+		relativeTimeFr,
 		type EntreprisesTab,
 		type EntreprisesView,
 	} from '$lib/utils/entreprisesFormat';
 	import EntreprisesIndicators from '$lib/components/entreprises/EntreprisesIndicators.svelte';
+	import EntreprisesKpiStrip from '$lib/components/entreprises/EntreprisesKpiStrip.svelte';
 	import EntreprisesTabs from '$lib/components/entreprises/EntreprisesTabs.svelte';
 	import EntreprisesViewToggle from '$lib/components/entreprises/EntreprisesViewToggle.svelte';
 	import EntreprisesCards from '$lib/components/entreprises/EntreprisesCards.svelte';
+	import StagePill from '$lib/components/StagePill.svelte';
+	import SourcePill from '$lib/components/SourcePill.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -185,6 +192,14 @@
 	const indicators = $derived(entreprisesIndicators(data.entreprises, data.contacts));
 	const counts = $derived(entreprisesCountsByTab(data.entreprises, data.contacts));
 
+	// Vague 2 « listes premium » (réversible par flag JWT). OFF → rendu actuel, zéro régression.
+	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+	// Map entreprise_id -> étape active la plus avancée (helper pur, O(n) sur les opportunités).
+	const stageByEntreprise = $derived(buildActiveStageByEntreprise(data.opportunites));
+	const premiumIndicators = $derived(
+		entreprisesPremiumIndicators(data.entreprises, data.contacts, data.opportunites)
+	);
+
 	const tabsSpec = $derived([
 		{ key: 'toutes' as EntreprisesTab, label: 'Toutes', count: counts.toutes },
 		{ key: 'qualifiees' as EntreprisesTab, label: 'Qualifiées', count: counts.qualifiees },
@@ -312,6 +327,19 @@
 		{ key: 'contacts', label: 'Contacts', class: 'w-[10%] hidden lg:table-cell' },
 		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-[12%]' },
 	];
+
+	// Vague 2 : colonnes de la ligne riche (logo + identité + signaux). Le nb de colonnes
+	// DOIT égaler le nb de <td> du snippet premium (sticky/alignement DataTable).
+	const premiumColumns = [
+		{ key: 'logo', label: '', srLabel: 'Logo', class: 'w-14' },
+		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true, class: 'w-[22%]' },
+		{ key: 'localisation', label: 'Localisation', class: 'w-[12%] hidden md:table-cell' },
+		{ key: 'contacts', label: 'Contacts', class: 'w-[9%] hidden lg:table-cell' },
+		{ key: 'pipeline', label: 'Pipeline', class: 'w-[14%] hidden md:table-cell' },
+		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-[12%]' },
+		{ key: 'source', label: 'Source · activité', srLabel: 'Source et activité', class: 'w-[15%] hidden lg:table-cell' },
+		{ key: 'chevron', label: '', srLabel: 'Ouvrir', class: 'w-10' },
+	];
 </script>
 
 <div class="ws-page">
@@ -322,7 +350,11 @@
 		</button>
 	</div>
 
-	<EntreprisesIndicators values={indicators} />
+	{#if premium}
+		<EntreprisesKpiStrip values={premiumIndicators} />
+	{:else}
+		<EntreprisesIndicators values={indicators} />
+	{/if}
 
 	<EntreprisesTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)}>
 		{#snippet actions()}
@@ -358,7 +390,7 @@
 		{:else if effectiveView === 'table'}
 			<DataTable
 				data={filteredEntreprises}
-				{columns}
+				columns={premium ? premiumColumns : columns}
 				onRowClick={openDetail}
 				searchable={false}
 				stickyLeftCols={2}
@@ -371,7 +403,7 @@
 					<td class="px-4 py-3">
 						{#if logo}
 							<img
-								class="logo-cell"
+								class="logo-cell {premium ? 'logo-cell--lg' : ''}"
 								src={logo}
 								alt=""
 								onerror={(e) => {
@@ -379,22 +411,59 @@
 									(e.currentTarget.nextElementSibling as HTMLElement).style.display = 'grid';
 								}}
 							/>
-							<span class="logo-cell logo-cell--placeholder">
+							<span class="logo-cell {premium ? 'logo-cell--lg' : ''} logo-cell--placeholder">
 								{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
 							</span>
 						{:else}
-							<span class="logo-cell logo-cell--placeholder">
+							<span class="logo-cell {premium ? 'logo-cell--lg' : ''} logo-cell--placeholder">
 								{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
 							</span>
 						{/if}
 					</td>
-					<td class="px-4 py-3 font-semibold text-text">{entreprise.raison_sociale}</td>
-					<td class="px-4 py-3 text-text-muted hidden md:table-cell">{entreprise.secteur_activite ?? '–'}</td>
-					<td class="px-4 py-3 text-text hidden md:table-cell">{entreprise.canton ?? '–'}</td>
-					<td class="px-4 py-3 text-text tabular-nums hidden lg:table-cell">{cc}</td>
-					<td class="px-4 py-3">
-						<Badge label={statutLabel(entreprise.statut_qualification)} variant={statutBadgeVariant(entreprise.statut_qualification)} />
-					</td>
+					{#if premium}
+						{@const stage = stageByEntreprise.get(entreprise.id)}
+						{@const src = sourceMetaFor(entreprise.source)}
+						{@const activite = relativeTimeFr(entreprise.date_derniere_modification)}
+						<td class="px-4 py-3">
+							<div class="crm-name">{entreprise.raison_sociale}</div>
+							{#if entreprise.secteur_activite}<div class="crm-sec">{entreprise.secteur_activite}</div>{/if}
+						</td>
+						<td class="px-4 py-3 hidden md:table-cell">
+							{#if entreprise.canton}
+								<span class="crm-loc"><Icon name="location_on" size={13} />{entreprise.canton}</span>
+							{:else}
+								<span class="crm-muted">Canton ?</span>
+							{/if}
+						</td>
+						<td class="px-4 py-3 hidden lg:table-cell">
+							<span class="crm-contacts" class:zero={cc === 0}><Icon name="people" size={13} />{cc}</span>
+						</td>
+						<td class="px-4 py-3 hidden md:table-cell">
+							{#if stage}
+								<StagePill label={stage.label} variant={stage.variant} />
+							{:else}
+								<span class="crm-muted">Pas d'affaire</span>
+							{/if}
+						</td>
+						<td class="px-4 py-3">
+							<Badge label={statutLabel(entreprise.statut_qualification)} variant={statutBadgeVariant(entreprise.statut_qualification)} />
+						</td>
+						<td class="px-4 py-3 hidden lg:table-cell">
+							<span class="crm-srcline">
+								{#if src}<SourcePill label={src.label} variant={src.variant} />{/if}
+								{#if activite}<span class="crm-activity">{activite}</span>{/if}
+							</span>
+						</td>
+						<td class="px-4 py-3 crm-chev-cell"><Icon name="chevron_right" size={18} /></td>
+					{:else}
+						<td class="px-4 py-3 font-semibold text-text">{entreprise.raison_sociale}</td>
+						<td class="px-4 py-3 text-text-muted hidden md:table-cell">{entreprise.secteur_activite ?? '–'}</td>
+						<td class="px-4 py-3 text-text hidden md:table-cell">{entreprise.canton ?? '–'}</td>
+						<td class="px-4 py-3 text-text tabular-nums hidden lg:table-cell">{cc}</td>
+						<td class="px-4 py-3">
+							<Badge label={statutLabel(entreprise.statut_qualification)} variant={statutBadgeVariant(entreprise.statut_qualification)} />
+						</td>
+					{/if}
 				{/snippet}
 			</DataTable>
 		{:else}
@@ -402,6 +471,7 @@
 				entreprises={filteredEntreprises}
 				contacts={data.contacts}
 				onSelect={openDetail}
+				stageByEntreprise={premium ? stageByEntreprise : undefined}
 				emptyMessage={searchQuery.trim() ? `Aucun résultat pour « ${searchQuery.trim()} »` : emptyMessageForTab(activeTab)}
 			/>
 		{/if}
@@ -421,6 +491,9 @@
 <SlideOut bind:open={slideOutOpen} title={selectedEntreprise?.raison_sociale ?? ''}>
 	{#if selectedEntreprise}
 		{@const logo = logoUrlForSite(selectedEntreprise.site_web)}
+		{@const fStage = stageByEntreprise.get(selectedEntreprise.id)}
+		{@const fSrc = sourceMetaFor(selectedEntreprise.source)}
+		{@const fActivite = relativeTimeFr(selectedEntreprise.date_derniere_modification)}
 		<div class="space-y-6">
 			<!-- En-tête avec logo -->
 			<div class="flex items-center gap-4">
@@ -431,10 +504,22 @@
 						{selectedEntreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
 					</span>
 				{/if}
-				<div>
-					<p class="font-semibold text-lg text-text">{selectedEntreprise.raison_sociale}</p>
-					<Badge label={statutLabel(selectedEntreprise.statut_qualification)} variant={statutBadgeVariant(selectedEntreprise.statut_qualification)} />
-				</div>
+				{#if premium}
+					<div class="min-w-0">
+						<p class="font-semibold text-lg text-text">{selectedEntreprise.raison_sociale}</p>
+						<div class="flex flex-wrap items-center gap-2 mt-1.5">
+							<Badge label={statutLabel(selectedEntreprise.statut_qualification)} variant={statutBadgeVariant(selectedEntreprise.statut_qualification)} />
+							{#if fStage}<StagePill label={fStage.label} variant={fStage.variant} />{/if}
+							{#if fSrc}<SourcePill label={fSrc.label} variant={fSrc.variant} />{/if}
+						</div>
+						{#if fActivite}<p class="text-xs text-text-muted mt-2">Dernière activité : {fActivite}</p>{/if}
+					</div>
+				{:else}
+					<div>
+						<p class="font-semibold text-lg text-text">{selectedEntreprise.raison_sociale}</p>
+						<Badge label={statutLabel(selectedEntreprise.statut_qualification)} variant={statutBadgeVariant(selectedEntreprise.statut_qualification)} />
+					</div>
+				{/if}
 			</div>
 
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -723,6 +808,15 @@
 		place-items: center;
 		font-weight: 700;
 		font-size: 13px;
+	}
+
+	/* Vague 2 : agrandit le logo de la ligne premium (spécifique entreprise).
+	   Les primitives partagées .crm-* vivent dans app.css (cascade multi-pages). */
+	:global(.logo-cell--lg) {
+		width: 40px;
+		height: 40px;
+		border-radius: var(--radius-lg);
+		font-size: 15px;
 	}
 
 	@media (max-width: 1024px) {

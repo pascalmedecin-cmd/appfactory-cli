@@ -1,16 +1,19 @@
 <script lang="ts" generics="T extends { id: string; raison_sociale: string; secteur_activite: string | null; canton: string | null; adresse_siege: string | null; site_web: string | null; statut_qualification: string | null }">
 	import Icon from '$lib/components/Icon.svelte';
 	import Badge from '$lib/components/Badge.svelte';
-	import { logoUrlForSite, contactCountForEntreprise, type ContactForEntrepriseLite } from '$lib/utils/entreprisesFormat';
+	import StagePill from '$lib/components/StagePill.svelte';
+	import { logoUrlForSite, contactCountForEntreprise, type ContactForEntrepriseLite, type StageMeta } from '$lib/utils/entreprisesFormat';
 
 	type Props = {
 		entreprises: T[];
 		contacts: ReadonlyArray<ContactForEntrepriseLite>;
 		onSelect: (entreprise: T) => void;
 		emptyMessage?: string;
+		/** Vague 2 (flag ffCrmListesV2) : map entreprise_id -> etape active, pour la pill pipeline. */
+		stageByEntreprise?: ReadonlyMap<string, StageMeta>;
 	};
 
-	let { entreprises, contacts, onSelect, emptyMessage = 'Aucune entreprise.' }: Props = $props();
+	let { entreprises, contacts, onSelect, emptyMessage = 'Aucune entreprise.', stageByEntreprise }: Props = $props();
 
 	function statutBadgeVariant(statut: string | null): 'default' | 'info' | 'success' | 'warning' | 'muted' {
 		switch (statut) {
@@ -88,8 +91,12 @@
 						{#if entreprise.secteur_activite}
 							<div class="card-visite-secteur">{entreprise.secteur_activite}</div>
 						{/if}
-						<div class="card-visite-status">
+						<div class="card-visite-status" class:has-stage={stageByEntreprise?.get(entreprise.id)}>
 							<Badge label={statutLabel(entreprise.statut_qualification)} variant={statutBadgeVariant(entreprise.statut_qualification)} />
+							{#if stageByEntreprise?.get(entreprise.id)}
+								{@const stage = stageByEntreprise.get(entreprise.id)!}
+								<StagePill label={stage.label} variant={stage.variant} />
+							{/if}
 						</div>
 					</div>
 				</div>
@@ -199,6 +206,14 @@
 		font-size: 13px;
 		color: var(--color-text-muted);
 		line-height: 1.5;
+	}
+	/* Flag OFF (pas de stageByEntreprise) → pas de .has-stage → rendu bloc d'origine
+	   (zéro régression). Flex appliqué uniquement quand une pill d'étape accompagne le badge. */
+	.card-visite-status.has-stage {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		align-items: center;
 	}
 	.card-visite-rows {
 		display: grid;

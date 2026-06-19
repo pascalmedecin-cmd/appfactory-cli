@@ -11,12 +11,19 @@ export interface FeatureFlags {
 	ffCrmMobileV3: boolean;
 	/** Outil « Découpe Films » (chantier 2 portail) : route /decoupe. ADR-0005 (decoupe). */
 	ffDecoupe: boolean;
+	/**
+	 * Refonte UX/UI - Vague 2 « listes & fiches premium » (chantier réversible par page).
+	 * ON → ligne riche + chips KPI + fiche premium. OFF → rendu actuel (zéro régression).
+	 * Activation : `... raw_app_meta_data || '{"ff_crm_listes_v2": true}'::jsonb`.
+	 */
+	ffCrmListesV2: boolean;
 }
 
 export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
 	ffCrmMobileV2: false,
 	ffCrmMobileV3: false,
 	ffDecoupe: false,
+	ffCrmListesV2: false,
 };
 
 /**
@@ -29,5 +36,6 @@ export function readFeatureFlags(appMetadata: Record<string, unknown> | null | u
 		ffCrmMobileV2: appMetadata['ff_crm_mobile_v2'] === true,
 		ffCrmMobileV3: appMetadata['ff_crm_mobile_v3'] === true,
 		ffDecoupe: appMetadata['ff_decoupe'] === true,
+		ffCrmListesV2: appMetadata['ff_crm_listes_v2'] === true,
 	};
 }

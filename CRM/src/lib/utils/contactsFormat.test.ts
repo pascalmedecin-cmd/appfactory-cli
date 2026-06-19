@@ -4,10 +4,43 @@ import {
 	contactsIndicators,
 	filterContactsByTab,
 	contactsCountsByTab,
+	contactInitials,
 	type ContactLite,
 } from './contactsFormat';
 
 const NOW = new Date('2026-05-08T10:00:00');
+
+describe('contactInitials (Vague 2 avatar)', () => {
+	it('combine prénom + nom en majuscules', () => {
+		expect(contactInitials('Claire', 'Dupuis')).toBe('CD');
+		expect(contactInitials('léa', 'vionnet')).toBe('LV');
+	});
+	it('gère prénom OU nom manquant', () => {
+		expect(contactInitials(null, 'Dupuis')).toBe('D');
+		expect(contactInitials('Claire', null)).toBe('C');
+		expect(contactInitials('  ', 'Blanc')).toBe('B');
+	});
+	it('vide / null / espaces → "?" (jamais chaîne vide, jamais throw)', () => {
+		expect(contactInitials(null, null)).toBe('?');
+		expect(contactInitials('', '')).toBe('?');
+		expect(contactInitials('   ', '   ')).toBe('?');
+		expect(contactInitials(undefined, undefined)).toBe('?');
+	});
+	it('fuzz : toujours 1-2 chars majuscules, jamais throw', () => {
+		const samples = ['', ' ', 'a', 'éà', 'Jean-Pierre', '   x', '😀b', '123', 'O', null, undefined];
+		for (const p of samples) {
+			for (const n of samples) {
+				let out!: string;
+				expect(() => (out = contactInitials(p as string | null, n as string | null))).not.toThrow();
+				// invariant en POINTS DE CODE (un emoji = 1 initiale, pas 2 unités UTF-16)
+				const cps = [...out];
+				expect(cps.length).toBeGreaterThanOrEqual(1);
+				expect(cps.length).toBeLessThanOrEqual(2);
+				expect(out).toBe(out.toUpperCase());
+			}
+		}
+	});
+});
 
 describe('normalizeCompanyName', () => {
 	it('lowercase + trim', () => {

@@ -15,9 +15,13 @@
 		contactsIndicators,
 		contactsCountsByTab,
 		filterContactsByTab,
+		contactInitials,
 		type ContactsTab,
 	} from '$lib/utils/contactsFormat';
+	import { sourceMetaFor, relativeTimeFr } from '$lib/utils/entreprisesFormat';
 	import ContactsIndicators from '$lib/components/contacts/ContactsIndicators.svelte';
+	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
+	import SourcePill from '$lib/components/SourcePill.svelte';
 	import ContactsTabs from '$lib/components/contacts/ContactsTabs.svelte';
 	import ContactSuggestionQueue from '$lib/components/contacts/ContactSuggestionQueue.svelte';
 	import MobileEntityCard from '$lib/components/mobile/MobileEntityCard.svelte';
@@ -80,6 +84,15 @@
 	const indicators = $derived(contactsIndicators(data.contacts));
 	const counts = $derived(contactsCountsByTab(data.contacts));
 	const filteredContacts = $derived(filterContactsByTab(data.contacts, activeTab));
+
+	// Vague 2 « listes premium » (même flag JWT que les autres pages). OFF → rendu actuel.
+	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+	const kpiItems = $derived<KpiItem[]>([
+		{ icon: 'contacts', value: indicators.total, label: indicators.total === 1 ? 'Contact' : 'Contacts', tone: 'primary' },
+		{ icon: 'handshake', value: indicators.prescripteurs, label: 'Prescripteurs', tone: 'success' },
+		{ icon: 'calendar_today', value: indicators.nouveauxThisMonth, label: 'Nouveaux ce mois', tone: 'convert' },
+		{ icon: 'domain', value: indicators.sansEntreprise, label: 'Sans entreprise', tone: 'warn', highlight: indicators.sansEntreprise > 0 },
+	]);
 
 	const tabsSpec = $derived([
 		{ key: 'tous' as ContactsTab, label: 'Tous', count: counts.tous },
@@ -169,6 +182,20 @@
 		{ key: 'telephone', label: 'Téléphone', class: 'w-[15%] whitespace-nowrap hidden lg:table-cell' },
 		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[6%] hidden md:table-cell' },
 		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-[10%]' },
+	];
+
+	// Vague 2 : colonnes de la ligne riche contact (avatar + identité + signaux réels).
+	// Pas d'opportunités chargées sur cette page -> pas de pill pipeline (aucune invention).
+	// nb de colonnes == nb de <td> du snippet premium (8). Tri sur vrais champs uniquement.
+	const premiumColumns = [
+		{ key: 'avatar', label: '', srLabel: 'Initiales', class: 'w-14' },
+		{ key: 'nom', label: 'Contact', sortable: true, class: 'w-[24%]' },
+		{ key: 'entreprise', label: 'Entreprise', class: 'w-[16%] hidden md:table-cell' },
+		{ key: 'email_professionnel', label: 'Email', class: 'w-[20%] hidden lg:table-cell' },
+		{ key: 'telephone', label: 'Téléphone', class: 'w-[13%] whitespace-nowrap hidden lg:table-cell' },
+		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-[13%]' },
+		{ key: 'source', label: 'Source · activité', srLabel: 'Source et activité', class: 'w-[14%] hidden lg:table-cell' },
+		{ key: 'chevron', label: '', srLabel: 'Ouvrir', class: 'w-10' },
 	];
 
 	function rowAriaLabelFor(c: Contact): string {
@@ -303,7 +330,11 @@
 		</button>
 	</div>
 
-	<ContactsIndicators values={indicators} />
+	{#if premium}
+		<KpiStrip items={kpiItems} ariaLabel="Indicateurs contacts" />
+	{:else}
+		<ContactsIndicators values={indicators} />
+	{/if}
 
 	<ContactSuggestionQueue contacts={data.contacts} />
 
@@ -357,7 +388,7 @@
 			<div class="table-wrap">
 				<DataTable
 					data={filteredContacts}
-					{columns}
+					columns={premium ? premiumColumns : columns}
 					onRowClick={openDetail}
 					searchPlaceholder="Rechercher un contact…"
 					stickyLeftCols={2}
@@ -365,16 +396,57 @@
 					emptyMessage={emptyMessageFor(activeTab)}
 				>
 					{#snippet row(contact, _i)}
-						<td class="px-4 py-3 font-medium text-text">{contact.nom ?? '–'}</td>
-						<td class="px-4 py-3 text-text hidden md:table-cell">{contact.prenom ?? '–'}</td>
-						<td class="px-4 py-3 text-text">{contact.entreprises?.raison_sociale ?? '–'}</td>
-						<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.role_fonction ?? '–'}</td>
-						<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.email_professionnel ?? '–'}</td>
-						<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.telephone ?? '–'}</td>
-						<td class="px-4 py-3 text-text w-20 hidden md:table-cell">{contact.canton ?? '–'}</td>
-						<td class="px-4 py-3 w-24">
-							<Badge label={contact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(contact.statut_qualification)} />
-						</td>
+						{#if premium}
+							{@const ent = contact.entreprises}
+							{@const src = sourceMetaFor(contact.source)}
+							{@const activite = relativeTimeFr(contact.date_derniere_modification)}
+							<td class="px-4 py-3"><span class="crm-avatar">{contactInitials(contact.prenom, contact.nom)}</span></td>
+							<td class="px-4 py-3">
+								<div class="crm-id">
+									<div class="crm-name">{`${contact.prenom ?? ''} ${contact.nom ?? ''}`.trim() || 'Contact sans nom'}</div>
+									{#if contact.est_prescripteur}<Badge label="Prescripteur" variant="success" />{/if}
+								</div>
+								{#if contact.role_fonction}<div class="crm-sec">{contact.role_fonction}</div>{/if}
+							</td>
+							<td class="px-4 py-3 hidden md:table-cell">
+								{#if ent?.raison_sociale}
+									<span class="crm-chip"><Icon name="business" size={13} /><span>{ent.raison_sociale}</span></span>
+								{:else}
+									<span class="crm-muted">Sans entreprise</span>
+								{/if}
+							</td>
+							<td class="px-4 py-3 hidden lg:table-cell">
+								{#if contact.email_professionnel}
+									<span class="crm-chip"><Icon name="mail" size={13} /><span>{contact.email_professionnel}</span></span>
+								{/if}
+							</td>
+							<td class="px-4 py-3 hidden lg:table-cell">
+								{#if contact.telephone}
+									<span class="crm-chip"><Icon name="phone" size={13} /><span>{contact.telephone}</span></span>
+								{/if}
+							</td>
+							<td class="px-4 py-3">
+								<Badge label={contact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(contact.statut_qualification)} />
+							</td>
+							<td class="px-4 py-3 hidden lg:table-cell">
+								<span class="crm-srcline">
+									{#if src}<SourcePill label={src.label} variant={src.variant} />{/if}
+									{#if activite}<span class="crm-activity">{activite}</span>{/if}
+								</span>
+							</td>
+							<td class="px-4 py-3 crm-chev-cell"><Icon name="chevron_right" size={18} /></td>
+						{:else}
+							<td class="px-4 py-3 font-medium text-text">{contact.nom ?? '–'}</td>
+							<td class="px-4 py-3 text-text hidden md:table-cell">{contact.prenom ?? '–'}</td>
+							<td class="px-4 py-3 text-text">{contact.entreprises?.raison_sociale ?? '–'}</td>
+							<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.role_fonction ?? '–'}</td>
+							<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.email_professionnel ?? '–'}</td>
+							<td class="px-4 py-3 text-text hidden lg:table-cell">{contact.telephone ?? '–'}</td>
+							<td class="px-4 py-3 text-text w-20 hidden md:table-cell">{contact.canton ?? '–'}</td>
+							<td class="px-4 py-3 w-24">
+								<Badge label={contact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(contact.statut_qualification)} />
+							</td>
+						{/if}
 					{/snippet}
 				</DataTable>
 			</div>
@@ -395,12 +467,30 @@
 <SlideOut bind:open={slideOutOpen} title="{selectedContact?.prenom ?? ''} {selectedContact?.nom ?? ''}">
 	{#if selectedContact}
 		<div class="space-y-6">
-			<div class="flex items-center justify-between">
-				<Badge label={selectedContact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(selectedContact.statut_qualification)} />
-				{#if selectedContact.est_prescripteur}
-					<Badge label="Prescripteur" variant="default" />
-				{/if}
-			</div>
+			{#if premium}
+				{@const fSrc = sourceMetaFor(selectedContact.source)}
+				{@const fActivite = relativeTimeFr(selectedContact.date_derniere_modification)}
+				<div class="flex items-center gap-4">
+					<span class="crm-avatar crm-avatar--lg">{contactInitials(selectedContact.prenom, selectedContact.nom)}</span>
+					<div class="min-w-0">
+						<p class="font-semibold text-lg text-text">{`${selectedContact.prenom ?? ''} ${selectedContact.nom ?? ''}`.trim() || 'Contact sans nom'}</p>
+						{#if selectedContact.role_fonction}<p class="text-sm text-text-muted">{selectedContact.role_fonction}</p>{/if}
+						<div class="flex flex-wrap items-center gap-2 mt-1.5">
+							<Badge label={selectedContact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(selectedContact.statut_qualification)} />
+							{#if selectedContact.est_prescripteur}<Badge label="Prescripteur" variant="default" />{/if}
+							{#if fSrc}<SourcePill label={fSrc.label} variant={fSrc.variant} />{/if}
+						</div>
+						{#if fActivite}<p class="text-xs text-text-muted mt-2">Dernière activité : {fActivite}</p>{/if}
+					</div>
+				</div>
+			{:else}
+				<div class="flex items-center justify-between">
+					<Badge label={selectedContact.statut_qualification ?? 'inconnu'} variant={statutBadgeVariant(selectedContact.statut_qualification)} />
+					{#if selectedContact.est_prescripteur}
+						<Badge label="Prescripteur" variant="default" />
+					{/if}
+				</div>
+			{/if}
 
 			{#if entrepriseForContact(selectedContact) || selectedContact.entreprises?.raison_sociale}
 				{@const ent = entrepriseForContact(selectedContact)}

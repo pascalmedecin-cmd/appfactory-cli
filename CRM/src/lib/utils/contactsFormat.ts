@@ -100,3 +100,20 @@ export function contactsCountsByTab<T extends ContactLite>(contacts: ReadonlyArr
 		'sans-entreprise': contacts.filter((c) => !c.entreprise_id).length,
 	};
 }
+
+/**
+ * Initiales d'un contact pour l'avatar de la ligne/fiche premium (Vague 2).
+ * Première lettre du prénom + première lettre du nom, en majuscules. Robuste aux
+ * null/vides/espaces (jamais throw, jamais de chaîne vide -> '?'). Pur.
+ */
+export function contactInitials(prenom: string | null | undefined, nom: string | null | undefined): string {
+	const p = (prenom ?? '').trim();
+	const n = (nom ?? '').trim();
+	// Itération par POINT DE CODE ([...str][0]) et non par unité UTF-16 (str[0]) :
+	// un prénom commençant par un caractère hors-BMP (emoji) donnerait sinon une
+	// demi-surrogate cassée. Domaine FilmPro = noms B2B, mais on reste robuste.
+	const a = p ? [...p][0] : '';
+	const b = n ? [...n][0] : '';
+	const out = `${a}${b}`.toUpperCase();
+	return out || '?';
+}

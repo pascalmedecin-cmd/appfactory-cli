@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Golden Vague 2 - Listes & fiches premium (CRM FilmPro)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..800;1,9..40,400..600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ====== Tokens charte CRM FilmPro (extrait app.css, source de verite) ====== */
+  :root {
+    --color-primary: #2F5A9E;
+    --color-primary-light: #F0F4F8;
+    --color-primary-hover: #264C85;
+    --color-primary-dark: #0A1628;
+
+    --color-surface: #FFFFFF;
+    --color-surface-alt: #F9FAFB;
+    --color-shell: #F4F6F9;
+
+    --color-border: #E5E7EB;
+    --color-border-strong: #D1D5DB;
+    --color-border-input: #ADB5BD;
+
+    --color-text: #111827;
+    --color-text-body: #374151;
+    --color-text-muted: #6B7280;
+    --color-text-faint: #9CA3AF;
+    --color-text-inverse: #FFFFFF;
+
+    --color-success: #12B76A;
+    --color-success-light: #ECFDF3;
+    --color-success-deep: #067647;
+    --color-warning: #F79009;
+    --color-warning-light: #FFFAEB;
+    --color-warning-deep: #B54708;
+    --color-danger: #F04438;
+    --color-danger-light: #FEF3F2;
+    --color-danger-deep: #B42318;
+    --color-info: #5A7190;
+    --color-info-light: #EDF1F5;
+    --color-info-deep: #4A5E78;
+
+    /* Pipeline workflow (4 etapes) */
+    --color-prosp-import: #5A7190;   --color-prosp-import-bg: #EDF1F5;   --color-prosp-import-deep: #546B8A;
+    --color-prosp-enrich: #7B6A9A;   --color-prosp-enrich-bg: #F0ECF5;   --color-prosp-enrich-deep: #6F5E8E;
+    --color-prosp-qualify: #917548;  --color-prosp-qualify-bg: #F5F0E8;  --color-prosp-qualify-deep: #85693C;
+    --color-prosp-convert: #538B6B;  --color-prosp-convert-bg: #EBF3EF;  --color-prosp-convert-deep: #417959;
+    --color-prosp-place: #3F7C82;    --color-prosp-place-bg: #E9F1F2;    --color-prosp-place-deep: #39767C;
+
+    --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'DM Mono', 'Consolas', monospace;
+
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 10px;
+    --radius-xl: 12px;
+    --radius-2xl: 16px;
+    --radius-full: 9999px;
+
+    --shadow-xs: 0 1px 2px rgba(16,24,40,0.05);
+    --shadow-card: 0 1px 0 rgba(17,24,39,0.02), 0 0 0 1px rgba(17,24,39,0.04), 0 8px 20px -12px rgba(17,24,39,0.10);
+    --shadow-card-hover: 0 1px 3px rgba(17,24,39,0.05), 0 20px 40px -15px rgba(17,24,39,0.08);
+    --shadow-card-active: 0 1px 0 rgba(17,24,39,0.02), 0 0 0 1px rgba(47,90,158,0.16), 0 16px 28px -16px rgba(17,24,39,0.14);
+    --shadow-panel: 0 24px 48px -12px rgba(16,24,40,0.18);
+
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(47,90,158,0.06), transparent 60%),
+      var(--color-shell);
+    color: var(--color-text);
+    line-height: 1.5;
+  }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  /* ====== Cadre documentaire (annotations) ====== */
+  .doc { max-width: 1320px; margin: 0 auto; padding: 56px 28px 120px; }
+  .doc-head { margin-bottom: 44px; }
+  .doc-eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: var(--radius-full);
+    background: var(--color-surface); box-shadow: var(--shadow-card);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--color-primary);
+  }
+  .doc-eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-prosp-convert); box-shadow: 0 0 0 3px rgba(83,139,107,0.18); }
+  .doc-title { font-size: 34px; font-weight: 800; letter-spacing: -0.03em; margin: 20px 0 10px; color: var(--color-primary-dark); }
+  .doc-sub { font-size: 16px; color: var(--color-text-muted); max-width: 760px; }
+
+  .section-label {
+    display: flex; align-items: center; gap: 14px;
+    margin: 64px 0 22px; padding-bottom: 14px;
+    border-bottom: 1px solid var(--color-border);
+  }
+  .section-num {
+    width: 30px; height: 30px; flex-shrink: 0;
+    border-radius: var(--radius-md);
+    display: grid; place-items: center;
+    background: var(--color-primary-dark); color: #fff;
+    font-size: 13px; font-weight: 700;
+  }
+  .section-label h2 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin: 0; color: var(--color-text); }
+  .section-label p { margin: 2px 0 0; font-size: 13px; color: var(--color-text-muted); }
+
+  .callout {
+    margin: 0 0 24px; padding: 14px 18px;
+    background: var(--color-surface); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    font-size: 13.5px; color: var(--color-text-body);
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .callout svg { flex-shrink: 0; margin-top: 1px; color: var(--color-primary); }
+  .callout b { color: var(--color-text); }
+
+  /* ====== Cadre "ecran" CRM ====== */
+  .screen {
+    background: var(--color-surface-alt);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+  }
+  .screen-topbar {
+    height: 52px; display: flex; align-items: center; gap: 12px;
+    padding: 0 18px; background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+  }
+  .brand-dot { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 14px; color: var(--color-primary-dark); letter-spacing: -0.01em; }
+  .brand-dot .sq { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, #2F5A9E, #0A1628); }
+  .crumb { font-size: 13px; color: var(--color-text-muted); margin-left: 4px; }
+  .crumb b { color: var(--color-text); font-weight: 600; }
+  .topbar-spacer { flex: 1; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--color-primary-light); color: var(--color-primary); display: grid; place-items: center; font-weight: 700; font-size: 12px; }
+
+  /* corps borne a 1200px (garde-fou bornage) */
+  .workspace { padding: 0; }
+  .ws-bound { max-width: 1200px; margin: 0 auto; }
+
+  /* ---- bande 1 : titre + KPI chips + action (remplace 2 bandes empilees) ---- */
+  .ws-toolbar-top {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 24px;
+    padding: 26px 32px 18px;
+  }
+  .ws-titleblock h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-text); }
+  .ws-titleblock .meta { margin-top: 4px; font-size: 13px; color: var(--color-text-muted); }
+
+  /* primitive : chip KPI (compact, premium, remplace la bande geante 24px) */
+  .kpi-strip { display: flex; gap: 10px; flex-wrap: wrap; padding: 0 32px 18px; }
+  .kpi {
+    display: inline-flex; align-items: center; gap: 11px;
+    padding: 9px 14px 9px 10px; background: var(--color-surface);
+    border-radius: var(--radius-xl); box-shadow: var(--shadow-card);
+    transition: box-shadow 220ms var(--ease), transform 220ms var(--ease);
+  }
+  .kpi:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px); }
+  .kpi-ic { width: 32px; height: 32px; border-radius: var(--radius-md); display: grid; place-items: center; flex-shrink: 0; }
+  .kpi-ic.primary { background: radial-gradient(circle at 30% 30%, rgba(47,90,158,0.12), rgba(47,90,158,0.02)); color: var(--color-primary); }
+  .kpi-ic.success { background: radial-gradient(circle at 30% 30%, rgba(18,183,106,0.14), rgba(18,183,106,0.02)); color: var(--color-success-deep); }
+  .kpi-ic.warn    { background: radial-gradient(circle at 30% 30%, rgba(247,144,9,0.14), rgba(247,144,9,0.02)); color: var(--color-warning-deep); }
+  .kpi-ic.convert { background: radial-gradient(circle at 30% 30%, rgba(83,139,107,0.16), rgba(83,139,107,0.02)); color: var(--color-prosp-convert-deep); }
+  .kpi-body { display: flex; flex-direction: column; line-height: 1.1; }
+  .kpi-val { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-primary-dark); }
+  .kpi-lab { font-size: 11.5px; color: var(--color-text-muted); font-weight: 500; margin-top: 2px; }
+
+  /* ---- bande 2 : tabs segmentes + recherche VISIBLE + toggle vue ---- */
+  .ws-toolbar {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    padding: 6px 32px 20px;
+  }
+  .segtabs { display: inline-flex; gap: 2px; padding: 4px; background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-card); }
+  .segtab {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 7px 14px; border: none; background: transparent; cursor: pointer;
+    border-radius: var(--radius-lg); font-family: inherit; font-size: 13px; font-weight: 600; color: var(--color-text-muted);
+    transition: background 200ms var(--ease), color 200ms var(--ease);
+  }
+  .segtab:hover { color: var(--color-text); }
+  .segtab.active { background: var(--color-primary); color: #fff; }
+  .segtab .ct { font-size: 11.5px; padding: 1px 7px; border-radius: var(--radius-full); background: rgba(17,24,39,0.06); color: var(--color-text-muted); font-weight: 700; }
+  .segtab.active .ct { background: rgba(255,255,255,0.22); color: #fff; }
+
+  .toolbar-spacer { flex: 1; }
+
+  /* primitive : recherche (visible, persistante - jamais Cmd+K) */
+  .crm-search { position: relative; width: 280px; }
+  .crm-search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .crm-search input {
+    width: 100%; height: 40px; padding: 0 14px 0 40px;
+    border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+    background: var(--color-surface); font: 14px var(--font-sans); color: var(--color-text);
+    box-shadow: var(--shadow-xs);
+    transition: border-color 200ms var(--ease), box-shadow 200ms var(--ease);
+  }
+  .crm-search input::placeholder { color: var(--color-text-faint); }
+  .crm-search input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(47,90,158,0.16); }
+
+  .viewtoggle { display: inline-flex; padding: 3px; background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); }
+  .viewtoggle button { width: 36px; height: 34px; display: grid; place-items: center; border: none; background: transparent; border-radius: var(--radius-md); cursor: pointer; color: var(--color-text-muted); transition: all 180ms var(--ease); }
+  .viewtoggle button.active { background: var(--color-primary-light); color: var(--color-primary); }
+
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px;
+    border: none; border-radius: var(--radius-lg); background: var(--color-primary); color: #fff;
+    font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer;
+    box-shadow: 0 1px 2px rgba(16,24,40,0.12), inset 0 1px 0 rgba(255,255,255,0.14);
+    transition: background 200ms var(--ease), transform 120ms var(--ease);
+  }
+  .btn-primary:hover { background: var(--color-primary-hover); }
+  .btn-primary:active { transform: scale(0.98); }
+
+  /* ====== primitive : crm-row (la LIGNE premium riche) ====== */
+  .listcard {
+    margin: 0 32px 8px; background: var(--color-surface);
+    border-radius: var(--radius-xl); box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .list-head, .crm-row {
+    display: grid;
+    grid-template-columns: 52px minmax(220px, 2.2fr) 1.1fr 0.7fr 1.3fr 1fr 150px 28px;
+    align-items: center; gap: 16px;
+    padding: 0 18px;
+  }
+  .list-head {
+    height: 42px; border-bottom: 1px solid var(--color-border);
+    font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-faint);
+  }
+  .list-head .sortable { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+  .crm-row {
+    min-height: 68px; padding-top: 12px; padding-bottom: 12px;
+    border-bottom: 1px solid rgba(17,24,39,0.05); cursor: pointer;
+    position: relative;
+    transition: background 180ms var(--ease);
+  }
+  .crm-row:last-child { border-bottom: none; }
+  .crm-row::before {
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--color-primary); opacity: 0; transition: opacity 180ms var(--ease);
+  }
+  .crm-row:hover { background: linear-gradient(90deg, rgba(47,90,158,0.035), rgba(47,90,158,0) 40%); }
+  .crm-row:hover::before { opacity: 1; }
+  .crm-row:hover .row-chevron { color: var(--color-primary); transform: translateX(2px); }
+
+  .logo {
+    width: 40px; height: 40px; border-radius: var(--radius-lg); flex-shrink: 0;
+    display: grid; place-items: center; overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(17,24,39,0.08);
+    background: #fff; object-fit: contain;
+  }
+  .logo.ph { background: var(--color-primary-light); color: var(--color-primary); font-weight: 700; font-size: 15px; }
+
+  .id-cell { min-width: 0; }
+  .id-name { font-size: 14.5px; font-weight: 600; color: var(--color-text); letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .id-sec { font-size: 12.5px; color: var(--color-text-muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* primitive : pill (chip colore reutilisable) */
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px; max-width: 100%;
+    padding: 4px 10px; border-radius: var(--radius-full);
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+  }
+  .pill svg { flex-shrink: 0; }
+  .pill span { overflow: hidden; text-overflow: ellipsis; }
+  .pill-loc    { background: var(--color-info-light);   color: var(--color-info-deep); }
+  .pill-people { background: var(--color-surface-alt);  color: var(--color-text-body); box-shadow: inset 0 0 0 1px var(--color-border); }
+  .pill-people.zero { color: var(--color-text-faint); }
+
+  /* pipeline stage pill (palette workflow) */
+  .stage { display: inline-flex; align-items: center; gap: 7px; padding: 4px 11px 4px 9px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; }
+  .stage .stdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .stage-import  { background: var(--color-prosp-import-bg);  color: var(--color-prosp-import-deep); }
+  .stage-import  .stdot { background: var(--color-prosp-import); }
+  .stage-enrich  { background: var(--color-prosp-enrich-bg);  color: var(--color-prosp-enrich-deep); }
+  .stage-enrich  .stdot { background: var(--color-prosp-enrich); }
+  .stage-qualify { background: var(--color-prosp-qualify-bg); color: var(--color-prosp-qualify-deep); }
+  .stage-qualify .stdot { background: var(--color-prosp-qualify); }
+  .stage-convert { background: var(--color-prosp-convert-bg); color: var(--color-prosp-convert-deep); }
+  .stage-convert .stdot { background: var(--color-prosp-convert); }
+  .stage-none { color: var(--color-text-faint); font-size: 13px; padding-left: 4px; }
+
+  /* source pill */
+  .src { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: var(--radius-md); font-size: 11.5px; font-weight: 600; box-shadow: inset 0 0 0 1px transparent; }
+  .src-zefix  { background: #EEF3EE; color: #3C5840; }
+  .src-google { background: var(--color-prosp-place-bg); color: var(--color-prosp-place-deep); }
+  .src-terrain{ background: #F2ECF1; color: #6F4F6E; }
+
+  /* badge statut (primitive Badge existante) */
+  .badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--radius-lg); font-size: 12px; font-weight: 600; }
+  .badge .bdot { width: 6px; height: 6px; border-radius: 50%; }
+  .badge-success { background: var(--color-success-light); color: var(--color-success-deep); box-shadow: inset 0 0 0 1px rgba(18,183,106,0.18); }
+  .badge-success .bdot { background: var(--color-success); }
+  .badge-info { background: var(--color-info-light); color: var(--color-info-deep); box-shadow: inset 0 0 0 1px rgba(90,113,144,0.18); }
+  .badge-info .bdot { background: var(--color-info); }
+  .badge-warning { background: var(--color-warning-light); color: var(--color-warning-deep); box-shadow: inset 0 0 0 1px rgba(247,144,9,0.18); }
+  .badge-warning .bdot { background: var(--color-warning); }
+  .badge-muted { background: var(--color-surface-alt); color: var(--color-text-muted); box-shadow: inset 0 0 0 1px var(--color-border); }
+  .badge-muted .bdot { background: var(--color-text-faint); }
+
+  .activity { font-size: 12px; color: var(--color-text-faint); white-space: nowrap; }
+  .row-chevron { color: var(--color-text-faint); transition: color 180ms var(--ease), transform 180ms var(--ease); justify-self: end; }
+
+  .list-foot { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-top: 1px solid var(--color-border); font-size: 12.5px; color: var(--color-text-muted); }
+  .pager { display: inline-flex; gap: 6px; }
+  .pager button { height: 30px; min-width: 30px; padding: 0 9px; border: 1px solid var(--color-border); background: var(--color-surface); border-radius: var(--radius-md); font: 12.5px var(--font-sans); color: var(--color-text-body); cursor: pointer; }
+  .pager button.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+
+  /* ====== Vue Cards ====== */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 18px; padding: 4px 32px 28px; }
+  .ecard {
+    background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-card);
+    padding: 20px; cursor: pointer; display: grid; gap: 18px;
+    transition: transform 220ms var(--ease), box-shadow 220ms var(--ease);
+  }
+  .ecard:hover { transform: translateY(-3px); box-shadow: var(--shadow-card-active); }
+  .ecard-head { display: flex; align-items: flex-start; gap: 14px; }
+  .ecard .logo { width: 48px; height: 48px; font-size: 18px; }
+  .ecard-meta { min-width: 0; flex: 1; }
+  .ecard-name { font-size: 15.5px; font-weight: 600; color: var(--color-text); letter-spacing: -0.01em; }
+  .ecard-sec { font-size: 12.5px; color: var(--color-text-muted); margin-top: 2px; }
+  .ecard-badges { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+  .ecard-rows { display: grid; gap: 9px; padding-top: 16px; border-top: 1px solid rgba(17,24,39,0.06); }
+  .ecard-row { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--color-text-muted); }
+  .ecard-row svg { color: var(--color-text-faint); flex-shrink: 0; }
+
+  /* ====== Fiche SlideOut (primitive crm-fiche) ====== */
+  .fiche-stage { position: relative; background:
+      repeating-linear-gradient(135deg, rgba(17,24,39,0.015) 0 2px, transparent 2px 9px),
+      var(--color-surface-alt);
+    border-radius: var(--radius-2xl); border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card); overflow: hidden; min-height: 560px; display: flex; }
+  .fiche-stage .dim { flex: 1; background: rgba(10,22,40,0.18); backdrop-filter: blur(1px); }
+  .fiche {
+    width: 540px; max-width: 92%; background: var(--color-surface);
+    box-shadow: var(--shadow-panel); display: flex; flex-direction: column;
+    border-left: 1px solid var(--color-border);
+  }
+  .fiche-head { height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 22px; border-bottom: 1px solid var(--color-border); }
+  .fiche-head h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--color-text); letter-spacing: -0.01em; }
+  .icon-btn { width: 38px; height: 38px; display: grid; place-items: center; border: none; background: transparent; color: var(--color-text-muted); border-radius: var(--radius-md); cursor: pointer; transition: background 180ms var(--ease), color 180ms var(--ease); }
+  .icon-btn:hover { background: var(--color-surface-alt); color: var(--color-text); }
+  .fiche-body { flex: 1; overflow-y: auto; padding: 22px; display: grid; gap: 20px; }
+
+  .fiche-hero { display: flex; gap: 16px; align-items: center; }
+  .fiche-hero .logo { width: 60px; height: 60px; font-size: 22px; border-radius: var(--radius-xl); }
+  .fiche-hero-meta { min-width: 0; }
+  .fiche-hero-name { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-text); }
+  .fiche-hero-tags { display: flex; gap: 7px; margin-top: 8px; flex-wrap: wrap; }
+
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--color-border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: inset 0 0 0 1px var(--color-border); }
+  .fact { background: var(--color-surface); padding: 12px 14px; }
+  .fact .k { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-faint); }
+  .fact .v { font-size: 13.5px; font-weight: 600; color: var(--color-text); margin-top: 3px; }
+  .fact .v a { color: var(--color-primary); text-decoration: none; }
+  .fact .v a:hover { text-decoration: underline; }
+
+  .fsection { }
+  .fsection-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 11px; }
+  .fsection-h h4 { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-muted); }
+  .fsection-h .count { font-size: 11.5px; font-weight: 700; color: var(--color-text-faint); }
+
+  .pipeline-card { border-radius: var(--radius-lg); padding: 14px 16px; background: var(--color-prosp-convert-bg); box-shadow: inset 0 0 0 1px rgba(83,139,107,0.2); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .pipeline-card .pc-l { display: flex; flex-direction: column; gap: 6px; }
+  .pipeline-card .pc-k { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-prosp-convert-deep); }
+  .pipeline-steps { display: flex; gap: 4px; align-items: center; }
+  .pipeline-steps .ps { width: 30px; height: 5px; border-radius: var(--radius-full); background: rgba(83,139,107,0.25); }
+  .pipeline-steps .ps.done { background: var(--color-prosp-convert); }
+  .pc-advance { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 13px; border-radius: var(--radius-md); background: var(--color-surface); color: var(--color-prosp-convert-deep); font-size: 12.5px; font-weight: 600; border: none; cursor: pointer; box-shadow: var(--shadow-xs); }
+
+  .contact-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-radius: var(--radius-lg); background: var(--color-surface-alt); }
+  .contact-row + .contact-row { margin-top: 7px; }
+  .ci { display: flex; align-items: center; gap: 11px; min-width: 0; }
+  .ci-av { width: 34px; height: 34px; border-radius: 50%; background: var(--color-primary-light); color: var(--color-primary); display: grid; place-items: center; font-weight: 700; font-size: 12px; flex-shrink: 0; }
+  .ci-name { font-size: 13.5px; font-weight: 600; color: var(--color-text); }
+  .ci-role { font-size: 12px; color: var(--color-text-muted); }
+  .ci-call { width: 32px; height: 32px; border-radius: var(--radius-md); display: grid; place-items: center; background: var(--color-surface); color: var(--color-primary); box-shadow: var(--shadow-xs); }
+
+  .timeline { position: relative; padding-left: 22px; }
+  .timeline::before { content: ''; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 2px; background: var(--color-border); }
+  .tl-item { position: relative; padding-bottom: 14px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-item::before { content: ''; position: absolute; left: -19px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--color-surface); box-shadow: 0 0 0 2px var(--color-primary); }
+  .tl-item.muted::before { box-shadow: 0 0 0 2px var(--color-border); }
+  .tl-t { font-size: 13px; font-weight: 600; color: var(--color-text); }
+  .tl-d { font-size: 11.5px; color: var(--color-text-faint); margin-top: 1px; }
+
+  .photo-strip { display: flex; gap: 8px; }
+  .photo-strip .ph-thumb { width: 64px; height: 64px; border-radius: var(--radius-md); flex-shrink: 0; box-shadow: inset 0 0 0 1px rgba(17,24,39,0.08); }
+  .ph-1 { background: linear-gradient(135deg, #cdd9e8, #9fb6d4); }
+  .ph-2 { background: linear-gradient(135deg, #d8d2c4, #b9ad93); }
+  .ph-3 { background: linear-gradient(135deg, #c9d8d1, #9bbfae); }
+  .ph-more { display: grid; place-items: center; background: var(--color-surface-alt); color: var(--color-text-muted); font-weight: 700; font-size: 13px; box-shadow: inset 0 0 0 1px var(--color-border); }
+
+  .fiche-foot { border-top: 1px solid var(--color-border); padding: 14px 22px; display: flex; gap: 10px; align-items: center; background: var(--color-surface); }
+  .fbtn { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 16px; border-radius: var(--radius-lg); font-family: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; border: none; transition: all 180ms var(--ease); }
+  .fbtn-primary { background: var(--color-primary); color: #fff; }
+  .fbtn-primary:hover { background: var(--color-primary-hover); }
+  .fbtn-ghost { background: var(--color-primary-light); color: var(--color-primary); }
+  .fbtn-danger { background: transparent; color: var(--color-danger-deep); margin-left: auto; }
+  .fbtn-danger:hover { background: var(--color-danger-light); }
+
+  /* ====== Etat vide ====== */
+  .empty {
+    margin: 4px 32px 28px; background: var(--color-surface); border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card); padding: 56px 32px; text-align: center;
+  }
+  .empty-ic { width: 64px; height: 64px; margin: 0 auto 18px; border-radius: var(--radius-2xl); display: grid; place-items: center; background: radial-gradient(circle at 30% 30%, rgba(47,90,158,0.12), rgba(47,90,158,0.02)); color: var(--color-primary); }
+  .empty h3 { margin: 0 0 8px; font-size: 17px; font-weight: 700; color: var(--color-text); }
+  .empty p { margin: 0 auto 20px; font-size: 14px; color: var(--color-text-muted); max-width: 420px; }
+
+  /* ====== Legende primitives ====== */
+  .prims { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .prim { background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-card); padding: 20px 22px; }
+  .prim-name { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 13px; font-weight: 600; color: var(--color-primary); background: var(--color-primary-light); padding: 4px 10px; border-radius: var(--radius-md); }
+  .prim p { margin: 12px 0 0; font-size: 13px; color: var(--color-text-body); }
+  .prim .where { margin-top: 8px; font-size: 12px; color: var(--color-text-faint); }
+
+  .legend { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+
+  @media (max-width: 920px) {
+    .list-head { display: none; }
+    .crm-row { grid-template-columns: 44px 1fr auto; row-gap: 8px; }
+    .prims { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <div class="doc-head">
+    <span class="doc-eyebrow"><span class="dot"></span> Refonte CRM - Vague 2 - Golden v1</span>
+    <h1 class="doc-title">Listes & fiches premium</h1>
+    <p class="doc-sub">Modele de reference, ancre sur la page Entreprises (entite la plus riche, 1re de l'ordre cadre). Une fois valide, ce golden se decline page par page : Entreprises - Contacts - Signaux - Prospection - Pipeline. Aucune ligne de code production n'est encore touchee.</p>
+  </div>
+
+  <div class="callout">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16" r=".5" fill="currentColor"/></svg>
+    <div><b>Les 3 maux corriges :</b> (1) <b>empilement</b> - 2 bandes au lieu de 4-5 avant la 1re ligne, bornage a 1200px ; (2) <b>listes grises</b> - la ligne devient <b>riche</b> (pills colores, source, pipeline, statut) sans perdre en lisibilite ; (3) <b>incoherence</b> - 4 primitives partagees nommees (la ligne, la fiche, le chip KPI, la recherche) pour que le rendu premium tienne sur les 5 pages.</div>
+  </div>
+
+  <!-- ============ SECTION 1 : LISTE VUE TABLE ============ -->
+  <div class="section-label">
+    <span class="section-num">1</span>
+    <div><h2>Liste premium - vue Table</h2><p>La ligne riche : un coup d'oeil suffit pour situer une entreprise (qui, ou, combien de contacts, ou en est l'affaire, d'ou elle vient).</p></div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-topbar">
+      <span class="brand-dot"><span class="sq"></span> FilmPro CRM</span>
+      <span class="crumb">/ <b>Entreprises</b></span>
+      <span class="topbar-spacer"></span>
+      <span class="avatar">PM</span>
+    </div>
+
+    <div class="workspace">
+      <div class="ws-bound">
+
+        <div class="ws-toolbar-top">
+          <div class="ws-titleblock">
+            <h1>Entreprises</h1>
+            <div class="meta">84 entreprises - derniere mise a jour il y a 2 h</div>
+          </div>
+          <button class="btn-primary">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            Ajouter
+          </button>
+        </div>
+
+        <!-- primitive : chip KPI (compact) -->
+        <div class="kpi-strip">
+          <div class="kpi"><span class="kpi-ic primary"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">84</span><span class="kpi-lab">Entreprises</span></span></div>
+          <div class="kpi"><span class="kpi-ic success"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">31</span><span class="kpi-lab">Qualifiees</span></span></div>
+          <div class="kpi"><span class="kpi-ic convert"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 17l6-6 4 4 8-8"/><path d="M17 7h4v4"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">9</span><span class="kpi-lab">Affaires en cours</span></span></div>
+          <div class="kpi"><span class="kpi-ic warn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 8v4M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">12</span><span class="kpi-lab">Sans contact</span></span></div>
+        </div>
+
+        <!-- primitive : recherche visible + tabs + toggle vue -->
+        <div class="ws-toolbar">
+          <div class="segtabs">
+            <button class="segtab active">Toutes <span class="ct">84</span></button>
+            <button class="segtab">Qualifiees <span class="ct">31</span></button>
+            <button class="segtab">A qualifier <span class="ct">41</span></button>
+            <button class="segtab">Sans contact <span class="ct">12</span></button>
+          </div>
+          <span class="toolbar-spacer"></span>
+          <div class="crm-search">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" placeholder="Rechercher une entreprise, un secteur, un canton..." />
+          </div>
+          <div class="viewtoggle">
+            <button class="active" aria-label="Vue tableau"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+            <button aria-label="Vue cartes"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+          </div>
+        </div>
+
+        <!-- LISTE -->
+        <div class="listcard">
+          <div class="list-head">
+            <span></span>
+            <span class="sortable">Raison sociale <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m6 9 6 6 6-6"/></svg></span>
+            <span>Localisation</span>
+            <span>Contacts</span>
+            <span>Pipeline</span>
+            <span>Statut</span>
+            <span>Source / activite</span>
+            <span></span>
+          </div>
+
+          <!-- ligne 1 -->
+          <div class="crm-row">
+            <span class="logo ph">R</span>
+            <div class="id-cell"><div class="id-name">Regie Dupuis & Associes SA</div><div class="id-sec">Gerance immobiliere</div></div>
+            <span class="pill pill-loc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>VD - Lausanne</span></span>
+            <span class="pill pill-people"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="8" r="3"/><path d="M21 19v-1a4 4 0 0 0-3-3.85"/></svg> 3</span>
+            <span class="stage stage-qualify"><span class="stdot"></span> Devis envoye</span>
+            <span class="badge badge-success"><span class="bdot"></span> Qualifiee</span>
+            <span><span class="src src-zefix">Zefix</span> <span class="activity">il y a 2 j</span></span>
+            <svg class="row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+
+          <!-- ligne 2 -->
+          <div class="crm-row">
+            <span class="logo ph" style="background:#EEF3EE;color:#3C5840">A</span>
+            <div class="id-cell"><div class="id-name">Atelier d'architecture Vionnet</div><div class="id-sec">Bureau d'architectes</div></div>
+            <span class="pill pill-loc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>GE - Geneve</span></span>
+            <span class="pill pill-people"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="8" r="3"/><path d="M21 19v-1a4 4 0 0 0-3-3.85"/></svg> 2</span>
+            <span class="stage stage-enrich"><span class="stdot"></span> Visite planifiee</span>
+            <span class="badge badge-info"><span class="bdot"></span> En cours</span>
+            <span><span class="src src-terrain">Terrain</span> <span class="activity">hier</span></span>
+            <svg class="row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+
+          <!-- ligne 3 (mise en avant survol par defaut pour montrer l'etat) -->
+          <div class="crm-row" style="background:linear-gradient(90deg, rgba(47,90,158,0.045), rgba(47,90,158,0) 40%)">
+            <span class="logo ph" style="background:var(--color-prosp-place-bg);color:var(--color-prosp-place-deep)">H</span>
+            <div class="id-cell"><div class="id-name">Helvetia Facility Management</div><div class="id-sec">Facility management</div></div>
+            <span class="pill pill-loc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>VD - Nyon</span></span>
+            <span class="pill pill-people"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="8" r="3"/><path d="M21 19v-1a4 4 0 0 0-3-3.85"/></svg> 5</span>
+            <span class="stage stage-none">Pas d'affaire</span>
+            <span class="badge badge-warning"><span class="bdot"></span> A qualifier</span>
+            <span><span class="src src-google">Google</span> <span class="activity">il y a 5 j</span></span>
+            <svg class="row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2" style="transform:translateX(2px)"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+
+          <!-- ligne 4 -->
+          <div class="crm-row">
+            <span class="logo ph" style="background:var(--color-danger-light);color:var(--color-danger-deep)">C</span>
+            <div class="id-cell"><div class="id-name">Clinique de la Source</div><div class="id-sec">Etablissement de sante - discretion vitrage</div></div>
+            <span class="pill pill-loc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>VD - Lausanne</span></span>
+            <span class="pill pill-people"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="8" r="3"/><path d="M21 19v-1a4 4 0 0 0-3-3.85"/></svg> 4</span>
+            <span class="stage stage-convert"><span class="stdot"></span> Negociation</span>
+            <span class="badge badge-success"><span class="bdot"></span> Qualifiee</span>
+            <span><span class="src src-terrain">Terrain</span> <span class="activity">il y a 3 j</span></span>
+            <svg class="row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+
+          <!-- ligne 5 -->
+          <div class="crm-row">
+            <span class="logo ph" style="background:#F5F0E8;color:#85693C">B</span>
+            <div class="id-cell"><div class="id-name">Bureau d'etudes Tendance Sarl</div><div class="id-sec">Ingenierie du batiment</div></div>
+            <span class="pill pill-loc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>FR - Fribourg</span></span>
+            <span class="pill pill-people zero"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="8" r="3"/><path d="M21 19v-1a4 4 0 0 0-3-3.85"/></svg> 1</span>
+            <span class="stage stage-none">Pas d'affaire</span>
+            <span class="badge badge-muted"><span class="bdot"></span> Nouveau</span>
+            <span><span class="src src-zefix">Zefix</span> <span class="activity">aujourd'hui</span></span>
+            <svg class="row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+
+          <!-- ligne 6 -->
+          <div class="crm-row">
+            <span class="logo ph" style="background:#F2ECF1;color:#6F4F6E">M</span>
+            <div class="id-cell"><div class="id-name">Migros Vaud - Siege administratif</div><div class="id-sec">Grande distribution</div></div>
+            <span class="pill pill-loc"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>VD - Ecublens</span></span>
+            <span class="pill pill-people"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="8" r="3"/><path d="M21 19v-1a4 4 0 0 0-3-3.85"/></svg> 6</span>
+            <span class="stage stage-convert"><span class="stdot"></span> Gagnee</span>
+            <span class="badge badge-success"><span class="bdot"></span> Qualifiee</span>
+            <span><span class="src src-terrain">Terrain</span> <span class="activity">il y a 1 sem</span></span>
+            <svg class="row-chevron" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
+          </div>
+
+          <div class="list-foot">
+            <span>1 - 6 sur 84</span>
+            <span class="pager">
+              <button>Precedent</button>
+              <button class="active">1</button>
+              <button>2</button>
+              <button>3</button>
+              <button>...</button>
+              <button>14</button>
+              <button>Suivant</button>
+            </span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:24px">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M9 18h6M10 22h4"/><path d="M2 9a10 10 0 1 1 20 0c0 3-2 4-2.5 6h-15C4 13 2 12 2 9Z"/></svg>
+    <div><b>Pourquoi c'est plus utile :</b> chaque ligne porte les 5 signaux qui comptent en prospection vitrage - localisation (zone de chantier), nombre de contacts, etat de l'affaire (pipeline), statut de qualification, provenance. La couleur encode le sens (palette workflow), pas la decoration. Survolez une ligne pour la barre d'accent et le chevron.</div>
+  </div>
+
+  <!-- ============ SECTION 2 : FICHE SLIDEOUT ============ -->
+  <div class="section-label">
+    <span class="section-num">2</span>
+    <div><h2>Fiche entreprise - panneau lateral</h2><p>Ouverte au clic sur une ligne. Tout le dossier sans quitter la liste : faits cles, affaire, contacts, historique terrain, photos.</p></div>
+  </div>
+
+  <div class="fiche-stage">
+    <div class="dim"></div>
+    <div class="fiche">
+      <div class="fiche-head">
+        <h3>Clinique de la Source</h3>
+        <button class="icon-btn" aria-label="Fermer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="fiche-body">
+
+        <div class="fiche-hero">
+          <span class="logo ph" style="background:var(--color-danger-light);color:var(--color-danger-deep)">C</span>
+          <div class="fiche-hero-meta">
+            <div class="fiche-hero-name">Clinique de la Source</div>
+            <div class="fiche-hero-tags">
+              <span class="badge badge-success"><span class="bdot"></span> Qualifiee</span>
+              <span class="stage stage-convert"><span class="stdot"></span> Negociation</span>
+              <span class="src src-terrain">Terrain</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="facts">
+          <div class="fact"><div class="k">Secteur</div><div class="v">Etablissement de sante</div></div>
+          <div class="fact"><div class="k">Canton</div><div class="v">Vaud (VD)</div></div>
+          <div class="fact"><div class="k">Taille</div><div class="v">Grande structure</div></div>
+          <div class="fact"><div class="k">No IDE</div><div class="v">CHE-104.872.391</div></div>
+          <div class="fact" style="grid-column:1 / -1"><div class="k">Adresse</div><div class="v">Avenue Vinet 30, 1004 Lausanne &nbsp;<a href="#">Voir sur la carte</a></div></div>
+          <div class="fact" style="grid-column:1 / -1"><div class="k">Site web</div><div class="v"><a href="#">www.lasource.ch</a></div></div>
+        </div>
+
+        <div class="fsection">
+          <div class="fsection-h"><h4>Affaire en cours</h4></div>
+          <div class="pipeline-card">
+            <div class="pc-l">
+              <span class="pc-k">Negociation - Devis CHF 48'000</span>
+              <span class="pipeline-steps"><span class="ps done"></span><span class="ps done"></span><span class="ps done"></span><span class="ps"></span></span>
+            </div>
+            <button class="pc-advance">Avancer <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          </div>
+        </div>
+
+        <div class="fsection">
+          <div class="fsection-h"><h4>Contacts rattaches</h4><span class="count">4</span></div>
+          <div class="contact-row">
+            <div class="ci"><span class="ci-av">MB</span><div><div class="ci-name">Martine Blanc</div><div class="ci-role">Responsable technique</div></div></div>
+            <span class="ci-call"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.4 2.1L8 9.5a16 16 0 0 0 6 6l1.1-1.3a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z"/></svg></span>
+          </div>
+          <div class="contact-row">
+            <div class="ci"><span class="ci-av">JR</span><div><div class="ci-name">Jean Reymond</div><div class="ci-role">Directeur des infrastructures</div></div></div>
+            <span class="ci-call"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3-8.6A2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.3 1.8.6 2.6a2 2 0 0 1-.4 2.1L8 9.5a16 16 0 0 0 6 6l1.1-1.3a2 2 0 0 1 2.1-.5c.8.3 1.7.5 2.6.6a2 2 0 0 1 1.7 2Z"/></svg></span>
+          </div>
+        </div>
+
+        <div class="fsection">
+          <div class="fsection-h"><h4>Historique terrain</h4></div>
+          <div class="timeline">
+            <div class="tl-item"><div class="tl-t">Visite de releve - 3 facades sud</div><div class="tl-d">il y a 3 jours - Pascal M.</div></div>
+            <div class="tl-item"><div class="tl-t">Devis transmis a Martine Blanc</div><div class="tl-d">il y a 8 jours</div></div>
+            <div class="tl-item muted"><div class="tl-t">Premier contact - salon Sante & Batiment</div><div class="tl-d">il y a 1 mois</div></div>
+          </div>
+        </div>
+
+        <div class="fsection">
+          <div class="fsection-h"><h4>Photos chantier</h4><span class="count">7</span></div>
+          <div class="photo-strip">
+            <span class="ph-thumb ph-1"></span>
+            <span class="ph-thumb ph-2"></span>
+            <span class="ph-thumb ph-3"></span>
+            <span class="ph-thumb ph-more">+4</span>
+          </div>
+        </div>
+
+      </div>
+      <div class="fiche-foot">
+        <button class="fbtn fbtn-primary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Modifier</button>
+        <button class="fbtn fbtn-ghost"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/></svg> Enrichir via Zefix</button>
+        <button class="fbtn fbtn-danger"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg> Supprimer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SECTION 3 : VUE CARTES ============ -->
+  <div class="section-label">
+    <span class="section-num">3</span>
+    <div><h2>Vue Cartes (toggle)</h2><p>Le faux dilemme tranche : Table <b>et</b> Cartes. Memes signaux, format visuel pour le reperage rapide (logos, identite).</p></div>
+  </div>
+
+  <div class="screen">
+    <div class="workspace">
+      <div class="ws-bound">
+        <div class="cards-grid">
+
+          <div class="ecard">
+            <div class="ecard-head">
+              <span class="logo ph">R</span>
+              <div class="ecard-meta">
+                <div class="ecard-name">Regie Dupuis & Associes SA</div>
+                <div class="ecard-sec">Gerance immobiliere</div>
+                <div class="ecard-badges">
+                  <span class="badge badge-success"><span class="bdot"></span> Qualifiee</span>
+                  <span class="stage stage-qualify"><span class="stdot"></span> Devis envoye</span>
+                </div>
+              </div>
+            </div>
+            <div class="ecard-rows">
+              <div class="ecard-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> VD - Lausanne</div>
+              <div class="ecard-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg> www.regie-dupuis.ch</div>
+              <div class="ecard-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="8" r="3"/></svg> 3 contacts <span style="margin-left:auto" class="src src-zefix">Zefix</span></div>
+            </div>
+          </div>
+
+          <div class="ecard">
+            <div class="ecard-head">
+              <span class="logo ph" style="background:var(--color-prosp-place-bg);color:var(--color-prosp-place-deep)">H</span>
+              <div class="ecard-meta">
+                <div class="ecard-name">Helvetia Facility Management</div>
+                <div class="ecard-sec">Facility management</div>
+                <div class="ecard-badges">
+                  <span class="badge badge-warning"><span class="bdot"></span> A qualifier</span>
+                </div>
+              </div>
+            </div>
+            <div class="ecard-rows">
+              <div class="ecard-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> VD - Nyon</div>
+              <div class="ecard-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg> www.helvetia-fm.ch</div>
+              <div class="ecard-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="8" r="3"/></svg> 5 contacts <span style="margin-left:auto" class="src src-google">Google</span></div>
+            </div>
+          </div>
+
+          <div class="ecard">
+            <div class="ecard-head">
+              <span class="logo ph" style="background:var(--color-danger-light);color:var(--color-danger-deep)">C</span>
+              <div class="ecard-meta">
+                <div class="ecard-name">Clinique de la Source</div>
+                <div class="ecard-sec">Etablissement de sante</div>
+                <div class="ecard-badges">
+                  <span class="badge badge-success"><span class="bdot"></span> Qualifiee</span>
+                  <span class="stage stage-convert"><span class="stdot"></span> Negociation</span>
+                </div>
+              </div>
+            </div>
+            <div class="ecard-rows">
+              <div class="ecard-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg> VD - Lausanne</div>
+              <div class="ecard-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg> www.lasource.ch</div>
+              <div class="ecard-row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 19v-1a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v1"/><circle cx="9.5" cy="8" r="3"/></svg> 4 contacts <span style="margin-left:auto" class="src src-terrain">Terrain</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SECTION 4 : ETAT VIDE ============ -->
+  <div class="section-label">
+    <span class="section-num">4</span>
+    <div><h2>Etats vides soignes</h2><p>L'ecran nominal d'un CRM est souvent vide. Il doit guider, pas punir.</p></div>
+  </div>
+
+  <div class="screen">
+    <div class="workspace">
+      <div class="ws-bound">
+        <div class="empty">
+          <span class="empty-ic"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-3"/><path d="M9 9h.01M9 13h.01M9 17h.01"/></svg></span>
+          <h3>Aucune entreprise pour l'instant</h3>
+          <p>Les entreprises apparaissent ici automatiquement quand vous rattachez un contact, ou ajoutez-en une a la main.</p>
+          <button class="btn-primary" style="margin:0 auto"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg> Ajouter une entreprise</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SECTION 5 : PRIMITIVES PARTAGEES ============ -->
+  <div class="section-label">
+    <span class="section-num">5</span>
+    <div><h2>Les primitives partagees (nommees)</h2><p>Le contrat de coherence : ces 4 briques se declinent identiquement sur les 5 pages. C'est ce qui fait tenir le "premium" a 12 mois.</p></div>
+  </div>
+
+  <div class="prims">
+    <div class="prim">
+      <span class="prim-name">crm-row</span>
+      <p>La ligne premium riche : logo, identite a 2 niveaux, pills de signaux colores (localisation, contacts, pipeline, statut, source), activite, barre d'accent au survol.</p>
+      <p class="where">Decline : Entreprises, Contacts, Signaux, Prospection, Pipeline. Colonnes adaptees a l'entite, structure et hauteur identiques.</p>
+    </div>
+    <div class="prim">
+      <span class="prim-name">crm-fiche</span>
+      <p>Le panneau lateral : hero (logo + statut + affaire), grille de faits cles, sections (affaire, contacts, historique, photos), barre d'actions ancree en bas.</p>
+      <p class="where">Reprend la primitive SlideOut existante, en version premium structuree.</p>
+    </div>
+    <div class="prim">
+      <span class="prim-name">crm-kpi</span>
+      <p>Le chip KPI compact : icone teintee + valeur + libelle. Remplace la bande geante 24px qui empilait l'ecran. Strip horizontale, repliable.</p>
+      <p class="where">Dashboard, et en-tete de chaque liste (compteurs de l'entite).</p>
+    </div>
+    <div class="prim">
+      <span class="prim-name">crm-search</span>
+      <p>La recherche visible et persistante dans la barre d'outils. Jamais cachee derriere un raccourci (pas de Cmd+K) - elle se voit et se comprend en 2 secondes.</p>
+      <p class="where">Composant SearchInput partage (livre en Vague 1), cable sur les 5 listes.</p>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:28px">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+    <div><b>Garde-fous cadrage respectes :</b> bornage 1200px et retrait du decor (sobriete = layout) ; ligne riche, pas epuree (densite de signaux conservee) ; recherche visible, pas Cmd+K ; toggle Table/Cartes ; etats vides soignes ; pagination au-dela de 100 lignes ; 4 primitives nommees pour la coherence cross-pages. La palette workflow (import/qualify/convert) et les variantes AA <code>-deep</code> de la charte sont reutilisees telles quelles.</div>
+  </div>
+
+</div>
+</body>
+</html>
