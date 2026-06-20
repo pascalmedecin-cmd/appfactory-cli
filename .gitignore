@@ -73,3 +73,11 @@ scripts/image-rework/output/
 
 # Sous-projets autonomes (ont leur propre repo Git)
 Formation/
+
+# Hygiène working tree 2026-06-20 (bruit machine, jamais committé)
+*.flock
+._*
+.playwright-mcp/
+.trash/
+/branding/filmpro
+.claude/*.tmp.*

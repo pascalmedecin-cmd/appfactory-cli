@@ -25,3 +25,11 @@ vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 template/supabase/.temp/
 .env*.local
+
+# Hygiène working tree 2026-06-20 (artefacts product-architect régénérables + audits)
+.product-architect/decoupe/audit/
+.product-architect/decoupe/audit-shots/
+.product-architect/decoupe/qa-shots/
+.product-architect/decoupe/pdf-preview.html
+.product-architect/decoupe/pdf-stress.html
+notes/audit-mobile-v1-session-D/
