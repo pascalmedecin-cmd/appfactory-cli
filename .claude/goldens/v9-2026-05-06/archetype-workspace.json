@@ -1,0 +1,99 @@
+{
+  "name": "CRM FilmPro - Archétype Workspace",
+  "version": "v9",
+  "created_at": "2026-05-06",
+  "scope": "Pages denses operables : listes/tables d'entités CRM avec filtres, actions inline, slide-out détail. Tâche utilisateur principale = triage / qualification / opération sur volume.",
+  "reference_page": "/prospection (page modèle figée S164+S165)",
+  "applies_to_pages": ["/prospection", "/contacts", "/entreprises", "/pipeline", "/signaux"],
+
+  "_meta": {
+    "extracted_from": "v7 components + componentsPhase01.indicatorFlat + patterns figés S164/S165 (CLAUDE.md AppFactory ligne 242)",
+    "rule": "Toute page workspace consomme tokens.json + primitives.json + ce gabarit. Aucune divergence layout autorisée hors écart documenté + arbitré par Pascal."
+  },
+
+  "layout": {
+    "container": "max-w-full (pleine largeur sous header), pas de max-w restrictif",
+    "header": {
+      "structure": "Header condensé 2 rows (S164)",
+      "row1": {
+        "left": "H1 sémantique (titre page) + breadcrumb optionnel",
+        "right": "Actions globales (Importer, Nouveau, paramètres)"
+      },
+      "row2": {
+        "left": "Tabs ARIA underline (scopes : Entreprise / Marchés / Particuliers etc.)",
+        "right": "Actions contextuelles au tab actif (Filtres, Tri, Vue)",
+        "_note": "Pattern figé S164 : actions descendues dans tabs-bar = libère row 1 pour titre + actions globales uniquement"
+      },
+      "borderBottom": "1px solid var(--color-border) + petite ombre de scroll si overflow"
+    },
+    "filters": {
+      "scope": "Barre filtres horizontale au-dessus de la table",
+      "structure": "Search + select(s) canton/source/statut + reset link + count résultats",
+      "behavior": "Filtrage côté serveur via URL params (?canton=GE&source=zefix). Pas de filtrage client-side sur volume > 50 lignes.",
+      "rule": "Filtres collapsibles si > 4 sur mobile (pattern S126)"
+    },
+    "indicators": {
+      "scope": "Optional. Indicateurs flat premium au-dessus de la table principale (ex: /prospection 3 indicateurs).",
+      "layout": "grid 3 cols desktop, empilé 1 col mobile, border-y 1px, séparateurs verticaux 1px",
+      "padding": "28px 28px 28px 0 desktop / 16px vertical mobile",
+      "iconBox": { "size": "44×44 px", "borderRadius": "12px", "background": "radial-gradient(circle at 30% 30%, rgba(47,90,158,0.10), rgba(47,90,158,0.02))" },
+      "iconSize": "22px stroke 1.5",
+      "value": { "fontSize": "36px", "fontWeight": 700, "tabularNums": true, "color": "primary-dark", "letterSpacing": "-0.025em", "lineHeight": 1 },
+      "label": { "fontSize": "13px", "color": "text-muted", "fontWeight": 500 },
+      "trend": { "fontSize": "11px", "tabularNums": true, "iconSize": "12px stroke 2", "variants": ["up=success", "flat=text-muted", "info=info"] },
+      "rule": "Honnêteté > suggestion de parcours linéaire (décision 10 v7). Indicateurs factuels (Leads actifs / Marchés ouverts / Transférés ce mois), pas de funnel décoratif."
+    },
+    "table": {
+      "structure": "Voir primitives.json § dataTable",
+      "stickyColumns": "2 colonnes sticky gauche obligatoires (identifiant + nom) sur mobile et < 1280px",
+      "row": "tr cliquable ouvre SlideOut détail. aria-label obligatoire. Hover bg surface.",
+      "actions": "Cellule actions à droite : ActionButton(s) inline ou kebab menu (mobile)"
+    },
+    "slideOut": {
+      "scope": "Détail entité, ouvert sur clic ligne ou bouton 'Détails'",
+      "structure": "Header (titre + actions sticky) + sections collapsibles + footer actions",
+      "voir": "primitives.json § slideOut"
+    }
+  },
+
+  "patterns": {
+    "scorePillSystemic": {
+      "scope": "ScorePill apparaît systémique : table cellule score + LeadSlideOut header + tout endroit où une priorité/score est visualisée",
+      "rule": "Cohérence DRY UI principle (décision 9 v7). Jamais de Badge custom pour température/score. Toujours ScorePill."
+    },
+    "importModal": {
+      "scope": "Tout import multi-source passe par ImportModal (3 parcours : fichier_csv / saisie_manuelle / source_externe)",
+      "voir": "primitives.json § importModal",
+      "rule": "Pattern systémique pour /prospection (Zefix, search.ch, SIMAP, CSV) ET /contacts (CSV) ET futurs imports"
+    },
+    "confirmModal": {
+      "scope": "Toute action destructive ou état changeant",
+      "voir": "primitives.json § confirmModal"
+    },
+    "emptyStates": {
+      "rule": "Empty states contextuels selon filtre actif (S165). Pas de fallback générique."
+    }
+  },
+
+  "do_not": [
+    "Pas de hero éditorial, pas de mag-* typography (réservé archétype editorial)",
+    "Pas de fond primary-light en body (réservé sidebar/login/hero veille)",
+    "Pas de funnel décoratif, pas de progress steps imaginaires (décision 10)",
+    "Pas de Badge Chaud/Tiède/Froid → ScorePill obligatoire (décision 9)",
+    "Pas de window.confirm() → ConfirmModal obligatoire",
+    "Pas de filtrage client-side sur > 50 lignes → URL params + serveur",
+    "Pas de select déguisé en tabs → ARIA tabs obligatoire pour scopes"
+  ],
+
+  "must_have": [
+    "H1 sémantique unique en row 1 du header",
+    "Tabs ARIA si > 1 scope (entreprise/marchés/particuliers)",
+    "Sticky 2 cols left sur DataTable",
+    "ScorePill sur tout score visible",
+    "aria-label sur tr cliquable",
+    "Empty state contextualisé par filtre",
+    "ImportModal pour tout import",
+    "ConfirmModal pour toute action destructive",
+    "Focus-visible global (outline 2px primary)"
+  ]
+}

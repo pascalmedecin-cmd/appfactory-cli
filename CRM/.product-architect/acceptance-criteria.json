@@ -1,0 +1,188 @@
+{
+  "deliverable": "CRM FilmPro mobile V3 - outil terrain",
+  "version": "1.0",
+  "date": "2026-05-31",
+  "stack": "SvelteKit + Supabase + Tailwind v4 (stack reelle projet, pas le template Next.js)",
+  "criteria": [
+    {
+      "id": "AC-001",
+      "description": "Le shell mobile V3 n'expose que les ecrans IN (A faire, Rechercher, Fiche, Compte-rendu, Brouillon contact). Aucun lien vers prospection/signaux/veille/reporting/dashboard/log/kanban n'est atteignable.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Coeur du pivot V3 : terrain-only. Anti-overscope (feedback_mobile_overscope_anti_pattern)."
+    },
+    {
+      "id": "AC-002",
+      "description": "Navigation = exactement 2 onglets bas, aucun menu burger ni tiroir, profondeur max 2 (onglet -> fiche -> compte-rendu).",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Lisibilite = profondeur 1 (council). Verdict V2 : nav trop complexe."
+    },
+    {
+      "id": "AC-003",
+      "description": "L'ecran A faire affiche les relances dues reelles (opportunites.date_relance_prevue <= today, etape non close), cap 15. Empty state honnete si aucune.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Donnees reelles, jamais inventees (regle quality). Decision Pascal accueil = relances dues (ADR-0005)."
+    },
+    {
+      "id": "AC-004",
+      "description": "La recherche par nom (1 champ, sans filtre) renvoie une entreprise existante par raison_sociale.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Porte d'entree visite non agendee (Pascal : visites parfois planifiees)."
+    },
+    {
+      "id": "AC-005",
+      "description": "Depuis une fiche : boutons Appeler (tel:), Itineraire (maps:), Email (mailto:) ouvrent l'action native ; bouton grise si la donnee est absente.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 4,
+      "rationale": "Liens natifs iOS, testables seulement sur iPhone reel (feedback_crm_mobile_testing_devtools)."
+    },
+    {
+      "id": "AC-006",
+      "description": "Un compte-rendu (resultat enum + note + >=1 photo) s'enregistre et est relisible au desktop sur la meme entreprise (visite + photo + note presentes).",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "La seule ecriture plein. Boucle terrain complete bout-en-bout."
+    },
+    {
+      "id": "AC-007",
+      "description": "Le champ resultat n'accepte que les valeurs fermees de l'enum (pas d'option Autre). Une valeur hors enum est rejetee (Zod + CHECK DB).",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Regle UX projet : jamais d'Autre dans les listes (feedback_no_autre_in_lists)."
+    },
+    {
+      "id": "AC-008",
+      "description": "Aucun champ structurant (statut pipeline, score, qualification, raison_sociale) n'est modifiable depuis le mobile : aucun endpoint d'ecriture sur ces champs n'est expose au shell mobile.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 4,
+      "rationale": "Frontiere data dure (council Architecte) : mobile lit le referentiel, ecrit la trace terrain."
+    },
+    {
+      "id": "AC-009",
+      "description": "Un brouillon contact cree une ligne contact_suggestions (statut en_attente), JAMAIS une ligne contacts. Au moins un identifiant requis sinon 400.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Protege la qualite des donnees (Pascal : contact en brouillon a valider). ADR-0003."
+    },
+    {
+      "id": "AC-010",
+      "description": "Le desktop affiche un badge compteur (N contacts terrain a valider) ET permet validation/rejet/fusion en 1 clic. Une suggestion validee cree/fusionne une ligne contacts.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Mitigation file morte (council Critique) : sans badge, la feature est refusee."
+    },
+    {
+      "id": "AC-011",
+      "description": "L'etat d'envoi photo est visible (envoi / envoye / echec). Un echec reseau est rattrapable par Reessayer sans perte de la note saisie.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Mode d'echec silencieux le plus grave (council Critique) : photo perdue = perte de confiance."
+    },
+    {
+      "id": "AC-012",
+      "description": "Lisibilite : cibles tactiles >= 44x44 px, texte >= 16 px, contraste AA (4.5:1). axe-core 0 violation color-contrast sur les ecrans mobile.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "axe-core",
+      "owner_phase": 4,
+      "rationale": "Verdict V2 : peu de lisibilite. Tokens --deep + gate axe-core (feedback_a11y_deep_tokens_with_axe_gate)."
+    },
+    {
+      "id": "AC-013",
+      "description": "Flag ff_crm_mobile_v3 OFF -> comportement desktop inchange (zero regression). ON -> shell mobile servi sur viewport mobile.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Rollout controle + rollback. ADR-0004."
+    },
+    {
+      "id": "AC-014",
+      "description": "Tout endpoint d'ecriture V3 (POST visits, POST contact-suggestions, resolve) renvoie 401 sans session authentifiee.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Gate auth (RLS plate ne protege pas seule). ADR-0007."
+    },
+    {
+      "id": "AC-015",
+      "description": "Une visite peut etre enregistree sans coordonnees GPS (geoloc refusee) : visite persistee avec lat/lng NULL, sans erreur.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "GPS best-effort sur le terrain (ADR-0002, migration lat/lng nullable)."
+    },
+    {
+      "id": "AC-016",
+      "description": "code-review:security-auditor : 0 High/Critical/Medium sur les fichiers V3 (migrations + endpoints). Artifact audit_secu date persiste.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 4,
+      "rationale": "Definition of Done securite (rules/quality.md). Touche data model + endpoints d'ecriture."
+    },
+    {
+      "id": "AC-017",
+      "description": "Smoke iPhone reel Pascal : la boucle (fiche -> 3 actions natives -> compte-rendu avec photo -> relecture desktop) tient en <= 5 taps et est jugee lisible du premier coup d'oeil.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 4,
+      "rationale": "Metrique de succes = le meme test qui a recale la V2. Verdict binaire Pascal."
+    },
+    {
+      "id": "AC-018",
+      "description": "Empty/loading/error states presents sur les ecrans data-dependent (A faire, Rechercher, Fiche).",
+      "testable": true,
+      "blocking": false,
+      "test_type": "audit-uiux",
+      "owner_phase": 4,
+      "rationale": "Heuristics Nielsen (ux-guide). Advisory mais attendu."
+    },
+    {
+      "id": "AC-019",
+      "description": "GET et POST /api/visits retournent resultat + note (SELECT etendu) SANS retirer accuracy_m/distance_from_zefix_m/user_id consommes par le desktop. POST insere bien resultat+note.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Revue contracts H-1 : l'extension n'est pas un no-op, le code actuel n'ecrit/lit pas resultat+note. VisiteResume reste sur-ensemble (pas de regression desktop)."
+    },
+    {
+      "id": "AC-020",
+      "description": "Resolve sur une suggestion deja resolue (statut != en_attente) renvoie 409 et ne cree pas de 2e ligne contacts. Transition en_attente -> valide|rejete unique et irreversible.",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Revue contracts M : idempotence resolve, protege du double-clic = doublon (ADR-0003)."
+    }
+  ]
+}

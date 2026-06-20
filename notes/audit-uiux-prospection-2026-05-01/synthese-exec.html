@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Audit /prospection — Synthèse exécutive</title>
+<style>
+  :root {
+    --ink: #1a1f2b;
+    --muted: #5a6373;
+    --line: #e6e8ee;
+    --bg: #fafbfc;
+    --card: #ffffff;
+    --accent: #2b3a55;
+    --crit: #b3261e;
+    --high: #b06a00;
+    --med: #475669;
+    --low: #6b7280;
+    --ok: #2f6b3a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.55;
+    font-size: 16px;
+  }
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 56px 32px 80px;
+  }
+  header { margin-bottom: 40px; }
+  .kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  h1 {
+    font-size: 32px;
+    line-height: 1.2;
+    margin: 0 0 12px;
+    font-weight: 600;
+  }
+  .lede {
+    font-size: 18px;
+    color: var(--muted);
+    margin: 0;
+  }
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 48px 0 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+  }
+  p { margin: 0 0 12px; }
+  .verdict {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    padding: 20px 24px;
+    border-radius: 6px;
+    margin: 24px 0;
+  }
+  .verdict strong { color: var(--accent); }
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin: 24px 0;
+  }
+  .stat {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px 12px;
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 26px;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-num.crit { color: var(--crit); }
+  .stat-num.high { color: var(--high); }
+  .stat-num.med { color: var(--med); }
+  .stat-num.low { color: var(--low); }
+  .stat-num.info { color: var(--muted); }
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  ul { padding-left: 20px; margin: 0 0 16px; }
+  li { margin-bottom: 6px; }
+  .wave {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .wave-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+    gap: 12px;
+  }
+  .wave-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .wave-meta {
+    font-size: 13px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .wave p { color: var(--muted); margin: 0; }
+  .decisions {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 24px;
+  }
+  .decision { margin-bottom: 14px; }
+  .decision:last-child { margin-bottom: 0; }
+  .decision-q { font-weight: 600; margin-bottom: 2px; }
+  .decision-a { color: var(--muted); font-size: 14px; }
+  footer {
+    margin-top: 56px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  @media (max-width: 600px) {
+    main { padding: 32px 20px 56px; }
+    h1 { font-size: 26px; }
+    .stats { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+    .stat { padding: 12px 6px; }
+    .stat-num { font-size: 20px; }
+    .stat-label { font-size: 10px; }
+    .wave-head { flex-direction: column; gap: 4px; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="kicker">Audit UX/UI — 2026-05-01</div>
+    <h1>Page /prospection : ce qui ressort</h1>
+    <p class="lede">Synthèse exécutive. 91 problèmes recensés, 3 vagues de correctifs planifiées sur ~16 h de travail.</p>
+  </header>
+
+  <div class="verdict">
+    <p><strong>Verdict.</strong> La page /prospection n'est pas encore prête à servir de modèle pour les 6 autres pages du CRM. 31 problèmes bloquants doivent être corrigés avant promotion.</p>
+    <p style="margin-top: 8px; color: var(--muted); font-size: 14px;">Les fondamentaux sont solides (densité, pills, animations, persistance des largeurs de colonnes). Ce qui coince : sécurité, accessibilité clavier, et quelques choix esthétiques datés vs. les références du marché (Linear, Stripe, Notion, Attio).</p>
+  </div>
+
+  <h2>Le catalogue en un coup d'œil</h2>
+  <div class="stats">
+    <div class="stat"><div class="stat-num crit">4</div><div class="stat-label">Critique</div></div>
+    <div class="stat"><div class="stat-num high">27</div><div class="stat-label">Haut</div></div>
+    <div class="stat"><div class="stat-num med">38</div><div class="stat-label">Moyen</div></div>
+    <div class="stat"><div class="stat-num low">17</div><div class="stat-label">Bas</div></div>
+    <div class="stat"><div class="stat-num info">5</div><div class="stat-label">Info</div></div>
+  </div>
+
+  <h2>Les 3 problèmes qui pèsent le plus</h2>
+  <ul>
+    <li><strong>Faille de sécurité</strong> dans la barre de recherche (filtre non protégé). Risque concret en prod.</li>
+    <li><strong>Bouton « Importer » qui disparaît</strong> dès qu'un onglet est vide : workflow cassé pour démarrer.</li>
+    <li><strong>Tableau non utilisable au clavier</strong> : impossible d'ouvrir une fiche prospect sans souris (norme d'accessibilité non respectée).</li>
+  </ul>
+
+  <h2>Plan en 3 vagues</h2>
+
+  <div class="wave">
+    <div class="wave-head">
+      <p class="wave-title">Vague 1 — Bloquants prod</p>
+      <span class="wave-meta">≈ 4 h</span>
+    </div>
+    <p>Sécuriser la recherche, rétablir le bouton Importer, corriger le scroll vertical des onglets, rendre le tableau accessible au clavier. Sortie : prod sans risque sécurité, workflow d'entrée toujours disponible.</p>
+  </div>
+
+  <div class="wave">
+    <div class="wave-head">
+      <p class="wave-title">Vague 2 — Accessibilité</p>
+      <span class="wave-meta">≈ 6 h</span>
+    </div>
+    <p>Mettre la page au niveau WCAG AA : contrastes, indicateurs de focus, messages annoncés aux lecteurs d'écran, confirmation pour les actions destructives en lot. Sortie : conformité légale et clavier-only utilisable.</p>
+  </div>
+
+  <div class="wave">
+    <div class="wave-head">
+      <p class="wave-title">Vague 3 — Cohérence et finition</p>
+      <span class="wave-meta">≈ 6 h</span>
+    </div>
+    <p>Aligner sur la charte v7 (espacements, typo, couleurs neutres pour les onglets), ajouter la 1<sup>re</sup> colonne figée au scroll horizontal, calmer la zone TriageQueue. Sortie : page modèle, gabarit pour les 6 autres pages CRM.</p>
+  </div>
+
+  <h2>3 décisions à trancher avant lancement</h2>
+  <div class="decisions">
+    <div class="decision">
+      <div class="decision-q">1. Espacement des indicateurs en tête de page</div>
+      <div class="decision-a">Aligner sur l'échelle officielle (32 px) ou étendre l'échelle pour garder le 28 px actuel ? Reco : étendre l'échelle, le rendu actuel est juste.</div>
+    </div>
+    <div class="decision">
+      <div class="decision-q">2. Hauteur des boutons sur mobile</div>
+      <div class="decision-a">Garder 44 px (norme iOS, doigt) ou aligner sur 40 px desktop ? Reco : documenter l'exception mobile à 44 px.</div>
+    </div>
+    <div class="decision">
+      <div class="decision-q">3. Titre principal de la page</div>
+      <div class="decision-a">Le titre porté par le menu de gauche suffit-il ? Reco : oui, vérifié OK.</div>
+    </div>
+  </div>
+
+  <h2>Après les 3 vagues</h2>
+  <p>Re-audit complet sur la même méthode. Si la page passe le seuil (0 critique, 0 haut accessibilité, ≤ 5 hauts esthétiques), elle devient le gabarit pour /dashboard, /contacts, /entreprises, /pipeline, /signaux, /veille.</p>
+
+  <footer>
+    Méthode : 5 angles d'audit en parallèle (code statique, bugs cachés, audit machine en navigateur, benchmark externe Linear/Stripe/Notion/Attio, heuristiques Nielsen + WCAG). 91 problèmes consolidés après recoupement des sources.
+  </footer>
+</main>
+</body>
+</html>

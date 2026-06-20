@@ -1,0 +1,239 @@
+{
+  "deliverable": "Découpe Films (optimiseur de découpe, chantier 2 portail FilmPro)",
+  "version": "1.0",
+  "criteria": [
+    {
+      "id": "AC-001",
+      "description": "Créer un chantier (nom, client optionnel) le persiste avec statut 'en_saisie'",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest integration",
+      "owner_phase": 3,
+      "rationale": "Workflow étape 1 (brief §1)"
+    },
+    {
+      "id": "AC-002",
+      "description": "Saisir une vitre (L×H, quantité, type, produit, coche) la rattache au chantier ; quantité N = N pièces au nesting",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest integration",
+      "owner_phase": 3,
+      "rationale": "Workflow étape 2 + brief §4.3"
+    },
+    {
+      "id": "AC-003",
+      "description": "optimiserDecoupe : une vitre cochée sur-mesure fournisseur n'est jamais nestée et apparaît en liste de commande",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Règle structurante de la coche (brief §2)"
+    },
+    {
+      "id": "AC-004",
+      "description": "Garde-fou : produit nestable=false n'est jamais nesté quelle que soit la coche (mis en liste de commande)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Garde-fou nestable (brief §2) - empêche de nester vernis/e-film"
+    },
+    {
+      "id": "AC-005",
+      "description": "Incohérence (produit nestable=false + coche sur-mesure=non) produit une alerte explicite",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Jamais d'échec silencieux (brief §2/§6.5)"
+    },
+    {
+      "id": "AC-006",
+      "description": "Dimension de coupe = dimension vitre + marge de pose du produit (sur L et H), avant tout calcul",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Transformation initiale (brief §4.4), ADR-0003"
+    },
+    {
+      "id": "AC-007",
+      "description": "Multi-laizes : l'algo teste chaque laize du produit et retient celle qui minimise la longueur consommée",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Choix de laize (brief §6.2)"
+    },
+    {
+      "id": "AC-008",
+      "description": "Rotation : orientation_imposee=true interdit le pivot 90° ; false l'autorise et garde le meilleur calage",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Rotation des pièces (brief §6.3)"
+    },
+    {
+      "id": "AC-009",
+      "description": "Vitre plus large que la laize max + jointage_autorise=false → signalée 'non plaçable' (jamais omise)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Faisabilité (brief §6.4) - jamais d'omission silencieuse"
+    },
+    {
+      "id": "AC-010",
+      "description": "Vitre plus large que la laize + jointage_autorise=true → découpée en lés ≤ laize, recouvrement du produit ajouté à la matière, pose en lés signalée",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Pose en lés + recouvrement Q4 (brief §6.4)"
+    },
+    {
+      "id": "AC-011",
+      "description": "recouvrement_mm défaut 0 → partage géométrique pur (aucune matière ajoutée aux jointures)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Q4 : champ produit, défaut 0, intégré au calcul"
+    },
+    {
+      "id": "AC-012",
+      "description": "Sortie par produit : placements (x,y,rotation), longueur consommée, taux de chute = (surface_rouleau - surface_pièces)/surface_rouleau",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Sortie de l'optimisation (brief §6.6)"
+    },
+    {
+      "id": "AC-013",
+      "description": "Consolidation : vitres de plusieurs chantiers, même produit × même laize, découpe interne, nestable → nestées ensemble",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Consolidation multi-chantiers (brief §5)"
+    },
+    {
+      "id": "AC-014",
+      "description": "Consolidation suggérée : ne propose que des chantiers statut='en_saisie' partageant produit × laize (pas de fenêtre de temps)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Q3 : critère 'non lancé' seul"
+    },
+    {
+      "id": "AC-015",
+      "description": "Lancer une découpe passe le(s) chantier(s) sélectionné(s) en statut 'lancee' (exclus de la conso suggérée ensuite)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest integration",
+      "owner_phase": 3,
+      "rationale": "État chantier (brief §4.1) + conso suggérée (§5)"
+    },
+    {
+      "id": "AC-016",
+      "description": "L'écran d'optimisation affiche le plan SVG par produit, le taux de chute, la liste de commande et les alertes",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Sortie exploitable à l'atelier (brief §6.6)"
+    },
+    {
+      "id": "AC-017",
+      "description": "Le plan de découpe est accessible : SVG avec rôle/alternative + table de repli (dimensions/positions lisibles)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "axe-core",
+      "owner_phase": 4,
+      "rationale": "Plan exécuté à l'atelier ; 0 violation sérieuse/critique"
+    },
+    {
+      "id": "AC-018",
+      "description": "RLS : un utilisateur non authentifié ne peut lire/écrire aucune des 3 tables decoupe_*",
+      "testable": true,
+      "blocking": true,
+      "test_type": "pgTAP integration",
+      "owner_phase": 4,
+      "rationale": "RLS réelle non prouvée par mocks (M-48), ADR-0004"
+    },
+    {
+      "id": "AC-019",
+      "description": "Entrées CRUD validées par Zod (dimensions > 0, quantité ≥ 1, laizes > 0, marge/recouvrement ≥ 0, famille dans l'enum)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Defense-in-depth, cohérent avec les 19 form actions Zod du CRM"
+    },
+    {
+      "id": "AC-020",
+      "description": "Audit sécurité 0 H/C/M sur les fichiers Découpe Films, artefact daté produit",
+      "testable": true,
+      "blocking": true,
+      "test_type": "code-review:security-auditor",
+      "owner_phase": 4,
+      "rationale": "Definition of Done sécu projet"
+    },
+    {
+      "id": "AC-021",
+      "description": "svelte-check 0 erreur et suite Vitest complète verte (zéro régression CRM)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 4,
+      "rationale": "Critère de clôture projet"
+    },
+    {
+      "id": "AC-022",
+      "description": "Card portail 'Découpe Films' devient active (href /decoupe) quand le flag ffDecoupe est ON",
+      "testable": true,
+      "blocking": false,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Entrée par la card existante (Q1) + feature flag"
+    },
+    {
+      "id": "AC-023",
+      "description": "Empty states présents (aucun chantier, aucune vitre, aucun produit) avec action claire",
+      "testable": true,
+      "blocking": false,
+      "test_type": "ux-guide",
+      "owner_phase": 4,
+      "rationale": "Heuristiques Nielsen, outil neuf = beaucoup d'états vides au départ"
+    },
+    {
+      "id": "AC-024",
+      "description": "Export PDF du plan de découpe : depuis l'écran d'optimisation, génère un PDF vectoriel contenant le plan par produit, le taux de chute, la liste de commande et les alertes",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Sortie PDF demandée (Pascal 2026-06-05), exécutée à l'atelier - ADR-0005"
+    },
+    {
+      "id": "AC-025",
+      "description": "Le template PDF FilmPro (en-tête, mise en page, identité) est validé visuellement par Pascal au checkpoint dédié avant clôture",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 4,
+      "rationale": "Template à valider ensemble (Pascal 2026-06-05) - ADR-0005"
+    }
+  ],
+  "out_of_scope": [
+    "Aucun prix / chiffrage / devis (périmètre figé brief §0)",
+    "Pas de FK référentiel entreprises/contacts au MVP (rattachement client = champ libre, Q1)",
+    "Pas de persistance du plan de découpe (recalculé à la demande, déterministe, ADR-0002)",
+    "Pas d'attributs produit au-delà du minimum + champ notes (Q2)",
+    "Pas de fenêtre de temps pour la consolidation suggérée (Q3)",
+    "Pas d'envoi PDF automatisé par email (export manuel à la demande seulement, ADR-0005)"
+  ]
+}

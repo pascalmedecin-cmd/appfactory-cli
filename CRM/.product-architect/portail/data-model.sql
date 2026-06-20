@@ -1,0 +1,76 @@
+-- ============================================================================
+-- data-model.sql - Portail FilmPro multi-outils (chantier 1)
+-- ============================================================================
+-- IMPORTANT : ce chantier ne CREE ni ne RESTRUCTURE aucune table.
+-- Il reorganise des routes et renomme l'app. Aucune migration n'est appliquee ici.
+-- Ce fichier DOCUMENTE (a) le referentiel partage existant formalise comme contrat,
+-- (b) l'esquisse des tables Devis (chantier 2, NON appliquee) pour prouver que le
+-- referentiel suffit sans toucher l'existant.
+-- Principe migrations : add-column-only, jamais destructif (Supabase Vibe Coder's Guide).
+-- ============================================================================
+
+-- ----------------------------------------------------------------------------
+-- (A) REFERENTIEL PARTAGE - EXISTANT, inchange. Contrat formalise (ADR-0002).
+-- ----------------------------------------------------------------------------
+-- Source unique de verite "client", partagee par TOUS les outils.
+-- Ecriture exclusivement via la couche service src/lib/server/referentiel/.
+--
+--   entreprises ( id UUID PK, raison_sociale, adresse, canton, ... )   -- index trgm sur nom
+--   contacts    ( id UUID PK, entreprise_id FK -> entreprises, prenom, nom, role, tel, email, ... )
+--   utilisateurs( id UUID PK, email, ... )                              -- auth + tracabilite
+--
+-- Regle d'isolation : aucun outil ne duplique ces tables. Tout outil pointe vers
+-- elles via entreprise_id / contact_id. (Voir data-model-fondations.md.)
+
+-- ----------------------------------------------------------------------------
+-- (B) TABLES METIER CRM - EXISTANTES, inchangees ce chantier.
+-- ----------------------------------------------------------------------------
+--   opportunites, signaux_affaires, prospect_lead_signals, prospect_leads,
+--   intelligence_reports, activites, prospect_visits, prospect_photos,
+--   contact_suggestions
+-- -> Aucune modification. Propriete de l'outil CRM (et Terrain V3 pour visits/photos).
+
+-- ----------------------------------------------------------------------------
+-- (C) ESQUISSE OUTIL DEVIS - chantier 2, NON APPLIQUEE. Documentaire.
+-- ----------------------------------------------------------------------------
+-- But : prouver que le referentiel partage suffit (FK vers entreprises/contacts),
+-- sans aucune modification de l'existant. A valider/affiner au chantier 2.
+--
+-- CREATE TABLE catalogue_produits (
+--   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   nom           TEXT NOT NULL,                 -- ex : "Film solaire reflechissant"
+--   categorie     TEXT NOT NULL,                 -- 'film' | 'vernis'
+--   prix_m2       NUMERIC(10,2) NOT NULL,        -- prix unitaire au m2 (CHF)
+--   unite         TEXT NOT NULL DEFAULT 'm2',
+--   actif         BOOLEAN NOT NULL DEFAULT true,
+--   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+-- );
+--
+-- CREATE TABLE devis (
+--   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   entreprise_id UUID NOT NULL REFERENCES entreprises(id),   -- referentiel partage
+--   contact_id    UUID REFERENCES contacts(id),               -- referentiel partage
+--   opportunite_id UUID REFERENCES opportunites(id),          -- passerelle B (ADR-0003), nullable
+--   statut        TEXT NOT NULL DEFAULT 'brouillon',          -- brouillon|envoye|accepte|refuse
+--   total_ht      NUMERIC(12,2) NOT NULL DEFAULT 0,
+--   date_validite DATE,
+--   auteur_id     UUID NOT NULL REFERENCES utilisateurs(id),  -- tracabilite
+--   created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+--   updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+-- );
+-- CREATE INDEX idx_devis_entreprise_id ON devis(entreprise_id);   -- index-aware RLS perf
+--
+-- CREATE TABLE devis_lignes (
+--   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--   devis_id      UUID NOT NULL REFERENCES devis(id) ON DELETE CASCADE,
+--   produit_id    UUID REFERENCES catalogue_produits(id),
+--   designation   TEXT NOT NULL,
+--   surface_m2    NUMERIC(10,2) NOT NULL,
+--   prix_unitaire NUMERIC(10,2) NOT NULL,
+--   montant       NUMERIC(12,2) NOT NULL
+-- );
+-- CREATE INDEX idx_devis_lignes_devis_id ON devis_lignes(devis_id);
+--
+-- CONCLUSION FONDATION : ces 3 tables se branchent uniquement par FK sur
+-- entreprises / contacts / opportunites / utilisateurs. Le referentiel partage
+-- pose ce chantier suffit. AUCUNE modification de l'existant requise. Fondation validee.

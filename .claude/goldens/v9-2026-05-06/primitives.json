@@ -1,0 +1,227 @@
+{
+  "name": "CRM FilmPro - Primitives (couche universelle)",
+  "version": "v9",
+  "created_at": "2026-05-06",
+  "scope": "Composants partagés par TOUS les archétypes. Source unique de vérité pour Button, Input, Card, Modal, Badge, ScorePill, ActionButton, Dot, SlideOut, ConfirmModal, ImportModal, DataTable, Navigation. Aucune surcharge locale autorisée.",
+  "_meta": {
+    "extracted_from": "v7-2026-05-01 components + componentsPhase01 + patterns figés S164/S165",
+    "rule": "Toute page consomme ces primitives. Si une page a besoin d'un comportement non couvert : étendre la primitive, pas inventer de variante locale."
+  },
+
+  "button": {
+    "height": "40px",
+    "borderRadius": "10px",
+    "paddingY": "8px",
+    "paddingX": "16px",
+    "fontFamily": "DM Sans",
+    "fontSize": "14px",
+    "fontWeight": 600,
+    "letterSpacing": "0",
+    "textTransform": "none",
+    "boxSizing": "border-box",
+    "variants": {
+      "primary": { "bg": "#2F5A9E", "color": "#FFFFFF", "border": "none", "hover": "#264C85" },
+      "secondary": { "bg": "transparent", "color": "#7B6A9A", "border": "1px solid rgba(123, 106, 154, 0.3)", "fontWeight": 500 },
+      "tertiary": { "bg": "transparent", "color": "#111827", "border": "none", "fontWeight": 400 },
+      "destructive": { "bg": "#F04438", "color": "#FFFFFF", "border": "none", "hover": "#C9342A" }
+    }
+  },
+
+  "input": {
+    "height": "34px",
+    "borderRadius": "8px",
+    "borderWidth": "1px",
+    "borderColor": "#E5E7EB",
+    "borderColorFocus": "#2F5A9E",
+    "paddingY": "6px",
+    "paddingX": "12px",
+    "fontSize": "14px",
+    "color": "#111827",
+    "placeholderColor": "#6B7280",
+    "background": "#FFFFFF"
+  },
+
+  "card": {
+    "borderRadius": "10px",
+    "borderWidth": "1px",
+    "borderColor": "#E5E7EB",
+    "padding": "16px",
+    "shadow": "0 1px 2px rgba(16,24,40,0.05)",
+    "background": "#FFFFFF"
+  },
+
+  "modal": {
+    "borderRadius": "12px",
+    "padding": "24px",
+    "maxWidth": "560px",
+    "shadow": "0 4px 8px -2px rgba(16,24,40,0.1), 0 2px 4px -2px rgba(16,24,40,0.06)",
+    "backdropColor": "rgba(0, 0, 0, 0.4)",
+    "headerVariants": {
+      "default": "Header neutre border-b border-border, titre text-text",
+      "accent": "Header bg-primary text-white (emphasis fort) — pattern indépendant du Badge variant 'accent' supprimé S118"
+    }
+  },
+
+  "confirmModal": {
+    "scope": "Modal de confirmation destructive ou état changeant. Pattern S164 systémique CRM.",
+    "structure": "Header (titre + close) + body (description + impacts) + footer (Annuler tertiary + Confirmer destructive ou primary)",
+    "rule": "Toute action destructive (suppression, retrait, désactivation) DOIT passer par ConfirmModal. Pas de window.confirm()."
+  },
+
+  "importModal": {
+    "scope": "Modal contextuel premium 3 parcours pour import multi-source. Pattern S164 figé /prospection.",
+    "parcours": ["fichier_csv", "saisie_manuelle", "depuis_source_externe"],
+    "header": "Header bg-primary headerVariant='accent' (emphasis fort)",
+    "navigation": "Sélecteur 3 parcours + back button entre étapes + close header",
+    "validation": "Zod côté action SvelteKit, feedback inline par champ, blocage submit si erreurs",
+    "rule": "Pattern réutilisable pour toute opération multi-source structurée. Voir /prospection +page.svelte comme référence."
+  },
+
+  "dataTable": {
+    "headerFontSize": "12px",
+    "headerFontWeight": 600,
+    "headerColor": "#6B7280",
+    "headerHeight": "48px",
+    "cellPaddingY": "12px",
+    "cellPaddingX": "16px",
+    "cellFontSize": "14px",
+    "cellAlignmentOffset": "+4px (vertical alignment ajusté pour contenu mixte text + ScorePill, S165)",
+    "rowHoverBg": "#F9FAFB",
+    "borderColor": "#E5E7EB",
+    "layout": "table-fixed (S48 rule)",
+    "stickyColumns": {
+      "rule": "Pattern S164 figé : 2 colonnes sticky (gauche) pour identifiant + nom dans tables denses",
+      "implementation": "position: sticky, left: 0, z-index: 1, bg opaque pour overlap correct au scroll horizontal",
+      "shadow": "border-r 1px var(--color-border) + ombre légère au scroll"
+    },
+    "columnTypeShape": {
+      "_comment": "Type Column.srLabel obligatoire pour headers vides (pattern S165)",
+      "key": "string (data accessor)",
+      "label": "string (visible header)",
+      "srLabel": "string (a11y label si label vide, requis pour conformité axe-core)",
+      "align": "left | center | right",
+      "width": "string Tailwind (w-X) ou px",
+      "sticky": "boolean (left only pour V1)"
+    },
+    "rowSemantic": "aria-label obligatoire sur <tr> cliquable (pattern S164). Formule recommandée : `${entity.name}, score ${entity.score}, statut ${entity.status}`",
+    "emptyStates": {
+      "scope": "Empty states contextuels pattern S165",
+      "rule": "Chaque table fournit son propre empty state contextualisé : 'Aucun lead pour ce filtre' ≠ 'Aucun lead dans la base'. Pas de fallback générique 'Aucune donnée'.",
+      "structure": "Icône Lucide + titre H3 + description + CTA contextuel (souvent 'Importer' ou 'Réinitialiser filtres')"
+    }
+  },
+
+  "tabs": {
+    "scope": "Pattern ARIA tabs distinctifs underline figé S164.",
+    "structure": "<div role='tablist'> + <button role='tab' aria-selected aria-controls> + <div role='tabpanel' aria-labelledby>",
+    "visual": {
+      "container": "border-b border-border, padding-x aligné header, gap-1",
+      "tab": "h-10, px-4, text-sm font-medium, border-b-2 border-transparent, text-text-muted, hover:text-text",
+      "tabActive": "border-b-2 border-primary, text-primary, font-semibold",
+      "tabFocus": "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    },
+    "actions": "Actions contextuelles descendues dans tabs-bar (côté droit). Pattern header condensé S164 : titre H1 + actions globales en row 1, tabs + actions contextuelles en row 2.",
+    "rule": "Tous les changements de scope (tab Entreprise vs Marchés vs Particuliers etc.) DOIVENT passer par tabs ARIA. Pas de select déguisé en tabs."
+  },
+
+  "badge": {
+    "borderRadius": "10px",
+    "paddingY": "4px",
+    "paddingX": "8px",
+    "fontSize": "12px",
+    "fontWeight": 500,
+    "variants": {
+      "default": { "bg": "#F0F4F8", "color": "#2F5A9E", "border": "1px solid #2F5A9E" },
+      "info": { "bg": "#EDF1F5", "color": "#5A7190", "border": "1px solid rgba(90, 113, 144, 0.15)" },
+      "success": { "bg": "#ECFDF5", "color": "#538B6B" },
+      "warning": { "bg": "#FFFAEB", "color": "#B95400" },
+      "error": { "bg": "#FEF3F2", "color": "#C9342A" },
+      "muted": { "bg": "#F9FAFB", "color": "#6B7280" }
+    }
+  },
+
+  "scorePill": {
+    "scope": "Pill sémantique de priorité commerciale (Linear Priority pattern). Universal — utilisé en /prospection table + LeadSlideOut + dashboard TriageQueue + /contacts + /entreprises.",
+    "height": "26px",
+    "padding": "0 11px",
+    "borderRadius": "6px",
+    "gap": "7px",
+    "fontSize": "12px",
+    "fontWeight": 600,
+    "letterSpacing": "0.005em",
+    "minWidth": { "default": "130px", "compact": "auto" },
+    "icon": { "size": "14px", "strokeWidth": 2, "library": "lucide" },
+    "variants": {
+      "chaud": { "label": "Prioritaire", "bg": "#FFF1EC", "color": "#C0391A", "iconStroke": "#E04F2E", "icon": "flame", "scoreRange": "≥7" },
+      "tiede": { "label": "À qualifier", "bg": "#FFF7E6", "color": "#B54708", "iconStroke": "#DC8915", "icon": "target", "scoreRange": "4-6" },
+      "froid": { "label": "Faible signal", "bg": "#EDF1F5", "color": "#475669", "iconStroke": "#5A7190", "icon": "eye", "scoreRange": "0-3" },
+      "unscored": { "label": "Non scoré", "bg": "var(--color-surface-alt)", "color": "var(--color-text-muted)", "iconStroke": "var(--color-text-muted)", "icon": "schedule" }
+    }
+  },
+
+  "actionButton": {
+    "scope": "Bouton icône property-style (Notion / Stripe). Universal — queue triage dashboard + slide-outs + tables denses.",
+    "size": "36×36 px",
+    "padding": "0",
+    "borderRadius": "8px",
+    "border": "1px solid transparent (repos)",
+    "background": "transparent (repos)",
+    "icon": { "size": "17px", "strokeWidth": 1.75 },
+    "transition": "transform 220ms cubic-bezier(0.16, 1, 0.3, 1), background 220ms cubic-bezier(0.16, 1, 0.3, 1), color 180ms ease, box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1)",
+    "hover": "transform: translateY(-1px) + bg tinté + icône saturation 100% + tinted shadow",
+    "active": "transform: scale(0.96) translateY(0); transition-duration: 80ms",
+    "focusVisible": "box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.30)",
+    "variants": {
+      "yes": { "iconColorRest": "#6E9C8F", "hoverBg": "#ECFDF3", "hoverColor": "#027A48" },
+      "no": { "iconColorRest": "#C28A86", "hoverBg": "#FFF1EC", "hoverColor": "#C0391A" },
+      "later": { "iconColorRest": "#8A95A8", "hoverBg": "var(--color-info-light)", "hoverColor": "var(--color-info)" },
+      "view": { "iconColorRest": "#7B8FAE", "hoverBg": "var(--color-primary-light)", "hoverColor": "var(--color-primary)" }
+    },
+    "mobile": { "width": "100%", "height": "44px (HIG iOS)", "label": "::after content (visible)", "grid": "2x2" }
+  },
+
+  "dot": {
+    "size": "8px",
+    "borderRadius": "9999px",
+    "comment": "Indicateur statut/température, sans texte. Variants par couleur sémantique."
+  },
+
+  "slideOut": {
+    "scope": "Panneau latéral droit pour détail entité (lead, contact, entreprise). Pattern S45 + figé S164.",
+    "width": "560px",
+    "widthMobile": "100vw",
+    "padding": "24px",
+    "backdropColor": "rgba(0, 0, 0, 0.4)",
+    "shadow": "-8px 0 16px rgba(16,24,40,0.1)",
+    "headerSticky": true,
+    "headerBg": "#FFFFFF",
+    "headerBorder": "1px solid #E5E7EB",
+    "rule": "S45 — sticky header doit avoir fond opaque + border-bottom. Focus trap obligatoire. Escape ferme. Return focus au déclencheur.",
+    "structure": "Header sticky (titre + close + actions) + body scrollable + footer sticky (actions principales)"
+  },
+
+  "navigation": {
+    "header": {
+      "height": "48px",
+      "borderBottom": "1px solid #E5E7EB",
+      "background": "#FFFFFF"
+    },
+    "sidebar": {
+      "width": "240px",
+      "widthCollapsed": "64px",
+      "background": "#F0F4F8",
+      "borderRight": "1px solid #E5E7EB",
+      "itemHeight": "40px",
+      "itemBorderRadius": "10px",
+      "itemPaddingX": "12px",
+      "_note": "Background utilise --color-primary-light (palette éditoriale). Différent du fond CRM standard #FFFFFF. Cohérent avec hero /veille."
+    }
+  },
+
+  "rules": {
+    "tableLayout": "table-fixed obligatoire pour respecter max-w (S48)",
+    "stickyHeader": "tout sticky/fixed doit avoir bg opaque + séparateur (S45)",
+    "batchActionsBar": "flex-wrap sous 640px obligatoire (S45)",
+    "focusVisibleGlobal": "Pattern figé S164 : focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sur TOUT élément interactif (boutons, links, inputs, tr cliquables)"
+  }
+}

@@ -1,0 +1,251 @@
+{
+  "deliverable": "Refonte mobile CRM FilmPro",
+  "version": "1.0",
+  "date": "2026-05-24",
+  "scope": "5 pages MOBILE-ESSENTIEL (Prospection, Contacts, Entreprises, Pipeline, Reporting) + 4 pages MOBILE-OK polish (Dashboard, Signaux, Veille, Aide)",
+  "criteria": [
+    {
+      "id": "AC-001",
+      "description": "Page Prospection en viewport < 1024px : aucune table HTML rendue, cards 1 colonne avec score + raison sociale + canton + statut + bouton tap-to-call",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Objectif 0 tableau mobile (Q3.b)"
+    },
+    {
+      "id": "AC-002",
+      "description": "Page Contacts en viewport < 1024px : aucune table HTML rendue, cards 1 colonne avec nom + entreprise + fonction + boutons tél/email",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Objectif 0 tableau mobile (Q3.b)"
+    },
+    {
+      "id": "AC-003",
+      "description": "Page Entreprises en viewport < 1024px : forçage Cards view (toggle masqué), table view inaccessible",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Cards view existe déjà, juste forcer le défaut mobile"
+    },
+    {
+      "id": "AC-004",
+      "description": "Page Pipeline en viewport < 1024px : kanban remplacé par accordéon 6 étapes (header = nom + count + somme CHF), tap header expand/collapse, drag-drop tactile désactivé",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Kanban impossible en tactile (D-03)"
+    },
+    {
+      "id": "AC-005",
+      "description": "Page Reporting en viewport < 1024px : KPI + charts visibles, ReportingPipelineTable masquée, export CSV masqué",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Reporting allégé mobile"
+    },
+    {
+      "id": "AC-006",
+      "description": "Aucun scroll horizontal détecté sur viewport iPhone 14 Pro Max (430x932) sur les 10 pages CRM (sauf Log volontairement desktop-only)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Critère succès Q3.a"
+    },
+    {
+      "id": "AC-007",
+      "description": "Composant <MobileEntityCard> extrait dans src/lib/components/mobile/MobileEntityCard.svelte avec props (titre, sousTitre, badges, actions[]), réutilisé par Prospection + Contacts + Entreprises + Signaux",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 3,
+      "rationale": "DRY cross-page (D-02)"
+    },
+    {
+      "id": "AC-008",
+      "description": "Composant <PipelineMobileAccordion> créé dans src/lib/components/pipeline/PipelineMobileAccordion.svelte, animation transform-only (pas height), gestion clavier (Enter/Space toggle)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 3,
+      "rationale": "Pipeline accordéon spec (D-03)"
+    },
+    {
+      "id": "AC-009",
+      "description": "Tap targets >= 44x44 CSS pixels sur tous boutons/liens interactifs en mobile (axe-core target-size rule)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "axe-core",
+      "owner_phase": 4,
+      "rationale": "A11y AA (Q5)"
+    },
+    {
+      "id": "AC-010",
+      "description": "axe-core : 0 violation sérieuse, 0 violation critique sur les 10 pages CRM viewport mobile et desktop",
+      "testable": true,
+      "blocking": true,
+      "test_type": "axe-core",
+      "owner_phase": 4,
+      "rationale": "A11y AA (Q5)"
+    },
+    {
+      "id": "AC-011",
+      "description": "Contrastes WCAG >= 4.5:1 sur tous textes interactifs et informatifs (audit chartes couleur)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "axe-core",
+      "owner_phase": 4,
+      "rationale": "A11y AA (Q5)"
+    },
+    {
+      "id": "AC-012",
+      "description": "Lighthouse mobile Performance >= 90 sur les 5 pages refondues (preset mobile, run Vercel preview)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Lighthouse CI",
+      "owner_phase": 4,
+      "rationale": "Critère succès Q3.c"
+    },
+    {
+      "id": "AC-013",
+      "description": "Lighthouse mobile Accessibility >= 90 sur les 5 pages refondues",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Lighthouse CI",
+      "owner_phase": 4,
+      "rationale": "Critère succès Q3.c"
+    },
+    {
+      "id": "AC-014",
+      "description": "Lighthouse mobile Best Practices >= 90 sur les 5 pages refondues",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Lighthouse CI",
+      "owner_phase": 4,
+      "rationale": "Critère succès Q3.c"
+    },
+    {
+      "id": "AC-015",
+      "description": "Lighthouse mobile SEO >= 90 sur les 5 pages refondues",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Lighthouse CI",
+      "owner_phase": 4,
+      "rationale": "Critère succès Q3.c"
+    },
+    {
+      "id": "AC-016",
+      "description": "Snapshots Playwright desktop existants (viewport >= 1024px) 100 % verts (0 régression desktop)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Contrainte non négociable (Q5.b)"
+    },
+    {
+      "id": "AC-017",
+      "description": "Aucune policy RLS Supabase modifiée (refonte UI pure)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 3,
+      "rationale": "Contrainte non négociable (Q5.c)"
+    },
+    {
+      "id": "AC-018",
+      "description": "User flow F1 (Signal -> conversion prospect -> relance) exécutable sur Playwright preset iPhone 14 Pro Max en moins de 4 taps sur le chemin critique",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Flow critique F1"
+    },
+    {
+      "id": "AC-019",
+      "description": "User flow F2 (Création fiche terrain + photo + appel) : modal bottom sheet 4 champs, redirect Prospection, slide-out photos, lien tel: natif fonctionnel",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Flow critique F2"
+    },
+    {
+      "id": "AC-020",
+      "description": "User flow F3 (Pipeline accordéon -> faire avancer opp) : 3 taps max pour expand + ouvrir opp, bouton Faire avancer dans SlideOut fonctionnel",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Flow critique F3"
+    },
+    {
+      "id": "AC-021",
+      "description": "Empty states présents et lisibles mobile sur cards Prospection vide / accordéon Pipeline étape vide / Contacts vide / Entreprises vide / Reporting sans data",
+      "testable": true,
+      "blocking": true,
+      "test_type": "audit-uiux",
+      "owner_phase": 4,
+      "rationale": "ux-guide error/empty states"
+    },
+    {
+      "id": "AC-022",
+      "description": "Loading states (skeletons) présents sur les cards pendant data fetch",
+      "testable": true,
+      "blocking": true,
+      "test_type": "audit-uiux",
+      "owner_phase": 4,
+      "rationale": "ux-guide loading states"
+    },
+    {
+      "id": "AC-023",
+      "description": "code-review:security-auditor : 0 H/C/M, artifact ~/.claude/projects/.../memory/audit_secu_2026-05-XX_crm_mobile_v2.md persisté",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 4,
+      "rationale": "Definition of Done sécurité"
+    },
+    {
+      "id": "AC-024",
+      "description": "code-review:contracts-reviewer : 0 breaking change non documenté en ADR (data model + API contracts inchangés)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 4,
+      "rationale": "0 régression contrats"
+    },
+    {
+      "id": "AC-025",
+      "description": "code-review:bug-hunter : 0 finding Critical sur les fichiers modifiés",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 4,
+      "rationale": "Definition of Done bugs"
+    },
+    {
+      "id": "AC-026",
+      "description": "Feature flag ff_crm_mobile_v2 implémenté via JWT custom claims Supabase, kill switch testé (rollback < 60s)",
+      "testable": true,
+      "blocking": false,
+      "test_type": "manual verification",
+      "owner_phase": 5,
+      "rationale": "Rollout plan advisory, no-debt mais non-bloquant phase 4"
+    },
+    {
+      "id": "AC-027",
+      "description": "Safe area iOS gérée (env(safe-area-inset-*) sur sidebar burger + bottom SlideOut + bottom FAB)",
+      "testable": true,
+      "blocking": false,
+      "test_type": "manual verification",
+      "owner_phase": 3,
+      "rationale": "Confort iPhone récents (notch + home indicator)"
+    }
+  ]
+}

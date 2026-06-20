@@ -1,0 +1,43 @@
+-- ============================================================================
+-- rls-policies.sql - Portail FilmPro multi-outils (chantier 1)
+-- ============================================================================
+-- AUCUNE policy RLS n'est creee ni modifiee dans ce chantier.
+-- Le modele mono-tenant plat est CONSERVE (decision design L-03, 3 fondateurs symetriques).
+-- Ce fichier documente l'etat et la regle pour les futurs outils.
+-- ============================================================================
+
+-- ETAT EXISTANT (inchange) :
+-- ~11 tables (entreprises, contacts, opportunites, prospect_leads, signaux_affaires,
+-- prospect_visits, prospect_photos, contact_suggestions, intelligence_reports,
+-- activites, ...) ont une policy du type :
+--
+--   ALTER TABLE <table> ENABLE ROW LEVEL SECURITY;
+--   CREATE POLICY "<table>_all_authenticated" ON <table>
+--     FOR ALL TO authenticated
+--     USING (true) WITH CHECK (true);
+--
+-- => Tout utilisateur authentifie (@filmpro.ch, OTP) voit/modifie tout.
+-- => DELETE photos/visites loggent auteur_id pour tracabilite (sans bloquer).
+
+-- ----------------------------------------------------------------------------
+-- REGLE POUR LE PORTAIL ET LES FUTURS OUTILS
+-- ----------------------------------------------------------------------------
+-- 1. Le referentiel partage (entreprises/contacts) garde la policy mono-tenant plat.
+--    Le partage entre outils ne change RIEN a la RLS : meme tenant, memes 3 users.
+-- 2. Le futur outil Devis (chantier 2) creera ses tables avec la MEME convention
+--    mono-tenant plat tant que le tenant reste les 3 fondateurs :
+--
+--    -- (chantier 2, NON applique)
+--    -- ALTER TABLE devis ENABLE ROW LEVEL SECURITY;
+--    -- CREATE POLICY "devis_all_authenticated" ON devis
+--    --   FOR ALL TO authenticated USING (true) WITH CHECK (true);
+--
+-- ----------------------------------------------------------------------------
+-- RISQUE OUVERT (hors-scope ce chantier, documente)
+-- ----------------------------------------------------------------------------
+-- Avant l'ajout d'un 4e utilisateur NON-fondateur : durcir vers des policies
+-- created_by = (select auth.uid()) (wrapper pour cache initPlan + perf) OU role admin,
+-- + suite d'integration pgTAP contre une vraie DB avec une session non-admin.
+-- Les tests Vitest mockent supabase-js et ne prouvent RIEN sur la RLS reelle.
+-- Refs : CLAUDE.md CRM L-03 / M-48, feedback_rls_multitenant_durcissement_si_4_users,
+--        feedback_rls_mocks_insufficient_S99.

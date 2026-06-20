@@ -1,0 +1,1272 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Mockup /pipeline FilmPro — refonte v9</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     TOKENS GOLDEN v9 (universel)
+  ============================================================ */
+  :root {
+    --c-bg: #FAFAFA;
+    --c-surface: #FFFFFF;
+    --c-surface-alt: #F5F5F5;
+    --c-text: #111827;
+    --c-text-body: #374151;
+    --c-text-muted: #6B7280;
+    --c-text-soft: #9CA3AF;
+    --c-border: #E5E7EB;
+    --c-border-soft: rgba(17, 24, 39, 0.06);
+    --c-hairline: rgba(17, 24, 39, 0.05);
+
+    --c-primary: #2F5A9E;
+    --c-primary-hover: #264C85;
+    --c-primary-light: #F0F4F8;
+    --c-primary-dark: #0A1628;
+
+    --c-accent: #F79009;
+    --c-accent-bg: #FFFAEB;
+    --c-success: #538B6B;
+    --c-success-bg: #ECFDF5;
+    --c-warning: #B95400;
+    --c-warning-bg: #FFFAEB;
+    --c-error: #C9342A;
+    --c-error-bg: #FEF3F2;
+    --c-info: #5A7190;
+    --c-info-bg: #EDF1F5;
+
+    --r-sm: 6px;
+    --r-md: 8px;
+    --r-lg: 10px;
+    --r-xl: 12px;
+    --r-2xl: 16px;
+    --r-3xl: 24px;
+    --r-pill: 9999px;
+
+    /* Diffusion shadows */
+    --sh-diffuse: 0 1px 2px rgba(17,24,39,.04), 0 8px 24px -12px rgba(17,24,39,.10);
+    --sh-card: 0 1px 0 rgba(17,24,39,.02), 0 0 0 1px rgba(17,24,39,.04), 0 8px 20px -12px rgba(17,24,39,.10);
+    --sh-card-hover: 0 1px 0 rgba(17,24,39,.02), 0 0 0 1px rgba(47,90,158,.16), 0 16px 28px -16px rgba(17,24,39,.14);
+    --sh-focus: 0 0 0 3px rgba(47, 90, 158, 0.30);
+
+    /* Spring transition */
+    --tr-spring: cubic-bezier(0.16, 1, 0.3, 1);
+    --tr-snap: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+    background: var(--c-bg);
+    color: var(--c-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.45;
+  }
+  *:focus { outline: none; }
+  *:focus-visible {
+    outline: 2px solid var(--c-primary);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* ============================================================
+     APP CHROME — sidebar + topbar (mock simplifié)
+  ============================================================ */
+  .app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  .sidebar {
+    background: var(--c-primary-light);
+    border-right: 1px solid var(--c-border);
+    padding: 24px 16px;
+    position: sticky; top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .sidebar-logo {
+    font-size: 16px; font-weight: 700;
+    color: var(--c-primary-dark); letter-spacing: -0.02em;
+    padding: 0 8px 24px;
+    border-bottom: 1px solid var(--c-hairline);
+    margin-bottom: 16px;
+  }
+  .sidebar-section {
+    font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.18em;
+    color: var(--c-text-muted);
+    padding: 16px 8px 8px;
+  }
+  .sidebar-link {
+    display: flex; align-items: center; gap: 12px;
+    height: 36px; padding: 0 10px;
+    border-radius: var(--r-md);
+    color: var(--c-text-body); text-decoration: none;
+    font-size: 13.5px; font-weight: 500;
+    transition: background 200ms var(--tr-spring), color 200ms ease;
+  }
+  .sidebar-link:hover { background: rgba(47,90,158,.08); color: var(--c-primary-dark); }
+  .sidebar-link.active { background: var(--c-primary); color: white; font-weight: 600; }
+  .sidebar-link svg { width: 16px; height: 16px; flex-shrink: 0; stroke-width: 1.75; }
+
+  .topbar {
+    height: 56px; background: var(--c-surface);
+    border-bottom: 1px solid var(--c-hairline);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+    position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-title { font-size: 14px; font-weight: 600; color: var(--c-text); }
+  .topbar-user {
+    width: 32px; height: 32px; border-radius: var(--r-pill);
+    background: var(--c-primary); color: white;
+    display: grid; place-items: center;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.02em;
+  }
+
+  main { display: flex; flex-direction: column; min-width: 0; }
+
+  /* ============================================================
+     PAGE HEAD — header condensé 2 rows (workspace pattern)
+  ============================================================ */
+  .page-head {
+    padding: 24px 32px 0;
+    background: var(--c-surface);
+  }
+  .page-head-row1 {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 16px;
+  }
+  .page-head h1 {
+    font-size: 22px; font-weight: 600;
+    color: var(--c-text); margin: 0;
+    letter-spacing: -0.015em; line-height: 1;
+  }
+  .page-subtitle {
+    font-size: 13px; color: var(--c-text-muted);
+    margin: 6px 0 0; font-variant-numeric: tabular-nums;
+  }
+  .page-actions { display: flex; gap: 8px; align-items: center; }
+
+  /* Buttons (primitive button) */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    height: 40px; padding: 8px 16px;
+    border-radius: var(--r-lg);
+    font-family: inherit; font-size: 14px; font-weight: 600;
+    cursor: pointer; border: none;
+    box-sizing: border-box;
+    transition: background 220ms var(--tr-spring), transform 220ms var(--tr-spring), box-shadow 220ms var(--tr-spring);
+  }
+  .btn svg { width: 16px; height: 16px; stroke-width: 1.75; }
+  .btn-primary { background: var(--c-primary); color: white; }
+  .btn-primary:hover { background: var(--c-primary-hover); }
+  .btn-secondary {
+    background: transparent; color: var(--c-text-body);
+    border: 1px solid var(--c-border);
+  }
+  .btn-secondary:hover { background: var(--c-surface-alt); border-color: var(--c-text-soft); }
+  .btn-tertiary { background: transparent; color: var(--c-text-body); }
+  .btn-tertiary:hover { background: var(--c-surface-alt); }
+
+  /* ============================================================
+     INDICATEURS FLAT PREMIUM (workspace.layout.indicators)
+  ============================================================ */
+  .indicators {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    padding: 24px 32px 28px;
+    background: var(--c-surface);
+    border-top: 1px solid var(--c-border);
+    border-bottom: 1px solid var(--c-border);
+  }
+  .indicator {
+    padding: 0 28px 0 0;
+    display: flex; gap: 16px; align-items: flex-start;
+    position: relative;
+  }
+  .indicator + .indicator { padding-left: 28px; }
+  .indicator + .indicator::before {
+    content: "";
+    position: absolute; top: 4px; bottom: 4px; left: 0;
+    width: 1px; background: var(--c-border);
+  }
+  .indicator-icon {
+    width: 44px; height: 44px; border-radius: var(--r-xl);
+    background: radial-gradient(circle at 30% 30%, rgba(47,90,158,.10), rgba(47,90,158,.02));
+    display: grid; place-items: center;
+    flex-shrink: 0;
+    color: var(--c-primary);
+  }
+  .indicator-icon svg { width: 22px; height: 22px; stroke-width: 1.5; }
+  .indicator-body { flex: 1; min-width: 0; padding-top: 2px; }
+  .indicator-value {
+    font-size: 36px; font-weight: 700;
+    color: var(--c-primary-dark);
+    letter-spacing: -0.025em; line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .indicator-value-secondary {
+    font-size: 14px; font-weight: 600; color: var(--c-text-muted);
+    margin-left: 8px; font-variant-numeric: tabular-nums;
+  }
+  .indicator-label {
+    font-size: 13px; color: var(--c-text-muted);
+    font-weight: 500; margin-top: 8px;
+  }
+  .indicator-trend {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 600;
+    margin-top: 8px;
+    font-variant-numeric: tabular-nums;
+    color: var(--c-success);
+  }
+  .indicator-trend.warning { color: var(--c-warning); }
+  .indicator-trend.muted { color: var(--c-text-muted); }
+  .indicator-trend svg { width: 12px; height: 12px; stroke-width: 2; }
+
+  /* ============================================================
+     TABS-BAR ARIA underline (workspace + S164)
+  ============================================================ */
+  .tabs-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+    background: var(--c-surface);
+    border-bottom: 1px solid var(--c-border);
+    gap: 24px;
+    position: sticky; top: 56px; z-index: 8;
+  }
+  [role="tablist"] {
+    display: flex; gap: 4px;
+  }
+  [role="tab"] {
+    height: 44px; padding: 0 16px;
+    border: none; background: transparent;
+    border-bottom: 2px solid transparent;
+    font-family: inherit; font-size: 14px; font-weight: 500;
+    color: var(--c-text-muted); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: color 180ms ease, border-color 180ms ease;
+    margin-bottom: -1px;
+  }
+  [role="tab"]:hover { color: var(--c-text); }
+  [role="tab"][aria-selected="true"] {
+    color: var(--c-primary);
+    border-bottom-color: var(--c-primary);
+    font-weight: 600;
+  }
+  [role="tab"] .tab-count {
+    font-size: 11px; font-weight: 600;
+    padding: 2px 8px;
+    background: var(--c-surface-alt);
+    color: var(--c-text-muted);
+    border-radius: var(--r-pill);
+    font-variant-numeric: tabular-nums;
+  }
+  [role="tab"][aria-selected="true"] .tab-count {
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+  }
+  .tabs-actions { display: flex; gap: 8px; align-items: center; }
+  .tabs-action {
+    height: 32px; padding: 0 12px;
+    background: transparent; border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    font-family: inherit; font-size: 12.5px; font-weight: 500;
+    color: var(--c-text-body); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    transition: background 180ms ease, border-color 180ms ease;
+  }
+  .tabs-action svg { width: 14px; height: 14px; stroke-width: 1.75; }
+  .tabs-action:hover { background: var(--c-surface-alt); border-color: var(--c-text-soft); }
+
+  /* ============================================================
+     KANBAN BOARD
+  ============================================================ */
+  .kanban-wrap {
+    flex: 1; padding: 20px 32px 40px;
+    overflow-x: auto;
+  }
+  .kanban {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(280px, 1fr));
+    gap: 16px;
+    min-height: calc(100vh - 320px);
+  }
+  .col {
+    background: var(--c-surface);
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-2xl);
+    display: flex; flex-direction: column;
+    min-width: 280px;
+    transition: background 180ms ease, border-color 180ms ease, box-shadow 220ms var(--tr-spring);
+    overflow: hidden;
+  }
+  .col[data-dragover="true"] {
+    background: var(--c-primary-light);
+    border-color: var(--c-primary);
+    box-shadow: var(--sh-diffuse);
+  }
+  .col-head {
+    padding: 18px 16px 14px;
+    border-bottom: 1px solid var(--c-hairline);
+  }
+  .col-head-row1 {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+  }
+  .col-icon {
+    width: 36px; height: 36px;
+    border-radius: var(--r-lg);
+    display: grid; place-items: center;
+    flex-shrink: 0;
+  }
+  .col-icon svg { width: 20px; height: 20px; stroke-width: 1.75; }
+  .col-icon.identification { background: var(--c-info-bg); color: var(--c-info); }
+  .col-icon.qualification { background: var(--c-primary-light); color: var(--c-primary); }
+  .col-icon.proposition { background: var(--c-warning-bg); color: var(--c-warning); }
+  .col-icon.negociation { background: var(--c-success-bg); color: var(--c-success); }
+  .col-icon.gagne { background: var(--c-success-bg); color: var(--c-success); }
+  .col-icon.perdu { background: var(--c-error-bg); color: var(--c-error); }
+  .col-title {
+    flex: 1; min-width: 0;
+    font-size: 16px; font-weight: 600;
+    color: var(--c-text);
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+  }
+  .col-count {
+    font-size: 11px; font-weight: 600;
+    padding: 2px 8px;
+    background: var(--c-surface-alt);
+    color: var(--c-text-muted);
+    border-radius: var(--r-pill);
+    font-variant-numeric: tabular-nums;
+  }
+  .col-progress {
+    height: 3px; background: var(--c-surface-alt);
+    border-radius: var(--r-pill);
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .col-progress-bar {
+    height: 100%; border-radius: var(--r-pill);
+    transition: width 320ms var(--tr-spring);
+  }
+  .col-icon.identification ~ .col-meta .col-progress-bar { background: var(--c-info); }
+  .col-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px;
+  }
+  .col-total {
+    font-size: 12.5px; font-weight: 600;
+    color: var(--c-text);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.005em;
+  }
+  .col-total .currency {
+    color: var(--c-text-muted);
+    font-weight: 500;
+    margin-left: 3px;
+  }
+  .col-add {
+    width: 24px; height: 24px;
+    border-radius: var(--r-sm);
+    background: transparent; border: none; cursor: pointer;
+    display: grid; place-items: center;
+    color: var(--c-text-muted);
+    transition: background 180ms ease, color 180ms ease;
+  }
+  .col-add:hover { background: var(--c-surface-alt); color: var(--c-primary); }
+  .col-add svg { width: 14px; height: 14px; stroke-width: 1.75; }
+
+  .col-body {
+    padding: 12px;
+    flex: 1;
+    display: flex; flex-direction: column; gap: 10px;
+    min-height: 100px;
+    overflow-y: auto;
+  }
+
+  /* CARD OPP */
+  .card {
+    background: var(--c-surface);
+    border-radius: var(--r-xl);
+    padding: 14px;
+    box-shadow: var(--sh-card);
+    cursor: grab;
+    position: relative;
+    transition:
+      transform 220ms var(--tr-spring),
+      box-shadow 220ms var(--tr-spring),
+      opacity 200ms ease;
+    animation: cardEnter 320ms var(--tr-spring) backwards;
+    animation-delay: calc(var(--i, 0) * 50ms);
+  }
+  @keyframes cardEnter {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
+  }
+  .card:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--sh-card-hover);
+  }
+  .card:active { cursor: grabbing; }
+  .card[data-dragging="true"] {
+    opacity: 0.4;
+    transform: scale(0.98);
+    cursor: grabbing;
+  }
+  .card-title {
+    font-size: 13.5px; font-weight: 600;
+    color: var(--c-text); line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+  .card-company {
+    font-size: 12px; color: var(--c-text-muted);
+    margin-bottom: 12px;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-meta {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 8px; margin-bottom: 8px;
+  }
+  .card-amount {
+    font-size: 13.5px; font-weight: 600;
+    color: var(--c-primary);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.005em;
+  }
+  .card-amount.muted { color: var(--c-text-soft); font-weight: 500; }
+  .card-relance {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11.5px; font-weight: 500;
+    color: var(--c-text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .card-relance svg { width: 12px; height: 12px; stroke-width: 1.75; }
+  .card-relance.overdue {
+    color: var(--c-error); font-weight: 600;
+  }
+  .card-footer {
+    display: flex; align-items: center; gap: 8px;
+    padding-top: 10px;
+    border-top: 1px solid var(--c-hairline);
+  }
+  .card-avatar {
+    width: 18px; height: 18px;
+    border-radius: var(--r-pill);
+    background: var(--c-info-bg);
+    color: var(--c-info);
+    display: grid; place-items: center;
+    font-size: 9px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .card-contact {
+    flex: 1; min-width: 0;
+    font-size: 11.5px; color: var(--c-text-muted);
+    font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .card-signal {
+    width: 16px; height: 16px;
+    color: var(--c-warning);
+    flex-shrink: 0;
+  }
+  .card-signal svg { width: 100%; height: 100%; stroke-width: 1.75; }
+
+  /* DROP PLACEHOLDER — premium solid fill (no dashed lines, golden v9 § noDashedLines) */
+  .drop-placeholder {
+    height: 88px;
+    background: var(--c-primary-light);
+    border-radius: var(--r-xl);
+    box-shadow: inset 0 0 0 2px rgba(47,90,158,0.35);
+    display: grid; place-items: center;
+    color: var(--c-primary);
+    font-size: 11.5px; font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    animation: placeholderPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes placeholderPulse {
+    0%, 100% {
+      background: var(--c-primary-light);
+      box-shadow: inset 0 0 0 2px rgba(47,90,158,0.35);
+    }
+    50% {
+      background: rgba(47,90,158,0.12);
+      box-shadow: inset 0 0 0 2px rgba(47,90,158,0.55);
+    }
+  }
+
+  /* EMPTY STATE par colonne */
+  .col-empty {
+    text-align: center;
+    padding: 32px 16px;
+    color: var(--c-text-muted);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .col-empty-icon {
+    width: 40px; height: 40px;
+    border-radius: var(--r-pill);
+    background: var(--c-surface-alt);
+    display: grid; place-items: center;
+    color: var(--c-text-soft);
+    margin-bottom: 4px;
+  }
+  .col-empty-icon svg { width: 20px; height: 20px; stroke-width: 1.5; }
+  .col-empty-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--c-text-body);
+  }
+  .col-empty-desc {
+    font-size: 12px; color: var(--c-text-muted);
+    line-height: 1.4;
+    max-width: 200px;
+  }
+  .col-empty-cta {
+    margin-top: 4px;
+    height: 28px; padding: 0 10px;
+    font-size: 12px; font-weight: 500;
+    color: var(--c-primary);
+    background: transparent; border: 1px solid var(--c-primary-light);
+    border-radius: var(--r-md);
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
+    transition: background 180ms ease;
+  }
+  .col-empty-cta:hover { background: var(--c-primary-light); }
+  .col-empty-cta svg { width: 12px; height: 12px; stroke-width: 1.75; }
+
+  /* CTA add bottom de colonne */
+  .col-foot {
+    padding: 0 12px 12px;
+  }
+  .col-foot-add {
+    width: 100%;
+    height: 36px; padding: 0 12px;
+    background: var(--c-surface-alt);
+    border: 1px solid transparent;
+    border-radius: var(--r-lg);
+    color: var(--c-text-muted);
+    font-size: 12.5px; font-weight: 500;
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
+  }
+  .col-foot-add:hover {
+    background: var(--c-primary-light);
+    color: var(--c-primary);
+    border-color: rgba(47,90,158,0.25);
+  }
+  .col-foot-add svg { width: 14px; height: 14px; stroke-width: 1.75; }
+
+  /* ============================================================
+     ANNOTATIONS Mockup (visibles dev only)
+  ============================================================ */
+  .annot {
+    background: rgba(47, 90, 158, 0.06);
+    border-left: 3px solid var(--c-primary);
+    padding: 12px 16px;
+    margin: 16px 32px;
+    border-radius: 0 var(--r-md) var(--r-md) 0;
+    font-size: 12px; color: var(--c-text-body);
+    line-height: 1.5;
+  }
+  .annot strong { color: var(--c-primary-dark); }
+  .annot code {
+    font-family: Menlo, Consolas, monospace;
+    font-size: 11px;
+    background: rgba(17,24,39,0.06);
+    padding: 1px 5px; border-radius: 4px;
+  }
+
+  /* ============================================================
+     MOBILE PREVIEW (frame)
+  ============================================================ */
+  .mobile-section {
+    background: var(--c-surface-alt);
+    padding: 32px;
+    border-top: 1px solid var(--c-border);
+  }
+  .mobile-section h2 {
+    font-size: 18px; font-weight: 600; color: var(--c-text);
+    margin: 0 0 6px; letter-spacing: -0.015em;
+  }
+  .mobile-section p {
+    font-size: 13px; color: var(--c-text-muted);
+    margin: 0 0 24px; max-width: 600px;
+  }
+  .mobile-frame {
+    width: 390px;
+    margin: 0 auto;
+    background: var(--c-surface);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px -20px rgba(17,24,39,.18);
+    border: 8px solid #111;
+  }
+  .mobile-status {
+    height: 28px; background: white;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 24px;
+    font-size: 11px; font-weight: 600;
+  }
+  .mobile-content {
+    background: var(--c-bg);
+    height: 720px;
+    display: flex; flex-direction: column;
+  }
+  .mobile-topbar {
+    height: 48px; background: var(--c-surface);
+    border-bottom: 1px solid var(--c-hairline);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px;
+  }
+  .mobile-topbar h1 {
+    font-size: 17px; font-weight: 700; margin: 0;
+    color: var(--c-text); letter-spacing: -0.015em;
+  }
+  .mobile-tabs-bar {
+    background: var(--c-surface);
+    border-bottom: 1px solid var(--c-border);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    position: sticky; top: 0;
+  }
+  .mobile-tabs-bar::-webkit-scrollbar { display: none; }
+  .mobile-tabs {
+    display: flex; gap: 4px;
+    padding: 0 16px;
+    min-width: max-content;
+  }
+  .mobile-tab {
+    height: 44px; padding: 0 14px;
+    border: none; background: transparent;
+    border-bottom: 2px solid transparent;
+    font-family: inherit; font-size: 13px; font-weight: 500;
+    color: var(--c-text-muted); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+    flex-shrink: 0;
+    margin-bottom: -1px;
+  }
+  .mobile-tab[aria-selected="true"] {
+    color: var(--c-primary);
+    border-bottom-color: var(--c-primary);
+    font-weight: 600;
+  }
+  .mobile-tab .mobile-tab-count {
+    font-size: 10.5px; font-weight: 600;
+    padding: 1px 7px;
+    background: var(--c-surface-alt);
+    color: var(--c-text-muted);
+    border-radius: var(--r-pill);
+  }
+  .mobile-tab[aria-selected="true"] .mobile-tab-count {
+    background: var(--c-primary-light); color: var(--c-primary);
+  }
+  .mobile-col {
+    flex: 1; padding: 16px;
+    display: flex; flex-direction: column; gap: 10px;
+    overflow-y: auto;
+  }
+  .mobile-col-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .mobile-col-head .col-total { font-size: 13px; }
+  .mobile-fab {
+    position: absolute;
+    right: 24px; bottom: 24px;
+    width: 56px; height: 56px;
+    border-radius: var(--r-pill);
+    background: var(--c-primary);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: grid; place-items: center;
+    box-shadow: 0 8px 24px -6px rgba(47,90,158,.45);
+    transition: transform 220ms var(--tr-spring), background 220ms var(--tr-spring);
+  }
+  .mobile-fab:hover { transform: translateY(-2px); background: var(--c-primary-hover); }
+  .mobile-fab svg { width: 20px; height: 20px; stroke-width: 2; }
+
+  /* DESKTOP responsive fallback */
+  @media (max-width: 1024px) {
+    .indicators { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .indicator { padding-right: 0; }
+    .indicator + .indicator::before { display: none; }
+    .kanban { grid-template-columns: repeat(2, minmax(280px, 1fr)); }
+  }
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .indicators { grid-template-columns: 1fr; }
+    .kanban { grid-template-columns: 1fr; }
+    .page-head-row1 { flex-direction: column; align-items: stretch; gap: 12px; }
+    .tabs-bar { padding: 0 16px; }
+    .kanban-wrap { padding: 16px; }
+  }
+
+  /* prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- SIDEBAR (mock simplifié) -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">FilmPro CRM</div>
+    <div class="sidebar-section">Pilotage</div>
+    <a class="sidebar-link" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>Dashboard</a>
+    <a class="sidebar-link active" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 14h.01"/><path d="M10 14h6"/></svg>Pipeline</a>
+    <div class="sidebar-section">Acquisition</div>
+    <a class="sidebar-link" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Prospection</a>
+    <a class="sidebar-link" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Contacts</a>
+    <a class="sidebar-link" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>Entreprises</a>
+    <a class="sidebar-link" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Signaux</a>
+    <div class="sidebar-section">Veille</div>
+    <a class="sidebar-link" href="#"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>Articles</a>
+  </aside>
+
+  <main>
+    <!-- TOPBAR (mock) -->
+    <div class="topbar">
+      <div class="topbar-title">Pipeline</div>
+      <div class="topbar-user">PM</div>
+    </div>
+
+    <!-- PAGE HEAD : header condensé 2 rows -->
+    <div class="page-head">
+      <div class="page-head-row1">
+        <div>
+          <h1>Pipeline</h1>
+          <p class="page-subtitle">12 opportunités actives · 213 600 CHF en cours</p>
+        </div>
+        <div class="page-actions">
+          <button class="btn btn-secondary" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Importer
+          </button>
+          <button class="btn btn-primary" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            Nouvelle opportunité
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- INDICATEURS FLAT PREMIUM -->
+    <div class="indicators" role="region" aria-label="Indicateurs pipeline">
+      <div class="indicator">
+        <div class="indicator-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+        </div>
+        <div class="indicator-body">
+          <span class="indicator-value">12</span>
+          <div class="indicator-label">Opportunités actives</div>
+          <div class="indicator-trend">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+            +3 depuis vendredi
+          </div>
+        </div>
+      </div>
+      <div class="indicator">
+        <div class="indicator-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        </div>
+        <div class="indicator-body">
+          <span class="indicator-value">213.6</span>
+          <span class="indicator-value-secondary">k CHF</span>
+          <div class="indicator-label">Valeur pipeline</div>
+          <div class="indicator-trend">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+            +12% / mois précédent
+          </div>
+        </div>
+      </div>
+      <div class="indicator">
+        <div class="indicator-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+        </div>
+        <div class="indicator-body">
+          <span class="indicator-value">1</span>
+          <span class="indicator-value-secondary">· 6 200 CHF</span>
+          <div class="indicator-label">Gagné en mai</div>
+          <div class="indicator-trend muted">
+            objectif 8 / mois
+          </div>
+        </div>
+      </div>
+      <div class="indicator">
+        <div class="indicator-icon" style="background: radial-gradient(circle at 30% 30%, rgba(192,57,26,.12), rgba(192,57,26,.02)); color: var(--c-error);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="13" r="8"/><path d="M5 3 2 6"/><path d="m22 6-3-3"/><path d="M6.38 18.7 4 21"/><path d="M17.64 18.67 20 21"/><path d="m9 13 2 2 4-4"/></svg>
+        </div>
+        <div class="indicator-body">
+          <span class="indicator-value" style="color: var(--c-error);">2</span>
+          <div class="indicator-label">Relances en retard</div>
+          <div class="indicator-trend warning">
+            Atrium Genève · BCV Pully
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS-BAR ARIA + ACTIONS CONTEXTUELLES -->
+    <div class="tabs-bar">
+      <div role="tablist" aria-label="Filtrer le pipeline">
+        <button role="tab" aria-selected="true" aria-controls="panel-en-cours">
+          En cours <span class="tab-count">12</span>
+        </button>
+        <button role="tab" aria-selected="false" aria-controls="panel-closed">
+          Closed <span class="tab-count">2</span>
+        </button>
+        <button role="tab" aria-selected="false" aria-controls="panel-all">
+          Toutes <span class="tab-count">14</span>
+        </button>
+      </div>
+      <div class="tabs-actions">
+        <button class="tabs-action" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+          Responsable
+        </button>
+        <button class="tabs-action" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="21" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="3" y2="18"/></svg>
+          Trier
+        </button>
+      </div>
+    </div>
+
+    <!-- KANBAN BOARD : 4 colonnes (En cours actif) -->
+    <div class="kanban-wrap">
+      <div class="kanban" role="tabpanel" id="panel-en-cours" aria-labelledby="tab-en-cours">
+
+        <!-- COL IDENTIFICATION -->
+        <section class="col" aria-label="Colonne Identification, 3 opportunités">
+          <header class="col-head">
+            <div class="col-head-row1">
+              <div class="col-icon identification">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              </div>
+              <div class="col-title">Identification</div>
+              <div class="col-count">3</div>
+              <button class="col-add" type="button" aria-label="Ajouter dans Identification">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              </button>
+            </div>
+            <div class="col-progress"><div class="col-progress-bar" style="width:60%; background: var(--c-info);"></div></div>
+            <div class="col-meta">
+              <div class="col-total">48.9<span class="currency">k CHF</span></div>
+            </div>
+          </header>
+          <div class="col-body" role="list">
+            <article class="card" style="--i:0" role="listitem" aria-label="Vitrerie 240m² hôtel Schweizerhof, Glas-Pro-Tect SA, 28 500 CHF, sans relance" tabindex="0" draggable="true">
+              <div class="card-title">Vitrerie 240m² hôtel Schweizerhof</div>
+              <div class="card-company">Glas-Pro-Tect SA · Lausanne</div>
+              <div class="card-meta">
+                <span class="card-amount">28 500 CHF</span>
+                <span class="card-relance">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  À planifier
+                </span>
+              </div>
+              <div class="card-footer">
+                <span class="card-avatar">PM</span>
+                <span class="card-contact">Pascal Médecin</span>
+              </div>
+            </article>
+
+            <article class="card" style="--i:1" role="listitem" aria-label="Cabinet médical Onex protection UV, Médic-Vitres SA, 8 400 CHF, relance 18 mai" tabindex="0" draggable="true">
+              <div class="card-title">Cabinet médical Onex protection UV</div>
+              <div class="card-company">Médic-Vitres SA · Onex</div>
+              <div class="card-meta">
+                <span class="card-amount">8 400 CHF</span>
+                <span class="card-relance">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  18 mai
+                </span>
+              </div>
+              <div class="card-footer">
+                <span class="card-avatar" style="background:var(--c-warning-bg);color:var(--c-warning);">SR</span>
+                <span class="card-contact">Sophie Roy</span>
+                <span class="card-signal" title="Signal d'affaires lié">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m13 2-2 2.5h3L12 7"/><path d="M19 9c.5 1 .5 2.5 0 3.5L18 14h-7l-1-1.5c-.5-1-.5-2.5 0-3.5l1-1.5h7Z"/><path d="M3 15h18"/><path d="M5 19h14"/></svg>
+                </span>
+              </div>
+            </article>
+
+            <article class="card" style="--i:2" role="listitem" aria-label="Showroom auto Préverenges, Garage Préverenges SA, 12 000 CHF" tabindex="0" draggable="true">
+              <div class="card-title">Showroom auto Préverenges</div>
+              <div class="card-company">Garage Préverenges SA · Préverenges</div>
+              <div class="card-meta">
+                <span class="card-amount">12 000 CHF</span>
+                <span class="card-relance">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  À planifier
+                </span>
+              </div>
+              <div class="card-footer">
+                <span class="card-avatar">PM</span>
+                <span class="card-contact">Pascal Médecin</span>
+              </div>
+            </article>
+          </div>
+          <div class="col-foot">
+            <button class="col-foot-add" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              Ajouter dans Identification
+            </button>
+          </div>
+        </section>
+
+        <!-- COL QUALIFICATION -->
+        <section class="col" aria-label="Colonne Qualification, 4 opportunités">
+          <header class="col-head">
+            <div class="col-head-row1">
+              <div class="col-icon qualification">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+              </div>
+              <div class="col-title">Qualification</div>
+              <div class="col-count">4</div>
+              <button class="col-add" type="button" aria-label="Ajouter dans Qualification">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              </button>
+            </div>
+            <div class="col-progress"><div class="col-progress-bar" style="width:75%; background: var(--c-primary);"></div></div>
+            <div class="col-meta">
+              <div class="col-total">52.7<span class="currency">k CHF</span></div>
+            </div>
+          </header>
+          <div class="col-body" role="list">
+            <article class="card" style="--i:0" role="listitem" aria-label="Atrium Genève films solaires, Vitrerie Lausanne SA, 12 200 CHF, relance en retard depuis 06 mai" tabindex="0" draggable="true">
+              <div class="card-title">Atrium Genève films solaires</div>
+              <div class="card-company">Vitrerie Lausanne SA · Genève</div>
+              <div class="card-meta">
+                <span class="card-amount">12 200 CHF</span>
+                <span class="card-relance overdue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  06 mai · J-2
+                </span>
+              </div>
+              <div class="card-footer">
+                <span class="card-avatar">PM</span>
+                <span class="card-contact">Pascal Médecin</span>
+              </div>
+            </article>
+
+            <article class="card" style="--i:1" role="listitem" aria-label="EPFL bibliothèque polytech, EPFL Logistique, 24 500 CHF, relance 14 mai" tabindex="0" draggable="true">
+              <div class="card-title">EPFL bibliothèque polytech protection vitres</div>
+              <div class="card-company">EPFL Logistique · Lausanne</div>
+              <div class="card-meta">
+                <span class="card-amount">24 500 CHF</span>
+                <span class="card-relance">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  14 mai · J+6
+                </span>
+              </div>
+              <div class="card-footer">
+                <span class="card-avatar" style="background:var(--c-success-bg);color:var(--c-success);">JM</span>
+                <span class="card-contact">Jean Mercier</span>
+                <span class="card-signal" title="Issu de signal SIMAP">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>
+                </span>
+              </div>
+            </article>
+
+            <article class="card" style="--i:2" role="listitem" aria-label="Bureau Bondzio Nyon anti-éblouissement, Bondzio et Cie, 6 800 CHF, relance 20 mai" tabindex="0" draggable="true">
+              <div class="card-title">Bureau Bondzio anti-éblouissement</div>
+              <div class="card-company">Bondzio &amp; Cie · Nyon</div>
+              <div class="card-meta">
+                <span class="card-amount">6 800 CHF</span>
+                <span class="card-relance">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  20 mai · J+12
+                </span>
+              </div>
+              <div class="card-footer">
+                <span class="card-avatar">PM</span>
+                <span class="card-contact">Pascal Médecin</span>
+              </div>
+            </article>
+
+            <article class="card" style="--i:3" role="listitem" aria-label="Fiduciaire Centrale Lausanne, 9 200 CHF, relance 11 mai" tabindex="0" draggable="true">
+              <div class="card-title">Fiduciaire anti-éblouissement façade</div>
+              <div class="card-company">Fiduciaire Centrale SA · Lausanne</div>
+              <div class="card-meta">
+                <span class="card-amount">9 200 CHF</span>
+                <span class="card-relance">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  11 mai · J+3
+                </span>
+              </div>
+              <div class="card-footer">
+                <span class="card-avatar" style="background:var(--c-warning-bg);color:var(--c-warning);">SR</span>
+                <span class="card-contact">Sophie Roy</span>
+              </div>
+            </article>
+          </div>
+          <div class="col-foot">
+            <button class="col-foot-add" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              Ajouter dans Qualification
+            </button>
+          </div>
+        </section>
+
+        <!-- COL PROPOSITION (avec drop placeholder visible state) -->
+        <section class="col" data-dragover="true" aria-label="Colonne Proposition, 3 opportunités, drop actif">
+          <header class="col-head">
+            <div class="col-head-row1">
+              <div class="col-icon proposition">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+              </div>
+              <div class="col-title">Proposition</div>
+              <div class="col-count">3</div>
+              <button class="col-add" type="button" aria-label="Ajouter dans Proposition">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              </button>
+            </div>
+            <div class="col-progress"><div class="col-progress-bar" style="width:85%; background: var(--c-warning);"></div></div>
+            <div class="col-meta">
+              <div class="col-total">71.1<span class="currency">k CHF</span></div>
+            </div>
+          </header>
+          <div class="col-body" role="list">
+            <article class="card" style="--i:0" role="listitem" aria-label="Marché Champel SIMAP soumission, Service Cantonal GE, 45 000 CHF, relance 15 mai" tabindex="0" draggable="true">
+              <div class="card-title">Marché Champel SIMAP — soumission</div>
+              <div class="card-company">Service Cantonal GE · Genève</div>
+              <div class="card-meta">
+                <span class="card-amount">45 000 CHF</span>
+                <span class="card-relance">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  15 mai · J+7
+                </span>
+              </div>
+              <div class="card-footer">
+                <span class="card-avatar" style="background:var(--c-success-bg);color:var(--c-success);">JM</span>
+                <span class="card-contact">Jean Mercier</span>
+                <span class="card-signal" title="Issu de signal SIMAP">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>
+                </span>
+              </div>
+            </article>
+
+            <!-- DROP PLACEHOLDER (état visible pendant drag) -->
+            <div class="drop-placeholder" aria-hidden="true">Déposer ici</div>
+
+            <article class="card" style="--i:1" role="listitem" aria-label="Helvetia Energy showroom Lonay, 18 600 CHF, relance 22 mai" tabindex="0" draggable="true">
+              <div class="card-title">Helvetia Energy showroom — vitres techniques</div>
+              <div class="card-company">Helvetia Energy AG · Lonay</div>
+              <div class="card-meta">
+                <span class="card-amount">18 600 CHF</span>
+                <span class="card-relance">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  22 mai · J+14
+                </span>
+              </div>
+              <div class="card-footer">
+                <span class="card-avatar">PM</span>
+                <span class="card-contact">Pascal Médecin</span>
+              </div>
+            </article>
+
+            <article class="card" style="--i:2" role="listitem" aria-label="Cabinet dentaire Vevey, Dr Müller, 7 500 CHF, relance 17 mai" tabindex="0" draggable="true">
+              <div class="card-title">Cabinet dentaire — vitres confidentialité</div>
+              <div class="card-company">Dr Müller · Vevey</div>
+              <div class="card-meta">
+                <span class="card-amount">7 500 CHF</span>
+                <span class="card-relance">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  17 mai · J+9
+                </span>
+              </div>
+              <div class="card-footer">
+                <span class="card-avatar" style="background:var(--c-warning-bg);color:var(--c-warning);">SR</span>
+                <span class="card-contact">Sophie Roy</span>
+              </div>
+            </article>
+          </div>
+          <div class="col-foot">
+            <button class="col-foot-add" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              Ajouter dans Proposition
+            </button>
+          </div>
+        </section>
+
+        <!-- COL NEGOCIATION -->
+        <section class="col" aria-label="Colonne Négociation, 2 opportunités">
+          <header class="col-head">
+            <div class="col-head-row1">
+              <div class="col-icon negociation">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M16 16.5a2 2 0 0 1-2 2h-1l-3 4-3-4H6a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/><path d="M8 9h8"/><path d="M8 13h6"/></svg>
+              </div>
+              <div class="col-title">Négociation</div>
+              <div class="col-count">2</div>
+              <button class="col-add" type="button" aria-label="Ajouter dans Négociation">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              </button>
+            </div>
+            <div class="col-progress"><div class="col-progress-bar" style="width:95%; background: var(--c-success);"></div></div>
+            <div class="col-meta">
+              <div class="col-total">40.9<span class="currency">k CHF</span></div>
+            </div>
+          </header>
+          <div class="col-body" role="list">
+            <article class="card" style="--i:0" role="listitem" aria-label="Banque cantonale agence Pully, BCV Real Estate, 32 000 CHF, relance en retard depuis 04 mai" tabindex="0" draggable="true">
+              <div class="card-title">BCV agence Pully — film sécurité</div>
+              <div class="card-company">BCV Real Estate · Pully</div>
+              <div class="card-meta">
+                <span class="card-amount">32 000 CHF</span>
+                <span class="card-relance overdue">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  04 mai · J-4
+                </span>
+              </div>
+              <div class="card-footer">
+                <span class="card-avatar" style="background:var(--c-success-bg);color:var(--c-success);">JM</span>
+                <span class="card-contact">Jean Mercier</span>
+              </div>
+            </article>
+
+            <article class="card" style="--i:1" role="listitem" aria-label="Hôtel Royal Savoy spa, Royal Savoy Lausanne, 8 900 CHF, relance 16 mai" tabindex="0" draggable="true">
+              <div class="card-title">Hôtel Royal Savoy spa — protection UV</div>
+              <div class="card-company">Royal Savoy Lausanne · Lausanne</div>
+              <div class="card-meta">
+                <span class="card-amount">8 900 CHF</span>
+                <span class="card-relance">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                  16 mai · J+8
+                </span>
+              </div>
+              <div class="card-footer">
+                <span class="card-avatar">PM</span>
+                <span class="card-contact">Pascal Médecin</span>
+              </div>
+            </article>
+          </div>
+          <div class="col-foot">
+            <button class="col-foot-add" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              Ajouter dans Négociation
+            </button>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ANNOTATIONS DEV -->
+    <div class="annot">
+      <strong>État illustré ci-dessus :</strong> tab <em>En cours</em> actif (4 colonnes : identification → qualification → proposition → négociation).
+      Colonne <em>Proposition</em> en mode drag-over (ring primary + bg primary-light) avec <em>drop placeholder</em> solid (fill primary-light + inset shadow primary 35%, label « Déposer ici » 11px) visible entre la 1<sup>re</sup> et la 2<sup>e</sup> card. Spring physics <code>cubic-bezier(0.16, 1, 0.3, 1)</code>, stagger CSS <code>--i × 50ms</code>, focus-visible global outline 2px primary, zéro border dashed (golden v9 § noDashedLines).
+    </div>
+    <div class="annot">
+      <strong>Tab <em>Closed</em> :</strong> 2 colonnes (Gagné / Perdu) avec icônes <em>award</em> / <em>x-circle</em>.
+      <strong>Tab <em>Toutes</em> :</strong> 6 colonnes scroll horizontal (identification → perdu).
+      <strong>Empty state colonne :</strong> avatar Lucide + h3 + description + CTA "Ajouter dans X" (pattern S165).
+    </div>
+  </main>
+</div>
+
+<!-- ============================================================
+     MOBILE PREVIEW (390px iPhone 14)
+============================================================ -->
+<div class="mobile-section">
+  <h2>Mobile · iPhone 14 (390 × 844)</h2>
+  <p>Tabs étape sticky en haut, 1 colonne plein écran sous les tabs (option C arbitrée). Swipe horizontal entre étapes natif (overflow-x scroll), bouton FAB <em>Nouvelle opportunité</em> bottom-right. Le drag inter-colonnes reste possible (long-press), mais le workflow mobile principal = ajouter et faire avancer une opp via la modal d'édition (champ étape).</p>
+  <div class="mobile-frame">
+    <div class="mobile-status">
+      <span>16:42</span>
+      <span style="display:flex;gap:4px;align-items:center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M2 22h20V2L2 22z"/></svg>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+      </span>
+    </div>
+    <div class="mobile-content" style="position:relative;">
+      <div class="mobile-topbar">
+        <h1>Pipeline</h1>
+        <button style="background:transparent;border:none;cursor:pointer;color:var(--c-text-body);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        </button>
+      </div>
+      <nav class="mobile-tabs-bar" aria-label="Étapes pipeline">
+        <div class="mobile-tabs" role="tablist">
+          <button role="tab" class="mobile-tab" aria-selected="false">Identification <span class="mobile-tab-count">3</span></button>
+          <button role="tab" class="mobile-tab" aria-selected="true">Qualification <span class="mobile-tab-count">4</span></button>
+          <button role="tab" class="mobile-tab" aria-selected="false">Proposition <span class="mobile-tab-count">3</span></button>
+          <button role="tab" class="mobile-tab" aria-selected="false">Négociation <span class="mobile-tab-count">2</span></button>
+          <button role="tab" class="mobile-tab" aria-selected="false">Gagné <span class="mobile-tab-count">1</span></button>
+          <button role="tab" class="mobile-tab" aria-selected="false">Perdu <span class="mobile-tab-count">1</span></button>
+        </div>
+      </nav>
+      <div class="mobile-col">
+        <div class="mobile-col-head">
+          <div class="col-total">52.7<span class="currency">k CHF</span></div>
+          <div style="font-size:11px;color:var(--c-text-muted);">Total Qualification</div>
+        </div>
+        <article class="card" style="--i:0;cursor:pointer;">
+          <div class="card-title">Atrium Genève films solaires</div>
+          <div class="card-company">Vitrerie Lausanne SA · Genève</div>
+          <div class="card-meta">
+            <span class="card-amount">12 200 CHF</span>
+            <span class="card-relance overdue">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              06 mai · J-2
+            </span>
+          </div>
+        </article>
+        <article class="card" style="--i:1;cursor:pointer;">
+          <div class="card-title">EPFL bibliothèque polytech</div>
+          <div class="card-company">EPFL Logistique · Lausanne</div>
+          <div class="card-meta">
+            <span class="card-amount">24 500 CHF</span>
+            <span class="card-relance">14 mai · J+6</span>
+          </div>
+        </article>
+        <article class="card" style="--i:2;cursor:pointer;">
+          <div class="card-title">Bureau Bondzio anti-éblouissement</div>
+          <div class="card-company">Bondzio &amp; Cie · Nyon</div>
+          <div class="card-meta">
+            <span class="card-amount">6 800 CHF</span>
+            <span class="card-relance">20 mai · J+12</span>
+          </div>
+        </article>
+        <article class="card" style="--i:3;cursor:pointer;">
+          <div class="card-title">Fiduciaire anti-éblouissement</div>
+          <div class="card-company">Fiduciaire Centrale SA · Lausanne</div>
+          <div class="card-meta">
+            <span class="card-amount">9 200 CHF</span>
+            <span class="card-relance">11 mai · J+3</span>
+          </div>
+        </article>
+      </div>
+      <button class="mobile-fab" aria-label="Nouvelle opportunité">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

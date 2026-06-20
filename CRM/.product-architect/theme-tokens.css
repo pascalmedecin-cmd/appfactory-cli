@@ -1,0 +1,59 @@
+/* =============================================================================
+   THEME TOKENS — CRM FilmPro mobile V3
+   Phase 1 product-architect. Date : 2026-05-31.
+
+   PRINCIPE : la V3 mobile NE crée PAS de nouveau thème. Elle réutilise les
+   tokens existants de l'app (src/app.css, source unique). Divergence interdite
+   (doctrine projet : primitives = source unique, on compose). Ce fichier est un
+   POINTEUR + un EXTRAIT des tokens consommés par le shell mobile, plus les
+   quelques contraintes mobile-specific (cibles tactiles, taille texte mini).
+
+   Source de vérité des tokens : CRM/src/app.css (:root). Ne pas dupliquer ici
+   comme source — toujours lire app.css.
+   ============================================================================= */
+
+/* --- Extrait des tokens existants consommés par le mobile (réf app.css) --- */
+:root {
+  /* Couleurs cœur */
+  --color-primary:        #2F5A9E;   /* CTA principal (Compte-rendu, Enregistrer) */
+  --color-primary-hover:  #264C85;
+  --color-primary-dark:   #0A1628;
+  --color-surface:        #FFFFFF;
+  --color-surface-alt:    #F9FAFB;   /* fond liste */
+  --color-border:         #E5E7EB;
+  --color-text:           #111827;   /* titres */
+  --color-text-body:      #374151;
+  --color-text-muted:     #6B7280;   /* méta (date relance, canton) */
+  --color-success:        #12B76A;   /* état « envoyé » */
+  --color-warning:        #F79009;   /* état « envoi… » */
+  --color-danger:         #F04438;   /* état « échec → réessayer » */
+
+  /* Typo (DM Sans / DM Mono déjà chargées par l'app) */
+  --font-sans:  'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-mono:  'DM Mono', 'Consolas', monospace;
+
+  /* Rayons / ombres réutilisés */
+  --radius-md:   8px;
+  --radius-lg:   10px;
+  --radius-2xl:  16px;            /* cartes fiche / liste */
+  --shadow-sm:   0 1px 3px rgba(16,24,40,.10), 0 1px 2px rgba(16,24,40,.06);
+  --shadow-md:   0 4px 8px -2px rgba(16,24,40,.10), 0 2px 4px -2px rgba(16,24,40,.06);
+}
+
+/* --- Contraintes MOBILE-SPECIFIC V3 (nouvelles, terrain) --- */
+:root {
+  --mobile-touch-min:      44px;   /* cible tactile mini (AC-012, iOS HIG) */
+  --mobile-text-min:       16px;   /* texte mini (évite zoom auto iOS sur input) */
+  --mobile-tabbar-h:       56px;   /* hauteur bottom-nav 2 onglets */
+  --mobile-cta-h:          52px;   /* bouton dominant Compte-rendu / Enregistrer */
+  --mobile-gutter:         16px;   /* marge latérale écran */
+  --mobile-row-gap:        12px;   /* espacement vertical liste */
+  --mobile-safe-bottom:    env(safe-area-inset-bottom, 0px); /* encoche iPhone */
+}
+
+/*
+  CONTRASTE AA : tous les couples texte/fond utilisés doivent passer 4.5:1
+  (AC-012, gate axe-core Phase 4). Pour les accents sur fond clair (warning sur
+  blanc), utiliser la variante texte foncée, jamais l'accent vif sur fond clair
+  sans vérif ratio (feedback_a11y_deep_tokens_with_axe_gate).
+*/

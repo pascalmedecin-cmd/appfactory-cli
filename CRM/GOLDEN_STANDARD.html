@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM FilmPro - Golden Standard v9 - Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #FAF9F6;
+    --surface: #FFFFFF;
+    --surface-alt: #F3F4F6;
+    --text: #111827;
+    --text-body: #374151;
+    --text-muted: #6B7280;
+    --primary: #2F5A9E;
+    --primary-hover: #264C85;
+    --primary-light: #F0F4F8;
+    --primary-dark: #0A1628;
+    --border: #E5E7EB;
+    --border-input: #D1D5DB;
+    --success: #538B6B;
+    --success-bg: #ECFDF5;
+    --warning: #F79009;
+    --warning-bg: #FFFAEB;
+    --error: #F04438;
+    --error-bg: #FEF3F2;
+    --info: #5A7190;
+    --info-bg: #EDF1F5;
+  }
+
+  body {
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.43;
+    font-size: 14px;
+    padding: 32px 24px 64px;
+  }
+
+  .wrap { max-width: 1200px; margin: 0 auto; }
+
+  /* HEADER */
+  .top {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+    margin-bottom: 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .top-left .kicker {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--primary); margin-bottom: 8px;
+  }
+  .top-left h1 {
+    font-size: 32px; font-weight: 700; letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .top-right { text-align: right; font-size: 12px; color: var(--text-muted); }
+  .top-right .meta-row { margin-bottom: 4px; }
+  .top-right a { color: var(--primary); text-decoration: none; font-weight: 500; }
+  .top-right a:hover { text-decoration: underline; }
+
+  /* SECTIONS */
+  section { margin-bottom: 56px; }
+  .section-head {
+    display: flex; align-items: baseline; gap: 12px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+  }
+  .section-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; font-weight: 500;
+    color: var(--text-muted);
+  }
+  .section-head h2 {
+    font-size: 18px; font-weight: 600; color: var(--text);
+  }
+  .section-sub {
+    font-size: 12px; color: var(--text-muted); margin-left: auto;
+  }
+  .group-label {
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    margin-bottom: 12px; margin-top: 24px;
+  }
+  .group-label:first-child { margin-top: 0; }
+
+  /* PALETTE */
+  .swatch-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 16px;
+  }
+  .swatch {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .swatch-color {
+    width: 100%; aspect-ratio: 1 / 1; max-width: 100px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .swatch-name {
+    font-size: 12px; font-weight: 600; color: var(--text);
+  }
+  .swatch-hex {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--text-muted);
+  }
+
+  /* TYPO */
+  .type-row {
+    display: grid;
+    grid-template-columns: 90px 1fr;
+    gap: 24px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: baseline;
+  }
+  .type-row:last-child { border-bottom: 0; }
+  .type-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px; color: var(--text-muted); line-height: 1.5;
+  }
+  .type-spec-h1 { font-size: 22px; font-weight: 600; line-height: 1.0; }
+  .type-spec-h2 { font-size: 18px; font-weight: 600; line-height: 1.2; }
+  .type-spec-body { font-size: 14px; font-weight: 400; line-height: 1.43; color: var(--text-body); }
+  .type-spec-meta { font-size: 12px; font-weight: 400; line-height: 1.33; color: var(--text-muted); }
+
+  /* COMPONENTS */
+  .components-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+  .comp-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+  }
+  .comp-title {
+    font-size: 12px; font-weight: 600; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.05em;
+    margin-bottom: 16px;
+  }
+  .comp-demo {
+    display: flex; flex-direction: column; gap: 12px;
+    align-items: flex-start;
+  }
+  .comp-note {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px; color: var(--text-muted);
+    margin-top: 12px;
+  }
+
+  /* Buttons */
+  .btn {
+    height: 40px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: background 120ms ease;
+    box-sizing: border-box;
+  }
+  .btn-primary { background: var(--primary); color: #FFFFFF; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-secondary {
+    background: transparent;
+    color: #7B6A9A;
+    border: 1px solid rgba(123, 106, 154, 0.3);
+  }
+  .btn-tertiary { background: transparent; color: var(--text); }
+
+  /* ScorePill */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    height: 26px;
+    padding: 0 11px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.005em;
+    min-width: 130px;
+  }
+  .pill-chaud { background: #FFF1EC; color: #C0391A; }
+  .pill-tiede { background: #FFF7E6; color: #B54708; }
+  .pill-froid { background: #EDF1F5; color: #475669; }
+  .pill svg { width: 14px; height: 14px; }
+
+  /* Badge */
+  .badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .badge-info { background: var(--info-bg); color: var(--info); }
+  .badge-success { background: var(--success-bg); color: var(--success); }
+  .badge-warning { background: var(--warning-bg); color: #B54708; }
+
+  /* Card sample */
+  .sample-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+    width: 100%;
+  }
+  .sample-card-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .sample-card-meta { font-size: 12px; color: var(--text-muted); }
+
+  /* Toast */
+  .toast {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--text);
+    color: #FFFFFF;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  }
+  .toast .dot {
+    width: 8px; height: 8px; border-radius: 9999px;
+    background: var(--success);
+  }
+
+  /* ARCHETYPES */
+  .archetypes {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 800px) {
+    .archetypes { grid-template-columns: 1fr; }
+  }
+  .arch-frame {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .arch-frame-head {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-alt);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .arch-frame-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+  .arch-frame-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .arch-body { padding: 16px; }
+
+  /* Workspace mockup */
+  .ws-row1 {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+  .ws-h1 { font-size: 18px; font-weight: 600; }
+  .ws-tabs {
+    display: flex; gap: 16px;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ws-tab {
+    padding: 8px 4px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+  }
+  .ws-tab.active {
+    color: var(--primary);
+    font-weight: 600;
+    border-bottom: 2px solid var(--primary);
+    margin-bottom: -1px;
+  }
+  .ws-table { width: 100%; font-size: 12px; }
+  .ws-table-head {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1fr;
+    padding: 8px 0;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ws-table-row {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr 1fr;
+    padding: 10px 0;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .ws-table-row:last-child { border-bottom: 0; }
+  .ws-name { font-weight: 500; color: var(--text); }
+  .ws-canton { font-family: 'DM Mono', monospace; color: var(--text-muted); }
+  .pill-mini {
+    display: inline-flex; align-items: center; gap: 5px;
+    height: 20px; padding: 0 8px;
+    font-size: 11px; font-weight: 600;
+    border-radius: 6px;
+    min-width: auto;
+  }
+
+  /* Editorial mockup */
+  .ed-frame { padding: 0; }
+  .ed-hero {
+    display: grid;
+    grid-template-columns: 4fr 8fr;
+    min-height: 220px;
+    border-bottom: 2px solid var(--primary-dark);
+  }
+  @media (max-width: 600px) {
+    .ed-hero { grid-template-columns: 1fr; }
+  }
+  .ed-aside {
+    background: var(--primary-dark);
+    color: #FFFFFF;
+    padding: 20px;
+  }
+  .ed-aside-kicker {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+    text-transform: uppercase; opacity: 0.7;
+    margin-bottom: 8px;
+  }
+  .ed-aside-num {
+    font-size: 36px; font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+  .ed-aside-date {
+    font-size: 12px; opacity: 0.7;
+  }
+  .ed-body { padding: 20px; background: #FFFFFF; }
+  .ed-display {
+    font-size: 22px; font-weight: 800;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+  .ed-sub {
+    font-size: 13px; color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+  .ed-list { list-style: none; }
+  .ed-list li {
+    display: grid;
+    grid-template-columns: 24px 1fr;
+    padding: 6px 0;
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+  }
+  .ed-list li:first-child { border-top: 0; }
+  .ed-num {
+    font-family: 'DM Mono', monospace;
+    font-weight: 500; color: var(--primary);
+  }
+
+  /* FOOTER */
+  footer {
+    margin-top: 64px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px;
+  }
+  footer a { color: var(--primary); text-decoration: none; font-weight: 500; }
+  footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 1. HEADER -->
+  <header class="top">
+    <div class="top-left">
+      <div class="kicker">Golden Standard - Preview visuel</div>
+      <h1>CRM FilmPro</h1>
+    </div>
+    <div class="top-right">
+      <div class="meta-row"><strong>Version</strong> v9</div>
+      <div class="meta-row"><strong>Date</strong> 2026-05-06</div>
+      <div class="meta-row"><a href="GOLDEN_STANDARD.md">Source canonique : GOLDEN_STANDARD.md</a></div>
+      <div class="meta-row"><a href="https://filmpro-crm.vercel.app">Production : filmpro-crm.vercel.app</a></div>
+    </div>
+  </header>
+
+  <!-- 2. PALETTE -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2>Palette - tokens universels</h2>
+      <span class="section-sub">Mono-tenant FilmPro, accent fixe</span>
+    </div>
+
+    <div class="group-label">Surfaces</div>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background: #FFFFFF;"></div><div class="swatch-name">background</div><div class="swatch-hex">#FFFFFF</div></div>
+      <div class="swatch"><div class="swatch-color" style="background: #F9FAFB;"></div><div class="swatch-name">surface</div><div class="swatch-hex">#F9FAFB</div></div>
+      <div class="swatch"><div class="swatch-color" style="background: #F3F4F6;"></div><div class="swatch-name">surfaceAlt</div><div class="swatch-hex">#F3F4F6</div></div>
+    </div>
+
+    <div class="group-label">Texte</div>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background: #111827;"></div><div class="swatch-name">text</div><div class="swatch-hex">#111827</div></div>
+      <div class="swatch"><div class="swatch-color" style="background: #374151;"></div><div class="swatch-name">textBody</div><div class="swatch-hex">#374151</div></div>
+      <div class="swatch"><div class="swatch-color" style="background: #6B7280;"></div><div class="swatch-name">textMuted</div><div class="swatch-hex">#6B7280</div></div>
+    </div>
+
+    <div class="group-label">Accent FilmPro Blue (fixe, non dérivable)</div>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background: #2F5A9E;"></div><div class="swatch-name">primary</div><div class="swatch-hex">#2F5A9E</div></div>
+      <div class="swatch"><div class="swatch-color" style="background: #264C85;"></div><div class="swatch-name">primaryHover</div><div class="swatch-hex">#264C85</div></div>
+      <div class="swatch"><div class="swatch-color" style="background: #F0F4F8;"></div><div class="swatch-name">primaryLight</div><div class="swatch-hex">#F0F4F8</div></div>
+      <div class="swatch"><div class="swatch-color" style="background: #0A1628;"></div><div class="swatch-name">primaryDark</div><div class="swatch-hex">#0A1628</div></div>
+    </div>
+
+    <div class="group-label">Statuts</div>
+    <div class="swatch-grid">
+      <div class="swatch"><div class="swatch-color" style="background: #538B6B;"></div><div class="swatch-name">success</div><div class="swatch-hex">#538B6B</div></div>
+      <div class="swatch"><div class="swatch-color" style="background: #F79009;"></div><div class="swatch-name">warning</div><div class="swatch-hex">#F79009</div></div>
+      <div class="swatch"><div class="swatch-color" style="background: #F04438;"></div><div class="swatch-name">error</div><div class="swatch-hex">#F04438</div></div>
+      <div class="swatch"><div class="swatch-color" style="background: #5A7190;"></div><div class="swatch-name">info</div><div class="swatch-hex">#5A7190</div></div>
+    </div>
+  </section>
+
+  <!-- 3. TYPOGRAPHIE -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2>Typographie - DM Sans</h2>
+      <span class="section-sub">Poids 400 / 500 / 600 / 700</span>
+    </div>
+
+    <div class="type-row">
+      <div class="type-meta">h1<br>22px / 600<br>line 1.0</div>
+      <div class="type-spec-h1">Tableau de prospection FilmPro</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">h2<br>18px / 600<br>line 1.2</div>
+      <div class="type-spec-h2">Leads à qualifier cette semaine</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">body<br>14px / 400<br>line 1.43</div>
+      <div class="type-spec-body">Texte courant : description d'un marché en cours, vitrage commercial à Lausanne, soumission attendue avant le 15 du mois. Le commercial complète sa fiche entre deux rendez-vous, l'information doit rester lisible et factuelle.</div>
+    </div>
+    <div class="type-row">
+      <div class="type-meta">meta<br>12px / 400<br>line 1.33</div>
+      <div class="type-spec-meta">Mis à jour il y a 2 heures - Source : Zefix - Canton GE</div>
+    </div>
+  </section>
+
+  <!-- 4. COMPOSANTS -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <h2>Composants principaux</h2>
+      <span class="section-sub">Primitives universelles, aucune surcharge locale</span>
+    </div>
+
+    <div class="components-grid">
+
+      <div class="comp-card">
+        <div class="comp-title">Button - primary</div>
+        <div class="comp-demo">
+          <button class="btn btn-primary">Importer un lead</button>
+        </div>
+        <div class="comp-note">h 40px - radius 10px - bg #2F5A9E</div>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-title">Button - secondary</div>
+        <div class="comp-demo">
+          <button class="btn btn-secondary">Annuler</button>
+          <button class="btn btn-tertiary">Voir détail</button>
+        </div>
+        <div class="comp-note">secondary violet charte / tertiary text</div>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-title">Card</div>
+        <div class="comp-demo">
+          <div class="sample-card">
+            <div class="sample-card-title">Régie immobilière Genève SA</div>
+            <div class="sample-card-meta">12 vitrages - canton GE - relance prévue 2026-05-15</div>
+          </div>
+        </div>
+        <div class="comp-note">radius 10px - shadow xs - padding 16</div>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-title">ScorePill</div>
+        <div class="comp-demo">
+          <span class="pill pill-chaud">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            Prioritaire 8.4
+          </span>
+          <span class="pill pill-tiede">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            À qualifier 5.2
+          </span>
+          <span class="pill pill-froid">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            Faible signal 2.1
+          </span>
+        </div>
+        <div class="comp-note">3 variantes calibrées - jamais de Badge custom</div>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-title">Badge</div>
+        <div class="comp-demo">
+          <span class="badge badge-info">Prospection</span>
+          <span class="badge badge-success">Qualifié</span>
+          <span class="badge badge-warning">À relancer</span>
+        </div>
+        <div class="comp-note">radius 10px - 12px / 500</div>
+      </div>
+
+      <div class="comp-card">
+        <div class="comp-title">Toast</div>
+        <div class="comp-demo">
+          <div class="toast"><span class="dot"></span>Lead enregistré - 3 doublons fusionnés</div>
+        </div>
+        <div class="comp-note">feedback inline, jamais window.alert</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 5. ARCHETYPES -->
+  <section>
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <h2>Archétypes - 2 sources figées</h2>
+      <span class="section-sub">workspace et editorial, pas de mélange</span>
+    </div>
+
+    <div class="archetypes">
+
+      <!-- Workspace -->
+      <div class="arch-frame">
+        <div class="arch-frame-head">
+          <div class="arch-frame-title">Archétype workspace</div>
+          <div class="arch-frame-label">/prospection</div>
+        </div>
+        <div class="arch-body">
+          <div class="ws-row1">
+            <div class="ws-h1">Prospection</div>
+            <button class="btn btn-primary" style="height: 32px; font-size: 12px; padding: 6px 12px;">+ Lead</button>
+          </div>
+          <div class="ws-tabs">
+            <div class="ws-tab active">Entreprises</div>
+            <div class="ws-tab">Marchés</div>
+            <div class="ws-tab">Particuliers</div>
+          </div>
+          <div class="ws-table">
+            <div class="ws-table-head">
+              <div>Entreprise</div>
+              <div>Score</div>
+              <div>Canton</div>
+            </div>
+            <div class="ws-table-row">
+              <div class="ws-name">Régie Genève SA</div>
+              <div><span class="pill pill-chaud pill-mini">Chaud 8.4</span></div>
+              <div class="ws-canton">GE</div>
+            </div>
+            <div class="ws-table-row">
+              <div class="ws-name">Vitra Construct</div>
+              <div><span class="pill pill-tiede pill-mini">Tiède 5.2</span></div>
+              <div class="ws-canton">VD</div>
+            </div>
+            <div class="ws-table-row">
+              <div class="ws-name">Foncière du Léman</div>
+              <div><span class="pill pill-froid pill-mini">Froid 2.1</span></div>
+              <div class="ws-canton">VS</div>
+            </div>
+            <div class="ws-table-row">
+              <div class="ws-name">Bâti SA Lausanne</div>
+              <div><span class="pill pill-tiede pill-mini">Tiède 4.8</span></div>
+              <div class="ws-canton">VD</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Editorial -->
+      <div class="arch-frame ed-frame">
+        <div class="arch-frame-head">
+          <div class="arch-frame-title">Archétype editorial</div>
+          <div class="arch-frame-label">/veille</div>
+        </div>
+        <div class="ed-hero">
+          <div class="ed-aside">
+            <div class="ed-aside-kicker">Édition</div>
+            <div class="ed-aside-num">N°024</div>
+            <div class="ed-aside-date">2026-05-06</div>
+          </div>
+          <div class="ed-body">
+            <div class="ed-display">Veille hebdomadaire films et vernis</div>
+            <div class="ed-sub">3 signaux marché, 2 marchés publics ouverts en Suisse romande, 1 norme à anticiper.</div>
+            <ul class="ed-list">
+              <li><span class="ed-num">01</span><span>Norme cantonale GE sur film solaire bâtiments tertiaires</span></li>
+              <li><span class="ed-num">02</span><span>Appel d'offres immeuble Renens - clôture 2026-05-22</span></li>
+              <li><span class="ed-num">03</span><span>Hausse 8 % du segment vernis anti-graffiti</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div>
+      Source canonique : <a href="GOLDEN_STANDARD.md">GOLDEN_STANDARD.md</a> - Cascade pages : /dashboard, /pipeline, /contacts, /entreprises, /signaux, /veille/themes, /veille/[id], /login.
+    </div>
+    <div>
+      CRM FilmPro v9 - 2026-05-06
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,139 @@
+{
+  "name": "CRM FilmPro",
+  "inspiration": "Extraction /prospection (gabarit exclusif) + /veille refondue S112 (palette extras)",
+  "tagline": "DM Sans + palette ardoise/ambre FilmPro, spacing aéré, radius 10px dominant",
+  "_meta": {
+    "source": "https://filmpro-crm.vercel.app/prospection (+ /veille)",
+    "extracted_at": "2026-04-25",
+    "extraction_method": "chrome MCP getComputedStyle, top frequency",
+    "scope": "/prospection comme gabarit de vérité, /veille comme source palette uniquement"
+  },
+  "palette": {
+    "background": "#FFFFFF",
+    "surface": "#F9FAFB",
+    "text": "#111827",
+    "textMuted": "#6B7280",
+    "border": "#E5E7EB",
+    "primary": "#2F5A9E",
+    "accent": "#F79009",
+    "success": "#538B6B",
+    "warning": "#F79009",
+    "error": "#F04438",
+    "info": "#5A7190"
+  },
+  "typography": {
+    "fontFamilyHeading": "\"DM Sans\", system-ui, -apple-system, sans-serif",
+    "fontFamilyBody": "\"DM Sans\", system-ui, -apple-system, sans-serif",
+    "fontFamilyMono": "Menlo, Consolas, monospace",
+    "scale": {
+      "h1": "22px",
+      "h2": "18px",
+      "h3": "16px",
+      "h4": "15px",
+      "body": "14px",
+      "caption": "12px"
+    },
+    "weights": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "lineHeight": {
+      "heading": 1,
+      "body": 1.43
+    }
+  },
+  "spacing": {
+    "base": 4,
+    "scale": [
+      2,
+      4,
+      6,
+      8,
+      10,
+      12,
+      16,
+      20,
+      24,
+      32,
+      48
+    ]
+  },
+  "components": {
+    "button": {
+      "borderRadius": "10px",
+      "paddingY": "8px",
+      "paddingX": "16px",
+      "fontWeight": 600,
+      "fontSize": "14px",
+      "letterSpacing": "0",
+      "textTransform": "none"
+    },
+    "input": {
+      "borderRadius": "8px",
+      "borderWidth": "1px",
+      "paddingY": "6px",
+      "paddingX": "12px",
+      "fontSize": "14px"
+    },
+    "card": {
+      "borderRadius": "10px",
+      "padding": "16px",
+      "shadow": "0 1px 2px rgba(16,24,40,0.05)",
+      "borderWidth": "1px"
+    },
+    "modal": {
+      "borderRadius": "12px",
+      "padding": "24px",
+      "maxWidth": "560px"
+    },
+    "table": {
+      "headerFontSize": "12px",
+      "headerFontWeight": 600,
+      "headerColor": "#6B7280",
+      "cellPaddingY": "10px",
+      "cellPaddingX": "16px"
+    },
+    "badge": {
+      "borderRadius": "10px",
+      "paddingY": "4px",
+      "paddingX": "8px",
+      "fontSize": "12px",
+      "fontWeight": 500
+    }
+  },
+  "_extracted_extras": {
+    "extra_colors_filmpro_charte": {
+      "ardoise": "#5A7190",
+      "violet": "#7B6A9A",
+      "sauge": "#538B6B",
+      "brun": "#917548"
+    },
+    "extra_colors_workflow": {
+      "ambre_bg_doux": "#FFFAEB",
+      "rouge_bg_doux": "#FEF3F2",
+      "bleu_pale_veille": "#EDF1F5"
+    },
+    "extra_sizes_micro": [
+      "10px/400",
+      "10px/500/15",
+      "10px/600/15"
+    ],
+    "extra_radii": [
+      "8px",
+      "12px",
+      "4px"
+    ],
+    "extra_shadows": [
+      "0 4px 8px -2px rgba(16,24,40,0.1), 0 2px 4px -2px rgba(16,24,40,0.06)"
+    ],
+    "anomalies_to_review": [
+      "Bouton primary bleu #2F5A9E entre en conflit avec accent ambre #F79009 - choisir 1 unique stratégie de hiérarchie (primary=ambre OU primary=bleu charte)",
+      "Spacing 6px et 10px présents (base 4 stricte exclurait 6 et 10) - décider si on garde l'échelle empirique ou on aligne sur 4/8/12/16/24",
+      "Bouton 'Enrichir' h:42px vs Bouton 'Importer' h:40px - normaliser à 40px",
+      "Échelle typo : pas de H1 vrai détecté, le titre 'Prospection' est 22px/600 dans un div - confirmer hiérarchie",
+      "Material Symbols Outlined utilisé pour les icônes - convention à figer dans le golden (vs Lucide utilisé sur formation-ia)"
+    ]
+  }
+}

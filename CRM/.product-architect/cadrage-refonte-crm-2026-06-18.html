@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FilmPro CRM - Cadrage refonte UX/UI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --primary: #2F5A9E;
+    --primary-dark: #0A1628;
+    --accent: #3B6CB7;
+    --ink: #16202E;
+    --ink-soft: #43505F;
+    --ink-mute: #74808E;
+    --line: #E7ECF2;
+    --line-soft: #EFF3F8;
+    --paper: #FBFCFE;
+    --card: #FFFFFF;
+    --ok: #16a34a;
+    --warn: #d97706;
+    --danger: #dc2626;
+    /* Palette workflow FilmPro (sourde, chaude) */
+    --w1: #5A7190; --w1-bg: #EDF1F5; --w1-br: #8B9DB6;  /* bleu ardoise */
+    --w2: #7B6A9A; --w2-bg: #F0ECF5; --w2-br: #9B8BB5;  /* violet sourd */
+    --w3: #917548; --w3-bg: #F5F0E8; --w3-br: #B5976E;  /* ambre bronze */
+    --w4: #538B6B; --w4-bg: #EBF3EF; --w4-br: #7BAA8E;  /* sauge */
+    --shadow-soft: 0 1px 2px rgba(16,32,46,.04), 0 8px 24px -12px rgba(16,32,46,.12);
+    --shadow-lift: 0 2px 4px rgba(16,32,46,.05), 0 18px 40px -18px rgba(16,32,46,.18);
+    --r-lg: 20px; --r-md: 14px; --r-sm: 10px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; font-family: "DM Sans", system-ui, sans-serif;
+    color: var(--ink); background: var(--paper);
+    -webkit-font-smoothing: antialiased; line-height: 1.55;
+    font-size: 16px;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 28px; }
+  code, .mono { font-family: "DM Mono", ui-monospace, monospace; font-size: .85em; }
+
+  /* ---- Header ---- */
+  header.hero {
+    background:
+      radial-gradient(1200px 400px at 12% -10%, rgba(59,108,183,.10), transparent 60%),
+      radial-gradient(900px 360px at 100% 0%, rgba(83,139,107,.08), transparent 55%),
+      linear-gradient(180deg, #fff, var(--paper));
+    border-bottom: 1px solid var(--line);
+    padding: 56px 0 40px;
+  }
+  .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
+  .brand .mark {
+    width: 38px; height: 38px; border-radius: 11px;
+    background: linear-gradient(145deg, var(--primary), var(--primary-dark));
+    color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 18px;
+    box-shadow: var(--shadow-soft);
+  }
+  .brand .name { font-weight: 600; letter-spacing: -.01em; }
+  .brand .name b { color: var(--primary); }
+  .eyebrow {
+    display: inline-block; font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: .22em; font-weight: 600; color: var(--primary);
+    background: rgba(47,90,158,.07); padding: 6px 12px; border-radius: 999px; margin-bottom: 18px;
+  }
+  h1 {
+    font-size: clamp(30px, 4.4vw, 46px); line-height: 1.06; letter-spacing: -.025em;
+    margin: 0 0 16px; font-weight: 700; max-width: 18ch;
+  }
+  .lede { font-size: 18.5px; color: var(--ink-soft); max-width: 62ch; margin: 0 0 26px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip {
+    font-size: 13px; font-weight: 500; color: var(--ink-soft);
+    background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 7px 14px;
+    box-shadow: var(--shadow-soft);
+  }
+  .chip b { color: var(--ink); font-weight: 600; }
+
+  /* ---- Section scaffolding ---- */
+  section { padding: 46px 0; border-bottom: 1px solid var(--line-soft); }
+  .kicker { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
+  .kicker .num {
+    font-family: "DM Mono", monospace; font-size: 13px; color: var(--primary);
+    font-weight: 500; letter-spacing: .04em;
+  }
+  h2 { font-size: clamp(22px, 3vw, 30px); letter-spacing: -.02em; margin: 0 0 6px; font-weight: 700; }
+  h3 { font-size: 18px; letter-spacing: -.01em; margin: 30px 0 12px; font-weight: 600; }
+  .sub { color: var(--ink-soft); max-width: 70ch; margin: 0 0 22px; font-size: 16px; }
+  p { margin: 0 0 14px; }
+
+  /* ---- Exec summary cards ---- */
+  .levers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 24px; }
+  .lever {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--r-md);
+    padding: 20px; box-shadow: var(--shadow-soft); position: relative; overflow: hidden;
+  }
+  .lever::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: var(--primary); }
+  .lever h4 { margin: 0 0 8px; font-size: 15.5px; font-weight: 600; }
+  .lever p { margin: 0; font-size: 14px; color: var(--ink-soft); }
+  .lever.l2::before { background: var(--w3); }
+  .lever.l3::before { background: var(--w4); }
+
+  /* ---- Before / After schematic ---- */
+  .ba { display: grid; grid-template-columns: 1fr 44px 1fr; gap: 0; align-items: stretch; margin: 18px 0 8px; }
+  .ba .col {
+    border: 1px solid var(--line); border-radius: var(--r-md); padding: 16px 16px 18px; background: #fff;
+    box-shadow: var(--shadow-soft);
+  }
+  .ba .before { background: #FCFBFA; border-color: #ECE6E0; }
+  .ba .after { background: linear-gradient(180deg, #fff, #FAFCFF); border-color: #DBE6F4; }
+  .ba .arrow { display: grid; place-items: center; color: var(--ink-mute); font-size: 22px; }
+  .ba .tag {
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: .16em; font-weight: 600;
+    margin-bottom: 10px; display: inline-block;
+  }
+  .before .tag { color: #b08968; }
+  .after .tag { color: var(--primary); }
+  .ba ul { margin: 0; padding-left: 18px; }
+  .ba li { font-size: 14px; margin-bottom: 6px; color: var(--ink-soft); }
+  .ba .after li { color: var(--ink); }
+
+  /* wireframe blocks */
+  .wf { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .wf .row { border-radius: 7px; padding: 6px 9px; font-size: 11.5px; font-weight: 500; font-family: "DM Mono", monospace; }
+  .wf .kpi { background: #ECE6E0; color: #8a7a68; text-align: center; }
+  .wf .filt { background: #EEEAE4; color: #8a7a68; }
+  .wf .data { background: #E4DACd; color: #7a6a55; }
+  .after .wf .kpi { background: #E8EFF8; color: var(--primary); }
+  .after .wf .filt { background: #EAF1FA; color: var(--accent); }
+  .after .wf .data { background: #DCEBFA; color: #2c5183; }
+  .wf .tall { padding-top: 14px; padding-bottom: 14px; }
+
+  /* ---- Checklist ---- */
+  .checks { margin: 18px 0 4px; display: flex; flex-direction: column; gap: 0; }
+  .check {
+    display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px;
+    border: 1px solid var(--line); border-radius: var(--r-md); background: #fff; margin-bottom: 10px;
+    box-shadow: var(--shadow-soft); transition: border-color .2s, box-shadow .2s;
+  }
+  .check:hover { border-color: #cdd9e8; }
+  .check input[type=checkbox] {
+    appearance: none; -webkit-appearance: none; flex: 0 0 auto;
+    width: 21px; height: 21px; border: 1.5px solid #c3cdd9; border-radius: 7px; margin-top: 1px;
+    cursor: pointer; display: grid; place-items: center; transition: all .18s ease; background: #fff;
+  }
+  .check input[type=checkbox]:checked { background: var(--primary); border-color: var(--primary); }
+  .check input[type=checkbox]:checked::after { content: "✓"; color: #fff; font-size: 13px; font-weight: 700; }
+  .check .body { flex: 1; }
+  .check .t { font-weight: 600; font-size: 15px; margin-bottom: 3px; }
+  .check .d { font-size: 13.5px; color: var(--ink-soft); }
+  .check .src { font-size: 11.5px; color: var(--ink-mute); margin-top: 5px; }
+  .check.done { background: #F4FAF6; border-color: #cfe9d8; }
+  .check.done input[type=checkbox] { background: var(--ok); border-color: var(--ok); pointer-events: none; }
+  .check.done input[type=checkbox]::after { content: "✓"; color: #fff; font-size: 13px; font-weight: 700; }
+  .pill {
+    display: inline-block; font-size: 10.5px; font-weight: 600; padding: 2px 9px; border-radius: 999px;
+    text-transform: uppercase; letter-spacing: .05em; vertical-align: middle; margin-left: 8px;
+  }
+  .pill.p0 { background: #fdeaea; color: #c0392b; }
+  .pill.p1 { background: #fdf3e6; color: #b9770e; }
+  .pill.p2 { background: #eef1f5; color: #5a7190; }
+  .pill.ok { background: #e7f6ec; color: #1c8a48; }
+  .pill.new { background: #ecebf6; color: #6c5ca0; }
+
+  /* ---- Tables ---- */
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th, td { text-align: left; padding: 11px 13px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-mute); font-weight: 600; }
+  tr:last-child td { border-bottom: none; }
+  td .v { font-weight: 600; }
+  .verdict { font-weight: 600; }
+  .v-keep { color: var(--ok); }
+  .v-cut { color: var(--danger); }
+  .v-merge { color: var(--warn); }
+  .v-ask { color: var(--primary); }
+
+  /* ---- Callouts ---- */
+  .callout {
+    border-radius: var(--r-md); padding: 16px 18px; margin: 16px 0; font-size: 14.5px;
+    border: 1px solid; display: flex; gap: 12px;
+  }
+  .callout .ic { flex: 0 0 auto; font-size: 18px; line-height: 1.4; }
+  .callout.warn { background: #FFFBF4; border-color: #F0DCB8; color: #7a5a1e; }
+  .callout.info { background: #F5F9FE; border-color: #D4E4F6; color: #2c4a72; }
+  .callout.ok { background: #F4FAF6; border-color: #cfe9d8; color: #1f6e40; }
+  .callout b { color: inherit; }
+
+  .guard {
+    background: var(--w3-bg); border: 1px solid var(--w3-br); border-radius: var(--r-sm);
+    padding: 10px 13px; font-size: 13px; color: #6e5a34; margin-top: 8px;
+  }
+  .guard b { color: #5a4926; }
+
+  /* ---- Wave plan ---- */
+  .waves { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 18px; }
+  .wave { border-radius: var(--r-md); padding: 16px; border: 1px solid; }
+  .wave h4 { margin: 0 0 4px; font-size: 14px; }
+  .wave .w-n { font-family: "DM Mono", monospace; font-size: 12px; opacity: .8; }
+  .wave ul { margin: 8px 0 0; padding-left: 16px; }
+  .wave li { font-size: 12.5px; margin-bottom: 4px; }
+  .wave.a { background: var(--w1-bg); border-color: var(--w1-br); color: #3f5168; }
+  .wave.b { background: var(--w2-bg); border-color: var(--w2-br); color: #564a6b; }
+  .wave.c { background: var(--w3-bg); border-color: var(--w3-br); color: #6e5a34; }
+  .wave.d { background: var(--w4-bg); border-color: var(--w4-br); color: #3c6450; }
+
+  /* ---- Decisions ---- */
+  .decision {
+    border: 1px solid var(--line); border-left: 4px solid var(--primary); border-radius: var(--r-md);
+    padding: 16px 18px; margin-bottom: 14px; background: #fff; box-shadow: var(--shadow-soft);
+  }
+  .decision .q { font-weight: 600; font-size: 15px; margin-bottom: 6px; }
+  .decision .reco { font-size: 14px; color: var(--ink-soft); }
+  .decision .reco b { color: var(--primary); }
+
+  footer { padding: 40px 0 60px; color: var(--ink-mute); font-size: 13px; }
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 14px 0 0; font-size: 12.5px; color: var(--ink-mute); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  @media (max-width: 780px) {
+    .levers, .waves { grid-template-columns: 1fr; }
+    .ba { grid-template-columns: 1fr; }
+    .ba .arrow { transform: rotate(90deg); height: 32px; }
+  }
+  details.raw { margin-top: 10px; }
+  details.raw summary { cursor: pointer; font-size: 13px; color: var(--primary); font-weight: 500; }
+  details.raw .inner { font-size: 13.5px; color: var(--ink-soft); padding: 10px 0 0; }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="brand">
+      <div class="mark">F</div>
+      <div class="name"><b>FilmPro</b> · CRM</div>
+    </div>
+    <span class="eyebrow">Phase de cadrage · on n'attaque rien</span>
+    <h1>Rendre le CRM plus utile et plus premium, sans l'alourdir.</h1>
+    <p class="lede">
+      Audit 360 (UX, parcours, code), comparaison à 9 outils de référence (Pipedrive, Folk, Attio, Linear,
+      Airtable, Brevo, Mailchimp, Capsule, Lemlist) et passes de réflexion adverses. Ce document propose
+      des changements de <b>layout</b> et de <b>parcours</b> - avant/après - à cocher ensemble avant d'écrire la moindre spec.
+    </p>
+    <div class="meta-row">
+      <span class="chip">18 juin 2026</span>
+      <span class="chip"><b>10 bugs</b> corrigés à la racine cette session</span>
+      <span class="chip"><b>1725</b> tests verts</span>
+      <span class="chip">Audit sécu : <b>0 critique</b></span>
+      <span class="chip">Aucune fonction ajoutée, sauf <b>emailing</b></span>
+    </div>
+  </div>
+</header>
+
+<!-- ========== 1. SYNTHÈSE EXEC ========== -->
+<section id="synthese">
+  <div class="wrap">
+    <div class="kicker"><span class="num">01</span><h2>L'essentiel en 30 secondes</h2></div>
+    <p class="sub">
+      Le CRM est déjà solide et fonctionnel. Il ne souffre pas d'un manque de fonctions - il souffre de
+      <b>trois excès</b> qui freinent l'usage quotidien. La refonte vise à les corriger, pas à empiler.
+    </p>
+    <div class="levers">
+      <div class="lever l1">
+        <h4>1 · Trop d'empilement</h4>
+        <p>Sur chaque liste, 4 à 5 bandes (gros compteurs, filtres, bannières) s'empilent avant la première
+        ligne utile. La donnée tombe sous la ligne de flottaison.</p>
+      </div>
+      <div class="lever l2">
+        <h4>2 · Des fonctions mortes</h4>
+        <p>La V5 a coupé la prospection de masse mais a laissé les coquilles : onglets vides, filtres à
+        6 options sans données. La liste « se vide » → perçu comme un bug.</p>
+      </div>
+      <div class="lever l3">
+        <h4>3 · Des incohérences</h4>
+        <p>La recherche existe en 5 versions différentes selon la page ; certains parcours se cassent en
+        cours de route ; des listes restent grises façon Excel, hors de la charte premium.</p>
+      </div>
+    </div>
+    <div class="callout info" style="margin-top:24px">
+      <span class="ic">▶</span>
+      <div><b>Le fil rouge :</b> dégonfler la tuyauterie, finir le retrait V5, et unifier
+      (une seule recherche, des listes premium cohérentes, des fiches orientées action). Trois leviers,
+      zéro nouvelle complexité - exactement l'inverse d'« ajouter des fonctions ».</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 2. DÉJÀ CORRIGÉ ========== -->
+<section id="bugs">
+  <div class="wrap">
+    <div class="kicker"><span class="num">02</span><h2>Déjà corrigé cette session <span class="pill ok">livré dans le code</span></h2></div>
+    <p class="sub">
+      Tu m'as demandé de réparer les bugs trouvés en route, à la racine, sans régression. C'est fait et testé.
+      Dont <b>ton bug bloquant</b> : l'entreprise « Film » impossible à supprimer.
+    </p>
+
+    <h3>Ton bug B - suppression de l'entreprise « Film » bloquée</h3>
+    <div class="ba">
+      <div class="col before">
+        <span class="tag">Avant</span>
+        <ul>
+          <li>« Impossible de supprimer : un contact est rattaché »</li>
+          <li>… mais la fiche n'affiche <b>aucun contact</b>.</li>
+          <li>Cause : un contact archivé (invisible) « Jean Dupont » bloquait la suppression.</li>
+          <li>Blocage permanent et inexplicable.</li>
+        </ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="col after">
+        <span class="tag">Après</span>
+        <ul>
+          <li>La garde ne compte que les dépendances <b>visibles et détachables</b>.</li>
+          <li>Un contact archivé ne bloque plus ; il est proprement détaché à la suppression.</li>
+          <li>Confirmé sur la vraie donnée (« Film » + « Jean Dupont »).</li>
+          <li>4 tests de non-régression ajoutés sur cette garde sensible.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout warn" style="margin-top:6px">
+      <span class="ic">!</span>
+      <div>Le correctif est <b>dans le code, pas encore en ligne</b>. « Film » restera visible en prod
+      jusqu'au déploiement. Décision en fin de document : déployer le lot, ou nettoyer « Film » à la main
+      (donnée de test).</div>
+    </div>
+
+    <h3>Les 9 autres bugs trouvés et corrigés</h3>
+    <p class="sub" style="margin-bottom:14px">La base est quasi vide aujourd'hui : la plupart de ces bugs sont
+    <b>latents</b> (réels dans le code, sans dégât encore) - corrigés maintenant, justement tant que c'est gratuit.</p>
+    <div class="checks">
+      <label class="check done"><input type="checkbox" checked disabled><div class="body">
+        <div class="t">Référentiel Entreprises masque les sociétés archivées <span class="pill p1">data</span></div>
+        <div class="d">Les entreprises radiées par le robot Zefix réapparaissaient dans la liste. Désormais masquées, comme partout ailleurs.</div></div></label>
+      <label class="check done"><input type="checkbox" checked disabled><div class="body">
+        <div class="t">Compteur « Entreprises » du tableau de bord corrigé <span class="pill p1">data</span></div>
+        <div class="d">Il incluait les sociétés archivées → surcompte silencieux. Aligné sur les autres compteurs.</div></div></label>
+      <label class="check done"><input type="checkbox" checked disabled><div class="body">
+        <div class="t">Conversion d'un signal en opportunité : plus de doublon <span class="pill p1">data</span></div>
+        <div class="d">Un double-clic pouvait créer 2 opportunités dont une « orpheline ». Rendu fiable (une seule, même en cas de double-clic).</div></div></label>
+      <label class="check done"><input type="checkbox" checked disabled><div class="body">
+        <div class="t">Fusion de contact : refuse une cible archivée <span class="pill p1">data</span></div>
+        <div class="d">Un contact terrain pouvait être fusionné sur une fiche « morte » et disparaître. Désormais bloqué.</div></div></label>
+      <label class="check done"><input type="checkbox" checked disabled><div class="body">
+        <div class="t">Sélection « tout cocher » ne détruit plus la sélection complète <span class="pill p2">ux</span></div>
+        <div class="d">Sur Prospection, après « sélectionner les 185 », un clic la réduisait à la page (25) sans prévenir. Corrigé.</div></div></label>
+      <label class="check done"><input type="checkbox" checked disabled><div class="body">
+        <div class="t">Plus de plantage d'affichage sur un nom vide <span class="pill p2">ux</span></div>
+        <div class="d">L'initiale d'avatar (fiches Entreprise/Contact) pouvait planter sur une raison sociale vide. Sécurisé.</div></div></label>
+      <label class="check done"><input type="checkbox" checked disabled><div class="body">
+        <div class="t">Limite anti-surcharge sur les actions de lot <span class="pill p2">robustesse</span></div>
+        <div class="d">Le traitement par lot de leads n'avait pas de plafond. Borné à 500, comme son équivalent Signaux.</div></div></label>
+      <label class="check done"><input type="checkbox" checked disabled><div class="body">
+        <div class="t">Deux fuites de minuteries corrigées (Prospection, Contacts) <span class="pill p2">robustesse</span></div>
+        <div class="d">Des recherches/filtres pouvaient se déclencher après avoir quitté la page. Nettoyés proprement.</div></div></label>
+      <label class="check done"><input type="checkbox" checked disabled><div class="body">
+        <div class="t">Photos/visites se rechargent au changement de fiche <span class="pill p2">robustesse</span></div>
+        <div class="d">Préparation propre pour la future navigation « fiche suivante » sans rouvrir le panneau.</div></div></label>
+    </div>
+    <details class="raw">
+      <summary>2 alertes écartées après vérification (faux positifs)</summary>
+      <div class="inner">Le robot a aussi signalé 2 « bugs » que j'ai vérifiés puis écartés : (1) le contact archivé garde
+      son lien d'entreprise - c'est <b>correct</b> (permet la restauration) ; (2) l'absence de validation stricte sur
+      l'enrichissement Zefix - sans danger réel (la clé est du texte, pas d'identifiant qui plante). Je ne touche pas à ce qui marche.</div>
+    </details>
+  </div>
+</section>
+
+<!-- ========== 3. PAGE SIGNAUX (A) ========== -->
+<section id="signaux">
+  <div class="wrap">
+    <div class="kicker"><span class="num">03</span><h2>A · Page Signaux <span class="pill p0">refonte profonde</span></h2></div>
+    <p class="sub">
+      Tes 3 demandes : liste trop longue à rendre synthétique et actionnable (avec URL + adresse), bug des
+      catégories manquantes, et l'objectif « contacter en un clic ». Voici ce que l'audit révèle et propose.
+    </p>
+
+    <h3>A1 · Une liste plus courte, plus dense, actionnable</h3>
+    <div class="ba">
+      <div class="col before">
+        <span class="tag">Avant</span>
+        <div class="wf">
+          <div class="row kpi tall">Carte verbeuse · 4 lignes de description</div>
+          <div class="row data">Type · canton · date · score</div>
+          <div class="row filt">Détail complet seulement au clic (panneau)</div>
+        </div>
+        <ul>
+          <li>Cartes longues, 25 par page, descriptions sur 4 lignes.</li>
+          <li>Ni l'URL du dossier officiel, ni l'adresse complète.</li>
+          <li>Pour agir, il faut ouvrir le panneau puis aller sur SIMAP à la main.</li>
+        </ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="col after">
+        <span class="tag">Après · inspiré de Linear</span>
+        <div class="wf">
+          <div class="row data">Maître d'ouvrage · commune · <b>échéance</b></div>
+          <div class="row kpi">Score · canton · pastille fraîcheur</div>
+          <div class="row filt">↗ Ouvrir le dossier SIMAP · ✉ Contacter</div>
+        </div>
+        <ul>
+          <li>Ligne condensée en 3 zones : <b>qui</b> / <b>où + quand</b> / <b>actions</b>.</li>
+          <li>Lien direct vers le dossier SIMAP officiel + adresse complète affichée.</li>
+          <li>Hauteur constante, lecture en 2 secondes, scan rapide.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout warn">
+      <span class="ic">!</span>
+      <div><b>Point de vérité technique :</b> l'URL, l'adresse complète (code postal) et la date d'échéance
+      <b>ne sont pas encore stockées</b> aujourd'hui (la source SIMAP les fournit, mais on ne les enregistrait pas).
+      « Agir en 1 clic » suppose donc une petite évolution technique en amont, pas un simple changement d'écran.
+      Garde-fou : si une de ces infos manque sur un signal, l'action est <b>grisée avec sa raison</b>, jamais un bouton qui mène au vide.</div>
+    </div>
+
+    <h3>A2 · « Je ne vois que les appels d'offres » - ce n'est pas une panne</h3>
+    <div class="callout info">
+      <span class="ic">▶</span>
+      <div>Ce n'est <b>pas un bug d'API</b>. C'est le résultat voulu de la V5 : la seule source branchée est
+      SIMAP (appels d'offres). Le robot Zefix (créations d'entreprise) a été coupé volontairement, et les
+      <b>6 autres catégories du filtre n'ont jamais eu de source</b> - ce sont des étiquettes vides. Le vrai
+      défaut est UX : le filtre propose 7 choix dont 6 ne donneront jamais rien, ce qui fait « se vider » la liste.</div>
+    </div>
+    <div class="checks">
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Nettoyer le filtre : retirer les 6 catégories sans données</div>
+        <div class="d">Remplacer le filtre « Type » (7 options mortes) par un filtre utile : Score et Canton.</div>
+        <div class="src">Council : OUI (réversible, fort gain de confiance). Réintroduire un filtre Type seulement si SIMAP renvoie d'autres types un jour.</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Garder le robot Zefix éteint</div>
+        <div class="d">Le rallumer rouvrirait une source coupée volontairement (à 0 usage prouvé) et demanderait de re-vérifier sécurité/qualité.</div>
+        <div class="src">Council : NON pour l'instant. Décision réversible si un vrai besoin « créations d'entreprise » apparaît.</div></div></label>
+    </div>
+
+    <h3>A3 · Contacter en un clic depuis un signal</h3>
+    <div class="checks">
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Bouton « Contacter » directement sur le signal</div>
+        <div class="d">Pré-remplir un courrier / email vers le maître d'ouvrage, ou ouvrir le dossier SIMAP officiel. S'appuie sur le futur module emailing (section 5).</div>
+        <div class="src">Dépend de A1 (avoir l'adresse / le contact en base) et de la conformité nLPD du module email.</div></div></label>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 4. PAGE PROSPECTION (C) ========== -->
+<section id="prospection">
+  <div class="wrap">
+    <div class="kicker"><span class="num">04</span><h2>C · Page Prospection <span class="pill p1">3 ajouts ciblés</span></h2></div>
+    <p class="sub">Tes 3 demandes pour préparer des mailings : colonne Campagne, adresse complète dans la fiche, export CSV du groupe sélectionné.</p>
+
+    <div class="ba">
+      <div class="col before">
+        <span class="tag">Avant</span>
+        <ul>
+          <li>Liste plate, triée par source. Aucun regroupement par campagne.</li>
+          <li>Adresse présente mais tassée sur une ligne dans la fiche.</li>
+          <li>Aucun export : impossible de sortir un groupe pour préparer un envoi.</li>
+        </ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="col after">
+        <span class="tag">Après · inspiré d'Airtable</span>
+        <ul>
+          <li>Colonne <b>Campagne</b> (saisie manuelle) + lignes regroupées par campagne, en-tête coloré + compteur.</li>
+          <li>Adresse postale complète et structurée dans la fiche latérale.</li>
+          <li>Bouton <b>Exporter CSV</b> du groupe sélectionné, prêt pour le mailing.</li>
+        </ul>
+      </div>
+    </div>
+    <div class="checks">
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Colonne « Campagne » manuelle + séparation visuelle par campagne</div>
+        <div class="d">Un champ libre éditable sur chaque prospect, un filtre Campagne, et des groupes visuels (en-tête + compteur) pour voir chaque sous-groupe clairement.</div>
+        <div class="src">Nouveau champ en base + regroupement dans la liste. Inspiré du « group-by » d'Airtable.</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Adresse postale complète dans la fiche latérale</div>
+        <div class="d">Rue / code postal / localité / canton sur des lignes lisibles (les données existent déjà, c'est une mise en forme).</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Export CSV du groupe sélectionné</div>
+        <div class="d">Depuis la barre d'actions de lot : sortir les prospects cochés en CSV (accents préservés, prêt pour Excel et le mailing).</div>
+        <div class="src">Garde-fou repris du module existant : plafond, échappement CSV propre.</div></div></label>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 5. EMAILING GROUPÉ ========== -->
+<section id="email">
+  <div class="wrap">
+    <div class="kicker"><span class="num">05</span><h2>Emailing groupé depuis contact@filmpro.ch <span class="pill new">seule fonction ajoutée</span></h2></div>
+    <p class="sub">La bonne nouvelle : le socle technique existe déjà. Le travail neuf est surtout de la <b>conformité</b> et un parcours simple.</p>
+
+    <div class="callout warn">
+      <span class="ic">!</span>
+      <div><b>Scope recentré par la réflexion adverse (section 9) :</b> la fonction réellement utile pour une TPE,
+      c'est l'<b>email individuel depuis la fiche</b> (1-à-1, tracé). Le « mailing groupé » de masse devient une
+      <b>option gatée plus tard</b>, pas le chemin critique - il recréerait la machinerie de masse qu'on retire
+      ailleurs. Cette section décrit la cible complète ; on livre d'abord l'individuel.</div>
+    </div>
+
+    <div class="callout ok">
+      <span class="ic">✓</span>
+      <div><b>Socle déjà en place :</b> l'envoi d'emails (via Resend) fonctionne déjà pour la veille, le domaine
+      <code>filmpro.ch</code> est vérifié (signatures SPF/DKIM posées). On capitalise dessus - pas besoin d'un nouvel outil.</div>
+    </div>
+
+    <div class="ba">
+      <div class="col before">
+        <span class="tag">Aujourd'hui</span>
+        <ul>
+          <li>Le CRM envoie un seul email système (récap de veille) vers Pascal.</li>
+          <li>Aucun envoi vers des prospects, aucune notion de campagne, aucun désabonnement.</li>
+        </ul>
+      </div>
+      <div class="arrow">→</div>
+      <div class="col after">
+        <span class="tag">Cible · Brevo + Lemlist (le pattern, pas l'outil)</span>
+        <ul>
+          <li>Depuis un groupe de prospects : <b>« Créer un envoi groupé »</b>.</li>
+          <li>Parcours en 3 étapes verrouillées : destinataires → contenu → test &amp; envoi.</li>
+          <li>Un seul email par défaut (relance optionnelle, repliée). Récap de conformité avant envoi.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Ce qu'il faut décider et construire</h3>
+    <div class="checks">
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Rester sur Resend (pas de nouvel outil type Brevo)</div>
+        <div class="d">Le domaine est déjà vérifié, le code d'envoi existe. Brevo dupliquerait la configuration et fracturerait l'expérience.</div>
+        <div class="src">Council : Resend + envoi par lots. Brevo seulement si tu vises de vraies campagnes marketing massives récurrentes.</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Conformité suisse (nLPD) traitée comme un livrable à part entière, pas un à-côté</div>
+        <div class="d">Lien de désinscription dans chaque email (testé, pas juste présent), registre du consentement, exclusion automatique des désabonnés, mention de l'expéditeur.</div>
+        <div class="src">Pré-mortem : c'est le seul risque à dégât <b>externe et irréversible</b> (réputation du domaine + légal). Obligation, pas option.</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Commencer par l'envoi individuel depuis la fiche, le mailing de masse ensuite</div>
+        <div class="d">Un email à un prospect (base légale claire) d'abord ; le groupé arrive après, une fois la conformité rodée.</div>
+        <div class="src">Pré-mortem + recentrage V5 « le CRM n'est pas un outil marketing ». Démarrage prudent = réputation du domaine protégée.</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Garde-fous câblés en dur (façon Lemlist)</div>
+        <div class="d">Arrêt automatique si le prospect répond, plafond de volume par envoi, refus de partir si le lien de désinscription manque.</div></div></label>
+    </div>
+    <div class="callout warn">
+      <span class="ic">!</span>
+      <div><b>3 prérequis hors-écran à trancher avec toi :</b> (1) une vraie boîte <code>contact@filmpro.ch</code>
+      pour recevoir les réponses ; (2) la base légale pour écrire à ces prospects (sujet juridique avant
+      d'être technique) ; (3) le volume cible (si quelques centaines/mois, Resend gratuit suffit ; au-delà, ~20 $/mois).</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 6. REFONTE LAYOUT & PARCOURS ========== -->
+<section id="layout">
+  <div class="wrap">
+    <div class="kicker"><span class="num">06</span><h2>Refonte du layout &amp; du parcours <span class="pill p1">le cœur</span></h2></div>
+    <p class="sub">C'est ta demande centrale : un parcours plus instinctif et fluide. Regroupé par thème transverse - chaque ligne s'applique à plusieurs pages d'un coup.</p>
+
+    <h3>Navigation &amp; recherche</h3>
+    <div class="checks">
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Une seule recherche, partout pareille - un champ <b>visible</b> <span class="pill p0">P0</span></div>
+        <div class="d">Aujourd'hui la recherche existe en 5 versions différentes selon la page (Pipeline n'en a aucune). Une barre unique et visible, même place, même comportement.</div>
+        <div class="src">Champ visible persistant (pas un raccourci caché), le raccourci clavier en bonus secondaire - voir section 9, garde-fou « label compris en 2 secondes ».</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Menu regroupé en 2 blocs au lieu de 8 entrées à plat</div>
+        <div class="d">« Mon CRM » (Tableau de bord, Contacts, Entreprises, Pipeline) et « Radar &amp; sources » (Signaux, Prospection, Veille). L'ordre suit le flux de travail.</div>
+        <div class="src">Inspiré de Linear (groupes). Garde-fou : prévenir les 3 fondateurs, ne pas « déplacer » une page en silence.</div></div></label>
+    </div>
+
+    <h3>Listes &amp; tableaux</h3>
+    <div class="checks">
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Des lignes premium <b>riches</b> au lieu de lignes grises « Excel » <span class="pill p1">P1</span></div>
+        <div class="d">Un élément fort (le nom), des pastilles d'état expressives (badges, icônes, couleurs), la couleur qui porte le statut (jamais le texte brut), hauteur constante.</div>
+        <div class="src">Densité de Linear + richesse visuelle de ta charte. Sobriété = layout (bornage, retrait du décor), PAS densité de signaux. Standard de ligne validé en golden AVANT le code (voir section 9).</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Des cellules visuelles : logo, score en badge, statut coloré, email/tél cliquables</div>
+        <div class="d">Inspiré d'Airtable. Lecture instantanée sans surcharge.</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Garder le choix Tableau / Cartes (déjà en place)</div>
+        <div class="d">Le toggle existe ; on garde l'acquis et on améliore la qualité de la ligne. Ce n'est pas l'un ou l'autre.</div>
+        <div class="src">Council : faux dilemme - on fait les deux.</div></div></label>
+    </div>
+
+    <h3>Fiches latérales (sidepanes)</h3>
+    <div class="ba">
+      <div class="col before">
+        <span class="tag">Avant</span>
+        <div class="wf">
+          <div class="row data">Bloc 1</div><div class="row data">Bloc 2</div>
+          <div class="row data">Bloc 3 … 8 (tous égaux)</div>
+          <div class="row filt">Actions tout en bas</div>
+        </div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="col after">
+        <span class="tag">Après · inspiré de Folk</span>
+        <div class="wf">
+          <div class="row kpi">Identité + adresse + <b>actions (collées en haut)</b></div>
+          <div class="row data">« Où ça en est » : pipeline + contacts</div>
+          <div class="row filt">Détails secondaires</div>
+        </div>
+      </div>
+    </div>
+    <div class="checks">
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Fiche en 3 zones hiérarchisées, actions remontées en haut <span class="pill p1">P1</span></div>
+        <div class="d">« Qui contacter / où ça en est / quoi faire » lisible en 2 secondes, au lieu de 8 blocs égaux avec l'action en bas.</div></div></label>
+    </div>
+
+    <h3>Densité premium &amp; honnêteté visuelle</h3>
+    <div class="checks">
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Gros compteurs → petites pastilles, et largeur d'écran bornée</div>
+        <div class="d">Les KPI géants pleine bande deviennent des pastilles compactes → ~80px rendus à la donnée utile. Contenu centré (~1200px) au lieu d'étalé sur 27 pouces.</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Zéro chiffre décoratif : un indicateur est réel, ou il dégage</div>
+        <div class="d">La barre de progression du Pipeline affiche une valeur figée codée en dur (factice). Soit on lui donne un vrai sens (% de la valeur en CHF), soit on la retire. Pareil pour l'horloge live décorative.</div>
+        <div class="src">Pré-mortem : un CRM joli mais qui « ment » est pire qu'un CRM brut honnête.</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Afficher des statuts en français, pas les codes techniques</div>
+        <div class="d">« en_cours », « a_qualifier », « inconnu » → libellés FR lisibles. À livrer dans la même vague que les listes premium (sinon les belles listes affichent du code).</div></div></label>
+    </div>
+
+    <h3>États vides &amp; messages d'erreur</h3>
+    <div class="checks">
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Masquer les onglets dont la source est coupée</div>
+        <div class="d">Les onglets SIMAP / RegBL de Prospection sont vides depuis la V5 et affichent « Lancez un import » sans bouton. À masquer tant que la source est coupée.</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Messages d'erreur qui proposent la solution</div>
+        <div class="d">Quand une suppression est bloquée, offrir un bouton « Détacher » par dépendance, au lieu d'un cul-de-sac. (Récupération d'erreur, Nielsen.)</div></div></label>
+    </div>
+
+    <h3>Actions de lot</h3>
+    <div class="checks">
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Actions rapides au survol (écarter, créer une opportunité)</div>
+        <div class="d">Inspiré de Pipedrive / Linear : agir sans ouvrir un panneau à chaque fois.</div></div></label>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 7. RETRAITS / SIMPLIFICATION ========== -->
+<section id="retraits">
+  <div class="wrap">
+    <div class="kicker"><span class="num">07</span><h2>Ce qu'on peut retirer ou fusionner <span class="pill p2">moins = plus</span></h2></div>
+    <p class="sub">
+      Tu es ouvert à retirer des fonctions peu utiles. Voici l'arbitrage, basé sur l'usage réel (3 fondateurs,
+      185 leads, 1 transfert). Règle d'or du pré-mortem : <b>retrait = masquer derrière un interrupteur réversible</b>,
+      jamais supprimer le code - et jamais sans ton accord nominal.
+    </p>
+    <table>
+      <thead><tr><th>Élément</th><th>Usage réel</th><th>Reco</th><th>Risque</th></tr></thead>
+      <tbody>
+        <tr><td class="v">Onglets SIMAP + RegBL (Prospection)</td><td>Nul (sources coupées V5)</td><td class="verdict v-cut">Retirer</td><td>Nul (réversible)</td></tr>
+        <tr><td class="v">Filtre « Type » Signaux (7 options, 6 vides)</td><td>Nul</td><td class="verdict v-cut">Retirer</td><td>Faible</td></tr>
+        <tr><td class="v">Machinerie de prospection de masse (imports, alertes, enrichissement de lot)</td><td>Nul à 185 leads</td><td class="verdict v-cut">Sortir du parcours</td><td>Faible (code gardé)</td></tr>
+        <tr><td class="v">Coûts API dans le menu</td><td>Observation, pas métier</td><td class="verdict v-merge">Hors menu, page gardée</td><td>Nul - à confirmer</td></tr>
+        <tr><td class="v">Reporting en 4 onglets</td><td>Faible (pipeline court)</td><td class="verdict v-merge">Fusionner en 1 vue + export</td><td>Nul</td></tr>
+        <tr><td class="v">Horloge live + point clignotant (Dashboard)</td><td>Décoratif</td><td class="verdict v-cut">Retirer</td><td>Faible</td></tr>
+        <tr><td class="v">Signaux ↔ Prospection (fusionner ?)</td><td>0 conversion / 1 transfert</td><td class="verdict v-ask">Ne PAS fusionner - mesurer d'abord</td><td>Élevé si fusion à l'aveugle</td></tr>
+        <tr><td class="v">Contacts ↔ Entreprises</td><td>Cœur du CRM</td><td class="verdict v-keep">Garder séparés</td><td>-</td></tr>
+        <tr><td class="v">Pipeline · Veille · Log · Dashboard</td><td>Valeur prouvée</td><td class="verdict v-keep">Garder</td><td>-</td></tr>
+      </tbody>
+    </table>
+    <div class="checks">
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Appliquer les retraits « coquilles V5 » + décor (lignes rouges ci-dessus)</div>
+        <div class="d">Onglets morts, filtre vide, horloge décorative, machinerie de masse hors parcours, Coûts API hors menu, Reporting fusionné.</div></div></label>
+      <label class="check"><input type="checkbox"><div class="body">
+        <div class="t">Mesurer l'usage 30 jours avant tout retrait « à risque »</div>
+        <div class="d">Aucune fonction réellement utilisée par un des 3 fondateurs ne se retire sur une hypothèse. Mesure → ton OK → interrupteur réversible.</div>
+        <div class="src">Pré-mortem cause n°2 : le retrait à tort est silencieux et définitif côté confiance.</div></div></label>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 8. PATTERNS CONCURRENTS ========== -->
+<section id="benchmark">
+  <div class="wrap">
+    <div class="kicker"><span class="num">08</span><h2>Ce qu'on emprunte aux meilleurs <span class="pill p2">benchmark</span></h2></div>
+    <p class="sub">9 outils de référence scannés. Chaque pattern est mappé à un écran FilmPro précis - et calibré à ta taille (3 personnes), jamais copié tel quel.</p>
+    <table>
+      <thead><tr><th>Outil</th><th>Ce qu'on prend</th><th>Pour quel écran</th></tr></thead>
+      <tbody>
+        <tr><td class="v">Pipedrive</td><td>Carte « deal » compacte + pastille de fraîcheur</td><td>Pipeline, séparation par campagne</td></tr>
+        <tr><td class="v">Folk</td><td>Fiche latérale 3 zones, actions en haut, sans quitter la liste</td><td>Fiches Entreprise / Contact / Prospect</td></tr>
+        <tr><td class="v">Attio</td><td>Recherche/commande unique (Cmd+K)</td><td>Recherche globale, navigation rapide</td></tr>
+        <tr><td class="v">Linear</td><td>Densité maîtrisée et premium (pastilles sobres)</td><td>Listes Signaux / Entreprises / Contacts</td></tr>
+        <tr><td class="v">Airtable</td><td>Cellules visuelles + regroupement par colonne</td><td>Prospection (group-by Campagne)</td></tr>
+        <tr><td class="v">Capsule</td><td>Accueil segmenté par temporalité (aujourd'hui / cette semaine / en retard)</td><td>Tableau de bord</td></tr>
+        <tr><td class="v">Brevo</td><td>Parcours de campagne en 3 étapes verrouillées + conformité</td><td>Module emailing</td></tr>
+        <tr><td class="v">Mailchimp</td><td>Éditeur d'email simple + aperçu</td><td>Module emailing (contenu)</td></tr>
+        <tr><td class="v">Lemlist</td><td>Timeline verticale lisible + garde-fous câblés (stop sur réponse)</td><td>Emailing : passage prospects → envoi</td></tr>
+      </tbody>
+    </table>
+    <div class="callout info">
+      <span class="ic">▶</span>
+      <div><b>Le Dashboard repensé façon Capsule :</b> au lieu d'empiler les chiffres par type d'objet, organiser
+      l'accueil par <b>urgence</b> : à trier aujourd'hui / relances de la semaine / en retard. Avec des états vides
+      chaleureux (« Aucune relance en retard - tout est sous contrôle ✓ ») plutôt que des panneaux blancs.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 9. RÉFLEXION 360 (placeholder rempli après passes) ========== -->
+<section id="reflexion">
+  <div class="wrap">
+    <div class="kicker"><span class="num">09</span><h2>Garde-fous &amp; angles morts <span class="pill p2">réflexion adverse</span></h2></div>
+    <p class="sub">Avant de figer quoi que ce soit : ce que des passes de réflexion adverses (pré-mortem, inversion, conséquences à terme, leçons du passé, cas extrêmes) font remonter.</p>
+    <div id="reflexion-body">
+
+      <h3>Ce qui change le périmètre (3 passes le disent indépendamment)</h3>
+      <div class="checks">
+        <label class="check"><input type="checkbox"><div class="body">
+          <div class="t">L'emailing utile, c'est l'<b>individuel depuis la fiche</b> - pas le mailing de masse</div>
+          <div class="d">Tout le reste du cadrage retire le volume (machinerie de masse). Ajouter un moteur de campagne de masse + lourde couche conformité sur 185 contacts, c'est recréer ce qu'on débranche. La valeur réelle = un email cadré, 1-à-1, tracé dans l'historique, depuis contact@filmpro.ch.</div>
+          <div class="src">Inversion + Scale + Blindspot : requalifier le scope. Le batch/campagne devient une <b>option gatée plus tard</b>, nommée hors-scope (pas « à faire un jour »). Livre 90 % de la valeur pour 10 % du risque juridique.</div></div></label>
+        <label class="check"><input type="checkbox"><div class="body">
+          <div class="t">Le Pipeline lui-même est peut-être une coquille morte <span class="pill p1">à vérifier</span></div>
+          <div class="d">0 opportunité, 0 conversion depuis le début. Un CRM existe pour faire avancer des deals dans un tunnel. Si ça vit dans vos têtes / WhatsApp plutôt que dans l'outil, re-designer la fiche « où ça en est » serait cirer une salle vide.</div>
+          <div class="src">Inversion : poser la question aux 3 fondateurs avant de re-designer le pipeline. Si non utilisé → recentrer le CRM sur <b>annuaire + radar + relance email</b>.</div></div></label>
+        <label class="check"><input type="checkbox"><div class="body">
+          <div class="t">Purger / archiver les 184 leads de bruit avant de les re-styler</div>
+          <div class="d">185 leads importés / 1 traité = un dépotoir de prospection de masse que 3 personnes ne traiteront jamais. Le CRM doit s'ouvrir sur ce qu'on traite cette semaine, pas sur un cimetière.</div>
+          <div class="src">Inversion : le retrait à plus fort impact perçu, et il ne touche aucune ligne de layout.</div></div></label>
+      </div>
+
+      <h3>Corrections de direction (leçons de tes rejets passés)</h3>
+      <div class="checks">
+        <label class="check"><input type="checkbox"><div class="body">
+          <div class="t">Recherche <b>visible et persistante</b> en tête de nav - pas un raccourci Cmd+K caché</div>
+          <div class="d">Cmd+K est un réflexe d'outil de développeurs (Linear/Raycast), invisible pour 3 fondateurs vitrage. Ta charte exige « un label compris en 2 secondes ». Le vrai gain (5 recherches → 1) reste ; on le rend par un champ visible, Cmd+K en accélérateur secondaire optionnel.</div>
+          <div class="src">Lignées : corrige ma reco initiale. Évite de rejouer le rejet « benchmark SaaS hors cadre métier ».</div></div></label>
+        <label class="check"><input type="checkbox"><div class="body">
+          <div class="t">Ligne premium = <b>riche</b> (badges, icônes, pastilles colorées), la sobriété porte sur le layout</div>
+          <div class="d">Tu as déjà recalé le dense ET le minimaliste épuré. « Sobre » ne doit pas devenir « pauvre » : la sobriété concerne le bornage de largeur et le retrait du décor, pas la densité de signaux visuels par ligne. On valide un standard de ligne (golden HTML) AVANT de toucher au code.</div>
+          <div class="src">Lignées : la cible reste « premium moderne riche, simple d'usage ».</div></div></label>
+        <label class="check"><input type="checkbox"><div class="body">
+          <div class="t">Vérifier que l'URL / l'adresse / l'échéance Signaux viennent d'un champ <b>officiel</b> SIMAP</div>
+          <div class="d">« Reconstruire l'URL via l'identifiant » est une hypothèse, pas un contrat vérifié. Reconstruire en interne = l'odeur « bricolage » que tu as déjà rejetée. Mieux vaut un lien « voir sur SIMAP » fiable qu'un « 1 clic » fragile.</div>
+          <div class="src">Lignées : si non contractuel → garder l'action grisée (le contrat de complétude le couvre), pas de re-parsing maison.</div></div></label>
+        <label class="check"><input type="checkbox"><div class="body">
+          <div class="t">Remplacer « mesurer 30 jours » par une <b>réunion de 30 min</b> avec les 3 fondateurs</div>
+          <div class="d">Mesurer l'usage suppose du trafic. Sur une base vide, 30 jours de télémétrie sur un onglet vide retournent « zéro clic » - pas parce que c'est inutile, parce que c'est vide. Sur 3 personnes joignables, demander bat mesurer.</div>
+          <div class="src">Inversion + Scale : coquilles vides prouvées → retrait validé de vive voix, immédiat. Mesure réservée aux fonctions vraiment alimentées (toggle vue, pipeline si utilisé).</div></div></label>
+      </div>
+
+      <h3>Garde-fous de durée (gratuits maintenant, coûteux dans 12 mois)</h3>
+      <div class="checks">
+        <label class="check"><input type="checkbox"><div class="body">
+          <div class="t">Sous-domaine d'envoi séparé (ex. send.filmpro.ch) dès le premier email</div>
+          <div class="d">À la première campagne, filmpro.ch devient un domaine « jugé » par Google/Outlook. Un dérapage de réputation ne doit jamais contaminer tes emails métier (devis, factures) ni contact@filmpro.ch.</div>
+          <div class="src">Horizon : choix gratuit aujourd'hui, irréversible-coûteux après le 1er envoi.</div></div></label>
+        <label class="check"><input type="checkbox"><div class="body">
+          <div class="t">nLPD : base légale du <b>stock</b> + mention d'information, pas seulement l'opt-out</div>
+          <div class="d">L'opt-out blinde le 2e contact. Mais la loi suisse impose aussi d'informer à la collecte : ces leads (sources publiques) n'ont jamais su qu'une TPE les stocke pour prospecter. À documenter et valider avant le 1er envoi.</div>
+          <div class="src">Blindspot + Horizon : graver dans la spec (base légale par lead + date de revue), pas dans le code.</div></div></label>
+        <label class="check"><input type="checkbox"><div class="body">
+          <div class="t">Extraire 3-4 primitives partagées nommées (la ligne, la fiche, la pastille, la recherche)</div>
+          <div class="d">Sans composants partagés documentés, « premium » est un état instantané qui se re-dégrade à la page suivante (le mal n°3 revient par la porte de derrière).</div>
+          <div class="src">Horizon : seul livrable qui rend le premium durable à 12 mois.</div></div></label>
+        <label class="check"><input type="checkbox"><div class="body">
+          <div class="t">États vides soignés (l'écran le plus fréquent est… vide) + pagination au-delà de ~100 lignes</div>
+          <div class="d">L'état nominal du CRM aujourd'hui est vide ou quasi-vide : chaque liste a besoin d'un état vide chaleureux, pas d'un tableau à 0 ligne. Et au-delà de ~100 lignes, prévoir la pagination (sinon Cartes et listes gèlent à la montée en volume).</div>
+          <div class="src">Scale : ce que tu verras le plus souvent doit être le mieux pensé.</div></div></label>
+        <label class="check"><input type="checkbox"><div class="body">
+          <div class="t">2-3 critères de succès binaires posés AVANT la 1re vague</div>
+          <div class="d">« Plus utile / plus instinctif » n'est pas mesurable tel quel. Ex : « les 3 parcours du quotidien se font en ≤ X clics » + « les 3 fondateurs valident le nouveau layout en session live ». Le seul juge fiable ici, c'est leur usage réel + leur verdict.</div>
+          <div class="src">Blindspot : sinon la validation finale sera « j'aime / j'aime pas » au feeling.</div></div></label>
+      </div>
+
+      <div class="callout warn" style="margin-top:18px">
+        <span class="ic">!</span>
+        <div><b>Le fil rouge des passes adverses :</b> le cadrage est solide sur le « comment » et les garde-fous
+        de l'instant. Son angle mort : il sous-spécifie la <b>finalité</b> (à quoi sert vraiment chaque module
+        pour 3 personnes) et la <b>durée</b> (réputation, conformité continue, cohérence à 12 mois). D'où les
+        4 questions ci-dessous, à trancher avant les specs.</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== 10. PLAN DE VAGUES ========== -->
+<section id="vagues">
+  <div class="wrap">
+    <div class="kicker"><span class="num">10</span><h2>Comment on livrerait, sans casser les habitudes</h2></div>
+    <p class="sub">Par vagues réversibles (chacune derrière un interrupteur), pas en big-bang. Le gain « pur » d'abord, les nouveautés en dernier.</p>
+    <div class="waves">
+      <div class="wave a">
+        <span class="w-n">Vague 1</span>
+        <h4>Corrections &amp; cohérence</h4>
+        <ul><li>Bugs (fait)</li><li>Recherche unique</li><li>Statuts en FR</li><li>Onglets/filtres morts masqués</li></ul>
+      </div>
+      <div class="wave b">
+        <span class="w-n">Vague 2</span>
+        <h4>Listes &amp; fiches premium</h4>
+        <ul><li>Lignes premium</li><li>Fiches 3 zones</li><li>Densité, largeur bornée</li><li>Page par page</li></ul>
+      </div>
+      <div class="wave c">
+        <span class="w-n">Vague 3</span>
+        <h4>Tes 3 chantiers</h4>
+        <ul><li>Signaux condensés + actions</li><li>Prospection : campagne + CSV</li><li>Dashboard façon Capsule</li></ul>
+      </div>
+      <div class="wave d">
+        <span class="w-n">Vague 4</span>
+        <h4>Emailing</h4>
+        <ul><li>Envoi individuel</li><li>Conformité nLPD</li><li>Puis mailing groupé</li></ul>
+      </div>
+    </div>
+    <div class="callout info" style="margin-top:18px">
+      <span class="ic">▶</span>
+      <div>Chaque vague est validée et mesurée avant la suivante. Tu gardes la main : un court « ce qui change »
+      aux 3 fondateurs à chaque étape, et un retour arrière possible en moins d'une minute.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 11. DÉCISIONS À CONFIRMER ========== -->
+<section id="decisions">
+  <div class="wrap">
+    <div class="kicker"><span class="num">11</span><h2>Ce que j'ai besoin que tu tranches</h2></div>
+    <p class="sub">Tout le reste, je peux le décider seul avec une reco par défaut. Ces points-là changent la direction.</p>
+
+    <div class="decision">
+      <div class="q">1 · Le bug « Film » : on déploie le correctif, ou je nettoie « Film » à la main maintenant ?</div>
+      <div class="reco"><b>Reco : déployer le lot de corrections</b> (10 bugs, 1725 tests verts) - ça règle « Film » proprement et tout le reste d'un coup. Sinon je supprime « Film » directement en base (c'est une donnée de test).</div>
+    </div>
+    <div class="decision">
+      <div class="q">2 · Le robot Zefix (créations d'entreprise) reste-t-il éteint ?</div>
+      <div class="reco"><b>Reco : oui, éteint.</b> 0 usage prouvé, rouvrir la source demande une re-vérification sécurité. Réversible si un vrai besoin apparaît.</div>
+    </div>
+    <div class="decision">
+      <div class="q">3 · Emailing : on confirme Resend (pas Brevo) + conformité nLPD comme livrable spécifié ?</div>
+      <div class="reco"><b>Reco : oui aux deux.</b> Et démarrage par l'envoi individuel. Il me faut de toi : le volume cible, et confirmer qu'il existe une base légale pour écrire à ces prospects.</div>
+    </div>
+    <div class="decision">
+      <div class="q">4 · On valide d'abord un « standard de ligne premium » avant de refondre les 5 listes ?</div>
+      <div class="reco"><b>Reco : oui</b> (ta règle habituelle : golden validé avant cascade). Ordre suggéré : Entreprises → Contacts → Signaux → Prospection → Pipeline. Le standard prouvera « riche ET lisible », pas « épuré ».</div>
+    </div>
+    <div class="decision">
+      <div class="q">5 · Le Pipeline (opportunités) vous sert-il vraiment, ou ça vit ailleurs ?</div>
+      <div class="reco"><b>Reco : question aux 3 fondateurs avant de re-designer.</b> 0 opportunité / 0 conversion en base. Si le suivi vit dans vos têtes / WhatsApp, on recentre le CRM sur annuaire + radar + relance, au lieu de polir un tunnel inutilisé.</div>
+    </div>
+    <div class="decision">
+      <div class="q">6 · L'emailing : on commence bien par l'<b>individuel</b>, le groupé en option plus tard ?</div>
+      <div class="reco"><b>Reco : oui.</b> Et pour cadrer : décris-moi le prochain email réel que tu enverrais (à combien de personnes, quel message, attends-tu des réponses ?). Ça tranche « simple composeur » vs « wizard de campagne » et évite de sur-construire.</div>
+    </div>
+    <div class="decision">
+      <div class="q">7 · Les 184 leads de prospection non traités : on les archive (hors-vue) ?</div>
+      <div class="reco"><b>Reco : oui, archivage « dormant ».</b> Le CRM s'ouvre alors sur ce que vous traitez vraiment, pas sur un cimetière d'import. Retrait à fort impact perçu, zéro ligne de layout touchée. Réversible.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div>FilmPro CRM - document de cadrage, phase brainstorming. Aucune spec n'est figée ; rien n'est implémenté hormis les 10 corrections de bugs (dans le code, pas encore déployées).</div>
+    <div class="legend">
+      <span><span class="dot" style="background:var(--ok)"></span> Déjà corrigé</span>
+      <span><span class="dot" style="background:#c0392b"></span> P0 prioritaire</span>
+      <span><span class="dot" style="background:#b9770e"></span> P1</span>
+      <span><span class="dot" style="background:#5a7190"></span> P2 / confort</span>
+      <span><span class="dot" style="background:#6c5ca0"></span> Nouvelle fonction</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

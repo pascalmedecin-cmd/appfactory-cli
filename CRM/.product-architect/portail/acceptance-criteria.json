@@ -1,0 +1,220 @@
+{
+  "deliverable": "Portail FilmPro multi-outils (chantier 1 : portail + renommage + reorg CRM)",
+  "version": "1.1",
+  "date": "2026-06-01",
+  "revue": "Corrections post-revue best-in-class integrees (voir revue-specs-corrections.md)",
+  "criteria": [
+    {
+      "id": "AC-001",
+      "description": "La home portail affiche exactement 2 cards : CRM (active) et Devis (etat 'Bientot disponible')",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Decision Q5 : 2 cards CRM + Devis"
+    },
+    {
+      "id": "AC-002",
+      "description": "Clic sur la card CRM navigue vers le dashboard CRM",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4
+    },
+    {
+      "id": "AC-003",
+      "description": "La card Devis ne navigue pas (aucun lien actif, pas de 404) et est annoncee 'bientot disponible' (aria-disabled) aux lecteurs d'ecran",
+      "testable": true,
+      "blocking": true,
+      "test_type": "axe-core",
+      "owner_phase": 4,
+      "rationale": "Blindspot C3 : pas de lien mort, a11y"
+    },
+    {
+      "id": "AC-004",
+      "description": "Apres la reorg, 100 pourcent des pages CRM (dashboard, contacts, entreprises, pipeline, prospection, signaux, veille, reporting, log, aide, couts) sont accessibles et rendues sans erreur",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Zero regression CRM (objectif #1)"
+    },
+    {
+      "id": "AC-005",
+      "description": "Un lien/logo 'retour portail' est present sur le layout CRM et ramene a la home en 1 clic depuis n'importe quelle page",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4
+    },
+    {
+      "id": "AC-006",
+      "description": "Zero occurrence de 'CRM' comme NOM de l'application dans l'UI (title des onglets, navbar, config.app.name) ; 'CRM' ne subsiste que comme nom d'un outil",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 3,
+      "rationale": "Objectif #3, grep UI exhaustif"
+    },
+    {
+      "id": "AC-007",
+      "description": "La description metier dans config.ts est corrigee : 'traitements pour vitrage' (films + vernis), plus aucune mention 'production audiovisuelle'",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Catch cadrage : memoire project_filmpro_metier (pas de video)"
+    },
+    {
+      "id": "AC-008",
+      "description": "Aucun nouveau token couleur cree ; la home reutilise les tokens existants de app.css",
+      "testable": true,
+      "blocking": false,
+      "test_type": "manual verification",
+      "owner_phase": 3,
+      "rationale": "Coherence charte (decision auto D)"
+    },
+    {
+      "id": "AC-009",
+      "description": "axe-core : 0 violation serieuse ou critique sur la home portail",
+      "testable": true,
+      "blocking": true,
+      "test_type": "axe-core",
+      "owner_phase": 4
+    },
+    {
+      "id": "AC-010",
+      "description": "La home est responsive : cards empilees en 1 colonne sous 720px, lisible et utilisable a 375px",
+      "testable": true,
+      "blocking": true,
+      "test_type": "audit-uiux",
+      "owner_phase": 4,
+      "rationale": "Blindspot C1 : fondateurs peuvent ouvrir sur mobile"
+    },
+    {
+      "id": "AC-011",
+      "description": "Lighthouse CI sur la home : LCP < 2.5s et CLS < 0.1",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Lighthouse CI",
+      "owner_phase": 4
+    },
+    {
+      "id": "AC-012",
+      "description": "La suite Vitest existante reste verte (ancienne baseline rouge Sentry resolue le 2026-06-07 : hooks.server.test.ts repasse vert)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Premortem M6 (resolu 2026-06-07) : baseline rouge Sentry levee"
+    },
+    {
+      "id": "AC-013",
+      "description": "La commande CLI svelte-check retourne 0 erreur apres la reorg (imports, types, routing)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 3,
+      "rationale": "Premortem M3 : regression silencieuse via import casse ; svelte-check est une commande CLI, pas Vitest"
+    },
+    {
+      "id": "AC-014",
+      "description": "La couche service src/lib/server/referentiel/{entreprises,contacts}.ts existe, appelle la dedup/normalisation existante (ne la reinvente pas), et est branchee sur les ecritures des 2 pages critiques (entreprises, contacts). Les call sites API restants (visits, contact-suggestions, search) sont traces comme dette nommee chantier 2",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Fondation re-cadree (revue G) : ecritures aujourd'hui dispersees dans 5+ call sites, pas de couche existante. 'Cout nul' etait faux"
+    },
+    {
+      "id": "AC-015",
+      "description": "Apres connexion (login OTP), l'utilisateur atterrit sur la home portail (pas directement le dashboard CRM)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Blindspot C7 : rendre le portail visible des l'entree"
+    },
+    {
+      "id": "AC-016",
+      "description": "code-review:security-auditor retourne 0 High/Critical/Medium sur les fichiers touches (routing, layout, config, home)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 4,
+      "rationale": "rules/quality.md : artefact audit_secu date"
+    },
+    {
+      "id": "AC-017",
+      "description": "Bascule URL : la nouvelle adresse filmpro.vercel.app sert l'app, et l'ancienne filmpro-crm.vercel.app redirige vers la nouvelle (aucune coupure d'acces pour les fondateurs)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 4,
+      "rationale": "Premortem M1 : seul vrai risque, action supervisee"
+    },
+    {
+      "id": "AC-018",
+      "description": "Le vrai logo FilmPro (FilmPro_logo.svg) est affiche sur la home et le header, pas un logotype texte ad hoc",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Ajustement Pascal gate 1->2"
+    },
+    {
+      "id": "AC-019",
+      "description": "Les anciennes URLs internes redirigent (308) vers /crm : GET /pipeline -> /crm/pipeline, idem signaux/prospection/entreprises/contacts/veille/reporting/aide/log/dashboard-couts",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Revue D/F17 : ne pas casser les favoris internes des fondateurs"
+    },
+    {
+      "id": "AC-020",
+      "description": "manifest.webmanifest name === 'FilmPro' et app.html <title> ne contient plus 'CRM' (verification automatisee par lecture fichier)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Revue B/F12-F13 : manifest et app.html oublies du pack initial"
+    },
+    {
+      "id": "AC-021",
+      "description": "Un snapshot visuel de baseline de la home portail est approuve (Playwright snapshot), 0 diff non revu",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Playwright E2E",
+      "owner_phase": 4,
+      "rationale": "Revue F33 : home neuve = baseline visuelle bloquante"
+    },
+    {
+      "id": "AC-022",
+      "description": "L'URL publique est externalisee dans l'env var PUBLIC_APP_URL ; 0 occurrence en dur de 'filmpro-crm.vercel.app' hors fichiers de test (email-recap, cross-check, url-verify, aide/content)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "Vitest unit",
+      "owner_phase": 3,
+      "rationale": "Revue C/F16 : 4 hardcodes URL casseraient apres bascule"
+    },
+    {
+      "id": "AC-023",
+      "description": "Le template OTP Supabase (dashboard) est mis a jour (nom FilmPro + nouvelle URL) et le re-login cross-domain est documente/communique aux 3 fondateurs",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 4,
+      "rationale": "Revue B/F15 + F18 : OTP hors repo, cookies non transferes cross-domain, action supervisee"
+    },
+    {
+      "id": "AC-024",
+      "description": "Le reprefixage est centralise via une base CRM_BASE='/crm' ; aucun lien interne en dur vers une page CRM ne reste a la racine (grep des href/goto/redirect)",
+      "testable": true,
+      "blocking": true,
+      "test_type": "manual verification",
+      "owner_phase": 3,
+      "rationale": "Revue E/F3 : ~21 fichiers / ~35 points reels, pas 7"
+    }
+  ]
+}

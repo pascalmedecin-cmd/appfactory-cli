@@ -1,0 +1,355 @@
+{
+  "name": "CRM FilmPro",
+  "version": "v7",
+  "inspiration": "v5 + refonte /prospection phases 0+1 + scoring fix bimodalité 2026-05-01",
+  "tagline": "DM Sans + bleu primary + ambre signal, spacing Tailwind canonique, radius 10px, icônes Lucide. v7 ajoute pattern queue triage matin (TriageQueue), pills sémantiques métier (ScorePill : Prioritaire / À qualifier / Faible signal), boutons ActionButton Notion-like, indicateurs flat premium.",
+  "_meta": {
+    "source": "https://filmpro-crm.vercel.app/prospection (gabarit) + mockup notes/refonte-prospection-2026-05-01/mockup-prospection-phase01.html (validé Pascal)",
+    "extracted_at": "2026-05-01",
+    "extraction_method": "chrome MCP getComputedStyle + mockup HTML autoportant Pascal-validé",
+    "scope": "/prospection comme gabarit de vérité, /veille comme source palette éditoriale, dashboard pour widget TriageQueue",
+    "supersedes": "v5 (résolution divergence info-token-ardoise-vs-sky)",
+    "decisions_applied": "2026-04-25 — 5 anomalies arbitrées par Pascal via HTML interactif, +2 décisions sweep S118, +1 décision alignement S119, +4 décisions Phase 0+1 2026-05-01",
+    "v7_changelog": "2026-05-01 — Refonte /prospection phases 0+1 livrée. Composants nouveaux : ScorePill (pill sémantique avec glyphe Lucide), TriageQueue (widget dashboard inbox du matin), ActionButton (icône colorée Notion-like). Tags métier remplacent Chaud/Tiède/Froid (Prioritaire/À qualifier/Faible signal). Indicateurs flat premium remplacent funnel décoratif. Toggle 'Afficher les transférés' off par défaut. Décisions 9-12 ajoutées."
+  },
+  "decisions": {
+    "1": "Primary = bleu #2F5A9E (statu quo). Accent ambre #F79009 réservé aux signaux d'attention",
+    "2": "Spacing aligné Tailwind canonique : 4 / 8 / 12 / 16 / 24 / 32 / 48 (retrait de 2, 6, 10, 20)",
+    "3": "Hauteur boutons normalisée à 40px (h-10 Tailwind)",
+    "4": "H1 sémantique obligatoire en haut de chaque page (rendu via classes Tailwind)",
+    "5": "Migration CRM vers Lucide (override de la reco statu quo Material Symbols). Cohérence cross-projet avec formation-ia + gain perf -80kb. LIVRÉ S115 (commit f1a54c5).",
+    "6": "Opacités primary custom (bg-primary/{5,8,10,15,20} + border-primary/{12,15,20,30}) → bascule sémantique vers tokens existants (option (b) S118). bg-primary-light + border-primary uniformes. Hover/focus/ring transients conservés (pattern UA standard). LIVRÉ S118 (commit e9eaf4d, 31 substitutions / 10 fichiers).",
+    "7": "Variant Badge 'accent' (alias visuel legacy de 'default' post-suppression --color-accent) → 'info' pour statuts 'en cours' (sémantique correcte). LIVRÉ S118 (commit 5844633, 5 helpers TS basculés). ModalForm headerVariant 'accent' conservé (pattern indépendant : header bleu plein bg-primary, sémantique emphasis distincte).",
+    "8": "Token --color-info aligné sur golden (option (a) S119). Code → golden : --color-info #2E90FA sky → #5A7190 ardoise FilmPro + --color-info-light #EFF8FF → #EDF1F5. Cohérence charte FilmPro restaurée. Badge variant 'info' (S118) rend désormais en ardoise. Alerte signaux dashboard (commit eddb04b S117) bénéficie du même alignement.",
+    "9": "Tags métier orientés action commerciale remplacent Chaud/Tiède/Froid (Phase 0 2026-05-01). Pattern Linear Priority : 'Prioritaire' (score≥7) / 'À qualifier' (4-6) / 'Faible signal' (0-3). Composant ScorePill avec glyphe Lucide à gauche (flame/target/eye), couleurs calibrées modernes (rouge corail #C0391A vs danger criard #D92D20). Apparition systémique table /prospection + LeadSlideOut + queue dashboard. Cohérence DRY UI principle. Variante 'Non scoré' (icône clock, ardoise neutre) pour leads non encore enrichis (lead_express).",
+    "10": "Indicateurs flat premium remplacent métaphore funnel décoratif (Phase 0 2026-05-01). 4 cartes Importer/Enrichir/Qualifier/Convertir → 3 indicateurs honnêtes (Leads actifs / Marchés publics ouverts / Transférés ce mois) avec icône Lucide pastille radiale, valeur 36px tabular-nums, micro-trend optionnel. Honnêteté > suggestion de parcours linéaire qui n'existe pas (un lead SIMAP saute 'Enrichir').",
+    "11": "Boutons d'action queue triage : pattern Notion / Stripe property buttons (Phase 1 2026-05-01). 36×36 carré, repos transparent + icône colorée saturation faible (40%), hover bg tinté + icône saturation 100% + élévation translateY(-1px) + tinted shadow + spring physics cubic-bezier(0.16, 1, 0.3, 1). Quatre actions inline avec aria-label + tooltip natif title= : Intéressant (vert) / Écarter (rouge corail) / Snooze 7 j (ardoise) / Détails (navy). Mobile : full-width 44px + label visible via ::after.",
+    "12": "Widget TriageQueue dashboard cohérent pattern /veille S132 (Phase 1 2026-05-01). Bandeau primary-dark gauche avec ornements cercles white/[0.04] + count tabular-nums 88px. CTA 'Voir les N autres' subtil (texte ardoise pâle saturée + underline 1px). Aside cliquable = <button> natif (a11y). Cards leads avec animation entrée fadeUp staggered 50ms. Empty state soigné. Critères queue côté serveur : statut=nouveau ET score>=config.scoring.triage.scoreMin (5) ET (triage_snoozed_until IS NULL OR <= now()). Cap 25, top 12 affichés. Concurrency guards : 409 si lead déjà traité par un autre fondateur (queue partagée 3 fondateurs), anti-cumul snooze (rejette si déjà snoozé futur)."
+  },
+  "palette": {
+    "background": "#FFFFFF",
+    "surface": "#F9FAFB",
+    "text": "#111827",
+    "textMuted": "#6B7280",
+    "border": "#E5E7EB",
+    "primary": "#2F5A9E",
+    "primaryHover": "#264C85",
+    "accent": "#F79009",
+    "accentBg": "#FFFAEB",
+    "success": "#538B6B",
+    "warning": "#F79009",
+    "warningBg": "#FFFAEB",
+    "error": "#F04438",
+    "errorBg": "#FEF3F2",
+    "info": "#5A7190",
+    "infoBg": "#EDF1F5"
+  },
+  "paletteExtras": {
+    "filmproCharte": {
+      "ardoise": "#5A7190",
+      "violet": "#7B6A9A",
+      "sauge": "#538B6B",
+      "brun": "#917548"
+    },
+    "veillePale": "#EDF1F5",
+    "comment": "Charte FilmPro complète disponible pour pages métier spécifiques (signaux, marchés). Ne pas utiliser hors scope défini. Note : --color-info-light = veillePale = #EDF1F5 depuis S119 (alignement décision 8)."
+  },
+  "paletteEditorial": {
+    "scope": "Sidebar (fond), page login (fond), hero éditorial /veille — usage exclusif hors flux CRM standard",
+    "tokens": {
+      "primary-light": { "hex": "#F0F4F8", "usage": "Background sidebar, fond hero éditorial /veille, badges/pills brand soft (post-sweep S118)" },
+      "primary-dark": { "hex": "#0A1628", "usage": "Background page login (contraste fort, ambiance premium)" }
+    },
+    "comment": "Coexistent avec --color-primary-hover (#264C85) qui reste réservé aux interactions hover. Conservés explicitement S116 — ne pas confondre avec sweep décision 6.",
+    "documented_in_v4": true
+  },
+  "typography": {
+    "fontFamilyHeading": "\"DM Sans\", system-ui, -apple-system, sans-serif",
+    "fontFamilyBody": "\"DM Sans\", system-ui, -apple-system, sans-serif",
+    "fontFamilyMono": "Menlo, Consolas, monospace",
+    "scale": {
+      "h1": { "size": "22px", "weight": 600, "lineHeight": 1.0 },
+      "h2": { "size": "18px", "weight": 600, "lineHeight": 1.2 },
+      "h3": { "size": "16px", "weight": 600, "lineHeight": 1.3 },
+      "h4": { "size": "15px", "weight": 600, "lineHeight": 1.4 },
+      "body": { "size": "14px", "weight": 400, "lineHeight": 1.43 },
+      "bodyMedium": { "size": "14px", "weight": 500, "lineHeight": 1.43 },
+      "caption": { "size": "12px", "weight": 400, "lineHeight": 1.33 },
+      "captionMedium": { "size": "12px", "weight": 500, "lineHeight": 1.33 },
+      "label": { "size": "12px", "weight": 600, "lineHeight": 1.33 },
+      "micro": { "size": "10px", "weight": 500, "lineHeight": 1.5 }
+    },
+    "weights": { "regular": 400, "medium": 500, "semibold": 600, "bold": 700 }
+  },
+  "typographyEditorial": {
+    "scope": "Module /veille uniquement (pages liste + [id] + item/[slug]) — éditorial magazine, hors flux CRM standard",
+    "classes": {
+      "mag-kicker": { "letterSpacing": "0.14em", "textTransform": "uppercase", "fontSize": "11px", "fontWeight": 700, "usage": "Kicker éditorial (catégorie, segment)" },
+      "mag-display": { "fontWeight": 800, "letterSpacing": "-0.03em", "lineHeight": 1.02, "usage": "Display principal (hero veille)" },
+      "mag-display-2": { "fontWeight": 800, "letterSpacing": "-0.025em", "lineHeight": 1.05, "usage": "Display secondaire" },
+      "mag-display-3": { "fontWeight": 700, "letterSpacing": "-0.02em", "lineHeight": 1.1, "usage": "Display tertiaire (titres articles)" },
+      "mag-body": { "fontSize": "17px", "lineHeight": 1.7, "fontWeight": 400, "usage": "Corps éditorial enrichi (pertinence, deep-dive)" },
+      "mag-archive-card": { "behavior": "hover .mag-archive-title → color primary", "usage": "Cards archive éditoriale" }
+    },
+    "comment": "Conservés S117 audit /veille : design éditorial intentionnel. Ne pas substituer par typo CRM standard. Pas de migration prévue.",
+    "documented_in_v4": true
+  },
+  "spacing": {
+    "base": 4,
+    "scale": [4, 8, 12, 16, 24, 32, 48],
+    "tokens": {
+      "xs": "4px",
+      "sm": "8px",
+      "md": "12px",
+      "lg": "16px",
+      "xl": "24px",
+      "2xl": "32px",
+      "3xl": "48px"
+    }
+  },
+  "radius": {
+    "sm": "4px",
+    "md": "8px",
+    "lg": "10px",
+    "xl": "12px",
+    "full": "9999px",
+    "default": "10px"
+  },
+  "shadow": {
+    "xs": "0 1px 2px rgba(16,24,40,0.05)",
+    "sm": "0 1px 3px rgba(16,24,40,0.1), 0 1px 2px rgba(16,24,40,0.06)",
+    "md": "0 4px 8px -2px rgba(16,24,40,0.1), 0 2px 4px -2px rgba(16,24,40,0.06)",
+    "focusRing": "0 0 0 3px rgba(47, 90, 158, 0.2)"
+  },
+  "componentsPhase01": {
+    "scope": "Phase 0+1 2026-05-01 - composants nouveaux mockup-validés. Layouts canoniques pour réutilisation.",
+    "scorePill": {
+      "scope": "Pill sémantique de priorité commerciale (remplace Badge Chaud/Tiède/Froid).",
+      "height": "26px",
+      "padding": "0 11px",
+      "borderRadius": "6px",
+      "gap": "7px",
+      "fontSize": "12px",
+      "fontWeight": 600,
+      "letterSpacing": "0.005em",
+      "minWidth": { "default": "130px", "compact": "auto" },
+      "icon": { "size": "14px", "strokeWidth": 2, "library": "lucide" },
+      "variants": {
+        "chaud (Prioritaire)": { "bg": "#FFF1EC", "color": "#C0391A", "iconStroke": "#E04F2E", "icon": "flame" },
+        "tiede (À qualifier)": { "bg": "#FFF7E6", "color": "#B54708", "iconStroke": "#DC8915", "icon": "target" },
+        "froid (Faible signal)": { "bg": "#EDF1F5", "color": "#475669", "iconStroke": "#5A7190", "icon": "eye" },
+        "unscored (Non scoré)": { "bg": "var(--color-surface-alt)", "color": "var(--color-text-muted)", "iconStroke": "var(--color-text-muted)", "icon": "schedule" }
+      }
+    },
+    "actionButton": {
+      "scope": "Boutons icône queue triage (pattern Notion / Stripe property buttons).",
+      "size": "36×36 px",
+      "padding": "0",
+      "borderRadius": "8px",
+      "border": "1px solid transparent (repos)",
+      "background": "transparent (repos)",
+      "icon": { "size": "17px", "strokeWidth": 1.75 },
+      "transition": "transform 220ms cubic-bezier(0.16, 1, 0.3, 1), background 220ms cubic-bezier(0.16, 1, 0.3, 1), color 180ms ease, box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1)",
+      "hover": "transform: translateY(-1px) + bg tinté + icône saturation 100% + tinted shadow",
+      "active": "transform: scale(0.96) translateY(0); transition-duration: 80ms",
+      "focusVisible": "box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.30)",
+      "variants": {
+        "yes": { "iconColorRest": "#6E9C8F", "hoverBg": "#ECFDF3", "hoverColor": "#027A48", "hoverShadow": "0 4px 12px -3px rgba(2, 122, 72, 0.22)" },
+        "no": { "iconColorRest": "#C28A86", "hoverBg": "#FFF1EC", "hoverColor": "#C0391A", "hoverShadow": "0 4px 12px -3px rgba(192, 57, 26, 0.22)" },
+        "later": { "iconColorRest": "#8A95A8", "hoverBg": "var(--color-info-light)", "hoverColor": "var(--color-info)", "hoverShadow": "0 4px 12px -3px rgba(90, 113, 144, 0.20)" },
+        "view": { "iconColorRest": "#7B8FAE", "hoverBg": "var(--color-primary-light)", "hoverColor": "var(--color-primary)", "hoverShadow": "0 4px 12px -3px rgba(47, 90, 158, 0.22)" }
+      },
+      "mobile": { "width": "100%", "height": "44px (HIG iOS)", "label": "::after content (visible)", "grid": "2x2" }
+    },
+    "indicatorFlat": {
+      "scope": "Indicateurs flat premium (header de page liste).",
+      "layout": "grid 3 cols desktop, empilé 1 col mobile, border-y 1px, séparateurs verticaux 1px",
+      "padding": "28px 28px 28px 0 desktop / 16px vertical mobile",
+      "iconBox": { "size": "44×44 px", "borderRadius": "12px", "background": "radial-gradient(circle at 30% 30%, rgba(47,90,158,0.10), rgba(47,90,158,0.02))" },
+      "iconSize": "22px stroke 1.5",
+      "value": { "fontSize": "36px", "fontWeight": 700, "tabularNums": true, "color": "primary-dark", "letterSpacing": "-0.025em", "lineHeight": 1 },
+      "label": { "fontSize": "13px", "color": "text-muted", "fontWeight": 500 },
+      "trend": { "fontSize": "11px", "tabularNums": true, "iconSize": "12px stroke 2", "variants": ["up=success", "flat=text-muted", "info=info"] }
+    },
+    "triageQueue": {
+      "scope": "Widget dashboard inbox du matin (Phase 1 2026-05-01).",
+      "layout": "grid 2 cols desktop (280px aside | 1fr corps), bandeau horizontal top mobile",
+      "card": { "borderRadius": "16px", "border": "1px solid var(--color-border)", "shadow": "xs" },
+      "aside": {
+        "background": "var(--color-primary-dark)",
+        "padding": "32px 28px desktop, 20px 24px mobile",
+        "minHeight": "320px desktop",
+        "ornaments": "2 cercles rgba(255,255,255,0.04) en pseudo-éléments (top-right + bottom-left)",
+        "kicker": "uppercase 11px tracking 0.16em rgba(white, 0.6) avec icône bolt 16px",
+        "count": { "fontSize": "88px desktop / 44px mobile", "fontWeight": 700, "tabularNums": true, "letterSpacing": "-0.04em" },
+        "label": "fontSize 14px rgba(white, 0.75)",
+        "cta": "Voir les N autres en file - texte ardoise pâle saturée + underline 1px ardoise/30%, hover #DCEAF7",
+        "interaction": "<button> natif clickable (a11y native), drilldown vers /prospection?statut=nouveau"
+      },
+      "leadItem": {
+        "padding": "16px 24px",
+        "borderBottom": "1px solid var(--color-border)",
+        "animation": "fadeUp 280ms ease both, animation-delay calc(var(--i) * 50ms)",
+        "hover": "background var(--color-surface-alt)",
+        "isPending": "opacity 0.55, pointer-events none (race lock par leadId)",
+        "line1": "Badge source pastel + nom (font-weight 600, max-width 320px ellipsis) + ScorePill (compact, marge auto droite)",
+        "line2": "context via formatLeadContext(lead) (text-muted 13px), 1 phrase courte adaptée à la source",
+        "actions": "4 ActionButton inline gap 4px"
+      },
+      "criteresQueue": "statut=nouveau ET score >= config.scoring.triage.scoreMin (5) ET (triage_snoozed_until IS NULL OR <= now()). Order : score DESC, date_import DESC. Cap 25 (top 12 visibles).",
+      "concurrencyGuards": [
+        "409 si lead déjà traité par un autre fondateur (queue partagée 3 fondateurs)",
+        "Anti-cumul snooze (rejette si déjà snoozé futur, retourne alreadySnoozed: true)"
+      ],
+      "emptyState": "Rien à trier ce matin. Votre fond de pipe travaille pour vous."
+    }
+  },
+  "components": {
+    "button": {
+      "height": "40px",
+      "borderRadius": "10px",
+      "paddingY": "8px",
+      "paddingX": "16px",
+      "fontFamily": "DM Sans",
+      "fontSize": "14px",
+      "fontWeight": 600,
+      "letterSpacing": "0",
+      "textTransform": "none",
+      "boxSizing": "border-box",
+      "variants": {
+        "primary": { "bg": "#2F5A9E", "color": "#FFFFFF", "border": "none", "hover": "#264C85" },
+        "secondary": { "bg": "transparent", "color": "#7B6A9A", "border": "1px solid rgba(123, 106, 154, 0.3)", "fontWeight": 500 },
+        "tertiary": { "bg": "transparent", "color": "#111827", "border": "none", "fontWeight": 400 },
+        "destructive": { "bg": "#F04438", "color": "#FFFFFF", "border": "none", "hover": "#C9342A" }
+      }
+    },
+    "input": {
+      "height": "34px",
+      "borderRadius": "8px",
+      "borderWidth": "1px",
+      "borderColor": "#E5E7EB",
+      "borderColorFocus": "#2F5A9E",
+      "paddingY": "6px",
+      "paddingX": "12px",
+      "fontSize": "14px",
+      "color": "#111827",
+      "placeholderColor": "#6B7280",
+      "background": "#FFFFFF"
+    },
+    "card": {
+      "borderRadius": "10px",
+      "borderWidth": "1px",
+      "borderColor": "#E5E7EB",
+      "padding": "16px",
+      "shadow": "0 1px 2px rgba(16,24,40,0.05)",
+      "background": "#FFFFFF"
+    },
+    "modal": {
+      "borderRadius": "12px",
+      "padding": "24px",
+      "maxWidth": "560px",
+      "shadow": "0 4px 8px -2px rgba(16,24,40,0.1), 0 2px 4px -2px rgba(16,24,40,0.06)",
+      "backdropColor": "rgba(0, 0, 0, 0.4)",
+      "headerVariants": {
+        "default": "Header neutre border-b border-border, titre text-text",
+        "accent": "Header bg-primary text-white (emphasis fort) — pattern indépendant du Badge variant 'accent' supprimé S118"
+      }
+    },
+    "table": {
+      "headerFontSize": "12px",
+      "headerFontWeight": 600,
+      "headerColor": "#6B7280",
+      "headerHeight": "48px",
+      "cellPaddingY": "12px",
+      "cellPaddingX": "16px",
+      "cellFontSize": "14px",
+      "rowHoverBg": "#F9FAFB",
+      "borderColor": "#E5E7EB",
+      "layout": "table-fixed (S48 rule)",
+      "_note": "cellPaddingY aligné sur spacing canonique 12px (était 10px en v2 initial, conflit P2-06 audit 2026-04-25 résolu)"
+    },
+    "badge": {
+      "borderRadius": "10px",
+      "paddingY": "4px",
+      "paddingX": "8px",
+      "fontSize": "12px",
+      "fontWeight": 500,
+      "variants": {
+        "default": { "bg": "#F0F4F8", "color": "#2F5A9E", "border": "1px solid #2F5A9E", "_note": "post-sweep S118 : bg-primary-light + text-primary + border-primary (était bg-primary/8 + border-primary/15)" },
+        "info": { "bg": "#EDF1F5", "color": "#5A7190", "border": "1px solid rgba(90, 113, 144, 0.15)", "_note": "Variant ajouté S118. Aligné ardoise FilmPro depuis S119 (décision 8) : bg-info-light (#EDF1F5) + text-info (#5A7190) + border-info/15." },
+        "success": { "bg": "#ECFDF5", "color": "#538B6B" },
+        "warning": { "bg": "#FFFAEB", "color": "#B95400" },
+        "error": { "bg": "#FEF3F2", "color": "#C9342A" },
+        "muted": { "bg": "#F9FAFB", "color": "#6B7280" }
+      }
+    },
+    "dot": {
+      "size": "8px",
+      "borderRadius": "9999px",
+      "comment": "Indicateur statut/température, sans texte. Variants par couleur sémantique."
+    },
+    "slideOut": {
+      "width": "560px",
+      "widthMobile": "100vw",
+      "padding": "24px",
+      "backdropColor": "rgba(0, 0, 0, 0.4)",
+      "shadow": "-8px 0 16px rgba(16,24,40,0.1)",
+      "headerSticky": true,
+      "headerBg": "#FFFFFF",
+      "headerBorder": "1px solid #E5E7EB",
+      "rule": "S45 — sticky header doit avoir fond opaque + border-bottom"
+    },
+    "navigation": {
+      "header": {
+        "height": "48px",
+        "borderBottom": "1px solid #E5E7EB",
+        "background": "#FFFFFF",
+        "_note": "Aligné golden v3 S117 commit 3b8a735 (--header-height: 56 → 48px)."
+      },
+      "sidebar": {
+        "width": "240px",
+        "widthCollapsed": "64px",
+        "background": "#F0F4F8",
+        "borderRight": "1px solid #E5E7EB",
+        "itemHeight": "40px",
+        "itemBorderRadius": "10px",
+        "itemPaddingX": "12px",
+        "_note": "Background utilise --color-primary-light (palette.editorial), différent du fond CRM standard #FFFFFF."
+      }
+    }
+  },
+  "icons": {
+    "library": "lucide-svelte",
+    "size": { "xs": "14px", "sm": "16px", "md": "20px", "lg": "24px" },
+    "strokeWidth": 2,
+    "color": "currentColor",
+    "migration": {
+      "from": "Material Symbols Outlined",
+      "to": "Lucide",
+      "occurrences": "207 occurrences éliminées (28 fichiers)",
+      "decided": "2026-04-25",
+      "status": "LIVRÉ S115 (commit f1a54c5) — wrapper <Icon name='...'> + icon-map.ts (92 mappings)"
+    }
+  },
+  "accessibility": {
+    "contrastMin": "WCAG AA (4.5:1 pour body, 3:1 pour UI large)",
+    "focusVisible": "outline 2px solid #2F5A9E, offset 2px",
+    "headings": "H1 unique par page, hiérarchie sémantique stricte",
+    "buttons": "<button> ou <a> sémantique, jamais <div onclick>",
+    "modals": "focus trap obligatoire, Escape ferme, return focus au déclencheur",
+    "axeCore": "0 violation serious/critical en CI"
+  },
+  "rules": {
+    "tableLayout": "table-fixed obligatoire pour respecter max-w (S48)",
+    "stickyHeader": "tout sticky/fixed doit avoir bg opaque + séparateur (S45)",
+    "batchActionsBar": "flex-wrap sous 640px obligatoire (S45)",
+    "noAutreInLists": "jamais d'option « Autre » dans les select",
+    "imageAspectRatio": "préserver le ratio source, jamais width+height forcés sans calcul",
+    "iconLibrary": "lucide-svelte (post-migration S115)",
+    "headingSemantics": "H1 sémantique obligatoire au top de chaque page",
+    "buttonHeight": "40px uniforme (h-10), box-sizing: border-box pour neutraliser bordures",
+    "primaryOpacities": "Opacités custom statiques (bg-primary/X, border-primary/X) interdites — utiliser tokens sémantiques (bg-primary-light, bg-info-light, border-primary). Hover/focus/ring transients tolérés (pattern UA). Décision S118.",
+    "editorialScope": "Classes mag-* et tokens palette.editorial réservés au module /veille + Sidebar + login. Ne pas réutiliser dans flux CRM standard."
+  },
+  "knownDivergences": []
+}

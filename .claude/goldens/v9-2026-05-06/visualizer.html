@@ -1,0 +1,1157 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Golden Standard CRM FilmPro v9 - Visualizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================ */
+  /* TOKENS UNIVERSELS (depuis tokens.json)                        */
+  /* ============================================================ */
+  :root {
+    --c-bg: #FFFFFF;
+    --c-surface: #F9FAFB;
+    --c-surface-alt: #F3F4F6;
+    --c-text: #111827;
+    --c-text-body: #374151;
+    --c-text-muted: #6B7280;
+    --c-border: #E5E7EB;
+    --c-border-input: #D1D5DB;
+    --c-primary: #2F5A9E;
+    --c-primary-hover: #264C85;
+    --c-primary-light: #F0F4F8;
+    --c-primary-dark: #0A1628;
+    --c-accent: #F79009;
+    --c-accent-bg: #FFFAEB;
+    --c-success: #538B6B;
+    --c-success-bg: #ECFDF5;
+    --c-warning: #F79009;
+    --c-warning-bg: #FFFAEB;
+    --c-error: #F04438;
+    --c-error-bg: #FEF3F2;
+    --c-info: #5A7190;
+    --c-info-bg: #EDF1F5;
+
+    --c-filmpro-ardoise: #5A7190;
+    --c-filmpro-violet: #7B6A9A;
+    --c-filmpro-sauge: #538B6B;
+    --c-filmpro-brun: #917548;
+
+    --r-sm: 4px;
+    --r-md: 8px;
+    --r-lg: 10px;
+    --r-xl: 12px;
+    --r-2xl: 16px;
+    --r-full: 9999px;
+
+    --s-xs: 4px;
+    --s-sm: 8px;
+    --s-md: 12px;
+    --s-lg: 16px;
+    --s-xl: 24px;
+    --s-2xl: 32px;
+    --s-3xl: 48px;
+
+    --sh-xs: 0 1px 2px rgba(16,24,40,0.05);
+    --sh-sm: 0 1px 3px rgba(16,24,40,0.1), 0 1px 2px rgba(16,24,40,0.06);
+    --sh-md: 0 4px 8px -2px rgba(16,24,40,0.1), 0 2px 4px -2px rgba(16,24,40,0.06);
+    --sh-lg: 0 10px 20px -4px rgba(16,24,40,0.1), 0 4px 8px -2px rgba(16,24,40,0.06);
+    --sh-focus: 0 0 0 3px rgba(47, 90, 158, 0.20);
+    --sh-focus-strong: 0 0 0 3px rgba(47, 90, 158, 0.30);
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: "DM Sans", system-ui, -apple-system, sans-serif;
+    background: var(--c-surface);
+    color: var(--c-text);
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.43;
+  }
+
+  /* ============================================================ */
+  /* LAYOUT GLOBAL VISUALIZER                                      */
+  /* ============================================================ */
+  .viz-shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+  .viz-nav {
+    background: var(--c-primary-light);
+    border-right: 1px solid var(--c-border);
+    padding: 24px 16px;
+    position: sticky; top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }
+  .viz-nav h2 {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.14em;
+    color: var(--c-primary); margin: 0 0 12px;
+  }
+  .viz-nav ul { list-style: none; padding: 0; margin: 0 0 24px; }
+  .viz-nav li { margin: 0; }
+  .viz-nav a {
+    display: block; padding: 8px 12px;
+    border-radius: var(--r-lg);
+    color: var(--c-text-body);
+    text-decoration: none; font-size: 14px; font-weight: 500;
+    transition: background 200ms ease;
+  }
+  .viz-nav a:hover { background: rgba(47,90,158,0.08); color: var(--c-primary); }
+
+  .viz-main { padding: 48px 64px; max-width: 1280px; }
+
+  .viz-header {
+    border-bottom: 2px solid var(--c-primary-dark);
+    padding-bottom: 24px; margin-bottom: 48px;
+  }
+  .viz-kicker {
+    text-transform: uppercase; letter-spacing: 0.14em;
+    font-size: 11px; font-weight: 700; color: var(--c-primary);
+    margin-bottom: 12px;
+  }
+  .viz-h1 {
+    font-size: 48px; font-weight: 800;
+    letter-spacing: -0.03em; line-height: 1.02;
+    color: var(--c-primary-dark); margin: 0 0 16px;
+  }
+  .viz-tagline {
+    font-size: 17px; line-height: 1.7;
+    color: var(--c-text-body); max-width: 720px;
+    margin: 0;
+  }
+
+  .viz-section { margin-bottom: 64px; scroll-margin-top: 24px; }
+  .viz-section h2 {
+    font-size: 28px; font-weight: 700;
+    letter-spacing: -0.02em; line-height: 1.1;
+    color: var(--c-primary-dark);
+    margin: 0 0 8px;
+  }
+  .viz-section h3 {
+    font-size: 16px; font-weight: 600;
+    color: var(--c-text);
+    margin: 24px 0 12px;
+  }
+  .viz-section p { color: var(--c-text-body); margin: 0 0 16px; max-width: 720px; }
+  .viz-section .lead {
+    font-size: 15px; color: var(--c-text-muted);
+    margin-bottom: 24px;
+  }
+
+  /* ============================================================ */
+  /* DIAGRAMME COUCHES                                             */
+  /* ============================================================ */
+  .layer-diagram {
+    background: var(--c-bg); border: 1px solid var(--c-border);
+    border-radius: var(--r-2xl); padding: 32px;
+    box-shadow: var(--sh-xs);
+    margin-bottom: 24px;
+  }
+  .layer-row { display: flex; gap: 12px; margin-bottom: 16px; }
+  .layer-row:last-child { margin-bottom: 0; }
+  .layer-cell {
+    flex: 1; padding: 20px 16px;
+    border-radius: var(--r-lg);
+    border: 1px solid var(--c-border);
+    background: var(--c-surface);
+    text-align: center;
+  }
+  .layer-cell.universal {
+    background: var(--c-primary-light);
+    border-color: var(--c-primary);
+    color: var(--c-primary-dark);
+  }
+  .layer-cell.workspace { background: #FFF7E6; border-color: #DC8915; }
+  .layer-cell.editorial { background: var(--c-primary-light); border-color: var(--c-primary); }
+  .layer-cell.dashboard { background: #ECFDF5; border-color: var(--c-success); }
+  .layer-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .layer-sub { font-size: 12px; color: var(--c-text-muted); }
+  .layer-arrow { text-align: center; color: var(--c-text-muted); font-size: 20px; margin: 4px 0; }
+
+  /* ============================================================ */
+  /* GRID PALETTE                                                  */
+  /* ============================================================ */
+  .swatch-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 12px;
+  }
+  .swatch {
+    background: var(--c-bg); border: 1px solid var(--c-border);
+    border-radius: var(--r-lg); overflow: hidden;
+    box-shadow: var(--sh-xs);
+  }
+  .swatch-color { height: 80px; }
+  .swatch-meta { padding: 12px; }
+  .swatch-name { font-size: 13px; font-weight: 600; color: var(--c-text); }
+  .swatch-hex { font-family: Menlo, Consolas, monospace; font-size: 11px; color: var(--c-text-muted); margin-top: 2px; }
+  .swatch-usage { font-size: 11px; color: var(--c-text-muted); margin-top: 4px; line-height: 1.33; }
+
+  /* ============================================================ */
+  /* TYPOGRAPHIE                                                   */
+  /* ============================================================ */
+  .type-row {
+    display: grid; grid-template-columns: 140px 1fr;
+    align-items: baseline; gap: 24px;
+    padding: 16px 0; border-bottom: 1px solid var(--c-border);
+  }
+  .type-row:last-child { border-bottom: none; }
+  .type-label { font-family: Menlo, monospace; font-size: 12px; color: var(--c-text-muted); }
+  .type-sample { color: var(--c-text); }
+
+  /* ============================================================ */
+  /* SPACING / RADIUS / SHADOW                                     */
+  /* ============================================================ */
+  .scale-row { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  .scale-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .scale-label { font-size: 11px; color: var(--c-text-muted); font-family: Menlo, monospace; }
+  .spacing-block { background: var(--c-primary); height: 32px; }
+  .radius-block { width: 64px; height: 64px; background: var(--c-primary); }
+  .shadow-block { width: 96px; height: 64px; background: var(--c-bg); border: 1px solid var(--c-border); border-radius: var(--r-lg); }
+
+  /* ============================================================ */
+  /* PRIMITIVES                                                    */
+  /* ============================================================ */
+  .preview-card {
+    background: var(--c-bg); border: 1px solid var(--c-border);
+    border-radius: var(--r-lg); padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--sh-xs);
+  }
+  .preview-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+  .preview-row:last-child { margin-bottom: 0; }
+  .preview-label {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--c-text-muted);
+    margin-bottom: 8px;
+  }
+
+  /* Button */
+  .btn {
+    height: 40px; border-radius: var(--r-lg);
+    padding: 8px 16px; font-family: "DM Sans"; font-size: 14px; font-weight: 600;
+    border: none; cursor: pointer; box-sizing: border-box;
+    display: inline-flex; align-items: center; gap: 8px;
+    transition: background 200ms ease;
+  }
+  .btn-primary { background: var(--c-primary); color: white; }
+  .btn-primary:hover { background: var(--c-primary-hover); }
+  .btn-secondary { background: transparent; color: var(--c-filmpro-violet); border: 1px solid rgba(123,106,154,0.3); font-weight: 500; }
+  .btn-tertiary { background: transparent; color: var(--c-text); font-weight: 400; }
+  .btn-destructive { background: var(--c-error); color: white; }
+
+  /* Input */
+  .input {
+    height: 34px; border: 1px solid var(--c-border-input);
+    border-radius: var(--r-md); padding: 6px 12px;
+    font-size: 14px; color: var(--c-text); font-family: "DM Sans";
+    background: var(--c-bg); width: 240px;
+  }
+  .input:focus { outline: none; border-color: var(--c-primary); box-shadow: var(--sh-focus); }
+
+  /* Badge */
+  .badge {
+    display: inline-flex; align-items: center;
+    border-radius: var(--r-lg); padding: 4px 8px;
+    font-size: 12px; font-weight: 500;
+  }
+  .badge-default { background: var(--c-primary-light); color: var(--c-primary); border: 1px solid var(--c-primary); }
+  .badge-info { background: var(--c-info-bg); color: var(--c-info); border: 1px solid rgba(90,113,144,0.15); }
+  .badge-success { background: var(--c-success-bg); color: var(--c-success); }
+  .badge-warning { background: var(--c-warning-bg); color: #B95400; }
+  .badge-error { background: var(--c-error-bg); color: #C9342A; }
+  .badge-muted { background: var(--c-surface); color: var(--c-text-muted); }
+
+  /* ScorePill */
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    height: 26px; padding: 0 11px;
+    border-radius: 6px;
+    font-size: 12px; font-weight: 600; letter-spacing: 0.005em;
+    min-width: 130px; box-sizing: border-box;
+  }
+  .pill svg { flex-shrink: 0; }
+  .pill-chaud { background: #FFF1EC; color: #C0391A; }
+  .pill-tiede { background: #FFF7E6; color: #B54708; }
+  .pill-froid { background: #EDF1F5; color: #475669; }
+  .pill-unscored { background: var(--c-surface-alt); color: var(--c-text-muted); }
+
+  /* ActionButton */
+  .ab {
+    width: 36px; height: 36px; padding: 0;
+    border-radius: 8px; border: 1px solid transparent;
+    background: transparent; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: transform 220ms cubic-bezier(0.16,1,0.3,1), background 220ms cubic-bezier(0.16,1,0.3,1), color 180ms ease, box-shadow 220ms cubic-bezier(0.16,1,0.3,1);
+  }
+  .ab svg { stroke-width: 1.75; width: 17px; height: 17px; }
+  .ab-yes { color: #6E9C8F; }
+  .ab-yes:hover { background: #ECFDF3; color: #027A48; transform: translateY(-1px); box-shadow: 0 4px 12px -3px rgba(2,122,72,0.22); }
+  .ab-no { color: #C28A86; }
+  .ab-no:hover { background: #FFF1EC; color: #C0391A; transform: translateY(-1px); box-shadow: 0 4px 12px -3px rgba(192,57,26,0.22); }
+  .ab-later { color: #8A95A8; }
+  .ab-later:hover { background: var(--c-info-bg); color: var(--c-info); transform: translateY(-1px); box-shadow: 0 4px 12px -3px rgba(90,113,144,0.20); }
+  .ab-view { color: #7B8FAE; }
+  .ab-view:hover { background: var(--c-primary-light); color: var(--c-primary); transform: translateY(-1px); box-shadow: 0 4px 12px -3px rgba(47,90,158,0.22); }
+
+  /* Dot */
+  .dot { width: 8px; height: 8px; border-radius: var(--r-full); display: inline-block; }
+  .dot-success { background: var(--c-success); }
+  .dot-warning { background: var(--c-warning); }
+  .dot-error { background: var(--c-error); }
+  .dot-info { background: var(--c-info); }
+  .dot-muted { background: var(--c-text-muted); }
+
+  /* Card */
+  .card {
+    background: var(--c-bg); border: 1px solid var(--c-border);
+    border-radius: var(--r-lg); padding: 16px;
+    box-shadow: var(--sh-xs);
+  }
+
+  /* Tabs */
+  .tabs { display: flex; border-bottom: 1px solid var(--c-border); gap: 4px; }
+  .tab {
+    height: 40px; padding: 0 16px;
+    background: transparent; border: none; cursor: pointer;
+    font-family: "DM Sans"; font-size: 14px; font-weight: 500;
+    color: var(--c-text-muted);
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+  }
+  .tab.active { color: var(--c-primary); font-weight: 600; border-bottom-color: var(--c-primary); }
+
+  /* DataTable */
+  table.dt {
+    width: 100%; border-collapse: collapse;
+    table-layout: fixed; background: var(--c-bg);
+    border: 1px solid var(--c-border); border-radius: var(--r-lg); overflow: hidden;
+  }
+  table.dt th, table.dt td { padding: 12px 16px; text-align: left; }
+  table.dt th {
+    background: var(--c-surface); font-size: 12px; font-weight: 600;
+    color: var(--c-text-muted); text-transform: uppercase; letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--c-border); height: 48px;
+  }
+  table.dt td { font-size: 14px; color: var(--c-text); border-bottom: 1px solid var(--c-border); }
+  table.dt tr:last-child td { border-bottom: none; }
+  table.dt tr:hover td { background: var(--c-surface); }
+
+  /* ============================================================ */
+  /* ARCHÉTYPES MOCKUPS                                            */
+  /* ============================================================ */
+  .arch-mockup {
+    background: var(--c-bg); border: 1px solid var(--c-border);
+    border-radius: var(--r-2xl); overflow: hidden; box-shadow: var(--sh-md);
+    margin-bottom: 24px;
+  }
+  .arch-mockup-label {
+    background: var(--c-primary-dark); color: white;
+    padding: 8px 16px; font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.1em;
+  }
+
+  /* Workspace mockup */
+  .ws-header { padding: 24px 32px; border-bottom: 1px solid var(--c-border); }
+  .ws-row1 { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+  .ws-h1 { font-size: 22px; font-weight: 600; color: var(--c-text); margin: 0; }
+  .ws-row2 { display: flex; align-items: center; justify-content: space-between; }
+  .ws-tabs { display: flex; gap: 4px; }
+  .ws-actions { display: flex; gap: 8px; }
+  .ws-indicators { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--c-border); }
+  .ws-indicator { padding: 28px 28px 28px 0; border-right: 1px solid var(--c-border); padding-left: 32px; display: flex; gap: 16px; align-items: flex-start; }
+  .ws-indicator:last-child { border-right: none; }
+  .ws-icon-box {
+    width: 44px; height: 44px; border-radius: var(--r-xl);
+    background: radial-gradient(circle at 30% 30%, rgba(47,90,158,0.10), rgba(47,90,158,0.02));
+    display: flex; align-items: center; justify-content: center;
+    color: var(--c-primary); flex-shrink: 0;
+  }
+  .ws-value { font-size: 36px; font-weight: 700; letter-spacing: -0.025em; line-height: 1; color: var(--c-primary-dark); font-variant-numeric: tabular-nums; }
+  .ws-ind-label { font-size: 13px; color: var(--c-text-muted); font-weight: 500; margin-top: 8px; }
+  .ws-table-wrap { padding: 24px 32px; }
+
+  /* Editorial mockup */
+  .ed-page { padding: 32px 40px; max-width: 1280px; margin: 0 auto; }
+  .ed-header { padding-bottom: 24px; margin-bottom: 40px; border-bottom: 2px solid var(--c-primary-dark); }
+  .ed-kicker { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; font-weight: 700; color: var(--c-primary); margin-bottom: 12px; }
+  .ed-display { font-size: 44px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.02; color: var(--c-primary-dark); margin: 0; max-width: 720px; }
+  .ed-body { font-size: 17px; line-height: 1.7; color: var(--c-text-body); margin-top: 16px; max-width: 720px; }
+  .ed-hero {
+    display: grid; grid-template-columns: 4fr 8fr;
+    border-radius: var(--r-xl); overflow: hidden; border: 1px solid var(--c-border);
+    box-shadow: var(--sh-md); background: var(--c-bg);
+  }
+  .ed-hero-aside {
+    background: var(--c-primary-dark); color: white;
+    padding: 40px;
+    position: relative; overflow: hidden;
+    display: flex; flex-direction: column; justify-content: space-between; gap: 32px;
+    min-height: 320px;
+  }
+  .ed-hero-aside::before, .ed-hero-aside::after {
+    content: ""; position: absolute; border-radius: 50%; pointer-events: none;
+  }
+  .ed-hero-aside::before { top: -48px; right: -48px; width: 224px; height: 224px; background: rgba(255,255,255,0.04); }
+  .ed-hero-aside::after { bottom: -64px; left: -40px; width: 192px; height: 192px; background: rgba(255,255,255,0.03); }
+  .ed-edition-kicker { text-transform: uppercase; letter-spacing: 0.16em; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.55); margin-bottom: 8px; position: relative; z-index: 1; }
+  .ed-edition-count { font-size: 104px; font-weight: 800; letter-spacing: -0.04em; line-height: 0.85; color: white; font-variant-numeric: tabular-nums; position: relative; z-index: 1; }
+  .ed-edition-meta { font-size: 14px; color: rgba(255,255,255,0.85); font-weight: 600; margin-top: 24px; position: relative; z-index: 1; }
+  .ed-hero-body { padding: 40px; display: flex; flex-direction: column; gap: 24px; }
+  .ed-hero-synthese { font-size: 17px; line-height: 1.7; color: var(--c-text-body); }
+
+  /* Dashboard mockup */
+  .db-page { padding: 32px 40px; }
+  .db-section { margin-bottom: 32px; }
+  .db-indicators { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .db-card-ind {
+    background: var(--c-bg); border: 1px solid var(--c-border);
+    border-radius: var(--r-xl); padding: 20px;
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .db-tq {
+    background: var(--c-bg); border: 1px solid var(--c-border);
+    border-radius: var(--r-2xl); overflow: hidden; box-shadow: var(--sh-xs);
+    display: grid; grid-template-columns: 280px 1fr;
+  }
+  .db-tq-aside {
+    background: var(--c-primary-dark); color: white;
+    padding: 32px 28px;
+    position: relative; overflow: hidden;
+    min-height: 320px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .db-tq-aside::before, .db-tq-aside::after {
+    content: ""; position: absolute; border-radius: 50%; pointer-events: none;
+  }
+  .db-tq-aside::before { top: -40px; right: -40px; width: 200px; height: 200px; background: rgba(255,255,255,0.04); }
+  .db-tq-aside::after { bottom: -40px; left: -40px; width: 160px; height: 160px; background: rgba(255,255,255,0.03); }
+  .db-tq-kicker { display: flex; align-items: center; gap: 8px; text-transform: uppercase; letter-spacing: 0.16em; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.6); position: relative; z-index: 1; }
+  .db-tq-count { font-size: 88px; font-weight: 700; letter-spacing: -0.04em; color: white; font-variant-numeric: tabular-nums; line-height: 1; position: relative; z-index: 1; margin-top: 16px; }
+  .db-tq-label { font-size: 14px; color: rgba(255,255,255,0.75); margin-top: 8px; position: relative; z-index: 1; }
+  .db-tq-cta { font-size: 13px; color: rgba(220,234,247,0.9); text-decoration: underline; text-decoration-color: rgba(220,234,247,0.3); cursor: pointer; position: relative; z-index: 1; align-self: flex-start; background: none; border: none; padding: 0; font-family: inherit; }
+  .db-tq-body { padding: 0; }
+  .db-tq-item {
+    padding: 16px 24px; border-bottom: 1px solid var(--c-border);
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .db-tq-item:last-child { border-bottom: none; }
+  .db-tq-line1 { display: flex; align-items: center; gap: 12px; }
+  .db-tq-name { font-weight: 600; font-size: 14px; flex: 1; }
+  .db-tq-line2 { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .db-tq-context { font-size: 13px; color: var(--c-text-muted); }
+  .db-tq-actions { display: flex; gap: 4px; }
+
+  /* ============================================================ */
+  /* MAPPING TABLE                                                 */
+  /* ============================================================ */
+  .map-table { width: 100%; border-collapse: collapse; background: var(--c-bg); border: 1px solid var(--c-border); border-radius: var(--r-lg); overflow: hidden; }
+  .map-table th { background: var(--c-surface); padding: 12px 16px; text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--c-text-muted); border-bottom: 1px solid var(--c-border); }
+  .map-table td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid var(--c-border); }
+  .map-table tr:last-child td { border-bottom: none; }
+  .map-table .arch-pill { display: inline-block; padding: 2px 10px; border-radius: var(--r-full); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .arch-pill-workspace { background: #FFF7E6; color: #B54708; }
+  .arch-pill-editorial { background: var(--c-primary-light); color: var(--c-primary); }
+  .arch-pill-dashboard { background: var(--c-success-bg); color: var(--c-success); }
+  .arch-pill-special { background: var(--c-surface); color: var(--c-text-muted); }
+
+  /* ============================================================ */
+  /* DO / DONT                                                     */
+  /* ============================================================ */
+  .rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .rules-card {
+    background: var(--c-bg); border: 1px solid var(--c-border);
+    border-radius: var(--r-lg); padding: 20px;
+  }
+  .rules-card.do { border-left: 4px solid var(--c-success); }
+  .rules-card.dont { border-left: 4px solid var(--c-error); }
+  .rules-card h4 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
+  .rules-card.do h4 { color: var(--c-success); }
+  .rules-card.dont h4 { color: var(--c-error); }
+  .rules-card ul { margin: 0; padding-left: 20px; }
+  .rules-card li { font-size: 13px; line-height: 1.5; color: var(--c-text-body); margin-bottom: 8px; }
+  .rules-card li:last-child { margin-bottom: 0; }
+
+  /* ============================================================ */
+  /* CHECKLIST VALIDATION                                          */
+  /* ============================================================ */
+  .checklist-card {
+    background: var(--c-primary-light); border: 1px solid var(--c-primary);
+    border-radius: var(--r-2xl); padding: 32px;
+  }
+  .checklist-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(47,90,158,0.15); }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-item input[type=checkbox] { margin-top: 4px; flex-shrink: 0; width: 18px; height: 18px; accent-color: var(--c-primary); }
+  .checklist-item label { font-size: 14px; color: var(--c-text); line-height: 1.5; cursor: pointer; }
+  .checklist-item label strong { color: var(--c-primary-dark); }
+
+  .meta-block {
+    background: var(--c-surface); border-left: 4px solid var(--c-info);
+    padding: 16px 20px; border-radius: 0 var(--r-md) var(--r-md) 0;
+    margin-bottom: 16px;
+  }
+  .meta-block strong { color: var(--c-info); }
+  code { font-family: Menlo, Consolas, monospace; font-size: 12px; background: var(--c-surface); padding: 2px 6px; border-radius: 4px; color: var(--c-primary-dark); }
+
+  /* svg helpers */
+  .icon { width: 16px; height: 16px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="viz-shell">
+  <!-- ============================================================ -->
+  <!-- NAVIGATION                                                    -->
+  <!-- ============================================================ -->
+  <aside class="viz-nav">
+    <h2>Golden v9</h2>
+    <ul>
+      <li><a href="#overview">Vue d'ensemble</a></li>
+      <li><a href="#layers">Modèle en couches</a></li>
+      <li><a href="#scope">Périmètre source</a></li>
+    </ul>
+    <h2>Tokens universels</h2>
+    <ul>
+      <li><a href="#palette">Palette</a></li>
+      <li><a href="#typography">Typographie</a></li>
+      <li><a href="#spacing">Spacing</a></li>
+      <li><a href="#radius">Radius</a></li>
+      <li><a href="#shadow">Shadow</a></li>
+    </ul>
+    <h2>Primitives</h2>
+    <ul>
+      <li><a href="#button">Button</a></li>
+      <li><a href="#input">Input + Card</a></li>
+      <li><a href="#badge">Badge</a></li>
+      <li><a href="#scorepill">ScorePill</a></li>
+      <li><a href="#actionbutton">ActionButton</a></li>
+      <li><a href="#tabs-table">Tabs + DataTable</a></li>
+    </ul>
+    <h2>Archétypes</h2>
+    <ul>
+      <li><a href="#arch-workspace">Workspace</a></li>
+      <li><a href="#arch-editorial">Editorial</a></li>
+    </ul>
+    <h2>Application</h2>
+    <ul>
+      <li><a href="#mapping">Mapping pages</a></li>
+      <li><a href="#rules">Règles</a></li>
+      <li><a href="#validation">Checklist validation</a></li>
+    </ul>
+  </aside>
+
+  <!-- ============================================================ -->
+  <!-- MAIN                                                          -->
+  <!-- ============================================================ -->
+  <main class="viz-main">
+
+    <!-- HEADER -->
+    <section id="overview" class="viz-section viz-header">
+      <div class="viz-kicker">Golden Standard CRM FilmPro</div>
+      <h1 class="viz-h1">v9 — Layered DS + 2 archétypes sources</h1>
+      <p class="viz-tagline">
+        Modèle en couches inspiré de Linear, Stripe, Atlassian Design System. Tokens et primitives universels héritages,
+        layouts spécifiques selon la nature du contenu. <strong>Périmètre source strict : uniquement /prospection (workspace) et /veille (editorial)</strong> — les seules pages figées comme référence. Toutes les autres pages consomment le golden + définissent leur identité propre cohérente avec les tokens et primitives.
+      </p>
+      <div style="display: flex; gap: 16px; margin-top: 24px; flex-wrap: wrap;">
+        <span class="badge badge-info">Source : /prospection + /veille uniquement</span>
+        <span class="badge badge-info">2 archétypes : workspace + editorial</span>
+        <span class="badge badge-success">Pattern Linear / Stripe / Atlassian</span>
+        <span class="badge badge-muted">Créé : 2026-05-06</span>
+      </div>
+    </section>
+
+    <!-- LAYER DIAGRAM -->
+    <section id="layers" class="viz-section">
+      <h2>Modèle en couches</h2>
+      <p class="lead">Universel hérite par toutes les pages. Archétypes héritent des couches universelles puis ajoutent des patterns layout selon nature du contenu.</p>
+
+      <div class="layer-diagram">
+        <div class="layer-row">
+          <div class="layer-cell universal">
+            <div class="layer-title">tokens.json</div>
+            <div class="layer-sub">couleurs · typo · spacing · radius · shadow · a11y</div>
+          </div>
+        </div>
+        <div class="layer-arrow">↑</div>
+        <div class="layer-row">
+          <div class="layer-cell universal">
+            <div class="layer-title">primitives.json</div>
+            <div class="layer-sub">Button · Input · Modal · Badge · ScorePill · ActionButton · DataTable · Tabs · SlideOut · ConfirmModal · ImportModal</div>
+          </div>
+        </div>
+        <div class="layer-arrow">↑ source figée</div>
+        <div class="layer-row">
+          <div class="layer-cell workspace">
+            <div class="layer-title">archetype-workspace</div>
+            <div class="layer-sub">Tables denses, filtres, slide-out</div>
+            <div class="layer-sub" style="margin-top: 8px; font-weight: 600;">Source : /prospection (page modèle S164+S165)</div>
+          </div>
+          <div class="layer-cell editorial">
+            <div class="layer-title">archetype-editorial</div>
+            <div class="layer-sub">Long-form magazine, hero, lecture</div>
+            <div class="layer-sub" style="margin-top: 8px; font-weight: 600;">Source : /veille (gabarit S132)</div>
+          </div>
+        </div>
+        <div class="layer-arrow">↓ cibles cascade (consomment + identité propre)</div>
+        <div class="layer-row">
+          <div class="layer-cell" style="background: var(--c-surface-alt); flex: 1;">
+            <div class="layer-title" style="color: var(--c-text);">Pages consommatrices</div>
+            <div class="layer-sub">Héritent tokens + primitives, conforment patterns workspace/editorial selon mapping, gardent identité propre figée post-refonte</div>
+            <div class="layer-sub" style="margin-top: 8px; font-weight: 600;">/dashboard · /pipeline · /contacts · /entreprises · /signaux · /veille/themes · /login</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCOPE -->
+    <section id="scope" class="viz-section">
+      <h2>Périmètre source strict</h2>
+      <p class="lead">Le golden v9 a comme <strong>seules sources</strong> les 2 pages figées comme référence. Les autres pages CRM consomment le golden — elles ne le définissent pas.</p>
+      <div class="rules-grid">
+        <div class="rules-card do">
+          <h4>Pages sources (figées)</h4>
+          <ul>
+            <li><strong>/prospection</strong> — page modèle workspace (S164+S165)</li>
+            <li><strong>/veille</strong> — gabarit editorial magazine (S132/S168)</li>
+          </ul>
+          <p style="margin-top: 12px; font-size: 12px; color: var(--c-text-muted);">Toute évolution layout d'une de ces 2 pages = nouvelle version golden (v10, v11…). Jamais d'écrasement.</p>
+        </div>
+        <div class="rules-card dont">
+          <h4>Pages consommatrices (à refondre)</h4>
+          <ul>
+            <li><strong>/dashboard</strong> — refonte Bloc #1 cockpit actif. Identité propre figée post-refonte.</li>
+            <li><strong>/pipeline</strong> — cascade workspace + drag prospects spécifique</li>
+            <li><strong>/contacts</strong>, <strong>/entreprises</strong>, <strong>/signaux</strong> — cascade workspace</li>
+            <li><strong>/veille/themes</strong> — cascade workspace (admin taxonomie)</li>
+            <li><strong>/login</strong> — cascade special, palette éditoriale</li>
+          </ul>
+          <p style="margin-top: 12px; font-size: 12px; color: var(--c-text-muted);">Ces pages héritent tokens + primitives + règles, mais ajoutent leurs patterns spécifiques au cas par cas (ex: TriageQueue pour /dashboard).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PALETTE -->
+    <section id="palette" class="viz-section">
+      <h2>Palette</h2>
+      <p class="lead">Couleurs universelles héritées par tous les archétypes. <code>primary-light</code> et <code>primary-dark</code> ont un usage <strong>strictement réservé</strong> à l'archétype editorial + sidebar + login.</p>
+
+      <h3>Tokens fonctionnels</h3>
+      <div class="swatch-grid">
+        <div class="swatch"><div class="swatch-color" style="background: #FFFFFF; border-bottom: 1px solid var(--c-border);"></div><div class="swatch-meta"><div class="swatch-name">background</div><div class="swatch-hex">#FFFFFF</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #F9FAFB;"></div><div class="swatch-meta"><div class="swatch-name">surface</div><div class="swatch-hex">#F9FAFB</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #111827;"></div><div class="swatch-meta"><div class="swatch-name">text</div><div class="swatch-hex">#111827</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #6B7280;"></div><div class="swatch-meta"><div class="swatch-name">text-muted</div><div class="swatch-hex">#6B7280</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #E5E7EB;"></div><div class="swatch-meta"><div class="swatch-name">border</div><div class="swatch-hex">#E5E7EB</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #2F5A9E;"></div><div class="swatch-meta"><div class="swatch-name">primary</div><div class="swatch-hex">#2F5A9E</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #264C85;"></div><div class="swatch-meta"><div class="swatch-name">primary-hover</div><div class="swatch-hex">#264C85</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #F0F4F8;"></div><div class="swatch-meta"><div class="swatch-name">primary-light</div><div class="swatch-hex">#F0F4F8</div><div class="swatch-usage">Editorial + sidebar + login uniquement</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #0A1628;"></div><div class="swatch-meta"><div class="swatch-name">primary-dark</div><div class="swatch-hex">#0A1628</div><div class="swatch-usage">Editorial + sidebar + login uniquement</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #F79009;"></div><div class="swatch-meta"><div class="swatch-name">accent</div><div class="swatch-hex">#F79009</div><div class="swatch-usage">Réservé signaux d'attention</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #538B6B;"></div><div class="swatch-meta"><div class="swatch-name">success</div><div class="swatch-hex">#538B6B</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #F04438;"></div><div class="swatch-meta"><div class="swatch-name">error</div><div class="swatch-hex">#F04438</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #5A7190;"></div><div class="swatch-meta"><div class="swatch-name">info</div><div class="swatch-hex">#5A7190</div><div class="swatch-usage">Aligné ardoise FilmPro S119</div></div></div>
+      </div>
+
+      <h3>Charte FilmPro étendue</h3>
+      <div class="swatch-grid">
+        <div class="swatch"><div class="swatch-color" style="background: #5A7190;"></div><div class="swatch-meta"><div class="swatch-name">ardoise</div><div class="swatch-hex">#5A7190</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #7B6A9A;"></div><div class="swatch-meta"><div class="swatch-name">violet</div><div class="swatch-hex">#7B6A9A</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #538B6B;"></div><div class="swatch-meta"><div class="swatch-name">sauge</div><div class="swatch-hex">#538B6B</div></div></div>
+        <div class="swatch"><div class="swatch-color" style="background: #917548;"></div><div class="swatch-meta"><div class="swatch-name">brun</div><div class="swatch-hex">#917548</div></div></div>
+      </div>
+    </section>
+
+    <!-- TYPOGRAPHY -->
+    <section id="typography" class="viz-section">
+      <h2>Typographie</h2>
+      <p class="lead"><strong>DM Sans</strong> partout. Échelle universelle pour CRM standard. Classes <code>mag-*</code> réservées archétype editorial.</p>
+
+      <h3>Échelle universelle</h3>
+      <div class="preview-card">
+        <div class="type-row"><div class="type-label">h1 22/600</div><div class="type-sample" style="font-size: 22px; font-weight: 600; line-height: 1;">Titre principal page workspace</div></div>
+        <div class="type-row"><div class="type-label">h2 18/600</div><div class="type-sample" style="font-size: 18px; font-weight: 600; line-height: 1.2;">Section / sous-titre</div></div>
+        <div class="type-row"><div class="type-label">h3 16/600</div><div class="type-sample" style="font-size: 16px; font-weight: 600; line-height: 1.3;">Bloc / card title</div></div>
+        <div class="type-row"><div class="type-label">body 14/400</div><div class="type-sample" style="font-size: 14px; font-weight: 400;">Corps texte standard. Lecture confortable, densité workspace.</div></div>
+        <div class="type-row"><div class="type-label">caption 12/400</div><div class="type-sample" style="font-size: 12px; color: var(--c-text-muted);">Méta-information, légende, label discret</div></div>
+        <div class="type-row"><div class="type-label">label 12/600</div><div class="type-sample" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;">FORM LABEL</div></div>
+      </div>
+
+      <h3>Échelle éditoriale (réservée /veille)</h3>
+      <div class="preview-card">
+        <div class="type-row"><div class="type-label">mag-kicker</div><div class="type-sample" style="text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; font-weight: 700; color: var(--c-primary);">VEILLE SECTORIELLE FILMPRO</div></div>
+        <div class="type-row"><div class="type-label">mag-display</div><div class="type-sample" style="font-size: 44px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.02; color: var(--c-primary-dark);">Hero éditorial magazine</div></div>
+        <div class="type-row"><div class="type-label">mag-display-3</div><div class="type-sample" style="font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; color: var(--c-primary-dark);">Titre article éditorial</div></div>
+        <div class="type-row"><div class="type-label">mag-body</div><div class="type-sample" style="font-size: 17px; line-height: 1.7; color: var(--c-text-body);">Corps éditorial enrichi. Lecture longue. Confort maximal. Échelle distincte du body workspace pour signaler au lecteur le changement de mode.</div></div>
+      </div>
+    </section>
+
+    <!-- SPACING -->
+    <section id="spacing" class="viz-section">
+      <h2>Spacing</h2>
+      <p class="lead">Échelle Tailwind canonique : <strong>4 / 8 / 12 / 16 / 24 / 32 / 48</strong>. Décision 2 v5 : retrait définitif de 2/6/10/20.</p>
+      <div class="preview-card">
+        <div class="scale-row">
+          <div class="scale-item"><div class="spacing-block" style="width: 4px;"></div><div class="scale-label">xs · 4px</div></div>
+          <div class="scale-item"><div class="spacing-block" style="width: 8px;"></div><div class="scale-label">sm · 8px</div></div>
+          <div class="scale-item"><div class="spacing-block" style="width: 12px;"></div><div class="scale-label">md · 12px</div></div>
+          <div class="scale-item"><div class="spacing-block" style="width: 16px;"></div><div class="scale-label">lg · 16px</div></div>
+          <div class="scale-item"><div class="spacing-block" style="width: 24px;"></div><div class="scale-label">xl · 24px</div></div>
+          <div class="scale-item"><div class="spacing-block" style="width: 32px;"></div><div class="scale-label">2xl · 32px</div></div>
+          <div class="scale-item"><div class="spacing-block" style="width: 48px;"></div><div class="scale-label">3xl · 48px</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RADIUS -->
+    <section id="radius" class="viz-section">
+      <h2>Radius</h2>
+      <p class="lead">Default <code>10px</code>. <code>2xl 16px</code> ajouté en v9 pour cards TriageQueue + Hero éditorial.</p>
+      <div class="preview-card">
+        <div class="scale-row">
+          <div class="scale-item"><div class="radius-block" style="border-radius: 4px;"></div><div class="scale-label">sm · 4px</div></div>
+          <div class="scale-item"><div class="radius-block" style="border-radius: 8px;"></div><div class="scale-label">md · 8px (input)</div></div>
+          <div class="scale-item"><div class="radius-block" style="border-radius: 10px;"></div><div class="scale-label">lg · 10px (default)</div></div>
+          <div class="scale-item"><div class="radius-block" style="border-radius: 12px;"></div><div class="scale-label">xl · 12px (modal)</div></div>
+          <div class="scale-item"><div class="radius-block" style="border-radius: 16px;"></div><div class="scale-label">2xl · 16px (hero)</div></div>
+          <div class="scale-item"><div class="radius-block" style="border-radius: 9999px;"></div><div class="scale-label">full · 9999px</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SHADOW -->
+    <section id="shadow" class="viz-section">
+      <h2>Shadow</h2>
+      <p class="lead">5 niveaux d'élévation + focus rings. Spring transitions cubic-bezier(0.16, 1, 0.3, 1) pour l'interaction premium.</p>
+      <div class="preview-card">
+        <div class="scale-row">
+          <div class="scale-item"><div class="shadow-block" style="box-shadow: var(--sh-xs);"></div><div class="scale-label">xs (card)</div></div>
+          <div class="scale-item"><div class="shadow-block" style="box-shadow: var(--sh-sm);"></div><div class="scale-label">sm</div></div>
+          <div class="scale-item"><div class="shadow-block" style="box-shadow: var(--sh-md);"></div><div class="scale-label">md (modal)</div></div>
+          <div class="scale-item"><div class="shadow-block" style="box-shadow: var(--sh-lg);"></div><div class="scale-label">lg</div></div>
+          <div class="scale-item"><div class="shadow-block" style="box-shadow: var(--sh-focus);"></div><div class="scale-label">focusRing</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BUTTON -->
+    <section id="button" class="viz-section">
+      <h2>Button</h2>
+      <p class="lead">Hauteur uniforme <code>40px</code>, radius <code>10px</code>, font 14/600. <code>box-sizing: border-box</code> pour neutraliser bordures.</p>
+      <div class="preview-card">
+        <div class="preview-row">
+          <button class="btn btn-primary">Primary</button>
+          <button class="btn btn-secondary">Secondary</button>
+          <button class="btn btn-tertiary">Tertiary</button>
+          <button class="btn btn-destructive">Destructive</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- INPUT + CARD -->
+    <section id="input" class="viz-section">
+      <h2>Input + Card</h2>
+      <div class="preview-card">
+        <div class="preview-label">Input (h-34, radius-md)</div>
+        <input class="input" placeholder="Rechercher un lead, un canton..." />
+      </div>
+      <div class="preview-card">
+        <div class="preview-label">Card (radius-lg, shadow-xs)</div>
+        <div class="card" style="max-width: 400px;">
+          <h3 style="margin: 0 0 8px;">Titre card</h3>
+          <p style="margin: 0; color: var(--c-text-muted); font-size: 13px;">Composant de base pour blocs autonomes (KPIs, alertes, items liste compacte).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- BADGE -->
+    <section id="badge" class="viz-section">
+      <h2>Badge</h2>
+      <p class="lead">6 variants sémantiques. <code>info</code> aligné ardoise FilmPro S119. <code>accent</code> supprimé S118.</p>
+      <div class="preview-card">
+        <div class="preview-row">
+          <span class="badge badge-default">default</span>
+          <span class="badge badge-info">info</span>
+          <span class="badge badge-success">success</span>
+          <span class="badge badge-warning">warning</span>
+          <span class="badge badge-error">error</span>
+          <span class="badge badge-muted">muted</span>
+        </div>
+      </div>
+      <div class="preview-card">
+        <div class="preview-label">Dot (statut sans texte)</div>
+        <div class="preview-row">
+          <span class="dot dot-success"></span><span style="font-size: 13px; color: var(--c-text-muted);">success</span>
+          <span class="dot dot-warning"></span><span style="font-size: 13px; color: var(--c-text-muted);">warning</span>
+          <span class="dot dot-error"></span><span style="font-size: 13px; color: var(--c-text-muted);">error</span>
+          <span class="dot dot-info"></span><span style="font-size: 13px; color: var(--c-text-muted);">info</span>
+          <span class="dot dot-muted"></span><span style="font-size: 13px; color: var(--c-text-muted);">muted</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCORE PILL -->
+    <section id="scorepill" class="viz-section">
+      <h2>ScorePill</h2>
+      <p class="lead">Linear Priority pattern. <strong>Universal cross-archétypes</strong>. Remplace Badge Chaud/Tiède/Froid (décision 9 v7). Apparaît en /prospection table + LeadSlideOut + dashboard TriageQueue + future /contacts + /entreprises.</p>
+      <div class="preview-card">
+        <div class="preview-row">
+          <span class="pill pill-chaud">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#E04F2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+            Prioritaire
+          </span>
+          <span class="pill pill-tiede">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#DC8915" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+            À qualifier
+          </span>
+          <span class="pill pill-froid">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#5A7190" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            Faible signal
+          </span>
+          <span class="pill pill-unscored">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Non scoré
+          </span>
+        </div>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--c-text-muted);">
+          <strong>Score range</strong> : Prioritaire ≥7 · À qualifier 4-6 · Faible signal 0-3 · Non scoré (lead_express)
+        </div>
+      </div>
+    </section>
+
+    <!-- ACTION BUTTON -->
+    <section id="actionbutton" class="viz-section">
+      <h2>ActionButton</h2>
+      <p class="lead">Property buttons Notion / Stripe. 36×36 carré. Repos transparent + icône colorée saturation faible. Hover bg tinté + saturation 100% + élévation. <em>Survole les boutons pour voir l'animation.</em></p>
+      <div class="preview-card">
+        <div class="preview-row">
+          <button class="ab ab-yes" title="Intéressant">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </button>
+          <button class="ab ab-no" title="Écarter">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <button class="ab ab-later" title="Snooze 7j">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </button>
+          <button class="ab ab-view" title="Détails">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+        <div style="margin-top: 16px; font-size: 12px; color: var(--c-text-muted);">
+          <strong>4 variants</strong> : yes (vert) · no (rouge corail) · later (ardoise) · view (navy). Mobile : full-width 44px (HIG iOS) + label visible via ::after.
+        </div>
+      </div>
+    </section>
+
+    <!-- TABS + DATATABLE -->
+    <section id="tabs-table" class="viz-section">
+      <h2>Tabs + DataTable</h2>
+      <p class="lead">Pattern figé S164 : <strong>ARIA tabs underline</strong> distinctifs. <strong>DataTable table-fixed</strong> avec sticky 2 cols left + alignement td +4px. <strong>aria-label</strong> sur tr cliquable, <strong>Column.srLabel</strong> pour headers vides.</p>
+      <div class="preview-card">
+        <div class="tabs">
+          <button class="tab active">Entreprise</button>
+          <button class="tab">Marchés publics</button>
+          <button class="tab">Particuliers</button>
+        </div>
+        <table class="dt" style="margin-top: 16px;">
+          <thead>
+            <tr>
+              <th style="width: 240px;">Entreprise</th>
+              <th style="width: 160px;">Canton</th>
+              <th style="width: 160px;">Score</th>
+              <th>Source</th>
+              <th style="width: 120px; text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Glas-Pro-Tect SA</td>
+              <td>VD</td>
+              <td><span class="pill pill-chaud" style="min-width: auto;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#E04F2E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>Prioritaire</span></td>
+              <td><span class="badge badge-info">Zefix</span></td>
+              <td style="text-align: right;">
+                <button class="ab ab-yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+                <button class="ab ab-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </td>
+            </tr>
+            <tr>
+              <td>Vitrerie Lausanne SA</td>
+              <td>VD</td>
+              <td><span class="pill pill-tiede" style="min-width: auto;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#DC8915" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>À qualifier</span></td>
+              <td><span class="badge badge-info">search.ch</span></td>
+              <td style="text-align: right;">
+                <button class="ab ab-yes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
+                <button class="ab ab-view"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+              </td>
+            </tr>
+            <tr>
+              <td>Verre & Vitrage Genève</td>
+              <td>GE</td>
+              <td><span class="pill pill-froid" style="min-width: auto;"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="#5A7190" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>Faible signal</span></td>
+              <td><span class="badge badge-info">Zefix</span></td>
+              <td style="text-align: right;">
+                <button class="ab ab-no"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                <button class="ab ab-later"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ARCHETYPE WORKSPACE -->
+    <section id="arch-workspace" class="viz-section">
+      <h2>Archétype Workspace</h2>
+      <p class="lead">Tâche utilisateur principale = triage / qualification / opération sur volume. Référence figée : <code>/prospection</code> S164+S165.</p>
+      <div class="meta-block">
+        <strong>Pages cibles :</strong> /prospection · /contacts · /entreprises · /pipeline · /signaux · /veille/themes
+      </div>
+
+      <div class="arch-mockup">
+        <div class="arch-mockup-label">Mockup gabarit /prospection</div>
+        <div class="ws-header">
+          <div class="ws-row1">
+            <h1 class="ws-h1">Prospection</h1>
+            <div class="ws-actions">
+              <button class="btn btn-secondary">Importer</button>
+              <button class="btn btn-primary">Nouveau lead</button>
+            </div>
+          </div>
+          <div class="ws-row2">
+            <div class="ws-tabs">
+              <button class="tab active">Entreprise</button>
+              <button class="tab">Marchés publics</button>
+              <button class="tab">Particuliers</button>
+            </div>
+            <div class="ws-actions">
+              <button class="btn btn-tertiary" style="height: 32px; font-size: 13px;">Filtres</button>
+              <button class="btn btn-tertiary" style="height: 32px; font-size: 13px;">Tri</button>
+            </div>
+          </div>
+        </div>
+        <div class="ws-indicators">
+          <div class="ws-indicator">
+            <div class="ws-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <div>
+              <div class="ws-value">142</div>
+              <div class="ws-ind-label">Leads actifs</div>
+            </div>
+          </div>
+          <div class="ws-indicator">
+            <div class="ws-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/></svg>
+            </div>
+            <div>
+              <div class="ws-value">8</div>
+              <div class="ws-ind-label">Marchés publics ouverts</div>
+            </div>
+          </div>
+          <div class="ws-indicator">
+            <div class="ws-icon-box">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div>
+              <div class="ws-value">23</div>
+              <div class="ws-ind-label">Transférés ce mois</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ARCHETYPE EDITORIAL -->
+    <section id="arch-editorial" class="viz-section">
+      <h2>Archétype Editorial</h2>
+      <p class="lead">Tâche utilisateur principale = consulter une édition / un article / un item. Référence figée : <code>/veille</code>.</p>
+      <div class="meta-block">
+        <strong>Pages cibles :</strong> /veille · /veille/[id] · /veille/item/[slug]
+      </div>
+
+      <div class="arch-mockup">
+        <div class="arch-mockup-label">Mockup gabarit /veille</div>
+        <div class="ed-page">
+          <div class="ed-header">
+            <div class="ed-kicker">Veille sectorielle FilmPro</div>
+            <h1 class="ed-display">Films de protection vitrage : ce qu'il faut retenir cette semaine</h1>
+            <p class="ed-body">Synthèse condensée des signaux marché, normes, événements et innovations sur le segment films &amp; vernis vitrage en Europe.</p>
+          </div>
+
+          <div style="text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; font-weight: 700; color: var(--c-primary); margin-bottom: 16px; display: flex; align-items: center; gap: 12px;">
+            À la une cette semaine
+            <span style="height: 1px; flex: 1; background: var(--c-border);"></span>
+          </div>
+
+          <div class="ed-hero">
+            <div class="ed-hero-aside">
+              <div>
+                <div class="ed-edition-kicker">Édition n°</div>
+                <div class="ed-edition-count">18</div>
+                <div class="ed-edition-meta">Vendredi 02 mai 2026</div>
+                <div style="font-size: 12px; color: rgba(255,255,255,0.55); margin-top: 4px; position: relative; z-index: 1;">3 items publiés</div>
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; position: relative; z-index: 1;">
+                <span style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--r-full); background: var(--c-warning); color: white; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;"><span class="dot" style="background: white;"></span>Live</span>
+                <span style="display: inline-flex; padding: 4px 10px; border-radius: var(--r-full); background: rgba(255,255,255,0.1); color: white; font-size: 11px; font-weight: 600; border: 1px solid rgba(255,255,255,0.2);">Suisse romande</span>
+              </div>
+            </div>
+            <div class="ed-hero-body">
+              <div class="ed-kicker">Synthèse de la semaine</div>
+              <p class="ed-hero-synthese">Helvetia Energy lance des subventions VD/JU pour film solaire bâtiments tertiaires. Fensterbau Frontale 2026 attribue le Innovation Award à Remmers (système Induline I-130). ICCG 2026 confirme programme tracks coatings haute performance.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- MAPPING -->
+    <section id="mapping" class="viz-section">
+      <h2>Mapping pages → archétype</h2>
+      <p class="lead">2 pages SOURCES (figées) définissent les archétypes. Toutes les autres pages sont CONSOMMATRICES : elles héritent des tokens + primitives + patterns archétype, et apportent leur identité propre.</p>
+      <table class="map-table">
+        <thead>
+          <tr><th>Page</th><th>Rôle</th><th>Archétype</th><th>Justification</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>/prospection</code></td><td><span class="arch-pill arch-pill-workspace">Source</span></td><td><span class="arch-pill arch-pill-workspace">Workspace</span></td><td>Page modèle figée S164+S165 (référence)</td></tr>
+          <tr><td><code>/veille</code></td><td><span class="arch-pill arch-pill-editorial">Source</span></td><td><span class="arch-pill arch-pill-editorial">Editorial</span></td><td>Gabarit magazine S132/S168 (référence)</td></tr>
+          <tr><td><code>/dashboard</code></td><td><span class="arch-pill arch-pill-special">Consommatrice</span></td><td>—</td><td>Identité propre figée post-refonte (Bloc #1 cockpit). Hérite tokens + primitives, layout synthèse 60s spécifique.</td></tr>
+          <tr><td><code>/contacts</code></td><td><span class="arch-pill arch-pill-special">Consommatrice</span></td><td><span class="arch-pill arch-pill-workspace">Workspace</span></td><td>Cascade workspace : liste dense + filtres + slide-out</td></tr>
+          <tr><td><code>/entreprises</code></td><td><span class="arch-pill arch-pill-special">Consommatrice</span></td><td><span class="arch-pill arch-pill-workspace">Workspace</span></td><td>Cascade workspace : liste dense + filtres + slide-out</td></tr>
+          <tr><td><code>/pipeline</code></td><td><span class="arch-pill arch-pill-special">Consommatrice</span></td><td><span class="arch-pill arch-pill-workspace">Workspace</span></td><td>Cascade workspace + drag prospects spécifique</td></tr>
+          <tr><td><code>/signaux</code></td><td><span class="arch-pill arch-pill-special">Consommatrice</span></td><td><span class="arch-pill arch-pill-workspace">Workspace</span></td><td>Cascade workspace : liste dense + filtres + slide-out</td></tr>
+          <tr><td><code>/veille/themes</code></td><td><span class="arch-pill arch-pill-special">Consommatrice</span></td><td><span class="arch-pill arch-pill-workspace">Workspace</span></td><td>Admin taxonomie : DataTable + ModalForm (déjà aligné S169)</td></tr>
+          <tr><td><code>/veille/[id]</code>, <code>/veille/item/[slug]</code></td><td><span class="arch-pill arch-pill-special">Consommatrices</span></td><td><span class="arch-pill arch-pill-editorial">Editorial</span></td><td>Cascade editorial : corps long-form, mag-* typography</td></tr>
+          <tr><td><code>/login</code></td><td><span class="arch-pill arch-pill-special">Consommatrice</span></td><td><span class="arch-pill arch-pill-special">Spécial</span></td><td>Hors flux app, palette éditoriale primary-dark</td></tr>
+        </tbody>
+      </table>
+
+      <h3 style="margin-top: 32px;">Cascade : ordre d'attaque recommandé</h3>
+      <ol style="font-size: 14px; color: var(--c-text-body); line-height: 1.8;">
+        <li><strong>/dashboard</strong> — Bloc #1 actif cockpit. Refonte avec patterns golden v9 + identité propre figée à la livraison.</li>
+        <li><strong>/pipeline</strong> (cascade workspace) — priorité métier drag prospects (S170 reco)</li>
+        <li><strong>/contacts</strong>, <strong>/entreprises</strong>, <strong>/signaux</strong> (cascade workspace)</li>
+        <li><strong>/veille/themes</strong> (cascade workspace) — déjà aligné S169, audit éclair</li>
+        <li><strong>/veille/[id]</strong> + <strong>/veille/item/[slug]</strong> (cascade editorial) — audit éclair, conforme S132/S168</li>
+        <li><strong>/login</strong> (spécial) — audit séparé, palette éditoriale validée</li>
+      </ol>
+    </section>
+
+    <!-- RULES -->
+    <section id="rules" class="viz-section">
+      <h2>Règles & anti-patterns</h2>
+      <p class="lead">Règle d'or : <strong>aucun pattern d'un archétype copié dans un autre</strong>. Si tentation = signal d'un mauvais mapping → revérifier le mapping.</p>
+
+      <div class="rules-grid">
+        <div class="rules-card do">
+          <h4>✓ Must have</h4>
+          <ul>
+            <li>H1 sémantique unique par page</li>
+            <li>ARIA tabs underline si > 1 scope</li>
+            <li>DataTable table-fixed + sticky 2 cols left</li>
+            <li>ScorePill systémique sur tout score visible</li>
+            <li>aria-label sur tr cliquable</li>
+            <li>Empty state contextualisé par filtre</li>
+            <li>ImportModal 3 parcours pour tout import</li>
+            <li>ConfirmModal pour toute action destructive</li>
+            <li>Focus-visible global (outline 2px primary)</li>
+            <li>Tabular nums sur compteurs / numéros</li>
+          </ul>
+        </div>
+        <div class="rules-card dont">
+          <h4>✗ Do NOT</h4>
+          <ul>
+            <li>Pas de hero éditorial sur page workspace ou consommatrice non-veille</li>
+            <li>Pas de DataTable workspace dans editorial</li>
+            <li>Pas de mag-* typography hors module /veille</li>
+            <li>Pas de fond primary-light en body workspace</li>
+            <li>Pas de funnel décoratif, pas de progress steps imaginaires</li>
+            <li>Pas de Badge Chaud/Tiède/Froid → ScorePill</li>
+            <li>Pas de window.confirm() → ConfirmModal</li>
+            <li>Pas de filtrage client-side > 50 lignes</li>
+            <li>Pas de select déguisé en tabs</li>
+            <li>Pas d'option « Autre » dans les select</li>
+            <li>Pas de surcharge tokens locale (tout passe par tokens.json)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- VALIDATION -->
+    <section id="validation" class="viz-section">
+      <h2>Checklist validation Pascal</h2>
+      <p class="lead">Lecture rapide : coche mentalement les 8 points ci-dessous avant de lancer la cascade.</p>
+
+      <div class="checklist-card">
+        <div class="checklist-item">
+          <input type="checkbox" id="c1" />
+          <label for="c1"><strong>Modèle layered DS</strong> compris : tokens + primitives universels, 2 archétypes sources (workspace / editorial), pages consommatrices héritent + identité propre.</label>
+        </div>
+        <div class="checklist-item">
+          <input type="checkbox" id="c2" />
+          <label for="c2"><strong>Périmètre source strict</strong> : seules /prospection et /veille fixent le golden. Toutes les autres pages = consommatrices.</label>
+        </div>
+        <div class="checklist-item">
+          <input type="checkbox" id="c3" />
+          <label for="c3"><strong>Palette</strong> : primary-light + primary-dark RÉSERVÉS à éditorial + sidebar + login. Reste universel.</label>
+        </div>
+        <div class="checklist-item">
+          <input type="checkbox" id="c4" />
+          <label for="c4"><strong>Typographie</strong> : DM Sans + échelle workspace + classes mag-* uniquement en éditorial.</label>
+        </div>
+        <div class="checklist-item">
+          <input type="checkbox" id="c5" />
+          <label for="c5"><strong>Primitives</strong> partagées (Button h-40, Badge 6 variants, ScorePill 4 variants, ActionButton 4 variants, DataTable + Tabs ARIA).</label>
+        </div>
+        <div class="checklist-item">
+          <input type="checkbox" id="c6" />
+          <label for="c6"><strong>Archétype workspace</strong> /prospection : header condensé 2 rows, tabs ARIA, indicateurs flat, table-fixed sticky 2 cols.</label>
+        </div>
+        <div class="checklist-item">
+          <input type="checkbox" id="c7" />
+          <label for="c7"><strong>Archétype editorial</strong> /veille : hero 12-col primary-dark aside + body, mag-* typo, max-w-1280.</label>
+        </div>
+        <div class="checklist-item">
+          <input type="checkbox" id="c8" />
+          <label for="c8"><strong>Mapping pages</strong> + ordre cascade validés (Bloc #1 /dashboard, puis /pipeline, /contacts, /entreprises, /signaux, /veille/themes, etc.).</label>
+        </div>
+      </div>
+
+      <div class="meta-block" style="margin-top: 24px;">
+        <strong>Source de vérité :</strong> 4 fichiers split dans <code>.claude/goldens/v9-2026-05-06/</code> (tokens · primitives · archetype-workspace · archetype-editorial) + <code>mapping.md</code> + bundle agrégé <code>audit-uiux-golden-v9-2026-05-06.json</code>. Symlink <code>audit-uiux-golden-current.json</code> retag fait.<br><br>
+        <strong>Étape suivante après validation :</strong> audit éclair <code>/dashboard</code> vs golden v9 (tokens + primitives + patterns workspace utiles), puis refonte avec identité propre. Logger refonte comme tâche cockpit Bloc #1 actif.
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // Smooth scroll pour la nav
+  document.querySelectorAll('.viz-nav a').forEach(a => {
+    a.addEventListener('click', e => {
+      const href = a.getAttribute('href');
+      if (href.startsWith('#')) {
+        e.preventDefault();
+        const target = document.querySelector(href);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    });
+  });
+
+  // Persist checklist locally
+  document.querySelectorAll('.checklist-item input[type=checkbox]').forEach(cb => {
+    const key = 'goldenv9_' + cb.id;
+    cb.checked = localStorage.getItem(key) === '1';
+    cb.addEventListener('change', () => {
+      localStorage.setItem(key, cb.checked ? '1' : '0');
+    });
+  });
+</script>
+</body>
+</html>

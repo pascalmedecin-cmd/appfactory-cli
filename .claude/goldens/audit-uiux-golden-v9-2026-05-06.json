@@ -1,0 +1,221 @@
+{
+  "name": "CRM FilmPro",
+  "version": "v9",
+  "created_at": "2026-05-06",
+  "inspiration": "v7 + split layered design system + 2 archétypes sources (workspace / editorial) basés strictement sur /prospection et /veille",
+  "tagline": "DM Sans + bleu primary + ambre signal, spacing Tailwind canonique, radius 10px, icônes Lucide. v9 introduit le modèle layered (tokens + primitives universels) + 2 archétypes sources (workspace dense, editorial magazine). Périmètre source strict : seules /prospection et /veille définissent le golden. Toutes les autres pages CRM consomment le golden et figent leur identité propre lors de leur refonte.",
+
+  "_meta": {
+    "source": "https://filmpro-crm.vercel.app/prospection (gabarit workspace) + /veille (gabarit editorial)",
+    "extracted_at": "2026-05-06",
+    "extraction_method": "consolidation v7 + scan /veille +page.svelte 2026-05-06 + patterns figés S164/S165",
+    "scope": "/prospection comme source workspace, /veille comme source editorial. Layered DS : tokens + primitives universels héritages, 2 archétypes pour patterns layout selon nature de contenu. Toutes les autres pages = consommatrices (héritent tokens + primitives + cascade archétype mappé), identité propre figée post-refonte.",
+    "supersedes": "v7 (monolithique) — v9 split en 4 fichiers source + 1 bundle agrégé (ce fichier) pour compat audit-uiux skill",
+    "split_source": ".claude/goldens/v9-2026-05-06/ (tokens.json + primitives.json + 2 archetype-*.json + mapping.md + visualizer.html)",
+    "v9_changelog": "2026-05-06 — Layered DS introduit (Linear/Stripe/Atlassian pattern). 2 archétypes sources STRICTS : workspace (basé /prospection figée S164+S165), editorial (basé /veille S132/S168). Périmètre source restreint : aucun archétype dashboard, /dashboard est consommatrice avec identité propre figée à sa refonte (Bloc #1 cockpit). Mapping pages → rôle (source/consommatrice) + archétype consommé documenté."
+  },
+
+  "decisions": {
+    "1": "Primary = bleu #2F5A9E (statu quo v5+).",
+    "2": "Spacing Tailwind canonique : 4 / 8 / 12 / 16 / 24 / 32 / 48.",
+    "3": "Hauteur boutons 40px (h-10).",
+    "4": "H1 sémantique obligatoire au top de chaque page.",
+    "5": "Icons Lucide (LIVRÉ S115).",
+    "6": "Opacités primary custom interdites — sweep sémantique S118 (LIVRÉ).",
+    "7": "Badge variant 'info' (S118), 'accent' supprimé (LIVRÉ).",
+    "8": "Token --color-info ardoise FilmPro #5A7190 (alignement S119).",
+    "9": "ScorePill (Linear Priority) remplace Badge Chaud/Tiède/Froid — Phase 0 2026-05-01.",
+    "10": "Indicateurs flat premium honnêtes remplacent funnel décoratif.",
+    "11": "ActionButton property-style (Notion/Stripe) pour queue triage.",
+    "12": "TriageQueue widget : pattern composite réservé /dashboard, à figer lors de sa refonte (pas dans le golden v9 qui n'a comme sources que /prospection et /veille).",
+    "13": "v9 : Layered DS + 2 archétypes SOURCES STRICTS basés sur /prospection (workspace) et /veille (editorial) uniquement. Toutes les autres pages = consommatrices (héritent tokens + primitives + archétype consommé). Identité propre des pages consommatrices figée lors de leur refonte. /dashboard refonte = Bloc #1 cockpit actif, son layout sera figé après livraison (pas un nouvel archétype par défaut, voir si nouveau v10 ou variation existante)."
+  },
+
+  "palette": {
+    "background": "#FFFFFF",
+    "surface": "#F9FAFB",
+    "text": "#111827",
+    "textMuted": "#6B7280",
+    "border": "#E5E7EB",
+    "primary": "#2F5A9E",
+    "primaryHover": "#264C85",
+    "accent": "#F79009",
+    "accentBg": "#FFFAEB",
+    "success": "#538B6B",
+    "warning": "#F79009",
+    "warningBg": "#FFFAEB",
+    "error": "#F04438",
+    "errorBg": "#FEF3F2",
+    "info": "#5A7190",
+    "infoBg": "#EDF1F5"
+  },
+
+  "paletteExtras": {
+    "filmproCharte": {
+      "ardoise": "#5A7190",
+      "violet": "#7B6A9A",
+      "sauge": "#538B6B",
+      "brun": "#917548"
+    },
+    "veillePale": "#EDF1F5",
+    "comment": "Charte FilmPro complète disponible pour pages métier spécifiques (signaux, marchés). Ne pas utiliser hors scope défini."
+  },
+
+  "paletteEditorial": {
+    "scope": "Archétype editorial UNIQUEMENT (sidebar, login, hero /veille). Voir archetype-editorial.json.",
+    "tokens": {
+      "primary-light": { "hex": "#F0F4F8", "usage": "Background sidebar, fond hero éditorial /veille, badges/pills brand soft" },
+      "primary-dark": { "hex": "#0A1628", "usage": "Background page login, bandeau aside hero veille, contraste fort premium" }
+    },
+    "comment": "Coexistent avec --color-primary-hover (#264C85) qui reste réservé aux interactions hover. Décision figée S116/S117."
+  },
+
+  "typography": {
+    "fontFamilyHeading": "\"DM Sans\", system-ui, -apple-system, sans-serif",
+    "fontFamilyBody": "\"DM Sans\", system-ui, -apple-system, sans-serif",
+    "fontFamilyMono": "Menlo, Consolas, monospace",
+    "scale": {
+      "h1": { "size": "22px", "weight": 600, "lineHeight": 1.0 },
+      "h2": { "size": "18px", "weight": 600, "lineHeight": 1.2 },
+      "h3": { "size": "16px", "weight": 600, "lineHeight": 1.3 },
+      "h4": { "size": "15px", "weight": 600, "lineHeight": 1.4 },
+      "body": { "size": "14px", "weight": 400, "lineHeight": 1.43 },
+      "bodyMedium": { "size": "14px", "weight": 500, "lineHeight": 1.43 },
+      "caption": { "size": "12px", "weight": 400, "lineHeight": 1.33 },
+      "captionMedium": { "size": "12px", "weight": 500, "lineHeight": 1.33 },
+      "label": { "size": "12px", "weight": 600, "lineHeight": 1.33 },
+      "micro": { "size": "10px", "weight": 500, "lineHeight": 1.5 }
+    },
+    "weights": { "regular": 400, "medium": 500, "semibold": 600, "bold": 700 }
+  },
+
+  "typographyEditorial": {
+    "scope": "Archétype editorial UNIQUEMENT (/veille). Voir archetype-editorial.json.",
+    "classes": {
+      "mag-kicker": { "letterSpacing": "0.14em", "textTransform": "uppercase", "fontSize": "11px", "fontWeight": 700, "usage": "Kicker éditorial" },
+      "mag-display": { "fontWeight": 800, "letterSpacing": "-0.03em", "lineHeight": 1.02, "usage": "Display principal hero" },
+      "mag-display-2": { "fontWeight": 800, "letterSpacing": "-0.025em", "lineHeight": 1.05, "usage": "Display secondaire" },
+      "mag-display-3": { "fontWeight": 700, "letterSpacing": "-0.02em", "lineHeight": 1.1, "usage": "Display tertiaire" },
+      "mag-body": { "fontSize": "17px", "lineHeight": 1.7, "fontWeight": 400, "usage": "Corps éditorial" },
+      "mag-archive-card": { "behavior": "hover .mag-archive-title → color primary", "usage": "Cards archive" }
+    }
+  },
+
+  "spacing": {
+    "base": 4,
+    "scale": [4, 8, 12, 16, 24, 32, 48],
+    "tokens": { "xs": "4px", "sm": "8px", "md": "12px", "lg": "16px", "xl": "24px", "2xl": "32px", "3xl": "48px" }
+  },
+
+  "radius": {
+    "sm": "4px", "md": "8px", "lg": "10px", "xl": "12px", "2xl": "16px", "full": "9999px", "default": "10px"
+  },
+
+  "shadow": {
+    "xs": "0 1px 2px rgba(16,24,40,0.05)",
+    "sm": "0 1px 3px rgba(16,24,40,0.1), 0 1px 2px rgba(16,24,40,0.06)",
+    "md": "0 4px 8px -2px rgba(16,24,40,0.1), 0 2px 4px -2px rgba(16,24,40,0.06)",
+    "lg": "0 10px 20px -4px rgba(16,24,40,0.1), 0 4px 8px -2px rgba(16,24,40,0.06)",
+    "focusRing": "0 0 0 3px rgba(47, 90, 158, 0.2)",
+    "focusRingStrong": "0 0 0 3px rgba(47, 90, 158, 0.30)"
+  },
+
+  "archetypes": {
+    "_comment": "Voir archetype-{X}.json pour le détail layout/patterns/do_not/must_have de chaque archétype. Périmètre source strict : 2 archétypes uniquement (basés sur /prospection et /veille).",
+    "workspace": {
+      "role": "source",
+      "scope": "Listes/tables denses, filtres, slide-out détail",
+      "source_page": "/prospection (page modèle figée S164+S165)",
+      "consumed_by": ["/contacts", "/entreprises", "/pipeline", "/signaux", "/veille/themes"],
+      "key_patterns": ["Header condensé 2 rows (titre row1 + tabs row2 avec actions descendues)", "ARIA tabs underline", "DataTable table-fixed + sticky 2 cols left + cell alignment +4px", "ScorePill systémique sur scores", "ImportModal 3 parcours (csv/manuel/source)", "ConfirmModal pour destructive", "Empty states contextuels par filtre", "aria-label sur tr cliquable", "Column.srLabel pour headers vides"]
+    },
+    "editorial": {
+      "role": "source",
+      "scope": "Long-form magazine, hero, lecture",
+      "source_page": "/veille (gabarit S132/S168)",
+      "consumed_by": ["/veille/[id]", "/veille/item/[slug]"],
+      "key_patterns": ["Layout max-w-[1280px] mx-auto", "Header border-b-2 border-primary-dark", "mag-kicker labels (uppercase tracking 0.14em)", "mag-display h1 (40-72px primary-dark)", "mag-body 17px lh 1.7", "Hero 12-col grid : aside primary-dark 4 cols + body white 8 cols", "Ornements cercles white/[0.04] décoratifs", "Sticky bar footer hors flex scrollable (fix S168)"]
+    }
+  },
+
+  "consumer_pages": {
+    "_comment": "Pages consommatrices : héritent tokens + primitives + archétype consommé. Identité propre figée lors de leur refonte. Aucune ne figure comme source du golden v9.",
+    "/dashboard": {
+      "status": "à refondre",
+      "block": "Bloc #1 cockpit actif",
+      "consumes": "tokens + primitives + patterns workspace utiles (indicators flat, ScorePill, ActionButton)",
+      "own_identity": "Layout synthèse 60s + widget(s) spécifiques (TriageQueue, KPIs, alertes signaux). Identité figée à la livraison de la refonte. Pas un archétype par défaut — décision post-refonte (nouveau v10 ou variation workspace selon ce qui émerge)."
+    },
+    "/pipeline": { "consumes": "workspace", "own_identity": "drag prospects spécifique" },
+    "/contacts": { "consumes": "workspace", "own_identity": "—" },
+    "/entreprises": { "consumes": "workspace", "own_identity": "—" },
+    "/signaux": { "consumes": "workspace", "own_identity": "—" },
+    "/veille/themes": { "consumes": "workspace", "own_identity": "admin taxonomie, déjà aligné S169" },
+    "/login": { "consumes": "tokens + palette éditoriale primary-dark", "own_identity": "page hors flux app, ambiance premium" }
+  },
+
+  "components": {
+    "_split_source": "primitives.json (tous les composants universels détaillés)",
+    "button": { "height": "40px", "borderRadius": "10px", "fontFamily": "DM Sans", "fontSize": "14px", "fontWeight": 600, "boxSizing": "border-box" },
+    "input": { "height": "34px", "borderRadius": "8px", "borderColor": "#E5E7EB", "borderColorFocus": "#2F5A9E" },
+    "card": { "borderRadius": "10px", "borderColor": "#E5E7EB", "padding": "16px" },
+    "modal": { "borderRadius": "12px", "padding": "24px", "maxWidth": "560px" },
+    "badge": { "borderRadius": "10px", "paddingY": "4px", "paddingX": "8px", "fontSize": "12px", "fontWeight": 500 },
+    "scorePill": { "scope": "Linear Priority pattern, universal cross-archétypes", "variants": ["chaud", "tiede", "froid", "unscored"], "voir": "primitives.json" },
+    "actionButton": { "scope": "Notion/Stripe property buttons, universal", "variants": ["yes", "no", "later", "view"], "voir": "primitives.json" },
+    "dataTable": { "scope": "Workspace archetype only", "stickyColumns": "2 left", "voir": "primitives.json" },
+    "tabs": { "scope": "ARIA underline, workspace archetype only", "voir": "primitives.json" },
+    "slideOut": { "width": "560px", "headerSticky": true, "voir": "primitives.json" },
+    "confirmModal": { "scope": "Destructive actions universal", "voir": "primitives.json" },
+    "importModal": { "scope": "Multi-source 3 parcours, workspace archetype", "voir": "primitives.json" },
+    "indicatorFlat": { "scope": "Workspace (header /prospection)", "voir": "archetype-workspace.json" }
+  },
+
+  "icons": {
+    "library": "lucide-svelte",
+    "size": { "xs": "14px", "sm": "16px", "md": "20px", "lg": "24px" },
+    "strokeWidth": 2,
+    "color": "currentColor"
+  },
+
+  "accessibility": {
+    "contrastMin": "WCAG AA (4.5:1 pour body, 3:1 pour UI large)",
+    "focusVisible": "outline 2px solid #2F5A9E, offset 2px (par défaut). Ring 3px rgba(47,90,158,0.30) pour ActionButton.",
+    "headings": "H1 unique par page",
+    "buttons": "<button> ou <a> sémantique",
+    "modals": "focus trap + Escape + return focus",
+    "axeCore": "0 violation serious/critical",
+    "tableRow": "aria-label obligatoire sur tr cliquable",
+    "tableHeader": "Column.srLabel obligatoire pour cellules vides"
+  },
+
+  "rules": {
+    "tableLayout": "table-fixed obligatoire (S48)",
+    "stickyHeader": "bg opaque + séparateur (S45)",
+    "batchActionsBar": "flex-wrap < 640px (S45)",
+    "noAutreInLists": "jamais d'option Autre",
+    "imageAspectRatio": "préserver ratio source",
+    "iconLibrary": "lucide-svelte uniquement",
+    "headingSemantics": "H1 unique top page",
+    "buttonHeight": "40px uniforme",
+    "primaryOpacities": "Tokens sémantiques uniquement",
+    "editorialScope": "mag-* + paletteEditorial → archétype editorial uniquement",
+    "archetypeIsolation": "Aucun pattern d'un archétype copié dans un autre. Si tentation = mauvais mapping page → revérifier mapping.md",
+    "frenchTypo": "Voir ~/.claude/design-system/REDACTION-FR.md"
+  },
+
+  "knownDivergences": [],
+
+  "split_files_index": {
+    "directory": ".claude/goldens/v9-2026-05-06/",
+    "files": [
+      "tokens.json (couche universelle palette/typo/spacing/radius/shadow/a11y)",
+      "primitives.json (composants universels Button/Modal/ScorePill/ActionButton/DataTable/Tabs/SlideOut/etc.)",
+      "archetype-workspace.json (source /prospection)",
+      "archetype-editorial.json (source /veille)",
+      "mapping.md (table page → rôle + archétype consommé + ordre cascade)",
+      "visualizer.html (visualizer interactif autoportant pour validation)"
+    ],
+    "rule": "Source de vérité = les 4 fichiers split + mapping. Ce bundle agrégé sert la compat skill audit-uiux. Toute édition doit être appliquée d'abord sur le fichier split puis répercutée ici (jamais l'inverse)."
+  }
+}
