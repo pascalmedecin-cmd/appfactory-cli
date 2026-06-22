@@ -50,11 +50,11 @@ jobs:
     # Pipeline Anthropic streaming = 5-10 min en moyenne, jusqu'à 30 min en
     # cas de retry interne ou semaine très chargée. 30 min de marge confortable.
     timeout-minutes: 30
-    # checkout/setup-node v6 : les actions v4 (Node 20) sont dépréciées et
+    # checkout v7 / setup-node v6 : les actions v4 (Node 20) sont dépréciées et
     # forcées en Node 24 à partir du 16/06/2026 (warning officiel dans les logs
-    # de runs). v6 tourne nativement sur Node 24.
+    # de runs). v6/v7 tournent nativement sur Node 24.
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v6
         with:

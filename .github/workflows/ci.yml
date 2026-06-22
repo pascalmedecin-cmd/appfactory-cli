@@ -1,0 +1,57 @@
+# Garde-fou CI FilmPro CRM (ajout 2026-06-22, session refonte hygiène deps).
+#
+# POURQUOI : avant ce jour, AUCUNE vérification automatique ne tournait sur les
+# pull requests. Le seul signal était le preview deployment Vercel, sans
+# diagnostic exploitable (emails « preview failed » aveugles), ce qui a laissé
+# 6 PR Dependabot s'empiler pendant 5 semaines (dont 3 cassées) sans tri.
+#
+# Ce workflow gate chaque PR + chaque push sur main avec la chaîne de
+# vérification réelle, identique à la commande locale : svelte-check (types),
+# tests Vitest (1869), build SvelteKit. Aucune variable d'env requise au build
+# (l'app n'utilise que $env/dynamic, jamais $env/static — vérifié 2026-06-22).
+#
+# Le déploiement prod reste manuel (`vercel deploy --prod`) ; ce CI ne déploie
+# rien, il valide. C'est le filet qui transforme « preview rouge sans contexte »
+# en « PR rouge avec la ligne d'erreur exacte ».
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# Annule un run obsolète si un nouveau commit arrive sur la même ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: CRM
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: CRM/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type & svelte check
+        run: npm run check
+
+      - name: Unit tests (Vitest)
+        run: npm run test
+
+      - name: Build (SvelteKit)
+        run: npm run build
