@@ -1,9 +1,26 @@
-# Dependabot — surveillance hebdomadaire des dépendances (audit 360 V3b I-05).
+# Dependabot - surveillance hebdomadaire des dépendances (audit 360 V3b I-05 ;
+# durci 2026-06-22, session refonte hygiène deps).
 #
 # Le CRM FilmPro (SvelteKit) vit dans le sous-dossier /CRM avec son propre
 # package.json / package-lock.json. GitHub Actions vit dans /.github/workflows.
-# Dependabot ouvre des PR groupées pour les bumps mineurs/patch ; les majeures
-# arrivent en PR séparées (review humaine avant merge).
+#
+# DEUX LEÇONS gravées le 2026-06-22 (3 PR cassées sur 6, empilées 5 semaines) :
+#
+#   1. Le socle SvelteKit est FORTEMENT COUPLÉ : vite <-> vite-plugin-svelte
+#      <-> @sveltejs/kit <-> svelte. Monter une moitié sans l'autre casse le
+#      build (vite 8 exige le plugin 7 qui exige vite 8 -> ERESOLVE ; svelte
+#      5.56 + plugin 6 -> TypeScript non strippé). On les GROUPE pour qu'ils
+#      montent ensemble en UNE PR vérifiée par la CI.
+#
+#   2. vite 8 = bundler rolldown (stable 03/2026). Bug amont OUVERT :
+#      vite-plugin-svelte 7 + rolldown ne strippe pas le TS de certains .svelte
+#      (les nôtres ET ceux de layerchart), build cassé même sur 8.0.16/7.1.2 +
+#      vitePreprocess (vérifié 2026-06-22). Le socle est donc TENU sur vite 7
+#      (épinglé exact dans package.json) jusqu'à une session de migration
+#      dédiée. On IGNORE ses minor/major ici pour ne pas re-proposer du cassé
+#      (les patches restent autorisés). Idem typescript 6 (majeure) et
+#      @supabase/* 2.108 (typage RejectExcessProperties + smoke auth requis).
+#      → mémoire project_fix_deps_ci_vercel_2026-06-22.
 version: 2
 updates:
   # Dépendances npm du CRM FilmPro
@@ -21,13 +38,44 @@ updates:
       prefix: "chore(deps)"
       prefix-development: "chore(deps-dev)"
     groups:
-      # Regrouper les mises à jour mineures + patch en une seule PR par run.
+      # Socle SvelteKit : toujours en UNE PR (tous niveaux), jamais éclaté.
+      sveltekit:
+        patterns:
+          - "vite"
+          - "@sveltejs/*"
+          - "svelte"
+          - "svelte-check"
+        update-types:
+          - "major"
+          - "minor"
+          - "patch"
+      # Le reste des minor + patch en une seule PR par run.
       minor-and-patch:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      # --- Socle SvelteKit TENU sur vite 7 (cf. en-tête, leçon 2). Patches OK. ---
+      - dependency-name: "vite"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@sveltejs/vite-plugin-svelte"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@sveltejs/kit"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "svelte"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "svelte-check"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # --- typescript 6 : majeure différée (erreurs de type à trier). ---
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+      # --- @supabase/* : bump 2.108 différé (typage strict + smoke auth requis). ---
+      - dependency-name: "@supabase/supabase-js"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: "@supabase/ssr"
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
 
-  # Actions GitHub utilisées par les workflows (cron veille, etc.)
+  # Actions GitHub utilisées par les workflows (cron veille, CI, etc.)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
@@ -41,3 +89,8 @@ updates:
       - "github-actions"
     commit-message:
       prefix: "chore(ci)"
+    groups:
+      # Les bumps d'actions montent ensemble (checkout, setup-node, etc.).
+      github-actions:
+        patterns:
+          - "*"
