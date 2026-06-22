@@ -489,7 +489,7 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 		});
 		(crossCheckBatch as Mock).mockResolvedValueOnce({
 			kept: [],
-			rejected: [{ url: 'https://example.com/x', title: 't', verdict: { verbatim_ok: false, divergences: [], confidence: 'low' } }],
+			rejected: [{ url: 'https://example.com/x', title: 't', verdict: { facts_ok: false, divergences: [], confidence: 'low' } }],
 			unverifiable: [],
 			apiErrorCount: 1,
 			systemicError: { kind: 'request', message: 'credit balance too low' }
@@ -595,7 +595,7 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 				{
 					url: 'https://example.com/x',
 					title: 't',
-					verdict: { verbatim_ok: false, divergences: [], confidence: 'low' }
+					verdict: { facts_ok: false, divergences: [], confidence: 'low' }
 				}
 			],
 			unverifiable: [],

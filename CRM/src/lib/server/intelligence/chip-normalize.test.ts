@@ -46,9 +46,9 @@ describe('detectKind', () => {
 		expect(detectKind('Zefix recherche entreprise')).toBe('zefix');
 	});
 
-	it('retourne simap par défaut (API texte libre)', () => {
-		expect(detectKind('vitrage haute performance')).toBe('simap');
-		expect(detectKind('école rénovation')).toBe('simap');
+	it('retourne zefix par défaut (seule source vivante, AC-7 2026-06-22)', () => {
+		expect(detectKind('vitrage haute performance')).toBe('zefix');
+		expect(detectKind('école rénovation')).toBe('zefix');
 	});
 });
 
@@ -71,7 +71,7 @@ describe('normalizeStringToChip', () => {
 	it('applique le canton fallback (VD par défaut)', () => {
 		const chip = normalizeStringToChip('vitrage haute performance');
 		expect(chip.canton).toBe('VD');
-		expect(chip.kind).toBe('simap');
+		expect(chip.kind).toBe('zefix');
 	});
 
 	it('applique un canton fallback custom', () => {
@@ -97,7 +97,7 @@ describe('normalizeStoredChips', () => {
 			{ kind: 'zefix', canton: 'GE', query: 'Losinger', label: 'Zefix · GE · Losinger' }
 		]);
 		expect(result).toHaveLength(2);
-		expect(result[0]).toMatchObject({ kind: 'simap', canton: 'VD' });
+		expect(result[0]).toMatchObject({ kind: 'zefix', canton: 'VD' });
 		expect(result[1]).toMatchObject({ kind: 'zefix', canton: 'GE', query: 'Losinger' });
 	});
 

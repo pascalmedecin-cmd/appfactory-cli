@@ -13,7 +13,7 @@ import { normalizeStoredChips } from '$lib/server/intelligence/chip-normalize';
  */
 export type EditionPreviewItem = Pick<
 	IntelligenceItem,
-	'rank' | 'title' | 'segment' | 'actionability'
+	'rank' | 'title' | 'segment' | 'actionability' | 'filmpro_relevance'
 > & {
 	is_update?: boolean;
 };
@@ -89,6 +89,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 				title: it.title,
 				segment: it.segment,
 				actionability: it.actionability,
+				filmpro_relevance: it.filmpro_relevance ?? '',
 				is_update: it.is_update === true
 			}))
 		});

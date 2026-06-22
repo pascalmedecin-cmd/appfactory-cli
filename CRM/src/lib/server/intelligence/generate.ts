@@ -14,6 +14,7 @@ import {
 } from './theme-loader';
 import { verifyUrl } from './url-verify';
 import { sanitizeUrlsBatch } from './url-sanitize';
+import { extractSearchResultUrls, recoverUrl } from './url-recover';
 import { isDeniedSource, getDomainTier } from './source-allowlist';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
 import { isAllowedThemeSlug } from './theme-slug';
@@ -229,8 +230,9 @@ export async function callModelWithOverflowRetry(
 async function filterAndAnnotateItems(
 	items: IntelligenceItem[],
 	windowStart: string,
-	windowEnd: string
-): Promise<{ kept: IntelligenceItem[]; rejected: RejectedItem[] }> {
+	windowEnd: string,
+	knownUrls: readonly string[] = []
+): Promise<{ kept: IntelligenceItem[]; rejected: RejectedItem[]; recoveredCount: number }> {
 	// Pré-filtre denylist hard : reject avant verifyUrl pour économiser les
 	// appels réseau sur des domaines bannis (blogs marketing, agrégateurs SEO,
 	// sources d'hallucination identifiées). Cf. source-allowlist.ts.
@@ -262,17 +264,35 @@ async function filterAndAnnotateItems(
 		survivors.push(item);
 	}
 
+	// Vérification URL + RÉCUPÉRATION (2026-06-22, cause racine W25) : si l'URL émise
+	// échoue (404/network — cas suffixe parasite /ts, /j, /sd), on tente une URL de
+	// secours issue des citations web_search (ground truth) ou de l'URL du modèle
+	// amputée du suffixe parasite (jamais fabriquée), RE-VÉRIFIÉE live. Le cross-check
+	// verbatim en aval reste le backstop. Voir url-recover.ts + spec AC-2.
 	const annotated = await Promise.all(
 		survivors.map(async (item) => {
-			const urlResult = await verifyUrl(item.source.url);
+			let effectiveUrl = item.source.url;
+			let urlResult = await verifyUrl(effectiveUrl);
+			let mutated = false;
+			if (!urlResult.ok) {
+				const recovered = recoverUrl(effectiveUrl, knownUrls);
+				if (recovered && recovered !== effectiveUrl) {
+					const recheck = await verifyUrl(recovered);
+					if (recheck.ok) {
+						effectiveUrl = recovered;
+						urlResult = recheck;
+						mutated = true;
+					}
+				}
+			}
 			const llmDate = parseFlexibleDate(item.source.published_at);
 			const dateOk = llmDate ? isWithinWindow(llmDate, windowStart, windowEnd) : false;
-			const urlOk = urlResult.ok;
-			return { item, urlResult, urlOk, dateOk };
+			return { item, effectiveUrl, urlResult, urlOk: urlResult.ok, dateOk, mutated };
 		})
 	);
 
-	for (const { item, urlResult, urlOk, dateOk } of annotated) {
+	let recoveredCount = 0;
+	for (const { item, effectiveUrl, urlResult, urlOk, dateOk, mutated } of annotated) {
 		if (!urlOk) {
 			rejected.push({
 				url: item.source.url,
@@ -293,32 +313,40 @@ async function filterAndAnnotateItems(
 		}
 		if (!dateOk) {
 			rejected.push({
-				url: item.source.url,
+				url: effectiveUrl,
 				title: item.title,
 				reason: 'date_out_of_window',
 				detail: `published_at=${item.source.published_at} hors [${windowStart}..${windowEnd}]`
 			});
 			continue;
 		}
+		if (mutated) {
+			recoveredCount++;
+			console.log(
+				`[veille filter] URL récupérée : ${item.source.url.slice(0, 70)} → ${effectiveUrl.slice(0, 70)}`
+			);
+		}
 		// Annoter le tier whitelist (informatif, pas reject hors whitelist).
-		const tier = getDomainTier(new URL(item.source.url).hostname);
+		const tier = getDomainTier(new URL(effectiveUrl).hostname);
 		if (!tier) {
 			console.log(
-				`[veille filter] item ${item.title.slice(0, 60)}... domaine ${new URL(item.source.url).hostname} hors whitelist (autorisé mais à auditer)`
+				`[veille filter] item ${item.title.slice(0, 60)}... domaine ${new URL(effectiveUrl).hostname} hors whitelist (autorisé mais à auditer)`
 			);
 		}
 		kept.push({
 			...item,
+			source: { ...item.source, url: effectiveUrl },
 			verification: {
 				url_ok: true,
 				entity_ok: null,
 				unverified_entities: [],
-				date_ok: true
+				date_ok: true,
+				url_mutated: mutated
 			}
 		});
 	}
 
-	return { kept, rejected };
+	return { kept, rejected, recoveredCount };
 }
 
 export interface GenerateOptions {
@@ -431,12 +459,20 @@ export async function generateIntelligenceReport(
 	// est appliquée en aval dans run-generation.ts.
 	const { items: sanitizedItems, sanitizedCount } = sanitizeUrlsBatch(report.items);
 
+	// Ground truth des URLs réellement retournées par web_search (pour récupérer
+	// une URL mal-formée sans rien fabriquer — cause racine W25). Voir url-recover.ts.
+	const knownUrls = extractSearchResultUrls(response);
+
 	const windowStart = input.windowStart ?? input.dateStart;
-	const { kept, rejected } = await filterAndAnnotateItems(
+	const { kept, rejected, recoveredCount } = await filterAndAnnotateItems(
 		sanitizedItems,
 		windowStart,
-		input.dateEnd
+		input.dateEnd,
+		knownUrls
 	);
+	if (recoveredCount > 0) {
+		console.log(`[generate] ${recoveredCount} URL(s) récupérée(s) (suffixe parasite / citation).`);
+	}
 
 	const enrichedReport: IntelligenceReport = {
 		...report,

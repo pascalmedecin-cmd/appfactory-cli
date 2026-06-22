@@ -58,11 +58,17 @@ describe('buildRecapPayload - mode success', () => {
 		data: { weekLabel: '16-2026', report: mockReport(), costs: mockCosts(0.45) }
 	};
 
-	it('subject contient weekLabel + nb items + total EUR', () => {
+	it('subject = weekLabel + nb signaux, SANS montant EUR (brief, AC-6)', () => {
 		const p = buildRecapPayload(input);
 		expect(p.subject).toContain('W16-2026');
-		expect(p.subject).toContain('3 items');
-		expect(p.subject).toContain('0.45 EUR');
+		expect(p.subject).toContain('3 signaux');
+		expect(p.subject).not.toContain('EUR');
+	});
+
+	it('html met le résumé exécutif en tête (édito) et un lien brief', () => {
+		const p = buildRecapPayload(input);
+		expect(p.html).toContain('Test summary sur 3 sujets clés.');
+		expect(p.html).toContain('Ouvrir le brief complet');
 	});
 
 	it('html contient lien CRM /veille', () => {

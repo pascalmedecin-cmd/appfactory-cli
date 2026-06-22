@@ -16,7 +16,7 @@
  * portable hors SvelteKit (cron externalisé GitHub Actions, cf. scripts/run-veille.ts).
  */
 import type { IntelligenceReport } from './schema';
-import type { CostSummary, CostEntry } from './cost-tracker';
+import type { CostSummary } from './cost-tracker';
 import type { EmailRecapConfig } from './deps';
 
 const RESEND_ENDPOINT = 'https://api.resend.com/emails';
@@ -60,10 +60,6 @@ function fmtUsd(n: number): string {
 	return `$${n.toFixed(3)}`;
 }
 
-function fmtInt(n: number): string {
-	return n.toLocaleString('fr-CH');
-}
-
 function escapeHtml(s: string): string {
 	return s
 		.replace(/&/g, '&amp;')
@@ -73,28 +69,61 @@ function escapeHtml(s: string): string {
 		.replace(/'/g, '&#39;');
 }
 
-function fmtEntryDetails(entry: CostEntry): string {
-	return `in ${fmtInt(entry.input_tokens)} / out ${fmtInt(entry.output_tokens)} / cache ${fmtInt(entry.cache_read_tokens + entry.cache_creation_tokens)}`;
+// ---------- Templates ----------
+
+/** Items « à actionner » (action_directe) ou, à défaut, les premiers items par rank. */
+function briefItemsOf(report: IntelligenceReport): IntelligenceReport['items'] {
+	const items = report.items ?? [];
+	const actionItems = items.filter((it) => it?.actionability === 'action_directe');
+	return (actionItems.length ? actionItems : items).slice(0, 3);
 }
 
-// ---------- Templates ----------
+function itemUrl(it: IntelligenceReport['items'][number]): string {
+	const u = it?.source?.url;
+	return typeof u === 'string' && /^https?:\/\//i.test(u) ? u : `${CRM_URL}/crm/veille`;
+}
 
 function renderSuccessHtml(data: SendRecapSuccess): string {
 	const { report, weekLabel, costs } = data;
 	const itemsCount = (report.items ?? []).length;
-	const rowsHtml = costs.breakdown
+	const brief = briefItemsOf(report);
+	const impacts = report.impacts_filmpro ?? [];
+
+	// Brief = signaux à actionner d'abord (so-what par item + lien direct).
+	const briefHtml = brief.length
+		? brief
+				.map((it) => {
+					const so = it?.filmpro_relevance
+						? `<div style="margin:4px 0 0;color:#475569;font-size:13px;line-height:1.5;">${escapeHtml(it.filmpro_relevance)}</div>`
+						: '';
+					const tag =
+						it?.actionability === 'action_directe'
+							? `<span style="display:inline-block;font-size:11px;color:#9a3412;background:#ffedd5;border-radius:4px;padding:1px 6px;margin-left:6px;vertical-align:middle;">à actionner</span>`
+							: '';
+					return `<div style="margin:0 0 14px;padding:0 0 14px;border-bottom:1px solid #f1f5f9;">
+						<a href="${escapeHtml(itemUrl(it))}" style="color:#1e293b;font-weight:600;font-size:14px;text-decoration:none;">${escapeHtml(it?.title ?? '(sans titre)')}</a>${tag}
+						${so}
+					</div>`;
+				})
+				.join('')
+		: '<p style="color:#94a3b8;font-size:13px;">Aucun signal détaillé cette semaine.</p>';
+
+	const impactsHtml = impacts.length
+		? `<h3 style="margin:20px 0 8px;font-size:13px;color:#475569;text-transform:uppercase;letter-spacing:.04em;">Impacts FilmPro</h3>
+			<ul style="margin:0;padding-left:18px;color:#475569;font-size:13px;line-height:1.6;">
+				${impacts.map((im) => `<li>${escapeHtml(im?.note ?? '')}</li>`).join('')}
+			</ul>`
+		: '';
+
+	const costRows = costs.breakdown
 		.map(
 			(e) => `
 				<tr>
-					<td style="padding:6px 10px;border-bottom:1px solid #eee;">${escapeHtml(e.label)}</td>
-					<td style="padding:6px 10px;border-bottom:1px solid #eee;color:#666;font-size:13px;">${escapeHtml(e.model)}</td>
-					<td style="padding:6px 10px;border-bottom:1px solid #eee;color:#666;font-size:13px;">${escapeHtml(fmtEntryDetails(e))}</td>
-					<td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right;">${escapeHtml(fmtEur(e.eur))}</td>
+					<td style="padding:4px 8px;border-bottom:1px solid #f1f5f9;color:#94a3b8;">${escapeHtml(e.label)}</td>
+					<td style="padding:4px 8px;border-bottom:1px solid #f1f5f9;text-align:right;color:#94a3b8;">${escapeHtml(fmtEur(e.eur))}</td>
 				</tr>`
 		)
 		.join('');
-
-	const now = new Date().toLocaleString('fr-CH', { dateStyle: 'short', timeStyle: 'short' });
 
 	return `<!DOCTYPE html>
 <html lang="fr">
@@ -103,49 +132,31 @@ function renderSuccessHtml(data: SendRecapSuccess): string {
 	<div style="max-width:640px;margin:0 auto;background:#fff;border-radius:8px;overflow:hidden;border:1px solid #e5e5e5;">
 		<div style="background:#1e293b;color:#fff;padding:16px 20px;">
 			<div style="font-size:18px;font-weight:600;">FilmPro Veille, W${escapeHtml(weekLabel)}</div>
-			<div style="font-size:13px;color:#cbd5e1;margin-top:2px;">Récap automatique post-cron</div>
+			<div style="font-size:13px;color:#cbd5e1;margin-top:2px;">${itemsCount} ${itemsCount !== 1 ? 'signaux' : 'signal'} cette semaine</div>
 		</div>
 		<div style="padding:20px;">
-			<div style="margin-bottom:16px;">
-				<span style="color:#16a34a;font-weight:600;">✅ Veille publiée</span>
- : <a href="${CRM_URL}/crm/veille" style="color:#2563eb;">Ouvrir dans le CRM</a>
+			<p style="margin:0 0 16px;color:#334155;font-size:14px;line-height:1.6;">${escapeHtml(report.meta?.executive_summary ?? '')}</p>
+			<div style="margin-bottom:18px;">
+				<a href="${CRM_URL}/crm/veille" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 14px;border-radius:6px;">Ouvrir le brief complet dans le CRM</a>
 			</div>
 
-			<h3 style="margin:20px 0 8px;font-size:14px;color:#475569;text-transform:uppercase;letter-spacing:.04em;">Métriques</h3>
-			<table style="width:100%;border-collapse:collapse;font-size:14px;">
-				<tr>
-					<td style="padding:6px 10px;color:#64748b;">Items générés</td>
-					<td style="padding:6px 10px;text-align:right;font-weight:600;">${itemsCount}</td>
-				</tr>
-			</table>
+			<h3 style="margin:20px 0 12px;font-size:13px;color:#475569;text-transform:uppercase;letter-spacing:.04em;">Signaux clés</h3>
+			${briefHtml}
 
-			<h3 style="margin:20px 0 8px;font-size:14px;color:#475569;text-transform:uppercase;letter-spacing:.04em;">Coûts</h3>
-			<table style="width:100%;border-collapse:collapse;font-size:14px;">
-				<thead>
-					<tr style="background:#f1f5f9;">
-						<th style="padding:8px 10px;text-align:left;font-size:12px;text-transform:uppercase;color:#475569;">Étape</th>
-						<th style="padding:8px 10px;text-align:left;font-size:12px;text-transform:uppercase;color:#475569;">Modèle</th>
-						<th style="padding:8px 10px;text-align:left;font-size:12px;text-transform:uppercase;color:#475569;">Détail</th>
-						<th style="padding:8px 10px;text-align:right;font-size:12px;text-transform:uppercase;color:#475569;">EUR</th>
-					</tr>
-				</thead>
-				<tbody>${rowsHtml}</tbody>
-				<tfoot>
-					<tr>
-						<td colspan="3" style="padding:10px;text-align:right;font-weight:600;">Total</td>
-						<td style="padding:10px;text-align:right;font-weight:600;">${escapeHtml(fmtEur(costs.total_eur))}</td>
-					</tr>
-					<tr>
-						<td colspan="3" style="padding:2px 10px;text-align:right;color:#94a3b8;font-size:12px;">Équivalent USD</td>
-						<td style="padding:2px 10px;text-align:right;color:#94a3b8;font-size:12px;">${escapeHtml(fmtUsd(costs.total_usd))}</td>
-					</tr>
-				</tfoot>
-			</table>
+			${impactsHtml}
 
-			<div style="margin-top:24px;color:#94a3b8;font-size:12px;border-top:1px solid #eee;padding-top:12px;">
-				Généré le ${escapeHtml(now)} : Résumé exécutif :
-				<em>${escapeHtml(report.meta?.executive_summary ?? '')}</em>
-			</div>
+			<details style="margin-top:24px;border-top:1px solid #eee;padding-top:12px;">
+				<summary style="cursor:pointer;color:#94a3b8;font-size:12px;">Coûts de génération (${escapeHtml(fmtEur(costs.total_eur))})</summary>
+				<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;">
+					<tbody>${costRows}</tbody>
+					<tfoot>
+						<tr>
+							<td style="padding:6px 8px;text-align:right;font-weight:600;color:#64748b;">Total</td>
+							<td style="padding:6px 8px;text-align:right;font-weight:600;color:#64748b;">${escapeHtml(fmtEur(costs.total_eur))}</td>
+						</tr>
+					</tfoot>
+				</table>
+			</details>
 		</div>
 	</div>
 </body>
@@ -155,21 +166,27 @@ function renderSuccessHtml(data: SendRecapSuccess): string {
 function renderSuccessText(data: SendRecapSuccess): string {
 	const { report, weekLabel, costs } = data;
 	const itemsCount = (report.items ?? []).length;
+	const brief = briefItemsOf(report);
 	const lines: string[] = [];
 	lines.push(`FilmPro Veille : W${weekLabel}`);
-	lines.push(`=== Veille publiée ===`);
-	lines.push(`URL : ${CRM_URL}/crm/veille`);
+	lines.push('');
+	lines.push(report.meta?.executive_summary ?? '');
 	lines.push('');
 	lines.push(`Items générés : ${itemsCount}`);
+	lines.push(`Brief complet : ${CRM_URL}/crm/veille`);
 	lines.push('');
-	lines.push('Coûts :');
-	for (const e of costs.breakdown) {
-		lines.push(`  - ${e.label} (${e.model}) ${fmtEntryDetails(e)} → ${fmtEur(e.eur)}`);
+	lines.push('Signaux clés :');
+	for (const it of brief) {
+		const flag = it?.actionability === 'action_directe' ? ' [à actionner]' : '';
+		lines.push(`  - ${it?.title ?? '(sans titre)'}${flag}`);
+		if (it?.filmpro_relevance) lines.push(`    ${it.filmpro_relevance}`);
+		lines.push(`    ${itemUrl(it)}`);
+	}
+	for (const im of report.impacts_filmpro ?? []) {
+		if (im?.note) lines.push(`  Impact : ${im.note}`);
 	}
 	lines.push('');
-	lines.push(`Total : ${fmtEur(costs.total_eur)} (${fmtUsd(costs.total_usd)})`);
-	lines.push('');
-	lines.push(`Résumé : ${report.meta?.executive_summary ?? ''}`);
+	lines.push(`Coûts génération : ${fmtEur(costs.total_eur)} (${fmtUsd(costs.total_usd)})`);
 	return lines.join('\n');
 }
 
@@ -338,9 +355,16 @@ export function buildRecapPayload(input: SendRecapInput): {
 	text: string;
 } {
 	if (input.mode === 'success') {
-		const { weekLabel, costs } = input.data;
+		const { weekLabel, report } = input.data;
+		const n = report.items?.length ?? 0;
+		const actionCount = (report.items ?? []).filter(
+			(it) => it?.actionability === 'action_directe'
+		).length;
+		// Subject = signaux (et combien à actionner), SANS montant EUR (AC-6 2026-06-22 :
+		// l'email est un brief, pas un reçu de coûts ; le coût vit dans /couts et replié en bas).
+		const actionSuffix = actionCount > 0 ? ` (${actionCount} à actionner)` : '';
 		return {
-			subject: `[Veille FilmPro] W${weekLabel}, ${input.data.report.items?.length ?? 0} items, ${fmtEur(costs.total_eur)}`,
+			subject: `[Veille FilmPro] W${weekLabel} · ${n} ${n !== 1 ? 'signaux' : 'signal'}${actionSuffix}`,
 			html: renderSuccessHtml(input.data),
 			text: renderSuccessText(input.data)
 		};

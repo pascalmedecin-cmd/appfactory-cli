@@ -1,15 +1,29 @@
-// Cross-check LLM second-pass pour la veille FilmPro (refonte 2026-05-05).
+// Cross-check LLM second-pass pour la veille FilmPro (refonte 2026-05-05,
+// recalibrage faits/interprétation 2026-06-22).
 //
 // Pour chaque item rescapé du filtre URL/date, on :
 // 1. Refetch la page source (HTML brut, limité à 200KB).
-// 2. Demande à Sonnet 4.6 (modèle vérificateur, peu coûteux) de valider
-//    verbatim chaque chiffre, date, citation, entité du summary contre la page.
-// 3. Si le verdict est `verbatim_ok=false` → item rejeté (hallucination).
+// 2. Demande à Sonnet 4.6 (modèle vérificateur, peu coûteux) de valider les
+//    FAITS VÉRIFIABLES du summary (chiffres, dates, noms propres, citations entre
+//    guillemets, énumérations) contre la page réelle.
+// 3. Si le verdict est `facts_ok=false` → item rejeté (un fait est fabriqué/déformé).
 //
-// Origine : audit W18 a montré qu'un LLM générateur peut paraphraser un chiffre
-// en perturbant les décimales sans déclencher aucun check (ex: 2,88 Mds USD →
-// 2,66 Mds USD côté Mordor, item rank 5). Le générateur ne peut pas s'auto-corriger
-// sous pression de volume ; il faut un valideur EXTERNE avec accès au texte réel.
+// Origine I1 (zéro-hallu sur les FAITS) : audit W18 a montré qu'un LLM générateur
+// peut paraphraser un chiffre en perturbant les décimales sans déclencher aucun
+// check (ex: 2,88 Mds USD → 2,66 Mds USD côté Mordor, item rank 5). Le générateur
+// ne peut pas s'auto-corriger sous pression de volume ; il faut un valideur EXTERNE
+// avec accès au texte réel.
+//
+// Recalibrage 2026-06-22 (GO Pascal, cause racine W25 « 0 item ») : le vérificateur
+// ne juge PLUS « chaque phrase est-elle présente verbatim ? » (ce qui rejetait la
+// VOIX D'ANALYSTE — les phrases d'interprétation / « so what » ne sont jamais
+// littéralement dans un article et étaient flaggées hallucination → 4 items locaux
+// vivants jetés en W25). Il juge désormais « le résumé invente-t-il ou déforme-t-il
+// un FAIT ? ». Les chiffres/dates/noms/citations restent vérifiés à l'identique
+// (protection W18 INTACTE) ; l'interprétation cohérente passe. Le GATE déterministe
+// (rejet si `facts_ok=false`, y compris divergences vides — brèche H-04 fermée) est
+// INCHANGÉ : seul le CRITÈRE du vérificateur (le SYSTEM prompt) évolue.
+// Voir .product-architect/veille/refonte-lot1-lot2-spec.md (AC-1).
 
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
@@ -26,11 +40,24 @@ const USER_AGENT = `Mozilla/5.0 (compatible; FilmProBot/1.0; +${process.env.PUBL
 export interface CrossCheckDivergence {
 	quoted: string;
 	found: string | null;
+	/**
+	 * fatal = FAIT fabriqué ou déformé (chiffre faux, citation inventée, entité
+	 * absente, énumération étendue, date inventée, fait contredit) → cause le rejet.
+	 * minor = paraphrase fidèle / nuance secondaire (informatif, ne rejette pas).
+	 * Une phrase d'INTERPRÉTATION (so-what, implication) ne doit PAS être listée.
+	 */
 	severity: 'fatal' | 'minor';
 }
 
 export interface CrossCheckVerdict {
-	verbatim_ok: boolean;
+	/**
+	 * true SI aucun FAIT VÉRIFIABLE du résumé n'est fabriqué ni déformé par rapport
+	 * à la page. false dès qu'au moins UN fait l'est (et il est alors listé dans
+	 * `divergences` en severity='fatal'). Renommé depuis `verbatim_ok` (2026-06-22) :
+	 * le contrat ne vérifie plus la présence verbatim de CHAQUE phrase mais l'absence
+	 * de fait fabriqué (l'interprétation d'analyste passe). Gate inchangé : rejet si false.
+	 */
+	facts_ok: boolean;
 	divergences: CrossCheckDivergence[];
 	confidence: 'high' | 'medium' | 'low';
 }
@@ -125,18 +152,49 @@ export async function fetchPageContent(url: string): Promise<string | null> {
 }
 
 /**
+ * Décode une entité numérique HTML (décimale &#NN; ou hexadécimale &#xNN;) en
+ * caractère. Guard contre les code points invalides (retourne l'entité brute).
+ * Pourquoi (2026-06-22) : certaines pages encodent l'apostrophe des milliers en
+ * `&#x27;` (ex. Blick « 28&#x27;500 personnes »). Sans décodage, le texte vu par le
+ * vérificateur contient « 28&#x27;500 » alors que le résumé dit « 28'500 » → faux
+ * « chiffre absent ». Décoder réduit les rejets à tort d'items factuellement sains.
+ */
+function decodeNumericEntities(s: string): string {
+	return s
+		.replace(/&#x([0-9a-f]+);/gi, (m, hex) => {
+			const cp = parseInt(hex, 16);
+			try {
+				return Number.isFinite(cp) && cp > 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : m;
+			} catch {
+				return m;
+			}
+		})
+		.replace(/&#(\d+);/g, (m, dec) => {
+			const cp = parseInt(dec, 10);
+			try {
+				return Number.isFinite(cp) && cp > 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : m;
+			} catch {
+				return m;
+			}
+		});
+}
+
+/**
  * Extrait grossièrement le texte d'un HTML pour le cross-check :
  * - retire scripts, styles, balises HTML
+ * - décode les entités nommées courantes + numériques (chiffres avec apostrophe)
  * - normalise les whitespaces
  * - tronque à 60KB de texte (largement suffisant pour un article)
  */
 export function htmlToPlainText(html: string): string {
-	return html
-		.replace(/<script[\s\S]*?<\/script>/gi, ' ')
-		.replace(/<style[\s\S]*?<\/style>/gi, ' ')
-		.replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
-		.replace(/<!--[\s\S]*?-->/g, ' ')
-		.replace(/<[^>]+>/g, ' ')
+	return decodeNumericEntities(
+		html
+			.replace(/<script[\s\S]*?<\/script>/gi, ' ')
+			.replace(/<style[\s\S]*?<\/style>/gi, ' ')
+			.replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
+			.replace(/<!--[\s\S]*?-->/g, ' ')
+			.replace(/<[^>]+>/g, ' ')
+	)
 		.replace(/&nbsp;/g, ' ')
 		.replace(/&amp;/g, '&')
 		.replace(/&lt;/g, '<')
@@ -151,15 +209,19 @@ export function htmlToPlainText(html: string): string {
 const VERDICT_TOOL: Anthropic.Tool = {
 	name: 'emit_verdict',
 	description:
-		'Émet le verdict de cross-check verbatim entre le résumé proposé et le contenu réel de la page.',
+		"Émet le verdict de vérification FACTUELLE entre le résumé proposé et le contenu réel de la page. Tu vérifies les FAITS (chiffres, dates, noms, citations), pas le style ni la présence verbatim de chaque phrase d'analyse.",
 	input_schema: {
+		// confidence est ADVISORY (n'entre pas dans le gate, qui ne lit que facts_ok) →
+		// optionnel ici, le Zod VerdictSchema le défaute à 'medium'. Contraste voulu avec
+		// `severity` (strict, sans défaut) qui, lui, protège le zéro-hallu. Cohérence des
+		// 3 couches : entrée optionnelle, sortie toujours présente via le défaut Zod.
 		type: 'object',
-		required: ['verbatim_ok', 'divergences', 'confidence'],
+		required: ['facts_ok', 'divergences'],
 		properties: {
-			verbatim_ok: {
+			facts_ok: {
 				type: 'boolean',
 				description:
-					'true SI tous les chiffres précis (avec décimales), dates, noms d\'entreprises et citations littérales du résumé sont présents verbatim ou avec une équivalence évidente dans le contenu de la page. false dès qu\'au moins UNE divergence factuelle (chiffre faux, citation fabriquée, entité absente, date inventée) est détectée. Les paraphrases stylistiques fidèles ne comptent PAS comme divergence.'
+					"true SI aucun FAIT VÉRIFIABLE du résumé n'est fabriqué ni déformé : tous les chiffres (avec décimales/unités), dates, noms propres et citations entre guillemets sont présents verbatim ou avec une équivalence évidente dans la page, et aucune affirmation factuelle spécifique n'est contredite par la page. false dès qu'au moins UN fait est fabriqué ou déformé (et tu le listes alors dans divergences en severity='fatal'). Les phrases d'INTERPRÉTATION / d'analyse / de mise en perspective (le « so what ») qui n'introduisent aucun fait vérifiable nouveau ne réduisent JAMAIS facts_ok."
 			},
 			divergences: {
 				type: 'array',
@@ -170,18 +232,18 @@ const VERDICT_TOOL: Anthropic.Tool = {
 					properties: {
 						quoted: {
 							type: 'string',
-							description: 'Le passage du résumé qui pose problème (citation littérale).'
+							description: 'Le FAIT du résumé qui pose problème (citation littérale du passage).'
 						},
 						found: {
 							type: ['string', 'null'],
 							description:
-								'Le passage correspondant dans la page (verbatim) si trouvé, ou null si le fait est totalement absent.'
+								'Le fait correspondant dans la page (verbatim) si trouvé, ou null si le fait est totalement absent.'
 						},
 						severity: {
 							type: 'string',
 							enum: ['fatal', 'minor'],
 							description:
-								'fatal = chiffre faux, citation fabriquée, entité inventée, date inventée. minor = paraphrase légèrement enrichie, source secondaire non citée.'
+								"fatal = FAIT fabriqué ou déformé (chiffre faux, citation inventée, entité absente, énumération étendue, date inventée, fait contredit). minor = paraphrase fidèle / nuance secondaire (informatif, ne rejette pas). N'inscris JAMAIS ici une phrase d'interprétation : si elle n'a pas de fait vérifiable, ce n'est pas une divergence."
 						}
 					}
 				}
@@ -190,27 +252,49 @@ const VERDICT_TOOL: Anthropic.Tool = {
 				type: 'string',
 				enum: ['high', 'medium', 'low'],
 				description:
-					'high = page lisible et résumé clairement vérifiable. medium = page partielle ou résumé ambigu. low = page peu lisible ou hors-contexte.'
+					'high = page lisible et faits clairement vérifiables. medium = page partielle ou faits ambigus. low = page peu lisible ou hors-contexte.'
 			}
 		}
 	}
 };
 
-const SYSTEM = `Tu es un valideur factuel pour un module de veille hebdomadaire B2B.
-Ta mission : détecter toute hallucination dans le résumé d'un item de veille en le comparant à la page source réelle.
+const SYSTEM = `Tu es un VÉRIFICATEUR FACTUEL pour une veille sectorielle B2B rédigée par un analyste sénior.
+Ta SEULE mission : détecter si le résumé INVENTE ou DÉFORME un FAIT VÉRIFIABLE par rapport à la page source réelle. Tu ne juges NI le style, NI si chaque phrase est présente mot-pour-mot.
 
-Règles strictes :
-- Tout chiffre présent dans le résumé (montant, pourcentage, CAGR, surface, date, durée, etc.) DOIT apparaître verbatim ou avec une équivalence évidente dans la page. Une perturbation des décimales (ex: 2,66 Md vs 2,88 Md sur la page) = divergence fatale.
-- Toute citation entre guillemets ou marquée <cite> DOIT correspondre à un passage présent verbatim dans la page.
-- Tout nom d'entreprise, personne, lieu spécifique cité comme source DOIT être présent dans la page.
-- **Extension d'énumération** : si le résumé liste des éléments (« comme A, B et C », « notamment X et Y », « parmi lesquels … »), CHAQUE élément cité DOIT figurer dans la page. Un élément ajouté qui n'est pas dans la page = divergence FATALE, même si la liste de la page est sémantiquement proche. Exemple : page dit « façades, toitures et sols », résumé dit « fenêtres et toitures » → fatal (fenêtres ajoutée, façades + sols supprimés).
-- **Traduction de terme technique** : si le résumé traduit un terme technique anglais nommé sur la page (composant, brevet, modèle, technique), la traduction DOIT être fidèle à la nature du composant/concept. Exemple : page dit « Magnetic fixed-sash stop for double-sash units » (butée magnétique pour vantail fixe sur fenêtre à double vantail) ; résumé dit « fixe magnétique sur seuil affleurant » → fatal (« seuil affleurant » est un autre composant que « fixed-sash stop »). En cas de doute, signaler une divergence MINOR.
-- Une paraphrase stylistique fidèle au sens et aux faits = ACCEPTABLE (pas une divergence).
-- Une affirmation ajoutée par le résumé qui n'est pas dans la page = divergence fatale.
+# Un FAIT VÉRIFIABLE
+Un chiffre (montant, %, CAGR, surface, volume, durée, température), une date, un nom propre (entreprise, personne, lieu, produit, norme, loi), ou une citation entre guillemets / marquée <cite>.
+
+# Champs à vérifier
+On te fournit le RÉSUMÉ (description de l'article) et, parfois, la LECTURE FILMPRO (so-what : interprétation métier). Tu vérifies les FAITS des DEUX, mais leur nature diffère :
+- RÉSUMÉ : décrit l'article → tous ses faits doivent être dans la page.
+- LECTURE FILMPRO : interprétation métier (opportunité, segment cible, action commerciale). Son RAISONNEMENT est libre et ne se vérifie pas. NE flagge RIEN sur : les capacités produit de FilmPro (ex. « les films bloquent jusqu'à 99% des UV »), les catégories de cibles génériques (régies, architectes, tertiaire, ERP, commerces), les suggestions d'action (relancer, prospecter, cibler). MAIS si elle présente comme un FAIT EXTERNE RÉEL ET ACTUEL une entreprise NOMMÉE (raison sociale) ayant agi, une personne, un appel d'offres / chantier / événement précis, un lieu ou un chiffre spécifique attribué à l'actualité → ce fait DOIT être dans la page (sinon fatal). Exemple FATAL : so-what « la régie Dupont SA a lancé un appel d'offres sur 12 immeubles » alors que la page n'en parle pas.
+
+# À REJETER → facts_ok=false + divergence severity='fatal'
+- Un chiffre absent de la page, ou aux décimales/unités différentes. Exemple FATAL : « 2,66 Md USD » alors que la page dit « 2,88 Md USD ».
+- Une citation entre guillemets / <cite> non présente verbatim dans la page (pas de paraphrase sous guillemets).
+- Un nom propre (entreprise, personne, lieu, produit, norme) cité comme fait et absent de la page.
+- **Extension d'énumération** : si on liste des éléments (« comme A, B et C », « notamment X et Y »), CHAQUE élément DOIT figurer dans la page. Un élément ajouté absent = FATAL. Exemple : page « façades, toitures et sols », résumé « fenêtres et toitures » → fatal (fenêtres ajoutée).
+- **Traduction de terme technique infidèle** : la traduction d'un terme technique nommé sur la page doit être fidèle à la nature du composant/concept. Exemple : page « Magnetic fixed-sash stop for double-sash units », résumé « fixe magnétique sur seuil affleurant » → fatal (autre composant).
+- Une date inventée (non affichée sur la page).
+- Une affirmation FACTUELLE spécifique CONTREDITE par la page.
+- **Exclusivité / antériorité / tendance présentée comme un fait, absente de la page** : un superlatif ou une exclusivité (« le premier », « le plus grand », « unique », « du jamais-vu », « record »), une antériorité (« pour la première fois », « jamais auparavant »), ou une tendance chiffrable affirmée comme un fait (« la demande accélère depuis deux ans ») est un FAIT VÉRIFIABLE même sans chiffre. S'il n'est pas établi par la page → fatal. L'ABSENCE suffit (pas besoin d'une contradiction explicite). NE PAS confondre avec une généralisation prudente cohérente avec la page.
+
+# À IGNORER → ne JAMAIS flagger, ne réduit JAMAIS facts_ok
+- Les phrases d'ANALYSE, d'INTERPRÉTATION, d'IMPLICATION, de mise en perspective — le « so what » — qui n'introduisent AUCUN fait vérifiable nouveau. Exemple à IGNORER : « cela confirme la pression estivale croissante sur les bâtiments très vitrés » (interprétation, aucun chiffre/nom/date/citation/exclusivité).
+- Les paraphrases fidèles au sens et aux faits.
+- La généralisation prudente cohérente avec la page (« la sensibilité au sujet augmente ») — distincte d'une exclusivité/antériorité affirmée.
+- Les capacités produit de FilmPro et les catégories de cibles génériques de la lecture FilmPro (voir « Champs à vérifier »).
+
+# Règle d'or
+En cas de doute sur la nature d'une phrase (fait vs interprétation), considère-la comme INTERPRÉTATION (ne pas flagger) SAUF si elle contient un chiffre, un nom propre, une date, une citation précis, OU une affirmation d'exclusivité / d'antériorité / de tendance présentée comme un fait. Tu ne pénalises jamais une phrase parce qu'elle est « interprétative » ou « pas confirmée mot-pour-mot » : tu la pénalises UNIQUEMENT si elle contient un fait FABRIQUÉ ou DÉFORMÉ.
+
+facts_ok = true si AUCUN fait fabriqué/déformé. facts_ok = false dès qu'au moins UN fait l'est (listé en 'fatal').
 
 Tu réponds UNIQUEMENT via le tool emit_verdict. Pas de markdown, pas de préambule.`;
 
-function buildUserPrompt(item: IntelligenceItem, pageText: string): string {
+// Exporté pour test (vérifie que la lecture FilmPro est bien soumise au vérificateur,
+// fermeture de la brèche « entité externe fabriquée dans le so-what » — revue 2026-06-22).
+export function buildUserPrompt(item: IntelligenceItem, pageText: string): string {
 	const parts = [
 		`# Item à vérifier`,
 		`URL source : ${item.source.url}`,
@@ -218,9 +302,15 @@ function buildUserPrompt(item: IntelligenceItem, pageText: string): string {
 		`Date publiée déclarée : ${item.source.published_at}`,
 		`Titre : ${item.title}`,
 		``,
-		`## Résumé proposé (à vérifier mot pour mot)`,
+		`## Résumé proposé (faits à vérifier contre la page)`,
 		item.summary,
-		item.deep_dive ? `\n## Deep dive proposé\n${item.deep_dive}` : ''
+		item.deep_dive ? `\n## Deep dive proposé\n${item.deep_dive}` : '',
+		// La lecture FilmPro (so-what) est de l'interprétation, MAIS ses faits EXTERNES
+		// (entreprise nommée, AO, événement, chiffre d'actualité) doivent être sourcés —
+		// cf. SYSTEM « Champs à vérifier ». Soumise pour fermer la brèche entité fabriquée.
+		item.filmpro_relevance
+			? `\n## Lecture FilmPro (so-what, interprétation — vérifier UNIQUEMENT ses faits externes)\n${item.filmpro_relevance}`
+			: ''
 	];
 	parts.push(``, `## Contenu réel de la page (extrait)`, pageText);
 	return parts.join('\n');
@@ -230,7 +320,7 @@ function buildUserPrompt(item: IntelligenceItem, pageText: string): string {
 // Sans ce check, un LLM qui omet `severity` faisait passer un fatal pour minor
 // (severity=undefined → !== 'fatal' → considéré minor → item gardé halluciné).
 const VerdictSchema = z.object({
-	verbatim_ok: z.boolean(),
+	facts_ok: z.boolean(),
 	divergences: z.array(
 		z.object({
 			quoted: z.string(),
@@ -396,7 +486,7 @@ export async function crossCheckBatch(
 				rejected.push({
 					url: item.source.url,
 					title: item.title,
-					verdict: { verbatim_ok: false, divergences: [], confidence: 'low' }
+					verdict: { facts_ok: false, divergences: [], confidence: 'low' }
 				});
 			} else {
 				unverifiable.push(item);
@@ -409,7 +499,7 @@ export async function crossCheckBatch(
 				rejected.push({
 					url: item.source.url,
 					title: item.title,
-					verdict: { verbatim_ok: false, divergences: [], confidence: 'low' }
+					verdict: { facts_ok: false, divergences: [], confidence: 'low' }
 				});
 			} else {
 				unverifiable.push(item);
@@ -417,10 +507,13 @@ export async function crossCheckBatch(
 			continue;
 		}
 		// Cas 3 : vérifié. Audit 360 H-04 (zéro hallu strict) : rejet dès que
-		// verbatim_ok=false, indépendamment des divergences (peut être [] ou minor
-		// uniquement). Le LLM cross-check signale verbatim_ok=false quand le contenu
-		// source ne confirme pas l'item, même sans divergence détaillée → brèche fermée.
-		if (!verdict.verbatim_ok) {
+		// facts_ok=false, indépendamment des divergences (peut être [] ou minor
+		// uniquement). Le LLM signale facts_ok=false quand un fait du résumé n'est pas
+		// confirmé par la page, même sans divergence détaillée → brèche fermée. Le GATE
+		// est INCHANGÉ par le recalibrage faits/interprétation (2026-06-22) : seul le
+		// CRITÈRE qui amène le LLM à poser facts_ok=false a changé (faits seuls, plus
+		// la présence verbatim de chaque phrase d'analyse).
+		if (!verdict.facts_ok) {
 			rejected.push({ url: item.source.url, title: item.title, verdict });
 		} else {
 			kept.push(item);

@@ -240,7 +240,8 @@ describe('IntelligenceItemSchema', () => {
 			expect(chips).toHaveLength(2);
 			expect(chips[0]).toMatchObject({ kind: 'simap', canton: 'VD' });
 			expect(chips[0].label).toContain('SIMAP');
-			expect(chips[1]).toMatchObject({ kind: 'simap', canton: 'VD' });
+			// 'Ville Lausanne rénovation' : aucun indice → défaut zefix (AC-7 2026-06-22).
+			expect(chips[1]).toMatchObject({ kind: 'zefix', canton: 'VD' });
 		}
 	});
 

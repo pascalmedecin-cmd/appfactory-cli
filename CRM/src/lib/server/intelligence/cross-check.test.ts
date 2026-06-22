@@ -2,7 +2,8 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import {
 	crossCheckBatch,
 	fetchPageContent,
-	htmlToPlainText
+	htmlToPlainText,
+	buildUserPrompt
 } from './cross-check';
 import type { IntelligenceItem } from './schema';
 
@@ -73,6 +74,19 @@ describe('htmlToPlainText', () => {
 		expect(text).toContain('Il fait');
 		expect(text).toContain('&');
 	});
+
+	it("décode les entités numériques (apostrophe des milliers : 28&#x27;500 et &#8217;)", () => {
+		// Cas réel Blick W25 : « 28&#x27;500 personnes » — sans décodage, le chiffre du
+		// résumé « 28'500 » ne matchait pas → faux « chiffre absent » → rejet à tort.
+		expect(htmlToPlainText('<p>28&#x27;500 personnes</p>')).toContain("28'500");
+		expect(htmlToPlainText('<p>3&#39;500 cas</p>')).toContain("3'500");
+		// Décimale hors apostrophe : &#8364; = € (juste vérifier que ça ne casse pas).
+		expect(htmlToPlainText('<p>Prix 100&#8364;</p>')).toContain('100');
+	});
+
+	it('décodage numérique robuste aux code points invalides (jamais throw)', () => {
+		expect(() => htmlToPlainText('<p>&#xFFFFFFFF; &#99999999999;</p>')).not.toThrow();
+	});
 });
 
 describe('fetchPageContent', () => {
@@ -113,8 +127,27 @@ describe('fetchPageContent', () => {
 	});
 });
 
+describe('buildUserPrompt', () => {
+	it('soumet aussi la lecture FilmPro (so-what) au vérificateur — ferme la brèche entité externe fabriquée', () => {
+		const item = {
+			...baseItem,
+			filmpro_relevance:
+				'Opportunité tertiaire : la régie Dupont SA a lancé un appel d\'offres, à contacter.'
+		};
+		const prompt = buildUserPrompt(item, 'contenu de la page');
+		expect(prompt).toContain('Lecture FilmPro');
+		expect(prompt).toContain('régie Dupont SA');
+		expect(prompt).toContain(item.summary);
+	});
+
+	it('omet la section so-what si filmpro_relevance est vide', () => {
+		const item = { ...baseItem, filmpro_relevance: '' };
+		expect(buildUserPrompt(item, 'page')).not.toContain('Lecture FilmPro');
+	});
+});
+
 describe('crossCheckBatch', () => {
-	it('rejette items avec verdict verbatim_ok=false ET divergence fatale', async () => {
+	it('rejette items avec verdict facts_ok=false ET divergence fatale', async () => {
 		
 		const create = __mockCreate;
 		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
@@ -129,7 +162,7 @@ describe('crossCheckBatch', () => {
 					type: 'tool_use',
 					name: 'emit_verdict',
 					input: {
-						verbatim_ok: false,
+						facts_ok: false,
 						divergences: [
 							{
 								quoted: '2,66 milliards USD',
@@ -153,7 +186,7 @@ describe('crossCheckBatch', () => {
 		expect(r.rejected[0].verdict.divergences[0].severity).toBe('fatal');
 	});
 
-	it('garde items avec verbatim_ok=true', async () => {
+	it('garde items avec facts_ok=true', async () => {
 		
 		const create = __mockCreate;
 		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
@@ -171,7 +204,7 @@ describe('crossCheckBatch', () => {
 				{
 					type: 'tool_use',
 					name: 'emit_verdict',
-					input: { verbatim_ok: true, divergences: [], confidence: 'high' }
+					input: { facts_ok: true, divergences: [], confidence: 'high' }
 				}
 			],
 			usage: { input_tokens: 100, output_tokens: 30 }
@@ -181,7 +214,76 @@ describe('crossCheckBatch', () => {
 		expect(r.rejected).toHaveLength(0);
 	});
 
-	it("rejette items avec verbatim_ok=false même si divergences seulement minor (audit 360 H-04)", async () => {
+	// Recalibrage faits/interprétation 2026-06-22 (cause racine W25 « 0 item ») :
+	// un résumé d'analyste contient des phrases d'INTERPRÉTATION (le « so what »)
+	// jamais présentes verbatim dans la page. Sous l'ancien contrat verbatim-de-tout,
+	// le LLM posait verbatim_ok=false → item jeté. Sous le nouveau contrat faits-only,
+	// le LLM pose facts_ok=true (faits sains, interprétation ignorée) → item gardé.
+	it("garde un résumé interprétatif (so-what d'analyste) si les FAITS sont sains (fix W25)", async () => {
+		const create = __mockCreate;
+		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			text: async () =>
+				'<html><body>' +
+				"MétéoSuisse annonce une canicule de degré 3 en Suisse romande, jusqu'à 37 degrés entre jeudi et mardi. ".repeat(
+					4
+				) +
+				'</body></html>'
+		});
+		const itemAnalyste = {
+			...baseItem,
+			summary:
+				"MétéoSuisse annonce une canicule de degré 3 en Suisse romande, jusqu'à 37 degrés. C'est la deuxième vague intense en quelques semaines, confirmant la pression estivale croissante sur les bâtiments très vitrés."
+		};
+		create.mockResolvedValueOnce({
+			content: [
+				{
+					type: 'tool_use',
+					name: 'emit_verdict',
+					// Le vérificateur, sous le nouveau SYSTEM, ne flagge PAS l'interprétation.
+					input: { facts_ok: true, divergences: [], confidence: 'high' }
+				}
+			],
+			usage: { input_tokens: 100, output_tokens: 30 }
+		});
+		const r = await crossCheckBatch([itemAnalyste], { anthropicApiKey: 'sk-test' });
+		expect(r.kept).toHaveLength(1);
+		expect(r.rejected).toHaveLength(0);
+	});
+
+	it('garde un item avec facts_ok=true ET une divergence minor (paraphrase fidèle, informatif)', async () => {
+		const create = __mockCreate;
+		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			text: async () =>
+				'<html><body>' +
+				'Le rapport décrit en détail le marché du vitrage performant et ses tendances. '.repeat(5) +
+				'</body></html>'
+		});
+		create.mockResolvedValueOnce({
+			content: [
+				{
+					type: 'tool_use',
+					name: 'emit_verdict',
+					input: {
+						facts_ok: true,
+						divergences: [
+							{ quoted: 'forte croissance', found: 'croissance soutenue', severity: 'minor' }
+						],
+						confidence: 'high'
+					}
+				}
+			],
+			usage: { input_tokens: 100, output_tokens: 30 }
+		});
+		const r = await crossCheckBatch([baseItem], { anthropicApiKey: 'sk-test' });
+		expect(r.kept).toHaveLength(1);
+		expect(r.rejected).toHaveLength(0);
+	});
+
+	it("rejette items avec facts_ok=false même si divergences seulement minor (audit 360 H-04)", async () => {
 		const create = __mockCreate;
 		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 			ok: true,
@@ -199,7 +301,7 @@ describe('crossCheckBatch', () => {
 					type: 'tool_use',
 					name: 'emit_verdict',
 					input: {
-						verbatim_ok: false,
+						facts_ok: false,
 						divergences: [
 							{
 								quoted: 'reformulation enrichie',
@@ -218,7 +320,7 @@ describe('crossCheckBatch', () => {
 		expect(r.kept).toHaveLength(0);
 	});
 
-	it("rejette items avec verbatim_ok=false ET divergences vides (audit 360 H-04 brèche zéro hallu)", async () => {
+	it("rejette items avec facts_ok=false ET divergences vides (audit 360 H-04 brèche zéro hallu)", async () => {
 		const create = __mockCreate;
 		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
 			ok: true,
@@ -236,7 +338,7 @@ describe('crossCheckBatch', () => {
 					type: 'tool_use',
 					name: 'emit_verdict',
 					input: {
-						verbatim_ok: false,
+						facts_ok: false,
 						divergences: [],
 						confidence: 'low'
 					}
@@ -323,7 +425,7 @@ describe('crossCheckBatch', () => {
 					type: 'tool_use',
 					name: 'emit_verdict',
 					input: {
-						verbatim_ok: false,
+						facts_ok: false,
 						divergences: [
 							{
 								quoted: 'fenêtres et les toitures',
@@ -366,7 +468,7 @@ describe('crossCheckBatch', () => {
 					type: 'tool_use',
 					name: 'emit_verdict',
 					input: {
-						verbatim_ok: false,
+						facts_ok: false,
 						divergences: [
 							{
 								quoted: 'fixe magnétique sur seuil affleurant',
@@ -410,7 +512,7 @@ describe('crossCheckBatch', () => {
 					{
 						type: 'tool_use',
 						name: 'emit_verdict',
-						input: { verbatim_ok: true, divergences: [], confidence: 'high' }
+						input: { facts_ok: true, divergences: [], confidence: 'high' }
 					}
 				],
 				usage: { input_tokens: 100, output_tokens: 30 }
@@ -486,7 +588,7 @@ describe('crossCheckBatch', () => {
 					type: 'tool_use',
 					name: 'emit_verdict',
 					input: {
-						verbatim_ok: false,
+						facts_ok: false,
 						// divergences sans severity → Zod refuse
 						divergences: [{ quoted: 'X', found: null }],
 						confidence: 'high'

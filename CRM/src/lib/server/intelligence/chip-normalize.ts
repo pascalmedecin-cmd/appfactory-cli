@@ -25,7 +25,7 @@ const CANTON_PATTERNS: Array<{ canton: ChipCanton; re: RegExp }> = [
 	{ canton: 'JU', re: /\b(JU|Jura|Jurassien|Del[eé]mont|Porrentruy)\b/i }
 ];
 
-const SIMAP_HINT = /\b(SIMAP|appel[s]?\s+d['’]?offres?|AO|march[eé]\s+public|adjudication|soumission)\b/i;
+const SIMAP_HINT = /\b(SIMAP|appel[s]?\s+d['’\s]?offres?|AO|march[eé]\s+public|adjudication|soumission)\b/i;
 const ZEFIX_HINT = /\b(SA|S\.A\.|Sàrl|SARL|GmbH|AG|entreprise|raison\s+sociale|Zefix)\b/i;
 const REGBL_HINT = /\b(RegBL|EGID|permis\s+de\s+construire|chantier|b[aâ]timent|construction\s+neuve|GWR)\b/i;
 
@@ -40,9 +40,13 @@ export function detectCanton(text: string): ChipCanton | null {
 }
 
 /**
- * Devine le kind SIMAP/Zefix/RegBL. SIMAP par défaut (seul API texte libre historique).
- * Zefix seulement si indices forts (SA/Sàrl/GmbH/AG...).
- * RegBL seulement si indices forts (chantier, permis de construire, EGID).
+ * Devine le kind SIMAP/Zefix/RegBL.
+ *
+ * Défaut = ZEFIX (2026-06-22, spec AC-7) : c'est la SEULE source de prospection
+ * vivante (config.ts V5 : simap.enabled=false, regbl.enabled=false). Un chip simap/
+ * regbl produit un bouton mort. On garde les branches SIMAP_HINT/REGBL_HINT pour
+ * rétro-compat des strings legacy explicites ET forward-compat si Pascal réactive
+ * ces sources, mais le DÉFAUT (chemin le plus courant) route vers la source vivante.
  */
 export function detectKind(text: string): ChipKind {
 	// RegBL prioritaire car ses indices sont les plus spécifiques (peu de faux positifs).
@@ -51,7 +55,8 @@ export function detectKind(text: string): ChipKind {
 	if (SIMAP_HINT.test(text)) return 'simap';
 	// Si indices raison sociale entreprise → zefix
 	if (ZEFIX_HINT.test(text)) return 'zefix';
-	return 'simap';
+	// Défaut : zefix (seule source vivante).
+	return 'zefix';
 }
 
 /**

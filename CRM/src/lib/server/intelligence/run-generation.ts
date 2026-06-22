@@ -1,6 +1,8 @@
 import { generateIntelligenceReport } from './generate';
 import { loadThemeBundle } from './theme-loader';
 import { crossCheckBatch } from './cross-check';
+import { selectByMix } from './mix-select';
+import { demoteGenericRelevance } from './relevance-net';
 import { currentWeekRange, extendedWindowStart } from './week-utils';
 import type { IntelligenceReport, IntelligenceItem } from './schema';
 import type { PreviousItem } from './prompt';
@@ -475,11 +477,28 @@ export async function runWeeklyGeneration(
 		};
 	}
 
-	// Cap items publiés (priorisation par rank LLM préservée).
-	const cappedItems = publishableItems
-		.slice()
-		.sort((a, b) => a.rank - b.rank)
-		.slice(0, PUBLISHED_ITEMS_CAP);
+	// Filet anti-générique (Lot 1, spec AC-5) : un so-what qui ne nomme NI segment NI
+	// action est RÉTROGRADÉ (pénalité de rank), jamais rejeté (on combat la famine).
+	// Il passe derrière les items concrets → tombe en premier si l'édition dépasse le
+	// cap, reste publié en famine. Le rank publié est réassigné 1..N en aval.
+	const { items: demotedItems, demotedCount } = demoteGenericRelevance(publishableItems);
+	if (demotedCount > 0) {
+		logPhase(week.weekLabel, 'relevance_demoted', { count: demotedCount });
+	}
+
+	// Sélection geo-aware (2026-06-22) : préserve le mix 2/3 local / 1/3 monde quand
+	// il y a plus d'items que le cap, garde TOUT en famine (aucun item perdu vs
+	// l'ancien `sort(rank)+slice`), et lève un canari de DÉRIVE (baseline W18-24 =
+	// 77 % monde JAMAIS détecté). Voir mix-select.ts + spec AC-3.
+	const { selected: cappedItems, mix, drift } = selectByMix(demotedItems, PUBLISHED_ITEMS_CAP);
+	logPhase(week.weekLabel, 'mix', { ...mix, localShare: Math.round(mix.localShare * 100) / 100 });
+	if (drift) {
+		console.warn(
+			`[veille ${week.weekLabel}] mix_drift : part locale ${Math.round(mix.localShare * 100)}% ` +
+				`(${mix.local}/${mix.total}) sous le plancher — édition trop « monde », à investiguer.`
+		);
+		logPhase(week.weekLabel, 'mix_drift', { local: mix.local, monde: mix.monde, total: mix.total });
+	}
 
 	if (cappedItems.length < LOW_VOLUME_THRESHOLD) {
 		console.warn(

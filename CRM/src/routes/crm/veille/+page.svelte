@@ -157,7 +157,7 @@
 				<!-- Corps : synthèse + à retenir + CTA -->
 				<div class="lg:col-span-8 p-6 md:p-8 lg:p-10 flex flex-col">
 					<div class="mag-kicker text-primary mb-3">Synthèse de la semaine</div>
-					<p class="mag-body text-text-body mb-8 line-clamp-5">
+					<p class="mag-body text-text-body mb-8">
 						{featured.executive_summary}
 					</p>
 
@@ -202,6 +202,11 @@
 												</span>
 											{/if}
 										</div>
+										{#if item.filmpro_relevance}
+											<p class="mt-2 text-sm text-text-muted leading-snug line-clamp-2">
+												{item.filmpro_relevance}
+											</p>
+										{/if}
 									</div>
 								</li>
 							{/each}
