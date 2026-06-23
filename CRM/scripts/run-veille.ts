@@ -43,6 +43,10 @@ Options:
   --week YYYY-Www    Force la semaine cible (rattrapage manuel).
                      Exemple : --week 2026-W18
                      Sans ce flag : utilise la semaine ISO de la date système.
+  --force            Régénère même si l'édition est déjà publiée (contourne
+                     l'idempotent_skip). Pour rattraper une édition ratée.
+  --no-email         Supprime tout envoi d'email (récap + brief + alerte). Pour
+                     un backfill silencieux d'une semaine passée.
   --help, -h         Affiche cette aide.
 
 Exit code : 0 succès, 1 échec attendu, 2 erreur non capturée.
@@ -82,11 +86,17 @@ async function main(): Promise<number> {
 	}
 
 	const mode = opts.weekLabel ? `rattrapage ${opts.weekLabel}` : 'semaine en cours';
-	console.log(`[run-veille] démarrage pipeline veille (${mode})`);
+	const flags = [opts.force ? 'FORCE régén' : '', opts.noEmail ? 'NO-EMAIL' : '']
+		.filter(Boolean)
+		.join(', ');
+	console.log(`[run-veille] démarrage pipeline veille (${mode}${flags ? ', ' + flags : ''})`);
 	const startedAt = Date.now();
 
 	try {
-		const result = await runWeeklyGeneration(now, deps);
+		const result = await runWeeklyGeneration(now, deps, {
+			force: opts.force,
+			noEmail: opts.noEmail
+		});
 		const elapsed = ((Date.now() - startedAt) / 1000).toFixed(1);
 
 		if (result.ok) {

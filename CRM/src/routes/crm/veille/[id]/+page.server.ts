@@ -3,6 +3,7 @@ import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import {
 	normalizeStoredChips,
+	buildChipLabel,
 	type SearchChip
 } from '$lib/server/intelligence/chip-normalize';
 import type { IntelligenceItem } from '$lib/server/intelligence/schema';
@@ -14,6 +15,7 @@ import { sanitizeUrl } from '$lib/server/intelligence/url-sanitize';
 import { isDeniedSource } from '$lib/server/intelligence/source-allowlist';
 import { listActiveThemes } from '$lib/server/intelligence/themes-repository';
 import { stripCitationTags } from '$lib/server/intelligence/strip-citations';
+import { dedashItem } from '$lib/server/intelligence/dedash';
 
 /**
  * Agrégat de chips structurés à partir des items, avec rappel du signal source.
@@ -73,9 +75,9 @@ export const load: PageServerLoad = async ({ locals, params }) => {
 	return { report, aggregatedChips, activeThemes };
 };
 
-// Schema validation pour ajout manuel item. Champs minimaux : on génère les
-// chips search_terms côté serveur (1 SIMAP VD + 1 Zefix VD basés sur le titre)
-// pour ne pas surcharger l'UX.
+// Schema validation pour ajout manuel item. Champs minimaux : on génère le
+// chip search_terms côté serveur (1 Zefix VD basé sur le titre) pour ne pas
+// surcharger l'UX.
 const ManualItemSchema = z.object({
 	title: z.string().min(10).max(200),
 	summary: z.string().min(40).max(1500),
@@ -97,14 +99,13 @@ function flattenIssues(issues: z.ZodIssue[]): string {
 	return issues.map((i) => `${i.path.join('.') || '_'}: ${i.message}`).join(' | ');
 }
 
-/** Génère 2 chips search_terms par défaut (SIMAP VD + Zefix VD) à partir du
- *  titre. Pascal pourra les éditer ensuite via /veille/themes ou re-générer. */
-function buildDefaultChips(title: string): SearchChip[] {
-	const query = title.split(/\s+/).slice(0, 4).join(' ').slice(0, 100) || 'film vitrage';
-	return [
-		{ kind: 'simap', canton: 'VD', query, label: `SIMAP VD ${query}` },
-		{ kind: 'zefix', canton: 'VD', query, label: `Zefix VD ${query}` }
-	];
+/** Génère le chip search_terms par défaut (Zefix VD) à partir du titre.
+ *  Zefix uniquement : c'est la SEULE source de prospection vivante (simap/regbl
+ *  désactivées en V5 -> un chip simap/regbl serait un bouton mort, cohérent avec
+ *  detectKind/prompt.ts). Pascal pourra l'éditer via /veille/themes ou re-générer. */
+export function buildDefaultChips(title: string): SearchChip[] {
+	const query = title.split(/\s+/).filter(Boolean).slice(0, 4).join(' ').slice(0, 100) || 'film vitrage';
+	return [{ kind: 'zefix', canton: 'VD', query, label: buildChipLabel('zefix', 'VD', query) }];
 }
 
 export const actions: Actions = {
@@ -207,7 +208,9 @@ export const actions: Actions = {
 			const maxRank = currentItems.reduce((acc, it) => Math.max(acc, it.rank ?? 0), 0);
 			const newRank = maxRank + 1;
 
-			const newItem: IntelligenceItem = {
+			// Dedash déterministe (tirets typographiques) appliqué après strip <cite>,
+			// cohérent avec le chemin de génération auto (cf. dedash.ts).
+			const newItem: IntelligenceItem = dedashItem({
 				rank: newRank,
 				title: parsed.data.title,
 				summary: stripCitationTags(parsed.data.summary),
@@ -224,7 +227,7 @@ export const actions: Actions = {
 				segment: parsed.data.segment,
 				actionability: parsed.data.actionability,
 				search_terms: buildDefaultChips(parsed.data.title)
-			};
+			});
 
 			const updatedItems = [...currentItems, newItem].sort((a, b) => a.rank - b.rank);
 

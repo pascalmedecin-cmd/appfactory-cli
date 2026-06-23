@@ -4,6 +4,7 @@
 // Retourne le résultat d'import + URL de redirection /prospection avec filtres pré-appliqués.
 
 import { json, type RequestEvent } from '@sveltejs/kit';
+import { PROSPECTION_TABS, TAB_SOURCE_MAP } from '$lib/prospection-utils';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CANTON_SET = new Set(['GE', 'VD', 'VS', 'NE', 'FR', 'JU']);
@@ -142,8 +143,34 @@ export const POST = async ({ request, locals, fetch }: RequestEvent) => {
 	});
 };
 
-function buildRedirect(source: 'simap' | 'zefix' | 'regbl', canton: string, reportId: string, fromTerm: string): string {
+/**
+ * Onglet Prospection contenant une source donnée. Dérivé de TAB_SOURCE_MAP (source
+ * UNIQUE des onglets, prospection-utils.ts) pour rester aligné si une source change
+ * d'onglet. zefix -> 'entreprises', simap -> 'simap', regbl -> 'regbl'.
+ * Fallback = la source elle-même (cohérent : simap/regbl sont aussi des noms d'onglet).
+ */
+function tabForSource(source: string): string {
+	return PROSPECTION_TABS.find((tab) => TAB_SOURCE_MAP[tab].includes(source)) ?? source;
+}
+
+/**
+ * URL de redirection /crm/prospection après import depuis un chip Veille.
+ *
+ * CRITIQUE : pose `tab=` (en plus de `source=`). Sans onglet, parseProspectionFilter
+ * retombe sur l'onglet par défaut ; si la source du chip (ex. zefix) n'appartient pas
+ * à cet onglet, `sourceFilterIncompatible` -> 0 résultat et les leads importés sont
+ * invisibles. Pose donc l'onglet qui CONTIENT la source (zefix -> entreprises).
+ * `sort=date_import` reste une clé de tri valide (cf. SORT_FIELDS) : les imports
+ * frais remontent en tête.
+ */
+export function buildRedirect(
+	source: 'simap' | 'zefix' | 'regbl',
+	canton: string,
+	reportId: string,
+	fromTerm: string
+): string {
 	const params = new URLSearchParams();
+	params.set('tab', tabForSource(source));
 	params.set('source', source);
 	params.set('canton', canton);
 	params.set('from_intelligence', reportId);

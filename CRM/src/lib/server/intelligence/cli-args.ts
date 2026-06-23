@@ -5,6 +5,13 @@
  */
 export interface CliOptions {
 	weekLabel?: string;
+	/** Force la régénération même si l'édition de la semaine est déjà `published`
+	 *  (contourne l'idempotent_skip). Pour rattraper une édition ratée. */
+	force?: boolean;
+	/** Supprime TOUT envoi d'email (récap admin + brief + alerte échec). Pour un
+	 *  rattrapage/backfill silencieux d'une semaine passée sans notifier les
+	 *  destinataires métier. */
+	noEmail?: boolean;
 }
 
 export class HelpRequestedError extends Error {
@@ -33,6 +40,14 @@ export function parseArgv(argv: string[]): CliOptions {
 			}
 			opts.weekLabel = value;
 			i++;
+			continue;
+		}
+		if (arg === '--force') {
+			opts.force = true;
+			continue;
+		}
+		if (arg === '--no-email') {
+			opts.noEmail = true;
 			continue;
 		}
 		if (arg === '--help' || arg === '-h') {

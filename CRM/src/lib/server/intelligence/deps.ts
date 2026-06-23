@@ -22,14 +22,30 @@ export interface EmailRecapConfig {
 	enabled: boolean;
 	/** Resend API key. Si manquante alors que enabled=true, sendRecapEmail skip. */
 	apiKey?: string;
-	to: string;
+	/** Destinataires (array : Resend accepte plusieurs `to`). */
+	to: string[];
+	from: string;
+}
+
+/**
+ * Config du brief éditorial brandé (email #2). Distinct du récap admin (#1) :
+ * destinataires différents (pascal + antoine vs pascal seul), template brandé,
+ * envoyé uniquement quand l'édition a du contenu (>= 1 item).
+ */
+export interface EmailBriefConfig {
+	enabled: boolean;
+	apiKey?: string;
+	to: string[];
 	from: string;
 }
 
 export interface VeilleDeps {
 	supabase: SupabaseClient<Database>;
 	anthropicApiKey: string;
+	/** Email récap admin (#1) : « la veille a tourné » + coûts. */
 	email: EmailRecapConfig;
+	/** Email brief éditorial brandé (#2) : résumé + signaux + liens. */
+	brief: EmailBriefConfig;
 	/** Seuil weekLabel à partir duquel l'anti-doublons s'active. Si undefined, toujours actif. */
 	antiDoublonsFrom?: string;
 	/** Tolérance fenêtre vérification (jours). Default 30. */
@@ -37,8 +53,34 @@ export interface VeilleDeps {
 }
 
 const DEFAULT_TO = 'pascal@filmpro.ch';
+const DEFAULT_BRIEF_TO = 'pascal@filmpro.ch,antoine@filmpro.ch';
 const DEFAULT_FROM = 'FilmPro Veille <noreply@filmpro.ch>';
 const DEFAULT_WINDOW_DAYS = 30;
+
+/**
+ * Parse une liste de destinataires « a@x.ch, b@y.ch ; c@z.ch » en array propre :
+ * split virgule/point-virgule, trim, retrait des vides, dédup (insensible à la casse,
+ * en préservant la 1re casse rencontrée). Garde-fou : au plus 20 destinataires.
+ */
+export function parseRecipients(raw: string | undefined, fallback: string): string[] {
+	const parse = (s: string): string[] => {
+		const seen = new Set<string>();
+		const out: string[] = [];
+		for (const part of s.split(/[,;]/)) {
+			const addr = part.trim();
+			if (!addr) continue;
+			const key = addr.toLowerCase();
+			if (seen.has(key)) continue;
+			seen.add(key);
+			out.push(addr);
+			if (out.length >= 20) break;
+		}
+		return out;
+	};
+	const primary = raw && raw.trim() ? parse(raw) : [];
+	// Filet : si la source primaire est vide/invalide, retomber sur le fallback parsé.
+	return primary.length ? primary : parse(fallback);
+}
 
 /**
  * Sous-ensemble des ENV vars pertinentes pour la veille. Strict pour qu'un
@@ -54,6 +96,9 @@ export type VeilleEnv = Partial<Record<
 	| 'RESEND_API_KEY'
 	| 'EMAIL_RECAP_TO'
 	| 'EMAIL_RECAP_FROM'
+	| 'EMAIL_BRIEF_ENABLED'
+	| 'EMAIL_BRIEF_TO'
+	| 'EMAIL_BRIEF_FROM'
 	| 'VEILLE_ANTI_DOUBLONS_FROM'
 	| 'VEILLE_WINDOW_DAYS',
 	string
@@ -95,8 +140,18 @@ export function buildVeilleDepsFromEnvObject(env: VeilleEnv): VeilleDeps {
 		email: {
 			enabled: (env.EMAIL_RECAP_ENABLED ?? '').toLowerCase() === 'true',
 			apiKey: env.RESEND_API_KEY,
-			to: env.EMAIL_RECAP_TO || DEFAULT_TO,
+			to: parseRecipients(env.EMAIL_RECAP_TO, DEFAULT_TO),
 			from: env.EMAIL_RECAP_FROM || DEFAULT_FROM
+		},
+		brief: {
+			// Gate du brief : par défaut activé SI le récap l'est (même infra Resend).
+			// Permet de couper le brief seul via EMAIL_BRIEF_ENABLED=false sans toucher
+			// au récap admin.
+			enabled:
+				(env.EMAIL_BRIEF_ENABLED ?? env.EMAIL_RECAP_ENABLED ?? '').toLowerCase() === 'true',
+			apiKey: env.RESEND_API_KEY,
+			to: parseRecipients(env.EMAIL_BRIEF_TO, DEFAULT_BRIEF_TO),
+			from: env.EMAIL_BRIEF_FROM || DEFAULT_FROM
 		},
 		antiDoublonsFrom: env.VEILLE_ANTI_DOUBLONS_FROM,
 		windowDays

@@ -53,6 +53,7 @@ function makeCapturingSupabase(responses: MockResp[]) {
 
 const generateMock = vi.fn();
 const sendRecapMock = vi.fn();
+const sendBriefMock = vi.fn();
 const applySignalsMock = vi.fn();
 
 vi.mock('./generate', () => ({
@@ -61,6 +62,10 @@ vi.mock('./generate', () => ({
 
 vi.mock('./email-recap', () => ({
 	sendRecapEmail: (...args: unknown[]) => sendRecapMock(...args)
+}));
+
+vi.mock('./email-brief', () => ({
+	sendBriefEmail: (...args: unknown[]) => sendBriefMock(...args)
 }));
 
 vi.mock('./apply-signals', () => ({
@@ -102,7 +107,12 @@ function makeMockDeps(supabase: unknown): VeilleDeps {
 		anthropicApiKey: 'sk-ant-test-fixture',
 		email: {
 			enabled: false,
-			to: 'test@filmpro.ch',
+			to: ['test@filmpro.ch'],
+			from: 'noreply@filmpro.ch'
+		},
+		brief: {
+			enabled: false,
+			to: ['test@filmpro.ch', 'antoine@filmpro.ch'],
 			from: 'noreply@filmpro.ch'
 		},
 		antiDoublonsFrom: '2026-W18',
@@ -114,6 +124,8 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 	beforeEach(() => {
 		generateMock.mockReset();
 		sendRecapMock.mockReset();
+		sendBriefMock.mockReset();
+		sendBriefMock.mockResolvedValue({ ok: true });
 		applySignalsMock.mockReset();
 		(crossCheckBatch as Mock).mockReset();
 		// Défaut : cross-check ne garde aucun item (comportement neutre). Les tests
@@ -614,5 +626,136 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 		const published = fresh.upserts.find((u) => u.values.status === 'published');
 		expect(published).toBeDefined();
 		expect(published!.values.items).toHaveLength(0);
+	});
+
+	// --- force / brief / no-email (verrouille les comportements neufs de cette session,
+	// LOW remontés par la revue adversariale 2026-06-23 : sans ces tests, une régression
+	// inversant `!opts.force` ou le seuil `>= 1` passerait la suite verte). ---
+
+	it('force:true : régénère même une édition déjà publiée (bypass idempotence, rattrapage W25)', async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: { id: 'rep-pub', status: 'published' }, error: null }, // idempotence : DÉJÀ publiée
+			{ data: null, error: null }, // markRunning
+			{ data: [], error: null }, // previousItems
+			{ data: { id: 'rep-regen' }, error: null } // publish
+		]);
+		generateMock.mockResolvedValue({
+			success: true,
+			report: { meta: metaOk, items: [itemZeroChip], impacts_filmpro: [] },
+			raw: { mock: true },
+			costs: { breakdown: [], total_usd: 1, total_eur: 1 }
+		});
+		(crossCheckBatch as Mock).mockResolvedValueOnce({
+			kept: [itemZeroChip],
+			rejected: [],
+			unverifiable: [],
+			apiErrorCount: 0
+		});
+
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client),
+			{ force: true }
+		);
+
+		// PAS de skip malgré le status=published : la génération tourne quand même.
+		expect(result.skipped).toBeFalsy();
+		expect(generateMock).toHaveBeenCalledTimes(1);
+		// Nouvelle édition publiée (écrase l'ancienne).
+		expect(fresh.upserts.some((u) => u.values.status === 'published')).toBe(true);
+	});
+
+	it('brief brandé ENVOYÉ quand l’édition a >= 1 item', async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: null, error: null },
+			{ data: null, error: null },
+			{ data: [], error: null },
+			{ data: { id: 'rep-1item' }, error: null }
+		]);
+		generateMock.mockResolvedValue({
+			success: true,
+			report: { meta: metaOk, items: [itemZeroChip], impacts_filmpro: [] },
+			raw: {},
+			costs: { breakdown: [], total_usd: 1, total_eur: 1 }
+		});
+		(crossCheckBatch as Mock).mockResolvedValueOnce({
+			kept: [itemZeroChip],
+			rejected: [],
+			unverifiable: [],
+			apiErrorCount: 0
+		});
+
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client)
+		);
+
+		expect(result.ok).toBe(true);
+		expect(sendBriefMock).toHaveBeenCalledTimes(1);
+		expect(sendBriefMock.mock.calls[0][0]).toMatchObject({ weekLabel: '2026-W18' });
+	});
+
+	it('brief brandé NON envoyé quand l’édition est vide (0 item) : seul l’admin est alerté', async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: null, error: null },
+			{ data: null, error: null },
+			{ data: [], error: null },
+			{ data: { id: 'rep-empty' }, error: null }
+		]);
+		generateMock.mockResolvedValue({
+			success: true,
+			report: { meta: metaOk, items: [itemZeroChip], impacts_filmpro: [] },
+			raw: {},
+			costs: { breakdown: [], total_usd: 1, total_eur: 1 }
+		});
+		// Cross-check ne garde rien -> 0 item publié.
+		(crossCheckBatch as Mock).mockResolvedValueOnce({
+			kept: [],
+			rejected: [],
+			unverifiable: [],
+			apiErrorCount: 0
+		});
+
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client)
+		);
+
+		expect(result.ok).toBe(true);
+		const published = fresh.upserts.find((u) => u.values.status === 'published');
+		expect(published!.values.items).toHaveLength(0);
+		// Le brief brandé n'est PAS expédié à antoine@.
+		expect(sendBriefMock).not.toHaveBeenCalled();
+		// L'admin reçoit quand même l'alerte (mode sparse).
+		expect(sendRecapMock).toHaveBeenCalled();
+	});
+
+	it('--no-email : récap admin ET brief reçoivent une config désactivée (backfill silencieux)', async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: null, error: null },
+			{ data: null, error: null },
+			{ data: [], error: null },
+			{ data: { id: 'rep-silent' }, error: null }
+		]);
+		generateMock.mockResolvedValue({
+			success: true,
+			report: { meta: metaOk, items: [itemZeroChip], impacts_filmpro: [] },
+			raw: {},
+			costs: { breakdown: [], total_usd: 1, total_eur: 1 }
+		});
+		(crossCheckBatch as Mock).mockResolvedValueOnce({
+			kept: [itemZeroChip],
+			rejected: [],
+			unverifiable: [],
+			apiErrorCount: 0
+		});
+
+		await runWeeklyGeneration(new Date('2026-05-01T06:00:00Z'), makeMockDeps(fresh.client), {
+			noEmail: true
+		});
+
+		// Les envois reçoivent enabled=false (skip interne réel prouvé en unit).
+		expect(sendRecapMock.mock.calls[0][1]).toMatchObject({ enabled: false });
+		expect(sendBriefMock.mock.calls[0][1]).toMatchObject({ enabled: false });
 	});
 });

@@ -50,4 +50,36 @@ describe('parseArgv - run-veille standalone', () => {
 	it('--only-if-absent (retiré) → rejeté comme argument inconnu', () => {
 		expect(() => parseArgv(['--only-if-absent'])).toThrow(/Argument inconnu/);
 	});
+
+	it('--force → opts.force=true', () => {
+		expect(parseArgv(['--force'])).toEqual({ force: true });
+	});
+
+	it('--week + --force combinés (rattrapage forcé d’une semaine précise)', () => {
+		expect(parseArgv(['--week', '2026-W25', '--force'])).toEqual({
+			weekLabel: '2026-W25',
+			force: true
+		});
+		// ordre inverse
+		expect(parseArgv(['--force', '--week', '2026-W25'])).toEqual({
+			weekLabel: '2026-W25',
+			force: true
+		});
+	});
+
+	it('absence de --force → force non défini (régén non forcée par défaut)', () => {
+		expect(parseArgv(['--week', '2026-W25']).force).toBeUndefined();
+	});
+
+	it('--no-email → opts.noEmail=true', () => {
+		expect(parseArgv(['--no-email'])).toEqual({ noEmail: true });
+	});
+
+	it('backfill silencieux : --week + --force + --no-email combinés', () => {
+		expect(parseArgv(['--week', '2026-W25', '--force', '--no-email'])).toEqual({
+			weekLabel: '2026-W25',
+			force: true,
+			noEmail: true
+		});
+	});
 });

@@ -7,11 +7,13 @@ import { currentWeekRange, extendedWindowStart } from './week-utils';
 import type { IntelligenceReport, IntelligenceItem } from './schema';
 import type { PreviousItem } from './prompt';
 import { sendRecapEmail } from './email-recap';
+import { sendBriefEmail } from './email-brief';
 import { applySignalsFromReport } from './apply-signals';
 import { costTracker, CostTracker, type PersistMeta } from './cost-tracker';
 import type { VeilleDeps } from './deps';
 import { sanitizeForLog, sanitizeError } from './sanitize';
 import { stripCitationsFromReport } from './strip-citations';
+import { dedashReport } from './dedash';
 import type { Json } from '$lib/database.types';
 
 type Supabase = VeilleDeps['supabase'];
@@ -214,9 +216,20 @@ function antiDoublonsActive(currentWeek: string, seuil: string | undefined): boo
  */
 export async function runWeeklyGeneration(
 	now: Date = new Date(),
-	deps: VeilleDeps
+	deps: VeilleDeps,
+	opts: { force?: boolean; noEmail?: boolean } = {}
 ): Promise<RunResult> {
 	const week = currentWeekRange(now);
+	// --no-email : neutralise TOUS les envois (récap admin + brief + alerte échec) en
+	// désactivant la config email injectée. sendRecapEmail/sendBriefEmail skip proprement
+	// sur enabled=false. Pour un backfill silencieux d'une semaine passée (cf. régén W25).
+	if (opts.noEmail) {
+		deps = {
+			...deps,
+			email: { ...deps.email, enabled: false },
+			brief: { ...deps.brief, enabled: false }
+		};
+	}
 	const { supabase } = deps;
 	const startedAt = new Date().toISOString();
 	// Audit 360 M-05 : tracker de coûts dédié à CE run (pas le singleton module-level),
@@ -226,15 +239,22 @@ export async function runWeeklyGeneration(
 	logPhase(week.weekLabel, 'start', { now: startedAt });
 
 	// Idempotence : ne pas regénérer si édition déjà publiée cette semaine.
+	// `opts.force` contourne ce garde-fou (rattrapage manuel d'une édition ratée,
+	// ex. W25 régénérée après le correctif anti-hallu du 2026-06-22). Sans force, le
+	// comportement est inchangé : skip si published. markRunning écrasera ensuite la
+	// ligne published en running, donc l'anti-doublons aval ne reverra pas l'ancienne.
 	const { data: existing } = await supabase
 		.from('intelligence_reports')
 		.select('id, status')
 		.eq('week_label', week.weekLabel)
 		.maybeSingle();
 
-	if (existing && existing.status === 'published') {
+	if (existing && existing.status === 'published' && !opts.force) {
 		logPhase(week.weekLabel, 'idempotent_skip', { reportId: existing.id });
 		return { ok: true, weekLabel: week.weekLabel, reportId: existing.id, skipped: true };
+	}
+	if (existing && existing.status === 'published' && opts.force) {
+		logPhase(week.weekLabel, 'force_regenerate', { reportId: existing.id });
 	}
 
 	// Rattrapage du soir (décision Pascal 2026-06-19, renverse council 06-06) :
@@ -521,11 +541,16 @@ export async function runWeeklyGeneration(
 	// que la valeur émise par le modèle (décorative, jamais fiable sur le format).
 	// Couplé à la pré-normalisation de report-validate, un generated_at off ne peut
 	// plus faire échouer l'édition.
-	const report: IntelligenceReport = stripCitationsFromReport({
-		...gen.report,
-		meta: { ...gen.report.meta, generated_at: startedAt },
-		items: rerankedItems
-	});
+	// Strip <cite> puis dedash déterministe (tirets typographiques -> tiret court) sur
+	// TOUT le texte publié (résumé, titres, so-what, deep_dive, source.name, impacts).
+	// Invariant typo dur jamais confié au prompt seul (cf. dedash.ts).
+	const report: IntelligenceReport = dedashReport(
+		stripCitationsFromReport({
+			...gen.report,
+			meta: { ...gen.report.meta, generated_at: startedAt },
+			items: rerankedItems
+		})
+	);
 	const { data: inserted, error: insertError } = await supabase
 		.from('intelligence_reports')
 		.upsert(
@@ -613,6 +638,28 @@ export async function runWeeklyGeneration(
 		}
 	} catch (e) {
 		console.error(`[email-recap] unexpected error: ${sanitizeError(e)}`);
+	}
+
+	// Email #2 : brief éditorial brandé (résumé + signaux + liens) -> antoine@ + pascal@.
+	// Envoyé UNIQUEMENT s'il y a du contenu (>= 1 item) : on n'expédie jamais un brief
+	// vide à un destinataire métier (décision Pascal 2026-06-23). Une semaine vide ne
+	// déclenche que l'alerte admin ci-dessus. Best-effort : n'influence pas le retour.
+	if (report.items.length >= 1) {
+		try {
+			const briefResult = await sendBriefEmail(
+				{ weekLabel: week.weekLabel, report },
+				deps.brief
+			);
+			if (!briefResult.ok && !briefResult.skipped) {
+				console.warn(
+					`[email-brief] brief not sent: ${sanitizeForLog(briefResult.reason ?? '')}`
+				);
+			}
+		} catch (e) {
+			console.error(`[email-brief] unexpected error: ${sanitizeError(e)}`);
+		}
+	} else {
+		logPhase(week.weekLabel, 'brief_skipped_empty', { items: report.items.length });
 	}
 
 	// Persistance coûts API (best-effort, n'influence pas le retour). Status
