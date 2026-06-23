@@ -404,6 +404,101 @@ describe('crossCheckBatch', () => {
 		expect(r.unverifiable).toHaveLength(0);
 	});
 
+	it('trust-by-source : page non fetchable d\'une source FIABLE (rts.ch, régime trusted) → conservée + marquée, malgré rejectUnfetchable', async () => {
+		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+			ok: false,
+			status: 500,
+			text: async () => ''
+		});
+		const itemOfficiel = {
+			...baseItem,
+			source: { ...baseItem.source, url: 'https://www.rts.ch/info/canicule-geneve' },
+			summary:
+				'RTS a consacré un sujet aux solutions pour rafraîchir les logements pendant la canicule.',
+			filmpro_relevance:
+				"Fenêtre médiatique sur le confort d'été, à exploiter auprès des régies romandes."
+		};
+		const r = await crossCheckBatch([itemOfficiel], {
+			anthropicApiKey: 'sk-test',
+			rejectUnfetchable: true
+		});
+		expect(r.kept).toHaveLength(1);
+		expect(r.rejected).toHaveLength(0);
+		expect(r.keptByTrust).toBe(1);
+		expect(r.kept[0].verification?.content_reverified).toBe(false);
+	});
+
+	it('trust-by-source : page non fetchable d\'une source INCONNUE (example.com, régime strict) reste REJETÉE (compteur trust=0)', async () => {
+		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+			ok: false,
+			status: 500,
+			text: async () => ''
+		});
+		const r = await crossCheckBatch([baseItem], {
+			anthropicApiKey: 'sk-test',
+			rejectUnfetchable: true
+		});
+		expect(r.rejected).toHaveLength(1);
+		expect(r.kept).toHaveLength(0);
+		expect(r.keptByTrust).toBe(0);
+	});
+
+	it('trust-by-source NE couvre PAS une panne du vérificateur (apiError) : source fiable dont la VÉRIF échoue côté API reste REJETÉE', async () => {
+		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			text: async () =>
+				'<html><body><p>' +
+				'Article officiel RTS sur la canicule à Genève, contenu réel et suffisamment long pour dépasser le seuil de prose et atteindre le vérificateur. '.repeat(
+					6
+				) +
+				'</p></body></html>'
+		});
+		__mockCreate.mockRejectedValue(new Error('verifier down (credit exhausted)'));
+		const itemOfficiel = {
+			...baseItem,
+			source: { ...baseItem.source, url: 'https://www.rts.ch/info/canicule-geneve' }
+		};
+		const r = await crossCheckBatch([itemOfficiel], {
+			anthropicApiKey: 'sk-test',
+			rejectUnfetchable: true
+		});
+		expect(r.apiErrorCount).toBe(1);
+		expect(r.rejected).toHaveLength(1);
+		expect(r.kept).toHaveLength(0);
+		expect(r.keptByTrust).toBe(0);
+	});
+
+	it('trust-by-source resserré : source fiable, page LISIBLE mais verdict avorté (pas de bloc emit_verdict = verifier_failed) → REJETÉE, pas de trust-keep', async () => {
+		(global.fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+			ok: true,
+			status: 200,
+			text: async () =>
+				'<html><body><p>' +
+				'Article officiel RTS sur la canicule, contenu réel et suffisamment long pour dépasser le seuil de prose et atteindre le vérificateur. '.repeat(
+					6
+				) +
+				'</p></body></html>'
+		});
+		// Le vérificateur répond mais SANS bloc emit_verdict → crossCheckItem renvoie 'verifier_failed'
+		// (échec de NOTRE côté, pas une page morte) → jamais de trust-keep, même sur rts.ch (trusted).
+		__mockCreate.mockResolvedValueOnce({
+			content: [{ type: 'text', text: 'pas de tool_use' }],
+			usage: { input_tokens: 10, output_tokens: 5 }
+		});
+		const itemOfficiel = {
+			...baseItem,
+			source: { ...baseItem.source, url: 'https://www.rts.ch/info/canicule-geneve' }
+		};
+		const r = await crossCheckBatch([itemOfficiel], {
+			anthropicApiKey: 'sk-test',
+			rejectUnfetchable: true
+		});
+		expect(r.rejected).toHaveLength(1);
+		expect(r.kept).toHaveLength(0);
+		expect(r.keptByTrust).toBe(0);
+	});
+
 	it('liste vide → résultat vide sans appel SDK', async () => {
 		const r = await crossCheckBatch([], { anthropicApiKey: 'sk-test' });
 		expect(r.kept).toHaveLength(0);

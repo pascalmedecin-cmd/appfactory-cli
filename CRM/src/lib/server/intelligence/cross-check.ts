@@ -96,6 +96,13 @@ export interface CrossCheckResult {
 	 */
 	apiErrorCount: number;
 	/**
+	 * Nombre d'items conservés par TRUST-BY-SOURCE (levier sourcing 2026-06-23) :
+	 * page authentiquement non re-fetchable au cross-check MAIS source à régime
+	 * 'trusted'/'trusted_advocacy' (T1 officiel, T2 presse pro, etc.) → aucune contradiction
+	 * possible, conservé et marqué `content_reverified=false`. Observabilité du levier.
+	 */
+	keptByTrust: number;
+	/**
 	 * Présent UNIQUEMENT si TOUS les items ont échoué côté API verifier (aucune
 	 * vérification possible). Signal d'un incident systémique (crédit dédié épuisé,
 	 * clé invalide, API down) à remonter en alerte distincte - surtout PAS publier
@@ -846,18 +853,31 @@ async function runWithConcurrency<T, R>(
 }
 
 /**
+ * Cause d'un cross-check sans verdict exploitable, DISCRIMINÉE (levier sourcing 2026-06-23).
+ * La distinction est nécessaire au trust-by-source : seul un échec qui est une PROPRIÉTÉ DE LA
+ * SOURCE autorise un keep par confiance ; un échec de NOTRE vérificateur ne le fait jamais.
+ *  - 'dead_page'      : page non re-fetchable / vide (réseau, 404, soft-404, shell JS-only, mur
+ *                       cookie, < 200 chars). Propriété de la source → éligible au trust-by-source
+ *                       si le domaine est 'trusted'.
+ *  - 'verifier_failed': NOTRE vérificateur a tourné mais n'a pas produit de verdict exploitable
+ *                       (pas de tool_use emit_verdict, ou verdict non conforme Zod). Échec de
+ *                       notre côté → JAMAIS de trust-keep (cohérent avec apiError).
+ */
+export type CrossCheckMiss = 'dead_page' | 'verifier_failed';
+
+/**
  * Cross-check un item : fetch + LLM verdict.
- * Retourne null si la page n'a pas pu être fetchée (item à conserver par défaut).
+ * Retourne un CrossCheckVerdict, ou un CrossCheckMiss discriminé si pas de verdict exploitable.
  */
 export async function crossCheckItem(
 	client: Anthropic,
 	item: IntelligenceItem,
 	tracker: CostTracker = costTracker
-): Promise<CrossCheckVerdict | null> {
+): Promise<CrossCheckVerdict | CrossCheckMiss> {
 	const html = await fetchPageContent(item.source.url);
-	if (!html) return null;
+	if (!html) return 'dead_page';
 	const pageText = htmlToPlainText(html);
-	if (pageText.length < 200) return null; // page trop pauvre pour vérifier
+	if (pageText.length < 200) return 'dead_page'; // page trop pauvre/morte pour vérifier
 
 	// Régime de vérification (cadrage trust-by-source 2026-06-23, durci ROUND-2). Garde paywall
 	// (5.1) : une source fiable dont seul un teaser est lisible NE bénéficie PAS de la confiance
@@ -883,13 +903,13 @@ export async function crossCheckItem(
 	const block = response.content.find(
 		(b): b is Anthropic.ToolUseBlock => b.type === 'tool_use' && b.name === 'emit_verdict'
 	);
-	if (!block) return null;
+	if (!block) return 'verifier_failed';
 
 	// Validation Zod stricte du verdict (audit Low #2). Si le LLM retourne un
 	// objet non conforme (severity manquant, divergences malformées), on traite
 	// comme verdict invalide → null (= unverifiable côté caller).
 	const parsed = VerdictSchema.safeParse(block.input);
-	if (!parsed.success) return null;
+	if (!parsed.success) return 'verifier_failed';
 	return parsed.data;
 }
 
@@ -898,7 +918,7 @@ export async function crossCheckBatch(
 	opts: CrossCheckOptions
 ): Promise<CrossCheckResult> {
 	if (items.length === 0) {
-		return { kept: [], rejected: [], unverifiable: [], apiErrorCount: 0 };
+		return { kept: [], rejected: [], unverifiable: [], apiErrorCount: 0, keptByTrust: 0 };
 	}
 	const client = new Anthropic({ apiKey: opts.anthropicApiKey });
 	const concurrency = opts.concurrency ?? DEFAULT_CONCURRENCY;
@@ -918,7 +938,11 @@ export async function crossCheckBatch(
 			const verdict = await crossCheckItem(client, item, tracker);
 			return { item, verdict, apiError: null as ClassifiedApiError | null };
 		} catch (e) {
-			return { item, verdict: null as CrossCheckVerdict | null, apiError: classifyApiError(e) };
+			return {
+				item,
+				verdict: null as CrossCheckVerdict | CrossCheckMiss | null,
+				apiError: classifyApiError(e)
+			};
 		}
 	});
 
@@ -926,6 +950,7 @@ export async function crossCheckBatch(
 	const rejected: CrossCheckRejectedItem[] = [];
 	const unverifiable: IntelligenceItem[] = [];
 	let apiErrorCount = 0;
+	let keptByTrust = 0;
 	let firstApiError: ClassifiedApiError | null = null;
 
 	for (const { item, verdict, apiError } of outcomes) {
@@ -946,14 +971,58 @@ export async function crossCheckBatch(
 			}
 			continue;
 		}
-		// Cas 2 : page non fetchable (contenu mort).
-		if (verdict === null) {
+		// Cas 2a : NOTRE vérificateur n'a pas produit de verdict exploitable
+		// ('verifier_failed' : pas de tool_use emit_verdict, ou verdict non conforme Zod).
+		// (Le `=== null` est une garde de typage : il ne survient qu'avec apiError, déjà
+		// traité au cas 1 ; en filet on le traite ici comme un échec de notre côté.)
+		// Échec de NOTRE côté, PAS une propriété de la source → JAMAIS de trust-keep
+		// (cohérent avec l'apiError). Rejeté sous rejectUnfetchable, sinon non-vérifiable.
+		if (verdict === 'verifier_failed' || verdict === null) {
 			if (opts.rejectUnfetchable) {
 				rejected.push({
 					url: item.source.url,
 					title: item.title,
 					verdict: { facts_ok: false, divergences: [], confidence: 'low' }
 				});
+			} else {
+				unverifiable.push(item);
+			}
+			continue;
+		}
+		// Cas 2b : page authentiquement non re-fetchable / vide ('dead_page' : réseau, 404,
+		// soft-404, shell JS, mur cookie, < 200 chars). Cas fréquent des pages officielles
+		// .ch/.admin.ch et RTS (audit sourcing 2026-06-23).
+		//
+		// TRUST-BY-SOURCE (levier sourcing W26) : la décision garder/rejeter respecte le
+		// RÉGIME DU DOMAINE (le même qui régit déjà la sévérité du cross-check des pages
+		// fetchables) :
+		//  - régime 'trusted'/'trusted_advocacy' (T1 officiel, T2 presse pro, T4 presse
+		//    qualité, T5 acad) : sous ce régime un fait n'est rejeté que s'il est CONTREDIT
+		//    par la page ; une page absente ne contredit rien → l'item est CONSERVÉ, marqué
+		//    content_reverified=false (traçabilité + relecture). Extension cohérente du modèle.
+		//  - régime 'strict' (domaine inconnu/hors-tier, preprint, sponsorisé/opinion,
+		//    cabinet d'études) : strict exige une confirmation POSITIVE, absente ici → REJET
+		//    (inchangé). effectiveRegime() rabaisse déjà sponsorisé/opinion/market-research.
+		// Le gate facts_ok (cas 3) et l'apiError (cas 1) ne sont PAS touchés. Seule une
+		// page authentiquement morte d'une source fiable bénéficie du keep.
+		if (verdict === 'dead_page') {
+			if (opts.rejectUnfetchable) {
+				if (effectiveRegime(item) !== 'strict') {
+					keptByTrust++;
+					kept.push({
+						...item,
+						verification: {
+							...(item.verification ?? { url_ok: true, unverified_entities: [] }),
+							content_reverified: false
+						}
+					});
+				} else {
+					rejected.push({
+						url: item.source.url,
+						title: item.title,
+						verdict: { facts_ok: false, divergences: [], confidence: 'low' }
+					});
+				}
 			} else {
 				unverifiable.push(item);
 			}
@@ -982,5 +1051,5 @@ export async function crossCheckBatch(
 			? { kind: firstApiError.kind, message: firstApiError.message }
 			: undefined;
 
-	return { kept, rejected, unverifiable, apiErrorCount, systemicError };
+	return { kept, rejected, unverifiable, apiErrorCount, keptByTrust, systemicError };
 }

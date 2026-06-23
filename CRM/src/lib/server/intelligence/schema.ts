@@ -148,7 +148,12 @@ export const IntelligenceItemSchema = z.object({
 			unverified_entities: z.array(z.string()).optional().default([]),
 			date_ok: z.boolean().optional(),
 			date_source: z.enum(['og', 'llm', 'none']).optional(),
-			url_mutated: z.boolean().optional()
+			url_mutated: z.boolean().optional(),
+			// false = item d'une source FIABLE (régime 'trusted') conservé sans
+			// re-vérification de contenu car la page n'était pas re-fetchable au
+			// cross-check (trust-by-source, levier sourcing 2026-06-23). Absent/undefined
+			// = item dont le contenu a bien été re-vérifié (cas nominal). Champ d'audit.
+			content_reverified: z.boolean().optional()
 		})
 		.optional()
 });

@@ -409,8 +409,13 @@ export async function runWeeklyGeneration(
 	// dans cross-check Sonnet 4.6 qui valide chiffres + citations + entités.
 	//
 	// Garantie « zéro hallucination » :
-	// - rejectUnfetchable=true : item dont la page n'est pas fetchable → rejet
-	//   (pas de publication d'un item qu'on n'a pas pu vérifier).
+	// - rejectUnfetchable=true : item dont la page n'est pas fetchable → rejet, SAUF
+	//   exception trust-by-source (levier sourcing 2026-06-23) : une page authentiquement
+	//   morte ('dead_page') d'une source à régime 'trusted' (T1 officiel .ch/.admin.ch, T2/T4/T5)
+	//   est CONSERVÉE et marquée content_reverified=false (cf. crossCheckBatch). Un échec de
+	//   NOTRE vérificateur ('verifier_failed', apiError) reste rejeté quel que soit le régime.
+	//   Le contenu d'un item trust-kept reste ancré à une vraie citation web_search (pas inventé) ;
+	//   les titres concernés sont loggés ci-dessous (keptByTrustTitles) pour relecture humaine.
 	// - try/catch global : si cross-check échoue COMPLÈTEMENT (Sonnet down,
 	//   réseau, etc.) → status=error, on ne publie pas d'items non vérifiés.
 	logPhase(week.weekLabel, 'cross_check_start', {
@@ -431,6 +436,10 @@ export async function runWeeklyGeneration(
 			kept: ccResult.kept.length,
 			rejected: ccResult.rejected.length,
 			apiErrors: ccResult.apiErrorCount,
+				keptByTrust: ccResult.keptByTrust,
+				keptByTrustTitles: ccResult.kept
+					.filter((i) => i.verification?.content_reverified === false)
+					.map((i) => i.title.slice(0, 80)),
 			fatalDivergences: ccResult.rejected.flatMap((r) =>
 				r.verdict.divergences.filter((d) => d.severity === 'fatal').map((d) => ({
 					url: r.url,

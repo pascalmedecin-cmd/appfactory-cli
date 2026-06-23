@@ -51,10 +51,15 @@ Un serveur revérifie en aval, sur la page réelle, tous les FAITS de ton résum
 Reflet dans le champ geo_scope : "suisse_romande" (1), "suisse" (2), "monde" (3 à 6).
 
 # Méthode de recherche obligatoire (DOIT être respectée)
-Tu disposes d'environ 15 web_search uses. Répartition imposée :
-- **Au moins 5 web_search dédiées Suisse romande** : queries de la forme \`site:.ch [thème]\`, \`Suisse romande [thème] 2026\`, \`[canton VD/GE/VS/NE/FR/JU] [thème]\`, \`MoPEC Minergie [thème]\`, \`SIA EN [thème]\`.
+Tu disposes d'environ 22 web_search uses. Répartition imposée :
+- **Au moins 8 web_search dédiées Suisse romande, en VARIANT systématiquement les angles ET les sources** (ne dépends JAMAIS d'une seule source comme RTS ; le local de cette veille a trop longtemps reposé sur RTS seul) :
+  - Presse romande nommée : \`site:letemps.ch [thème]\`, \`site:24heures.ch\`, \`site:tdg.ch\`, \`site:bilan.ch\`, \`site:agefi.com\`, \`site:swissinfo.ch\`, \`site:rts.ch\`, heidi.news.
+  - Officiel cantonal + fédéral : \`site:ge.ch\`, \`site:vd.ch\`, \`site:vs.ch\`, \`site:ne.ch\`, \`site:fr.ch\`, offices cantonaux de l'énergie, \`MétéoSuisse alerte canicule\`, \`SUVA SECO chaleur travail\`, \`site:sia.ch\`, \`site:minergie.ch\`, \`MoPEC [canton]\`.
+  - Presse pro bâtiment CH : \`site:espazium.ch\`, \`site:constructo.ch\`, \`site:baublatt.ch\`, \`site:hochparterre.ch\`.
+  - Format générique en complément : \`site:.ch [thème]\`, \`Suisse romande [thème] 2026\`, \`[canton VD/GE/VS/NE/FR/JU] [thème]\`.
+  - Si une recherche locale ne rend rien, VARIE l'angle (autre canton, autre type de source, autre thème) plutôt que de répéter la même requête à vide : ne gaspille pas le budget de recherche, mais ne renonce pas au local après un seul essai.
 - **2-3 web_search Suisse alémanique + France miroir** : Bauen+Wohnen, Batiactu, Le Moniteur, ADEME, RE2020 ERP.
-- **5-7 web_search VEILLE TECH GLOBALE** : innovations matériau, smart glass, électrochrome, PDLC, IA bâtiment, brevets WIPO/Espacenet, mouvements concurrents (3M, Eastman, Avery, Madico, Solar Gard, Saint-Gobain, Guardian, Eastman Saflex, View, Sage Glass, Halio, Kinestral). Ces recherches sont **PRIORITAIRES, pas conditionnelles** : elles ne sont PAS bloquées par la couverture Suisse romande.
+- **5-7 web_search VEILLE TECH GLOBALE** : innovations matériau, smart glass, électrochrome, PDLC, IA bâtiment, brevets WIPO/Espacenet, mouvements concurrents (3M, Eastman, Avery, Madico, Solar Gard, Saint-Gobain, Guardian, Eastman Saflex, View, Sage Glass, Halio, Kinestral). Ces recherches sont **PRIORITAIRES, pas conditionnelles** : elles ne sont PAS bloquées par la couverture Suisse romande. NE dépasse PAS ce volet : le surplus de budget va au LOCAL, pas à plus de tech globale.
 - Les 1-2 dernières web_search servent à vérifier les dates / sources des items retenus.
 
 INTERDIT d'émettre une édition avec compliance_tag différent de "Non exploitable" si tu n'as pas effectué AU MOINS 3 recherches \`site:.ch\` ou ciblées Suisse romande dans la session.
@@ -78,9 +83,9 @@ Chaque édition vise **2/3 items à ancrage local + 1/3 items veille tech global
 - Articles purement promotionnels / publi-rédactionnels sans contenu informatif : EXCLUS.
 
 # Volume cible
-- **Émettre 10 à 15 items candidats**. Le serveur applique en aval un filtrage strict (URL active + cross-check verbatim chiffres/citations contre la page réelle). Cible publiée : 8 à 12 items après filtrage (pas de plafond artificiel : tout signal réel, vérifiable et pertinent mérite sa place).
-- Sur-générer raisonnablement (12-15) augmente la chance qu'au moins 8-10 passent le filtre. Mais : mieux vaut 10 items solides bien sourcés que 15 items faibles dont la moitié seront rejetés.
-- Les semaines creuses restent possibles : si moins de 8 signaux réels trouvés malgré recherche large + tech globale, émets ce qui existe vraiment (0 à 7 items, voire items=[] et compliance_tag="Non exploitable" acceptés).
+- **Émettre 12 à 18 items candidats**. Le serveur applique en aval un filtrage strict (URL active + cross-check verbatim chiffres/citations contre la page réelle). Cible publiée : 8 à 12 items après filtrage (pas de plafond artificiel : tout signal réel, vérifiable et pertinent mérite sa place).
+- Sur-générer raisonnablement (14-18) augmente la chance qu'au moins 8-10 passent le filtre. Le surplus doit venir du LOCAL romand (sources nommées + fenêtre 30 jours), pas de tech globale ajoutée. Mais : mieux vaut 12 items solides bien sourcés que 18 items faibles dont la moitié seront rejetés.
+- Les semaines creuses restent possibles : si moins de 8 signaux réels trouvés MALGRÉ une recherche large sur 30 jours, toutes les sources locales nommées variées ET la tech globale, émets ce qui existe vraiment (0 à 7 items, voire items=[] et compliance_tag="Non exploitable" acceptés). « Semaine creuse » ne se conclut qu'après cet effort réel, jamais par défaut.
 - Un serveur déclenche une alerte « semaine creuse » si items.length < 2.
 - **INTERDIT d'émettre un item « coquille » / placeholder pour gonfler le volume** : jamais de titre générique vide (« ... », « Item »), jamais de summary/filmpro_relevance vide, jamais de source factice (name = « x », « n/a », url bidon). Un item incomplet est écarté par le serveur et ne sert à rien. En semaine creuse, émets FRANCHEMENT moins d'items : 1, 2 ou 3 signaux réels et complets valent infiniment mieux qu'un quota rempli de coquilles. Mieux vaut items=[] qu'un seul item vide.
 
@@ -261,11 +266,11 @@ ${itemsList}
 Règle : ne pas re-proposer un sujet déjà couvert sauf si tu trouves un article PLUS RÉCENT (date strictement supérieure) sur le même sujet → marquer is_update=true et renseigner previous_url avec l'URL de l'item antérieur.`;
 	}
 
-	return `Édition : ${input.weekLabel} (cible éditoriale ${input.dateStart} → ${input.dateEnd}, tolérance vérification jusqu'à ${input.windowDays} jours avant ${input.dateEnd}).
+	return `Édition : ${input.weekLabel}. Fenêtre de RECHERCHE éditoriale = les ${input.windowDays} derniers jours jusqu'au ${input.dateEnd}, PAS seulement la semaine ${input.dateStart} → ${input.dateEnd}. Explore tout cet intervalle de ${input.windowDays} jours : études, rapports, communiqués officiels, décisions cantonales, normes et signaux structurels comptent autant que le breaking news de la semaine. À pertinence égale, préfère le plus récent. Tout item daté dans cette fenêtre (et non postérieur au ${input.dateEnd}) est éligible.
 
 ${antiDoublonsBlock}
 
-Cherche maintenant les candidats sur le web, sélectionne les 8 à 12 meilleurs (plus s'il y a vraiment plus de signaux pertinents et vérifiables) et appelle emit_report.`;
+Cherche maintenant LARGEMENT (utilise tes ~22 recherches, en priorité sur le local romand et toutes ses sources nommées), puis émets TOUS les candidats réels, datés et pertinents que tu trouves : vise 14 à 18 candidats pour qu'au moins 8 à 12 survivent au filtre aval (URL + cross-check). N'auto-censure pas à 8-12 et ne conclus « semaine creuse » qu'APRÈS avoir réellement cherché sur 30 jours et toutes les sources locales. Ton rôle est de fournir de la matière vérifiable, pas de présélectionner serré ; le serveur filtre. Les coquilles / placeholders restent INTERDITES (voir règle Volume). Appelle ensuite emit_report.`;
 }
 
 // JSON schema strict-mode Anthropic pour emit_report (refonte 1-phase).

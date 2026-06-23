@@ -37,7 +37,10 @@ const MAX_TOKENS = 64000;
 // tronqué n'est PAS récupérable partiellement (doc /handling-stop-reasons :
 // « retry with higher max_tokens, not continuation »), d'où la relance complète.
 const MAX_TOKENS_RETRY = 128000;
-const WEB_SEARCH_MAX_USES = 15;
+// 22 (était 15, levier sourcing 2026-06-23) : plus de budget de recherche pour
+// élargir le sourcing local (sources romandes nommées au-delà de RTS) + fenêtre 30j,
+// sans toucher la barre de pertinence. Le filtre aval (URL + cross-check) reste identique.
+const WEB_SEARCH_MAX_USES = 22;
 
 export interface GenerateInput {
 	weekLabel: string;
