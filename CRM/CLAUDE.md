@@ -4,7 +4,7 @@
 
 **Statut :** Portail FilmPro multi-outils en prod : CRM (`/crm`) + Découpe Films (`/decoupe`) sur `filmpro-portail.vercel.app`. Formation IA = projet autonome `Formation/` (`cc` option 5). Historique (V3 terrain, Signaux V4, golden v9, restructure S173-S174) → `archive/`.
 **Derniere mise a jour :** 2026-06-23. Prod = `filmpro-portail.vercel.app` sur `291ae02` (veille W25 mergée+déployée : libellés humanisés + tri d'importance + strip enum-en-prose ; refonte CRM flag `ffCrmListesV2` OFF). **Derniere revue /optimize :** 2026-04-05. **Prochain bug :** #001.
-**Session courante :** 2026-06-23 (session 5) - **Chantier veille W25 TERMINÉ + DÉPLOYÉ** : merge FF `8b03f07` + flake fix `d99beab` + strip enum-en-prose `291ae02`, 2 deploys prod (`dpl_49tN…` puis `dpl_A3dW…`), data W25 nettoyée live, smoke authentifié clean. 6e défaut (enum d'actionnabilité dumpé en queue de prose) attrapé au smoke prod et fermé (cause racine prompt + garde déterministe liste close, revue adversariale 3 sceptiques). → [[project_veille_fix_w25_commentaires_2026-06-23]]. WIP Campagnes 3.2 intact (non commité) → [[project_module_campagnes_vague32_2026-06-22]].
+**Session courante :** 2026-06-23 (session 5) - **Chantier veille W25 TERMINÉ + DÉPLOYÉ** (`291ae02`) : merge + flake fix + strip enum-en-prose (6e défaut attrapé au smoke, garde liste close + cause racine prompt, revue adversariale 3 sceptiques), 2 deploys prod, data W25 nettoyée, smoke clean. → [[project_veille_fix_w25_commentaires_2026-06-23]]. WIP Campagnes 3.2 intact → [[project_module_campagnes_vague32_2026-06-22]].
 **Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175, S122-S125, S70-S107).
 
 
@@ -94,7 +94,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 - **Auth** : OTP email 6 chiffres @filmpro.ch + session 7 jours httpOnly ; SMTP Resend (domaine verifié, free plan)
 - **APIs** : Zefix REST + search.ch + fal.ai Flux 1.1 Pro Ultra (partage clé avec Enseignement) - Pexels/Unsplash supprimés S67
 - **Crons** : `/api/cron/{signaux,alertes,nettoyage-crm,intelligence,intelligence-archive}` tous sécurisés `CRON_SECRET` + service role (Cron `media-enrich` supprimé S67)
-- **Tests** : Vitest 2054 (dernier run vérifié 2026-06-23, +66 veille round-2) + Playwright e2e (suite + P1/P2/P3 Prospection). Accessibilité : focus trap + ConfirmModal partout, axe-core 0 violation modale P3. Sécurité : Zod sur 20 form actions/endpoints, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
+- **Tests** : Vitest 2098 (dernier run vérifié 2026-06-23, +18 strip-enum-artifacts + W25 + flake) + Playwright e2e (suite + P1/P2/P3 Prospection). Accessibilité : focus trap + ConfirmModal partout, axe-core 0 violation modale P3. Sécurité : Zod sur 20 form actions/endpoints, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
 
 → Détail intégral (env vars, BDD exhaustive, liste tests, liste crons, headers sécurité, pagination serveur) : `archive/infra-crm-detail.md`
 
@@ -133,17 +133,13 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Campagnes Vague 3.2** (WIP non commité, migration N-N à appliquer) → [[project_module_campagnes_vague32_2026-06-22]]. Veille W25 **TERMINÉE + DÉPLOYÉE** (prod `291ae02`, bloc 0). **W26 (vendredi 26/06) = 1er run cron sur le code W25 (libellés + tri + strip enum-en-prose) + 1er brief réel antoine@**, à surveiller (densité items, ordre local-actionnable, 0 underscore, so-what sans cible inventée, et confirmer que le cron ne re-dumpe plus l'enum en prose).
+**Prochaine attaque** : **Campagnes Vague 3.2** (WIP non commité, migration N-N à appliquer) → [[project_module_campagnes_vague32_2026-06-22]]. Veille W25 **TERMINÉE + DÉPLOYÉE** (prod `291ae02`, bloc 0). **W26 (vendredi 26/06) = 1er run cron sur le code W25 + 1er brief réel antoine@**, à surveiller (densité, ordre local-actionnable, 0 underscore, so-what sans cible inventée, et que le cron ne re-dumpe plus l'enum en prose).
 
 > Cadrage commun (refonte UX/UI CRM, validé Pascal 2026-06-18) → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_refonte_crm_cadrage_2026-06-18.md` + golden Vague 3 `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html` (validé Chrome).
 
-### 0. Veille - commentaires Pascal W25 + Lot 3 [SUPERVISÉ • high • ~2h]
+### 0. Veille - Lot 3 structurel (reste) [SUPERVISÉ • high • session dédiée]
 
-- [x] ~~**Veille trust-by-source ROUND-2 + W25**~~ - LIVRÉ + DÉPLOYÉ 2026-06-23 (`47841d9` main, prod `lut2v4cy1`) → [[project_veille_trust_by_source_2026-06-23]] + [[audit_secu_2026-06-23_veille_trust_by_source]].
-- [x] ~~**Veille - qualité éditoriale + sélection (5 points)**~~ - **CODE LIVRÉ 2026-06-23**, branche `veille-w25-qualite-selection` (`8b03f07`, poussé, NON mergé) : enums humanisés (source unique `veilleFormat.ts` + theme via label DB), so-what sans cible non sourcée, cap 10→12, tri d'importance déterministe (Vitro/Fraunhofer redescendent). 2080 tests, revue adversariale clean (zéro-hallu intacte). Détail → [[project_veille_fix_w25_commentaires_2026-06-23]].
-- [x] ~~**Merger + déployer la branche veille**~~ - **FAIT + DÉPLOYÉ 2026-06-23** : merge FF `8b03f07` sur main (WIP Campagnes intact via stash), 2 deploys prod (`dpl_49tN…` merge+flake, puis `dpl_A3dW…` strip enum-en-prose), alias canonique vérifié, smoke authentifié clean. → [[project_veille_fix_w25_commentaires_2026-06-23]].
-- [x] ~~**Fix flake `entreprisesFormat.premium.test.ts`**~~ - FAIT 2026-06-23 (`d99beab`) : `timeout 20000` sur le describe STRESS (convention repo `optimiser.fuzz.test.ts`). 2098 tests verts.
-- [x] ~~**Strip déterministe enum-en-prose (6e défaut, smoke prod)**~~ - FAIT + DÉPLOYÉ 2026-06-23 (`291ae02`) : les 3 items W25 dumpaient l'actionnabilité en queue de `filmpro_relevance`. Cause racine = exemples few-shot du prompt + garde `strip-enum-artifacts.ts` (liste close enums Zod, jamais snake_case générique - revue adversariale 3 sceptiques). Data W25 nettoyée en prod. → [[project_veille_fix_w25_commentaires_2026-06-23]].
+- [x] ~~**Chantier veille W25 - TERMINÉ + DÉPLOYÉ 2026-06-23**~~ : round-2 trust-by-source (`47841d9`) + 5 commentaires Pascal (humanisation enums via `veilleFormat.ts`, so-what sans cible non sourcée, cap 10→12, tri d'importance déterministe) + flake fix (`d99beab`) + strip enum-en-prose (`291ae02`, 6e défaut attrapé au smoke prod ; garde liste close + cause racine prompt) ; 2 deploys prod, data W25 nettoyée live, smoke authentifié clean, revue adversariale 3 sceptiques. → [[project_veille_fix_w25_commentaires_2026-06-23]] + [[project_veille_trust_by_source_2026-06-23]].
 - [ ] **[BLOQUÉ - après mesure W26+]** **Lot 3 - structurel (optionnel)** : élargir sources (OFS/assos/salons) ; dashboard qualité + boucle feedback ; PDF de marque (`filmpro-pdf`) ; pont veille→action ; décomposer mono-appel LLM si plafond ; nettoyage enum RegBL. → [[project_veille_refonte_lots12_livree_2026-06-22]].
 
 ### 1. Vague 3 (suite) + Vague 4 refonte CRM [SUPERVISÉ • xhigh • cascade par chantiers]
@@ -169,11 +165,9 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ### Livré cette session
 
-- [x] ~~**Veille - fix 5 commentaires Pascal W25 (qualité éditoriale + sélection)**~~ - CODE LIVRÉ 2026-06-23 (session 4) : branche `veille-w25-qualite-selection` (`8b03f07`, poussé, NON mergé/déployé) → bloc 0 + [[project_veille_fix_w25_commentaires_2026-06-23]].
-- [x] ~~**Veille trust-by-source round-2 + W25 + deploy (23/06)**~~ - LIVRÉ + DÉPLOYÉ (`47841d9`, prod `lut2v4cy1`) → bloc 0 + [[project_veille_trust_by_source_2026-06-23]].
-- [x] ~~**Veille W25 + 2 emails + chips + dedash**~~ - Fait 2026-06-23 : `1c7e484`+`8aa9547` prod → [[project_veille_w25_emails_chips_dedash_2026-06-23]] + [[audit_secu_2026-06-23_veille_w25_emails_chips_dedash]].
+- [x] ~~**Chantier veille W25 TERMINÉ + DÉPLOYÉ**~~ - 2026-06-23 (session 5) : merge FF `8b03f07` + flake `d99beab` + strip enum-en-prose `291ae02`, 2 deploys prod, data W25 nettoyée live, smoke authentifié clean. 6e défaut (enum dumpé en prose) attrapé au smoke prod et fermé (cause racine prompt + garde liste close, revue adversariale 3 sceptiques), 2098 tests. → [[project_veille_fix_w25_commentaires_2026-06-23]].
 - [~] **Module Campagnes Vague 3.2 - 3/6 phases (WIP, non commité, intact cette session)** → [[project_module_campagnes_vague32_2026-06-22]].
-→ Livrés antérieurs : Veille Lots 1+2 (`de05779`, 06-22 → [[project_veille_refonte_lots12_livree_2026-06-22]]), hygiène working tree (`407d7b8`/`0eedeab`, 06-20), Vague 3.1 Signaux (`5e0c369`)/export CSV (`6626818`)/Vague 2 (`8c5d84d`)/fiches (`87a1842`)/P1-P3 (`6c4230a`)/Pipeline (`35d7df7`)/Vague 1 (`676a9d4`) → `archive/claude-md-crm-livre-2026-06-19.md` + `archive/claude-md-crm-livre-2026-06-18.md`.
+→ Livrés antérieurs : Veille trust-by-source round-2 (`47841d9`, prod `lut2v4cy1`), W25+emails+chips+dedash (`1c7e484`/`8aa9547`), Lots 1+2 (`de05779`), hygiène working tree (`407d7b8`/`0eedeab`), Vague 3.1 Signaux (`5e0c369`)/export CSV (`6626818`)/Vague 2 (`8c5d84d`)/fiches (`87a1842`)/P1-P3 (`6c4230a`)/Pipeline (`35d7df7`)/Vague 1 (`676a9d4`) → `archive/claude-md-crm-livre-2026-06-19.md` + `_2026-06-18.md` + mémoires veille 06-22/23.
 
 ### Watch list active après pivot
 
