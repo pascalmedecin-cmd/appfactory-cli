@@ -181,4 +181,42 @@ describe('stripCitationsFromReport', () => {
 		expect(out.items[0].summary).toBe('A cite1 B');
 		expect(out.items[0].filmpro_relevance).toBe('C cite2 D');
 	});
+
+	it('strippe les notes de impacts_filmpro (rendues dans le brief client)', () => {
+		// Régression : impacts_filmpro[].note est rendu en clair dans email-brief
+		// (-> antoine@). Un <cite> de web_search y fuyait car seul ce strip (vs ses
+		// jumeaux dedash/strip-enum) ne couvrait pas impacts_filmpro.
+		const report = {
+			meta: { week_label: '2026-W26', executive_summary: 'Synthèse.' },
+			items: [
+				{
+					rank: 1,
+					title: 'Item 1',
+					summary: 'S',
+					filmpro_relevance: 'R',
+					deep_dive: null as string | null
+				}
+			],
+			impacts_filmpro: [
+				{ axis: 'pricing', note: 'Hausse <cite index="1-2">de 12% en 2026</cite> à anticiper.' },
+				{ axis: 'reglementation', note: 'Note sans cite, inchangée.' }
+			]
+		};
+
+		const out = stripCitationsFromReport(report);
+		expect(out.impacts_filmpro[0].note).toBe('Hausse de 12% en 2026 à anticiper.');
+		expect(out.impacts_filmpro[1].note).toBe('Note sans cite, inchangée.');
+		// axis (champ non textuel) préservé
+		expect(out.impacts_filmpro[0].axis).toBe('pricing');
+	});
+
+	it('préserve impacts_filmpro null/absent (rétrocompat)', () => {
+		const report = {
+			meta: { week_label: '2026-W26', executive_summary: 'X' },
+			items: [],
+			impacts_filmpro: null as Array<{ note?: string }> | null
+		};
+		const out = stripCitationsFromReport(report);
+		expect(out.impacts_filmpro).toBe(null);
+	});
 });

@@ -70,8 +70,12 @@ export function stripCitationsFromItem<
 }
 
 /**
- * Strip cite sur l'edition complète : executive_summary + tous les items.
- * Retourne une nouvelle copie (pas de mutation du paramètre).
+ * Strip cite sur l'edition complète : executive_summary + tous les items + les
+ * notes d'impacts_filmpro. Retourne une nouvelle copie (pas de mutation du
+ * paramètre). Couvre impacts_filmpro[].note en miroir exact de ses deux jumeaux
+ * de la même chaîne post-LLM (dedashReport, stripEnumArtifactsFromReport) : un
+ * <cite> émis par web_search dans une note d'impact est rendu en clair dans le
+ * brief client (email-brief), il doit être strippé comme partout ailleurs.
  */
 export function stripCitationsFromReport<
 	T extends {
@@ -81,6 +85,7 @@ export function stripCitationsFromReport<
 			filmpro_relevance: string;
 			deep_dive: string | null;
 		}>;
+		impacts_filmpro?: Array<{ note?: string }> | null;
 	}
 >(report: T): T {
 	return {
@@ -89,6 +94,11 @@ export function stripCitationsFromReport<
 			...report.meta,
 			executive_summary: stripCitationTags(report.meta.executive_summary)
 		},
-		items: report.items.map((it) => stripCitationsFromItem(it))
+		items: report.items.map((it) => stripCitationsFromItem(it)),
+		impacts_filmpro: report.impacts_filmpro
+			? report.impacts_filmpro.map((im) =>
+					im && typeof im.note === 'string' ? { ...im, note: stripCitationTags(im.note) } : im
+				)
+			: report.impacts_filmpro
 	};
 }

@@ -215,7 +215,7 @@ function renderSparseHtml(data: SendRecapSuccess): string {
 		</div>
 		<div style="padding:20px;">
 			<div style="margin-bottom:16px;">
-				<span style="color:#9a3412;font-weight:600;">⚠️ Volume anormalement bas (&lt; 2 items)</span>
+				<span style="color:#9a3412;font-weight:600;">Volume anormalement bas (&lt; 2 items)</span>
 				 : <a href="${CRM_URL}/crm/veille" style="color:#2563eb;">Ouvrir dans le CRM</a>
 			</div>
 
@@ -295,7 +295,7 @@ function renderFailureHtml(data: SendRecapFailure): string {
 			<div style="font-size:13px;color:#fecaca;margin-top:2px;">W${escapeHtml(weekLabel)}, génération interrompue</div>
 		</div>
 		<div style="padding:20px;">
-			<div style="margin-bottom:16px;"><span style="color:#dc2626;font-weight:600;">❌ Échec génération</span></div>
+			<div style="margin-bottom:16px;"><span style="color:#dc2626;font-weight:600;">Échec génération</span></div>
 
 			<h3 style="margin:16px 0 8px;font-size:14px;color:#475569;">Message d'erreur</h3>
 			<pre style="background:#fef2f2;border:1px solid #fecaca;padding:10px;border-radius:4px;font-size:13px;overflow-x:auto;color:#7f1d1d;white-space:pre-wrap;">${escapeHtml(truncated)}</pre>
