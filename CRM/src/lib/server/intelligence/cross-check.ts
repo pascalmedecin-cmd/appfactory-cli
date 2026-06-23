@@ -16,20 +16,35 @@
 //
 // Recalibrage 2026-06-22 (GO Pascal, cause racine W25 « 0 item ») : le vérificateur
 // ne juge PLUS « chaque phrase est-elle présente verbatim ? » (ce qui rejetait la
-// VOIX D'ANALYSTE — les phrases d'interprétation / « so what » ne sont jamais
+// VOIX D'ANALYSTE - les phrases d'interprétation / « so what » ne sont jamais
 // littéralement dans un article et étaient flaggées hallucination → 4 items locaux
 // vivants jetés en W25). Il juge désormais « le résumé invente-t-il ou déforme-t-il
 // un FAIT ? ». Les chiffres/dates/noms/citations restent vérifiés à l'identique
 // (protection W18 INTACTE) ; l'interprétation cohérente passe. Le GATE déterministe
-// (rejet si `facts_ok=false`, y compris divergences vides — brèche H-04 fermée) est
+// (rejet si `facts_ok=false`, y compris divergences vides - brèche H-04 fermée) est
 // INCHANGÉ : seul le CRITÈRE du vérificateur (le SYSTEM prompt) évolue.
 // Voir .product-architect/veille/refonte-lot1-lot2-spec.md (AC-1).
+//
+// Recalibrage TRUST-BY-SOURCE 2026-06-23 (GO Pascal, cadrage sources fiables) : la
+// confiance s'applique désormais AUSSI aux faits durs SELON LE RÉGIME DU DOMAINE.
+// - Source FIABLE (T1 officiel/normatif/stats, T2 presse pro, T4 presse qualité +
+//   agence, T5 peer-reviewed) → critère « confiance » : un fait dur n'est rejeté que
+//   s'il est CONTREDIT par la page (l'absence seule ne rejette plus - l'extracteur de
+//   texte est grossier et rate tableaux/PDF/images d'une source reconnue). DEUX
+//   garde-fous stricts conservés : (a) un chiffre ATTRIBUÉ à un cabinet d'études reste
+//   verbatim (héritage de flag), (b) sur une association/lobby, les chiffres de marché
+//   /perf restent verbatim.
+// - Source NON fiable / inconnue / sponsorisée / opinion / preprint / paywall non lu →
+//   critère STRICT inchangé (l'absence suffit à rejeter).
+// Le GATE déterministe (rejet si facts_ok=false) est TOUJOURS INCHANGÉ : seul le
+// CRITÈRE (quel SYSTEM) change selon le régime. Voir cadrage-sources-fiables-v1.md.
 
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import type { IntelligenceItem } from './schema';
 import { costTracker, type CostTracker } from './cost-tracker';
 import { isSafeUrlForFetch } from './url-guard';
+import { domainRegime, type VerificationRegime } from './source-allowlist';
 
 const CROSS_CHECK_MODEL = 'claude-sonnet-4-6';
 const CROSS_CHECK_MAX_TOKENS = 1500;
@@ -75,7 +90,7 @@ export interface CrossCheckResult {
 	unverifiable: IntelligenceItem[];
 	/**
 	 * Nombre d'items dont la VÉRIFICATION a échoué côté API (exception du modèle
-	 * vérificateur : crédit épuisé, auth, surcharge, réseau) — distinct d'une page
+	 * vérificateur : crédit épuisé, auth, surcharge, réseau) - distinct d'une page
 	 * morte (unfetchable) qui est un problème de contenu. Sert à distinguer un
 	 * échec systémique d'un rejet de contenu.
 	 */
@@ -83,7 +98,7 @@ export interface CrossCheckResult {
 	/**
 	 * Présent UNIQUEMENT si TOUS les items ont échoué côté API verifier (aucune
 	 * vérification possible). Signal d'un incident systémique (crédit dédié épuisé,
-	 * clé invalide, API down) à remonter en alerte distincte — surtout PAS publier
+	 * clé invalide, API down) à remonter en alerte distincte - surtout PAS publier
 	 * une édition vide en silence (la génération coûteuse a déjà réussi).
 	 */
 	systemicError?: { kind: ApiErrorKind; message: string };
@@ -187,13 +202,17 @@ function decodeNumericEntities(s: string): string {
  * - tronque à 60KB de texte (largement suffisant pour un article)
  */
 export function htmlToPlainText(html: string): string {
+	// Retrait LINÉAIRE de script/style/noscript/template + commentaires via stripNonContent
+	// (indexOf, ReDoS-safe, gère les ouvrants non fermés d'une page tronquée) AVANT le strip des
+	// balises. Remplace les anciennes regex lazy `<script>[\s\S]*?</script>` / `<!--…-->` à
+	// backtracking quadratique sur des ouvrants sans fermant (re-vérif finding ReDoS amplifié).
+	// Strip des balises = `<[^<>]+>` (et PAS `<[^>]+>`) : exclure `<` du contenu de balise borne le
+	// backtracking à une seule balise → linéaire même sur du code non-échappé « if (a < b && c < d) »
+	// (re-vérif finale, bloqueur DoS event-loop : `<[^>]+>` faisait 57 s sur 200KB de `<` sans `>`).
+	// Sortie identique sur HTML valide (une vraie balise ne contient pas de `<` non échappé) ;
+	// strictement meilleure sur HTML invalide (« a < b » préservé comme texte vers le vérificateur).
 	return decodeNumericEntities(
-		html
-			.replace(/<script[\s\S]*?<\/script>/gi, ' ')
-			.replace(/<style[\s\S]*?<\/style>/gi, ' ')
-			.replace(/<noscript[\s\S]*?<\/noscript>/gi, ' ')
-			.replace(/<!--[\s\S]*?-->/g, ' ')
-			.replace(/<[^>]+>/g, ' ')
+		stripNonContent(html).replace(/<[^<>]+>/g, ' ')
 	)
 		.replace(/&nbsp;/g, ' ')
 		.replace(/&amp;/g, '&')
@@ -221,7 +240,7 @@ const VERDICT_TOOL: Anthropic.Tool = {
 			facts_ok: {
 				type: 'boolean',
 				description:
-					"true SI aucun FAIT VÉRIFIABLE du résumé n'est fabriqué ni déformé : tous les chiffres (avec décimales/unités), dates, noms propres et citations entre guillemets sont présents verbatim ou avec une équivalence évidente dans la page, et aucune affirmation factuelle spécifique n'est contredite par la page. false dès qu'au moins UN fait est fabriqué ou déformé (et tu le listes alors dans divergences en severity='fatal'). Les phrases d'INTERPRÉTATION / d'analyse / de mise en perspective (le « so what ») qui n'introduisent aucun fait vérifiable nouveau ne réduisent JAMAIS facts_ok."
+					"true SI, SELON LE CRITÈRE DÉFINI DANS LES INSTRUCTIONS SYSTÈME, aucun FAIT VÉRIFIABLE du résumé n'est fautif. false dès qu'au moins UN fait l'est (tu le listes alors dans divergences en severity='fatal'). Les phrases d'INTERPRÉTATION / d'analyse / de mise en perspective (le « so what ») qui n'introduisent aucun fait vérifiable nouveau ne réduisent JAMAIS facts_ok."
 			},
 			divergences: {
 				type: 'array',
@@ -243,7 +262,7 @@ const VERDICT_TOOL: Anthropic.Tool = {
 							type: 'string',
 							enum: ['fatal', 'minor'],
 							description:
-								"fatal = FAIT fabriqué ou déformé (chiffre faux, citation inventée, entité absente, énumération étendue, date inventée, fait contredit). minor = paraphrase fidèle / nuance secondaire (informatif, ne rejette pas). N'inscris JAMAIS ici une phrase d'interprétation : si elle n'a pas de fait vérifiable, ce n'est pas une divergence."
+								"fatal = fait fautif SELON LE CRITÈRE SYSTÈME (mode STRICT : fait fabriqué/absent/déformé/contredit ; mode CONFIANCE : fait CONTREDIT par la page, OU chiffre attribué à un cabinet d'études absent, OU chiffre de marché/perf d'une association absent). minor = paraphrase fidèle / nuance secondaire / (en mode CONFIANCE) fait simplement absent mais NON contredit (informatif, ne rejette pas). N'inscris JAMAIS ici une phrase d'interprétation : si elle n'a pas de fait vérifiable, ce n'est pas une divergence."
 						}
 					}
 				}
@@ -258,7 +277,11 @@ const VERDICT_TOOL: Anthropic.Tool = {
 	}
 };
 
-const SYSTEM = `Tu es un VÉRIFICATEUR FACTUEL pour une veille sectorielle B2B rédigée par un analyste sénior.
+// SYSTEM mode STRICT (sources non fiables / inconnues / sponsorisées / preprints /
+// paywall non lu) : l'ABSENCE d'un fait sur la page suffit à le rejeter. Critère
+// historique (protection W18). Renommé depuis `SYSTEM` le 2026-06-23 (ajout du mode
+// CONFIANCE pour les sources fiables, voir SYSTEM_TRUSTED).
+const SYSTEM_STRICT = `Tu es un VÉRIFICATEUR FACTUEL pour une veille sectorielle B2B rédigée par un analyste sénior.
 Ta SEULE mission : détecter si le résumé INVENTE ou DÉFORME un FAIT VÉRIFIABLE par rapport à la page source réelle. Tu ne juges NI le style, NI si chaque phrase est présente mot-pour-mot.
 
 # Un FAIT VÉRIFIABLE
@@ -280,9 +303,9 @@ On te fournit le RÉSUMÉ (description de l'article) et, parfois, la LECTURE FIL
 - **Exclusivité / antériorité / tendance présentée comme un fait, absente de la page** : un superlatif ou une exclusivité (« le premier », « le plus grand », « unique », « du jamais-vu », « record »), une antériorité (« pour la première fois », « jamais auparavant »), ou une tendance chiffrable affirmée comme un fait (« la demande accélère depuis deux ans ») est un FAIT VÉRIFIABLE même sans chiffre. S'il n'est pas établi par la page → fatal. L'ABSENCE suffit (pas besoin d'une contradiction explicite). NE PAS confondre avec une généralisation prudente cohérente avec la page.
 
 # À IGNORER → ne JAMAIS flagger, ne réduit JAMAIS facts_ok
-- Les phrases d'ANALYSE, d'INTERPRÉTATION, d'IMPLICATION, de mise en perspective — le « so what » — qui n'introduisent AUCUN fait vérifiable nouveau. Exemple à IGNORER : « cela confirme la pression estivale croissante sur les bâtiments très vitrés » (interprétation, aucun chiffre/nom/date/citation/exclusivité).
+- Les phrases d'ANALYSE, d'INTERPRÉTATION, d'IMPLICATION, de mise en perspective - le « so what » - qui n'introduisent AUCUN fait vérifiable nouveau. Exemple à IGNORER : « cela confirme la pression estivale croissante sur les bâtiments très vitrés » (interprétation, aucun chiffre/nom/date/citation/exclusivité).
 - Les paraphrases fidèles au sens et aux faits.
-- La généralisation prudente cohérente avec la page (« la sensibilité au sujet augmente ») — distincte d'une exclusivité/antériorité affirmée.
+- La généralisation prudente cohérente avec la page (« la sensibilité au sujet augmente ») - distincte d'une exclusivité/antériorité affirmée.
 - Les capacités produit de FilmPro et les catégories de cibles génériques de la lecture FilmPro (voir « Champs à vérifier »).
 
 # Règle d'or
@@ -292,8 +315,420 @@ facts_ok = true si AUCUN fait fabriqué/déformé. facts_ok = false dès qu'au m
 
 Tu réponds UNIQUEMENT via le tool emit_verdict. Pas de markdown, pas de préambule.`;
 
+// SYSTEM mode CONFIANCE (sources fiables : T1 officiel/normatif/stats, T2 presse pro,
+// T4 presse de qualité + agence, T5 peer-reviewed). Décision Pascal 2026-06-23 : on se
+// fie à la source reconnue plutôt qu'au filtre IA. Un fait dur n'est rejeté que s'il est
+// CONTREDIT par la page (l'absence seule ne rejette plus). DEUX garde-fous stricts
+// conservés (héritage de flag + chiffres de cabinet). Le GATE (rejet si facts_ok=false)
+// est inchangé ; seul le critère qui amène facts_ok=false change. Cf. cadrage section 1.
+const SYSTEM_TRUSTED = `Tu es un VÉRIFICATEUR FACTUEL pour une veille sectorielle B2B rédigée par un analyste sénior.
+La source de cet article est une SOURCE RECONNUE ET REDEVABLE (organisme officiel, statistique publique, norme, presse professionnelle ou de qualité établie, agence de presse, revue à comité de lecture). On lui accorde la CONFIANCE : ta mission n'est PAS de retrouver chaque fait mot-pour-mot, mais de détecter si le résumé est CONTREDIT par la page.
+
+# Un FAIT VÉRIFIABLE
+Un chiffre (montant, %, CAGR, surface, volume, durée, température), une date, un nom propre (entreprise, personne, lieu, produit, norme, loi), ou une citation entre guillemets / marquée <cite>.
+
+# Champs à vérifier
+On te fournit le RÉSUMÉ et, parfois, la LECTURE FILMPRO (so-what : interprétation métier). La LECTURE FILMPRO est libre dans son raisonnement : ne flagge RIEN sur les capacités produit de FilmPro (ex. « bloque jusqu'à 99% des UV »), les catégories de cibles génériques (régies, architectes, tertiaire, ERP), les suggestions d'action. MAIS si elle présente comme un FAIT EXTERNE RÉEL une entreprise NOMMÉE ayant agi, un appel d'offres / chantier précis, une personne, un lieu ou un chiffre d'actualité spécifique, et que la page le CONTREDIT → fatal.
+
+# À REJETER → facts_ok=false + divergence severity='fatal'
+- Un fait du résumé CONTREDIT par la page : la page affirme une valeur DIFFÉRENTE (chiffre, date, nom, lieu). Exemple FATAL : page « 28°C », résumé « 35°C » ; page « 2,88 Md USD », résumé « 2,66 Md USD » ; page « façades et toitures », résumé « fenêtres » (élément contredit/substitué). C'est la CONTRADICTION qui rejette, pas l'absence.
+- **GARDE-FOU 1 (héritage de flag)** : un CHIFFRE que le résumé attribue à un CABINET D'ÉTUDES DE MARCHÉ nommé (Mordor, Fortune Business, MarketsandMarkets, SNS / SNS Insider, Grand View, Allied Market Research, Research and Markets, GII) ou à « une étude de marché / un rapport de marché / un cabinet » DOIT être présent VERBATIM sur la page. S'il est ABSENT → fatal (on ne blanchit pas un chiffre de cabinet sous la signature de la source fiable). Pour CE type de chiffre uniquement, l'absence suffit.
+- Une citation entre guillemets / <cite> que la page CONTREDIT (mots différents attribués à la même personne). Une citation simplement introuvable mais plausible ne rejette pas.
+
+# À IGNORER → ne JAMAIS flagger, ne réduit JAMAIS facts_ok
+- **Un fait simplement ABSENT de la page mais NON contredit** : la source est reconnue et l'extracteur de texte est grossier (il rate tableaux, PDF liés, images, contenu chargé en JS). Un chiffre/nom/date du résumé qu'on ne retrouve pas, sans que la page affirme autre chose, est très probablement réel mais non extrait → tu le classes en severity='minor' (informatif), JAMAIS fatal. (Exception : le GARDE-FOU 1 ci-dessus.)
+- Les phrases d'ANALYSE / d'INTERPRÉTATION / de mise en perspective (le « so what ») sans fait vérifiable nouveau.
+- Les paraphrases fidèles au sens et aux faits.
+
+# Règle d'or (mode CONFIANCE)
+Tu ne rejettes un fait QUE si la page le CONTREDIT activement (la page affirme autre chose), OU s'il s'agit d'un chiffre attribué à un cabinet d'études absent de la page (garde-fou 1). L'ABSENCE seule d'un fait ne rejette JAMAIS. En cas de doute, NE PAS flagger.
+
+facts_ok = false UNIQUEMENT si la page contredit au moins un fait, OU si un chiffre de cabinet attribué est absent. Sinon facts_ok = true.
+
+Tu réponds UNIQUEMENT via le tool emit_verdict. Pas de markdown, pas de préambule.`;
+
+// Clause ajoutée au SYSTEM CONFIANCE pour les domaines ADVOCACY (associations /
+// fédérations sectorielles, financées par l'industrie). Garde-fou 2 du cadrage : leurs
+// chiffres de marché / performance / superlatifs ne bénéficient PAS de la confiance.
+const ADVOCACY_CLAUSE = `
+# GARDE-FOU 2 (source = association / fédération sectorielle)
+Cette source est un organe financé par l'industrie. Tout CHIFFRE DE MARCHÉ, POURCENTAGE DE PERFORMANCE, ou SUPERLATIF / EXCLUSIVITÉ (« le plus grand », « première fois », « record ») présenté comme un fait DOIT être présent VERBATIM sur la page ; s'il est ABSENT → fatal (on ne fait pas confiance à un chiffre de marché auto-déclaré par un lobby). Les faits techniques, normatifs et descriptifs restent en confiance (leur absence ne rejette pas).`;
+
+/** Retourne le SYSTEM correspondant au régime de vérification (cadrage 2026-06-23). */
+function systemForRegime(regime: VerificationRegime): string {
+	if (regime === 'strict') return SYSTEM_STRICT;
+	if (regime === 'trusted_advocacy') return SYSTEM_TRUSTED + '\n' + ADVOCACY_CLAUSE;
+	return SYSTEM_TRUSTED;
+}
+
+// Détecteur sponsorisé / opinion (cadrage 5.2) : la fiabilité d'un titre ne se transmet
+// PAS à sa rubrique payée ou d'opinion. Sur match, on FORCE le régime strict, même sur un
+// domaine fiable.
+//
+// Matching PAR SEGMENT de chemin (revue 2026-06-23, findings MEDIUM-3/4 + LOW-5/6) :
+// l'ancien matching par sous-chaîne ratait des tokens publicitaires (publicite, anzeige,
+// werbung, sponsored-content, branded...) ET créait des faux positifs (« cp- » au milieu
+// d'un slug, « présenté par » dans un titre éditorial normal). On découpe le path en
+// segments et on matche un segment EXACT, ou un PRÉFIXE clairement publicitaire.
+// ROUND-2 (revue 2026-06-23 finding LOW round-2) : tokens AMBIGUS retirés - `cp` (slug
+// ambigu, ≠ « communiqué de presse » garanti), `native` (native plants/API/native-ad…),
+// `promo`/`promotion`/`promoted` (promotion scolaire/immobilière), `annonce`/`annonces`
+// (toute annonce/communiqué d'actualité). Ils créaient des faux strict (perte de volume) sur
+// des slugs métier légitimes. Les marqueurs publicitaires NON ambigus restent ; on ajoute
+// `native-advertising` (l'expression complète, sans le `native` nu). Préfixe `cp-` retiré.
+const SPONSORED_SEGMENTS = new Set([
+	'sponsored', 'sponsorise', 'sponsorisé', 'sponsored-content', 'sponsoredcontent',
+	'partner', 'partners', 'partner-content', 'partenaire', 'partenaires', 'contenu-partenaire',
+	'publi', 'publireportage', 'publi-communique', 'publicommunique', 'publicite', 'publicité',
+	'advertorial', 'advertising', 'native-advertising', 'brandstudio', 'brand-studio',
+	'brandlab', 'brand-lab', 'anzeige', 'werbung',
+	'communique', 'communiques', 'press-release'
+]);
+const SPONSORED_SEGMENT_PREFIXES = ['publi-', 'sponsored-', 'advertorial-', 'brand-'];
+const OPINION_SEGMENTS = new Set([
+	'opinion', 'opinions', 'tribune', 'tribunes', 'edito', 'editorial', 'éditorial',
+	'chronique', 'chroniques', 'debat', 'débat', 'debats', 'idees', 'idées', 'meinung',
+	'point-de-vue', 'carte-blanche'
+]);
+// Marqueurs de titre UNIQUEMENT non ambigus (les « en collaboration avec » / « présenté
+// par » nus ont été retirés : trop fréquents en journalisme normal, finding LOW-6).
+const SPONSORED_TITLE_MARKERS = [
+	'publireportage', 'publi-communiqué', 'publi-communique', 'contenu sponsorisé',
+	'contenu sponsorise', 'contenu de marque', 'contenu partenaire', '[sponsorisé]',
+	'[sponsorise]', 'sponsorisé par', 'sponsorise par', 'en partenariat commercial', 'advertorial'
+];
+const OPINION_TITLE_MARKERS = [
+	'opinion :', 'tribune :', 'tribune libre', 'édito :', 'edito :', 'point de vue :',
+	'chronique :', 'carte blanche :'
+];
+
+/**
+ * true si l'item provient d'une rubrique sponsorisée / publireportage / opinion
+ * (détecté par SEGMENT de chemin d'URL ou marqueur de titre non ambigu). Ces rubriques ne
+ * bénéficient pas de la confiance accordée au domaine → régime strict. Exporté pour test.
+ */
+export function isSponsoredOrOpinion(url: string, title: string): boolean {
+	let segments: string[] = [];
+	try {
+		segments = new URL(url).pathname.toLowerCase().split('/').filter(Boolean);
+	} catch {
+		segments = (url ?? '').toLowerCase().split('/').filter(Boolean);
+	}
+	const segHit = segments.some(
+		(s) =>
+			SPONSORED_SEGMENTS.has(s) ||
+			OPINION_SEGMENTS.has(s) ||
+			SPONSORED_SEGMENT_PREFIXES.some((p) => s.startsWith(p))
+	);
+	if (segHit) return true;
+	const t = (title ?? '').toLowerCase();
+	return (
+		SPONSORED_TITLE_MARKERS.some((m) => t.includes(m)) ||
+		OPINION_TITLE_MARKERS.some((m) => t.includes(m))
+	);
+}
+
+// Garde-fou 1 DÉTERMINISTE (revue 2026-06-23, finding LOW-7) : backstop du prompt. Si le
+// contenu rédigé (résumé / deep_dive / so-what) attribue un CHIFFRE à un cabinet d'études de
+// marché nommé, on force le régime STRICT pour tout l'item (le chiffre attribué doit être
+// verbatim). Ne dépend plus du seul jugement LLM (invariant dur jamais confié au prompt seul,
+// cf. feedback_splitter_deterministe_post_llm). Le SYSTEM_TRUSTED porte DÉJÀ le garde-fou 1
+// pour le LLM ; ce backstop est la ceinture déterministe sur le cas courant (chiffre proche
+// du cabinet).
+//
+// ROUND-2 (revue 2026-06-23 finding MEDIUM round-2) : on exige désormais la PROXIMITÉ d'un
+// chiffre au nom du cabinet, et on retire « grand view » nu. Avant, une simple mention forçait
+// tout l'item en strict → deux régressions de volume :
+//  - « a grand view of the skyline » (anglais immobilier/vitrage = cœur métier FilmPro) matchait
+//    « grand view » → strict à tort. Retiré au profit de « grandview » / « grand view research ».
+//  - « selon McKinsey, le cabinet recommande de… » (name-drop SANS chiffre attribué) forçait
+//    strict pour rien. La proximité chiffre+cabinet cible l'INTENTION réelle du garde-fou
+//    (un CHIFFRE attribué), pas toute mention.
+const MARKET_RESEARCH_FIRM_MARKERS = [
+	'mordor', 'fortune business', 'marketsandmarkets', 'markets and markets', 'sns insider',
+	'grandview', 'grand view research', 'allied market', 'research and markets', 'researchandmarkets',
+	'gii research', 'global industry analysts', 'precedence research', 'statista', 'gartner',
+	'mckinsey', 'roland berger', 'frost & sullivan', 'frost and sullivan', 'technavio',
+	'euromonitor', 'forrester'
+];
+// Fenêtre (en caractères) autour du nom du cabinet dans laquelle un chiffre de MARCHÉ est
+// considéré « attribué ». Couvre une phrase courte de résumé (« Selon Mordor Intelligence, +6 %
+// d'ici 2031 »). Au-delà : couvert par le garde-fou 1 du SYSTEM_TRUSTED (le prompt reste primaire).
+const FIRM_FIGURE_PROXIMITY = 160;
+// Indice qu'un chiffre voisin est un CHIFFRE DE MARCHÉ (et pas une année, un étage, une température)
+// - ROUND-2 re-vérif finding LOW « la fenêtre capte n'importe quel chiffre ». On exige, dans la
+// fenêtre, un chiffre ET un indice de marché : %, monnaie, ordre de grandeur, CAGR, « marché ».
+//
+// ROUND-2 re-vérif finding MEDIUM : frontières CONSCIENTES DES ACCENTS (lookbehind/lookahead sur
+// [a-zà-öø-ÿ]). Le `\b` ASCII traitait « é » comme non-mot → « eur » dans « leur », « march » dans
+// « démarche », « usd/chf » en sous-chaîne déclenchaient un faux strict. L'entrée est déjà en
+// minuscules (mentionsMarketResearchFirm) → pas besoin du flag i. Les symboles %/$/€ n'ont pas de
+// frontière (non-lettres). Couvre FR + EN courants.
+const LETTER_CLASS = 'a-zà-öø-ÿ';
+const MARKET_FIGURE_CUE = new RegExp(
+	`%|\\$|€|(?<![${LETTER_CLASS}])(eur|usd|chf|euros?|dollars?|francs?|milliards?|millions?|billions?|md|mrd|mds|bn|cagr|tcac|march[ée]s?|markets?|parts? de march[ée])(?![${LETTER_CLASS}])`
+);
+
+/** true si un caractère est une lettre/chiffre ASCII ou accentué (frontière de mot pour le nom). */
+function isWordChar(ch: string | undefined): boolean {
+	return !!ch && /[a-z0-9à-öø-ÿ]/i.test(ch);
+}
+
+/**
+ * true si le contenu rédigé de l'item attribue un CHIFFRE DE MARCHÉ à un cabinet d'études nommé
+ * (cabinet en frontière de mot ET, dans sa fenêtre de proximité, un chiffre accompagné d'un indice
+ * de marché). Exporté pour test. ROUND-2 : frontière de mot (pas de sous-chaîne) + indice de marché
+ * (pas une année/un étage) - réduit le faux strict tout en gardant la ceinture sur les vrais chiffres
+ * de cabinet ; les cas hors fenêtre restent couverts par le garde-fou 1 du SYSTEM_TRUSTED.
+ */
+export function mentionsMarketResearchFirm(item: IntelligenceItem): boolean {
+	const text =
+		`${item.summary ?? ''} ${item.deep_dive ?? ''} ${item.filmpro_relevance ?? ''}`.toLowerCase();
+	for (const firm of MARKET_RESEARCH_FIRM_MARKERS) {
+		let idx = text.indexOf(firm);
+		while (idx !== -1) {
+			// Frontière de mot : ni lettre/chiffre juste avant ni juste après (évite « gartner »
+			// dans un mot plus large). Les espaces internes des noms multi-mots sont sans effet.
+			const before = text[idx - 1];
+			const after = text[idx + firm.length];
+			if (!isWordChar(before) && !isWordChar(after)) {
+				const from = Math.max(0, idx - FIRM_FIGURE_PROXIMITY);
+				const to = Math.min(text.length, idx + firm.length + FIRM_FIGURE_PROXIMITY);
+				const window = text.slice(from, to);
+				if (/\d/.test(window) && MARKET_FIGURE_CUE.test(window)) return true;
+			}
+			idx = text.indexOf(firm, idx + firm.length);
+		}
+	}
+	return false;
+}
+
+// Marqueurs anti-teaser (revue 2026-06-23, finding HIGH-2) : un article paywallé affiche
+// souvent une mention explicite d'abonnement. Détectés → on retombe en strict (on ne fait
+// pas confiance à un corps qu'on n'a pas pu lire).
+const PAYWALL_TEASER_MARKERS = [
+	'réservé aux abonnés', 'reserve aux abonnes', 'contenu réservé', 'article réservé',
+	"s'abonner pour lire", 'abonnez-vous pour lire', 'pour lire la suite', 'déjà abonné',
+	"offre d'abonnement", 'connectez-vous pour lire', 'nur für abonnenten', 'nur fuer abonnenten',
+	'jetzt abonnieren', 'subscribe to read', 'this content is for subscribers',
+	'create an account to read', 'log in to read',
+	// Paywall académique EN (T5 revues : ne sont pas dans PAYWALL_DOMAINS upstream ; primary
+	// catch domaine-agnostique - ROUND-2 finding HIGH résiduel, couverture sources trusted hors
+	// PAYWALL_DOMAINS). Marqueurs spécifiques (pas « access options » trop large).
+	'subscribe to access', 'purchase pdf', 'purchase article', 'buy this article',
+	'access through your institution', 'get access to the full'
+];
+
+/** true si le texte de page contient un marqueur de paywall/teaser explicite. Exporté pour test. */
+export function looksLikePaywallTeaser(pageText: string): boolean {
+	const t = (pageText ?? '').toLowerCase();
+	return PAYWALL_TEASER_MARKERS.some((m) => t.includes(m));
+}
+
+/**
+ * Extrait les contenus des blocs <tag>...</tag> de façon LINÉAIRE par balayage `indexOf`
+ * (ROUND-2 finding ReDoS : remplace les regex `<tag>([\s\S]*?)</tag>` à backtracking
+ * quadratique, ~4-6 s/item sur HTML dégénéré). Tolérant : ignore les `<tagXXX>` (frontière de
+ * mot vérifiée), s'arrête à un bloc non fermé, borné par `maxBlocks`. Insensible à la casse.
+ */
+function extractTagBlocks(html: string, tag: string, maxBlocks = 200): string[] {
+	const lower = html.toLowerCase();
+	const open = `<${tag}`;
+	const close = `</${tag}>`;
+	const blocks: string[] = [];
+	let scan = 0;
+	while (blocks.length < maxBlocks) {
+		const openIdx = lower.indexOf(open, scan);
+		if (openIdx === -1) break;
+		// Frontière de mot : le caractère après `<tag` doit terminer le nom de balise
+		// (espace, '>', '/', fin), sinon c'est un autre tag (`<article`≠`<articleX`, `<p`≠`<pre`).
+		const boundary = lower[openIdx + open.length] ?? '>';
+		if (!(boundary === ' ' || boundary === '>' || boundary === '/' || boundary === '\t' || boundary === '\n' || boundary === '\r')) {
+			scan = openIdx + open.length;
+			continue;
+		}
+		const gt = lower.indexOf('>', openIdx + open.length);
+		if (gt === -1) break;
+		const closeIdx = lower.indexOf(close, gt + 1);
+		if (closeIdx === -1) break; // bloc non fermé : on s'arrête (pas de span géant ReDoS-like)
+		blocks.push(html.slice(gt + 1, closeIdx));
+		scan = closeIdx + close.length;
+	}
+	return blocks;
+}
+
+/**
+ * Retire les blocs <tag>...</tag> de façon LINÉAIRE (même motivation ReDoS qu'`extractTagBlocks`).
+ * Conserve le reste du HTML (y compris un éventuel bloc final non fermé). Insensible à la casse.
+ */
+function removeTagBlocks(html: string, tag: string, dropUnclosed = false): string {
+	const open = `<${tag}`;
+	const close = `</${tag}>`;
+	const lower = html.toLowerCase();
+	let out = '';
+	let cursor = 0; // copié jusqu'ici
+	let scan = 0; // position de recherche
+	// Borne de sûreté = nb de caractères (scan croît strictement à chaque tour, donc on termine
+	// de toute façon par indexOf=-1 ; cette borne ne fait que garantir l'arrêt sans plafonner le
+	// traitement réel - fix findings LOW « cap 1000 laisse du chrome/des liens non strippés »).
+	let safety = html.length + 1;
+	while (safety-- > 0) {
+		const openIdx = lower.indexOf(open, scan);
+		if (openIdx === -1) break;
+		const boundary = lower[openIdx + open.length] ?? '>';
+		if (!(boundary === ' ' || boundary === '>' || boundary === '/' || boundary === '\t' || boundary === '\n' || boundary === '\r')) {
+			scan = openIdx + open.length;
+			continue;
+		}
+		const closeIdx = lower.indexOf(close, openIdx + open.length);
+		if (closeIdx === -1) {
+			// Tag non fermé. dropUnclosed (tag NON-CONTENU : script/style/noscript/template) : un
+			// ouvrant sans fermant = page tronquée à 200KB en plein <script> JSON-LD → le reste EST
+			// le contenu du tag, on le retire jusqu'à la fin (sinon son bruit gonfle la mesure de
+			// corps → teaser paywallé resterait 'trusted' - re-vérif bloqueur HIGH). Fail-secure :
+			// le corps mesuré tombe → strict (on ne fait pas confiance à une page illisible).
+			// Sans dropUnclosed (tag de contenu : nav/aside/a/…) : on garde le reste (pas de sur-retrait).
+			if (dropUnclosed) return out + html.slice(cursor, openIdx);
+			break;
+		}
+		out += html.slice(cursor, openIdx);
+		cursor = closeIdx + close.length;
+		scan = cursor;
+	}
+	out += html.slice(cursor);
+	return out;
+}
+
+/**
+ * Retire les commentaires HTML <!-- ... --> de façon LINÉAIRE. Pourquoi (ROUND-2 finding bug
+ * LOW) : une balise fermante DANS un commentaire (`<!-- </article> -->`) trompait l'extraction,
+ * et un <p> commenté gonflait la mesure. On nettoie en amont (stripNonContent).
+ */
+function removeHtmlComments(html: string): string {
+	let out = '';
+	let cursor = 0;
+	while (true) {
+		const start = html.indexOf('<!--', cursor);
+		if (start === -1) break;
+		out += html.slice(cursor, start);
+		const end = html.indexOf('-->', start + 4);
+		if (end === -1) return out; // commentaire non fermé : on coupe ici
+		cursor = end + 3;
+	}
+	return out + html.slice(cursor);
+}
+
+/**
+ * Nettoie le HTML AVANT toute mesure de corps : retire script/style/noscript + commentaires.
+ * Sinon un <p>/<article> présent dans un <script> (chaîne JS) ou un commentaire gonfle la mesure
+ * (ROUND-2 finding bug MEDIUM « <p> dans <script>/<style>/commentaires → inflation »). ReDoS-safe.
+ */
+function stripNonContent(html: string): string {
+	let s = html;
+	// dropUnclosed=true : un de ces tags ouvert sans fermant (troncature 200KB) est retiré jusqu'à
+	// la fin - sinon son contenu (JS/CSS) pollue la mesure de corps (re-vérif bloqueur HIGH).
+	for (const tag of ['script', 'style', 'noscript', 'template']) s = removeTagBlocks(s, tag, true);
+	return removeHtmlComments(s);
+}
+
+/** Retire le chrome de page (nav/header/footer/aside) avant mesure. ReDoS-safe. */
+function stripPageChrome(html: string): string {
+	let s = html;
+	for (const tag of ['nav', 'header', 'footer', 'aside']) s = removeTagBlocks(s, tag);
+	return s;
+}
+
+/**
+ * Texte de CORPS d'un scope = texte brut APRÈS retrait des ancres <a> (liens). Pourquoi le
+ * retrait des ancres (ROUND-2 re-vérif, bloqueur HIGH + bloqueur MEDIUM) :
+ *  - Une zone « à lire aussi » / « recommandés » est faite de LIENS, quel que soit leur balisage
+ *    (liens nus <a>, <li><a>, OU <p><a> - pattern CMS Tamedia/WordPress/AMP). Retirer le texte
+ *    des <a> fait s'effondrer ces zones → elles ne gonflent plus la mesure (ferme le bloqueur
+ *    HIGH : la prémisse « les blocs liés ne sont pas des <p> » était fausse).
+ *  - On mesure le TEXTE BRUT (pas seulement les <p>) → un corps rédigé en <div>/<li> SANS <p>
+ *    (chapô <p> + corps <div>, AMP) compte enfin (ferme le bloqueur MEDIUM = faux strict round-2).
+ * Le corps d'un article réel est de la prose NON liée (peu d'ancres relativement à son texte) →
+ * il survit. Résiduel assumé (cadrage §1) : du boilerplate non lié (cookies/newsletter en <p>/<div>
+ * hors <aside>) peut subsister ; le marqueur paywall explicite reste la garde primaire, et le GATE
+ * (rejet si facts_ok=false) garantit le zéro-hallu indépendamment de cette mesure.
+ */
+function bodyText(scope: string): string {
+	return htmlToPlainText(removeTagBlocks(scope, 'a'));
+}
+
+/**
+ * Mesure le CORPS RÉEL lisible de l'article pour la garde de confiance (cadrage 5.1).
+ *
+ * Parmi 3 scopes candidats, retient celui dont le CORPS (texte brut hors ancres, cf. bodyText)
+ * est le plus long :
+ *  - plus grand bloc <article>, plus grand bloc <main> (corps sémantique),
+ *  - page entière chrome-strippée (filet quand un CMS n'enveloppe qu'un chapô dans un <article>
+ *    minuscule - AMP/WordPress ; ferme le faux strict « <article> minuscule »).
+ * Le HTML est d'abord nettoyé (stripNonContent : script/style/noscript/commentaires) pour qu'un
+ * <p>/<article> injecté en chaîne JS ou commenté ne gonfle pas la mesure. Extraction 100 %
+ * linéaire (indexOf, pas de regex à backtracking - finding ReDoS).
+ *
+ * Sert UNIQUEMENT à jauger « corps réel lisible » ; le vérificateur reçoit toujours le pageText
+ * complet (il doit voir tout l'article). Exporté pour test.
+ */
+export function articleBodyText(html: string): string {
+	const cleaned = stripNonContent(html);
+	const candidates: string[] = [];
+	const articleBlocks = extractTagBlocks(cleaned, 'article');
+	const mainBlocks = extractTagBlocks(cleaned, 'main');
+	if (articleBlocks.length) candidates.push(articleBlocks.reduce((a, b) => (b.length > a.length ? b : a)));
+	if (mainBlocks.length) candidates.push(mainBlocks.reduce((a, b) => (b.length > a.length ? b : a)));
+	candidates.push(stripPageChrome(cleaned)); // toujours présent (filet chapô minuscule)
+	let best = '';
+	for (const c of candidates) {
+		const t = bodyText(c);
+		if (t.length > best.length) best = t;
+	}
+	return best;
+}
+
+function hostOf(url: string): string {
+	try {
+		return new URL(url).hostname;
+	} catch {
+		return '';
+	}
+}
+
+/**
+ * Régime de vérification EFFECTIF d'un item = régime du DOMAINE (source-allowlist),
+ * rabaissé à 'strict' si la page est une rubrique sponsorisée / d'opinion (5.2). Le
+ * garde paywall (corps trop maigre) est appliqué en aval dans crossCheckItem (il
+ * nécessite le contenu fetché). Exporté pour test.
+ */
+export function effectiveRegime(item: IntelligenceItem): VerificationRegime {
+	const base = domainRegime(hostOf(item.source.url));
+	if (base === 'strict') return 'strict';
+	if (isSponsoredOrOpinion(item.source.url, item.title)) return 'strict';
+	// Garde-fou 1 déterministe : un item qui nomme un cabinet d'études repasse strict
+	// (le chiffre attribué doit être verbatim), sans dépendre du seul prompt.
+	if (mentionsMarketResearchFirm(item)) return 'strict';
+	return base;
+}
+
+/**
+ * Plancher de PROSE (somme des <p>, mesure ROUND-2) pour accorder la confiance (cadrage 5.1,
+ * garde paywall). Sous ce plancher, le corps lisible est trop maigre pour constater une
+ * contradiction de façon fiable → on retombe en strict.
+ *
+ * ROUND-2 (revue 2026-06-23 finding HIGH régression volume) : abaissé 1200 → 350. À 1200 le
+ * plancher rabaissait en strict les BRÈVES D'AGENCE courtes mais fiables (keystone-sda/ats/rts,
+ * ~400-900 chars de prose) - précisément le format RTS qui a sauvé W25 → re-creusait le volume.
+ * La défense paywall PRIMAIRE est désormais le marqueur explicite (looksLikePaywallTeaser,
+ * domaine-agnostique) + le rejet upstream des PAYWALL_DOMAINS (url-verify, body < 5KB). Ce
+ * plancher n'est plus que le filet pour un corps quasi vide sans marqueur. Risque résiduel
+ * assumé (cadrage §1, décision Pascal) : un teaser non marqué de 350-900 chars de prose sur une
+ * source reconnue hors PAYWALL_DOMAINS reste « confiance » - narrow, et strict ≠ exclusion.
+ */
+const TRUSTED_BODY_MIN_CHARS = 350;
+
 // Exporté pour test (vérifie que la lecture FilmPro est bien soumise au vérificateur,
-// fermeture de la brèche « entité externe fabriquée dans le so-what » — revue 2026-06-22).
+// fermeture de la brèche « entité externe fabriquée dans le so-what » - revue 2026-06-22).
 export function buildUserPrompt(item: IntelligenceItem, pageText: string): string {
 	const parts = [
 		`# Item à vérifier`,
@@ -306,10 +741,10 @@ export function buildUserPrompt(item: IntelligenceItem, pageText: string): strin
 		item.summary,
 		item.deep_dive ? `\n## Deep dive proposé\n${item.deep_dive}` : '',
 		// La lecture FilmPro (so-what) est de l'interprétation, MAIS ses faits EXTERNES
-		// (entreprise nommée, AO, événement, chiffre d'actualité) doivent être sourcés —
+		// (entreprise nommée, AO, événement, chiffre d'actualité) doivent être sourcés -
 		// cf. SYSTEM « Champs à vérifier ». Soumise pour fermer la brèche entité fabriquée.
 		item.filmpro_relevance
-			? `\n## Lecture FilmPro (so-what, interprétation — vérifier UNIQUEMENT ses faits externes)\n${item.filmpro_relevance}`
+			? `\n## Lecture FilmPro (so-what, interprétation - vérifier UNIQUEMENT ses faits externes)\n${item.filmpro_relevance}`
 			: ''
 	];
 	parts.push(``, `## Contenu réel de la page (extrait)`, pageText);
@@ -359,7 +794,8 @@ const ANTHROPIC_RETRY_BASE_MS = 1500;
 async function callVerifierWithRetry(
 	client: Anthropic,
 	item: IntelligenceItem,
-	pageText: string
+	pageText: string,
+	system: string
 ): Promise<Anthropic.Message> {
 	let lastError: unknown;
 	for (let attempt = 0; attempt <= ANTHROPIC_MAX_RETRIES; attempt++) {
@@ -367,7 +803,7 @@ async function callVerifierWithRetry(
 			return await client.messages.create({
 				model: CROSS_CHECK_MODEL,
 				max_tokens: CROSS_CHECK_MAX_TOKENS,
-				system: SYSTEM,
+				system,
 				tools: [VERDICT_TOOL],
 				tool_choice: { type: 'tool', name: 'emit_verdict' },
 				messages: [{ role: 'user', content: buildUserPrompt(item, pageText) }]
@@ -423,7 +859,24 @@ export async function crossCheckItem(
 	const pageText = htmlToPlainText(html);
 	if (pageText.length < 200) return null; // page trop pauvre pour vérifier
 
-	const response = await callVerifierWithRetry(client, item, pageText);
+	// Régime de vérification (cadrage trust-by-source 2026-06-23, durci ROUND-2). Garde paywall
+	// (5.1) : une source fiable dont seul un teaser est lisible NE bénéficie PAS de la confiance
+	// (on ne peut pas constater de contradiction de façon fiable) → on retombe en strict. Deux
+	// signaux, en OU :
+	//  - PRIMAIRE : marqueur de paywall explicite dans le pageText (looksLikePaywallTeaser),
+	//    domaine-agnostique, robuste au chrome.
+	//  - FILET : prose réelle trop maigre (articleBodyText mesure la somme des <p> du meilleur
+	//    scope, ReDoS-safe et insensible au chrome interne « à lire aussi » - finding HIGH
+	//    résiduel ; max-sur-scopes contre le <article> minuscule - finding MEDIUM).
+	let regime = effectiveRegime(item);
+	if (regime !== 'strict') {
+		const bodyLen = articleBodyText(html).length;
+		if (looksLikePaywallTeaser(pageText) || bodyLen < TRUSTED_BODY_MIN_CHARS) {
+			regime = 'strict';
+		}
+	}
+
+	const response = await callVerifierWithRetry(client, item, pageText, systemForRegime(regime));
 
 	tracker.addClaudeCall(CROSS_CHECK_MODEL, response.usage, 'Cross-check verbatim');
 

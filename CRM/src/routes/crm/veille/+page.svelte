@@ -62,13 +62,11 @@
 <div class="max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12">
 	<!-- Masthead éditorial -->
 	<header class="pb-6 md:pb-8 mb-10 md:mb-14 border-b-2 border-primary-dark">
-		<div class="mag-kicker text-primary mb-3">Veille sectorielle FilmPro</div>
-		<div class="flex items-end justify-between gap-6 flex-wrap">
-			<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
-			<h2 class="mag-display text-[40px] md:text-6xl text-primary-dark max-w-3xl">
-				Le pouls hebdomadaire des films FilmPro
-			</h2>
-			<div class="flex items-end gap-4 shrink-0">
+		<!-- Bandeau : label de section (gauche) + dernière édition / action (droite),
+		     kickers alignés sur la même ligne. Le grand titre court vit en dessous. -->
+		<div class="flex items-start justify-between gap-6 mb-4 md:mb-6">
+			<div class="mag-kicker text-primary">Veille sectorielle FilmPro</div>
+			<div class="flex items-start gap-4 shrink-0">
 				{#if featured}
 					<div class="text-right hidden md:block">
 						<div class="mag-kicker text-text-muted">Dernière édition</div>
@@ -85,7 +83,11 @@
 				</a>
 			</div>
 		</div>
-		<p class="mag-body text-text-body mt-4 max-w-3xl text-base md:text-[17px]">
+		<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
+		<h2 class="mag-display text-[40px] md:text-7xl text-primary-dark text-balance">
+			Filtrer l'essentiel
+		</h2>
+		<p class="mag-body text-text-body mt-4 max-w-2xl text-base md:text-[17px]">
 			Le panorama hebdomadaire des marchés bâtiment, films solaires, vitrages et
 			réglementation, lu et synthétisé chaque vendredi pour servir vos décisions
 			commerciales.

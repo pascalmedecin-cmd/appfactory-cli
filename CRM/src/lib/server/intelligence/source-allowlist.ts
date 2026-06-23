@@ -8,7 +8,7 @@
 //
 // 7 tiers de sources autorisées + denylist hard. Le pipeline filtre
 // les items dont le domaine est dans la denylist. Les items hors whitelist
-// mais hors denylist sont autorisés (log warning seulement) — la whitelist
+// mais hors denylist sont autorisés (log warning seulement) - la whitelist
 // est informative au début, le temps que la deep research la complète.
 //
 // Cette liste est appelée à grossir : Pascal a lancé une deep research Google
@@ -18,7 +18,7 @@
 export type SourceTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'T6' | 'T7A' | 'T7B';
 
 /**
- * T1 — Sources officielles : régulation, normes, agences publiques.
+ * T1 - Sources officielles : régulation, normes, agences publiques.
  * Crédibilité : haute. Usage : autorité chiffrée, citations réglementaires.
  */
 export const TIER_1_OFFICIAL = new Set([
@@ -45,21 +45,44 @@ export const TIER_1_OFFICIAL = new Set([
 	'guichet.public.lu',
 	// UE / international
 	'commission.europa.eu',
+	'ec.europa.eu', // Commission EU / Eurostat (cadrage sources fiables 2026-06-23)
+	'eur-lex.europa.eu', // droit EU consolidé (cadrage 2026-06-23)
 	'cordis.europa.eu',
 	'din.de',
-	'glass-for-europe.eu',
+	'glassforeurope.com', // corrigé 2026-06-23 : glass-for-europe.eu était mort (vérif source primaire)
 	'gae-eu.org',
 	'gimm.eu',
 	'eurovent.eu',
 	'iea.org',
 	'irena.org',
-	// Associations professionnelles dédiées films vitrage
+	// Normes / propriété intellectuelle (cadrage sources fiables 2026-06-23)
+	'iso.org',
+	'cen.eu',
+	'cencenelec.eu',
+	'fedlex.admin.ch', // droit fédéral suisse consolidé
+	'ige.ch', // Institut fédéral de la propriété intellectuelle
+	// Statistiques officielles (productrices primaires, code de pratique statistique) - cadrage 2026-06-23
+	'bfs.admin.ch',
+	'ofs.admin.ch',
+	'insee.fr',
+	'destatis.de',
+	// Agences publiques énergie / bâtiment CH (mandat public) - cadrage 2026-06-23
+	'energieschweiz.ch',
+	'suisseenergie.ch',
+	'leprogrammebatiments.ch',
+	'cecb.ch',
+	// Associations professionnelles dédiées films vitrage / verre (advocacy : voir ADVOCACY_DOMAINS)
 	'ewfa.org', // European Window Film Association
-	'iwfa.com' // International Window Film Association
+	'iwfa.com', // International Window Film Association
+	'apfv.org', // Association des professionnels du film pour vitrage (cadrage 2026-06-23)
+	'asffv.fr', // Assoc. française des spécialistes du film pour vitrage
+	'sigab.ch', // Institut suisse du verre dans le bâtiment
+	'sfv-asvp.ch', // Association suisse du verre plat (la vraie, PAS « SVS » = soudure)
+	'ffpv.org' // Fédération professionnelle du verre
 ]);
 
 /**
- * T2 — Presse professionnelle bâtiment / vitrage.
+ * T2 - Presse professionnelle bâtiment / vitrage.
  * Crédibilité : haute. Usage : actualités sectorielles, études de cas.
  */
 export const TIER_2_TRADE_PRO = new Set([
@@ -86,11 +109,16 @@ export const TIER_2_TRADE_PRO = new Set([
 	'archdaily.com',
 	'archdaily.fr',
 	'build-up.eu',
-	'glass-international.com'
+	'glass-international.com',
+	// Presse pro bâtiment/façade DE + FR (cadrage sources fiables 2026-06-23)
+	'glaswelt.de',
+	'gff-magazin.de',
+	'baunetzwissen.de',
+	'lechodelabaie.fr'
 ]);
 
 /**
- * T3 — Études de marché et cabinets d'analyse.
+ * T3 - Études de marché et cabinets d'analyse.
  * Crédibilité : haute. Usage : chiffres marché, baromètres ESG/immobilier.
  *
  * NOTE : mordorintelligence.com et fortunebusinessinsights.com sont
@@ -119,7 +147,7 @@ export const TIER_3_MARKET_RESEARCH = new Set([
 ]);
 
 /**
- * T4 — Presse généraliste qualité (CH romande, alémanique, France).
+ * T4 - Presse généraliste qualité (CH romande, alémanique, France).
  * Crédibilité : haute. Usage : signaux marché, opinions tribunes.
  *
  * NOTE : 24heures.ch / tdg.ch / lematin.ch / letemps.ch / lemonde.fr ont
@@ -150,11 +178,16 @@ export const TIER_4_PRESS_GENERAL = new Set([
 	'lesechos.fr',
 	'lefigaro.fr',
 	'capital.fr',
-	'challenges.fr'
+	'challenges.fr',
+	'latribune.fr',
+	// Agence de presse + service public additionnels (cadrage sources fiables 2026-06-23)
+	'keystone-sda.ch', // agence de presse nationale (double sourcing, sans paywall)
+	'rsi.ch', // service public italophone SSR
+	'watson.ch'
 ]);
 
 /**
- * T5 — Tech & innovation : R&D, brevets, recherche académique.
+ * T5 - Tech & innovation : R&D, brevets, recherche académique.
  * Crédibilité : haute. Usage : signaux faibles innovation matériau, brevets.
  */
 export const TIER_5_TECH_INNOVATION = new Set([
@@ -178,11 +211,19 @@ export const TIER_5_TECH_INNOVATION = new Set([
 	'heia-fr.ch',
 	'zhaw.ch',
 	'pagora.grenoble-inp.fr', // Grenoble INP Pagora électronique imprimée
-	'grenoble-inp.fr'
+	'grenoble-inp.fr',
+	// Revues à comité de lecture + labos publics additionnels (cadrage sources fiables 2026-06-23)
+	'link.springer.com',
+	'onlinelibrary.wiley.com',
+	'tandfonline.com',
+	'cnrs.fr',
+	'fraunhofer.de'
+	// NB : arxiv.org reste listé ci-dessus pour le TIER, mais est traité STRICT
+	// (preprint non peer-reviewed) via ACADEMIC_PREPRINT_STRICT / domainRegime.
 ]);
 
 /**
- * T6 — Sites officiels concurrents internationaux films/smart glass.
+ * T6 - Sites officiels concurrents internationaux films/smart glass.
  * Crédibilité : haute pour signal compétitif (lancement produit, tech),
  * moyenne pour chiffres marché (biais marketing).
  */
@@ -214,7 +255,7 @@ export const TIER_6_COMPETITORS_INTERNATIONAL = new Set([
 ]);
 
 /**
- * T7A — Installateurs concurrents directs FilmPro (CH/FR/IT/BE).
+ * T7A - Installateurs concurrents directs FilmPro (CH/FR/IT/BE).
  * Crédibilité : moyenne (sites pro mais biais marketing). Usage : signal
  * compétitif EXPLICITE (« X concurrent lance Y », « Z installateur référence
  * sur chantier W »). JAMAIS source neutre pour chiffres marché.
@@ -255,7 +296,7 @@ export const TIER_7A_INSTALLERS_BENCHMARK = new Set([
 ]);
 
 /**
- * T7B — Fabricants/marques solutions architecture/bâtiment.
+ * T7B - Fabricants/marques solutions architecture/bâtiment.
  * Crédibilité : moyenne-haute pour signal compétitif. Usage : bench specs
  * produits, normes, certifications, R&D matériaux.
  */
@@ -297,6 +338,14 @@ export const DENYLIST = new Set([
 	'openpr.com',
 	'pr.com',
 	'img.pr.com'
+	// NB (décision Pascal 2026-06-23) : les sources NON listées « fiables » (réseaux
+	// sociaux, wikis ouverts, forums, domaines inconnus) ne sont PAS exclues d'office.
+	// Elles passent par le FILTRE ANTI-HALLU (régime 'strict' via domainRegime → chaque
+	// fait doit être présent verbatim sur la page, sinon rejet). Seules les sources
+	// PROUVÉES toxiques (blogs marketing/spam SEO ci-dessus, identifiés W18) restent en
+	// denylist : le filtre anti-hallu ne peut PAS les rattraper (il vérifie que le résumé
+	// colle à la SOURCE, pas que la source dit vrai ; un blog qui invente un chiffre sur
+	// sa propre page passerait le verbatim). La denylist reste donc volontairement étroite.
 ]);
 
 /**
@@ -350,10 +399,109 @@ export const STRICT_VERBATIM_DOMAINS = new Set([
 	'mordorintelligence.com',
 	'fortunebusinessinsights.com',
 	'marketsandmarkets.com',
+	'snsinsider.com',
 	'globenewswire.com',
-	'businesswire.com'
+	'businesswire.com',
+	// Cabinets d'études à chiffres payants + fils de communiqués (cadrage 2026-06-23).
+	// Chiffres dans un livrable payant / rédigés par l'émetteur → non vérifiables, strict obligatoire.
+	'grandviewresearch.com',
+	'researchandmarkets.com',
+	'giiresearch.com',
+	'alliedmarketresearch.com',
+	'prnewswire.com',
+	'accesswire.com',
+	'einpresswire.com',
+	'newswire.ca'
 ]);
 
 export function requiresStrictVerbatim(hostname: string): boolean {
 	return STRICT_VERBATIM_DOMAINS.has(normalizeHostname(hostname));
+}
+
+/**
+ * Preprints académiques : NON peer-reviewed (modération seule, ~14000 retraits).
+ * arxiv.org reste dans TIER_5 pour l'étiquetage de tier, mais son RÉGIME de
+ * vérification est STRICT (cadrage sources fiables 2026-06-23, section 4).
+ */
+export const ACADEMIC_PREPRINT_STRICT = new Set([
+	'arxiv.org',
+	'medrxiv.org',
+	'biorxiv.org',
+	'preprints.org',
+	'ssrn.com',
+	'researchsquare.com'
+]);
+
+export function isPreprintSource(hostname: string): boolean {
+	return ACADEMIC_PREPRINT_STRICT.has(normalizeHostname(hostname));
+}
+
+/**
+ * Domaines d'associations / fédérations sectorielles (sous-ensemble de T1).
+ * Régime « trusted_advocacy » : confiance sur les faits techniques / normatifs /
+ * auto-déclaratifs, mais STRICT verbatim sur tout chiffre de marché / % de
+ * performance / superlatif (organes financés par l'industrie → garde-fou 2 du
+ * cadrage 2026-06-23, section 3.4).
+ */
+export const ADVOCACY_DOMAINS = new Set([
+	'ewfa.org',
+	'iwfa.com',
+	'glassforeurope.com',
+	'apfv.org',
+	'asffv.fr',
+	'sigab.ch',
+	'sfv-asvp.ch',
+	'ffpv.org',
+	// Fédérations industrielles plus larges déjà en T1 (revue 2026-06-23, finding LOW-1) :
+	// ce sont aussi des organes financés par l'industrie → clause advocacy (strict sur
+	// leurs chiffres de marché/perf), pas confiance nue.
+	'gae-eu.org', // Glass Alliance Europe (fédération faîtière verre)
+	'gimm.eu',
+	'eurovent.eu' // association fabricants HVAC
+]);
+
+export function isAdvocacySource(hostname: string): boolean {
+	return ADVOCACY_DOMAINS.has(normalizeHostname(hostname));
+}
+
+/**
+ * Régime de vérification d'un DOMAINE (cadrage sources fiables 2026-06-23).
+ *
+ * - 'strict' : filtre verbatim actuel (l'ABSENCE d'un fait sur la page suffit à
+ *   rejeter). Sources non fiables, inconnues, ou flaggées strict.
+ * - 'trusted' : confiance - un fait dur n'est rejeté que s'il est CONTREDIT par
+ *   la page (l'absence seule ne rejette plus). Source reconnue + URL active.
+ * - 'trusted_advocacy' : comme 'trusted' mais les chiffres de marché / perf /
+ *   superlatifs restent strict (associations / lobbies sectoriels).
+ *
+ * Décision Pascal (2026-06-23) : la confiance s'applique AUSSI aux faits durs sur
+ * les sources reconnues. La fiabilité est un attribut du DOMAINE, jamais re-jugée
+ * par le LLM article par article. Règle d'or : dans le doute, strict (domaine
+ * inconnu / tier=null → strict). Le sponsorisé/opinion (pattern URL/titre) et le
+ * paywall (corps non lu) sont gérés en aval (cross-check.ts) car ils dépendent de
+ * l'item / de la page, pas seulement du domaine.
+ *
+ * NB : le GATE déterministe (rejet si facts_ok=false) est INCHANGÉ ; seul le
+ * CRITÈRE du vérificateur change selon le régime retourné ici.
+ */
+export type VerificationRegime = 'strict' | 'trusted' | 'trusted_advocacy';
+
+export function domainRegime(hostname: string): VerificationRegime {
+	const normalized = normalizeHostname(hostname);
+	// Sources flaggées strict, déniées, ou preprints → strict (les déniées sont
+	// déjà rejetées en amont ; ceinture-bretelles ici si jamais elles arrivent).
+	if (isDeniedSource(normalized)) return 'strict';
+	if (requiresStrictVerbatim(normalized)) return 'strict';
+	if (isPreprintSource(normalized)) return 'strict';
+	const tier = getDomainTier(normalized);
+	// Domaine inconnu (hors whitelist) → strict par défaut (privilège par domaine nommé).
+	if (tier === null) return 'strict';
+	// Cabinets/conseil (T3, chiffres non vérifiables) + concurrents/installateurs/
+	// marques (T6/T7, biais marketing) → strict en bloc.
+	if (tier === 'T3' || tier === 'T6' || tier === 'T7A' || tier === 'T7B') return 'strict';
+	// Associations / lobbies sectoriels → confiance + clause advocacy.
+	if (isAdvocacySource(normalized)) return 'trusted_advocacy';
+	// T1 (officiel/normatif/stats/agences) + T2 (presse pro) + T4 (presse qualité +
+	// agence) + T5 (peer-reviewed/brevets/labos, hors preprints) → confiance.
+	return 'trusted';
 }

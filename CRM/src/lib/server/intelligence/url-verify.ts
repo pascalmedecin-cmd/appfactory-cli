@@ -29,7 +29,25 @@ const PAYWALL_DOMAINS = new Set([
 	'tdg.ch',
 	'lematin.ch',
 	'lemonde.fr',
-	'letemps.ch'
+	'letemps.ch',
+	// T4 payants ajoutés au cadrage sources fiables 2026-06-23 (garde 5.1) : sous le mode
+	// CONFIANCE, un article paywallé non lisible deviendrait un chèque en blanc. Rejet
+	// upstream si le corps est < 5KB (article réel >= 20KB) ; un article gratuit passe.
+	'nzz.ch',
+	'lesechos.fr',
+	'lefigaro.fr',
+	'handelszeitung.ch',
+	'bilan.ch',
+	// Complément revue 2026-06-23 (finding HIGH-2) : autres médias T4 en régime trusted
+	// avec paywall dur, absents jusque-là de la défense primaire.
+	'tagesanzeiger.ch',
+	'bilanz.ch',
+	'cash.ch',
+	'agefi.com',
+	'capital.fr',
+	'challenges.fr',
+	'latribune.fr',
+	'heidi.news'
 ]);
 
 const PAYWALL_BODY_THRESHOLD = 5 * 1024; // 5KB : un article réel pèse ≥ 20KB en HTML
