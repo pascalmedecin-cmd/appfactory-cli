@@ -1,0 +1,273 @@
+import { describe, it, expect } from 'vitest';
+import {
+	isCouleurSlug,
+	DEFAULT_COULEUR,
+	createCampagne,
+	renameCampagne,
+	updateCampagne,
+	deleteCampagne,
+	listCampagnes,
+	assignCampagnesToLead,
+	removeCampagneFromLead,
+	fetchCampagnesByLead,
+	leadIdsForCampagnes,
+	MAX_CAMPAGNE_IDS,
+	type Campagne
+} from './campagnes';
+
+/**
+ * Mock Supabase chainable thenable (Proxy) : chaque méthode enregistre l'appel et renvoie la
+ * même chaîne ; `await chaine` (ou `.single()`) résout le résultat configuré. On teste la
+ * LOGIQUE du module (validation, traduction d'erreur Postgres, extraction du compte embarqué,
+ * dédup/bornage, groupement) — jamais le comportement de supabase-js lui-même.
+ */
+type SbResult = { data?: unknown; error?: unknown; count?: number | null };
+function createSupabaseMock(result: SbResult = {}) {
+	const calls: Array<[string, ...unknown[]]> = [];
+	const res = { data: result.data ?? null, error: result.error ?? null, count: result.count ?? null };
+	const chain: unknown = new Proxy(
+		{},
+		{
+			get(_t, prop: string) {
+				if (prop === 'then') {
+					return (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) =>
+						Promise.resolve(res).then(resolve, reject);
+				}
+				return (...args: unknown[]) => {
+					calls.push([prop, ...args]);
+					return chain;
+				};
+			}
+		}
+	);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const supabase: any = {
+		from(t: string) {
+			calls.push(['from', t]);
+			return chain;
+		}
+	};
+	return { supabase, calls };
+}
+
+function arg(calls: Array<[string, ...unknown[]]>, method: string): unknown[] | undefined {
+	return calls.find((c) => c[0] === method)?.slice(1);
+}
+
+const baseCampagne: Campagne = {
+	id: 'cmp-1',
+	nom: 'Régies',
+	couleur: 'c1',
+	description: null,
+	archived: false,
+	date_creation: '2026-06-23T00:00:00Z',
+	created_by: null
+};
+
+describe('isCouleurSlug', () => {
+	it('accepte c1..c8, rejette le reste', () => {
+		for (const c of ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8']) expect(isCouleurSlug(c)).toBe(true);
+		for (const c of ['c0', 'c9', 'C1', 'rouge', '', null, undefined, 1]) expect(isCouleurSlug(c)).toBe(false);
+	});
+});
+
+describe('createCampagne - validation', () => {
+	it('rejette un nom vide (invalid, aucune requête)', async () => {
+		const m = createSupabaseMock();
+		const { data, error } = await createCampagne(m.supabase, { nom: '   ', userId: null });
+		expect(data).toBe(null);
+		expect(error?.code).toBe('invalid');
+		expect(m.calls.find((c) => c[0] === 'from')).toBeUndefined();
+	});
+
+	it('rejette un nom trop long (>80)', async () => {
+		const m = createSupabaseMock();
+		const { error } = await createCampagne(m.supabase, { nom: 'x'.repeat(81), userId: null });
+		expect(error?.code).toBe('invalid');
+	});
+
+	it('trim le nom + couleur invalide retombe sur le défaut c1', async () => {
+		const m = createSupabaseMock({ data: { ...baseCampagne } });
+		await createCampagne(m.supabase, { nom: '  Régies  ', couleur: 'rouge', description: '  ', userId: 'u1' });
+		expect(arg(m.calls, 'insert')?.[0]).toEqual({
+			nom: 'Régies',
+			couleur: DEFAULT_COULEUR,
+			description: null,
+			created_by: 'u1'
+		});
+	});
+
+	it('couleur valide conservée + description bornée', async () => {
+		const m = createSupabaseMock({ data: { ...baseCampagne } });
+		await createCampagne(m.supabase, {
+			nom: 'Architectes',
+			couleur: 'c4',
+			description: 'd'.repeat(400),
+			userId: null
+		});
+		const insert = arg(m.calls, 'insert')?.[0] as { couleur: string; description: string };
+		expect(insert.couleur).toBe('c4');
+		expect(insert.description.length).toBe(280);
+	});
+
+	it('conflit de nom (23505) -> erreur duplicate typée', async () => {
+		const m = createSupabaseMock({ error: { code: '23505', message: 'dup key' } });
+		const { data, error } = await createCampagne(m.supabase, { nom: 'Régies', userId: null });
+		expect(data).toBe(null);
+		expect(error?.code).toBe('duplicate');
+		expect(error?.message).toContain('Régies');
+	});
+});
+
+describe('renameCampagne', () => {
+	it('conflit de nom -> duplicate', async () => {
+		const m = createSupabaseMock({ error: { code: '23505', message: 'dup' } });
+		const { error } = await renameCampagne(m.supabase, 'cmp-1', 'Régies');
+		expect(error?.code).toBe('duplicate');
+	});
+	it('nom vide -> invalid sans requête', async () => {
+		const m = createSupabaseMock();
+		const { error } = await renameCampagne(m.supabase, 'cmp-1', '  ');
+		expect(error?.code).toBe('invalid');
+		expect(m.calls.length).toBe(0);
+	});
+});
+
+describe('updateCampagne', () => {
+	it('couleur invalide -> invalid', async () => {
+		const m = createSupabaseMock();
+		const { error } = await updateCampagne(m.supabase, 'cmp-1', { couleur: 'mauve' });
+		expect(error?.code).toBe('invalid');
+		expect(m.calls.length).toBe(0);
+	});
+	it('patch vide -> invalid', async () => {
+		const m = createSupabaseMock();
+		const { error } = await updateCampagne(m.supabase, 'cmp-1', {});
+		expect(error?.code).toBe('invalid');
+	});
+	it('archive + description appliquées', async () => {
+		const m = createSupabaseMock({ data: { ...baseCampagne, archived: true } });
+		await updateCampagne(m.supabase, 'cmp-1', { archived: true, description: '  notes  ' });
+		expect(arg(m.calls, 'update')?.[0]).toEqual({ archived: true, description: 'notes' });
+	});
+});
+
+describe('deleteCampagne', () => {
+	it('appelle delete().eq(id)', async () => {
+		const m = createSupabaseMock({});
+		const { error } = await deleteCampagne(m.supabase, 'cmp-1');
+		expect(error).toBe(null);
+		expect(arg(m.calls, 'eq')).toEqual(['id', 'cmp-1']);
+	});
+});
+
+describe('listCampagnes - extraction du compte embarqué', () => {
+	it('mappe prospect_lead_campagnes:[{count}] -> lead_count et retire l’embed', async () => {
+		const m = createSupabaseMock({
+			data: [
+				{ ...baseCampagne, id: 'a', prospect_lead_campagnes: [{ count: 7 }] },
+				{ ...baseCampagne, id: 'b', prospect_lead_campagnes: [] }
+			]
+		});
+		const { data } = await listCampagnes(m.supabase);
+		expect(data[0]).toMatchObject({ id: 'a', lead_count: 7 });
+		expect(data[1]).toMatchObject({ id: 'b', lead_count: 0 });
+		expect('prospect_lead_campagnes' in data[0]).toBe(false);
+	});
+
+	it('includeArchived:false ajoute eq(archived,false)', async () => {
+		const m = createSupabaseMock({ data: [] });
+		await listCampagnes(m.supabase, { includeArchived: false });
+		expect(arg(m.calls, 'eq')).toEqual(['archived', false]);
+	});
+
+	it('includeArchived par défaut -> pas de filtre archived', async () => {
+		const m = createSupabaseMock({ data: [] });
+		await listCampagnes(m.supabase);
+		expect(m.calls.some((c) => c[0] === 'eq')).toBe(false);
+	});
+});
+
+describe('assignCampagnesToLead', () => {
+	it('ids vides -> aucune requête, pas d’erreur', async () => {
+		const m = createSupabaseMock();
+		const { error } = await assignCampagnesToLead(m.supabase, 'lead-1', []);
+		expect(error).toBe(null);
+		expect(m.calls.length).toBe(0);
+	});
+
+	it('dédoublonne les ids avant upsert', async () => {
+		const m = createSupabaseMock({});
+		await assignCampagnesToLead(m.supabase, 'lead-1', ['x', 'x', 'y']);
+		const rows = arg(m.calls, 'upsert')?.[0] as Array<{ lead_id: string; campagne_id: string }>;
+		expect(rows).toEqual([
+			{ lead_id: 'lead-1', campagne_id: 'x' },
+			{ lead_id: 'lead-1', campagne_id: 'y' }
+		]);
+	});
+
+	it('campagne inexistante (FK 23503) -> erreur invalid', async () => {
+		const m = createSupabaseMock({ error: { code: '23503', message: 'fk' } });
+		const { error } = await assignCampagnesToLead(m.supabase, 'lead-1', ['ghost']);
+		expect(error?.code).toBe('invalid');
+	});
+});
+
+describe('removeCampagneFromLead', () => {
+	it('delete avec les deux eq (lead + campagne)', async () => {
+		const m = createSupabaseMock({});
+		await removeCampagneFromLead(m.supabase, 'lead-1', 'cmp-1');
+		const eqs = m.calls.filter((c) => c[0] === 'eq').map((c) => c.slice(1));
+		expect(eqs).toEqual([
+			['lead_id', 'lead-1'],
+			['campagne_id', 'cmp-1']
+		]);
+	});
+});
+
+describe('fetchCampagnesByLead', () => {
+	it('leadIds vides -> Map vide, aucune requête', async () => {
+		const m = createSupabaseMock();
+		const map = await fetchCampagnesByLead(m.supabase, []);
+		expect(map.size).toBe(0);
+		expect(m.calls.length).toBe(0);
+	});
+
+	it('groupe par lead + trie les campagnes par nom', async () => {
+		const m = createSupabaseMock({
+			data: [
+				{ lead_id: 'l1', campagnes: { ...baseCampagne, id: 'z', nom: 'Zèbre' } },
+				{ lead_id: 'l1', campagnes: { ...baseCampagne, id: 'a', nom: 'Alpha' } },
+				{ lead_id: 'l2', campagnes: { ...baseCampagne, id: 'm', nom: 'Milieu' } },
+				{ lead_id: 'l1', campagnes: null }
+			]
+		});
+		const map = await fetchCampagnesByLead(m.supabase, ['l1', 'l2']);
+		expect(map.get('l1')?.map((c) => c.nom)).toEqual(['Alpha', 'Zèbre']);
+		expect(map.get('l2')?.map((c) => c.id)).toEqual(['m']);
+	});
+});
+
+describe('leadIdsForCampagnes', () => {
+	it('ids vides -> [] sans requête', async () => {
+		const m = createSupabaseMock();
+		expect(await leadIdsForCampagnes(m.supabase, [])).toEqual([]);
+		expect(m.calls.length).toBe(0);
+	});
+
+	it('dédoublonne les lead_ids du résultat', async () => {
+		const m = createSupabaseMock({
+			data: [{ lead_id: 'l1' }, { lead_id: 'l2' }, { lead_id: 'l1' }]
+		});
+		expect(await leadIdsForCampagnes(m.supabase, ['c1'])).toEqual(['l1', 'l2']);
+	});
+
+	it('borne le nombre de campagnes du filtre à MAX_CAMPAGNE_IDS', async () => {
+		const m = createSupabaseMock({ data: [] });
+		const many = Array.from({ length: MAX_CAMPAGNE_IDS + 20 }, (_, i) => `c${i}`);
+		await leadIdsForCampagnes(m.supabase, many);
+		const inArg = arg(m.calls, 'in') as [string, string[]];
+		expect(inArg[0]).toBe('campagne_id');
+		expect(inArg[1].length).toBe(MAX_CAMPAGNE_IDS);
+	});
+});

@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       activites: {
@@ -90,6 +115,36 @@ export type Database = {
           source?: string
           updated_at?: string
           year_month?: string
+        }
+        Relationships: []
+      }
+      campagnes: {
+        Row: {
+          archived: boolean
+          couleur: string
+          created_by: string | null
+          date_creation: string
+          description: string | null
+          id: string
+          nom: string
+        }
+        Insert: {
+          archived?: boolean
+          couleur?: string
+          created_by?: string | null
+          date_creation?: string
+          description?: string | null
+          id?: string
+          nom: string
+        }
+        Update: {
+          archived?: boolean
+          couleur?: string
+          created_by?: string | null
+          date_creation?: string
+          description?: string | null
+          id?: string
+          nom?: string
         }
         Relationships: []
       }
@@ -829,6 +884,39 @@ export type Database = {
           },
         ]
       }
+      prospect_lead_campagnes: {
+        Row: {
+          campagne_id: string
+          date_assignation: string
+          lead_id: string
+        }
+        Insert: {
+          campagne_id: string
+          date_assignation?: string
+          lead_id: string
+        }
+        Update: {
+          campagne_id?: string
+          date_assignation?: string
+          lead_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prospect_lead_campagnes_campagne_id_fkey"
+            columns: ["campagne_id"]
+            isOneToOne: false
+            referencedRelation: "campagnes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prospect_lead_campagnes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prospect_lead_signals: {
         Row: {
           applied_at: string
@@ -1226,6 +1314,42 @@ export type Database = {
           },
         ]
       }
+      signaux_mots_cles: {
+        Row: {
+          categorie: string
+          cree_le: string
+          cree_par: string | null
+          cree_par_email: string
+          id: string
+          mis_a_jour_le: string
+          poids: number
+          terme: string
+          terme_norm: string
+        }
+        Insert: {
+          categorie: string
+          cree_le?: string
+          cree_par?: string | null
+          cree_par_email: string
+          id?: string
+          mis_a_jour_le?: string
+          poids: number
+          terme: string
+          terme_norm: string
+        }
+        Update: {
+          categorie?: string
+          cree_le?: string
+          cree_par?: string | null
+          cree_par_email?: string
+          id?: string
+          mis_a_jour_le?: string
+          poids?: number
+          terme?: string
+          terme_norm?: string
+        }
+        Relationships: []
+      }
       utilisateurs: {
         Row: {
           actif: boolean
@@ -1444,6 +1568,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

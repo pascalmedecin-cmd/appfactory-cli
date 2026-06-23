@@ -3,8 +3,9 @@ import { fail, redirect } from '@sveltejs/kit';
 import { LeadCreateSchema, LeadExpressCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema, RechercheCreateSchema, RechercheDeleteSchema, LEAD_FIELDS, LEAD_EXPRESS_FIELDS, extractForm, validate, coerceFormBoolean } from '$lib/schemas';
 import { calculerScore } from '$lib/scoring';
 import { dbFail, escapeIlike, newId, now } from '$lib/server/db-helpers';
-import { PROSPECTION_TABS, TAB_SOURCE_MAP, VALID_SORT_KEYS, type ProspectionTabKey } from '$lib/prospection-utils';
-import { isProspectionFeatureEnabled, isProspectionTabVisible, defaultProspectionTab, isProspectionSourceEnabled } from '$lib/prospection-flags';
+import { TAB_SOURCE_MAP } from '$lib/prospection-utils';
+import { isProspectionFeatureEnabled, isProspectionSourceEnabled } from '$lib/prospection-flags';
+import { parseProspectionFilter, applyProspectionFilters, applyProspectionScopeFilters, PROSPECTION_SEARCH_FIELDS, prospectionSearchPattern } from '$lib/server/prospection-query';
 import { getMonthlyUsage } from '$lib/server/quota';
 import { googlePlacesQuotaStatus } from '$lib/api-limits';
 
@@ -13,44 +14,25 @@ const ALLOWED_PAGE_SIZES = new Set([25, 50, 100]);
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const page = Math.max(0, parseInt(url.searchParams.get('page') ?? '0', 10) || 0);
-	const rawSort = url.searchParams.get('sort') ?? '';
-	const sortKey = (VALID_SORT_KEYS as readonly string[]).includes(rawSort)
-		? (rawSort as (typeof VALID_SORT_KEYS)[number])
-		: ('score_pertinence' as const);
-	const sortAsc = url.searchParams.get('dir') === 'asc';
 
-	// Onglet actif. V5/P1 (2026-06-18) : SIMAP et RegBL sont masqués (sources coupées par flag).
-	// Le défaut ET le fallback pointent sur le premier onglet VISIBLE (plus 'simap', sinon écran
-	// fantôme). Garde de route : un ?tab= explicite vers un onglet masqué/inconnu redirige (303)
-	// vers l'URL canonique du défaut. Comme la cible est toujours un onglet visible, pas de boucle.
-	const fallbackTab = defaultProspectionTab();
+	// Filtre normalisé partagé avec l'export CSV et la sélection globale (source unique
+	// `$lib/server/prospection-query` — la dette des 3 filtres dupliqués est résorbée).
+	const filter = parseProspectionFilter(url);
+
+	// Onglet actif. V5/P1 : SIMAP et RegBL sont masqués (sources coupées par flag) ;
+	// `parseProspectionFilter` retombe sur le premier onglet visible. Garde de route :
+	// un ?tab= explicite vers un onglet masqué/inconnu redirige (303) vers l'URL canonique
+	// du défaut. Comme la cible est toujours un onglet visible, pas de boucle.
 	const requestedTab = url.searchParams.get('tab');
-	const rawTab = requestedTab ?? fallbackTab;
-	const tab: ProspectionTabKey =
-		(PROSPECTION_TABS as readonly string[]).includes(rawTab) && isProspectionTabVisible(rawTab as ProspectionTabKey)
-			? (rawTab as ProspectionTabKey)
-			: fallbackTab;
-	if (requestedTab !== null && requestedTab !== tab) {
+	if (requestedTab !== null && requestedTab !== filter.tab) {
 		const target = new URL(url);
-		target.searchParams.set('tab', tab);
+		target.searchParams.set('tab', filter.tab);
 		throw redirect(303, target.pathname + target.search);
 	}
 
 	// Phase 2 : entrées par page configurable, whitelist stricte (anti-DOS via URL).
 	const rawPerPage = parseInt(url.searchParams.get('perPage') ?? '', 10);
 	const pageSize = ALLOWED_PAGE_SIZES.has(rawPerPage) ? rawPerPage : DEFAULT_PAGE_SIZE;
-
-	// Filtres depuis URL params
-	const filterSources = url.searchParams.getAll('source');
-	const filterCantons = url.searchParams.getAll('canton');
-	const filterStatuts = url.searchParams.getAll('statut');
-	const filterTemperatures = url.searchParams.getAll('temp');
-	const search = url.searchParams.get('q') ?? '';
-
-	// Phase 0 : toggle "afficher les transférés". Off par défaut, persiste via URL.
-	// Quand off ET aucun filtre statut explicite : on cache statut=transfere de la liste.
-	// Si l'utilisateur cherche explicitement les transférés via le filtre statut, on respecte.
-	const showTransferred = url.searchParams.get('showTransferred') === '1';
 
 	// Tracabilite Veille -> Prospection : propagee depuis /veille/[id] via URL.
 	// UUID = tracable vers intelligence_reports, term = libre (max 200).
@@ -59,56 +41,28 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const fromIntelligence = rawFromIntelligence && UUID_RE.test(rawFromIntelligence) ? rawFromIntelligence : null;
 	const fromTerm = (url.searchParams.get('from_term') ?? '').slice(0, 200) || null;
 
-	// V1.2 audit S160 : pattern dédié pour search safe (pas de mini-DSL PostgREST).
-	// Injection passée par .or() était critique (cf. memory/feedback_postgrest_or_filter_injection.md).
-	// On factorise toute la query (sans search) puis on duplique en parallèle 3 .ilike() + Set dédup.
-	const tabSources = TAB_SOURCE_MAP[tab];
-	const effectiveSources = filterSources.length > 0
-		? filterSources.filter((s) => tabSources.includes(s))
-		: tabSources;
-	const sourceFilterIncompatible = filterSources.length > 0 && effectiveSources.length === 0;
-
-	const buildBaseQuery = () => {
-		let q = locals.supabase
-			.from('prospect_leads')
-			.select('*', { count: 'exact' });
-		if (!sourceFilterIncompatible) {
-			q = q.in('source', effectiveSources.length > 0 ? effectiveSources : tabSources);
-		}
-		if (filterCantons.length > 0) q = q.in('canton', filterCantons);
-		if (filterStatuts.length > 0) {
-			q = q.in('statut', filterStatuts);
-		} else if (!showTransferred) {
-			q = q.neq('statut', 'transfere');
-		}
-		if (filterTemperatures.length > 0) {
-			const ranges: string[] = [];
-			if (filterTemperatures.includes('chaud')) ranges.push('score_pertinence.gte.7');
-			if (filterTemperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.4,score_pertinence.lte.6)');
-			if (filterTemperatures.includes('froid')) ranges.push('score_pertinence.lte.3');
-			if (ranges.length > 0) q = q.or(ranges.join(','));
-		}
-		return q;
-	};
+	// Query principale : filtre partagé (source onglet + canton/statut/transférés/température).
+	// La recherche reste un pattern sûr (3 .ilike() en parallèle + Set dédup, pas de mini-DSL
+	// .or() interpolé, cf. memory/feedback_postgrest_or_filter_injection.md).
+	const buildBaseQuery = () =>
+		applyProspectionFilters(locals.supabase.from('prospect_leads').select('*', { count: 'exact' }), filter);
 
 	// Type ligne : on récupère le type produit par Supabase (Database.public.prospect_leads.Row).
 	// Awaited<ReturnType<typeof buildBaseQuery>>['data'] = LeadRow[] | null typé strict.
 	type LeadRow = NonNullable<Awaited<ReturnType<typeof buildBaseQuery>>['data']>[number];
-	const SEARCH_FIELDS: Array<'raison_sociale' | 'localite' | 'canton'> = ['raison_sociale', 'localite', 'canton'];
 
 	const runMainQuery = async (): Promise<{ data: LeadRow[]; count: number; error: { message: string } | null }> => {
-		if (sourceFilterIncompatible) {
+		if (filter.sourceFilterIncompatible) {
 			return { data: [], count: 0, error: null };
 		}
-		if (search) {
-			// Échappe les 3 wildcards SQL ilike (% _ \). Les séparateurs mini-DSL PostgREST
-			// (`,` `(` `)` `:` `.`) ne sont plus interprétés ici car la valeur est passée
-			// comme argument à `.ilike(field, value)` (pas comme expression `.or(...)`).
-			const escaped = search.replace(/[%_\\]/g, (c) => `\\${c}`);
-			const queries = SEARCH_FIELDS.map((field) =>
+		if (filter.search) {
+			// Recherche sûre : 3 .ilike() en parallèle + Set dédup. La valeur est passée comme
+			// argument à `.ilike(field, value)` (wildcards échappés), jamais comme expression `.or(...)`.
+			const pattern = prospectionSearchPattern(filter.search);
+			const queries = PROSPECTION_SEARCH_FIELDS.map((field) =>
 				buildBaseQuery()
-					.ilike(field, `%${escaped}%`)
-					.order(sortKey, { ascending: sortAsc })
+					.ilike(field, pattern)
+					.order(filter.sortKey, { ascending: filter.sortAsc })
 					.range(page * pageSize, (page + 1) * pageSize - 1)
 			);
 			const results = await Promise.all(queries);
@@ -131,7 +85,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			return { data: merged.slice(0, pageSize), count: mergedCount, error: null };
 		}
 		const q = buildBaseQuery()
-			.order(sortKey, { ascending: sortAsc })
+			.order(filter.sortKey, { ascending: filter.sortAsc })
 			.range(page * pageSize, (page + 1) * pageSize - 1);
 		const r = await q;
 		return { data: (r.data ?? []) as LeadRow[], count: r.count ?? 0, error: r.error };
@@ -148,38 +102,28 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	// Phase 2 : counts par onglet (Promise.all parallèle, 1 round-trip).
 	// Filtre identique à la requête principale (cantons + statuts + showTransferred + temperatures + search)
 	// pour que les badges des onglets reflètent le résultat actuel des filtres globaux.
-	const buildTabCountBase = (sources: string[]) => {
-		let q = locals.supabase
-			.from('prospect_leads')
-			.select('*', { count: 'exact', head: true })
-			.in('source', sources);
-		if (filterCantons.length > 0) q = q.in('canton', filterCantons);
-		if (filterStatuts.length > 0) q = q.in('statut', filterStatuts);
-		else if (!showTransferred) q = q.neq('statut', 'transfere');
-		if (filterTemperatures.length > 0) {
-			const ranges: string[] = [];
-			if (filterTemperatures.includes('chaud')) ranges.push('score_pertinence.gte.7');
-			if (filterTemperatures.includes('tiede')) ranges.push('and(score_pertinence.gte.4,score_pertinence.lte.6)');
-			if (filterTemperatures.includes('froid')) ranges.push('score_pertinence.lte.3');
-			if (ranges.length > 0) q = q.or(ranges.join(','));
-		}
-		return q;
-	};
+	// Compteur par onglet : source = celle de l'onglet compté (pas l'onglet actif) + les
+	// mêmes filtres de portée (canton/statut/transférés/température) que la vue, via le helper
+	// partagé. Les badges reflètent ainsi le résultat des filtres globaux.
+	const buildTabCountBase = (sources: readonly string[]) =>
+		applyProspectionScopeFilters(
+			locals.supabase.from('prospect_leads').select('*', { count: 'exact', head: true }).in('source', [...sources]),
+			filter,
+		);
 
 	// V1.2 audit S160 : tab count avec recherche sécurisée (pattern S120).
 	// Pour les counts on prend max(field1, field2, field3) comme proxy du distinct count.
 	// Acceptable : badge onglet, pas une pagination critique.
 	const runTabCount = async (sources: readonly string[]): Promise<{ count: number }> => {
-		const sourcesArr = [...sources];
-		if (search) {
-			const escaped = search.replace(/[%_\\]/g, (c) => `\\${c}`);
-			const queries = SEARCH_FIELDS.map((field) =>
-				buildTabCountBase(sourcesArr).ilike(field, `%${escaped}%`)
+		if (filter.search) {
+			const pattern = prospectionSearchPattern(filter.search);
+			const queries = PROSPECTION_SEARCH_FIELDS.map((field) =>
+				buildTabCountBase(sources).ilike(field, pattern)
 			);
 			const results = await Promise.all(queries);
 			return { count: Math.max(...results.map((r) => r.count ?? 0)) };
 		}
-		const r = await buildTabCountBase(sourcesArr);
+		const r = await buildTabCountBase(sources);
 		return { count: r.count ?? 0 };
 	};
 
@@ -243,18 +187,18 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			entreprises: tabEntreprisesRes.count ?? 0,
 			terrain: tabTerrainRes.count ?? 0,
 		},
-		tab,
+		tab: filter.tab,
 		// P2 (2026-06-18) : statut quota Google Places exposé à la page (compteur « X/900 restantes
 		// ce mois », seuils 80/95 %). null si la source est coupée. Foundation pour la carte Google P3.
 		googlePlacesQuota: gpUsedRaw === null ? null : googlePlacesQuotaStatus(gpUsedRaw),
 		page,
 		pageSize,
-		sort: sortKey,
-		sortAsc,
-		filters: { sources: filterSources, cantons: filterCantons, statuts: filterStatuts, temperatures: filterTemperatures },
-		sourceFilterIncompatible,
-		showTransferred,
-		search,
+		sort: filter.sortKey,
+		sortAsc: filter.sortAsc,
+		filters: { sources: filter.filterSources, cantons: filter.filterCantons, statuts: filter.filterStatuts, temperatures: filter.filterTemperatures },
+		sourceFilterIncompatible: filter.sourceFilterIncompatible,
+		showTransferred: filter.showTransferred,
+		search: filter.search,
 		entreprises: entreprisesRes.data ?? [],
 		// V5 (2026-06-07) : recherches sauvegardées coupées → liste vide côté UI (masque les
 		// boutons « Mes recherches » et le panneau, sans supprimer la table). Réversible via
