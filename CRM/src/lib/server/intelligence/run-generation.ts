@@ -13,6 +13,7 @@ import { costTracker, CostTracker, type PersistMeta } from './cost-tracker';
 import type { VeilleDeps } from './deps';
 import { sanitizeForLog, sanitizeError } from './sanitize';
 import { stripCitationsFromReport } from './strip-citations';
+import { stripEnumArtifactsFromReport } from './strip-enum-artifacts';
 import { dedashReport } from './dedash';
 import type { Json } from '$lib/database.types';
 
@@ -556,12 +557,18 @@ export async function runWeeklyGeneration(
 	// Strip <cite> puis dedash déterministe (tirets typographiques -> tiret court) sur
 	// TOUT le texte publié (résumé, titres, so-what, deep_dive, source.name, impacts).
 	// Invariant typo dur jamais confié au prompt seul (cf. dedash.ts).
+	// Strip <cite> -> strip artefacts d'enum dumpés en prose (commentaire Pascal W25 #1 :
+	// l'enum d'actionnabilité a fui en queue de `filmpro_relevance` sur les 3 items W25) ->
+	// dedash. Chaîne déterministe : un slug snake_case terminal est toujours un artefact,
+	// jamais un fait (garantie zéro-hallu intacte). Cf. strip-enum-artifacts.ts.
 	const report: IntelligenceReport = dedashReport(
-		stripCitationsFromReport({
-			...gen.report,
-			meta: { ...gen.report.meta, generated_at: startedAt },
-			items: rerankedItems
-		})
+		stripEnumArtifactsFromReport(
+			stripCitationsFromReport({
+				...gen.report,
+				meta: { ...gen.report.meta, generated_at: startedAt },
+				items: rerankedItems
+			})
+		)
 	);
 	const { data: inserted, error: insertError } = await supabase
 		.from('intelligence_reports')

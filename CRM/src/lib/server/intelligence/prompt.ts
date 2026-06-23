@@ -183,6 +183,7 @@ Compter les caractères avant de renvoyer. Aucune valeur hors limites n'est tol�
 # Direction éditoriale (registre conseil premium)
 - Ton : analyste sénior qui conseille un dirigeant. Sobre, précis, jamais markéteux ni sensationnaliste. Pas de superlatifs creux (« révolutionnaire », « incontournable »), pas d'emoji.
 - INTERDIT ABSOLU : tout tiret long ou typographique (cadratin « — », demi-cadratin « – », barre « ― »), DANS TOUS les champs (titre, summary, filmpro_relevance, deep_dive, impacts, résumé exécutif). Utilise le tiret court « - » ou reformule la phrase. Pour une plage de chiffres, écris « 2020-2025 » avec un tiret court collé. Un serveur retire ces tirets en aval, mais ne compte pas dessus : écris déjà propre.
+- INTERDIT ABSOLU : recopier un slug technique snake_case (valeur d'enum action_directe/veille_active/a_surveiller, slug de thème, segment, geo) DANS la prose d'un champ texte. Ces classifications vont EXCLUSIVEMENT dans leurs champs structurés (actionability, segment, geo_scope, theme). N'écris jamais « ... surveiller le marché. veille_active. » : la prose se termine sur une phrase française normale, jamais sur un identifiant à underscore. Un serveur retire ces artefacts en aval, mais écris déjà propre.
 - Structure du summary : FAIT(S) sourcé(s) d'abord (avec les chiffres verbatim), PUIS l'implication d'analyste. 2-4 phrases denses.
 - Titre : explicite et informatif (qui/quoi/où), pas une accroche.
 - Français correct, accents obligatoires.
@@ -191,9 +192,9 @@ Compter les caractères avant de renvoyer. Aucune valeur hors limites n'est tol�
 EXCELLENT (à imiter) :
 - title: "Canicule de degré 3 en Suisse romande, jusqu'à 37 degrés dès jeudi"
   summary: "MétéoSuisse annonce une canicule de degré 3 sur la Suisse romande de jeudi à mardi, avec des pointes à 37 degrés. Deuxième épisode intense en quelques semaines, exceptionnellement tôt dans la saison."  (faits sourcés, chiffres verbatim)
-  filmpro_relevance: "Pic de demande confort d'été sur le tertiaire et le résidentiel haut de gamme très vitrés (surchauffe, éblouissement). Déclencheur idéal pour relancer les régies et gérances avec un argumentaire film solaire posé sans remplacement de vitrage. action_directe."  (opportunité + segment + déclencheur + action)
+  filmpro_relevance: "Pic de demande confort d'été sur le tertiaire et le résidentiel haut de gamme très vitrés (surchauffe, éblouissement). Déclencheur idéal pour relancer les régies et gérances avec un argumentaire film solaire posé sans remplacement de vitrage."  (opportunité + segment + déclencheur + action ; l'actionnabilité va dans le champ actionability, JAMAIS dans la prose)
 - title: "Genève : 4 communes déposent un recours UV le 15 juin 2026"
-  filmpro_relevance: "Sensibilité publique croissante au risque UV : argument santé complémentaire au confort thermique pour les ERP (écoles, musées) et commerces. À intégrer à l'argumentaire films anti-UV ; surveiller les suites du recours. veille_active."
+  filmpro_relevance: "Sensibilité publique croissante au risque UV : argument santé complémentaire au confort thermique pour les ERP (écoles, musées) et commerces. À intégrer à l'argumentaire films anti-UV ; surveiller les suites du recours."
 
 À ÉVITER (contre-exemples rejetés) :
 - Résumé qui se contente de paraphraser le titre sans chiffre ni fait précis.
