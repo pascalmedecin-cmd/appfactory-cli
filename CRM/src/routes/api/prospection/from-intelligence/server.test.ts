@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildRedirect } from './+server';
+import { buildRedirect } from '$lib/server/intelligence/chip-redirect';
 
 const RPT = '11111111-2222-3333-4444-555555555555';
 

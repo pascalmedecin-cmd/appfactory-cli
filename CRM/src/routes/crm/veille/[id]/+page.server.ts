@@ -3,7 +3,7 @@ import { error, fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import {
 	normalizeStoredChips,
-	buildChipLabel,
+	buildDefaultChips,
 	type SearchChip
 } from '$lib/server/intelligence/chip-normalize';
 import type { IntelligenceItem } from '$lib/server/intelligence/schema';
@@ -97,15 +97,6 @@ const ManualItemSchema = z.object({
 
 function flattenIssues(issues: z.ZodIssue[]): string {
 	return issues.map((i) => `${i.path.join('.') || '_'}: ${i.message}`).join(' | ');
-}
-
-/** Génère le chip search_terms par défaut (Zefix VD) à partir du titre.
- *  Zefix uniquement : c'est la SEULE source de prospection vivante (simap/regbl
- *  désactivées en V5 -> un chip simap/regbl serait un bouton mort, cohérent avec
- *  detectKind/prompt.ts). Pascal pourra l'éditer via /veille/themes ou re-générer. */
-export function buildDefaultChips(title: string): SearchChip[] {
-	const query = title.split(/\s+/).filter(Boolean).slice(0, 4).join(' ').slice(0, 100) || 'film vitrage';
-	return [{ kind: 'zefix', canton: 'VD', query, label: buildChipLabel('zefix', 'VD', query) }];
 }
 
 export const actions: Actions = {

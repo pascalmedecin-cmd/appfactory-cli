@@ -83,6 +83,19 @@ export function buildChipLabel(kind: ChipKind, canton: ChipCanton, query: string
 }
 
 /**
+ * Génère le chip search_terms par défaut (Zefix VD) à partir d'un titre, pour
+ * l'ajout manuel d'item Veille. Zefix uniquement : c'est la SEULE source de
+ * prospection vivante (simap/regbl désactivées en V5 -> un chip simap/regbl serait
+ * un bouton mort, cohérent avec detectKind/prompt.ts). Vit ici (lib) et pas dans
+ * +page.server.ts : SvelteKit interdit les exports non-standard depuis une route.
+ */
+export function buildDefaultChips(title: string): SearchChip[] {
+	const query =
+		title.split(/\s+/).filter(Boolean).slice(0, 4).join(' ').slice(0, 100) || 'film vitrage';
+	return [{ kind: 'zefix', canton: 'VD', query, label: buildChipLabel('zefix', 'VD', query) }];
+}
+
+/**
  * Normalise un tableau mixte (strings legacy + chips structurés) stocké en DB
  * en SearchChip[] garantis. Utilisé côté +page.server.ts /veille et item/[slug].
  */

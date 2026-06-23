@@ -181,23 +181,3 @@ describe('addItem validation pipeline (H-20)', () => {
 		expect(r.data?.error).toMatch(/denylist/i);
 	});
 });
-
-describe('buildDefaultChips (alignement Prospection : zefix uniquement)', () => {
-	it('génère UN seul chip, kind=zefix (plus de chip simap mort en V5)', async () => {
-		const mod = await import('./+page.server');
-		const chips = mod.buildDefaultChips('Canicule de degré 3 en Suisse romande');
-		expect(chips).toHaveLength(1);
-		expect(chips[0].kind).toBe('zefix');
-		expect(chips.some((c) => c.kind === 'simap')).toBe(false);
-		expect(chips[0].canton).toBe('VD');
-		// Libellé canonique "Zefix · VD · ..." (buildChipLabel).
-		expect(chips[0].label).toContain('Zefix');
-		expect(chips[0].label).toContain('VD');
-	});
-
-	it('tronque la requête aux 4 premiers mots et fallback si titre vide', async () => {
-		const mod = await import('./+page.server');
-		expect(mod.buildDefaultChips('un deux trois quatre cinq six')[0].query).toBe('un deux trois quatre');
-		expect(mod.buildDefaultChips('   ')[0].query).toBe('film vitrage');
-	});
-});

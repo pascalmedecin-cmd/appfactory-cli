@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectCanton, detectKind, normalizeStringToChip, buildChipLabel, normalizeStoredChips } from './chip-normalize';
+import { detectCanton, detectKind, normalizeStringToChip, buildChipLabel, normalizeStoredChips, buildDefaultChips } from './chip-normalize';
 
 describe('detectCanton', () => {
 	it('détecte les abréviations cantonales', () => {
@@ -143,5 +143,22 @@ describe('buildChipLabel', () => {
 		const label = buildChipLabel('simap', 'VD', long);
 		expect(label.length).toBeLessThan(100);
 		expect(label).toContain('…');
+	});
+});
+
+describe('buildDefaultChips (alignement Prospection : zefix uniquement)', () => {
+	it('génère UN seul chip kind=zefix (plus de chip simap mort en V5)', () => {
+		const chips = buildDefaultChips('Canicule de degré 3 en Suisse romande');
+		expect(chips).toHaveLength(1);
+		expect(chips[0].kind).toBe('zefix');
+		expect(chips.some((c) => c.kind === 'simap')).toBe(false);
+		expect(chips[0].canton).toBe('VD');
+		expect(chips[0].label).toContain('Zefix');
+		expect(chips[0].label).toContain('VD');
+	});
+
+	it('tronque la requête aux 4 premiers mots et fallback si titre vide', () => {
+		expect(buildDefaultChips('un deux trois quatre cinq six')[0].query).toBe('un deux trois quatre');
+		expect(buildDefaultChips('   ')[0].query).toBe('film vitrage');
 	});
 });
