@@ -9,6 +9,14 @@
 		IntelligenceItem,
 		ImpactFilmpro
 	} from '$lib/server/intelligence/schema';
+	import {
+		themeLabel,
+		themeLabelMap,
+		maturityLabel,
+		geoScopeLabel,
+		impactAxisLabel,
+		chipKindLabel
+	} from '$lib/utils/veilleFormat';
 
 	let { data }: { data: PageData } = $props();
 
@@ -19,6 +27,8 @@
 	const items = $derived(data.report.items as IntelligenceItem[]);
 	const impacts = $derived(data.report.impacts_filmpro as ImpactFilmpro[]);
 	const aggregatedChips = $derived(data.aggregatedChips ?? []);
+	// Libellés humains des thèmes (slug DB -> label), jamais le slug brut (Pascal W25 #1).
+	const themeLabels = $derived(themeLabelMap(data.activeThemes));
 
 	let chipLoading = $state<number | null>(null);
 
@@ -78,58 +88,13 @@
 		}
 	}
 
-	const KIND_LABELS: Record<string, string> = {
-		simap: 'SIMAP',
-		zefix: 'Zefix',
-		regbl: 'RegBL'
-	};
-
+	// KIND_ICONS reste local : ce sont des icônes Material (pas des libellés). Les
+	// libellés enum (theme/maturity/geo/impact/kind) passent par $lib/utils/veilleFormat
+	// (source unique, anti-fuite underscore, Pascal W25 #1).
 	const KIND_ICONS: Record<string, string> = {
 		simap: 'gavel',
 		zefix: 'business',
 		regbl: 'construction'
-	};
-
-	const THEME_LABELS: Record<string, string> = {
-		films_solaires: 'Films solaires',
-		films_securite: 'Films sécurité',
-		discretion_smartfilm: 'Discrétion / smart film',
-		batiment_renovation: 'Bâtiment / rénovation',
-		ia_outils: 'IA & outils',
-		reglementation: 'Réglementation',
-		autre: 'Autre'
-	};
-
-	const MATURITY_LABELS: Record<string, string> = {
-		emergent: 'Émergent',
-		etabli: 'Établi',
-		speculatif: 'Spéculatif'
-	};
-
-	const GEO_LABELS: Record<string, string> = {
-		suisse_romande: 'Suisse romande',
-		suisse: 'Suisse',
-		monde: 'Monde'
-	};
-
-	const IMPACT_LABELS: Record<string, string> = {
-		diagnostic: 'Diagnostic',
-		go_nogo: 'Go / No-go',
-		pricing: 'Pricing',
-		sourcing: 'Sourcing',
-		capacite: 'Capacité',
-		qualite: 'Qualité',
-		organisation: 'Organisation',
-		image: 'Image',
-		reglementation: 'Réglementation'
-	};
-
-	const SEGMENT_LABELS: Record<string, string> = {
-		tertiaire: 'Tertiaire',
-		residentiel: 'Résidentiel',
-		commerces: 'Commerces',
-		erp: 'ERP',
-		partenaires: 'Partenaires'
 	};
 
 	const COMPLIANCE_STYLES: Record<string, string> = {
@@ -352,16 +317,16 @@
 								class="flex items-center gap-2 text-xs text-text-muted mb-3 flex-wrap"
 							>
 								<span class="mag-kicker text-primary"
-									>{THEME_LABELS[item.theme] ?? item.theme}</span
+									>{themeLabel(item.theme, themeLabels)}</span
 								>
 								<span aria-hidden="true">·</span>
-								<span>{GEO_LABELS[item.geo_scope] ?? item.geo_scope}</span>
+								<span>{geoScopeLabel(item.geo_scope)}</span>
 								<span
 									class="px-2 py-0.5 rounded {MATURITY_STYLES[
 										item.maturity
 									]} text-[10px] font-semibold"
 								>
-									{MATURITY_LABELS[item.maturity]}
+									{maturityLabel(item.maturity)}
 								</span>
 							</div>
 							<h3
@@ -431,7 +396,7 @@
 						class="bg-white border border-border border-l-4 border-l-primary rounded-lg shadow-xs hover:shadow-md transition-shadow px-6 md:px-8 py-6 md:py-8"
 					>
 						<div class="mag-kicker text-primary mb-3">
-							Axe {IMPACT_LABELS[impact.axis] ?? impact.axis}
+							Axe {impactAxisLabel(impact.axis)}
 						</div>
 						<p
 							class="mag-display-3 text-lg md:text-xl text-primary-dark leading-snug"
@@ -476,7 +441,7 @@
 							<div class="flex-1 min-w-0">
 								<div class="flex items-center gap-2 flex-wrap mb-2">
 									<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary-light text-primary text-[10px] font-bold uppercase tracking-wider">
-										{KIND_LABELS[chip.kind] ?? chip.kind}
+										{chipKindLabel(chip.kind)}
 									</span>
 									<span class="inline-flex items-center px-2 py-0.5 rounded-full bg-surface-alt text-text-muted text-[10px] font-semibold uppercase tracking-wider border border-border">
 										{chip.canton}

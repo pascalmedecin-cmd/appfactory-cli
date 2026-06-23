@@ -2,7 +2,12 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import type { PageData } from './$types';
-	import type { Actionability, Segment } from '$lib/server/intelligence/schema';
+	import {
+		actionabilityLabel,
+		segmentLabel,
+		actionabilityStyle,
+		segmentStyle
+	} from '$lib/utils/veilleFormat';
 
 	let { data }: { data: PageData } = $props();
 
@@ -13,34 +18,6 @@
 				? 'Aucune édition'
 				: `${n} édition${n > 1 ? 's' : ''} récente${n > 1 ? 's' : ''}`;
 	});
-
-	const ACTIONABILITY_LABELS: Record<Actionability, string> = {
-		action_directe: 'Action directe',
-		veille_active: 'Veille active',
-		a_surveiller: 'À surveiller'
-	};
-
-	const SEGMENT_LABELS: Record<Segment, string> = {
-		tertiaire: 'Tertiaire',
-		residentiel: 'Résidentiel',
-		commerces: 'Commerces',
-		erp: 'ERP',
-		partenaires: 'Partenaires'
-	};
-
-	const ACTIONABILITY_STYLES: Record<Actionability, string> = {
-		action_directe: 'bg-danger-light text-danger-deep border-danger/20',
-		veille_active: 'bg-warning-light text-warning-deep border-warning/20',
-		a_surveiller: 'bg-surface-alt text-text-muted border-border'
-	};
-
-	const SEGMENT_STYLES: Record<Segment, string> = {
-		tertiaire: 'bg-prosp-import-bg text-prosp-import-deep border-prosp-import/30',
-		residentiel: 'bg-prosp-qualify-bg text-prosp-qualify-deep border-prosp-qualify/30',
-		commerces: 'bg-prosp-convert-bg text-prosp-convert-deep border-prosp-convert/30',
-		erp: 'bg-prosp-enrich-bg text-prosp-enrich-deep border-prosp-enrich/30',
-		partenaires: 'bg-primary-light text-primary border-primary'
-	};
 
 	function formatDateLong(iso: string): string {
 		return new Date(iso).toLocaleDateString('fr-CH', {
@@ -182,18 +159,18 @@
 										</a>
 										<div class="flex flex-wrap gap-1.5 mt-2">
 											<span
-												class="inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-medium {SEGMENT_STYLES[
+												class="inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-medium {segmentStyle(
 													item.segment
-												]}"
+												)}"
 											>
-												{SEGMENT_LABELS[item.segment]}
+												{segmentLabel(item.segment)}
 											</span>
 											<span
-												class="inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-semibold {ACTIONABILITY_STYLES[
+												class="inline-flex items-center px-2 py-0.5 rounded-full border text-[10px] font-semibold {actionabilityStyle(
 													item.actionability
-												]}"
+												)}"
 											>
-												{ACTIONABILITY_LABELS[item.actionability]}
+												{actionabilityLabel(item.actionability)}
 											</span>
 											{#if item.is_update}
 												<span

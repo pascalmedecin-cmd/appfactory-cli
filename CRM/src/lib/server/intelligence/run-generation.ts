@@ -2,7 +2,7 @@ import { generateIntelligenceReport } from './generate';
 import { loadThemeBundle } from './theme-loader';
 import { crossCheckBatch } from './cross-check';
 import { selectByMix } from './mix-select';
-import { demoteGenericRelevance } from './relevance-net';
+import { orderByFilmproImportance } from './relevance-net';
 import { currentWeekRange, extendedWindowStart } from './week-utils';
 import type { IntelligenceReport, IntelligenceItem } from './schema';
 import type { PreviousItem } from './prompt';
@@ -30,8 +30,15 @@ export interface RunResult {
 const SPARSE_WEEK_THRESHOLD = 2;
 /** Seuil items en-dessous duquel on logge un warning low-volume (sans bloquer). */
 const LOW_VOLUME_THRESHOLD = 8;
-/** Plafond items publiés par édition (anti-débordement post-filtrage). */
-const PUBLISHED_ITEMS_CAP = 10;
+/**
+ * Plafond items publiés par édition (anti-débordement post-filtrage). Relevé de 10
+ * à 12 le 2026-06-23 (commentaire Pascal W25 #3 « ne pas capper artificiellement ») :
+ * headroom pour qu'un 11e/12e signal réel et vérifié ne soit pas tronqué. NB : ce cap
+ * n'a JAMAIS été la cause des semaines à 3 items (= déficit d'offre web_search, traité
+ * par le Lot 3 sourcing), il borne seulement le scénario inverse (plus d'items vérifiés
+ * que de places). Aucun effet sur l'anti-hallu, qui tourne en amont.
+ */
+const PUBLISHED_ITEMS_CAP = 12;
 /** Texte placeholder écrit en DB lors du marquage running (évite NOT NULL sur executive_summary). */
 const RUNNING_PLACEHOLDER = 'Run en cours, en attente de publication.';
 
@@ -497,20 +504,25 @@ export async function runWeeklyGeneration(
 		};
 	}
 
-	// Filet anti-générique (Lot 1, spec AC-5) : un so-what qui ne nomme NI segment NI
-	// action est RÉTROGRADÉ (pénalité de rank), jamais rejeté (on combat la famine).
-	// Il passe derrière les items concrets → tombe en premier si l'édition dépasse le
-	// cap, reste publié en famine. Le rank publié est réassigné 1..N en aval.
-	const { items: demotedItems, demotedCount } = demoteGenericRelevance(publishableItems);
-	if (demotedCount > 0) {
-		logPhase(week.weekLabel, 'relevance_demoted', { count: demotedCount });
+	// Tri d'importance FilmPro déterministe (Lot 1 AC-5 + commentaires Pascal W25 #4+#5) :
+	// ré-ordonne par actionnabilité + ancrage local + maturité (so-what générique dominant),
+	// pour que le local actionnable mûr remonte et la nouveauté produit internationale
+	// lointaine (a_surveiller + monde + speculatif) redescende. JAMAIS un rejet (on combat
+	// la famine) ; le rank synthétique est réassigné 1..N en aval (re-rank ci-dessous).
+	const { items: orderedItems, demotedCount, reorderedCount } =
+		orderByFilmproImportance(publishableItems);
+	if (demotedCount > 0 || reorderedCount > 0) {
+		logPhase(week.weekLabel, 'importance_ordered', {
+			generic: demotedCount,
+			reordered: reorderedCount
+		});
 	}
 
 	// Sélection geo-aware (2026-06-22) : préserve le mix 2/3 local / 1/3 monde quand
 	// il y a plus d'items que le cap, garde TOUT en famine (aucun item perdu vs
 	// l'ancien `sort(rank)+slice`), et lève un canari de DÉRIVE (baseline W18-24 =
 	// 77 % monde JAMAIS détecté). Voir mix-select.ts + spec AC-3.
-	const { selected: cappedItems, mix, drift } = selectByMix(demotedItems, PUBLISHED_ITEMS_CAP);
+	const { selected: cappedItems, mix, drift } = selectByMix(orderedItems, PUBLISHED_ITEMS_CAP);
 	logPhase(week.weekLabel, 'mix', { ...mix, localShare: Math.round(mix.localShare * 100) / 100 });
 	if (drift) {
 		console.warn(

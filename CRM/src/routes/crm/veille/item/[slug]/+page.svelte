@@ -3,57 +3,21 @@
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { goto } from '$app/navigation';
 	import type { PageData } from './$types';
-	import type { Actionability, Segment, Theme, Maturity } from '$lib/server/intelligence/schema';
+	import {
+		actionabilityLabel,
+		segmentLabel,
+		themeLabel,
+		maturityLabel,
+		geoScopeShortLabel,
+		actionabilityStyle,
+		segmentStyle
+	} from '$lib/utils/veilleFormat';
 
 	let { data }: { data: PageData } = $props();
 
 	$effect(() => {
 		$pageSubtitle = `Édition ${data.report.week_label}`;
 	});
-
-	const ACTIONABILITY_LABELS: Record<Actionability, string> = {
-		action_directe: 'Action directe',
-		veille_active: 'Veille active',
-		a_surveiller: 'À surveiller'
-	};
-
-	const SEGMENT_LABELS: Record<Segment, string> = {
-		tertiaire: 'Tertiaire',
-		residentiel: 'Résidentiel',
-		commerces: 'Commerces',
-		erp: 'ERP',
-		partenaires: 'Partenaires'
-	};
-
-	const THEME_LABELS: Record<Theme, string> = {
-		films_solaires: 'Films solaires',
-		films_securite: 'Films sécurité',
-		discretion_smartfilm: 'Discrétion',
-		batiment_renovation: 'Bâtiment',
-		ia_outils: 'IA & outils',
-		reglementation: 'Réglementation',
-		autre: 'Autre'
-	};
-
-	const MATURITY_LABELS: Record<Maturity, string> = {
-		emergent: 'Émergent',
-		etabli: 'Établi',
-		speculatif: 'Spéculatif'
-	};
-
-	const ACTIONABILITY_STYLES: Record<Actionability, string> = {
-		action_directe: 'bg-danger-light text-danger-deep border-danger/20',
-		veille_active: 'bg-warning-light text-warning-deep border-warning/20',
-		a_surveiller: 'bg-surface-alt text-text-muted border-border'
-	};
-
-	const SEGMENT_STYLES: Record<Segment, string> = {
-		tertiaire: 'bg-prosp-import-bg text-prosp-import-deep border-prosp-import/30',
-		residentiel: 'bg-prosp-qualify-bg text-prosp-qualify-deep border-prosp-qualify/30',
-		commerces: 'bg-prosp-convert-bg text-prosp-convert-deep border-prosp-convert/30',
-		erp: 'bg-prosp-enrich-bg text-prosp-enrich-deep border-prosp-enrich/30',
-		partenaires: 'bg-primary-light text-primary border-primary'
-	};
 
 	function formatDateLong(iso: string): string {
 		return new Date(iso).toLocaleDateString('fr-CH', {
@@ -95,11 +59,6 @@
 		}
 	}
 
-	function geoLabel(g: string): string {
-		if (g === 'suisse_romande') return 'Romandie';
-		if (g === 'suisse') return 'CH';
-		return 'Monde';
-	}
 </script>
 
 <article class="max-w-5xl mx-auto px-4 md:px-12 py-8 md:py-12">
@@ -126,29 +85,29 @@
 	<!-- Badges -->
 	<div class="flex flex-wrap gap-1.5 text-[11px] mb-5">
 		<span
-			class="inline-flex items-center px-2 py-0.5 rounded-full border font-semibold {ACTIONABILITY_STYLES[data.item.actionability]}"
+			class="inline-flex items-center px-2 py-0.5 rounded-full border font-semibold {actionabilityStyle(data.item.actionability)}"
 		>
-			{ACTIONABILITY_LABELS[data.item.actionability]}
+			{actionabilityLabel(data.item.actionability)}
 		</span>
 		<span
-			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium {SEGMENT_STYLES[data.item.segment]}"
+			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium {segmentStyle(data.item.segment)}"
 		>
-			{SEGMENT_LABELS[data.item.segment]}
+			{segmentLabel(data.item.segment)}
 		</span>
 		<span
 			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium bg-surface-alt text-text border-border"
 		>
-			{geoLabel(data.item.geo_scope)}
+			{geoScopeShortLabel(data.item.geo_scope)}
 		</span>
 		<span
 			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium bg-primary-light text-primary border-primary"
 		>
-			{THEME_LABELS[data.item.theme]}
+			{themeLabel(data.item.theme, data.themeLabels)}
 		</span>
 		<span
 			class="inline-flex items-center px-2 py-0.5 rounded-full border font-medium bg-surface-alt text-text-muted border-border"
 		>
-			Maturité : {MATURITY_LABELS[data.item.maturity]}
+			Maturité : {maturityLabel(data.item.maturity)}
 		</span>
 	</div>
 

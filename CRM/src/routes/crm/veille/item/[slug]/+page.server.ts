@@ -2,6 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import type { IntelligenceItem } from '$lib/server/intelligence/schema';
 import { normalizeStoredChips } from '$lib/server/intelligence/chip-normalize';
+import { themeLabelMap } from '$lib/utils/veilleFormat';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	// slug = "<report_uuid>-<rank>"
@@ -27,6 +28,14 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const item = items.find((it) => it.rank === rank);
 	if (!item) throw error(404, 'Signal introuvable dans cette édition');
 
+	// Libellés humains des thèmes (slug DB -> label) : le `theme` est un slug
+	// éditable (snake_case), jamais affiché brut (commentaire Pascal W25 #1).
+	const activeThemes = await locals.supabase
+		.from('veille_themes')
+		.select('slug, label')
+		.eq('active', true);
+	const themeLabels = themeLabelMap(activeThemes.data);
+
 	return {
 		item: {
 			...item,
@@ -34,6 +43,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			actionability: item.actionability ?? 'a_surveiller',
 			search_terms: normalizeStoredChips(item.search_terms) as unknown as IntelligenceItem['search_terms']
 		} as IntelligenceItem,
+		themeLabels,
 		report: {
 			id: report.id,
 			week_label: report.week_label,

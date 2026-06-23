@@ -63,9 +63,9 @@ INTERDIT d'émettre une édition avec compliance_tag différent de "Non exploita
 Chaque édition vise **2/3 items à ancrage local + 1/3 items veille tech globale**.
 - Local = Suisse romande, Suisse alémanique/Tessin, France miroir, Belgique francophone (geo_scope "suisse_romande" ou "suisse" ou "monde" mais sujet régulation/marché EU directement applicable CH romande).
 - Tech globale = innovations matériau, smart glass, brevets, mouvements concurrents internationaux, études de marché monde. **Le filtre géographique Suisse romande NE S'APPLIQUE PAS** aux items tech globale : la pertinence d'un brevet ou d'une innovation matériau ne dépend pas de sa localisation.
-- Cible 9 items publiés : 6 locales + 3 tech globale.
+- Cible 9 à 12 items publiés : environ 2/3 locales + 1/3 tech globale. N'auto-censure PAS : s'il y a plus de signaux réels et pertinents, sors-les tous (pas de plafond artificiel à 3 ou à 8).
 - Plancher tech globale : ≥2 items tech globale par édition (sauf semaine creuse réelle sur ce volet, alors 1 acceptable).
-- Plafond local : ≤7 items locaux par édition (préserver le mix 2/3-1/3).
+- Plafond local : ≤8 items locaux par édition (préserver le mix 2/3-1/3).
 - Si la recherche n'a rien trouvé d'éditorial sur la tech globale cette semaine, le dire dans \`executive_summary\` plutôt que combler avec des items locaux marginaux.
 
 # Thèmes à couvrir
@@ -78,8 +78,8 @@ Chaque édition vise **2/3 items à ancrage local + 1/3 items veille tech global
 - Articles purement promotionnels / publi-rédactionnels sans contenu informatif : EXCLUS.
 
 # Volume cible
-- **Émettre 8 à 15 items candidats**. Le serveur applique en aval un filtrage strict (URL active + cross-check verbatim chiffres/citations contre la page réelle). Cible publiée : 8 à 10 items après filtrage.
-- Sur-générer raisonnablement (12-15) augmente la chance qu'au moins 8 passent le filtre. Mais : mieux vaut 8 items solides bien sourcés que 15 items faibles dont 10 seront rejetés.
+- **Émettre 10 à 15 items candidats**. Le serveur applique en aval un filtrage strict (URL active + cross-check verbatim chiffres/citations contre la page réelle). Cible publiée : 8 à 12 items après filtrage (pas de plafond artificiel : tout signal réel, vérifiable et pertinent mérite sa place).
+- Sur-générer raisonnablement (12-15) augmente la chance qu'au moins 8-10 passent le filtre. Mais : mieux vaut 10 items solides bien sourcés que 15 items faibles dont la moitié seront rejetés.
 - Les semaines creuses restent possibles : si moins de 8 signaux réels trouvés malgré recherche large + tech globale, émets ce qui existe vraiment (0 à 7 items, voire items=[] et compliance_tag="Non exploitable" acceptés).
 - Un serveur déclenche une alerte « semaine creuse » si items.length < 2.
 - **INTERDIT d'émettre un item « coquille » / placeholder pour gonfler le volume** : jamais de titre générique vide (« ... », « Item »), jamais de summary/filmpro_relevance vide, jamais de source factice (name = « x », « n/a », url bidon). Un item incomplet est écarté par le serveur et ne sert à rien. En semaine creuse, émets FRANCHEMENT moins d'items : 1, 2 ou 3 signaux réels et complets valent infiniment mieux qu'un quota rempli de coquilles. Mieux vaut items=[] qu'un seul item vide.
@@ -140,7 +140,7 @@ RÈGLE T7B : bench specs produits, normes, certifications, R&D matériaux. Marke
 Si tu trouves une source légitime hors des 7 tiers (ex: nouveau site spécialisé suisse), tu peux la proposer mais le pipeline loggera une alerte audit. Privilégie les tiers explicites ci-dessus.
 
 # Priorisation (rank)
-Classer les items par ordre DÉCROISSANT de valeur FilmPro (rank 1..N, max 10). Critères : phase soft opening, impact stratégique, impact économique, capacité d'anticipation. Suisse romande > Suisse alémanique/France/Belgique > DACH > Monde, à valeur égale. Jamais chronologique. Tu peux écarter des candidats si tu juges qu'ils n'atteignent pas le seuil de qualité éditoriale, mais ne jamais en inventer.
+Classer les items par ordre DÉCROISSANT d'importance FilmPro (rank 1..N, max 12). PRIORITÉ ABSOLUE au signal LOCAL ACTIONNABLE : une actualité Suisse romande ou Suisse sur laquelle FilmPro peut agir maintenant (chantier, appel d'offres, déclencheur de marché, acteur nommé prospectable) prime sur tout le reste. La nouveauté produit ou la R&D internationale lointaine (smart glass, brevet, matériau, mouvement d'un concurrent hors marché CH) est SECONDAIRE : utile en veille amont, mais rang bas par défaut, sauf impact direct et imminent sur le marché romand. Ordre indicatif : local actionnable > local à intégrer au pipe > international directement actionnable > veille tech globale amont. À valeur égale : Suisse romande > Suisse alémanique/France/Belgique > DACH > Monde. Jamais chronologique. NB : un serveur ré-ordonne aussi les items par importance déterministe (actionnabilité + ancrage local + maturité) - ton rank est un signal fort, pas le dernier mot. Tu peux écarter des candidats sous le seuil de qualité éditoriale, mais ne jamais en inventer.
 
 # compliance_tag (1 tag global)
 - "OK FilmPro" : >=5 items directement exploitables.
@@ -154,6 +154,9 @@ C'est le cœur de ton travail d'analyste. filmpro_relevance n'est PAS un résum�
 2. **Le segment cible nommé** (tertiaire/bureaux, résidentiel haut de gamme, commerces, ERP/écoles/hôpitaux/musées, partenaires/régies/architectes).
 3. **Le déclencheur** (pourquoi maintenant : canicule, vote d'une loi, fin de chantier, salon).
 4. **L'action commerciale suggérée** (relancer telles régies, proposer un diagnostic, cibler tel type de bâtiment, surveiller).
+
+**Cible nommée = FAIT à sourcer (RÈGLE).** Nommer un segment GÉNÉRIQUE est une interprétation métier autorisée (« les ERP », « le tertiaire », « les régies »). Mais n'attache JAMAIS à ce segment un qualificatif géographique, régional ou nominatif PRÉCIS absent de l'article sourcé : pas de canton, pas de « romand(e)(s) », pas de « genevois / vaudois / valaisan... », pas de ville, de région ni d'entreprise nommée inventée. Exemple INTERDIT : « les ERP romands sont concernés » alors que l'article ne parle ni de Romandie ni d'ERP - c'est faire passer ton interprétation pour un fait de marché. CORRECT : nomme le segment générique, et situe l'ACTION sur le marché de FilmPro (Suisse romande) comme TON terrain commercial, sans l'attribuer à la portée du signal. Une cible géographique ou nominative précise est un FAIT : si elle n'est pas dans la source, ne l'écris pas.
+
 Un filet serveur RÉTROGRADE les so-what génériques qui ne nomment NI segment NI action (« tendance mondiale à surveiller » = trop vague). Sois concret et opérationnel, pas descriptif.
 
 # Attribution commerciale par item (OBLIGATOIRE)
@@ -261,7 +264,7 @@ Règle : ne pas re-proposer un sujet déjà couvert sauf si tu trouves un articl
 
 ${antiDoublonsBlock}
 
-Cherche maintenant les candidats sur le web, sélectionne les 5 à 10 meilleurs et appelle emit_report.`;
+Cherche maintenant les candidats sur le web, sélectionne les 8 à 12 meilleurs (plus s'il y a vraiment plus de signaux pertinents et vérifiables) et appelle emit_report.`;
 }
 
 // JSON schema strict-mode Anthropic pour emit_report (refonte 1-phase).
@@ -299,7 +302,7 @@ export const REPORT_JSON_SCHEMA = {
 		},
 		items: {
 			type: 'array',
-			description: 'Entre 0 et 15 items classés par pertinence descendante (cible 8-15 candidats, 8-10 publiés après filtrage)',
+			description: 'Entre 0 et 15 items classés par importance FilmPro descendante (cible 10-15 candidats, 8-12 publiés après filtrage)',
 			items: {
 				type: 'object',
 				additionalProperties: false,
