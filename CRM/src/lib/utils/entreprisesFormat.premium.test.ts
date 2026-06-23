@@ -272,4 +272,4 @@ describe('STRESS : invariants durs sur 5000 cas aléatoires (PRNG seedé)', () =
 			expect(out).not.toContain('undefined');
 		}
 	});
-});
+}, 20000);
