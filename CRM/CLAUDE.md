@@ -133,7 +133,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Éditeur de la veille - étape 2/6** (`sources-loader` DB + filet + classifieur + test équivalence) : chantier chaud, mockup **v2 VALIDÉ**, migration pas-à-pas (étape 1 table+seed 238 livrée), objectif **zéro source en dur**. Reprendre depuis la branche `editeur-veille-sources` (chantier sécurisé là). → [[project_editeur_veille_sources_editables_2026-06-24]]. **Décision déploiement W26 tranchée 24/06 : DÉPLOYER** - sources presse cantonales/frontalières + règle traduction **commitées sur main `6f8de17` pour le cron W26** ; le bouton supprimer/retour thèmes (UI web, hors cron) reste sur la branche WIP, non déployé. Campagnes 3.2 (branche `campagnes-vague32`, `3e27c49`, non mergée) reste en attente derrière.
+**Prochaine attaque** : **Éditeur de la veille - étape 2/6** (`sources-loader` DB + filet + classifieur + test équivalence) : chantier chaud, mockup **v2 VALIDÉ**, objectif **zéro source en dur**. **Reprendre depuis la branche `editeur-veille-sources`** (chantier 24/06 sécurisé là ; presse + règle traduction déjà sur main `6f8de17` pour le cron W26). → [[project_editeur_veille_sources_editables_2026-06-24]]. Campagnes 3.2 (branche `campagnes-vague32`, `3e27c49`, non mergée) en attente derrière.
 
 > Cadrage commun refonte UX/UI CRM (validé 2026-06-18) → [[project_refonte_crm_cadrage_2026-06-18]] + golden `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html` (validé Chrome).
 
@@ -141,6 +141,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 - **Pourquoi** : page Éditeur 2 onglets (Thèmes + Sources éditables), mockup **v2 VALIDÉ** par Pascal. Migration pas-à-pas, étape 1 (table `veille_sources` + seed 238) livrée. Objectif Pascal : **zéro source en dur**, tests régression abo (jamais clé API).
 - **Payload** → [[project_editeur_veille_sources_editables_2026-06-24]] (plan 6 étapes, décisions UI terme/priorité/case à cocher, cartographie 3 call sites, schéma table, mockup v2).
+- **Reprise** : depuis la branche **`editeur-veille-sources`** (`177e7b5`, chantier sécurisé là), **pas `main`**. ⚠ **Dette migration** : `20260624_001_veille_sources.sql` non appliquée ET **jamais exécutée contre un vrai Postgres** (validée seulement par cohérence syntaxique + alignement 238 seed↔SQL). À l'application (étape 2/déploiement) : exécuter la migration contre la base réelle AVANT de s'y fier, puis régénérer `database.types` via `supabase gen types`.
 - [ ] **[EXÉCUTABLE]** **Étape 2** : `sources-loader.ts` (charge `veille_sources` actives + filet `sources-seed`) + classifieur sur bundle + test équivalence DB↔code. Moteur pas encore branché.
 - [ ] **[BLOQUÉ - étape 2 livrée]** **Étape 3** : brancher le moteur (3 call sites : `generate.ts` 258/333, `cross-check.ts` 711, `veille/[id]/+page.server.ts` 140).
 - [ ] **[BLOQUÉ - étape 3 livrée]** **Étape 4** : le prompt génère la section sources depuis la DB (cf. `buildThemesPromptSection`).
@@ -171,19 +172,17 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ### Réserve (hors backlog actif)
 - Chantier 3 portail (non cadré) ; durcissement RLS si 4e user ([[feedback_rls_multitenant_durcissement_si_4_users]]).
+- [ ] **[EXÉCUTABLE - basse]** **Nettoyer les 29 warnings `svelte-check`** (préexistants, non bloquants, 11 fichiers ; reproductibles par `npm run check`) : `state_referenced_locally`, `a11y_no_noninteractive_tabindex`, `attribute_quoted`, compat `line-clamp` (cosmétique a11y/Svelte 5). À traiter en marge d'un chantier UI touchant ces fichiers.
 
 ### Livré cette session
 
-- [x] ~~**Éditeur veille - étape 1/6 : table `veille_sources` + seed 238 + repository**~~ - 2026-06-24 : migration SQL + `sources-seed.ts` + `sources-repository.ts` + database.types + générateur déterministe (`scripts/gen-veille-sources-seed.ts`) + tests équivalence domaine par domaine (garde-fou anti-régression). Moteur pas encore branché, 0 régression (584 tests intelligence). → [[project_editeur_veille_sources_editables_2026-06-24]].
-- [x] ~~**Mockup Éditeur veille v2 - VALIDÉ par Pascal**~~ - 2026-06-24 : page 2 onglets, 8 retours intégrés (Terme, Priorité 3 niveaux, case à cocher, collapse top 5, filtres, légende confiance). `CRM/.product-architect/editeur-veille/mockup-v2.html`. → [[project_editeur_veille_sources_editables_2026-06-24]].
-- [x] ~~**Sources presse veille élargies + traduction sources étrangères**~~ - 2026-06-24 (**commité sur main `6f8de17` pour W26**) : +7 cantonaux romands + 2 frontaliers Genève (T4) + règle prompt « synthèse FR, URL d'origine ». → [[project_editeur_veille_sources_editables_2026-06-24]].
-- [x] ~~**Bouton Supprimer + Retour sur les thèmes veille**~~ - 2026-06-24 (codé/testé, NON déployé) : `deleteTheme` + action delete (auth+UUID+service-role) + ConfirmModal danger + breadcrumb. Audit sécu+bug **0 C/H/M**. → [[project_editeur_veille_sources_editables_2026-06-24]].
-- [x] ~~**Doc HTML revue des 238 sources de veille (annotable)**~~ - 2026-06-24 : `CRM/docs/veille/sources-revue-2026-06-24.html`. → [[project_editeur_veille_sources_editables_2026-06-24]].
+- [x] ~~**Audit de clôture 24/06 + sécurisation + déploiement W26**~~ - 2026-06-24 : audit factuel 4 dimensions = rien cassé (main propre 2089 / working complet 2107 tests verts, svelte-check 0 erreur, prod insensible au local), rien perdu, 0 corruption git. Chantier 24/06 (18 fichiers) **sécurisé** sur branche `editeur-veille-sources` (`177e7b5`) ; sources presse romande + règle traduction **poussées sur main** (`6f8de17`+`7c2e8da`, CI verte) pour le cron W26. → [[project_editeur_veille_sources_editables_2026-06-24]].
+- [x] ~~**Éditeur veille - étape 1/6 + mockup v2 + bouton supprimer/retour thèmes + doc HTML 238 sources**~~ - 2026-06-24 : table `veille_sources` + seed 238 + repo + tests équivalence (générateur déterministe), mockup v2 VALIDÉ (8 retours), `deleteTheme` (0 C/H/M), 0 régression (584 tests intelligence). Tout sur branche `editeur-veille-sources` (sauf la presse, sur main). → [[project_editeur_veille_sources_editables_2026-06-24]].
 → Livrés 23/06 (W26, W25, pré-flight QA, Campagnes 3.2 backend) + antérieurs → mémoires veille 06-23 + `archive/`.
 
 ### Watch list active après pivot
 
-- **[WATCH] W26 (vendredi 26/06) = 1er run cron sur le nouveau sourcing (`9bef41b`) + 1er brief brandé réel antoine@**. Surveiller GHA : `keptByTrust`/`keptByTrustTitles`, densité (cible 8-12, W25=2), part locale (↑ vs 33%), 0 `<cite>`/emoji/underscore. **NB : les sources presse cantonales/frontalières de cette session ne seront sur W26 que si déployées avant vendredi.** → [[project_veille_sourcing_w26_2026-06-23]].
+- **[WATCH] W26 (vendredi 26/06) = 1er run cron sur le nouveau sourcing + 1er brief brandé réel antoine@**. Surveiller GHA : `keptByTrust`/`keptByTrustTitles`, densité (cible 8-12, W25=2), part locale (↑ vs 33%), 0 `<cite>`/emoji/underscore. **Sources presse cantonales/frontalières + règle traduction déployées sur main `6f8de17` → W26 en bénéficiera ; surveiller leur apport (part locale, sources nommées).** → [[project_veille_sourcing_w26_2026-06-23]].
 - **[WATCH] Svelte 5 `onDestroy` s'exécute en SSR Vercel** (pas en `vite preview`) : window/document/localStorage/setInterval à cleanup → `$effect(() => {...; return () => cleanup})`. Tester en preview branch. → `feedback_svelte5_ondestroy_ssr_window_undefined.md`.
 - **[WATCH] Trap Vercel `rollback` → alias prod verrouillé** : après `vercel rollback`, les `git push` buildent mais ne promeuvent PAS automatiquement. Vérifier via `vercel inspect filmpro-portail.vercel.app` (domaine canonique) que l'alias pointe sur le nouveau deploy.
 - **[WATCH] Réactivation d'une source coupée V5 (2026-06-07)** : flip de flag → re-vérifier les contrôles d'origine (Zod, quota, rate-limit, anti-hallu) AVANT de rallumer en prod. Réf `audit_secu_2026-06-07_v5_signaux_prospection.md` § I-3.
