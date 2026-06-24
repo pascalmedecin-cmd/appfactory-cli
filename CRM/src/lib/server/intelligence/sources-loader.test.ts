@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
 	buildSourcesBundle,
+	buildSourcesPromptSection,
 	getFallbackSourcesBundle,
 	loadSourcesBundle,
 	type SourceClassification
@@ -14,7 +15,8 @@ import {
 	requiresStrictVerbatim,
 	isAdvocacySource,
 	isPreprintSource,
-	regimeFromClassification
+	regimeFromClassification,
+	SOURCE_TIERS
 } from './source-allowlist';
 
 // GARDE-FOU anti-régression de l'étape 2 du chantier « sources éditables » :
@@ -283,5 +285,118 @@ describe('loadSourcesBundle (résilience, miroir de theme-loader)', () => {
 		const bundle = await loadSourcesBundle(client);
 		expect(bundle.source).toBe('fallback');
 		warn.mockRestore();
+	});
+});
+
+// ÉTAPE 4 du chantier « sources éditables » : la section « Sources autorisées
+// (7 tiers) » du prompt n'est plus en dur — elle est régénérée depuis le bundle.
+// Ces tests prouvent l'ÉQUIVALENCE (chaque domaine sous le bon tier, denylist
+// complète, règles éditoriales préservées) + le déterminisme. Zéro réseau, zéro clé.
+describe('buildSourcesPromptSection : section prompt « Sources autorisées » depuis le bundle (étape 4)', () => {
+	const bundle = getFallbackSourcesBundle();
+	const section = buildSourcesPromptSection(bundle);
+
+	/** Découpe la portion tiers (avant la denylist) en blocs indexés par tier. */
+	function tierBlocks(s: string): Map<string, string> {
+		const tierPortion = s.split('\n\n# Denylist')[0];
+		const map = new Map<string, string>();
+		for (const b of tierPortion.split('\n\n')) {
+			const m = b.match(/^\*\*(T\d[AB]?) - /);
+			if (m) map.set(m[1], b);
+		}
+		return map;
+	}
+	/** Domaines listés dans un bloc tier (ligne 2 = la liste). */
+	function domainsOf(block: string): string[] {
+		const line = block.split('\n')[1];
+		return line === '(aucune source active)' ? [] : line.split(', ');
+	}
+
+	it('a exactement un bloc par tier T1..T7B avec son libellé', () => {
+		const blocks = tierBlocks(section);
+		for (const t of SOURCE_TIERS) expect(blocks.has(t)).toBe(true);
+		expect(blocks.size).toBe(SOURCE_TIERS.length);
+	});
+
+	it('chaque domaine à tier T_x (non denylist) figure SOUS le bloc T_x, trié, et eux seuls', () => {
+		const blocks = tierBlocks(section);
+		for (const t of SOURCE_TIERS) {
+			const expected = [...bundle.byDomain.values()]
+				.filter((c) => c.tier === t && !c.in_denylist)
+				.map((c) => c.hostname)
+				.sort();
+			expect([t, domainsOf(blocks.get(t)!)]).toEqual([t, expected]);
+		}
+	});
+
+	it('aucun domaine en denylist ne fuit dans une section tier', () => {
+		const blocks = tierBlocks(section);
+		const tierDomains = new Set([...blocks.values()].flatMap(domainsOf));
+		for (const c of bundle.byDomain.values()) {
+			if (c.in_denylist) expect(tierDomains.has(c.hostname)).toBe(false);
+		}
+	});
+
+	it('liste TOUS les domaines denylist (et eux seuls) dans la section denylist', () => {
+		const deniedExpected = [...bundle.byDomain.values()]
+			.filter((c) => c.in_denylist)
+			.map((c) => c.hostname)
+			.sort();
+		expect(deniedExpected.length).toBeGreaterThan(0);
+		const denyLines = section.slice(section.indexOf('# Denylist hard')).split('\n');
+		const idx = denyLines.findIndex((l) => l.startsWith('**Sources INTERDITES**'));
+		expect(denyLines[idx + 1].split(', ').sort()).toEqual(deniedExpected);
+	});
+
+	it('les domaines tier=null non-denylist (PR-wires, preprints) ne sont PAS whitelistés', () => {
+		const blocks = tierBlocks(section);
+		const allTierDomains = [...blocks.values()].flatMap(domainsOf);
+		// globenewswire est NOMMÉ dans la prose ALERTE mais jamais dans une liste tier.
+		for (const host of ['prnewswire.com', 'biorxiv.org', 'globenewswire.com']) {
+			expect(allTierDomains).not.toContain(host);
+		}
+	});
+
+	it('préserve les règles éditoriales (politique en code, pas en base)', () => {
+		expect(section).toContain('RESPECTER STRICTEMENT');
+		expect(section).toContain('ALERTE VERBATIM STRICT');
+		expect(section).toContain('mordorintelligence.com'); // nommé dans la règle T3
+		expect(section).toContain('NOTE PAYWALL');
+		expect(section).toContain('FRANCE VOISINE');
+		expect(section).toContain('ledauphine.com'); // nommé dans la règle T4
+		expect(section).toContain('RÈGLE T7A');
+		expect(section).toContain('RÈGLE T7B');
+		expect(section).toContain('Patterns bannis : *.blogspot.com');
+		expect(section).toContain('# Hors whitelist');
+	});
+
+	it('ne contient aucun tiret cadratin (conformité typo FR)', () => {
+		expect(section).not.toContain('—');
+	});
+
+	it('est déterministe (tri alpha stable, 2 appels identiques)', () => {
+		expect(buildSourcesPromptSection(getFallbackSourcesBundle())).toBe(section);
+		for (const [, b] of tierBlocks(section)) {
+			const d = domainsOf(b);
+			expect(d).toEqual([...d].sort());
+		}
+	});
+
+	it('anti-régression : domaines critiques présents sous le bon tier, dérive corrigée', () => {
+		const blocks = tierBlocks(section);
+		expect(domainsOf(blocks.get('T1')!)).toContain('bafu.admin.ch');
+		// Corrige la dérive code↔prompt : l'ancien prompt listait glass-for-europe.eu (mort).
+		expect(domainsOf(blocks.get('T1')!)).toContain('glassforeurope.com');
+		expect(section).not.toContain('glass-for-europe.eu');
+		// Sources romandes/cantonales + frontalières ajoutées (W26).
+		expect(domainsOf(blocks.get('T4')!)).toContain('lenouvelliste.ch');
+		expect(domainsOf(blocks.get('T4')!)).toContain('ledauphine.com');
+	});
+
+	it('bundle vide → section bien formée, tous les tiers en « (aucune source active) »', () => {
+		const s = buildSourcesPromptSection(buildSourcesBundle([], 'fallback'));
+		expect(s).toContain('(aucune source active)');
+		expect(s).toContain('# Hors whitelist');
+		for (const t of SOURCE_TIERS) expect(s).toContain(`**${t} - `);
 	});
 });

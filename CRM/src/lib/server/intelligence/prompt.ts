@@ -96,56 +96,7 @@ Le message utilisateur liste les items des 4 dernières éditions (URL + titre +
 - Si l'article que tu trouves a une date égale ou antérieure à un item déjà couvert, INTERDIT de le proposer (vrai doublon).
 - Sujet différent même thème = nouveau candidat (is_update=false).
 
-# Sources autorisées (7 tiers) — RESPECTER STRICTEMENT
-Le pipeline aval rejette les domaines hors whitelist informative (warning) et reject HARD les domaines de la denylist. Cible tes recherches PRIORITAIREMENT sur les tiers ci-dessous.
-
-**T1 — Officiel (régulation, normes, agences publiques)**
-Suisse : bafu.admin.ch, bfe.admin.ch, are.admin.ch, sia.ch, snv.ch, minergie.ch, ofl.admin.ch
-France : ademe.fr, cstb.fr, afnor.org, effinergie.org, operat.ademe.fr
-UE/INT : din.de, glass-for-europe.eu, gae-eu.org, gimm.eu, eurovent.eu, iea.org, irena.org
-
-**T2 — Presse pro bâtiment/vitrage**
-Suisse : espazium.ch, constructo.ch, bauen-wohnen.ch, hochparterre.ch, baublatt.ch
-France : batiactu.com, lemoniteur.fr, cahiers-techniques-batiment.fr, amc-archi.com, architectes.org, verre-et-protections.com
-INT : detail.de, glassonweb.com, glassmagazine.com, usglassmag.com, archdaily.com, archdaily.fr, build-up.eu, glass-international.com
-
-**T3 — Études marché & cabinets analyse**
-mckinsey.com, rolandberger.com, jll.ch/com, cbre.ch/com, bnpparibas-realestate.com, cushmanwakefield.com, savills.com, deloitte.com, pwc.com, ey.com
-ALERTE VERBATIM STRICT (sources d'hallucination chiffrée connues) : mordorintelligence.com, fortunebusinessinsights.com, marketsandmarkets.com, globenewswire.com, businesswire.com — autorisées MAIS tout chiffre cité doit être copié verbatim depuis la page (cross-check refetch + valide en aval).
-
-**T4 — Presse généraliste qualité (CH+FR)**
-Suisse romande : rts.ch, letemps.ch, 24heures.ch, tdg.ch, lematin.ch, bilan.ch, agefi.com, heidi.news
-Quotidiens cantonaux romands (local fin chantiers/communes/régies) : lenouvelliste.ch (VS), laliberte.ch (FR), arcinfo.ch (NE), lacote.ch (VD), lqj.ch (JU), lecourrier.ch (GE), ghi.ch (GE)
-Suisse alémanique : srf.ch, swissinfo.ch, ats.ch, nzz.ch, tagesanzeiger.ch, handelszeitung.ch, bilanz.ch, cash.ch, schweizerbauer.ch
-France : lemonde.fr, lesechos.fr, lefigaro.fr, capital.fr, challenges.fr
-France voisine frontalière de Genève (veille de CONTEXTE, jamais une cible commerciale : FilmPro n'intervient PAS en France voisine) : ledauphine.com, lemessager.fr. Un item issu de ces sources = actionability veille_active ou a_surveiller, geo_scope "monde", AUCUN chip Zefix (pas d'entreprise au registre suisse).
-NOTE PAYWALL : 24heures, tdg, lematin, letemps, lemonde retournent souvent 302/paywall. Le pipeline les détecte et reject. Privilégier swissinfo.ch, rts.ch, bilan.ch, agefi.com, srf.ch (paywall plus rare).
-
-**T5 — Tech & innovation (R&D, brevets, recherche académique)**
-technologyreview.com, phys.org, ieee.org, spectrum.ieee.org, nature.com, sciencedirect.com, sciencemag.org, arxiv.org, espacenet.com, wipo.int, patents.google.com, uspto.gov
-Académique CH : empa.ch, epfl.ch, ethz.ch, heia-fr.ch, zhaw.ch
-
-**T6 — Concurrents internationaux (sites officiels)**
-3m.com, 3msuisse.ch, eastman.com, llumar.com, averydennison.com, madico.com, solargard.com, view.com, sageglass.com, halio.com, kinestral.com, saint-gobain.com, saint-gobain-glass.com, guardianglass.com, hueck.com, schueco.com, vitro.com, pilkington.com, agc.com, agc-glass.eu, nsg.com
-
-**T7A — Installateurs concurrents directs FilmPro (benchmark)**
-Suisse romande : jpschweizer.com, solar-comfort.com, vitroconcept.ch, glaslook.ch, noovum.ch, a-film.ch
-France : dexypro.fr, solisconcept.com, storesdefrance.com
-Italie : serisolar.com, solarisfilms.it, italfilm.it, glassfilm.it
-RÈGLE T7A : signal compétitif EXPLICITE uniquement (« X concurrent lance produit Y », « Z installateur référence chantier W »). JAMAIS source neutre pour chiffres marché : un site installateur n'est PAS une autorité chiffrée.
-
-**T7B — Fabricants/marques solutions architecture/bâtiment (benchmark)**
-solarscreen.eu, tegofilm.com, swissnanotech.ch, reflectiv.com, hanitacoatings.com, gauzy.com
-RÈGLE T7B : bench specs produits, normes, certifications, R&D matériaux. Marketing produit = à pondérer par filmpro_relevance.
-
-# Denylist hard (reject AUTOMATIQUE par le pipeline)
-**Sources INTERDITES** (le pipeline les filtre AVANT vérification, donc ne perds pas tes recherches dessus) :
-- Blogs perso / SaaS marketing déguisés : leblogfinance.com, nextnews.fr, projectfork.net, zyyne.com, coast-smartfilm.com, epx-informatique.com, sun-shield.fr, vitroconcept.com (FR ; vitroconcept.ch CH = T7A légitime), decilab.com
-- Patterns bannis : *.blogspot.com, *.wordpress.com, *.medium.com/@user, *.substack.com
-- Agrégateurs SEO low-effort : wikiwand.com, newsbreak.com, pressreleasetoday.com
-
-# Hors whitelist (autorisé mais à éviter)
-Si tu trouves une source légitime hors des 7 tiers (ex: nouveau site spécialisé suisse), tu peux la proposer mais le pipeline loggera une alerte audit. Privilégie les tiers explicites ci-dessus.
+{{sources_section}}
 
 # Priorisation (rank)
 Classer les items par ordre DÉCROISSANT d'importance FilmPro (rank 1..N, max 12). PRIORITÉ ABSOLUE au signal LOCAL ACTIONNABLE : une actualité Suisse romande ou Suisse sur laquelle FilmPro peut agir maintenant (chantier, appel d'offres, déclencheur de marché, acteur nommé prospectable) prime sur tout le reste. La nouveauté produit ou la R&D internationale lointaine (smart glass, brevet, matériau, mouvement d'un concurrent hors marché CH) est SECONDAIRE : utile en veille amont, mais rang bas par défaut, sauf impact direct et imminent sur le marché romand. Ordre indicatif : local actionnable > local à intégrer au pipe > international directement actionnable > veille tech globale amont. À valeur égale : Suisse romande > Suisse alémanique/France/Belgique > DACH > Monde. Jamais chronologique. NB : un serveur ré-ordonne aussi les items par importance déterministe (actionnabilité + ancrage local + maturité) - ton rank est un signal fort, pas le dernier mot. Tu peux écarter des candidats sous le seuil de qualité éditoriale, mais ne jamais en inventer.
@@ -218,18 +169,29 @@ emit_report attend EXACTEMENT 3 clés racines : meta, items, impacts_filmpro.
 Appeler emit_report UNE SEULE FOIS en toute fin, après recherches web.`;
 
 /**
- * Construit le SYSTEM_PROMPT en injectant la section thèmes dynamique
- * (chargée depuis `veille_themes` par theme-loader.ts). Remplace le template
- * placeholder `{{themes_section}}` par le contenu produit par
- * `buildThemesPromptSection(bundle)`.
+ * Construit le SYSTEM_PROMPT en injectant les deux sections dynamiques chargées
+ * depuis la base :
+ * - `{{themes_section}}` ← `buildThemesPromptSection(themeBundle)` (table `veille_themes`).
+ * - `{{sources_section}}` ← `buildSourcesPromptSection(sourcesBundle)` (table `veille_sources`,
+ *   étape 4 du chantier sources éditables : la whitelist 7 tiers n'est plus en dur).
  *
- * Si `themesSection` est vide ou ne remplace rien, on retourne le template tel
- * quel — le prompt restera fonctionnel (le LLM comprend la section vide comme
- * « libre choix » ; le serveur gardera quand même le contrôle via la
- * validation post-Zod sur `allowedSlugs`).
+ * Les deux sont REQUISES : le cron prod fournit toujours les bundles (fallback
+ * hardcodé/seed côté loaders si la DB est indisponible), donc on n'autorise pas
+ * d'appel sans elles (un prompt amputé de sa whitelist sources serait un bug
+ * silencieux). Si une section ne remplace rien (placeholder absent du template),
+ * `.replace` est un no-op inoffensif.
  */
-export function buildSystemPrompt(themesSection: string): string {
-	return SYSTEM_PROMPT_TEMPLATE.replace('{{themes_section}}', themesSection);
+export function buildSystemPrompt(themesSection: string, sourcesSection: string): string {
+	// Forme FONCTION de `.replace` (`() => valeur`) volontaire : avec une chaîne de
+	// remplacement, JS interprète les motifs `$&`/`$1`/`$\`` etc. Or `themesSection`
+	// concatène des `description` de thèmes ÉDITABLES par un admin (texte libre ≤500),
+	// qui pourraient contenir un `$` → corruption silencieuse du prompt. La forme
+	// fonction insère la valeur LITTÉRALEMENT (aucune interprétation de motif). Chaque
+	// placeholder n'apparaît qu'une fois → `.replace` (1re occurrence) suffit.
+	return SYSTEM_PROMPT_TEMPLATE.replace('{{themes_section}}', () => themesSection).replace(
+		'{{sources_section}}',
+		() => sourcesSection
+	);
 }
 
 export interface PreviousItem {

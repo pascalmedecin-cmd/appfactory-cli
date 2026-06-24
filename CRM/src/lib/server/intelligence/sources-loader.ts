@@ -28,6 +28,7 @@ import {
 	matchesDenylistHostnamePattern,
 	normalizeHostname,
 	regimeFromClassification,
+	SOURCE_TIERS,
 	type SourceTier,
 	type VerificationRegime
 } from './source-allowlist';
@@ -188,4 +189,101 @@ export async function loadSourcesBundle(client: SupabaseClient<Database>): Promi
 		console.warn('[sources-loader] exception, fallback hardcoded:', msg);
 		return getFallbackSourcesBundle();
 	}
+}
+
+/**
+ * Métadonnées éditoriales par tier : libellé humain + règle d'usage optionnelle.
+ *
+ * Split assumé (même patron que `theme-loader.buildThemesPromptSection`, étape 4
+ * du chantier sources éditables) : la DONNÉE (quels domaines sont dans quel tier)
+ * vient du bundle (table `veille_sources`, éditable sans redeploy) ; la POLITIQUE
+ * éditoriale (libellés de tier, règles verbatim/benchmark/paywall, note France
+ * voisine) reste en CODE — c'est de la consigne stable à l'analyste LLM, pas une
+ * donnée par-domaine. Décision Pascal 2026-06-24 : grouper par famille seulement
+ * (pas de sous-groupage région), cohérent avec l'éditeur 2 onglets validé.
+ *
+ * Les domaines nommés dans une `rule` (mordorintelligence.com, ledauphine.com…)
+ * sont volontairement codés en dur ICI : ce sont des cas à TRAITEMENT spécial
+ * (verbatim chiffré, contexte non-prospectable), pas une simple appartenance à un
+ * tier. Ils figurent AUSSI dans la liste de leur tier si la base les y classe.
+ */
+const TIER_PROMPT_META: Record<SourceTier, { label: string; rule?: string }> = {
+	T1: { label: 'Officiel (régulation, normes, agences publiques)' },
+	T2: { label: 'Presse pro bâtiment/vitrage' },
+	T3: {
+		label: 'Études marché & cabinets analyse',
+		rule: "ALERTE VERBATIM STRICT (sources d'hallucination chiffrée connues) : mordorintelligence.com, fortunebusinessinsights.com, marketsandmarkets.com, globenewswire.com, businesswire.com - autorisées MAIS tout chiffre cité doit être copié verbatim depuis la page (cross-check refetch + valide en aval)."
+	},
+	T4: {
+		label: 'Presse généraliste qualité (CH+FR)',
+		rule:
+			'NOTE PAYWALL : 24heures, tdg, lematin, letemps, lemonde retournent souvent 302/paywall. Le pipeline les détecte et reject. Privilégier swissinfo.ch, rts.ch, bilan.ch, agefi.com, srf.ch (paywall plus rare).\n' +
+			"FRANCE VOISINE (ledauphine.com, lemessager.fr) : veille de CONTEXTE uniquement, FilmPro n'intervient PAS en France voisine (bassin lémanique frontalier de Genève, miroir utile). Un item issu de ces sources = actionability veille_active ou a_surveiller, geo_scope \"monde\", AUCUN chip Zefix (pas d'entreprise au registre suisse)."
+	},
+	T5: { label: 'Tech & innovation (R&D, brevets, recherche académique)' },
+	T6: { label: 'Concurrents internationaux (sites officiels)' },
+	T7A: {
+		label: 'Installateurs concurrents directs FilmPro (benchmark)',
+		rule: "RÈGLE T7A : signal compétitif EXPLICITE uniquement (« X concurrent lance produit Y », « Z installateur référence chantier W »). JAMAIS source neutre pour chiffres marché : un site installateur n'est PAS une autorité chiffrée."
+	},
+	T7B: {
+		label: 'Fabricants/marques solutions architecture/bâtiment (benchmark)',
+		rule: 'RÈGLE T7B : bench specs produits, normes, certifications, R&D matériaux. Marketing produit = à pondérer par filmpro_relevance.'
+	}
+};
+
+/**
+ * Construit la section « Sources autorisées (7 tiers) » du SYSTEM_PROMPT depuis le
+ * bundle (étape 4 du chantier sources éditables). Remplace le bloc autrefois
+ * hardcodé dans `prompt.ts`. Conséquence voulue : la liste reflète désormais la
+ * whitelist RÉELLE (table/seed = 7 tiers complets), pas un sous-ensemble curé qui
+ * dérivait du code (ex : l'ancien prompt listait `glass-for-europe.eu`, mort).
+ *
+ * Règles de construction :
+ * - Domaines groupés par tier (T1..T7B), triés alpha (déterministe), `, `-joints.
+ * - Un domaine `in_denylist` n'apparaît JAMAIS dans une section tier (denylist seule).
+ * - Un domaine `tier=null` non-denylist (PR-wires, preprints : régime strict géré en
+ *   aval) n'est PAS listé comme source autorisée — comportement identique à l'ancien
+ *   prompt, qui ne les whitelistait pas non plus.
+ * - Tier sans aucune source active → « (aucune source active) » (résilience).
+ *
+ * Sécurité d'injection : mêmes garanties que `buildThemesPromptSection` (admin déjà
+ * pleinement privilégié, sortie LLM re-vérifiée verbatim en aval). Les hostnames
+ * sont validés (`HostnameSchema`) à l'écriture côté repository.
+ */
+export function buildSourcesPromptSection(bundle: SourcesBundle): string {
+	const byTier = new Map<SourceTier, string[]>();
+	for (const t of SOURCE_TIERS) byTier.set(t, []);
+	const denied: string[] = [];
+
+	for (const c of bundle.byDomain.values()) {
+		if (c.in_denylist) {
+			denied.push(c.hostname);
+			continue; // un domaine denylisté n'est jamais une source autorisée
+		}
+		if (c.tier) byTier.get(c.tier)?.push(c.hostname);
+	}
+
+	const tierBlocks = SOURCE_TIERS.map((t) => {
+		const meta = TIER_PROMPT_META[t];
+		const domains = [...(byTier.get(t) ?? [])].sort();
+		const list = domains.length ? domains.join(', ') : '(aucune source active)';
+		const ruleLine = meta.rule ? `\n${meta.rule}` : '';
+		return `**${t} - ${meta.label}**\n${list}${ruleLine}`;
+	}).join('\n\n');
+
+	const deniedList = [...denied].sort().join(', ') || '(aucune)';
+
+	return `# Sources autorisées (7 tiers) - RESPECTER STRICTEMENT
+Le pipeline aval rejette les domaines hors whitelist informative (warning) et reject HARD les domaines de la denylist. Cible tes recherches PRIORITAIREMENT sur les tiers ci-dessous.
+
+${tierBlocks}
+
+# Denylist hard (reject AUTOMATIQUE par le pipeline)
+**Sources INTERDITES** (le pipeline les filtre AVANT vérification, donc ne perds pas tes recherches dessus) - blogs perso / SaaS marketing déguisés + agrégateurs SEO/PR low-effort :
+${deniedList}
+Patterns bannis : *.blogspot.com, *.wordpress.com, *.medium.com/@user, *.substack.com
+
+# Hors whitelist (autorisé mais à éviter)
+Si tu trouves une source légitime hors des 7 tiers (ex: nouveau site spécialisé suisse), tu peux la proposer mais le pipeline loggera une alerte audit. Privilégie les tiers explicites ci-dessus.`;
 }

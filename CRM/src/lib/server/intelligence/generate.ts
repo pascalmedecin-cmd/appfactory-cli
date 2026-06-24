@@ -15,7 +15,11 @@ import {
 import { verifyUrl } from './url-verify';
 import { sanitizeUrlsBatch } from './url-sanitize';
 import { extractSearchResultUrls, recoverUrl } from './url-recover';
-import { getFallbackSourcesBundle, type SourcesBundle } from './sources-loader';
+import {
+	buildSourcesPromptSection,
+	getFallbackSourcesBundle,
+	type SourcesBundle
+} from './sources-loader';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
 import { isAllowedThemeSlug } from './theme-slug';
 import { costTracker, type CostSummary, type CostTracker } from './cost-tracker';
@@ -87,10 +91,12 @@ async function callModel(
 	client: Anthropic,
 	input: GenerateInput,
 	themes: ThemeBundle,
+	sources: SourcesBundle,
 	maxTokens: number
 ): Promise<Anthropic.Message> {
 	const themesSection = buildThemesPromptSection(themes);
-	const systemPrompt = buildSystemPrompt(themesSection);
+	const sourcesSection = buildSourcesPromptSection(sources);
+	const systemPrompt = buildSystemPrompt(themesSection, sourcesSection);
 	const reportSchema = buildReportJsonSchema(themes.allowedSlugs);
 	const tools: Anthropic.Tool[] = [
 		{
@@ -203,9 +209,10 @@ export async function callModelWithOverflowRetry(
 	client: Anthropic,
 	input: GenerateInput,
 	themes: ThemeBundle,
+	sources: SourcesBundle,
 	tracker: CostTracker
 ): Promise<Anthropic.Message> {
-	const first = await callModel(client, input, themes, MAX_TOKENS);
+	const first = await callModel(client, input, themes, sources, MAX_TOKENS);
 	tracker.addClaudeCall(MODEL, first.usage, 'Claude veille (1-phase)');
 	if (first.stop_reason !== 'max_tokens') return first;
 
@@ -213,7 +220,7 @@ export async function callModelWithOverflowRetry(
 		`[generate] stop_reason=max_tokens à ${MAX_TOKENS} tokens ` +
 			`(thinking_tokens=${thinkingTokensOf(first.usage) ?? 'n/a'}) — relance à ${MAX_TOKENS_RETRY}.`
 	);
-	const second = await callModel(client, input, themes, MAX_TOKENS_RETRY);
+	const second = await callModel(client, input, themes, sources, MAX_TOKENS_RETRY);
 	tracker.addClaudeCall(MODEL, second.usage, 'Claude veille (relance max_tokens)');
 	return second;
 }
@@ -397,7 +404,7 @@ export async function generateIntelligenceReport(
 	const sources = opts.sources ?? getFallbackSourcesBundle();
 	// callModelWithOverflowRetry trace lui-même chaque appel réel dans le tracker
 	// et relance à 128K si le 1er appel à 64K déborde (stop_reason=max_tokens).
-	const response = await callModelWithOverflowRetry(client, input, themes, tracker);
+	const response = await callModelWithOverflowRetry(client, input, themes, sources, tracker);
 
 	// Garde stop_reason : si le modèle a été coupé par max_tokens MÊME après la
 	// relance à 128K, l'emit_report final est tronqué (non récupérable). On échoue
