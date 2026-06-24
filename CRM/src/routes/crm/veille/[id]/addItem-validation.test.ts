@@ -15,8 +15,9 @@ const mockVerifyUrl = vi.fn(async (_u: string): Promise<VerifyResult> => ({ ok: 
 vi.mock('$lib/server/intelligence/url-verify', () => ({ verifyUrl: (u: string) => mockVerifyUrl(u) }));
 vi.mock('$lib/server/intelligence/url-sanitize', () => ({ sanitizeUrl: (u: string) => ({ cleaned: u }) }));
 const mockIsDeniedSource = vi.fn((_h: string) => false);
-vi.mock('$lib/server/intelligence/source-allowlist', () => ({
-	isDeniedSource: (h: string) => mockIsDeniedSource(h)
+// Étape 3 : l'action lit la denylist via loadSourcesBundle (table veille_sources).
+vi.mock('$lib/server/intelligence/sources-loader', () => ({
+	loadSourcesBundle: async () => ({ isDenied: (h: string) => mockIsDeniedSource(h) })
 }));
 const mockActiveThemes = vi.fn(
 	async (): Promise<Array<{ slug: string; label: string }>> => [{ slug: 'cinema', label: 'Cinéma' }]

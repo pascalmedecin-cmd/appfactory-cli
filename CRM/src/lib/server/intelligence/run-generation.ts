@@ -1,5 +1,6 @@
 import { generateIntelligenceReport } from './generate';
 import { loadThemeBundle } from './theme-loader';
+import { loadSourcesBundle } from './sources-loader';
 import { crossCheckBatch } from './cross-check';
 import { selectByMix } from './mix-select';
 import { orderByFilmproImportance } from './relevance-net';
@@ -281,6 +282,9 @@ export async function runWeeklyGeneration(
 	// SDK error, etc.) est convertie en upsert status=error + email failure.
 	// Plus aucune exception muette qui propagerait sans laisser de trace.
 	let gen: Awaited<ReturnType<typeof generateIntelligenceReport>>;
+	// Bundle sources : chargé dans le try (après themes) mais déclaré ici car réutilisé
+	// par crossCheckBatch après le try (même scope que `gen`).
+	let sources: Awaited<ReturnType<typeof loadSourcesBundle>>;
 	try {
 		// Charge les 4 dernières éditions pour anti-doublons URL+date.
 		let previousItems: PreviousItem[] = [];
@@ -327,6 +331,15 @@ export async function runWeeklyGeneration(
 			adjacent: themes.adjacent.length
 		});
 
+		// Sources veille externalisées en DB (table veille_sources). Chargé une fois ici
+		// puis passé à generate (filtre denylist + annotation tier) ET cross-check (régime
+		// trust-by-source). Fallback seed (= photo exacte du code) si la DB est vide.
+		sources = await loadSourcesBundle(deps.supabase);
+		logPhase(week.weekLabel, 'sources_loaded', {
+			source: sources.source,
+			count: sources.byDomain.size
+		});
+
 		logPhase(week.weekLabel, 'generate_start', { windowDays: days });
 		gen = await generateIntelligenceReport(
 			{
@@ -337,7 +350,7 @@ export async function runWeeklyGeneration(
 				windowDays: days,
 				previousItems
 			},
-			{ anthropicApiKey: deps.anthropicApiKey, themes, tracker }
+			{ anthropicApiKey: deps.anthropicApiKey, themes, sources, tracker }
 		);
 		logPhase(week.weekLabel, 'generate_done', {
 			success: gen.success,
@@ -429,6 +442,7 @@ export async function runWeeklyGeneration(
 		const ccResult = await crossCheckBatch(gen.report.items, {
 			anthropicApiKey: deps.anthropicApiKey,
 			rejectUnfetchable: true,
+			sources,
 			tracker
 		});
 		publishableItems = ccResult.kept;

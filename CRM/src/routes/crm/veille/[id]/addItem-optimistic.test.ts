@@ -13,8 +13,9 @@ vi.mock('$lib/server/intelligence/url-verify', () => ({
 	verifyUrl: async () => ({ ok: true, status: 200 }),
 }));
 
-vi.mock('$lib/server/intelligence/source-allowlist', () => ({
-	isDeniedSource: () => false,
+// Étape 3 : l'action lit la denylist via loadSourcesBundle (table veille_sources).
+vi.mock('$lib/server/intelligence/sources-loader', () => ({
+	loadSourcesBundle: async () => ({ isDenied: () => false }),
 }));
 
 vi.mock('$lib/server/intelligence/themes-repository', () => ({

@@ -26,6 +26,13 @@ function makeCapturingSupabase(responses: MockResp[]) {
 		const handler: ProxyHandler<Record<string, unknown>> = {
 			get(_t, prop) {
 				if (prop === 'then') {
+					// veille_sources (sources-loader, étape 3) : réponse inerte qui NE consomme
+					// PAS la séquence intelligence_reports → loadSourcesBundle retombe sur le
+					// seed (= code). Sans ça, l'await décalerait toute la séquence d'un cran.
+					if (table === 'veille_sources') {
+						const r = { data: [], error: null } as MockResp;
+						return (resolve: (v: MockResp) => unknown) => Promise.resolve(resolve(r));
+					}
 					const r = next();
 					return (resolve: (v: MockResp) => unknown) => Promise.resolve(resolve(r));
 				}

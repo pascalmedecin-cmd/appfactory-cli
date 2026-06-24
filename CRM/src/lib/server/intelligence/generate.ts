@@ -15,7 +15,7 @@ import {
 import { verifyUrl } from './url-verify';
 import { sanitizeUrlsBatch } from './url-sanitize';
 import { extractSearchResultUrls, recoverUrl } from './url-recover';
-import { isDeniedSource, getDomainTier } from './source-allowlist';
+import { getFallbackSourcesBundle, type SourcesBundle } from './sources-loader';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
 import { isAllowedThemeSlug } from './theme-slug';
 import { costTracker, type CostSummary, type CostTracker } from './cost-tracker';
@@ -234,6 +234,7 @@ async function filterAndAnnotateItems(
 	items: IntelligenceItem[],
 	windowStart: string,
 	windowEnd: string,
+	sources: SourcesBundle,
 	knownUrls: readonly string[] = []
 ): Promise<{ kept: IntelligenceItem[]; rejected: RejectedItem[]; recoveredCount: number }> {
 	// Pré-filtre denylist hard : reject avant verifyUrl pour économiser les
@@ -255,7 +256,7 @@ async function filterAndAnnotateItems(
 			});
 			continue;
 		}
-		if (isDeniedSource(host)) {
+		if (sources.isDenied(host)) {
 			rejected.push({
 				url: item.source.url,
 				title: item.title,
@@ -330,7 +331,7 @@ async function filterAndAnnotateItems(
 			);
 		}
 		// Annoter le tier whitelist (informatif, pas reject hors whitelist).
-		const tier = getDomainTier(new URL(effectiveUrl).hostname);
+		const tier = sources.tierOf(new URL(effectiveUrl).hostname);
 		if (!tier) {
 			console.log(
 				`[veille filter] item ${item.title.slice(0, 60)}... domaine ${new URL(effectiveUrl).hostname} hors whitelist (autorisé mais à auditer)`
@@ -362,6 +363,12 @@ export interface GenerateOptions {
 	 */
 	themes?: ThemeBundle;
 	/**
+	 * Bundle sources actives (chargé depuis `veille_sources` par sources-loader).
+	 * Optionnel pour rétrocompat tests. Si absent, fallback seed (= photo exacte
+	 * du code, cf. SOURCES_SEED) — le cron prod doit toujours fournir.
+	 */
+	sources?: SourcesBundle;
+	/**
 	 * Tracker de coûts à alimenter (audit 360 M-05 : DI explicite plutôt que
 	 * le singleton module-level). Défaut : le singleton `costTracker`.
 	 */
@@ -385,6 +392,9 @@ export async function generateIntelligenceReport(
 	// Themes bundle : fourni par run-generation.ts (chargé via theme-loader).
 	// Fallback explicite vers la liste hardcoded si l'appelant l'omet (tests).
 	const themes = opts.themes ?? getFallbackBundle();
+	// Sources bundle : fourni par run-generation.ts (chargé via sources-loader).
+	// Fallback seed (= photo exacte du code) si l'appelant l'omet (tests).
+	const sources = opts.sources ?? getFallbackSourcesBundle();
 	// callModelWithOverflowRetry trace lui-même chaque appel réel dans le tracker
 	// et relance à 128K si le 1er appel à 64K déborde (stop_reason=max_tokens).
 	const response = await callModelWithOverflowRetry(client, input, themes, tracker);
@@ -471,6 +481,7 @@ export async function generateIntelligenceReport(
 		sanitizedItems,
 		windowStart,
 		input.dateEnd,
+		sources,
 		knownUrls
 	);
 	if (recoveredCount > 0) {

@@ -11,6 +11,7 @@ import {
 	articleBodyText
 } from './cross-check';
 import type { IntelligenceItem } from './schema';
+import { buildSourcesBundle } from './sources-loader';
 
 // Mock @anthropic-ai/sdk : on intercepte le constructeur et messages.create.
 const __mockCreate = vi.fn();
@@ -923,6 +924,50 @@ describe('effectiveRegime', () => {
 	it('rabaisse à strict sur rubrique sponsorisée / opinion (même domaine fiable)', () => {
 		expect(effectiveRegime(withUrl('https://www.rts.ch/opinion/x'))).toBe('strict');
 		expect(effectiveRegime(withUrl('https://www.lemonde.fr/a', 'Publireportage : Acme'))).toBe('strict');
+	});
+});
+
+describe('effectiveRegime - consulte le bundle sources fourni (étape 3 : wiring DB)', () => {
+	const withUrl = (url: string, title = 'Titre') => ({ ...baseItem, title, source: { ...baseItem.source, url } });
+
+	it("respecte une source AJOUTÉE par le bundle (inconnue du code → trusted via DB)", () => {
+		// Le code/seed ne connaît pas 'nouvelle-source.example' → strict par défaut.
+		expect(effectiveRegime(withUrl('https://nouvelle-source.example/x'))).toBe('strict');
+		// Un bundle DB qui la classe T2 (presse pro) doit la faire passer en 'trusted'.
+		const bundle = buildSourcesBundle(
+			[
+				{
+					hostname: 'nouvelle-source.example',
+					tier: 'T2',
+					in_denylist: false,
+					strict_verbatim: false,
+					is_advocacy: false,
+					is_preprint: false
+				}
+			],
+			'db'
+		);
+		expect(effectiveRegime(withUrl('https://nouvelle-source.example/x'), bundle)).toBe('trusted');
+	});
+
+	it('respecte une source DÉNYLISTÉE par le bundle (normalement fiable → strict via DB)', () => {
+		// Par défaut (seed/code) rts.ch est T4 → trusted.
+		expect(effectiveRegime(withUrl('https://www.rts.ch/info/x'))).toBe('trusted');
+		// Un bundle DB qui la met en denylist doit primer → strict.
+		const bundle = buildSourcesBundle(
+			[
+				{
+					hostname: 'rts.ch',
+					tier: 'T4',
+					in_denylist: true,
+					strict_verbatim: false,
+					is_advocacy: false,
+					is_preprint: false
+				}
+			],
+			'db'
+		);
+		expect(effectiveRegime(withUrl('https://www.rts.ch/info/x'), bundle)).toBe('strict');
 	});
 });
 
