@@ -272,4 +272,7 @@ describe('STRESS : invariants durs sur 5000 cas aléatoires (PRNG seedé)', () =
 			expect(out).not.toContain('undefined');
 		}
 	});
-}, 20000);
+	// timeout 60s : 4 fuzz-tests de 5000 cas chacun (CPU-bound). Sous la charge de la
+	// suite complète (contention CPU multi-fichiers), un run peut atteindre ~28s ; le
+	// plafond de 20s était trop serré et rendait ce bloc flaky (faux rouge en CI).
+}, 60000);
