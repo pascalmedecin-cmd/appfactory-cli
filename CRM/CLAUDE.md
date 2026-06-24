@@ -3,8 +3,8 @@
 **Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; container racine = stub. Contexte → `memory/project_appfactory_restructure.md`.
 
 **Statut :** Portail FilmPro multi-outils en prod : CRM (`/crm`) + Découpe Films (`/decoupe`) sur `filmpro-portail.vercel.app`. Formation IA = projet autonome `Formation/` (`cc` option 5). Historique (V3 terrain, Signaux V4, golden v9, restructure S173-S174) → `archive/`.
-**Derniere mise a jour :** 2026-06-24. Veille cron sur main `6f8de17` (presse romande + règle traduction, W26) ; web prod inchangé (flag `ffCrmListesV2` OFF). **Prochain bug :** #001.
-**Session courante :** 2026-06-24 (session 9) - **Éditeur veille étapes 4 + 5 livrées** (branche `editeur-veille-sources`, reste étape 6 = migration + déploiement). Étape 4 (`f547e7c`) section sources du prompt depuis le bundle ; 5a (`5c213d6`) régime calculé ; 5b (`c39d832`+`3109f4b`) UI route `/crm/veille/editeur` 2 onglets, vérif adversariale **sécu 0 C/H/M**. **2165 tests verts, svelte-check 0.** ⚠ Page non rendue avant migration `veille_sources` appliquée ; branche non déployée, prod + cron W26 intacts. Détail → [[project_editeur_veille_sources_editables_2026-06-24]] + [[audit_secu_2026-06-24_editeur_veille_etape5]]. WIP Campagnes 3.2 → [[project_module_campagnes_vague32_2026-06-22]].
+**Derniere mise a jour :** 2026-06-24. Éditeur veille **déployé web prod** (`69cd968`, branche `editeur-veille-sources` non mergée). Veille cron sur main `6f8de17` (presse romande, W26) intact ; web flag `ffCrmListesV2` OFF. **Prochain bug :** #001.
+**Session courante :** 2026-06-24 (session 10) - **Éditeur veille étape 6/6 LIVRÉE + DÉPLOYÉE web prod**, validée visuellement par Pascal. Migration `veille_sources` appliquée en prod (238 sources) ; audit adversarial du rendu réel (5 dim, 24 findings) → HIGH (footer modale source) + 2 MED + 6 LOW **corrigés**, reste loggé ; flaky CI fixé (`c5be860`). Commit `69cd968`. **2165 tests verts, svelte-check 0.** ⚠ **Non mergé dans `main`** : les éditions de sources n'affecteront la veille hebdo qu'après merge (à caler post-W26, change le prompt 120→238). Détail → [[project_editeur_veille_sources_editables_2026-06-24]] + [[audit_secu_2026-06-24_editeur_veille_etape5]]. WIP Campagnes 3.2 → [[project_module_campagnes_vague32_2026-06-22]].
 **Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175, S122-S125, S70-S107).
 
 
@@ -133,16 +133,15 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Éditeur de la veille - étape 6/6 (clôture + déploiement)** : appliquer la migration `veille_sources` (jamais exécutée) → débloque le rendu de la page editeur → validation visuelle Chrome + retrait hardcode runtime + QA 360 + déploiement. Détail dans le bloc 0 ci-dessous. **Reprendre depuis la branche `editeur-veille-sources`** (étapes 1-5 livrées là). Campagnes 3.2 (branche `campagnes-vague32`) en attente derrière.
+**Prochaine attaque** : **Vague 3.2 Campagnes - l'UI (Phase 5)** : backend déjà fait + testé (37 tests) sur branche `campagnes-vague32`, exécutable maintenant. Le merge `main` de l'éditeur veille (bloc 0) reste bloqué jusqu'à post-W26 (vendredi 26/06). → Campagnes [[project_module_campagnes_vague32_2026-06-22]].
 
 > Cadrage commun refonte UX/UI CRM (validé 2026-06-18) → [[project_refonte_crm_cadrage_2026-06-18]] + golden `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html` (validé Chrome).
 
-### 0. Éditeur de la veille (étape 6/6) [SUPERVISÉ • xhigh • cascade pas-à-pas]
+### 0. Éditeur de la veille - merge `main` (active les sources côté veille) [SUPERVISÉ • high • ~30 min]
 
-- **Pourquoi** : page Éditeur 2 onglets, mockup **v2 VALIDÉ**. Objectif Pascal : **zéro source en dur**, tests régression abo (jamais clé API). **Payload** (plan 6 étapes, décisions UI, schéma, archi étapes 2-5 + audits) → [[project_editeur_veille_sources_editables_2026-06-24]].
-- **Fait** : étapes 1-5 livrées 24/06 (seed 238 + loader + moteur branché + prompt depuis bundle + régime calculé + UI editeur 2 onglets, **sécu 0 C/H/M**). 2165 verts. ⚠ Page non rendue tant que migration non appliquée. → [[audit_secu_2026-06-24_editeur_veille_etape5]].
-- [x] ~~**Étapes 4 + 5** : prompt depuis bundle + régime calculé + UI editeur 2 onglets + bouton « Éditeur »~~ - 2026-06-24 (`f547e7c`/`5c213d6`/`c39d832`/`3109f4b`). 2 vérifs adversariales (4× + 3× lentilles), sécu 0 C/H/M, findings clos no-debt. Flags advocacy/preprint/denylist seed-only v1.
-- [ ] **[EXÉCUTABLE]** **Étape 6** : appliquer migration `veille_sources` (jamais exécutée) + `supabase gen types` ; validation visuelle Chrome + UI/UX audit du rendu (impossible avant migration) ; retrait hardcode `source-allowlist` runtime (filet ou supprimé - question ouverte) ; QA 360 + déploiement. **La migration DOIT partir AVEC le code** (le bouton « Éditeur » lit la table).
+- **Pourquoi** : éditeur **déployé web prod 24/06** (`69cd968`, validé Pascal), mais branche `editeur-veille-sources` **non mergée dans `main`**. Tant que non mergé, le cron de veille (GHA/`main`) lit l'ancien code (Sets en dur) → les éditions de sources dans l'éditeur **n'affectent pas encore la veille hebdo**. Le merge fait que le cron lit la table `veille_sources` (déjà en prod) ET active le prompt depuis le bundle (120→238 domaines). **Payload** (archi étapes 1-6, décisions, findings loggés) → [[project_editeur_veille_sources_editables_2026-06-24]].
+- **Prérequis** : **post-W26** (le merge change le prompt du sourcing 120→238 ; ne pas le faire avant le run W26 du vendredi 26/06 validé, pour ne pas modifier le sourcing en cours de validation).
+- [ ] **[BLOQUÉ - après W26 (vendredi 26/06)]** Merger `editeur-veille-sources` → `main` (rebaser sur `09f8137`), pousser la branche, laisser le prochain cron prendre le code branché-DB. Vérifier 1er run veille post-merge (densité, sources). Findings audit loggés (f7/f10/f14/f15/f16/f21 + 2 cadratins commentaires `app.css`) = dette mineure, à traiter si re-priorisé.
 
 ### 3. Veille - Lot 3 structurel (reste) [SUPERVISÉ • high • session dédiée]
 
@@ -170,12 +169,10 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ### Livré cette session
 
-- [x] ~~**Éditeur veille étape 5/6 : UI 2 onglets + régime calculé**~~ - 2026-06-24 (`5c213d6`/`c39d832`/`3109f4b`) : route `/crm/veille/editeur` (Thèmes + Sources, mockup v2) ; régime calculé (lecture seule) ; vérif 3 lentilles sécu 0 C/H/M, findings clos (thème né inactif fixé, badge régime par-ligne, toggle resync). 2165 verts. → [[audit_secu_2026-06-24_editeur_veille_etape5]].
-- [x] ~~**Éditeur veille étape 4/6 : section sources du prompt depuis le bundle**~~ - 2026-06-24 (`f547e7c`) : `buildSourcesPromptSection` (groupé par famille) ; dérive 120→238 corrigée (`glass-for-europe.eu` mort retiré) ; vérif 4× PASS. → [[project_editeur_veille_sources_editables_2026-06-24]].
-- [x] ~~**Éditeur veille étape 3/6 : moteur branché sur le bundle**~~ - 2026-06-24 (`5af0cbd`) : `loadSourcesBundle` threadé generate+cross-check+addItem ; fallback seed=code, 0 régression. → [[project_editeur_veille_sources_editables_2026-06-24]].
-- [x] ~~**Éditeur veille étape 2/6 : sources-loader + classifieur**~~ - 2026-06-24 (`13db5b5`) : politique régime factorisée code↔DB, équivalence `domainRegime` byte-identique. → [[project_editeur_veille_sources_editables_2026-06-24]].
-- [x] ~~**Éditeur veille étape 1/6 + mockup v2 + presse romande W26 + bouton supprimer thèmes**~~ - 2026-06-24 (`6f8de17`) : table+seed 238+repo+tests ; mockup validé ; +9 sources presse + règle traduction (main, cron W26) ; `deleteTheme`+UI. → [[project_editeur_veille_sources_editables_2026-06-24]].
-→ Livrés 23/06 (W26, W25, pré-flight QA, Campagnes 3.2 backend) + antérieurs → mémoires veille 06-23 + `archive/`.
+- [x] ~~**Éditeur veille étape 6/6 : migration prod + audit rendu + déploiement web**~~ - 2026-06-24 (`69cd968` + flaky `c5be860`) : migration `veille_sources` appliquée prod (238, RLS+trigger+index) via script lib `pg` ; type DB prouvé identique au schéma réel ; audit adversarial rendu réel (5 dim, 24 findings) → **HIGH** footer modale source + 2 MED + 6 LOW **corrigés**, reste loggé ; hardcode = filet gardé (runtime déjà zéro). **Déployé web prod, validé visuellement Pascal.** Non mergé `main`. 2165 verts, svelte-check 0. → [[project_editeur_veille_sources_editables_2026-06-24]] + [[audit_secu_2026-06-24_editeur_veille_etape6]] (+ étape5, sources).
+- [x] ~~**Éditeur veille étape 5/6 : UI 2 onglets + régime calculé**~~ - 2026-06-24 (`5c213d6`/`c39d832`/`3109f4b`) : route `/crm/veille/editeur` (Thèmes + Sources, mockup v2) ; régime calculé (lecture seule) ; vérif 3 lentilles sécu 0 C/H/M. → [[audit_secu_2026-06-24_editeur_veille_etape5]].
+- [x] ~~**Éditeur veille étape 4/6 : section sources du prompt depuis le bundle**~~ - 2026-06-24 (`f547e7c`) : `buildSourcesPromptSection` (par famille) ; dérive 120→238 corrigée ; vérif 4× PASS. → [[project_editeur_veille_sources_editables_2026-06-24]].
+→ Étapes 1-3 (`6f8de17`/`13db5b5`/`5af0cbd` : seed 238 + loader + moteur branché) + Livrés 23/06 (W26, W25, Campagnes 3.2 backend) → mémoires 06-23/24 + `archive/`.
 
 ### Watch list active après pivot
 
