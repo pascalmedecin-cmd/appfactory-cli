@@ -89,3 +89,21 @@ export async function updateTheme(
 	if (error) throw new Error(`updateTheme: ${error.message}`);
 	return data;
 }
+
+/**
+ * Supprime définitivement un thème de la taxonomie.
+ *
+ * Sans danger pour l'historique : le champ `theme` des items d'éditions passées
+ * est un slug TEXTE LIBRE dans `intelligence_reports.items` (JSONB), sans clé
+ * étrangère vers `veille_themes`. Une édition publiée qui référence un thème
+ * supprimé reste consultable (l'affichage retombe sur `humanizeSlug`, cf.
+ * `veilleFormat.ts::themeLabel`). Pour un retrait réversible, préférer
+ * `updateTheme(id, { active: false })`.
+ */
+export async function deleteTheme(
+	client: SupabaseClient<Database>,
+	id: string
+): Promise<void> {
+	const { error } = await client.from('veille_themes').delete().eq('id', id);
+	if (error) throw new Error(`deleteTheme: ${error.message}`);
+}

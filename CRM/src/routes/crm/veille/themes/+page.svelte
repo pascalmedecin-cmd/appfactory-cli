@@ -22,6 +22,10 @@
 	let confirmTarget = $state<VeilleTheme | null>(null);
 	let confirmLoading = $state(false);
 
+	let deleteOpen = $state(false);
+	let deleteTarget = $state<VeilleTheme | null>(null);
+	let deleteLoading = $state(false);
+
 	let form = $state({
 		slug: '',
 		label: '',
@@ -124,37 +128,81 @@
 		}
 	}
 
+	function askDelete(theme: VeilleTheme) {
+		deleteTarget = theme;
+		deleteOpen = true;
+	}
+
+	async function confirmDelete() {
+		if (!deleteTarget) return;
+		deleteLoading = true;
+		const fd = new FormData();
+		fd.append('id', deleteTarget.id);
+		try {
+			const res = await fetch('?/delete', { method: 'POST', body: fd });
+			const result: ActionResult = deserialize(await res.text());
+			if (result.type === 'success') {
+				toasts.success(
+					(result.data as { message?: string } | undefined)?.message ?? 'Thème supprimé.'
+				);
+				deleteOpen = false;
+				await invalidateAll();
+				await applyAction(result);
+			} else {
+				toasts.error(
+					result.type === 'failure'
+						? ((result.data as { error?: string } | undefined)?.error ?? 'Erreur')
+						: 'Erreur inattendue'
+				);
+			}
+		} catch (err) {
+			toasts.error(err instanceof Error ? err.message : 'Erreur réseau');
+		} finally {
+			deleteLoading = false;
+		}
+	}
+
 	const columns = [
 		{ key: 'slug', label: 'Slug', sortable: true, defaultWidth: 220 },
 		{ key: 'label', label: 'Libellé', sortable: true, defaultWidth: 220 },
 		{ key: 'category', label: 'Catégorie', sortable: true, defaultWidth: 120 },
 		{ key: 'sort_order', label: 'Ordre', sortable: true, defaultWidth: 90 },
 		{ key: 'active', label: 'Actif', sortable: true, defaultWidth: 90 },
-		{ key: 'actions', label: '', srLabel: 'Actions', defaultWidth: 100 }
+		{ key: 'actions', label: '', srLabel: 'Actions', defaultWidth: 136 }
 	];
 </script>
 
 <svelte:head><title>Thèmes veille · FilmPro</title></svelte:head>
 
 <div class="px-6 py-6 md:px-8 md:py-8 space-y-6">
-	<header class="flex items-center justify-between gap-4">
-		<div>
-			<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
-			<h2 class="text-2xl font-semibold tracking-tight">Thèmes veille</h2>
-			<p class="text-sm text-text-muted mt-1">
-				Taxonomie utilisée par le pipeline veille hebdomadaire (LLM + cross-check). Les thèmes
-				actifs sont injectés dans le prompt à chaque génération.
-			</p>
-		</div>
-		<button
-			type="button"
-			onclick={openCreate}
-			class="h-10 px-4 inline-flex items-center gap-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+	<div>
+		<!-- Retour : même pattern breadcrumb que /crm/veille/item/[slug] (cohérence module veille). -->
+		<a
+			href="/crm/veille"
+			class="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4"
 		>
-			<Icon name="add" class="w-4 h-4" />
-			Nouveau thème
-		</button>
-	</header>
+			<Icon name="arrow_back" size={18} />
+			Retour à la veille
+		</a>
+		<header class="flex items-center justify-between gap-4">
+			<div>
+				<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
+				<h2 class="text-2xl font-semibold tracking-tight">Thèmes veille</h2>
+				<p class="text-sm text-text-muted mt-1">
+					Taxonomie utilisée par le pipeline veille hebdomadaire (LLM + cross-check). Les thèmes
+					actifs sont injectés dans le prompt à chaque génération.
+				</p>
+			</div>
+			<button
+				type="button"
+				onclick={openCreate}
+				class="h-10 px-4 inline-flex items-center gap-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+			>
+				<Icon name="add" class="w-4 h-4" />
+				Nouveau thème
+			</button>
+		</header>
+	</div>
 
 	<DataTable
 		data={data.themes}
@@ -206,6 +254,14 @@
 						class="h-8 w-8 inline-flex items-center justify-center rounded-md text-text-muted hover:text-text hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
 					>
 						<Icon name={theme.active ? 'eye_off' : 'eye'} class="w-4 h-4" />
+					</button>
+					<button
+						type="button"
+						onclick={() => askDelete(theme)}
+						aria-label="Supprimer le thème {theme.label}"
+						class="h-8 w-8 inline-flex items-center justify-center rounded-md text-text-muted hover:text-danger-deep hover:bg-danger-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-danger-deep"
+					>
+						<Icon name="delete" class="w-4 h-4" />
 					</button>
 				</div>
 			</td>
@@ -314,4 +370,17 @@
 	variant={confirmTarget?.active ? 'warning' : 'warning'}
 	loading={confirmLoading}
 	onConfirm={confirmToggle}
+/>
+
+<ConfirmModal
+	bind:open={deleteOpen}
+	title="Supprimer ce thème ?"
+	message={deleteTarget
+		? `Le thème « ${deleteTarget.label} » sera définitivement retiré de la taxonomie et ne sera plus proposé aux prochaines générations. Les éditions déjà publiées qui le mentionnent restent consultables. Pour le retirer sans le perdre, utilise plutôt « Désactiver ».`
+		: ''}
+	confirmLabel="Supprimer définitivement"
+	cancelLabel="Annuler"
+	variant="danger"
+	loading={deleteLoading}
+	onConfirm={confirmDelete}
 />

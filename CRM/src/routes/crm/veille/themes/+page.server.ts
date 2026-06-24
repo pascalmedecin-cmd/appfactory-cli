@@ -6,6 +6,7 @@ import {
 	listAllThemes,
 	createTheme,
 	updateTheme,
+	deleteTheme,
 	ThemeCreateSchema,
 	ThemeUpdateSchema,
 	ThemeSlugSchema
@@ -120,6 +121,26 @@ export const actions: Actions = {
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : 'unknown';
 			console.error('[themes toggleActive]', msg);
+			return fail(500, { error: 'Erreur DB' });
+		}
+	},
+
+	delete: async ({ request, locals }) => {
+		const { user } = await locals.safeGetSession();
+		if (!user) return fail(401, { error: 'Unauthorized' });
+
+		const fd = await request.formData();
+		const idRaw = String(fd.get('id') ?? '').trim();
+		const idParsed = UuidSchema.safeParse(idRaw);
+		if (!idParsed.success) return fail(400, { error: 'id UUID invalide' });
+
+		try {
+			const service = createSupabaseServiceClient();
+			await deleteTheme(service, idParsed.data);
+			return { success: true, message: 'Thème supprimé.' };
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : 'unknown';
+			console.error('[themes delete]', msg);
 			return fail(500, { error: 'Erreur DB' });
 		}
 	},

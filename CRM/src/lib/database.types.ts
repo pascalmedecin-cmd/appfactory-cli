@@ -1295,6 +1295,63 @@ export type Database = {
         }
         Relationships: []
       }
+      veille_sources: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string
+          hostname: string
+          id: string
+          in_denylist: boolean
+          is_advocacy: boolean
+          is_benchmark: boolean
+          is_new: boolean
+          is_preprint: boolean
+          name: string
+          regime: string
+          sort_order: number
+          strict_verbatim: boolean
+          tier: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string
+          hostname: string
+          id?: string
+          in_denylist?: boolean
+          is_advocacy?: boolean
+          is_benchmark?: boolean
+          is_new?: boolean
+          is_preprint?: boolean
+          name: string
+          regime: string
+          sort_order?: number
+          strict_verbatim?: boolean
+          tier?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string
+          hostname?: string
+          id?: string
+          in_denylist?: boolean
+          is_advocacy?: boolean
+          is_benchmark?: boolean
+          is_new?: boolean
+          is_preprint?: boolean
+          name?: string
+          regime?: string
+          sort_order?: number
+          strict_verbatim?: boolean
+          tier?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

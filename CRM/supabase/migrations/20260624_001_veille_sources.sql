@@ -1,0 +1,315 @@
+-- Migration : externaliser les sources de veille (whitelist 7 tiers + denylist +
+-- regimes de verification) en table editable, comme veille_themes.
+--
+-- Genere par scripts/gen-veille-sources-seed.ts (deterministe, zero LLM) :
+-- chaque ligne est la PHOTO EXACTE du comportement de
+-- src/lib/server/intelligence/source-allowlist.ts (getDomainTier / domainRegime /
+-- isDeniedSource / requiresStrictVerbatim / isAdvocacySource / isPreprintSource).
+-- Un test d'equivalence (sources-seed.test.ts) reverifie ligne par ligne.
+--
+-- ETAPE 1 du chantier : le moteur ne lit PAS encore cette table (il lit toujours
+-- le code). Aucune regression. Les etapes suivantes branchent le loader + fallback.
+--
+-- Colonnes :
+-- - hostname  : domaine normalise (sans www.), cle naturelle unique.
+-- - tier      : T1..T7B (NULL pour les domaines hors whitelist mais connus :
+--               strict_verbatim only, denylist).
+-- - regime    : strict | trusted | trusted_advocacy (= domainRegime au seed).
+-- - in_denylist / strict_verbatim / is_advocacy / is_preprint : flags atomiques
+--               qui reproduisent isDeniedSource / requiresStrictVerbatim /
+--               isAdvocacySource / isPreprintSource.
+-- - is_benchmark / is_new : metadonnees UI (panel benchmark, ajouts recents).
+-- - active    : source utilisee par la veille (decoche = en pause, conservee).
+--
+-- NB : les 4 patterns regex de DENYLIST_HOSTNAME_PATTERNS (*.blogspot, *.wordpress,
+-- *.medium.com/@user, *.substack) ne sont PAS des domaines ; ils restent en code
+-- (regle anti-spam structurelle, hors UI sources).
+--
+-- RLS : public read (cron + UI), service-role-only writes (endpoints SvelteKit
+-- valident locals.user). Idempotent via ON CONFLICT (hostname).
+
+CREATE TABLE IF NOT EXISTS veille_sources (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  hostname text NOT NULL UNIQUE,
+  name text NOT NULL,
+  description text NOT NULL DEFAULT '',
+  tier text CHECK (tier IN ('T1','T2','T3','T4','T5','T6','T7A','T7B')),
+  regime text NOT NULL CHECK (regime IN ('strict','trusted','trusted_advocacy')),
+  in_denylist boolean NOT NULL DEFAULT false,
+  strict_verbatim boolean NOT NULL DEFAULT false,
+  is_advocacy boolean NOT NULL DEFAULT false,
+  is_preprint boolean NOT NULL DEFAULT false,
+  is_benchmark boolean NOT NULL DEFAULT false,
+  is_new boolean NOT NULL DEFAULT false,
+  active boolean NOT NULL DEFAULT true,
+  sort_order integer NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS veille_sources_active_idx ON veille_sources (active) WHERE active = true;
+CREATE INDEX IF NOT EXISTS veille_sources_tier_idx ON veille_sources (tier);
+
+ALTER TABLE veille_sources ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS veille_sources_select_all ON veille_sources;
+CREATE POLICY veille_sources_select_all ON veille_sources FOR SELECT USING (true);
+
+-- Aucune policy INSERT/UPDATE/DELETE : seul le service_role bypass RLS (endpoints admin).
+
+CREATE OR REPLACE FUNCTION veille_sources_set_updated_at()
+RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS veille_sources_updated_at ON veille_sources;
+CREATE TRIGGER veille_sources_updated_at
+  BEFORE UPDATE ON veille_sources
+  FOR EACH ROW EXECUTE FUNCTION veille_sources_set_updated_at();
+
+-- Seed : 238 domaines (photo exacte du code au 2026-06-24).
+INSERT INTO veille_sources
+  (hostname, name, description, tier, regime, in_denylist, strict_verbatim, is_advocacy, is_preprint, is_benchmark, is_new, sort_order)
+VALUES
+  ('24heures.ch', '24 heures', 'Quotidien vaudois (VD)', 'T4', 'trusted', false, false, false, false, false, false, 10),
+  ('3m.com', '3M', 'Films pour vitrage (groupe US)', 'T6', 'strict', false, false, false, false, true, false, 20),
+  ('3msuisse.ch', '3M Suisse', '3M Window Films Suisse', 'T6', 'strict', false, false, false, false, true, false, 30),
+  ('a-film.ch', 'a-film / GNT Groupe', 'Installateur films (CH romande)', 'T7A', 'strict', false, false, false, false, true, false, 40),
+  ('accesswire.com', 'ACCESS Newswire', 'Fil de communiqués', NULL, 'strict', false, true, false, false, false, false, 50),
+  ('ademe.fr', 'ADEME', 'Agence de la transition écologique (FR)', 'T1', 'trusted', false, false, false, false, false, false, 60),
+  ('afnor.org', 'AFNOR', 'Normalisation française', 'T1', 'trusted', false, false, false, false, false, false, 70),
+  ('agc-glass.eu', 'AGC Glass Europe', 'Verre architectural (UE)', 'T6', 'strict', false, false, false, false, false, false, 80),
+  ('agc.com', 'AGC', 'Verre (groupe japonais)', 'T6', 'strict', false, false, false, false, false, false, 90),
+  ('agefi.com', 'L''Agefi', 'Quotidien financier romand', 'T4', 'trusted', false, false, false, false, false, false, 100),
+  ('alliedmarketresearch.com', 'Allied Market Research', 'Études de marché', NULL, 'strict', false, true, false, false, false, false, 110),
+  ('amc-archi.com', 'AMC', 'Architecture (FR)', 'T2', 'trusted', false, false, false, false, false, false, 120),
+  ('anr.fr', 'ANR', 'Agence nationale de la recherche (FR)', 'T1', 'trusted', false, false, false, false, false, false, 130),
+  ('apfv.org', 'APFV', 'Pros du film pour vitrage', 'T1', 'trusted_advocacy', false, false, true, false, false, false, 140),
+  ('archdaily.com', 'ArchDaily', 'Architecture (INT)', 'T2', 'trusted', false, false, false, false, false, false, 150),
+  ('archdaily.fr', 'ArchDaily FR', 'Architecture (FR)', 'T2', 'trusted', false, false, false, false, false, false, 160),
+  ('architectes.org', 'Ordre architectes', 'Ordre des architectes (FR)', 'T2', 'trusted', false, false, false, false, false, false, 170),
+  ('arcinfo.ch', 'ArcInfo', 'Quotidien neuchâtelois (NE)', 'T4', 'trusted', false, false, false, false, false, true, 180),
+  ('are.admin.ch', 'ARE', 'Développement territorial (CH)', 'T1', 'trusted', false, false, false, false, false, false, 190),
+  ('arxiv.org', 'arXiv', 'Preprints NON validés par les pairs', 'T5', 'strict', false, false, false, true, false, false, 200),
+  ('asffv.fr', 'ASFFV', 'Spécialistes français du film vitrage', 'T1', 'trusted_advocacy', false, false, true, false, false, false, 210),
+  ('ats.ch', 'ATS', 'Agence télégraphique suisse', 'T4', 'trusted', false, false, false, false, false, false, 220),
+  ('averydennison.com', 'Avery Dennison', 'Films & matériaux', 'T6', 'strict', false, false, false, false, false, false, 230),
+  ('bafu.admin.ch', 'BAFU / OFEV', 'Office fédéral de l''environnement (CH)', 'T1', 'trusted', false, false, false, false, false, false, 240),
+  ('batiactu.com', 'Batiactu', 'Actualité du bâtiment (FR)', 'T2', 'trusted', false, false, false, false, false, false, 250),
+  ('baublatt.ch', 'Baublatt', 'Journal suisse de la construction', 'T2', 'trusted', false, false, false, false, false, false, 260),
+  ('bauen-wohnen.ch', 'Bauen+Wohnen', 'Bâtir & habiter (CH)', 'T2', 'trusted', false, false, false, false, false, false, 270),
+  ('baunetzwissen.de', 'Baunetz Wissen', 'Savoir technique bâtiment (DE)', 'T2', 'trusted', false, false, false, false, false, false, 280),
+  ('bfe.admin.ch', 'BFE / OFEN', 'Office fédéral de l''énergie (CH)', 'T1', 'trusted', false, false, false, false, false, false, 290),
+  ('bfs.admin.ch', 'OFS (DE)', 'Office fédéral de la statistique', 'T1', 'trusted', false, false, false, false, false, false, 300),
+  ('bilan.ch', 'Bilan', 'Magazine économique romand', 'T4', 'trusted', false, false, false, false, false, false, 310),
+  ('bilanz.ch', 'Bilanz', 'Magazine économique (DE/CH)', 'T4', 'trusted', false, false, false, false, false, false, 320),
+  ('biorxiv.org', 'bioRxiv', 'Preprints en biologie (non validés par les pairs)', NULL, 'strict', false, false, false, true, false, false, 330),
+  ('bnpparibas-realestate.com', 'BNP Paribas RE', 'Conseil immobilier', 'T3', 'strict', false, false, false, false, false, false, 340),
+  ('build-up.eu', 'BUILD UP', 'Plateforme bâtiment durable (UE)', 'T2', 'trusted', false, false, false, false, false, false, 350),
+  ('businesswire.com', 'Business Wire', 'Fil de communiqués de presse', NULL, 'strict', false, true, false, false, false, false, 360),
+  ('cahiers-techniques-batiment.fr', 'Cahiers techniques', 'Technique du bâtiment (FR)', 'T2', 'trusted', false, false, false, false, false, false, 370),
+  ('capital.fr', 'Capital', 'Économie (FR)', 'T4', 'trusted', false, false, false, false, false, false, 380),
+  ('carlikefilm.com', 'Carlike', 'Films (fabricant/distributeur, EU)', 'T7A', 'strict', false, false, false, false, false, false, 390),
+  ('cash.ch', 'cash', 'Finance (CH)', 'T4', 'trusted', false, false, false, false, false, false, 400),
+  ('cbre.ch', 'CBRE (CH)', 'Conseil immobilier', 'T3', 'strict', false, false, false, false, false, false, 410),
+  ('cbre.com', 'CBRE', 'Conseil immobilier (INT)', 'T3', 'strict', false, false, false, false, false, false, 420),
+  ('cecb.ch', 'CECB', 'Certificat énergétique cantonal des bâtiments', 'T1', 'trusted', false, false, false, false, false, false, 430),
+  ('cen.eu', 'CEN', 'Comité européen de normalisation', 'T1', 'trusted', false, false, false, false, false, false, 440),
+  ('cencenelec.eu', 'CEN-CENELEC', 'Normes européennes', 'T1', 'trusted', false, false, false, false, false, false, 450),
+  ('challenges.fr', 'Challenges', 'Économie (FR)', 'T4', 'trusted', false, false, false, false, false, false, 460),
+  ('cnrs.fr', 'CNRS', 'Recherche publique (FR)', 'T5', 'trusted', false, false, false, false, false, false, 470),
+  ('coast-smartfilm.com', 'Coast Smartfilm', 'Marketing déguisé', NULL, 'strict', true, false, false, false, false, false, 480),
+  ('commission.europa.eu', 'Commission UE', 'Commission européenne', 'T1', 'trusted', false, false, false, false, false, false, 490),
+  ('constructo.ch', 'Constructo', 'Portail construction romand', 'T2', 'trusted', false, false, false, false, false, false, 500),
+  ('cordis.europa.eu', 'CORDIS', 'Recherche & innovation UE', 'T1', 'trusted', false, false, false, false, false, false, 510),
+  ('cstb.fr', 'CSTB', 'Centre scientifique et technique du bâtiment (FR)', 'T1', 'trusted', false, false, false, false, false, false, 520),
+  ('cushmanwakefield.com', 'Cushman & Wakefield', 'Conseil immobilier', 'T3', 'strict', false, false, false, false, false, false, 530),
+  ('decilab.com', 'Decilab', 'Identifié W18', NULL, 'strict', true, false, false, false, false, false, 540),
+  ('deloitte.com', 'Deloitte', 'Audit & conseil', 'T3', 'strict', false, false, false, false, false, false, 550),
+  ('destatis.de', 'Destatis', 'Statistique fédérale allemande', 'T1', 'trusted', false, false, false, false, false, false, 560),
+  ('detail.de', 'DETAIL', 'Revue d''architecture (DE/INT)', 'T2', 'trusted', false, false, false, false, false, false, 570),
+  ('dexypro.fr', 'Dexypro', 'Installateur films (FR)', 'T7A', 'strict', false, false, false, false, true, false, 580),
+  ('din.de', 'DIN', 'Normalisation allemande', 'T1', 'trusted', false, false, false, false, false, false, 590),
+  ('eastman.com', 'Eastman', 'Chimie / films (LLumar, SunTek)', 'T6', 'strict', false, false, false, false, false, false, 600),
+  ('ec.europa.eu', 'Eurostat / EC', 'Commission / statistiques UE', 'T1', 'trusted', false, false, false, false, false, false, 610),
+  ('ecologie.gouv.fr', 'Ministère écologie', 'Politique environnementale (FR)', 'T1', 'trusted', false, false, false, false, false, false, 620),
+  ('effinergie.org', 'Effinergie', 'Label performance énergétique (FR)', 'T1', 'trusted', false, false, false, false, false, false, 630),
+  ('einpresswire.com', 'EIN Presswire', 'Fil de communiqués', NULL, 'strict', false, true, false, false, false, false, 640),
+  ('empa.ch', 'Empa', 'Laboratoire fédéral des matériaux (CH)', 'T5', 'trusted', false, false, false, false, false, false, 650),
+  ('energieschweiz.ch', 'SuisseEnergie', 'Programme fédéral énergie', 'T1', 'trusted', false, false, false, false, false, false, 660),
+  ('environnement.brussels', 'Bruxelles Env.', 'Agence environnement (BE)', 'T1', 'trusted', false, false, false, false, false, false, 670),
+  ('epfl.ch', 'EPFL', 'École polytechnique de Lausanne', 'T5', 'trusted', false, false, false, false, false, false, 680),
+  ('epx-informatique.com', 'EPX Informatique', 'Hors-sujet (IT)', NULL, 'strict', true, false, false, false, false, false, 690),
+  ('espacenet.com', 'Espacenet', 'Brevets européens (OEB)', 'T5', 'trusted', false, false, false, false, false, false, 700),
+  ('espazium.ch', 'Espazium', 'Revue suisse d''architecture (Tracés)', 'T2', 'trusted', false, false, false, false, false, false, 710),
+  ('ethz.ch', 'ETH Zurich', 'École polytechnique de Zurich', 'T5', 'trusted', false, false, false, false, false, false, 720),
+  ('eur-lex.europa.eu', 'EUR-Lex', 'Droit de l''Union européenne', 'T1', 'trusted', false, false, false, false, false, false, 730),
+  ('eurovent.eu', 'Eurovent', 'Fabricants HVAC (UE)', 'T1', 'trusted_advocacy', false, false, true, false, false, false, 740),
+  ('ewfa.org', 'EWFA', 'European Window Film Association', 'T1', 'trusted_advocacy', false, false, true, false, false, false, 750),
+  ('ey.com', 'EY', 'Audit & conseil', 'T3', 'strict', false, false, false, false, false, false, 760),
+  ('fedlex.admin.ch', 'Fedlex', 'Droit fédéral suisse consolidé', 'T1', 'trusted', false, false, false, false, false, false, 770),
+  ('fedpol.admin.ch', 'fedpol', 'Office fédéral de la police (sécurité)', 'T1', 'trusted', false, false, false, false, false, false, 780),
+  ('ffpv.org', 'FFPV', 'Fédération professionnelle du verre', 'T1', 'trusted_advocacy', false, false, true, false, false, false, 790),
+  ('fortunebusinessinsights.com', 'Fortune Business Insights', 'Études marché - hallucination chiffrée connue', 'T3', 'strict', false, true, false, false, false, false, 800),
+  ('fraunhofer.de', 'Fraunhofer', 'Instituts de recherche appliquée (DE)', 'T5', 'trusted', false, false, false, false, false, false, 810),
+  ('gae-eu.org', 'Glass Alliance Europe', 'Fédération faîtière du verre (UE)', 'T1', 'trusted_advocacy', false, false, true, false, false, false, 820),
+  ('gauzy.com', 'Gauzy', 'Smart glass & films commutables', 'T7B', 'strict', false, false, false, false, true, false, 830),
+  ('gff-magazin.de', 'GFF Magazin', 'Verre, façade, fenêtre (DE)', 'T2', 'trusted', false, false, false, false, false, false, 840),
+  ('ghi.ch', 'GHI', 'Hebdomadaire gratuit genevois (GE)', 'T4', 'trusted', false, false, false, false, false, true, 850),
+  ('giiresearch.com', 'GII Research', 'Revendeur d''études', NULL, 'strict', false, true, false, false, false, false, 860),
+  ('gimm.eu', 'GIMM', 'Industries du verre minéral (UE)', 'T1', 'trusted_advocacy', false, false, true, false, false, false, 870),
+  ('glas-pro-tect.ch', 'Glas Pro''tect', 'Installateur films (CH)', 'T7A', 'strict', false, false, false, false, false, false, 880),
+  ('glaslook.ch', 'Glaslook', 'Installateur films (CH romande)', 'T7A', 'strict', false, false, false, false, true, false, 890),
+  ('glass-international.com', 'Glass International', 'Industrie du verre (INT)', 'T2', 'trusted', false, false, false, false, false, false, 900),
+  ('glassfilm.it', 'Glassfilm', 'Installateur films (IT)', 'T7A', 'strict', false, false, false, false, true, false, 910),
+  ('glassforeurope.com', 'Glass for Europe', 'Fédération du verre plat (UE)', 'T1', 'trusted_advocacy', false, false, true, false, false, false, 920),
+  ('glassmagazine.com', 'Glass Magazine', 'Revue verre (US)', 'T2', 'trusted', false, false, false, false, false, false, 930),
+  ('glassonweb.com', 'Glass on Web', 'Portail international du verre', 'T2', 'trusted', false, false, false, false, false, false, 940),
+  ('glaswelt.de', 'GLASWELT', 'Fenêtre, façade, protection solaire (DE)', 'T2', 'trusted', false, false, false, false, false, false, 950),
+  ('globenewswire.com', 'GlobeNewswire', 'Fil de communiqués de presse', NULL, 'strict', false, true, false, false, false, false, 960),
+  ('grandviewresearch.com', 'Grand View Research', 'Études de marché payantes', NULL, 'strict', false, true, false, false, false, false, 970),
+  ('grenoble-inp.fr', 'Grenoble INP', 'Institut polytechnique (FR)', 'T5', 'trusted', false, false, false, false, false, false, 980),
+  ('guardianglass.com', 'Guardian Glass', 'Verre (groupe US)', 'T6', 'strict', false, false, false, false, false, false, 990),
+  ('guichet.public.lu', 'Guichet public LU', 'Portail administratif (LU)', 'T1', 'trusted', false, false, false, false, false, false, 1000),
+  ('halio.com', 'Halio', 'Smart glass à teinte variable', 'T6', 'strict', false, false, false, false, false, false, 1010),
+  ('handelszeitung.ch', 'Handelszeitung', 'Économie (DE/CH)', 'T4', 'trusted', false, false, false, false, false, false, 1020),
+  ('hanitacoatings.com', 'Hanita Coatings', 'Fabricant de films (IL)', 'T7B', 'strict', false, false, false, false, true, false, 1030),
+  ('heia-fr.ch', 'HEIA-FR', 'Haute école d''ingénierie Fribourg', 'T5', 'trusted', false, false, false, false, false, false, 1040),
+  ('heidi.news', 'Heidi.news', 'Média romand (science, société)', 'T4', 'trusted', false, false, false, false, false, false, 1050),
+  ('hochparterre.ch', 'Hochparterre', 'Architecture & design (CH)', 'T2', 'trusted', false, false, false, false, false, false, 1060),
+  ('hueck.com', 'Hueck', 'Profilés aluminium / façades (DE)', 'T6', 'strict', false, false, false, false, false, false, 1070),
+  ('iea.org', 'IEA / AIE', 'Agence internationale de l''énergie', 'T1', 'trusted', false, false, false, false, false, false, 1080),
+  ('ieee.org', 'IEEE', 'Ingénierie & électronique', 'T5', 'trusted', false, false, false, false, false, false, 1090),
+  ('ige.ch', 'IPI', 'Institut fédéral de la propriété intellectuelle', 'T1', 'trusted', false, false, false, false, false, false, 1100),
+  ('img.pr.com', 'img.pr.com', 'Communiqués SEO', NULL, 'strict', true, false, false, false, false, false, 1110),
+  ('insee.fr', 'INSEE', 'Statistique publique française', 'T1', 'trusted', false, false, false, false, false, false, 1120),
+  ('irena.org', 'IRENA', 'Agence internationale énergies renouvelables', 'T1', 'trusted', false, false, false, false, false, false, 1130),
+  ('iso.org', 'ISO', 'Organisation internationale de normalisation', 'T1', 'trusted', false, false, false, false, false, false, 1140),
+  ('italfilm.it', 'Italfilm', 'Installateur films (IT)', 'T7A', 'strict', false, false, false, false, true, false, 1150),
+  ('iwfa.com', 'IWFA', 'International Window Film Association', 'T1', 'trusted_advocacy', false, false, true, false, false, false, 1160),
+  ('jll.ch', 'JLL (CH)', 'Conseil immobilier', 'T3', 'strict', false, false, false, false, false, false, 1170),
+  ('jll.com', 'JLL', 'Conseil immobilier (INT)', 'T3', 'strict', false, false, false, false, false, false, 1180),
+  ('jpschweizer.com', 'JP Schweizer', 'Installateur films (CH romande)', 'T7A', 'strict', false, false, false, false, true, false, 1190),
+  ('keystone-sda.ch', 'Keystone-ATS', 'Agence de presse nationale', 'T4', 'trusted', false, false, false, false, false, false, 1200),
+  ('kinestral.com', 'Kinestral', 'Smart glass (Halio)', 'T6', 'strict', false, false, false, false, false, false, 1210),
+  ('lacote.ch', 'La Côte', 'Quotidien Nyon / Morges (VD)', 'T4', 'trusted', false, false, false, false, false, true, 1220),
+  ('laliberte.ch', 'La Liberté', 'Quotidien fribourgeois (FR)', 'T4', 'trusted', false, false, false, false, false, true, 1230),
+  ('latribune.fr', 'La Tribune', 'Économie (FR)', 'T4', 'trusted', false, false, false, false, false, false, 1240),
+  ('le-portail-du-film-pour-vitrages.com', 'Portail film vitrages', 'Portail films (FR)', 'T7A', 'strict', false, false, false, false, false, false, 1250),
+  ('leblogfinance.com', 'Le Blog Finance', 'Blog finance (identifié W18)', NULL, 'strict', true, false, false, false, false, false, 1260),
+  ('lechodelabaie.fr', 'L''Écho de la Baie', 'Menuiserie & fermeture (FR)', 'T2', 'trusted', false, false, false, false, false, false, 1270),
+  ('lecourrier.ch', 'Le Courrier', 'Quotidien genevois (GE)', 'T4', 'trusted', false, false, false, false, false, true, 1280),
+  ('ledauphine.com', 'Le Dauphiné Libéré', 'Frontalier - Ain / Pays de Gex / Haute-Savoie (contexte)', 'T4', 'trusted', false, false, false, false, false, true, 1290),
+  ('lefigaro.fr', 'Le Figaro', 'Quotidien généraliste (FR)', 'T4', 'trusted', false, false, false, false, false, false, 1300),
+  ('legifrance.gouv.fr', 'Légifrance', 'Droit français consolidé', 'T1', 'trusted', false, false, false, false, false, false, 1310),
+  ('lematin.ch', 'Le Matin', 'Actualité romande', 'T4', 'trusted', false, false, false, false, false, false, 1320),
+  ('lemessager.fr', 'Le Messager', 'Frontalier - Chablais / Genevois (contexte)', 'T4', 'trusted', false, false, false, false, false, true, 1330),
+  ('lemonde.fr', 'Le Monde', 'Quotidien de référence (FR)', 'T4', 'trusted', false, false, false, false, false, false, 1340),
+  ('lemoniteur.fr', 'Le Moniteur', 'Référence BTP (FR)', 'T2', 'trusted', false, false, false, false, false, false, 1350),
+  ('lenouvelliste.ch', 'Le Nouvelliste', 'Quotidien valaisan (VS)', 'T4', 'trusted', false, false, false, false, false, true, 1360),
+  ('leprogrammebatiments.ch', 'Programme Bâtiments', 'Subventions rénovation énergétique (CH)', 'T1', 'trusted', false, false, false, false, false, false, 1370),
+  ('lesechos.fr', 'Les Échos', 'Quotidien économique (FR)', 'T4', 'trusted', false, false, false, false, false, false, 1380),
+  ('letemps.ch', 'Le Temps', 'Quotidien de référence romand', 'T4', 'trusted', false, false, false, false, false, false, 1390),
+  ('link.springer.com', 'Springer', 'Revues scientifiques', 'T5', 'trusted', false, false, false, false, false, false, 1400),
+  ('lisaenergie.be', 'Lisa Énergie', 'Installateur films (BE)', 'T7A', 'strict', false, false, false, false, false, false, 1410),
+  ('llumar.com', 'LLumar', 'Films pour vitrage (Eastman)', 'T6', 'strict', false, false, false, false, false, false, 1420),
+  ('lqj.ch', 'Le Quotidien Jurassien', 'Quotidien jurassien (JU)', 'T4', 'trusted', false, false, false, false, false, true, 1430),
+  ('madico.com', 'Madico', 'Films pour vitrage (US)', 'T6', 'strict', false, false, false, false, true, false, 1440),
+  ('marketsandmarkets.com', 'MarketsandMarkets', 'Études de marché', NULL, 'strict', false, true, false, false, false, false, 1450),
+  ('mckinsey.com', 'McKinsey', 'Cabinet de conseil', 'T3', 'strict', false, false, false, false, false, false, 1460),
+  ('mediaassets.cbre.com', 'CBRE media', 'Rapports & médias CBRE', 'T3', 'strict', false, false, false, false, false, false, 1470),
+  ('medrxiv.org', 'medRxiv', 'Preprints en médecine (non validés par les pairs)', NULL, 'strict', false, false, false, true, false, false, 1480),
+  ('memento.epfl.ch', 'EPFL Mediacom', 'Agenda & actualités EPFL', 'T5', 'trusted', false, false, false, false, false, false, 1490),
+  ('minergie.ch', 'Minergie', 'Label bâtiment performant (CH)', 'T1', 'trusted', false, false, false, false, false, false, 1500),
+  ('mordorintelligence.com', 'Mordor Intelligence', 'Études marché - hallucination chiffrée connue', 'T3', 'strict', false, true, false, false, false, false, 1510),
+  ('nature.com', 'Nature', 'Revue scientifique (peer-reviewed)', 'T5', 'trusted', false, false, false, false, false, false, 1520),
+  ('newsbreak.com', 'NewsBreak', 'Agrégateur SEO', NULL, 'strict', true, false, false, false, false, false, 1530),
+  ('newswire.ca', 'Newswire.ca', 'Fil de communiqués (CA)', NULL, 'strict', false, true, false, false, false, false, 1540),
+  ('nextnews.fr', 'NextNews', 'Agrégateur', NULL, 'strict', true, false, false, false, false, false, 1550),
+  ('noovum.ch', 'noovum', 'Installateur films (CH romande)', 'T7A', 'strict', false, false, false, false, true, false, 1560),
+  ('nsg.com', 'NSG Group', 'Verre (Pilkington)', 'T6', 'strict', false, false, false, false, false, false, 1570),
+  ('nzz.ch', 'NZZ', 'Neue Zürcher Zeitung (DE)', 'T4', 'trusted', false, false, false, false, false, false, 1580),
+  ('ofl.admin.ch', 'OFL', 'Office fédéral du logement', 'T1', 'trusted', false, false, false, false, false, false, 1590),
+  ('ofs.admin.ch', 'OFS (FR)', 'Office fédéral de la statistique', 'T1', 'trusted', false, false, false, false, false, false, 1600),
+  ('onlinelibrary.wiley.com', 'Wiley', 'Revues scientifiques', 'T5', 'trusted', false, false, false, false, false, false, 1610),
+  ('openpr.com', 'OpenPR', 'Communiqués SEO', NULL, 'strict', true, false, false, false, false, false, 1620),
+  ('operat.ademe.fr', 'OPERAT', 'Plateforme décret tertiaire (ADEME)', 'T1', 'trusted', false, false, false, false, false, false, 1630),
+  ('pagora.grenoble-inp.fr', 'Grenoble INP Pagora', 'Électronique imprimée (FR)', 'T5', 'trusted', false, false, false, false, false, false, 1640),
+  ('patents.google.com', 'Google Patents', 'Recherche de brevets', 'T5', 'trusted', false, false, false, false, false, false, 1650),
+  ('pellicolerisparmioenergetico.it', 'Pellicole risparmio', 'Blog poseur (IT)', 'T7A', 'strict', false, false, false, false, false, false, 1660),
+  ('phys.org', 'Phys.org', 'Actualité scientifique', 'T5', 'trusted', false, false, false, false, false, false, 1670),
+  ('pilkington.com', 'Pilkington', 'Verre (NSG Group)', 'T6', 'strict', false, false, false, false, false, false, 1680),
+  ('pr.com', 'PR.com', 'Communiqués SEO', NULL, 'strict', true, false, false, false, false, false, 1690),
+  ('preprints.org', 'Preprints.org', 'Plateforme de preprints multidisciplinaire', NULL, 'strict', false, false, false, true, false, false, 1700),
+  ('pressreleasetoday.com', 'Press Release Today', 'Communiqués SEO', NULL, 'strict', true, false, false, false, false, false, 1710),
+  ('prnewswire.com', 'PR Newswire', 'Fil de communiqués', NULL, 'strict', false, true, false, false, false, false, 1720),
+  ('projectfork.net', 'ProjectFork', 'SaaS marketing déguisé', NULL, 'strict', true, false, false, false, false, false, 1730),
+  ('protectio-france.com', 'Protectio', 'Installateur films (FR)', 'T7A', 'strict', false, false, false, false, false, false, 1740),
+  ('pwc.com', 'PwC', 'Audit & conseil', 'T3', 'strict', false, false, false, false, false, false, 1750),
+  ('reflectiv.com', 'Reflectiv', 'Films décoratifs & techniques', 'T7B', 'strict', false, false, false, false, true, false, 1760),
+  ('researchandmarkets.com', 'Research and Markets', 'Revendeur d''études', NULL, 'strict', false, true, false, false, false, false, 1770),
+  ('researchsquare.com', 'Research Square', 'Plateforme de preprints', NULL, 'strict', false, false, false, true, false, false, 1780),
+  ('riouglass.com', 'Riou Glass', 'Transformateur verrier (FR)', 'T6', 'strict', false, false, false, false, false, false, 1790),
+  ('rolandberger.com', 'Roland Berger', 'Cabinet de conseil', 'T3', 'strict', false, false, false, false, false, false, 1800),
+  ('rsi.ch', 'RSI', 'Service public italophone (SSR)', 'T4', 'trusted', false, false, false, false, false, false, 1810),
+  ('rts.ch', 'RTS', 'Radio Télévision Suisse romande', 'T4', 'trusted', false, false, false, false, false, false, 1820),
+  ('sageglass.com', 'SageGlass', 'Smart glass (Saint-Gobain)', 'T6', 'strict', false, false, false, false, false, false, 1830),
+  ('saint-gobain-glass.com', 'Saint-Gobain Glass', 'Vitrages performants', 'T6', 'strict', false, false, false, false, false, false, 1840),
+  ('saint-gobain.com', 'Saint-Gobain', 'Groupe verre & matériaux', 'T6', 'strict', false, false, false, false, false, false, 1850),
+  ('savills.com', 'Savills', 'Conseil immobilier', 'T3', 'strict', false, false, false, false, false, false, 1860),
+  ('schueco.com', 'Schüco', 'Façades & fenêtres (DE)', 'T6', 'strict', false, false, false, false, false, false, 1870),
+  ('schweizerbauer.ch', 'Schweizer Bauer', 'Presse agricole/rurale (CH)', 'T4', 'trusted', false, false, false, false, false, false, 1880),
+  ('sciencedirect.com', 'ScienceDirect', 'Articles scientifiques (Elsevier)', 'T5', 'trusted', false, false, false, false, false, false, 1890),
+  ('sciencemag.org', 'Science', 'Revue scientifique (peer-reviewed)', 'T5', 'trusted', false, false, false, false, false, false, 1900),
+  ('seecret.ch', 'Seecret Films', 'Films de discrétion (CH)', 'T7A', 'strict', false, false, false, false, false, false, 1910),
+  ('serisolar.com', 'Serisolar', 'Installateur films (IT)', 'T7A', 'strict', false, false, false, false, true, false, 1920),
+  ('sfv-asvp.ch', 'SFV-ASVP', 'Association suisse du verre plat', 'T1', 'trusted_advocacy', false, false, true, false, false, false, 1930),
+  ('sia.ch', 'SIA', 'Société suisse des ingénieurs et architectes (normes SIA)', 'T1', 'trusted', false, false, false, false, false, false, 1940),
+  ('siacofrance.com', 'SIAC France', 'Réseau de poseurs (FR)', 'T7A', 'strict', false, false, false, false, false, false, 1950),
+  ('sigab.ch', 'SIGaB', 'Institut suisse du verre dans le bâtiment', 'T1', 'trusted_advocacy', false, false, true, false, false, false, 1960),
+  ('snsinsider.com', 'SNS Insider', 'Études marché - garde chiffres', 'T3', 'strict', false, true, false, false, false, false, 1970),
+  ('snv.ch', 'SNV', 'Association suisse de normalisation', 'T1', 'trusted', false, false, false, false, false, false, 1980),
+  ('solar-comfort.com', 'Solar Comfort', 'Installateur films (CH romande)', 'T7A', 'strict', false, false, false, false, true, false, 1990),
+  ('solarfilmprotect.com', 'Solar Film Protect', 'Installateur films (LU)', 'T7A', 'strict', false, false, false, false, false, false, 2000),
+  ('solargard.com', 'Solar Gard', 'Saint-Gobain Solar Gard (films)', 'T6', 'strict', false, false, false, false, true, false, 2010),
+  ('solarisfilms.it', 'Solaris Films', 'Installateur films (IT)', 'T7A', 'strict', false, false, false, false, true, false, 2020),
+  ('solarscreen.eu', 'Solar Screen', 'Films pour vitrage (distributeur EU)', 'T7B', 'strict', false, false, false, false, true, false, 2030),
+  ('solisconcept.com', 'Solis Concept', 'Installateur films (FR)', 'T7A', 'strict', false, false, false, false, true, false, 2040),
+  ('spectrum.ieee.org', 'IEEE Spectrum', 'Magazine technique IEEE', 'T5', 'trusted', false, false, false, false, false, false, 2050),
+  ('srf.ch', 'SRF', 'Service public alémanique', 'T4', 'trusted', false, false, false, false, false, false, 2060),
+  ('ssrn.com', 'SSRN', 'Preprints en sciences sociales (Elsevier)', NULL, 'strict', false, false, false, true, false, false, 2070),
+  ('storesdefrance.com', 'Stores de France', 'Protection solaire (FR)', 'T7A', 'strict', false, false, false, false, true, false, 2080),
+  ('suisseenergie.ch', 'SuisseEnergie (FR)', 'Programme fédéral énergie', 'T1', 'trusted', false, false, false, false, false, false, 2090),
+  ('sun-shield.fr', 'Sun Shield', 'Blog marketing', NULL, 'strict', true, false, false, false, false, false, 2100),
+  ('suntek.com', 'SunTek', 'Films pour vitrage (Eastman)', 'T6', 'strict', false, false, false, false, false, false, 2110),
+  ('swissinfo.ch', 'swissinfo', 'Service public international (CH)', 'T4', 'trusted', false, false, false, false, false, false, 2120),
+  ('swissnanotech.ch', 'Swissnanotech', 'Films nanotechnologiques (CH)', 'T7B', 'strict', false, false, false, false, true, false, 2130),
+  ('tagesanzeiger.ch', 'Tages-Anzeiger', 'Quotidien zurichois', 'T4', 'trusted', false, false, false, false, false, false, 2140),
+  ('tandfonline.com', 'Taylor & Francis', 'Revues scientifiques', 'T5', 'trusted', false, false, false, false, false, false, 2150),
+  ('tdg.ch', 'Tribune de Genève', 'Quotidien genevois (GE)', 'T4', 'trusted', false, false, false, false, false, false, 2160),
+  ('technologyreview.com', 'MIT Tech Review', 'Innovation technologique', 'T5', 'trusted', false, false, false, false, false, false, 2170),
+  ('tegofilm.com', 'TEGO', 'Smart films (Solar Screen Group)', 'T7B', 'strict', false, false, false, false, true, false, 2180),
+  ('usglassmag.com', 'USGlass', 'Revue verre & vitrage (US)', 'T2', 'trusted', false, false, false, false, false, false, 2190),
+  ('uspto.gov', 'USPTO', 'Brevets américains', 'T5', 'trusted', false, false, false, false, false, false, 2200),
+  ('vectura.be', 'Vectura', 'Installateur films (BE)', 'T7A', 'strict', false, false, false, false, false, false, 2210),
+  ('verre-et-protections.com', 'Verre & Protections', 'Revue verre & protection solaire (FR)', 'T2', 'trusted', false, false, false, false, false, false, 2220),
+  ('verreetprotections.com', 'Verre et Protections', 'Variante du précédent', 'T2', 'trusted', false, false, false, false, false, false, 2230),
+  ('view.com', 'View', 'Smart glass électrochrome (US)', 'T6', 'strict', false, false, false, false, false, false, 2240),
+  ('vista-films.com', 'Vista', 'Films pour vitrage (Eastman)', 'T6', 'strict', false, false, false, false, false, false, 2250),
+  ('vitro.com', 'Vitro', 'Verre architectural (Amérique)', 'T6', 'strict', false, false, false, false, false, false, 2260),
+  ('vitroconcept.ch', 'Vitroconcept Suisse', 'Installateur films (CH romande)', 'T7A', 'strict', false, false, false, false, true, false, 2270),
+  ('vitroconcept.com', 'Vitroconcept (FR)', 'Marketing FR - à NE PAS confondre avec vitroconcept.ch (légitime)', NULL, 'strict', true, false, false, false, false, false, 2280),
+  ('vitrocsa.com', 'Vitrocsa', 'Vitrages minimalistes (CH)', 'T7A', 'strict', false, false, false, false, false, false, 2290),
+  ('watson.ch', 'watson', 'Média d''actualité (CH)', 'T4', 'trusted', false, false, false, false, false, false, 2300),
+  ('wbdg.org', 'WBDG', 'Whole Building Design Guide (US)', 'T3', 'strict', false, false, false, false, false, false, 2310),
+  ('wikipedia-mirror.com', 'Wikipedia mirror', 'Miroir', NULL, 'strict', true, false, false, false, false, false, 2320),
+  ('wikiwand.com', 'Wikiwand', 'Miroir Wikipédia', NULL, 'strict', true, false, false, false, false, false, 2330),
+  ('windowfilmdepot.com', 'Window Film Depot', 'Référence industrie films (US)', 'T7A', 'strict', false, false, false, false, false, false, 2340),
+  ('windowfilmmag.com', 'Window Film Mag', 'Seule revue dédiée aux films pour vitrage', 'T2', 'trusted', false, false, false, false, false, false, 2350),
+  ('wipo.int', 'WIPO / OMPI', 'Brevets mondiaux', 'T5', 'trusted', false, false, false, false, false, false, 2360),
+  ('zhaw.ch', 'ZHAW', 'Haute école zurichoise', 'T5', 'trusted', false, false, false, false, false, false, 2370),
+  ('zyyne.com', 'Zyyne', 'Plateforme flipbook marketing', NULL, 'strict', true, false, false, false, false, false, 2380)
+ON CONFLICT (hostname) DO NOTHING;
