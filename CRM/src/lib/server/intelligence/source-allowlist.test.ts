@@ -266,3 +266,36 @@ describe('domainRegime (régime de vérification par domaine)', () => {
 		expect(domainRegime('WWW.MORDORINTELLIGENCE.COM')).toBe('strict');
 	});
 });
+
+// Ajouts presse 2026-06-24 : quotidiens cantonaux romands + frontaliers de Genève.
+describe('ajouts presse romande + frontalier 2026-06-24', () => {
+	const cantonaux = [
+		'lenouvelliste.ch',
+		'laliberte.ch',
+		'arcinfo.ch',
+		'lacote.ch',
+		'lqj.ch',
+		'lecourrier.ch',
+		'ghi.ch'
+	];
+	const frontaliers = ['ledauphine.com', 'lemessager.fr'];
+
+	it('classe les quotidiens cantonaux romands en T4', () => {
+		for (const d of cantonaux) expect(getDomainTier(d), d).toBe('T4');
+	});
+
+	it('classe les quotidiens frontaliers de Genève en T4', () => {
+		for (const d of frontaliers) expect(getDomainTier(d), d).toBe('T4');
+	});
+
+	it('régime trusted (presse qualité) sur tous ces ajouts', () => {
+		for (const d of [...cantonaux, ...frontaliers]) expect(domainRegime(d), d).toBe('trusted');
+	});
+
+	it('ne sont ni en denylist ni en strict-verbatim', () => {
+		for (const d of [...cantonaux, ...frontaliers]) {
+			expect(isDeniedSource(d), d).toBe(false);
+			expect(requiresStrictVerbatim(d), d).toBe(false);
+		}
+	});
+});

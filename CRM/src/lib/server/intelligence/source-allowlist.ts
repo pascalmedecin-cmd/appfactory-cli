@@ -163,6 +163,15 @@ export const TIER_4_PRESS_GENERAL = new Set([
 	'bilan.ch',
 	'agefi.com',
 	'heidi.news',
+	// Quotidiens cantonaux romands (couverture chantiers / régies / communes par canton ;
+	// les grands titres romands ratent souvent le local cantonal). Ajout 2026-06-24.
+	'lenouvelliste.ch', // VS - Le Nouvelliste
+	'laliberte.ch', // FR - La Liberté
+	'arcinfo.ch', // NE - ArcInfo (ex L'Express / L'Impartial)
+	'lacote.ch', // VD - La Côte (Nyon / Morges / La Côte vaudoise)
+	'lqj.ch', // JU - Le Quotidien Jurassien
+	'lecourrier.ch', // GE - Le Courrier
+	'ghi.ch', // GE - GHI (hebdomadaire genevois gratuit)
 	// Suisse alémanique
 	'srf.ch',
 	'swissinfo.ch',
@@ -180,6 +189,12 @@ export const TIER_4_PRESS_GENERAL = new Set([
 	'capital.fr',
 	'challenges.fr',
 	'latribune.fr',
+	// France voisine - bassin lémanique frontalier de Genève. Veille de CONTEXTE
+	// uniquement : FilmPro n'intervient PAS en France voisine, mais les problématiques
+	// (confort d'été, rénovation, réglementation thermique) sont un miroir utile du
+	// Grand Genève. Ajout 2026-06-24.
+	'ledauphine.com', // Le Dauphiné Libéré (Ain / Pays de Gex + Haute-Savoie)
+	'lemessager.fr', // Le Messager (Chablais / Genevois haut-savoyard)
 	// Agence de presse + service public additionnels (cadrage sources fiables 2026-06-23)
 	'keystone-sda.ch', // agence de presse nationale (double sourcing, sans paywall)
 	'rsi.ch', // service public italophone SSR

@@ -54,6 +54,7 @@ Reflet dans le champ geo_scope : "suisse_romande" (1), "suisse" (2), "monde" (3 
 Tu disposes d'environ 22 web_search uses. Répartition imposée :
 - **Au moins 8 web_search dédiées Suisse romande, en VARIANT systématiquement les angles ET les sources** (ne dépends JAMAIS d'une seule source comme RTS ; le local de cette veille a trop longtemps reposé sur RTS seul) :
   - Presse romande nommée : \`site:letemps.ch [thème]\`, \`site:24heures.ch\`, \`site:tdg.ch\`, \`site:bilan.ch\`, \`site:agefi.com\`, \`site:swissinfo.ch\`, \`site:rts.ch\`, heidi.news.
+  - Quotidiens cantonaux romands (le local fin : chantiers, communes, régies, que les grands titres ratent) : \`site:lenouvelliste.ch\` (VS), \`site:laliberte.ch\` (FR), \`site:arcinfo.ch\` (NE), \`site:lacote.ch\` (VD), \`site:lqj.ch\` (JU), \`site:lecourrier.ch\` (GE), \`site:ghi.ch\` (GE).
   - Officiel cantonal + fédéral : \`site:ge.ch\`, \`site:vd.ch\`, \`site:vs.ch\`, \`site:ne.ch\`, \`site:fr.ch\`, offices cantonaux de l'énergie, \`MétéoSuisse alerte canicule\`, \`SUVA SECO chaleur travail\`, \`site:sia.ch\`, \`site:minergie.ch\`, \`MoPEC [canton]\`.
   - Presse pro bâtiment CH : \`site:espazium.ch\`, \`site:constructo.ch\`, \`site:baublatt.ch\`, \`site:hochparterre.ch\`.
   - Format générique en complément : \`site:.ch [thème]\`, \`Suisse romande [thème] 2026\`, \`[canton VD/GE/VS/NE/FR/JU] [thème]\`.
@@ -114,8 +115,10 @@ ALERTE VERBATIM STRICT (sources d'hallucination chiffrée connues) : mordorintel
 
 **T4 — Presse généraliste qualité (CH+FR)**
 Suisse romande : rts.ch, letemps.ch, 24heures.ch, tdg.ch, lematin.ch, bilan.ch, agefi.com, heidi.news
+Quotidiens cantonaux romands (local fin chantiers/communes/régies) : lenouvelliste.ch (VS), laliberte.ch (FR), arcinfo.ch (NE), lacote.ch (VD), lqj.ch (JU), lecourrier.ch (GE), ghi.ch (GE)
 Suisse alémanique : srf.ch, swissinfo.ch, ats.ch, nzz.ch, tagesanzeiger.ch, handelszeitung.ch, bilanz.ch, cash.ch, schweizerbauer.ch
 France : lemonde.fr, lesechos.fr, lefigaro.fr, capital.fr, challenges.fr
+France voisine frontalière de Genève (veille de CONTEXTE, jamais une cible commerciale : FilmPro n'intervient PAS en France voisine) : ledauphine.com, lemessager.fr. Un item issu de ces sources = actionability veille_active ou a_surveiller, geo_scope "monde", AUCUN chip Zefix (pas d'entreprise au registre suisse).
 NOTE PAYWALL : 24heures, tdg, lematin, letemps, lemonde retournent souvent 302/paywall. Le pipeline les détecte et reject. Privilégier swissinfo.ch, rts.ch, bilan.ch, agefi.com, srf.ch (paywall plus rare).
 
 **T5 — Tech & innovation (R&D, brevets, recherche académique)**
@@ -192,6 +195,7 @@ Compter les caractères avant de renvoyer. Aucune valeur hors limites n'est tol�
 - Structure du summary : FAIT(S) sourcé(s) d'abord (avec les chiffres verbatim), PUIS l'implication d'analyste. 2-4 phrases denses.
 - Titre : explicite et informatif (qui/quoi/où), pas une accroche.
 - Français correct, accents obligatoires.
+- **Sources en langue étrangère (italien, allemand, anglais...)** : rédige TOUT en français pour le lecteur romand - title, summary, filmpro_relevance et deep_dive sont traduits / synthétisés en français. NE traduis JAMAIS l'URL : source.url pointe vers la page d'origine telle quelle (italienne, allemande...), copiée verbatim. source.name garde le nom propre du média d'origine (ex: « Serisolar », « Glaswelt »). Exception verbatim : une CITATION entre guillemets reste dans la langue de la source (sinon le cross-check verbatim échoue) ; pour rendre l'idée en français, paraphrase hors guillemets. Tout chiffre reste copié verbatim de la page d'origine.
 
 # Exemples
 EXCELLENT (à imiter) :
