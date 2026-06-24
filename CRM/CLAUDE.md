@@ -3,8 +3,8 @@
 **Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; container racine = stub. Contexte → `memory/project_appfactory_restructure.md`.
 
 **Statut :** Portail FilmPro multi-outils en prod : CRM (`/crm`) + Découpe Films (`/decoupe`) sur `filmpro-portail.vercel.app`. Formation IA = projet autonome `Formation/` (`cc` option 5). Historique (V3 terrain, Signaux V4, golden v9, restructure S173-S174) → `archive/`.
-**Derniere mise a jour :** 2026-06-24. Veille (code cron) sur main `6f8de17` (sources presse romande + règle traduction déployées pour W26) ; web prod inchangé (refonte CRM flag `ffCrmListesV2` OFF). **Derniere revue /optimize :** 2026-04-05. **Prochain bug :** #001.
-**Session courante :** 2026-06-24 (session 8) - **Éditeur veille étapes 2/6 ET 3/6 livrées**. Étape 2 : `sources-loader.ts` (loader DB + filet seed + classifieur reproduisant les 6 fonctions du moteur) + politique régime factorisée/partagée (`regimeFromClassification`) + fail-safe tier invalide (commitée `13db5b5`). Étape 3 : moteur BRANCHÉ sur le bundle (threadé en paramètre à generate + cross-check + addItem). **2127 tests verts, svelte-check 0, bug-hunter « THREADING CORRECT, COMPORTEMENT PRÉSERVÉ »**. Comportement **byte-identique en prod** (migration non appliquée → fallback seed=code) ; cron W26 inchangé. Branche `editeur-veille-sources`. Session 7 : étape 1/6 (table+seed 238) + presse romande sur main `6f8de17`. → [[project_editeur_veille_sources_editables_2026-06-24]]. WIP Campagnes 3.2 intact → [[project_module_campagnes_vague32_2026-06-22]].
+**Derniere mise a jour :** 2026-06-24. Veille cron sur main `6f8de17` (presse romande + règle traduction, W26) ; web prod inchangé (flag `ffCrmListesV2` OFF). **Prochain bug :** #001.
+**Session courante :** 2026-06-24 (session 9) - **Éditeur veille étapes 4 + 5 livrées** (branche `editeur-veille-sources`, reste étape 6 = migration + déploiement). Étape 4 (`f547e7c`) section sources du prompt depuis le bundle ; 5a (`5c213d6`) régime calculé ; 5b (`c39d832`+`3109f4b`) UI route `/crm/veille/editeur` 2 onglets, vérif adversariale **sécu 0 C/H/M**. **2165 tests verts, svelte-check 0.** ⚠ Page non rendue avant migration `veille_sources` appliquée ; branche non déployée, prod + cron W26 intacts. Détail → [[project_editeur_veille_sources_editables_2026-06-24]] + [[audit_secu_2026-06-24_editeur_veille_etape5]]. WIP Campagnes 3.2 → [[project_module_campagnes_vague32_2026-06-22]].
 **Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175, S122-S125, S70-S107).
 
 
@@ -133,18 +133,16 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Éditeur de la veille - étape 4/6** : le prompt génère la section « Sources autorisées (7 tiers) » depuis le bundle (dynamique, plus en dur dans `prompt.ts` ~98-145), modèle `buildThemesPromptSection`. **Reprendre depuis la branche `editeur-veille-sources`** (étapes 2-3 livrées là). → [[project_editeur_veille_sources_editables_2026-06-24]]. Campagnes 3.2 (branche `campagnes-vague32`, non mergée) en attente derrière.
+**Prochaine attaque** : **Éditeur de la veille - étape 6/6 (clôture + déploiement)** : appliquer la migration `veille_sources` (jamais exécutée) → débloque le rendu de la page editeur → validation visuelle Chrome + retrait hardcode runtime + QA 360 + déploiement. Détail dans le bloc 0 ci-dessous. **Reprendre depuis la branche `editeur-veille-sources`** (étapes 1-5 livrées là). Campagnes 3.2 (branche `campagnes-vague32`) en attente derrière.
 
 > Cadrage commun refonte UX/UI CRM (validé 2026-06-18) → [[project_refonte_crm_cadrage_2026-06-18]] + golden `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html` (validé Chrome).
 
-### 0. Éditeur de la veille - migration sources code→DB (étape 4/6) [SUPERVISÉ • xhigh • cascade pas-à-pas]
+### 0. Éditeur de la veille (étape 6/6) [SUPERVISÉ • xhigh • cascade pas-à-pas]
 
-- **Pourquoi** : page Éditeur 2 onglets (Thèmes + Sources éditables), mockup **v2 VALIDÉ**. Objectif Pascal : **zéro source en dur**, tests régression abo (jamais clé API).
-- **Payload** → [[project_editeur_veille_sources_editables_2026-06-24]] (plan 6 étapes, décisions UI, cartographie call sites, schéma table, mockup v2, archi étapes 2-3 + décision étape 5 régime).
-- **Fait** : étapes 1-3 livrées 24/06 (table+seed 238 ; loader+classifieur, équivalence `domainRegime` prouvée byte-identique, `13db5b5` ; moteur branché, working tree). 2127 tests verts, bug-hunter OK, byte-identique en prod (fallback seed=code).
-- [ ] **[EXÉCUTABLE]** **Étape 4** : le prompt génère la section « Sources autorisées (7 tiers) » depuis le bundle (dynamique, plus en dur dans `prompt.ts` ~98-145), modèle `buildThemesPromptSection`. Test : prompt équivalent au texte actuel.
-- [ ] **[BLOQUÉ - étape 4 livrée]** **Étape 5** : UI Éditeur 2 onglets + bouton « Éditeur » + CRUD sources (mockup v2, `redesign-skill`). **DÉCISION À ACTER** : `regime` dérivé au runtime (colonne = cache ignoré par le moteur) → l'afficher en lecture seule (admin édite tier+flags), retirer `regime` des schémas de saisie. Sinon édition sans effet.
-- [ ] **[BLOQUÉ - étape 5 livrée]** **Étape 6** : retrait hardcode `source-allowlist` du runtime + QA 360 (0 H/C/M) + suite complète + déploiement validé.
+- **Pourquoi** : page Éditeur 2 onglets, mockup **v2 VALIDÉ**. Objectif Pascal : **zéro source en dur**, tests régression abo (jamais clé API). **Payload** (plan 6 étapes, décisions UI, schéma, archi étapes 2-5 + audits) → [[project_editeur_veille_sources_editables_2026-06-24]].
+- **Fait** : étapes 1-5 livrées 24/06 (seed 238 + loader + moteur branché + prompt depuis bundle + régime calculé + UI editeur 2 onglets, **sécu 0 C/H/M**). 2165 verts. ⚠ Page non rendue tant que migration non appliquée. → [[audit_secu_2026-06-24_editeur_veille_etape5]].
+- [x] ~~**Étapes 4 + 5** : prompt depuis bundle + régime calculé + UI editeur 2 onglets + bouton « Éditeur »~~ - 2026-06-24 (`f547e7c`/`5c213d6`/`c39d832`/`3109f4b`). 2 vérifs adversariales (4× + 3× lentilles), sécu 0 C/H/M, findings clos no-debt. Flags advocacy/preprint/denylist seed-only v1.
+- [ ] **[EXÉCUTABLE]** **Étape 6** : appliquer migration `veille_sources` (jamais exécutée) + `supabase gen types` ; validation visuelle Chrome + UI/UX audit du rendu (impossible avant migration) ; retrait hardcode `source-allowlist` runtime (filet ou supprimé - question ouverte) ; QA 360 + déploiement. **La migration DOIT partir AVEC le code** (le bouton « Éditeur » lit la table).
 
 ### 3. Veille - Lot 3 structurel (reste) [SUPERVISÉ • high • session dédiée]
 
@@ -172,10 +170,11 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ### Livré cette session
 
-- [x] ~~**Éditeur veille étape 3/6 : moteur branché sur le bundle**~~ - 2026-06-24 : `loadSourcesBundle` threadé en paramètre à generate+cross-check+addItem ; fallback seed=code → 0 régression ; 2127 verts, bug-hunter « threading correct, comportement préservé ». → [[project_editeur_veille_sources_editables_2026-06-24]].
-- [x] ~~**Éditeur veille étape 2/6 : sources-loader DB + classifieur + équivalence**~~ - 2026-06-24 (`13db5b5`) : politique régime factorisée code↔DB, fail-safe tier invalide, équivalence `domainRegime` prouvée byte-identique. Revue 3 lentilles OK. → [[project_editeur_veille_sources_editables_2026-06-24]].
-- [x] ~~**Éditeur veille étape 1/6 + mockup v2 + presse romande W26 (`6f8de17`)**~~ - 2026-06-24 : table `veille_sources`+seed 238+repo+tests équivalence ; mockup 2 onglets validé ; +9 sources presse + règle traduction sur main pour le cron W26. → [[project_editeur_veille_sources_editables_2026-06-24]].
-- [x] ~~**Bouton Supprimer/Retour thèmes veille (0 C/H/M) + doc HTML 238 sources**~~ - 2026-06-24 : `deleteTheme`+action+ConfirmModal danger ; `docs/veille/sources-revue-2026-06-24.html`. → [[project_editeur_veille_sources_editables_2026-06-24]].
+- [x] ~~**Éditeur veille étape 5/6 : UI 2 onglets + régime calculé**~~ - 2026-06-24 (`5c213d6`/`c39d832`/`3109f4b`) : route `/crm/veille/editeur` (Thèmes + Sources, mockup v2) ; régime calculé (lecture seule) ; vérif 3 lentilles sécu 0 C/H/M, findings clos (thème né inactif fixé, badge régime par-ligne, toggle resync). 2165 verts. → [[audit_secu_2026-06-24_editeur_veille_etape5]].
+- [x] ~~**Éditeur veille étape 4/6 : section sources du prompt depuis le bundle**~~ - 2026-06-24 (`f547e7c`) : `buildSourcesPromptSection` (groupé par famille) ; dérive 120→238 corrigée (`glass-for-europe.eu` mort retiré) ; vérif 4× PASS. → [[project_editeur_veille_sources_editables_2026-06-24]].
+- [x] ~~**Éditeur veille étape 3/6 : moteur branché sur le bundle**~~ - 2026-06-24 (`5af0cbd`) : `loadSourcesBundle` threadé generate+cross-check+addItem ; fallback seed=code, 0 régression. → [[project_editeur_veille_sources_editables_2026-06-24]].
+- [x] ~~**Éditeur veille étape 2/6 : sources-loader + classifieur**~~ - 2026-06-24 (`13db5b5`) : politique régime factorisée code↔DB, équivalence `domainRegime` byte-identique. → [[project_editeur_veille_sources_editables_2026-06-24]].
+- [x] ~~**Éditeur veille étape 1/6 + mockup v2 + presse romande W26 + bouton supprimer thèmes**~~ - 2026-06-24 (`6f8de17`) : table+seed 238+repo+tests ; mockup validé ; +9 sources presse + règle traduction (main, cron W26) ; `deleteTheme`+UI. → [[project_editeur_veille_sources_editables_2026-06-24]].
 → Livrés 23/06 (W26, W25, pré-flight QA, Campagnes 3.2 backend) + antérieurs → mémoires veille 06-23 + `archive/`.
 
 ### Watch list active après pivot
