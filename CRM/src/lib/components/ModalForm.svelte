@@ -8,9 +8,11 @@
 		open = $bindable(false),
 		title = '',
 		saving = false,
+		saveDisabled = false,
 		maxWidth = 'max-w-lg',
 		icon = '',
 		headerVariant = 'default',
+		footerHint = '',
 		onSave,
 		onDelete,
 		children,
@@ -19,9 +21,14 @@
 		open?: boolean;
 		title?: string;
 		saving?: boolean;
+		// Bloque le bouton « Enregistrer » sans masquer le footer (état grisé visible,
+		// jamais un footer absent). Utilisé pour la prévention d'erreur (champ requis vide).
+		saveDisabled?: boolean;
 		maxWidth?: string;
 		icon?: string;
 		headerVariant?: 'default' | 'accent';
+		// Message d'aide affiché à gauche du footer quand le bouton est bloqué.
+		footerHint?: string;
 		onSave?: () => void;
 		onDelete?: () => void;
 		children?: Snippet;
@@ -101,8 +108,8 @@
 			</div>
 
 			{#if onSave || onDelete}
-				<div class="flex items-center justify-between px-6 py-4 border-t border-border">
-					<div>
+				<div class="flex items-center justify-between gap-3 px-6 py-4 border-t border-border">
+					<div class="flex items-center min-w-0">
 						{#if onDelete}
 							<button
 								type="button"
@@ -113,9 +120,12 @@
 								Supprimer
 							</button>
 						{/if}
+						{#if footerHint}
+							<span class="text-xs text-text-muted">{footerHint}</span>
+						{/if}
 					</div>
 					{#if onSave}
-						<div class="flex items-center gap-3">
+						<div class="flex items-center gap-3 shrink-0">
 							<button
 								type="button"
 								onclick={() => open = false}
@@ -126,8 +136,8 @@
 							<button
 								type="button"
 								onclick={onSave}
-								disabled={saving}
-								class="h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg shadow-sm disabled:opacity-50 cursor-pointer transition-colors"
+								disabled={saving || saveDisabled}
+								class="h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
 							>
 								{saving ? 'Enregistrement…' : 'Enregistrer'}
 							</button>

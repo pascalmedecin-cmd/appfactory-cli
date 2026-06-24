@@ -331,7 +331,16 @@
 			})
 		)
 	);
-	const sourceCanSave = $derived(sourceForm.url.trim().length > 3 && sourceForm.name.trim().length > 0);
+	const sourceCanSave = $derived(sourceForm.url.trim().length > 0 && sourceForm.name.trim().length > 0);
+	// Aide affichée dans le footer quand « Enregistrer » est grisé (décision UI gravée :
+	// bouton visible mais bloqué tant que l'URL est vide, jamais un footer absent).
+	const sourceFooterHint = $derived(
+		sourceForm.url.trim().length === 0
+			? "Renseigne d'abord l'URL du site."
+			: sourceForm.name.trim().length === 0
+				? 'Ajoute un nom à la source.'
+				: ''
+	);
 
 	function openCreateSource() {
 		editingSource = null;
@@ -500,7 +509,7 @@
 				{#each filteredThemes as theme (theme.id)}
 					{@const prio = prioriteOf(theme.sort_order)}
 					<div class="trow themes-grid" class:off={!theme.active}>
-						<span class="font-mono text-[13px] text-text-body">{theme.slug}</span>
+						<span class="font-mono text-xs text-text-body">{theme.slug}</span>
 						<div>
 							<div class="text-sm font-semibold text-text">{theme.label}</div>
 							<div class="text-xs text-text-muted mt-0.5 line-clamp-1">{theme.description}</div>
@@ -559,6 +568,7 @@
 				<div class="cl"><span class="sw bg-success"></span><div><b>Confiance</b><span>Un fait n'est écarté que s'il est contredit par la page (sources reconnues).</span></div></div>
 				<div class="cl"><span class="sw bg-info"></span><div><b>Confiance + garde chiffres</b><span>Faits crus, mais chaque chiffre revérifié (associations, lobbies).</span></div></div>
 				<div class="cl"><span class="sw bg-warning"></span><div><b>Strict</b><span>Chaque fait doit figurer mot pour mot sur la page (concurrents, cabinets).</span></div></div>
+				<div class="cl"><span class="sw bg-danger"></span><div><b>Strict renforcé</b><span>Sources à chiffres surveillées de près (cabinets d'études, fils de presse).</span></div></div>
 				<div class="cl"><span class="sw bg-danger"></span><div><b>Bloquée</b><span>Filtrée avant vérification (blog marketing, agrégateur spam).</span></div></div>
 			</div>
 
@@ -575,9 +585,9 @@
 						{/each}
 					</select>
 					<div class="flex gap-2 flex-wrap">
-						<button type="button" class="chip" aria-pressed={chipConfiance} onclick={() => (chipConfiance = !chipConfiance)}><span class="sw bg-success"></span>Confiance</button>
+						<button type="button" class="chip" aria-pressed={chipConfiance} onclick={() => (chipConfiance = !chipConfiance)} title="Inclut « Confiance » et « Confiance + garde chiffres »"><span class="sw bg-success"></span>Confiance (toutes)</button>
 						<button type="button" class="chip" aria-pressed={chipStrict} onclick={() => (chipStrict = !chipStrict)}><span class="sw bg-warning"></span>Strict</button>
-						<button type="button" class="chip" aria-pressed={chipBenchmark} onclick={() => (chipBenchmark = !chipBenchmark)}>Mon benchmark</button>
+						<button type="button" class="chip" aria-pressed={chipBenchmark} onclick={() => (chipBenchmark = !chipBenchmark)} title="Concurrents suivis pour comparaison, jamais cités en chiffres">Mon benchmark</button>
 						<button type="button" class="chip" aria-pressed={chipPause} onclick={() => (chipPause = !chipPause)}>En pause</button>
 					</div>
 				</div>
@@ -617,8 +627,9 @@
 									<div class="min-w-0">
 										<div class="src-name-row">
 											<span class="src-name">{s.name}</span>
-											{#if s.is_new}<span class="tag tag-new">Ajout récent</span>{/if}
-											{#if s.is_benchmark}<span class="tag tag-bench">Ton benchmark</span>{/if}
+											{#if !s.active}<span class="tag tag-pause">En pause</span>{/if}
+											{#if s.is_new}<span class="tag tag-new" title="Source ajoutée récemment">Ajout récent</span>{/if}
+											{#if s.is_benchmark}<span class="tag tag-bench" title="Concurrent suivi pour comparaison, jamais cité en chiffres">Ton benchmark</span>{/if}
 											{#if s.strict_verbatim}
 												<Badge variant="danger" label="Strict renforcé" dot />
 											{:else if (s.regime as Regime) !== familyDefaultRegime(fam.key)}
@@ -628,7 +639,7 @@
 										</div>
 										<div class="src-domain font-mono">{s.hostname}</div>
 									</div>
-									<span class="src-desc hide-sm">{s.description || '—'}</span>
+									<span class="src-desc hide-sm">{s.description || '-'}</span>
 									<div class="actions">
 										<button type="button" class="iconbtn" onclick={() => openEditSource(s)} aria-label="Modifier {s.name}">
 											<Icon name="edit" size={16} />
@@ -718,7 +729,9 @@
 	icon="language"
 	saving={sourceSaving}
 	maxWidth="max-w-xl"
-	onSave={sourceCanSave ? saveSource : undefined}
+	onSave={saveSource}
+	saveDisabled={!sourceCanSave}
+	footerHint={sourceFooterHint}
 >
 	<div class="space-y-4">
 		{#if sourceFormError}
@@ -769,7 +782,7 @@
 				<Icon name="info" size={14} />
 				<span>
 					Attribut structurel (réglé en base, non modifiable ici) :
-					{#if sourceForm.in_denylist}source bloquée.{:else if sourceForm.is_advocacy}association / lobby sectoriel — la confiance garde les chiffres.{:else}préprint non relu — vérification stricte.{/if}
+					{#if sourceForm.in_denylist}source bloquée.{:else if sourceForm.is_advocacy}association / lobby sectoriel : la confiance garde les chiffres.{:else}préprint non relu : vérification stricte.{/if}
 				</span>
 			</p>
 		{/if}
@@ -926,7 +939,7 @@
 		height: 34px;
 		padding: 0 14px;
 		border-radius: var(--radius-full, 9999px);
-		border: 1px solid var(--color-border-strong);
+		border: 1px solid var(--color-border-control);
 		background: var(--color-surface);
 		color: var(--color-text-body);
 		font: inherit;
@@ -992,9 +1005,12 @@
 	.trow:hover {
 		background: color-mix(in srgb, var(--color-primary) 3%, transparent);
 	}
+	/* Ligne en pause : dé-emphase par un fond grisé plutôt qu'opacity:0.5 (qui faisait
+	   tomber le texte sous AA 4.5:1). L'état reste porté par la case décochée + son
+	   aria-label + le badge « En pause » ; le texte garde son contraste sur surface-alt. */
 	.trow.off,
 	.src-row.off {
-		opacity: 0.5;
+		background: var(--color-surface-alt);
 	}
 
 	.actions {
@@ -1176,7 +1192,7 @@
 		width: 19px;
 		height: 19px;
 		border-radius: 5px;
-		border: 1.8px solid var(--color-border-strong);
+		border: 1.8px solid var(--color-border-control);
 		background: var(--color-surface);
 		cursor: pointer;
 		appearance: none;
@@ -1222,7 +1238,11 @@
 	}
 	.tag-new {
 		background: var(--color-primary-dark);
-		color: #cfe0ff;
+		color: rgba(255, 255, 255, 0.82);
+	}
+	.tag-pause {
+		background: var(--color-border);
+		color: var(--color-text-body);
 	}
 
 	/* Modale : champs */

@@ -20,9 +20,13 @@
 	/* Borders */
 	--color-border: #E5E7EB;
 	--color-border-strong: #D1D5DB;
-	/* V2.7 audit S160 : token dédié borders interactives (inputs, selects).
-	   #ADB5BD = ratio ≈ 3:1 sur fond blanc → respecte WCAG 2.2 AA 1.4.11 (composants UI). */
+	/* #ADB5BD ≈ 2.07:1 sur blanc, 1.99:1 sur surface-alt : SOUS le seuil 3:1 de WCAG 2.2 AA
+	   1.4.11. À n'utiliser QUE sur des champs portant un autre indice visuel (icône,
+	   placeholder, label, focus-ring), jamais comme unique délimiteur d'un contrôle. */
 	--color-border-input: #ADB5BD;
+	/* Bordure de contrôle réellement conforme 1.4.11 : #8C949E = 3.07:1 sur blanc. Pour les
+	   frontières porteuses de sens sans autre indice (case à cocher non cochée, chips de filtre). */
+	--color-border-control: #8C949E;
 
 	/* Text */
 	--color-text: #111827;
