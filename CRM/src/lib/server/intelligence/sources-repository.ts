@@ -9,11 +9,37 @@
 import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/database.types';
+import { isSourceTier, regimeFromClassification, type SourceTier } from './source-allowlist';
 
 export type VeilleSource = Database['public']['Tables']['veille_sources']['Row'];
 
 export const SourceTierEnum = z.enum(['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7A', 'T7B']);
 export const SourceRegimeEnum = z.enum(['strict', 'trusted', 'trusted_advocacy']);
+
+/**
+ * Régime de vérification d'une source : il n'est PAS saisi par l'admin (décision
+ * étape 5 du chantier sources éditables). Le moteur le DÉRIVE au runtime depuis
+ * tier + flags (`regimeFromClassification`, règle métier unique partagée avec le
+ * code) ; la colonne `regime` stockée n'est qu'un CACHE d'affichage. Le repository
+ * la recalcule à CHAQUE écriture pour qu'elle reste fidèle à tier+flags — laisser
+ * un admin éditer `regime` librement serait sans effet sur le pipeline (le moteur
+ * ignore la colonne stockée). D'où : `regime` retiré des schémas de saisie, calculé ici.
+ */
+function deriveRegime(c: {
+	tier: SourceTier | null;
+	in_denylist: boolean;
+	strict_verbatim: boolean;
+	is_advocacy: boolean;
+	is_preprint: boolean;
+}): z.infer<typeof SourceRegimeEnum> {
+	return regimeFromClassification({
+		denied: c.in_denylist,
+		strictVerbatim: c.strict_verbatim,
+		preprint: c.is_preprint,
+		tier: c.tier,
+		advocacy: c.is_advocacy
+	});
+}
 
 /** Domaine normalisé : minuscules, sans protocole, sans www., sans path. */
 export const HostnameSchema = z
@@ -42,12 +68,12 @@ export function normalizeSourceHostname(input: string): string {
 	return host.toLowerCase().replace(/^www\./, '');
 }
 
+// `regime` ABSENT des schémas : c'est un champ calculé (cf. deriveRegime), pas saisi.
 export const SourceCreateSchema = z.object({
 	hostname: HostnameSchema,
 	name: z.string().trim().min(1).max(160),
 	description: z.string().trim().max(500).default(''),
 	tier: SourceTierEnum.nullable().default(null),
-	regime: SourceRegimeEnum,
 	in_denylist: z.boolean().default(false),
 	strict_verbatim: z.boolean().default(false),
 	is_advocacy: z.boolean().default(false),
@@ -63,7 +89,6 @@ export const SourceUpdateSchema = z
 		name: z.string().trim().min(1).max(160).optional(),
 		description: z.string().trim().max(500).optional(),
 		tier: SourceTierEnum.nullable().optional(),
-		regime: SourceRegimeEnum.optional(),
 		in_denylist: z.boolean().optional(),
 		strict_verbatim: z.boolean().optional(),
 		is_advocacy: z.boolean().optional(),
@@ -108,7 +133,7 @@ export async function createSource(
 			name: input.name,
 			description: input.description,
 			tier: input.tier,
-			regime: input.regime,
+			regime: deriveRegime(input),
 			in_denylist: input.in_denylist,
 			strict_verbatim: input.strict_verbatim,
 			is_advocacy: input.is_advocacy,
@@ -129,9 +154,42 @@ export async function updateSource(
 	id: string,
 	input: SourceUpdateInput
 ): Promise<VeilleSource> {
+	// Le régime (colonne cache) doit rester fidèle à tier+flags. Si le patch touche
+	// l'un d'eux, on le recalcule depuis l'état RÉSULTANT (row courante + patch),
+	// jamais depuis le patch partiel seul. Sinon (ex. update name/active/sort_order)
+	// les flags n'ont pas bougé → régime inchangé, aucune lecture nécessaire.
+	const touchesRegime =
+		input.tier !== undefined ||
+		input.in_denylist !== undefined ||
+		input.strict_verbatim !== undefined ||
+		input.is_advocacy !== undefined ||
+		input.is_preprint !== undefined;
+
+	const patch: Record<string, unknown> = { ...input };
+	if (touchesRegime) {
+		const { data: current, error: readErr } = await client
+			.from('veille_sources')
+			.select('tier, in_denylist, strict_verbatim, is_advocacy, is_preprint')
+			.eq('id', id)
+			.single();
+		if (readErr) throw new Error(`updateSource (read): ${readErr.message}`);
+		patch.regime = deriveRegime({
+			tier:
+				input.tier !== undefined
+					? input.tier
+					: isSourceTier(current.tier)
+						? current.tier
+						: null,
+			in_denylist: input.in_denylist ?? current.in_denylist,
+			strict_verbatim: input.strict_verbatim ?? current.strict_verbatim,
+			is_advocacy: input.is_advocacy ?? current.is_advocacy,
+			is_preprint: input.is_preprint ?? current.is_preprint
+		});
+	}
+
 	const { data, error } = await client
 		.from('veille_sources')
-		.update(input)
+		.update(patch)
 		.eq('id', id)
 		.select('*')
 		.single();
