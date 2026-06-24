@@ -53,10 +53,10 @@
 					</div>
 				{/if}
 				<a
-					href="/crm/veille/themes"
+					href="/crm/veille/editeur"
 					class="h-10 px-4 inline-flex items-center gap-2 rounded-lg border border-border-input text-sm font-medium text-text hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
 				>
-					Gérer les thèmes
+					Éditeur
 				</a>
 			</div>
 		</div>
