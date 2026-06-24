@@ -3,8 +3,8 @@
 **Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; container racine = stub. Contexte → `memory/project_appfactory_restructure.md`.
 
 **Statut :** Portail FilmPro multi-outils en prod : CRM (`/crm`) + Découpe Films (`/decoupe`) sur `filmpro-portail.vercel.app`. Formation IA = projet autonome `Formation/` (`cc` option 5). Historique (V3 terrain, Signaux V4, golden v9, restructure S173-S174) → `archive/`.
-**Derniere mise a jour :** 2026-06-23. Veille (code cron) sur main `9bef41b` ; web prod inchangé (refonte CRM flag `ffCrmListesV2` OFF). **Derniere revue /optimize :** 2026-04-05. **Prochain bug :** #001.
-**Session courante :** 2026-06-23 (session 6) - **Veille sourcing W26 livré** (main `9bef41b`, CI verte) : Pack B (prompt 30j/sources romandes nommées/plancher + `WEB_SEARCH` 22 + trust-by-source code), vérif adversariale 4 lentilles 1 LOW fermé, 2085 tests + **W25 régénéré et validé en prod** (2 items locaux). → [[project_veille_sourcing_w26_2026-06-23]]. WIP Campagnes 3.2 intact → [[project_module_campagnes_vague32_2026-06-22]].
+**Derniere mise a jour :** 2026-06-24. Veille (code cron) sur main `6f8de17` (sources presse romande + règle traduction déployées pour W26) ; web prod inchangé (refonte CRM flag `ffCrmListesV2` OFF). **Derniere revue /optimize :** 2026-04-05. **Prochain bug :** #001.
+**Session courante :** 2026-06-24 (session 7) - **Éditeur veille étape 1/6 livrée** (table `veille_sources` + seed 238 + modules + tests équivalence) ; **sources presse romande + règle traduction commitées sur main `6f8de17` pour le cron W26** ; reste du chantier (étape 1 éditeur, bouton supprimer thèmes, mockups) sécurisé sur branche `editeur-veille-sources`. Session précédente : Veille sourcing W26 (main `9bef41b`, CI verte) → [[project_veille_sourcing_w26_2026-06-23]]. WIP Campagnes 3.2 intact → [[project_module_campagnes_vague32_2026-06-22]].
 **Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175, S122-S125, S70-S107).
 
 
@@ -133,15 +133,24 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Campagnes Vague 3.2 - UI (Phase 5)** : migration prod + backend testé FAITS le 23/06 (37 tests). **ATTENTION : reprendre depuis la branche `campagnes-vague32` (`3e27c49`), PAS `main`** - le schéma DB prod est en avance (tables `campagnes` + RLS live) mais le code qui les consomme n'est commité QUE sur la branche (non mergée). Reste filtre relationnel load/export + colonne liste + fiche + écran `/crm/campagnes` + revues. → [[project_module_campagnes_vague32_2026-06-22]]. Veille **sourcing W26 livré** (main `9bef41b`, CI verte, bloc 0). **W26 (vendredi 26/06) = 1er run cron sur le nouveau sourcing + 1er brief réel antoine@**, à surveiller (`keptByTrust`, densité, part locale, 0 underscore/cite).
+**Prochaine attaque** : **Éditeur de la veille - étape 2/6** (`sources-loader` DB + filet + classifieur + test équivalence) : chantier chaud, mockup **v2 VALIDÉ**, migration pas-à-pas (étape 1 table+seed 238 livrée), objectif **zéro source en dur**. Reprendre depuis la branche `editeur-veille-sources` (chantier sécurisé là). → [[project_editeur_veille_sources_editables_2026-06-24]]. **Décision déploiement W26 tranchée 24/06 : DÉPLOYER** - sources presse cantonales/frontalières + règle traduction **commitées sur main `6f8de17` pour le cron W26** ; le bouton supprimer/retour thèmes (UI web, hors cron) reste sur la branche WIP, non déployé. Campagnes 3.2 (branche `campagnes-vague32`, `3e27c49`, non mergée) reste en attente derrière.
 
-> Cadrage commun (refonte UX/UI CRM, validé Pascal 2026-06-18) → `~/.claude/projects/-Users-pascal-Claude-Projets-FilmPro/memory/project_refonte_crm_cadrage_2026-06-18.md` + golden Vague 3 `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html` (validé Chrome).
+> Cadrage commun refonte UX/UI CRM (validé 2026-06-18) → [[project_refonte_crm_cadrage_2026-06-18]] + golden `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html` (validé Chrome).
 
-### 0. Veille - Lot 3 structurel (reste) [SUPERVISÉ • high • session dédiée]
+### 0. Éditeur de la veille - migration sources code→DB (étape 2/6) [SUPERVISÉ • xhigh • cascade pas-à-pas]
 
-- [x] ~~**Veille sourcing W26 - LIVRÉ main `9bef41b`, CI verte 2026-06-23**~~ (mandat « zéro dette, 100% fonctionnel, clôture ») : Pack B - prompt 30j + sources romandes **nommées** au-delà de RTS + plancher 14-18 + `WEB_SEARCH` 22 ; code **trust-by-source** (garder l'officiel non-fetchable `dead_page` régime `trusted`, marqué `content_reverified`). Vérif adversariale 4 lentilles, 1 LOW fermé (discrimination `dead_page`/`verifier_failed`). 2085 tests. + **W25 régénéré et validé en prod par Pascal** (2 items locaux actionnables, monde hors-sujet viré ; W25 jamais régénéré = pourquoi les commentaires ne s'étaient pas reflétés). → [[project_veille_sourcing_w26_2026-06-23]] + [[audit_secu_2026-06-23_veille_sourcing_w26]].
-- [x] ~~Chantier veille W25 + pré-flight QA - DÉPLOYÉS 2026-06-23~~ (`291ae02` + `5401d78`). → [[project_veille_fix_w25_commentaires_2026-06-23]] + [[project_veille_preflight_qa_2026-06-23]].
-- [ ] **[BLOQUÉ - après mesure W26+]** **Lot 3 - reste (optionnel)** : dashboard qualité + boucle feedback ; PDF de marque (`filmpro-pdf`) ; pont veille→action ; décomposer mono-appel LLM si plafond ; nettoyage enum RegBL. (Élargir sources = FAIT ci-dessus.) → [[project_veille_sourcing_w26_2026-06-23]].
+- **Pourquoi** : page Éditeur 2 onglets (Thèmes + Sources éditables), mockup **v2 VALIDÉ** par Pascal. Migration pas-à-pas, étape 1 (table `veille_sources` + seed 238) livrée. Objectif Pascal : **zéro source en dur**, tests régression abo (jamais clé API).
+- **Payload** → [[project_editeur_veille_sources_editables_2026-06-24]] (plan 6 étapes, décisions UI terme/priorité/case à cocher, cartographie 3 call sites, schéma table, mockup v2).
+- [ ] **[EXÉCUTABLE]** **Étape 2** : `sources-loader.ts` (charge `veille_sources` actives + filet `sources-seed`) + classifieur sur bundle + test équivalence DB↔code. Moteur pas encore branché.
+- [ ] **[BLOQUÉ - étape 2 livrée]** **Étape 3** : brancher le moteur (3 call sites : `generate.ts` 258/333, `cross-check.ts` 711, `veille/[id]/+page.server.ts` 140).
+- [ ] **[BLOQUÉ - étape 3 livrée]** **Étape 4** : le prompt génère la section sources depuis la DB (cf. `buildThemesPromptSection`).
+- [ ] **[BLOQUÉ - étape 4 livrée]** **Étape 5** : UI page Éditeur 2 onglets (Tabs) + bouton « Éditeur » (remplace « Gérer les thèmes ») + CRUD sources (mockup v2, `redesign-skill`).
+- [ ] **[BLOQUÉ - étape 5 livrée]** **Étape 6** : retrait hardcode `source-allowlist` du runtime + QA 360 (0 H/C/M) + suite complète + déploiement validé.
+- [x] ~~**Déployer AVANT W26 les sources presse + règle traduction**~~ - 2026-06-24 : décision Pascal = DÉPLOYER. +7 cantonaux romands + 2 frontaliers + règle traduction **commités sur main `6f8de17`** (poussé pour le cron W26 de vendredi 26/06). Le bouton supprimer/retour thèmes (UI web, hors cron) reste WIP sur branche `editeur-veille-sources`, déployé plus tard avec l'éditeur. → [[project_editeur_veille_sources_editables_2026-06-24]].
+
+### 3. Veille - Lot 3 structurel (reste) [SUPERVISÉ • high • session dédiée]
+
+- [ ] **[BLOQUÉ - après mesure W26+]** **Lot 3 - reste (optionnel)** : dashboard qualité + boucle feedback ; PDF de marque (`filmpro-pdf`) ; pont veille→action ; décomposer mono-appel LLM si plafond ; nettoyage enum RegBL. → [[project_veille_sourcing_w26_2026-06-23]]. (Veille W26/W25 livrés 23/06, voir mémoires veille.)
 
 ### 1. Vague 3 (suite) + Vague 4 refonte CRM [SUPERVISÉ • xhigh • cascade par chantiers]
 
@@ -157,27 +166,27 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 - **Livré 22/06** (PR #16 `b84b6f5`) : garde-fou CI + Dependabot durci + 6 bumps sûrs. **Ne JAMAIS `rm package-lock.json` pour bumper ce repo** (cause Vercel-fail = regen lockfile flote les transitifs). → [[project_fix_deps_ci_vercel_2026-06-22]].
 - [ ] **[EXÉCUTABLE]** **Trier les 3 PR Dependabot régénérées** (sortie ATTENDUE de la nouvelle config, ~2 min post-merge) : **#20** (groupe patch dont vite/svelte patches socle autorisés → merger si CI verte = preuve du gate) ; **#19** (`@types/node` 26 majeure) + **#21** (`js-yaml` 5 majeure) à arbitrer.
-- [ ] **[EXÉCUTABLE]** **Migration socle SvelteKit (vite 8 / plugin-svelte 7 / kit 2.66)** : différée (vite 8 = bundler rolldown, bug amont ouvert TS-strip `.svelte` + layerchart incompatible). Rouvrir quand plugin-svelte/rolldown/layerchart clean (re-vérifier issues #928/#1313) : lever les `ignore` socle de `dependabot.yml` + monter le trio GROUPÉ, vérifié par la CI.
-- [ ] **[EXÉCUTABLE]** **Bump @supabase/* 2.108 + typescript 6** : différés. supabase = 6 erreurs type `RejectExcessProperties` à corriger (6 sites insert/update : photos, enrichir-batch, search-ch, triage, visits, entreprises) + **smoke auth OTP réel** (Vitest mocke supabase). typescript 6 = trier les erreurs.
+- [ ] **[EXÉCUTABLE]** **Migration socle SvelteKit (vite 8 / plugin-svelte 7 / kit 2.66)** : différée (rolldown + layerchart incompatibles, issues #928/#1313). Rouvrir quand clean : lever les `ignore` socle `dependabot.yml`, monter le trio groupé, CI verte.
+- [ ] **[EXÉCUTABLE]** **Bump @supabase/* 2.108 + typescript 6** : différés. supabase = 6 erreurs type `RejectExcessProperties` (insert/update : photos, enrichir-batch, search-ch, triage, visits, entreprises) + smoke auth OTP réel. typescript 6 = trier les erreurs.
 
 ### Réserve (hors backlog actif)
 - Chantier 3 portail (non cadré) ; durcissement RLS si 4e user ([[feedback_rls_multitenant_durcissement_si_4_users]]).
 
 ### Livré cette session
 
-- [x] ~~**Veille sourcing W26 - livré main `9bef41b`, CI verte**~~ - 2026-06-23 : Pack B (prompt 30j/sources romandes nommées/plancher + `WEB_SEARCH` 22 + trust-by-source `dead_page`/`trusted`), vérif adversariale 4 lentilles 1 LOW fermé, 2085 tests. → [[project_veille_sourcing_w26_2026-06-23]].
-- [x] ~~**W25 régénéré + validé prod**~~ - 2026-06-23 : `run-veille --week 2026-W25 --force --no-email`, 2 items locaux actionnables (monde hors-sujet viré). → [[project_veille_sourcing_w26_2026-06-23]].
-- [x] ~~**Veille pré-flight QA avant W26 - shippé main**~~ - 2026-06-23 : audit fan-out 5 dims + vérif ; 2 dettes fermées (`5401d78`). → [[project_veille_preflight_qa_2026-06-23]].
-- [x] ~~**Campagnes V3.2 backend - migration prod + module + API**~~ - 2026-06-23 (GO Pascal) : Phase 2 migration LIVE + `campagnes.ts` + endpoints, 37 tests, branche `campagnes-vague32` (`3e27c49`) non mergée. Reste l'UI Phase 5. → [[project_module_campagnes_vague32_2026-06-22]].
-- [x] ~~**Veille W25 TERMINÉ + DÉPLOYÉ**~~ - 2026-06-23 : merge FF + strip enum-en-prose, prod `291ae02`. → [[project_veille_fix_w25_commentaires_2026-06-23]].
-→ Livrés antérieurs (06-18/22) → `archive/claude-md-crm-livre-2026-06-19.md` + `_2026-06-18.md` + mémoires veille 06-22/23.
+- [x] ~~**Éditeur veille - étape 1/6 : table `veille_sources` + seed 238 + repository**~~ - 2026-06-24 : migration SQL + `sources-seed.ts` + `sources-repository.ts` + database.types + générateur déterministe (`scripts/gen-veille-sources-seed.ts`) + tests équivalence domaine par domaine (garde-fou anti-régression). Moteur pas encore branché, 0 régression (584 tests intelligence). → [[project_editeur_veille_sources_editables_2026-06-24]].
+- [x] ~~**Mockup Éditeur veille v2 - VALIDÉ par Pascal**~~ - 2026-06-24 : page 2 onglets, 8 retours intégrés (Terme, Priorité 3 niveaux, case à cocher, collapse top 5, filtres, légende confiance). `CRM/.product-architect/editeur-veille/mockup-v2.html`. → [[project_editeur_veille_sources_editables_2026-06-24]].
+- [x] ~~**Sources presse veille élargies + traduction sources étrangères**~~ - 2026-06-24 (**commité sur main `6f8de17` pour W26**) : +7 cantonaux romands + 2 frontaliers Genève (T4) + règle prompt « synthèse FR, URL d'origine ». → [[project_editeur_veille_sources_editables_2026-06-24]].
+- [x] ~~**Bouton Supprimer + Retour sur les thèmes veille**~~ - 2026-06-24 (codé/testé, NON déployé) : `deleteTheme` + action delete (auth+UUID+service-role) + ConfirmModal danger + breadcrumb. Audit sécu+bug **0 C/H/M**. → [[project_editeur_veille_sources_editables_2026-06-24]].
+- [x] ~~**Doc HTML revue des 238 sources de veille (annotable)**~~ - 2026-06-24 : `CRM/docs/veille/sources-revue-2026-06-24.html`. → [[project_editeur_veille_sources_editables_2026-06-24]].
+→ Livrés 23/06 (W26, W25, pré-flight QA, Campagnes 3.2 backend) + antérieurs → mémoires veille 06-23 + `archive/`.
 
 ### Watch list active après pivot
 
-- **[WATCH] W26 (vendredi 26/06, 06:27+17:27 UTC) = 1er run cron SUR LE NOUVEAU SOURCING (main `9bef41b`) + 1er brief brandé RÉEL à antoine@**. Surveiller logs GHA : **`keptByTrust` + `keptByTrustTitles`** (items sauvés par trust-by-source, relire les titres), **densité** (W25=2, cible 8-12), **part locale** (était 33%, viser ↑), 0 `<cite>`/emoji/underscore. Si `keptByTrust` explose OU un item trust-kept est faux → resserrer (lever TOCTOU optionnel non implémenté) ; si densité encore faible → reste du Lot 3. → [[project_veille_sourcing_w26_2026-06-23]].
-- **[WATCH] Svelte 5 - `onDestroy` s'exécute en SSR (Vercel) mais pas en `vite preview`** : toute référence à `window`/`document`/`localStorage`/`setInterval` à cleanup DOIT passer par `$effect(() => { ...; return () => cleanup; })`. Toujours tester en preview branch Vercel pour les composants qui touchent window. Mémoire `feedback_svelte5_ondestroy_ssr_window_undefined.md`.
+- **[WATCH] W26 (vendredi 26/06) = 1er run cron sur le nouveau sourcing (`9bef41b`) + 1er brief brandé réel antoine@**. Surveiller GHA : `keptByTrust`/`keptByTrustTitles`, densité (cible 8-12, W25=2), part locale (↑ vs 33%), 0 `<cite>`/emoji/underscore. **NB : les sources presse cantonales/frontalières de cette session ne seront sur W26 que si déployées avant vendredi.** → [[project_veille_sourcing_w26_2026-06-23]].
+- **[WATCH] Svelte 5 `onDestroy` s'exécute en SSR Vercel** (pas en `vite preview`) : window/document/localStorage/setInterval à cleanup → `$effect(() => {...; return () => cleanup})`. Tester en preview branch. → `feedback_svelte5_ondestroy_ssr_window_undefined.md`.
 - **[WATCH] Trap Vercel `rollback` → alias prod verrouillé** : après `vercel rollback`, les `git push` buildent mais ne promeuvent PAS automatiquement. Vérifier via `vercel inspect filmpro-portail.vercel.app` (domaine canonique) que l'alias pointe sur le nouveau deploy.
-- **[WATCH] Réactivation d'une source coupée en V5 (2026-06-07)** : flip de flag (`SIGNAUX_ZEFIX_ENABLED`, `config.prospection.sources.*.enabled`, `features.*`) → re-vérifier les contrôles d'origine (Zod, quota, rate-limit, anti-hallu) AVANT de rallumer en prod (le risque = la réactivation). Encodage Zefix corrigé (`decode-response.ts`). Réf `memory/audit_secu_2026-06-07_v5_signaux_prospection.md` § I-3.
+- **[WATCH] Réactivation d'une source coupée V5 (2026-06-07)** : flip de flag → re-vérifier les contrôles d'origine (Zod, quota, rate-limit, anti-hallu) AVANT de rallumer en prod. Réf `audit_secu_2026-06-07_v5_signaux_prospection.md` § I-3.
 
 → Watch list complète (Signaux V4 perf/contrats S189, S188, S186, S178, S171) déplacée dans `archive/2026-05-28-pivot-mobile-v3.md`. Restent triables si l'objet redevient actuel.
 
