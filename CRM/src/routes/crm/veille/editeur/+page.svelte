@@ -87,6 +87,14 @@
 		}
 		return regimeBadge('trusted');
 	}
+	// Régime « par défaut » de la famille (tier seul). Sert à n'afficher un badge
+	// régime PAR LIGNE que pour les sources dont le régime RÉEL (s.regime, tier+flags)
+	// s'écarte de ce défaut (advocacy → trusted_advocacy, preprint → strict) : sinon
+	// l'en-tête de famille (tier seul) mentirait sur ces sources (bug-hunt MEDIUM).
+	function familyDefaultRegime(key: FamilyKey): Regime {
+		if (key === 'T1' || key === 'T2' || key === 'T4' || key === 'T5') return 'trusted';
+		return 'strict';
+	}
 
 	const TOP_N = 5; // sources visibles avant collapse, par famille (mockup v2)
 
@@ -161,9 +169,14 @@
 			} else {
 				toasts.error('Erreur inattendue');
 			}
+			// Resync de l'état réel sur échec : la case à cocher (toggle source) est
+			// optimiste (le navigateur la bascule avant la réponse) ; sans recharge,
+			// elle resterait dans l'état basculé alors que le serveur a refusé.
+			await invalidateAll();
 			return false;
 		} catch (err) {
 			toasts.error(err instanceof Error ? err.message : 'Erreur réseau');
+			await invalidateAll();
 			return false;
 		}
 	}
@@ -606,7 +619,12 @@
 											<span class="src-name">{s.name}</span>
 											{#if s.is_new}<span class="tag tag-new">Ajout récent</span>{/if}
 											{#if s.is_benchmark}<span class="tag tag-bench">Ton benchmark</span>{/if}
-											{#if s.strict_verbatim}<Badge variant="danger" label="Strict renforcé" dot />{/if}
+											{#if s.strict_verbatim}
+												<Badge variant="danger" label="Strict renforcé" dot />
+											{:else if (s.regime as Regime) !== familyDefaultRegime(fam.key)}
+												{@const rb = regimeBadge(s.regime as Regime)}
+												<Badge variant={rb.variant} label={rb.label} />
+											{/if}
 										</div>
 										<div class="src-domain font-mono">{s.hostname}</div>
 									</div>
@@ -746,6 +764,15 @@
 			<label class="opt"><input type="checkbox" bind:checked={sourceForm.is_benchmark} /> Source benchmark (concurrent suivi)</label>
 			<label class="opt"><input type="checkbox" bind:checked={sourceForm.strict_verbatim} /> Chiffres surveillés (strict renforcé)</label>
 		</div>
+		{#if editingSource && (sourceForm.is_advocacy || sourceForm.is_preprint || sourceForm.in_denylist)}
+			<p class="struct-note">
+				<Icon name="info" size={14} />
+				<span>
+					Attribut structurel (réglé en base, non modifiable ici) :
+					{#if sourceForm.in_denylist}source bloquée.{:else if sourceForm.is_advocacy}association / lobby sectoriel — la confiance garde les chiffres.{:else}préprint non relu — vérification stricte.{/if}
+				</span>
+			</p>
+		{/if}
 	</div>
 </ModalForm>
 
@@ -1248,6 +1275,23 @@
 		font-size: 13px;
 		color: var(--color-text-body);
 		cursor: pointer;
+	}
+	.struct-note {
+		display: flex;
+		align-items: flex-start;
+		gap: 7px;
+		margin: 4px 0 0;
+		padding: 9px 11px;
+		font-size: 12.5px;
+		line-height: 1.45;
+		color: var(--color-text-muted);
+		background: var(--color-surface-alt);
+		border-radius: var(--radius-md, 8px);
+	}
+	.struct-note :global(svg) {
+		flex: none;
+		margin-top: 2px;
+		color: var(--color-text-muted);
 	}
 
 	@media (max-width: 860px) {
