@@ -22,6 +22,10 @@ function createMockSupabase(rows: Row[], opts: { dbError?: { message: string } }
 		order() {
 			return Promise.resolve({ data: opts.dbError ? null : rows, error: opts.dbError ?? null });
 		},
+		// Vague 3.2 : utilisé par fetchCampagnesByLead (jonction) en export leads premium.
+		in() {
+			return Promise.resolve({ data: [], error: null });
+		},
 	};
 	return {
 		from(table: string) {
@@ -33,10 +37,16 @@ function createMockSupabase(rows: Row[], opts: { dbError?: { message: string } }
 	};
 }
 
-async function callGet(entity: string, supabase: ReturnType<typeof createMockSupabase>) {
+async function callGet(entity: string, supabase: ReturnType<typeof createMockSupabase>, premium = false) {
 	return GET({
 		params: { entity },
-		locals: { supabase },
+		locals: {
+			supabase,
+			safeGetSession: async () => ({
+				session: { user: { id: 'u1' } },
+				user: { id: 'u1', app_metadata: premium ? { ff_crm_listes_v2: true } : {} }
+			})
+		},
 	} as unknown as Parameters<typeof GET>[0]);
 }
 
@@ -91,6 +101,14 @@ describe('GET /api/export/[entity]', () => {
 		expect(body).toContain('Lead X');
 		expect(supabase._table()).toBe('prospect_leads');
 		expect(supabase._filters()).toEqual([]);
+	});
+
+	it('leads : colonne Campagnes présente en premium, absente sinon (Vague 3.2, OFF byte-identique)', async () => {
+		const rows = [{ id: 'l1', raison_sociale: 'Lead X', source: 'simap' }];
+		const off = await (await callGet('leads', createMockSupabase(rows), false)).text();
+		expect(off).not.toContain('Campagnes');
+		const on = await (await callGet('leads', createMockSupabase(rows), true)).text();
+		expect(on).toContain('Campagnes');
 	});
 
 	it('erreur Supabase → 500', async () => {

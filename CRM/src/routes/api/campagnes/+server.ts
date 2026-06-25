@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { z } from 'zod';
 import { createCampagne, CAMPAGNE_NOM_MAX, CAMPAGNE_DESC_MAX } from '$lib/server/campagnes';
+import { isCampagnesEnabled } from '$lib/server/feature-gate';
 
 /**
  * POST /api/campagnes — crée une campagne (combo « créer à la volée » de la prospection +
@@ -17,6 +18,8 @@ const CreateSchema = z.object({
 export const POST = async ({ request, locals }: RequestEvent) => {
 	const { session, user } = await locals.safeGetSession();
 	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
+	// Defense-in-depth : la surface Campagnes est gatée par ffCrmListesV2 (pas que l'UI).
+	if (!isCampagnesEnabled(user)) return json({ error: 'Fonctionnalité non activée' }, { status: 403 });
 
 	const raw = await request.json().catch(() => null);
 	const parsed = CreateSchema.safeParse(raw);

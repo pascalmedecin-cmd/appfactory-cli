@@ -28,13 +28,14 @@ const UUID_B = '22222222-2222-4222-a222-222222222222';
 function event(
 	body: unknown,
 	handler: typeof POST | typeof DELETE,
-	opts: { authed?: boolean; supa?: ReturnType<typeof supabaseMock> } = {}
+	opts: { authed?: boolean; premium?: boolean; supa?: ReturnType<typeof supabaseMock> } = {}
 ) {
-	const { authed = true, supa = supabaseMock() } = opts;
+	const { authed = true, premium = true, supa = supabaseMock() } = opts;
+	const user = authed ? { id: 'u1', app_metadata: premium ? { ff_crm_listes_v2: true } : {} } : null;
 	return {
 		request: { json: async () => body },
 		locals: {
-			safeGetSession: async () => ({ session: authed ? { user: { id: 'u1' } } : null, user: null }),
+			safeGetSession: async () => ({ session: authed ? { user } : null, user }),
 			supabase: supa
 		}
 	} as unknown as Parameters<typeof handler>[0];
@@ -44,6 +45,11 @@ describe('POST /api/prospection/lead-campagnes (assignation)', () => {
 	it('401 non authentifié', async () => {
 		const res = await POST(event({ leadId: UUID_A, campagneIds: [UUID_B] }, POST, { authed: false }));
 		expect(res.status).toBe(401);
+	});
+
+	it('403 si flag premium OFF (defense-in-depth)', async () => {
+		const res = await POST(event({ leadId: UUID_A, campagneIds: [UUID_B] }, POST, { premium: false }));
+		expect(res.status).toBe(403);
 	});
 
 	it('400 si leadId pas un uuid', async () => {
@@ -73,6 +79,11 @@ describe('DELETE /api/prospection/lead-campagnes (retrait)', () => {
 	it('401 non authentifié', async () => {
 		const res = await DELETE(event({ leadId: UUID_A, campagneId: UUID_B }, DELETE, { authed: false }));
 		expect(res.status).toBe(401);
+	});
+
+	it('403 si flag premium OFF', async () => {
+		const res = await DELETE(event({ leadId: UUID_A, campagneId: UUID_B }, DELETE, { premium: false }));
+		expect(res.status).toBe(403);
 	});
 
 	it('400 si campagneId pas un uuid', async () => {

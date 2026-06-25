@@ -22,12 +22,17 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { PROSPECTION_TABS, TAB_SOURCE_MAP, VALID_SORT_KEYS, type ProspectionTabKey } from '$lib/prospection-utils';
 import { isProspectionTabVisible, defaultProspectionTab } from '$lib/prospection-flags';
 import { escapeIlike } from '$lib/server/db-helpers';
+import { leadIdsForCampagnes } from '$lib/server/campagnes';
 
 /** Champs balayés par la recherche texte (les 3, partout — corrige la divergence all-ids). */
 export const PROSPECTION_SEARCH_FIELDS = ['raison_sociale', 'localite', 'canton'] as const;
 
 /** Garde-fou DoS : un `IN (...)` borné par paramètre d'URL (sources/cantons/statuts). */
 export const MAX_FILTER_VALUES = 50;
+
+/** Format des ids campagne : tout `?campagne=` hors format UUID est ignoré au parsing
+ *  (defense-in-depth ; evite un filtre silencieusement vide sur une saisie malformee). */
+const CAMPAGNE_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Bornage de la saisie de recherche (cohérent avec l'ancien export/all-ids). */
 const MAX_SEARCH_LEN = 200;
@@ -45,6 +50,8 @@ export type ProspectionFilter = {
 	filterCantons: string[];
 	filterStatuts: string[];
 	filterTemperatures: string[];
+	/** Vague 3.2 : campagnes demandées (relation N-N, filtre « porte ≥1 de ces campagnes »). */
+	filterCampagnes: string[];
 	showTransferred: boolean;
 	search: string;
 	sortKey: string;
@@ -73,6 +80,7 @@ export function parseProspectionFilter(url: URL): ProspectionFilter {
 	const filterSources = url.searchParams.getAll('source').slice(0, MAX_FILTER_VALUES);
 	const filterCantons = url.searchParams.getAll('canton').slice(0, MAX_FILTER_VALUES);
 	const filterStatuts = url.searchParams.getAll('statut').slice(0, MAX_FILTER_VALUES);
+	const filterCampagnes = url.searchParams.getAll('campagne').filter((id) => CAMPAGNE_ID_RE.test(id)).slice(0, MAX_FILTER_VALUES);
 	const filterTemperatures = url.searchParams.getAll('temp').filter((t) => VALID_TEMPS.has(t));
 	const search = (url.searchParams.get('q') ?? '').slice(0, MAX_SEARCH_LEN);
 	const showTransferred = url.searchParams.get('showTransferred') === '1';
@@ -88,7 +96,7 @@ export function parseProspectionFilter(url: URL): ProspectionFilter {
 
 	return {
 		tab, tabSources, effectiveSources, sourceFilterIncompatible,
-		filterSources, filterCantons, filterStatuts, filterTemperatures,
+		filterSources, filterCantons, filterStatuts, filterTemperatures, filterCampagnes,
 		showTransferred, search, sortKey, sortAsc,
 	};
 }
@@ -136,6 +144,32 @@ export function applyProspectionFilters<T>(query: T, f: ProspectionFilter): T {
 	return applyProspectionScopeFilters(applyProspectionSourceFilter(query, f), f);
 }
 
+/**
+ * Résout la restriction « filtre campagne » (relation N-N) en une liste de lead_ids.
+ * Retourne `null` quand aucune campagne n'est demandée (= pas de restriction), sinon les
+ * lead_ids portant ≥1 des campagnes (dédupés, possiblement vide -> aucun résultat). Async
+ * (interroge la jonction `prospect_lead_campagnes`) : à appeler UNE fois par requête, en
+ * amont du query builder. La liste de campagnes est déjà bornée (MAX_FILTER_VALUES).
+ */
+export async function resolveCampagneLeadIds(
+	supabase: SupabaseClient,
+	filter: ProspectionFilter,
+): Promise<string[] | null> {
+	if (filter.filterCampagnes.length === 0) return null;
+	return leadIdsForCampagnes(supabase as never, filter.filterCampagnes);
+}
+
+/**
+ * Applique la restriction relationnelle campagne sur une query `prospect_leads` :
+ * `.in('id', leadIds)` (paramétré, jamais de `.or()` interpolé, cf.
+ * feedback_postgrest_or_filter_injection). `null` = no-op (pas de filtre campagne).
+ * NB : une liste VIDE matche 0 ligne — l'appelant court-circuite ce cas en amont.
+ */
+export function applyCampagneLeadFilter<T>(query: T, restrictIds: string[] | null): T {
+	if (restrictIds === null) return query;
+	return (query as any).in('id', restrictIds) as T;
+}
+
 /** Motif `.ilike()` échappé pour la recherche (wildcards SQL neutralisés). */
 export function prospectionSearchPattern(search: string): string {
 	return `%${escapeIlike(search)}%`;
@@ -165,13 +199,23 @@ export async function fetchProspectionRows<Row extends { id: string }>(
 		return { rows: [], totalMatching: 0, truncated: false, error: null };
 	}
 
+	// Filtre campagne (relation N-N) : résolu une fois en lead_ids, appliqué via `.in('id', ...)`.
+	// Aucune campagne sans aucun lead -> vue vide (court-circuit, aucune requête principale).
+	const restrictIds = await resolveCampagneLeadIds(supabase, filter);
+	if (restrictIds !== null && restrictIds.length === 0) {
+		return { rows: [], totalMatching: 0, truncated: false, error: null };
+	}
+
 	const decorate = (q: any) => (order ? q.order(filter.sortKey, { ascending: filter.sortAsc }) : q);
 
 	if (filter.search) {
 		const pattern = prospectionSearchPattern(filter.search);
 		const queries = PROSPECTION_SEARCH_FIELDS.map((field) =>
 			decorate(
-				applyProspectionFilters(supabase.from('prospect_leads').select(select), filter).ilike(field, pattern),
+				applyCampagneLeadFilter(
+					applyProspectionFilters(supabase.from('prospect_leads').select(select), filter),
+					restrictIds,
+				).ilike(field, pattern),
 			).limit(cap),
 		);
 		const results = await Promise.all(queries);
@@ -193,7 +237,10 @@ export async function fetchProspectionRows<Row extends { id: string }>(
 	}
 
 	const { data, count, error } = await decorate(
-		applyProspectionFilters(supabase.from('prospect_leads').select(select, { count: 'exact' }), filter),
+		applyCampagneLeadFilter(
+			applyProspectionFilters(supabase.from('prospect_leads').select(select, { count: 'exact' }), filter),
+			restrictIds,
+		),
 	).limit(cap);
 	if (error) return { rows: [], totalMatching: 0, truncated: false, error };
 	const rows = (data ?? []) as unknown as Row[];

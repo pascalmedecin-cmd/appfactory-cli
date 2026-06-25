@@ -445,3 +445,202 @@ textarea:focus-visible,
 	color: var(--color-text-muted);
 	margin-top: 1px;
 }
+
+/* ============================================================================
+ * Vague 3.2 - module Campagnes (multi-étiquetage N-N, flag ffCrmListesV2).
+ * Pastille de campagne + pile débordable + compteur de prospects + swatch.
+ * Globales (rendues dans les snippets DataTable + slot SlideOut, scope parent)
+ * comme .signal-score-pill. 8 couleurs stables tirées de la palette workflow
+ * (toutes AA, c8 dé-sémantisé berry). La couleur appartient à la campagne
+ * (slug c1..c8), pas au rendu. Le combo (recherche/création) vit scopé dans
+ * CampagneCombo.svelte ; ici seulement les primitives d'affichage partagées.
+ * ========================================================================== */
+.camp {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 3px 10px 3px 8px;
+	border-radius: var(--radius-full);
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+	max-width: 100%;
+	box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.04);
+}
+.camp .cdot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+.camp .clabel {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
+}
+.camp--c1 { background: var(--color-prosp-enrich-bg); color: var(--color-prosp-enrich-deep); }
+.camp--c1 .cdot { background: var(--color-prosp-enrich); }
+.camp--c2 { background: var(--color-prosp-import-bg); color: var(--color-prosp-import-deep); }
+.camp--c2 .cdot { background: var(--color-prosp-import); }
+.camp--c3 { background: var(--color-prosp-qualify-bg); color: var(--color-prosp-qualify-deep); }
+.camp--c3 .cdot { background: var(--color-prosp-qualify); }
+.camp--c4 { background: var(--color-prosp-convert-bg); color: var(--color-prosp-convert-deep); }
+.camp--c4 .cdot { background: var(--color-prosp-convert); }
+.camp--c5 { background: var(--color-prosp-place-bg); color: var(--color-prosp-place-deep); }
+.camp--c5 .cdot { background: var(--color-prosp-place); }
+.camp--c6 { background: var(--color-tab-terrain-bg); color: var(--color-tab-terrain); }
+.camp--c6 .cdot { background: var(--color-tab-terrain); }
+.camp--c7 { background: var(--color-tab-regbl-bg); color: var(--color-tab-regbl-deep); }
+.camp--c7 .cdot { background: var(--color-tab-regbl); }
+.camp--c8 { background: #F7ECF0; color: #8E4A6B; }
+.camp--c8 .cdot { background: #B05C86; }
+
+/* Pile de pastilles dans une cellule de liste : une seule ligne (hauteur stable),
+   débordement +N, affordance d'édition inline (présente AUSSI sur les lignes déjà
+   étiquetées, symétrie d'affordance - finding UX de la revue golden). */
+.camp-stack {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	flex-wrap: nowrap;
+	min-width: 0;
+	overflow: hidden;
+}
+.camp-stack .camp {
+	min-width: 0;
+	flex: 0 1 auto;
+}
+.camp-more {
+	display: inline-flex;
+	align-items: center;
+	padding: 3px 9px;
+	border-radius: var(--radius-full);
+	font-size: 11.5px;
+	font-weight: 700;
+	color: var(--color-text-muted);
+	background: var(--color-surface-alt);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+	flex-shrink: 0;
+}
+.camp-edit {
+	width: 22px;
+	height: 22px;
+	display: inline-grid;
+	place-items: center;
+	border: none;
+	padding: 0;
+	border-radius: 50%;
+	color: var(--color-text-muted);
+	background: var(--color-surface-alt);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+	cursor: pointer;
+	flex-shrink: 0;
+	transition: color 160ms var(--ease, ease), box-shadow 160ms var(--ease, ease);
+}
+.camp-edit:hover {
+	color: var(--color-primary);
+	box-shadow: inset 0 0 0 1px rgba(47, 90, 158, 0.30);
+}
+.camp-none {
+	color: var(--color-text-muted);
+	font-size: 13px;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+}
+.camp-add-inline {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: 3px 9px 3px 7px;
+	border: none;
+	border-radius: var(--radius-full);
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--color-primary);
+	background: var(--color-primary-light);
+	box-shadow: inset 0 0 0 1px rgba(47, 90, 158, 0.14);
+	cursor: pointer;
+}
+.camp-add-inline:hover {
+	box-shadow: inset 0 0 0 1px rgba(47, 90, 158, 0.30);
+}
+
+/* Compteur de prospects (écran Campagnes) - lien vers Prospection filtrée. */
+.leadcount {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	padding: 4px 11px 4px 9px;
+	border-radius: var(--radius-full);
+	font-size: 12.5px;
+	font-weight: 600;
+	color: var(--color-text-body);
+	background: var(--color-surface-alt);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+	font-variant-numeric: tabular-nums;
+}
+.leadcount:not(.zero) > :global(svg) {
+	color: var(--color-primary);
+}
+.leadcount.zero {
+	color: var(--color-text-muted);
+}
+
+/* Swatch couleur (écran Campagnes + sélecteur de création). */
+.camp-swatch {
+	width: 18px;
+	height: 18px;
+	border-radius: 6px;
+	box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.10);
+	flex-shrink: 0;
+}
+.sw1 { background: var(--color-prosp-enrich); }
+.sw2 { background: var(--color-prosp-import); }
+.sw3 { background: var(--color-prosp-qualify); }
+.sw4 { background: var(--color-prosp-convert); }
+.sw5 { background: var(--color-prosp-place); }
+.sw6 { background: var(--color-tab-terrain); }
+.sw7 { background: var(--color-tab-regbl); }
+.sw8 { background: #B05C86; }
+
+/* Pastille RETIRABLE (fiche / combo) + bouton « Ajouter » en pointillés. */
+.camp.removable {
+	padding-right: 4px;
+}
+.camp .cx {
+	width: 16px;
+	height: 16px;
+	display: grid;
+	place-items: center;
+	border: none;
+	padding: 0;
+	background: transparent;
+	border-radius: 50%;
+	cursor: pointer;
+	color: currentColor;
+	opacity: 0.55;
+	flex-shrink: 0;
+}
+.camp .cx:hover {
+	opacity: 1;
+	background: rgba(17, 24, 39, 0.08);
+}
+.chip-add {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 5px 11px 5px 9px;
+	border-radius: var(--radius-full);
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--color-primary);
+	background: var(--color-surface);
+	box-shadow: inset 0 0 0 1px var(--color-border-strong);
+	cursor: pointer;
+	border: none;
+}
+.chip-add:hover {
+	background: var(--color-primary-light);
+	box-shadow: inset 0 0 0 1px rgba(47, 90, 158, 0.30);
+}

@@ -78,6 +78,7 @@ async function runLoad(searchValue: string) {
 	await mod.load({
 		locals: { supabase: sb },
 		url,
+		parent: async () => ({}),
 	} as unknown as Parameters<typeof mod.load>[0]);
 	return sb;
 }

@@ -8,6 +8,7 @@ import {
 	deleteCampagne,
 	listCampagnes,
 	assignCampagnesToLead,
+	assignCampagnesToLeads,
 	removeCampagneFromLead,
 	fetchCampagnesByLead,
 	leadIdsForCampagnes,
@@ -269,5 +270,31 @@ describe('leadIdsForCampagnes', () => {
 		const inArg = arg(m.calls, 'in') as [string, string[]];
 		expect(inArg[0]).toBe('campagne_id');
 		expect(inArg[1].length).toBe(MAX_CAMPAGNE_IDS);
+	});
+});
+
+describe('assignCampagnesToLeads (étiquetage d’un lot importé)', () => {
+	it('no-op si aucun lead OU aucune campagne (aucune requête)', async () => {
+		const m = createSupabaseMock();
+		expect((await assignCampagnesToLeads(m.supabase, [], ['c1'])).error).toBe(null);
+		expect((await assignCampagnesToLeads(m.supabase, ['l1'], [])).error).toBe(null);
+		expect(m.calls.find((c) => c[0] === 'from')).toBeUndefined();
+	});
+
+	it('produit le cross-product leads × campagnes (dédupé) en un seul upsert idempotent', async () => {
+		const m = createSupabaseMock();
+		await assignCampagnesToLeads(m.supabase, ['l1', 'l1', 'l2'], ['c1', 'c2', 'c1']);
+		const upsertArgs = arg(m.calls, 'upsert');
+		const rows = upsertArgs?.[0] as Array<{ lead_id: string; campagne_id: string }>;
+		expect(rows).toHaveLength(4); // 2 leads distincts × 2 campagnes distinctes
+		expect(rows).toContainEqual({ lead_id: 'l1', campagne_id: 'c1' });
+		expect(rows).toContainEqual({ lead_id: 'l2', campagne_id: 'c2' });
+		expect(upsertArgs?.[1]).toMatchObject({ onConflict: 'lead_id,campagne_id', ignoreDuplicates: true });
+	});
+
+	it('FK 23503 -> erreur typée invalid (campagne inexistante), jamais une 500 opaque', async () => {
+		const m = createSupabaseMock({ error: { code: '23503', message: 'fk' } });
+		const { error } = await assignCampagnesToLeads(m.supabase, ['l1'], ['ghost']);
+		expect(error?.code).toBe('invalid');
 	});
 });

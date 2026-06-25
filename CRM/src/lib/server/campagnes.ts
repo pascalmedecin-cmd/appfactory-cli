@@ -22,24 +22,21 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/database.types';
+import {
+	COULEUR_SLUGS,
+	DEFAULT_COULEUR,
+	isCouleurSlug,
+	CAMPAGNE_NOM_MAX,
+	CAMPAGNE_DESC_MAX,
+	MAX_CAMPAGNE_IDS,
+} from '$lib/campagnes';
+import type { Campagne, CampagneWithCount, CouleurSlug } from '$lib/campagnes';
 
-export type Campagne = Database['public']['Tables']['campagnes']['Row'];
-export type CampagneWithCount = Campagne & { lead_count: number };
-
-/** Slugs de couleur valides (palette workflow FilmPro). Source unique, mappés en CSS côté UI. */
-export const COULEUR_SLUGS = ['c1', 'c2', 'c3', 'c4', 'c5', 'c6', 'c7', 'c8'] as const;
-export type CouleurSlug = (typeof COULEUR_SLUGS)[number];
-export const DEFAULT_COULEUR: CouleurSlug = 'c1';
-
-export function isCouleurSlug(v: unknown): v is CouleurSlug {
-	return typeof v === 'string' && (COULEUR_SLUGS as readonly string[]).includes(v);
-}
-
-/** Bornes de saisie (alignées sur le Zod des endpoints). */
-export const CAMPAGNE_NOM_MAX = 80;
-export const CAMPAGNE_DESC_MAX = 280;
-/** Garde DoS sur les multi-sélections campagne (cohérent avec MAX_FILTER_VALUES prospection). */
-export const MAX_CAMPAGNE_IDS = 50;
+// Constantes/types Campagnes : source unique dans le module client-safe `$lib/campagnes`
+// (partagé UI + serveur, aucune dérive de palette). Ré-exportés ici pour compat : les
+// endpoints, le filtre `prospection-query` et les tests les importent depuis ce module.
+export { COULEUR_SLUGS, DEFAULT_COULEUR, isCouleurSlug, CAMPAGNE_NOM_MAX, CAMPAGNE_DESC_MAX, MAX_CAMPAGNE_IDS };
+export type { Campagne, CampagneWithCount, CouleurSlug };
 
 export type CampagneError = { code: 'duplicate' | 'invalid' | 'db'; message: string };
 
@@ -212,6 +209,31 @@ export async function assignCampagnesToLead(
 		if (error.code === '23503') {
 			return { error: { code: 'invalid', message: 'Campagne inexistante.' } };
 		}
+		return { error: { code: 'db', message: error.message } };
+	}
+	return { error: null };
+}
+
+/**
+ * Assigne (cumulativement) une ou plusieurs campagnes à PLUSIEURS leads en une seule requête
+ * (étiquetage d'un lot importé). Idempotent (upsert ignoreDuplicates sur la PK). Best-effort
+ * côté appelant : utilisé après l'insert des leads ; une erreur est remontée typée (un id
+ * campagne inexistant -> 23503) mais ne supprime jamais les leads déjà importés.
+ */
+export async function assignCampagnesToLeads(
+	supabase: SupabaseClient<Database>,
+	leadIds: readonly string[],
+	campagneIds: readonly string[]
+): Promise<{ error: CampagneError | null }> {
+	const cids = normalizeCampagneIds(campagneIds);
+	const lids = [...new Set(leadIds.filter(Boolean))];
+	if (cids.length === 0 || lids.length === 0) return { error: null };
+	const rows = lids.flatMap((lead_id) => cids.map((campagne_id) => ({ lead_id, campagne_id })));
+	const { error } = await supabase
+		.from('prospect_lead_campagnes')
+		.upsert(rows, { onConflict: 'lead_id,campagne_id', ignoreDuplicates: true });
+	if (error) {
+		if (error.code === '23503') return { error: { code: 'invalid', message: 'Campagne inexistante.' } };
 		return { error: { code: 'db', message: error.message } };
 	}
 	return { error: null };

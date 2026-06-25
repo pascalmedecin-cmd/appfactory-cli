@@ -32,9 +32,15 @@ function createMock(rows: Row[], opts: { dbError?: { message: string }; count?: 
 	};
 }
 
-async function callGet(search: string, mock: ReturnType<typeof createMock>) {
+async function callGet(search: string, mock: ReturnType<typeof createMock>, premium = false) {
 	return GET({
-		locals: { supabase: mock.supabase },
+		locals: {
+			supabase: mock.supabase,
+			safeGetSession: async () => ({
+				session: { user: { id: 'u1' } },
+				user: { id: 'u1', app_metadata: premium ? { ff_crm_listes_v2: true } : {} }
+			})
+		},
 		url: new URL('http://localhost/api/export/prospection' + search),
 	} as unknown as Parameters<typeof GET>[0]);
 }
@@ -124,6 +130,14 @@ describe('GET /api/export/prospection', () => {
 	it('erreur Supabase → 500', async () => {
 		const mock = createMock([], { dbError: { message: 'connection lost' } });
 		await expect(callGet('?tab=entreprises', mock)).rejects.toMatchObject({ status: 500 });
+	});
+
+	it('colonne Campagnes présente en premium, absente sinon (Vague 3.2, OFF byte-identique)', async () => {
+		const rows = [{ id: '1', raison_sociale: 'Acme', source: 'zefix' }];
+		const off = await (await callGet('?tab=entreprises', createMock(rows), false)).text();
+		expect(off).not.toContain('Campagnes');
+		const on = await (await callGet('?tab=entreprises', createMock(rows), true)).text();
+		expect(on).toContain('Campagnes');
 	});
 
 	it('total > cap → header de troncature X-Export-Truncated (No silent caps)', async () => {

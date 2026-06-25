@@ -4,6 +4,8 @@ import {
 	applyProspectionFilters,
 	applyProspectionScopeFilters,
 	prospectionSearchPattern,
+	applyCampagneLeadFilter,
+	resolveCampagneLeadIds,
 	MAX_FILTER_VALUES,
 } from './prospection-query';
 
@@ -102,5 +104,45 @@ describe('applyProspectionFilters / applyProspectionScopeFilters', () => {
 describe('prospectionSearchPattern', () => {
 	it('échappe les wildcards SQL % _ \\ et borne par %...%', () => {
 		expect(prospectionSearchPattern('a%_\\b')).toBe('%a\\%\\_\\\\b%');
+	});
+});
+
+describe('filtre campagne (Vague 3.2, relation N-N)', () => {
+	const cid = (i: number) => `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`;
+
+	it('parse ?campagne (multi, uuid) et borne à MAX_FILTER_VALUES', () => {
+		const a = cid(1), b = cid(2);
+		expect(parseProspectionFilter(u(`?campagne=${a}&campagne=${b}`)).filterCampagnes).toEqual([a, b]);
+		const many = Array.from({ length: MAX_FILTER_VALUES + 5 }, (_, i) => `campagne=${cid(i)}`).join('&');
+		expect(parseProspectionFilter(u('?' + many)).filterCampagnes.length).toBe(MAX_FILTER_VALUES);
+	});
+
+	it('ignore les ?campagne hors format uuid (defense-in-depth)', () => {
+		expect(parseProspectionFilter(u('?campagne=abc&campagne=foobar')).filterCampagnes).toEqual([]);
+		expect(parseProspectionFilter(u(`?campagne=${cid(1)}&campagne=pas-un-uuid`)).filterCampagnes).toEqual([cid(1)]);
+	});
+
+	it('filterCampagnes vide par défaut', () => {
+		expect(parseProspectionFilter(u('')).filterCampagnes).toEqual([]);
+	});
+
+	it('applyCampagneLeadFilter(null) = no-op (aucun .in appliqué)', () => {
+		const calls: unknown[][] = [];
+		const q = { in: (...a: unknown[]) => { calls.push(a); return q; } };
+		expect(applyCampagneLeadFilter(q, null)).toBe(q);
+		expect(calls.length).toBe(0);
+	});
+
+	it('applyCampagneLeadFilter(ids) applique .in("id", ids) (jamais un .or interpolé)', () => {
+		const calls: unknown[][] = [];
+		const q = { in: (...a: unknown[]) => { calls.push(a); return q; } };
+		applyCampagneLeadFilter(q, ['l1', 'l2']);
+		expect(calls).toEqual([['id', ['l1', 'l2']]]);
+	});
+
+	it('resolveCampagneLeadIds = null quand aucun filtre campagne (aucune requête DB)', async () => {
+		const f = parseProspectionFilter(u(''));
+		const sb = { from: () => { throw new Error('ne doit pas requêter la jonction'); } };
+		expect(await resolveCampagneLeadIds(sb as never, f)).toBe(null);
 	});
 });

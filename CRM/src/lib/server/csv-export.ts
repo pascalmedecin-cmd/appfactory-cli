@@ -11,7 +11,7 @@
  * corps CSV (une ligne `# ...` en tête décalerait la ligne d'en-tête pour les
  * parseurs naïfs : ni Excel ni pandas ne traitent `#` comme un commentaire CSV).
  */
-export const EXPORT_SCHEMA_VERSION = 1;
+export const EXPORT_SCHEMA_VERSION = 2;
 
 export interface CsvColumn<T> {
 	/** Clé de l'objet source. */

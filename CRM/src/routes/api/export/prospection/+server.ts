@@ -18,10 +18,16 @@ import { toCsv, csvFilename, csvResponseHeaders } from '$lib/server/csv-export';
 import { LEADS_EXPORT_COLUMNS } from '$lib/server/export-columns';
 import { PROSPECTION_EXPORT_CAP } from '$lib/prospection-utils';
 import { parseProspectionFilter, fetchProspectionRows } from '$lib/server/prospection-query';
+import { fetchCampagnesByLead } from '$lib/server/campagnes';
+import { isCampagnesEnabled } from '$lib/server/feature-gate';
 
 const MAX_EXPORT = PROSPECTION_EXPORT_CAP;
 
 export const GET: RequestHandler = async ({ locals, url }) => {
+	// Vague 3.2 : la colonne Campagnes n'apparaît qu'en premium (defense-in-depth ; hors flag
+	// l'export reste byte-identique a l'existant, meme sur appel direct par un admin non-premium).
+	const { user } = await locals.safeGetSession();
+	const premium = isCampagnesEnabled(user);
 	const filter = parseProspectionFilter(url);
 
 	const { rows, totalMatching, truncated, error: dbError } = await fetchProspectionRows<Record<string, unknown> & { id: string }>(
@@ -34,7 +40,14 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 		throw error(500, 'Erreur lors de la récupération des données');
 	}
 
-	const csv = toCsv(rows, LEADS_EXPORT_COLUMNS);
+	// Vague 3.2 : colonne Campagnes = noms joints par lead (1 requête), uniquement en premium.
+	if (premium && rows.length > 0) {
+		const byLead = await fetchCampagnesByLead(locals.supabase, rows.map((r) => r.id));
+		for (const r of rows) r.campagnes = (byLead.get(r.id) ?? []).map((c) => c.nom).join('; ');
+	}
+
+	const columns = premium ? LEADS_EXPORT_COLUMNS : LEADS_EXPORT_COLUMNS.filter((c) => c.key !== 'campagnes');
+	const csv = toCsv(rows, columns);
 	// BOM UTF-8 (Excel). Version du schéma dans le header X-Export-Schema-Version.
 	const body = '\ufeff' + csv;
 

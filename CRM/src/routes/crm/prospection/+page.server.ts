@@ -5,19 +5,32 @@ import { calculerScore } from '$lib/scoring';
 import { dbFail, escapeIlike, newId, now } from '$lib/server/db-helpers';
 import { TAB_SOURCE_MAP } from '$lib/prospection-utils';
 import { isProspectionFeatureEnabled, isProspectionSourceEnabled } from '$lib/prospection-flags';
-import { parseProspectionFilter, applyProspectionFilters, applyProspectionScopeFilters, PROSPECTION_SEARCH_FIELDS, prospectionSearchPattern } from '$lib/server/prospection-query';
+import { parseProspectionFilter, applyProspectionFilters, applyProspectionScopeFilters, applyCampagneLeadFilter, resolveCampagneLeadIds, PROSPECTION_SEARCH_FIELDS, prospectionSearchPattern } from '$lib/server/prospection-query';
+import { listCampagnes, fetchCampagnesByLead, type CampagneWithCount, type Campagne } from '$lib/server/campagnes';
 import { getMonthlyUsage } from '$lib/server/quota';
 import { googlePlacesQuotaStatus } from '$lib/api-limits';
 
 const DEFAULT_PAGE_SIZE = 25;
 const ALLOWED_PAGE_SIZES = new Set([25, 50, 100]);
 
-export const load: PageServerLoad = async ({ locals, url }) => {
+export const load: PageServerLoad = async ({ locals, url, parent }) => {
 	const page = Math.max(0, parseInt(url.searchParams.get('page') ?? '0', 10) || 0);
 
 	// Filtre normalisé partagé avec l'export CSV et la sélection globale (source unique
 	// `$lib/server/prospection-query` — la dette des 3 filtres dupliqués est résorbée).
 	const filter = parseProspectionFilter(url);
+
+	// Vague 3.2 (flag ffCrmListesV2, hérité du layout racine) : le module Campagnes ne charge
+	// rien quand le flag est OFF -> payload byte-identique à l'existant. Le filtre relationnel
+	// `?campagne` s'applique côté requête (cf. plus bas), uniforme avec export/all-ids.
+	const { featureFlags } = await parent();
+	const premium = featureFlags?.ffCrmListesV2 === true;
+
+	// Filtre campagne (relation N-N) : résolu UNE fois en lead_ids, appliqué via `.in('id', ...)`
+	// sur la query principale ET les compteurs d'onglet (cohérent avec les autres filtres de
+	// portée). `null` = pas de filtre campagne ; `[]` = filtre actif sans aucun lead -> vue vide.
+	const campagneRestrictIds = await resolveCampagneLeadIds(locals.supabase, filter);
+	const campagneFilterEmpty = campagneRestrictIds !== null && campagneRestrictIds.length === 0;
 
 	// Onglet actif. V5/P1 : SIMAP et RegBL sont masqués (sources coupées par flag) ;
 	// `parseProspectionFilter` retombe sur le premier onglet visible. Garde de route :
@@ -45,14 +58,17 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	// La recherche reste un pattern sûr (3 .ilike() en parallèle + Set dédup, pas de mini-DSL
 	// .or() interpolé, cf. memory/feedback_postgrest_or_filter_injection.md).
 	const buildBaseQuery = () =>
-		applyProspectionFilters(locals.supabase.from('prospect_leads').select('*', { count: 'exact' }), filter);
+		applyCampagneLeadFilter(
+			applyProspectionFilters(locals.supabase.from('prospect_leads').select('*', { count: 'exact' }), filter),
+			campagneRestrictIds,
+		);
 
 	// Type ligne : on récupère le type produit par Supabase (Database.public.prospect_leads.Row).
 	// Awaited<ReturnType<typeof buildBaseQuery>>['data'] = LeadRow[] | null typé strict.
 	type LeadRow = NonNullable<Awaited<ReturnType<typeof buildBaseQuery>>['data']>[number];
 
 	const runMainQuery = async (): Promise<{ data: LeadRow[]; count: number; error: { message: string } | null }> => {
-		if (filter.sourceFilterIncompatible) {
+		if (filter.sourceFilterIncompatible || campagneFilterEmpty) {
 			return { data: [], count: 0, error: null };
 		}
 		if (filter.search) {
@@ -106,15 +122,19 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	// mêmes filtres de portée (canton/statut/transférés/température) que la vue, via le helper
 	// partagé. Les badges reflètent ainsi le résultat des filtres globaux.
 	const buildTabCountBase = (sources: readonly string[]) =>
-		applyProspectionScopeFilters(
-			locals.supabase.from('prospect_leads').select('*', { count: 'exact', head: true }).in('source', [...sources]),
-			filter,
+		applyCampagneLeadFilter(
+			applyProspectionScopeFilters(
+				locals.supabase.from('prospect_leads').select('*', { count: 'exact', head: true }).in('source', [...sources]),
+				filter,
+			),
+			campagneRestrictIds,
 		);
 
 	// V1.2 audit S160 : tab count avec recherche sécurisée (pattern S120).
 	// Pour les counts on prend max(field1, field2, field3) comme proxy du distinct count.
 	// Acceptable : badge onglet, pas une pagination critique.
 	const runTabCount = async (sources: readonly string[]): Promise<{ count: number }> => {
+		if (campagneFilterEmpty) return { count: 0 };
 		if (filter.search) {
 			const pattern = prospectionSearchPattern(filter.search);
 			const queries = PROSPECTION_SEARCH_FIELDS.map((field) =>
@@ -139,6 +159,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		tabEntreprisesRes,
 		tabTerrainRes,
 		gpUsedRaw,
+		campagnesListRes,
 	] = await Promise.all([
 		runMainQuery(),
 		locals.supabase
@@ -171,7 +192,23 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		isProspectionSourceEnabled('google_places')
 			? getMonthlyUsage(locals.supabase, 'google_places')
 			: Promise.resolve(null),
+		// Vague 3.2 : campagnes actives (filtre + combos), uniquement en premium (sinon vide).
+		premium
+			? listCampagnes(locals.supabase, { includeArchived: false })
+			: Promise.resolve({ data: [] as CampagneWithCount[], error: null }),
 	]);
+
+	// Vague 3.2 : campagnes par lead pour la page courante (multi-pastilles colonne + fiche).
+	// 1 requête sur la jonction, uniquement en premium et s'il reste des leads affichés.
+	const campagnesByLead: Record<string, Campagne[]> = {};
+	const campagnesList: CampagneWithCount[] = premium ? (campagnesListRes.data ?? []) : [];
+	if (premium) {
+		const leadIds = (leadsRes.data ?? []).map((l) => l.id);
+		if (leadIds.length > 0) {
+			const byLead = await fetchCampagnesByLead(locals.supabase, leadIds);
+			for (const [leadId, list] of byLead) campagnesByLead[leadId] = list;
+		}
+	}
 
 	return {
 		leads: leadsRes.data ?? [],
@@ -195,7 +232,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		pageSize,
 		sort: filter.sortKey,
 		sortAsc: filter.sortAsc,
-		filters: { sources: filter.filterSources, cantons: filter.filterCantons, statuts: filter.filterStatuts, temperatures: filter.filterTemperatures },
+		filters: { sources: filter.filterSources, cantons: filter.filterCantons, statuts: filter.filterStatuts, temperatures: filter.filterTemperatures, campagnes: filter.filterCampagnes },
+		// Vague 3.2 (premium uniquement, sinon vides -> rendu OFF byte-identique).
+		campagnes: campagnesList,
+		campagnesByLead,
 		sourceFilterIncompatible: filter.sourceFilterIncompatible,
 		showTransferred: filter.showTransferred,
 		search: filter.search,

@@ -22,15 +22,13 @@ function supabaseMock(result: { data?: unknown; error?: unknown } = {}) {
 	return { from: () => chain } as any;
 }
 
-function event(body: unknown, opts: { authed?: boolean; supa?: ReturnType<typeof supabaseMock> } = {}) {
-	const { authed = true, supa = supabaseMock({ data: { id: 'c1', nom: 'Régies', couleur: 'c1' } }) } = opts;
+function event(body: unknown, opts: { authed?: boolean; premium?: boolean; supa?: ReturnType<typeof supabaseMock> } = {}) {
+	const { authed = true, premium = true, supa = supabaseMock({ data: { id: 'c1', nom: 'Régies', couleur: 'c1' } }) } = opts;
+	const user = authed ? { id: 'u1', app_metadata: premium ? { ff_crm_listes_v2: true } : {} } : null;
 	return {
 		request: { json: async () => body },
 		locals: {
-			safeGetSession: async () => ({
-				session: authed ? { user: { id: 'u1' } } : null,
-				user: authed ? { id: 'u1' } : null
-			}),
+			safeGetSession: async () => ({ session: authed ? { user } : null, user }),
 			supabase: supa
 		}
 	} as unknown as Parameters<typeof POST>[0];
@@ -40,6 +38,11 @@ describe('POST /api/campagnes', () => {
 	it('401 si non authentifié (aucune écriture)', async () => {
 		const res = await POST(event({ nom: 'X' }, { authed: false }));
 		expect(res.status).toBe(401);
+	});
+
+	it('403 si flag premium ffCrmListesV2 OFF (defense-in-depth)', async () => {
+		const res = await POST(event({ nom: 'X' }, { premium: false }));
+		expect(res.status).toBe(403);
 	});
 
 	it('400 si nom manquant', async () => {

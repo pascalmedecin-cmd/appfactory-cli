@@ -1,6 +1,7 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { z } from 'zod';
 import { assignCampagnesToLead, removeCampagneFromLead, MAX_CAMPAGNE_IDS } from '$lib/server/campagnes';
+import { isCampagnesEnabled } from '$lib/server/feature-gate';
 
 /**
  * Assignation / retrait d'étiquettes campagne sur un prospect (multi-étiquetage N-N).
@@ -20,8 +21,9 @@ const RemoveSchema = z.object({
 });
 
 export const POST = async ({ request, locals }: RequestEvent) => {
-	const { session } = await locals.safeGetSession();
+	const { session, user } = await locals.safeGetSession();
 	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
+	if (!isCampagnesEnabled(user)) return json({ error: 'Fonctionnalité non activée' }, { status: 403 });
 
 	const raw = await request.json().catch(() => null);
 	const parsed = AssignSchema.safeParse(raw);
@@ -36,8 +38,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 };
 
 export const DELETE = async ({ request, locals }: RequestEvent) => {
-	const { session } = await locals.safeGetSession();
+	const { session, user } = await locals.safeGetSession();
 	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
+	if (!isCampagnesEnabled(user)) return json({ error: 'Fonctionnalité non activée' }, { status: 403 });
 
 	const raw = await request.json().catch(() => null);
 	const parsed = RemoveSchema.safeParse(raw);

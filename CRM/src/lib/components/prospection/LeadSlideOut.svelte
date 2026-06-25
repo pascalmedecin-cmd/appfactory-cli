@@ -16,6 +16,8 @@
 		cantonNoms, scoreBadgeVariant,
 		statutLabel, statutBadgeVariant, sourceLabel,
 	} from '$lib/prospection-utils';
+	import CampagneCombo from '$lib/components/prospection/CampagneCombo.svelte';
+	import type { CampagneWithCount, Campagne } from '$lib/campagnes';
 
 	type Lead = {
 		id: string;
@@ -39,15 +41,47 @@
 		date_publication: string | null;
 	};
 
-	let { open = $bindable(false), lead = $bindable<Lead | null>(null), importResult = $bindable<{ message: string; type: 'success' | 'error' } | null>(null), leads, premium = false }: {
+	let { open = $bindable(false), lead = $bindable<Lead | null>(null), importResult = $bindable<{ message: string; type: 'success' | 'error' } | null>(null), leads, premium = false, campagnes = [], campagnesByLead = {} }: {
 		open: boolean;
 		lead: Lead | null;
 		importResult: { message: string; type: 'success' | 'error' } | null;
 		leads: Lead[];
 		premium?: boolean;
+		campagnes?: CampagneWithCount[];
+		campagnesByLead?: Record<string, Campagne[]>;
 	} = $props();
 
 	let enriching = $state(false);
+
+	// Vague 3.2 : étiquettes campagne du lead courant. Resync depuis la donnée serveur à chaque
+	// changement de lead OU après invalidateAll (la source de vérité reste `campagnesByLead`).
+	let leadCampagneIds = $state<string[]>([]);
+	$effect(() => {
+		leadCampagneIds = lead ? (campagnesByLead[lead.id] ?? []).map((c) => c.id) : [];
+	});
+
+	// Persistance immédiate d'un ajout/retrait d'étiquette (multi-tag, depuis la fiche).
+	// Optimiste côté combo ; on resynchronise sur la vérité serveur (succès -> invalidateAll,
+	// échec -> revert depuis `campagnesByLead`).
+	async function persistCampagne(leadId: string, campagneId: string, op: 'add' | 'remove') {
+		try {
+			const resp = await fetch('/api/prospection/lead-campagnes', {
+				method: op === 'add' ? 'POST' : 'DELETE',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify(op === 'add' ? { leadId, campagneIds: [campagneId] } : { leadId, campagneId }),
+			});
+			if (!resp.ok) {
+				const d = await resp.json().catch(() => null);
+				toasts.error(d?.error || 'Mise à jour de la campagne impossible');
+				leadCampagneIds = (campagnesByLead[leadId] ?? []).map((c) => c.id);
+				return;
+			}
+			await invalidateAll();
+		} catch {
+			toasts.error('Erreur réseau');
+			leadCampagneIds = (campagnesByLead[leadId] ?? []).map((c) => c.id);
+		}
+	}
 
 	function getScoreDetail(l: Lead) {
 		const detail = calculerScore({
@@ -136,6 +170,20 @@
 					<Badge label={sourceLabel(lead.source)} variant="default" />
 				{/if}
 			</div>
+
+			{#if premium}
+				<!-- Vague 3.2 : étiquettes campagne (assigner/retirer à tout moment, même combo que l'import). -->
+				<section aria-labelledby="fiche-campagnes-h">
+					<h4 id="fiche-campagnes-h" class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Campagnes</h4>
+					<CampagneCombo
+						{campagnes}
+						bind:selected={leadCampagneIds}
+						onAdd={(id) => lead && persistCampagne(lead.id, id, 'add')}
+						onRemove={(id) => lead && persistCampagne(lead.id, id, 'remove')}
+						placeholder="Étiqueter cette entreprise…"
+					/>
+				</section>
+			{/if}
 
 			<!-- Score detail (remonté juste après les badges) -->
 			<div class="p-3 rounded-xl bg-gradient-to-r from-surface-alt to-surface">
