@@ -11,6 +11,8 @@ import {
 	scoreCandidate,
 	candidateToInsertRow,
 } from '$lib/server/prospection/candidate';
+import { assignCampagnesToLeads } from '$lib/server/campagnes';
+import { isCampagnesEnabled } from '$lib/server/feature-gate';
 
 /**
  * POST /api/prospection/import-selected — écriture sélective du flux aperçu → cocher → importer (P3).
@@ -24,7 +26,7 @@ import {
  * N'appelle AUCUNE API externe (le quota Google a déjà été débité à l'aperçu).
  */
 export const POST = async ({ request, locals }: RequestEvent) => {
-	const { session } = await locals.safeGetSession();
+	const { session, user } = await locals.safeGetSession();
 	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
 
 	const raw = await request.json().catch(() => null);
@@ -33,7 +35,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		const msg = parsed.error.issues.map((i) => i.message).join(', ');
 		return json({ error: `Sélection invalide : ${msg}` }, { status: 400 });
 	}
-	const { source, candidates, from_intelligence, from_term, from_item_rank } = parsed.data;
+	const { source, candidates, from_intelligence, from_term, from_item_rank, campagneIds } = parsed.data;
 
 	// Gate flag : une source désactivée (config.prospection.sources.*) ne peut rien écrire
 	// (defense-in-depth, même si l'UI ne propose plus la source).
@@ -109,6 +111,20 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			return json({ error: 'Erreur lors de l’enregistrement des leads. Réessayez.', imported: 0, skipped, rejected }, { status: 500 });
 		}
 		imported = inserts.length;
+
+		// Vague 3.2 : étiquetage campagne du lot (best-effort, après l'insert des leads). Un échec
+		// d'assignation n'annule pas l'import : les leads sont la sortie primaire. Les ids sont
+		// re-validés par la FK serveur (un id inexistant -> 23503 traduit, jamais une 500 opaque).
+		// Gate premium : hors ffCrmListesV2, on ignore silencieusement campagneIds (l'import lui-même
+		// reste autorisé ; l'assignation suit le même gate que le reste de la surface Campagnes).
+		if (campagneIds && campagneIds.length > 0 && isCampagnesEnabled(user)) {
+			const { error: campErr } = await assignCampagnesToLeads(
+				locals.supabase,
+				inserts.map((i) => i.id as string),
+				campagneIds,
+			);
+			if (campErr) console.warn(`[import-selected] assignation campagnes échouée: ${campErr.message}`);
+		}
 	}
 
 	// Liaison signal Veille → leads (optionnel, best-effort).

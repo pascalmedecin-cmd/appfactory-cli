@@ -7,6 +7,8 @@
 	import ResultsChecklist from './ResultsChecklist.svelte';
 	import { SOURCE_CARDS, SOURCE_ORDER, type EntrepriseSource } from './source-meta';
 	import type { PublicCandidate } from '$lib/server/prospection/candidate';
+	import CampagneCombo from '$lib/components/prospection/CampagneCombo.svelte';
+	import type { CampagneWithCount } from '$lib/campagnes';
 
 	type GoogleQuotaStatus = { used: number; cap: number; remaining: number; exhausted: boolean; warning: string | null };
 
@@ -17,6 +19,8 @@
 		fromTerm = null,
 		allowedSources,
 		googleQuota = null,
+		premium = false,
+		campagnes = [],
 	}: {
 		open: boolean;
 		importResult: { message: string; type: 'success' | 'error' } | null;
@@ -25,7 +29,13 @@
 		/** Sources entreprises actives (déjà filtrées par flag côté page), ordre canonique appliqué ici. */
 		allowedSources: EntrepriseSource[];
 		googleQuota?: GoogleQuotaStatus | null;
+		/** Vague 3.2 (flag ffCrmListesV2) : active l'étiquetage campagne du lot importé. */
+		premium?: boolean;
+		campagnes?: CampagneWithCount[];
 	} = $props();
+
+	// Vague 3.2 : campagnes assignées à TOUT le lot importé (lot-level, pas par candidat).
+	let campagneIds = $state<string[]>([]);
 
 	// Sources visibles dans l'ordre du golden, filtrées par celles autorisées.
 	const sources = $derived(SOURCE_ORDER.filter((k) => allowedSources.includes(k)));
@@ -69,6 +79,7 @@
 			error = null;
 			searching = false;
 			importing = false;
+			campagneIds = [];
 		}
 	});
 
@@ -129,6 +140,7 @@
 		const payload = {
 			source: active,
 			candidates: selected,
+			...(premium && campagneIds.length > 0 ? { campagneIds } : {}),
 			...(fromIntelligence ? { from_intelligence: fromIntelligence } : {}),
 			...(fromTerm ? { from_term: fromTerm } : {}),
 		};
@@ -173,6 +185,14 @@
 		{/if}
 
 		{#if candidates.length > 0}
+			{#if premium}
+				<!-- Vague 3.2 : étiquetage campagne du lot (optionnel, plusieurs possibles). -->
+				<div class="space-y-1.5">
+					<span class="block text-[13px] font-semibold text-text-body">Campagnes <span class="font-normal text-text-muted">- optionnel, plusieurs possibles</span></span>
+					<CampagneCombo {campagnes} bind:selected={campagneIds} placeholder="Étiqueter ce lot…" />
+					<p class="text-[12px] text-text-muted leading-snug">Les entreprises importées de ce lot recevront ces campagnes. Réimporter plus tard sous la même campagne regroupe sans créer de doublon.</p>
+				</div>
+			{/if}
 			<ResultsChecklist {candidates} source={active} pending={importing} onimport={runImport} />
 		{:else if hasSearched && !error}
 			<!-- État vide après recherche -->

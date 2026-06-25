@@ -41,7 +41,7 @@ async function runLoad(searchSuffix: string) {
 	const sb = createSpyingSupabase();
 	const mod = await import('./+page.server');
 	const url = new URL(`http://localhost/crm/prospection${searchSuffix}`);
-	return mod.load({ locals: { supabase: sb }, url } as unknown as Parameters<typeof mod.load>[0]);
+	return mod.load({ locals: { supabase: sb }, url, parent: async () => ({}) } as unknown as Parameters<typeof mod.load>[0]);
 }
 
 describe('P1 - garde de route onglet Prospection (load)', () => {
