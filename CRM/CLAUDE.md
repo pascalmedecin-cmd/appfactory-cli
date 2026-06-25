@@ -133,24 +133,28 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Bloc 0 reconciliation `main`** si **vendredi 26/06 (après le cron W26)** (dated must-do). **TOUTE la refonte CRM Vagues 1+2+3 (3.1+3.2+3.3) DÉPLOYÉE + ACTIVÉE prod** (Option A, flag `ffCrmListesV2` ON pour `pascal@`+`antoine@`) : Signaux/Pipeline/Entreprises/Prospection premium + Campagnes + **Dashboard temporel (3.3, déployé 25/06 `dpl_BHY6...`)** LIVE. Prod = branche `deploy-campagnes-editeur` (deploy CLI), `main` non touché. Reste **uniquement** la Vague 4 Emailing (bloquée, prérequis externes). → [[project_module_campagnes_vague32_2026-06-22]] + [[project_refonte_crm_cadrage_2026-06-18]] + [[audit_secu_2026-06-25_vague33_dashboard_temporel]].
+**Prochaine attaque** : exécutables maintenant = **Bloc 2 hygiène deps/CI** + **Bloc 3 veille Lot 3** (parties hors-W26) ; **Bloc 1 Vague 4 Emailing** dès que Pascal fournit les 3 inputs (DNS/nLPD/email) ; **Bloc 4 Daily Email** = session future (noté, pas le 25/06). **Seul bloqué = Bloc 0 reconciliation `main`** (vendredi 26/06 post-cron W26 : le merge change le sourcing avant le run = lié à la veille). Refonte CRM Vagues 1+2+3 (3.1+3.2+3.3) DÉPLOYÉE + ACTIVÉE prod (flag `ffCrmListesV2` ON fondateurs) ; reste Vague 4. Prod = `deploy-campagnes-editeur`, `main` non touché. → [[project_refonte_crm_cadrage_2026-06-18]] + [[audit_secu_2026-06-25_vague33_dashboard_temporel]].
 
 > Cadrage commun refonte UX/UI CRM (validé 2026-06-18) → [[project_refonte_crm_cadrage_2026-06-18]] + golden `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html` (validé Chrome).
 
 ### 0. Reconciliation `main` post-W26 (éditeur veille + Campagnes → trunk) [SUPERVISÉ • high • ~30 min]
 
-- **Pourquoi** : prod web tourne sur la branche d'intégration **`deploy-campagnes-editeur`** (= éditeur veille `69cd968` + Campagnes `c905952`, déployée 25/06, pushée origin `aae09f6`), **hors `main`** pour protéger le cron veille W26. Tant que non mergé, le cron (GHA/`main`) lit l'ancien sourcing (`9bef41b`, ~120 sources) ; le merge fait passer le cron à 238 (table `veille_sources` déjà en prod + prompt depuis le bundle). **Payload** → [[project_editeur_veille_sources_editables_2026-06-24]] + [[project_module_campagnes_vague32_2026-06-22]].
-- **Prérequis** : **post-W26** (vendredi 26/06, après le run cron validé - le merge change le sourcing 120→238, ne pas le faire avant).
-- [ ] **[BLOQUÉ - après W26 (vendredi 26/06)]** Merger **`deploy-campagnes-editeur` → `main`** (apporte éditeur veille + Campagnes d'un coup), pousser, **supprimer la branche `deploy-campagnes-editeur`** (local + origin), vérifier 1er run veille post-merge (densité, sources). Findings audit éditeur veille loggés (f7/f10/f14/f15/f16/f21 + 2 cadratins commentaires `app.css`) = dette mineure, à traiter si re-priorisé.
+- **Pourquoi** : prod web tourne sur `deploy-campagnes-editeur` (éditeur veille + Campagnes, déployée 25/06), **hors `main`** pour protéger le cron veille W26. Le merge fait passer le cron de ~120 à 238 sources → à faire APRÈS le run W26. → [[project_editeur_veille_sources_editables_2026-06-24]] + [[project_module_campagnes_vague32_2026-06-22]].
+- [ ] **[BLOQUÉ - après W26 (vendredi 26/06)]** Merger **`deploy-campagnes-editeur` → `main`**, pousser, **supprimer la branche** (local + origin), vérifier 1er run veille post-merge. Findings audit éditeur veille (f7/f10/f14/f15/f16/f21 + 2 cadratins `app.css`) = dette mineure tracée.
 
 ### 3. Veille - Lot 3 structurel (reste) [SUPERVISÉ • high • session dédiée]
 
-- [ ] **[BLOQUÉ - après mesure W26+]** **Lot 3 - reste (optionnel)** : dashboard qualité + boucle feedback ; PDF de marque (`filmpro-pdf`) ; pont veille→action ; décomposer mono-appel LLM si plafond ; nettoyage enum RegBL. → [[project_veille_sourcing_w26_2026-06-23]]. (Veille W26/W25 livrés 23/06, voir mémoires veille.)
+- [ ] **[EXÉCUTABLE]** **Lot 3 - reste (optionnel)** : dashboard qualité + boucle feedback ; PDF de marque (`filmpro-pdf`) ; pont veille→action ; décomposer mono-appel LLM si plafond ; nettoyage enum RegBL. **Faisable maintenant** (PDF / pont / décompo / cleanup enum) ; seul le **dashboard qualité + boucle feedback** gagne à attendre la 1re mesure W26 (vendredi). → [[project_veille_sourcing_w26_2026-06-23]].
 
 ### 1. Vague 4 Emailing refonte CRM [SUPERVISÉ • xhigh • cascade]
 
 - **Pourquoi** : toute la refonte Vagues 1+2+3 (3.1 Signaux + 3.2 Campagnes + 3.3 Dashboard) livrée + déployée + activée (25/06, flag `ffCrmListesV2` ON fondateurs). Reste l'emailing. → [[project-refonte-crm-cadrage-2026-06-18]] § Garde-fous emailing.
-- [ ] **[BLOQUÉ - prérequis externes Pascal]** **Vague 4 Emailing** (individuel → nLPD → groupé). Non codable tant que : (a) `send.filmpro.ch` vérifié Resend (DNS), (b) base légale nLPD + mention d'information validées, (c) 1er email réel décrit (réunion 3 fondateurs).
+- [ ] **[EXÉCUTABLE]** **Vague 4 Emailing** (individuel → nLPD → groupé). Non codable tant que : (a) `send.filmpro.ch` vérifié Resend (DNS), (b) base légale nLPD + mention d'information validées, (c) 1er email réel décrit (réunion 3 fondateurs). **Pas lié à la veille → débloquée** : ces 3 prérequis sont des inputs côté Pascal (pas une dépendance système) ; dès qu'il les fournit, cadrage + code démarrent. → cadrage § Garde-fous emailing.
+
+### 4. Module Daily Email - prêt mais NON activé [SUPERVISÉ • high • session dédiée]
+
+- **Pourquoi** : consigne Pascal 25/06 : daily email **100% prêt + QA + testé mais NON activé** (feu vert Pascal pour activer, jamais auto). **Garde-fou DUR : ne jamais casser le weekly email de veille validé**. Cadrage (contenu/destinataire/déclencheur/LLM) avant de coder. → [[project_daily_email_module_2026-06-25]].
+- [ ] **[EXÉCUTABLE]** **Construire le module daily email** : code + QA + tests, derrière un **gate d'activation OFF par défaut** (zéro envoi réel sans feu vert Pascal). Done = prêt + testé + désactivé. **Ne PAS livrer dans la session du 25/06** (noté pour session future).
 
 ### 2. Suite hygiène deps/CI [MIXTE • medium • ~1h]
 
@@ -165,11 +169,9 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ### Livré cette session
 
-- [x] ~~**Vague 3.3 Dashboard temporel - LIVRÉE + DÉPLOYÉE prod**~~ - 2026-06-25 (`ebacea6`, deploy `dpl_BHY6...` aliasé `filmpro-portail.vercel.app`, flag gaté ON 2 fondateurs, OFF byte-identique) : accueil `/crm` façon Capsule (À faire En retard/Aujourd'hui/Cette semaine + fil « Ce qui s'est passé » + chips KPI + encart Pipeline). Helpers purs testés + 3 composants `dashboard/{UrgencyGroup,ActivityFeed,DashboardTemporel}` + tone `danger` additif `KpiStrip` + `load` additif gaté premium (relances dues, ADR-0005). **Bug racine `date_relance_prevue` timestamptz** (comparaison lexicographique cassait l'échéance du jour) capté par la preuve visuelle, corrigé. Revue 5 lentilles 0 C/H/M ; 2266 verts ; smoke 303 OK. → [[audit_secu_2026-06-25_vague33_dashboard_temporel]].
+- [x] ~~**Vague 3.3 Dashboard temporel - LIVRÉE + DÉPLOYÉE prod**~~ - 2026-06-25 (`ebacea6`, deploy `dpl_BHY6...`, flag gaté ON 2 fondateurs, OFF byte-identique) : accueil `/crm` façon Capsule (À faire En retard/Aujourd'hui/Cette semaine + fil « Ce qui s'est passé » + chips KPI + Pipeline). 3 composants `dashboard/{UrgencyGroup,ActivityFeed,DashboardTemporel}` + tone `danger` additif `KpiStrip`. **Bug racine `date_relance_prevue` timestamptz** (comparaison cassait l'échéance du jour) capté par la preuve visuelle, corrigé. Revue 5 lentilles 0 C/H/M ; 2266 verts. → [[audit_secu_2026-06-25_vague33_dashboard_temporel]].
 - [x] ~~**Déploiement Campagnes V3.2 par-dessus l'éditeur veille (Option A)**~~ - 2026-06-25 : branche d'intégration `deploy-campagnes-editeur` (éditeur veille + Campagnes), `vercel deploy --prod`, flag OFF byte-identique, trunk non touché (cron W26 vendredi protégé). → [[project_module_campagnes_vague32_2026-06-22]].
-- [x] ~~**Éditeur veille étape 6/6 : migration prod + audit rendu + déploiement web**~~ - 2026-06-24 (`69cd968` + flaky `c5be860`) : migration `veille_sources` prod (238, via lib `pg`) ; audit rendu réel (24 findings → HIGH + 2 MED + 6 LOW corrigés, reste loggé) ; déployé web prod, validé Pascal ; non mergé `main`. → [[project_editeur_veille_sources_editables_2026-06-24]] + [[audit_secu_2026-06-24_editeur_veille_etape6]].
-- [x] ~~**Module Campagnes Vague 3.2 - UI complète 6/6**~~ - 2026-06-24 (`c905952`) : liste/fiche/import/écran `/crm/campagnes`/export + gate premium serveur ; revue 5 lentilles (11 findings corrigés). → [[project_module_campagnes_vague32_2026-06-22]] + [[audit_secu_2026-06-24_vague32_campagnes_ui]].
-→ Étapes éditeur veille 1-5 (`6f8de17`/`13db5b5`/`5af0cbd`/`f547e7c`/`5c213d6`/`c39d832`/`3109f4b`) + W25 (`291ae02`)/W26 (`9bef41b`)/trust-by-source round-2 (`47841d9`)/Lots 1+2 (`de05779`)/Vague 3.1 Signaux (`5e0c369`)/export CSV (`6626818`)/Vague 2 (`8c5d84d`)/Vague 1 (`676a9d4`) → mémoires veille 06-22/23/24 + `archive/`.
+→ Session 24/06 : Éditeur veille étape 6/6 (`69cd968`, migration prod 238 sources + audit rendu) + Campagnes V3.2 UI 6/6 (`c905952`, gate premium serveur, revue 5 lentilles). Antérieurs : étapes éditeur veille 1-5 + W25/W26 + Lots 1+2 + Vagues 1/2/3.1 + export CSV → mémoires veille 06-22/23/24 + `archive/`.
 
 ### Watch list active après pivot
 
