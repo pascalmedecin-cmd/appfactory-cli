@@ -16,6 +16,7 @@
 	import RelancesList from '$lib/components/dashboard/RelancesList.svelte';
 	import AlertesStrip from '$lib/components/dashboard/AlertesStrip.svelte';
 	import QuickActionsFooter from '$lib/components/dashboard/QuickActionsFooter.svelte';
+	import DashboardTemporel from '$lib/components/dashboard/DashboardTemporel.svelte';
 	import Icon from '$lib/components/Icon.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import type { PageData } from './$types';
@@ -23,6 +24,11 @@
 	$pageSubtitle = "Vue d'ensemble";
 
 	let { data }: { data: PageData } = $props();
+
+	// Vague 3.3 : dashboard temporel « façon Capsule » derrière le flag ffCrmListesV2.
+	// OFF = rendu v9 actuel byte-identique (branche {:else}).
+	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+
 	let leadExpressOpen = $state(false);
 
 	// Slide-out détail lead : ouvert depuis TriageQueue, sans switch de page.
@@ -50,6 +56,17 @@
 	});
 </script>
 
+{#if premium}
+	<DashboardTemporel
+		firstName={data.firstName}
+		todayIso={data.todayIso}
+		taches={data.taches}
+		activites={data.activitesRecentes}
+		opportunitesCount={data.stats.opportunites}
+		signauxCount={data.stats.signaux}
+		onLeadExpress={() => (leadExpressOpen = true)}
+	/>
+{:else}
 <div class="dash">
 
 	<!-- Section 1 : greeting hero -->
@@ -113,6 +130,7 @@
 	</div>
 
 </div>
+{/if}
 
 <LeadExpress bind:open={leadExpressOpen} redirectAfterCreate={true} />
 

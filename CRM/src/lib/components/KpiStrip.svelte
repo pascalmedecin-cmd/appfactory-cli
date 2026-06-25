@@ -1,5 +1,5 @@
 <script module lang="ts">
-	export type KpiTone = 'primary' | 'success' | 'convert' | 'warn';
+	export type KpiTone = 'primary' | 'success' | 'convert' | 'warn' | 'danger';
 	export type KpiItem = {
 		icon: string;
 		value: number | string;
@@ -80,6 +80,10 @@
 	.kpi-ic.warn {
 		background: radial-gradient(circle at 30% 30%, rgba(247, 144, 9, 0.14), rgba(247, 144, 9, 0.02));
 		color: var(--color-warning-deep);
+	}
+	.kpi-ic.danger {
+		background: radial-gradient(circle at 30% 30%, rgba(240, 68, 56, 0.14), rgba(240, 68, 56, 0.02));
+		color: var(--color-danger-deep);
 	}
 	.kpi-body {
 		display: flex;
