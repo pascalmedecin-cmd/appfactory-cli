@@ -133,7 +133,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** (MAJ 26/06 : **cron W26 a tourné, success** - voir Bloc 0 ; `main` dégelé) : **Bloc 0 reconciliation `main`** = prochaine vraie étape (merge `deploy-campagnes-editeur` → `main`, ~34 commits, embarque tout le non-veille du jour, sourcing 120→238 pour W27 ; reco : valider le brief W26 en boîte d'abord ; **NE PAS `git add -A`** : exclure l'untracked `CRM/.product-architect/daily-email/` avant merge). Puis : Bloc 2 Dependabot (post-merge), Bloc 3 veille Lot 3 (sur branche), Bloc 1 Vague 4 (attend 3 inputs Pascal). Refonte CRM 1+2+3 déployée+activée prod (flag `ffCrmListesV2` ON fondateurs), prod = `deploy-campagnes-editeur`. → [[project_refonte_crm_cadrage_2026-06-18]].
+**Prochaine attaque** : **Bloc 0 reconciliation `main`** - le cron W26 a tourné 26/06 (success), `main` est dégelé, c'est la prochaine vraie étape (merge `deploy-campagnes-editeur` → `main`, ~34 commits, embarque tout le non-veille du jour, sourcing 120→238 pour W27 ; reco : valider le brief W26 en boîte d'abord ; **NE PAS `git add -A`** : exclure l'untracked `CRM/.product-architect/daily-email/` avant merge). Puis : Bloc 2 Dependabot (post-merge), Bloc 3 veille Lot 3 (sur branche), Bloc 1 Vague 4 (attend 3 inputs Pascal). Refonte CRM 1+2+3 déployée+activée prod (flag `ffCrmListesV2` ON fondateurs), prod = `deploy-campagnes-editeur`. → [[project_refonte_crm_cadrage_2026-06-18]].
 
 > Cadrage commun refonte UX/UI CRM (validé 2026-06-18) → [[project_refonte_crm_cadrage_2026-06-18]] + golden `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html` (validé Chrome).
 
