@@ -133,7 +133,13 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : exécutables maintenant = **Bloc 2 hygiène deps/CI** + **Bloc 3 veille Lot 3** (parties hors-W26) ; **Bloc 1 Vague 4 Emailing** dès que Pascal fournit les 3 inputs (DNS/nLPD/email). **Bloc 4 Daily Email = LIVRÉ 26/06** (commit `d1db821`, gate OFF, reste 2 gestes Pascal : deploy au merge + activer env var). **Seul bloqué = Bloc 0 reconciliation `main`** (post-cron W26 : le merge change le sourcing avant le run = lié à la veille ; au 26/06 09:13 CEST le cron W26 n'avait PAS encore tourné - retard scheduler GitHub, rattrapage 17:27 UTC). Refonte CRM 1+2+3 DÉPLOYÉE + ACTIVÉE prod (flag `ffCrmListesV2` ON fondateurs) ; reste Vague 4. Prod = `deploy-campagnes-editeur`, `main` non touché. → [[project_refonte_crm_cadrage_2026-06-18]].
+**Prochaine attaque** (audit 360 réconcilié 26/06) : on attend le **cron W26** qui gèle `main` (cron sur `main`, pas encore tourné au 26/06 08:28 UTC - retard scheduler, rattrapage attendu 17:27 UTC). Tri par actionnabilité réelle :
+- **Bloqué (attend le cron W26)** : **Bloc 0 reconciliation `main`** (merge `deploy-campagnes-editeur` → `main`, 23 commits d'avance ; le merge fait passer le sourcing ~120 → 238) → entraîne **Bloc 4 Daily Email deploy** (dépend du merge) + le push de `3ae6209` (warnings).
+- **Gelé jusqu'au cron W26** (tout cible `main`) : **Bloc 2 - 3 PR Dependabot** (statut CI live : #20 ROUGE, #19/#21 vertes).
+- **Exécutable maintenant sur la branche** (sûr pour W26, le cron tourne sur `main`) : **Bloc 3 veille Lot 3** (PDF de marque, pont veille→action, nettoyage enum RegBL, décompo mono-appel LLM) ; **Bloc 2** bumps lourds différés (supabase/typescript 6, migration socle SvelteKit).
+- **Attend un input Pascal** (pas bloqué système, non actionnable par moi) : **Bloc 1 Vague 4 Emailing** (3 inputs : DNS `send.filmpro.ch`, base légale nLPD, 1er email réel).
+
+Refonte CRM 1+2+3 DÉPLOYÉE + ACTIVÉE prod (flag `ffCrmListesV2` ON fondateurs). Prod = `deploy-campagnes-editeur`, `main` non touché. → [[project_refonte_crm_cadrage_2026-06-18]].
 
 > Cadrage commun refonte UX/UI CRM (validé 2026-06-18) → [[project_refonte_crm_cadrage_2026-06-18]] + golden `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html` (validé Chrome).
 
@@ -159,16 +165,18 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 ### 2. Suite hygiène deps/CI [MIXTE • medium • ~1h]
 
 - **Livré 22/06** (PR #16 `b84b6f5`) : garde-fou CI + Dependabot durci + 6 bumps sûrs. **Ne JAMAIS `rm package-lock.json` pour bumper ce repo** (cause Vercel-fail = regen lockfile flote les transitifs). → [[project_fix_deps_ci_vercel_2026-06-22]].
-- [ ] **[EXÉCUTABLE]** **Trier les 3 PR Dependabot régénérées** (sortie ATTENDUE de la nouvelle config, ~2 min post-merge) : **#20** (groupe patch dont vite/svelte patches socle autorisés → merger si CI verte = preuve du gate) ; **#19** (`@types/node` 26 majeure) + **#21** (`js-yaml` 5 majeure) à arbitrer.
+- [ ] **[EXÉCUTABLE - gelé jusqu'au cron W26]** **Trier les 3 PR Dependabot** (toutes ciblent `main` → à geler tant que le cron W26 n'a pas tourné). **Statut CI live (audité 26/06)** : **#20** (groupe minor-patch, 8 updates) = **CI ROUGE** (Vercel fail + `verify` fail 8s, probable lockfile/transitifs cf. [[project_fix_deps_ci_vercel_2026-06-22]]) → NE PAS merger en l'état, diagnostiquer ; **#19** (`@types/node` 26 majeure) = **CI verte** ; **#21** (`js-yaml` 5 majeure) = **CI verte**. Les 2 majeures vertes restent à arbitrer (majeure = lire le changelog avant merge).
 - [ ] **[EXÉCUTABLE]** **Migration socle SvelteKit (vite 8 / plugin-svelte 7 / kit 2.66)** : différée (rolldown + layerchart incompatibles, issues #928/#1313). Rouvrir quand clean : lever les `ignore` socle `dependabot.yml`, monter le trio groupé, CI verte.
 - [ ] **[EXÉCUTABLE]** **Bump @supabase/* 2.108 + typescript 6** : différés. supabase = 6 erreurs type `RejectExcessProperties` (insert/update : photos, enrichir-batch, search-ch, triage, visits, entreprises) + smoke auth OTP réel. typescript 6 = trier les erreurs.
-- [ ] **[EXÉCUTABLE]** **Nettoyer les 29 warnings svelte-check** (préexistants, non bloquants ; ~30 au dernier run) : a11y `DataTable`/`PipelineCard`/`MultiSelectDropdown`/`TemperatureSelect`/`AlerteModal` (tabindex, role, label), `attribute_quoted` (`ModalForm`/`EnrichBatchModal`), `line-clamp` compat (`AlertesStrip`/`PipelineCard`), `state_referenced_locally` (`prospection`/`veille`). Hygiène basse priorité.
+- [x] ~~**Nettoyer les 30 warnings svelte-check → 0**~~ - LIVRÉ 26/06 (voir « Livré cette session »).
 
 ### Réserve (hors backlog actif)
 - Chantier 3 portail (non cadré) ; durcissement RLS si 4e user ([[feedback_rls_multitenant_durcissement_si_4_users]]).
 
 ### Livré cette session
 
+- [x] ~~**Nettoyage 30 warnings svelte-check → 0**~~ - 2026-06-26 (`3ae6209`, branche prod `deploy-campagnes-editeur`, **pas encore poussé**) : vrai fix a11y (label `for`/`id` `AlerteModal`) + `svelte-ignore` justifié sur widgets composites déjà accessibles (`DataTable` resizer, `PipelineCard`, `MultiSelectDropdown`, `TemperatureSelect`) + `attribute_quoted` (`class={expr}` sur `<Icon>`) + `line-clamp` standard + `state_referenced_locally` (seeds de valeur initiale voulus, convention `svelte-ignore` déjà en place). svelte-check **0 err / 0 warn** ; **2310 tests verts**. Ride avec le merge Bloc 0. Cockpit réconcilié (entry `0ee5f6751bb3` livrée).
+- [x] ~~**Audit 360 + nettoyage dette/statut projet**~~ - 2026-06-26 : réconciliation cockpit (entry svelte-check livrée), correction statut CI live des 3 PR Dependabot (#20 ROUGE, #19/#21 vertes), classification `bloqué` re-vérifiée (Bloc 0 = après cron W26 ✓, Bloc 4 = dépend de Bloc 0 ✓). Branche = 23 commits d'avance sur `main`.
 - [x] ~~**Module Daily Email relances - LIVRÉ + commité (prêt, gate OFF)**~~ - 2026-06-26 (`d1db821`) : email quotidien relances dues → 2 fondateurs, 100% déterministe (zéro LLM), design Gouvernance + charte FilmPro (bandeau navy carré, validé Chrome), weekly intact. 44 tests / 2310 verts / svelte-check 0 err / revue 4 lentilles 0 C/H + 2 MEDIUM corrigés. Reste 2 gestes Pascal (deploy au merge + activer env var). → [[project_daily_email_module_2026-06-25]] + [[audit_secu_2026-06-26_daily_email_module]].
 - [x] ~~**Vague 3.3 Dashboard temporel - LIVRÉE + DÉPLOYÉE prod**~~ - 2026-06-25 (`ebacea6`, flag ON 2 fondateurs, OFF byte-identique) : accueil `/crm` façon Capsule. Bug racine `date_relance_prevue` timestamptz capté par preuve visuelle, corrigé. Revue 5 lentilles 0 C/H/M ; 2266 verts. → [[audit_secu_2026-06-25_vague33_dashboard_temporel]].
 - [x] ~~**Déploiement Campagnes V3.2 par-dessus éditeur veille (Option A)**~~ - 2026-06-25 : branche `deploy-campagnes-editeur`, flag OFF byte-identique, trunk non touché (cron W26 protégé). → [[project_module_campagnes_vague32_2026-06-22]].
