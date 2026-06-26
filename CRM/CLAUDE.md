@@ -133,9 +133,9 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** (audit 360 réconcilié 26/06) : on attend le **cron W26** qui gèle `main` (cron sur `main`, pas encore tourné au 26/06 08:28 UTC - retard scheduler, rattrapage attendu 17:27 UTC). Tri par actionnabilité réelle :
-- **Bloqué (attend le cron W26)** : **Bloc 0 reconciliation `main`** (merge `deploy-campagnes-editeur` → `main`, 23 commits d'avance ; le merge fait passer le sourcing ~120 → 238) → entraîne **Bloc 4 Daily Email deploy** (dépend du merge) + le push de `3ae6209` (warnings).
-- **Gelé jusqu'au cron W26** (tout cible `main`) : **Bloc 2 - 3 PR Dependabot** (statut CI live : #20 ROUGE, #19/#21 vertes).
+**Prochaine attaque** (MAJ 26/06 ~10:00 UTC : **cron W26 a tourné, success** - voir Bloc 0) : `main` n'est plus gelé. Tri par actionnabilité réelle :
+- **DÉBLOQUÉ - prochaine vraie étape** : **Bloc 0 reconciliation `main`** (merge `deploy-campagnes-editeur` → `main`, ~28 commits d'avance ; embarque tout le non-veille livré aujourd'hui ; sourcing 120→238 pour W27+) → entraîne **Bloc 4 Daily Email deploy** + le push de tous les commits du jour. Reco : valider le brief W26 en boîte d'abord.
+- **Débloqué (post-W26)** : **Bloc 2 - 3 PR Dependabot** (statut CI live : #20 ROUGE, #19 verte, #21 caduque) - traiter après ou pendant la reconciliation.
 - **Exécutable maintenant sur la branche** (sûr pour W26, le cron tourne sur `main`) : **Bloc 3 veille Lot 3** (PDF de marque, pont veille→action, nettoyage enum RegBL, décompo mono-appel LLM) ; **Bloc 2** bumps lourds différés (supabase/typescript 6, migration socle SvelteKit).
 - **Attend un input Pascal** (pas bloqué système, non actionnable par moi) : **Bloc 1 Vague 4 Emailing** (3 inputs : DNS `send.filmpro.ch`, base légale nLPD, 1er email réel).
 
@@ -146,7 +146,8 @@ Refonte CRM 1+2+3 DÉPLOYÉE + ACTIVÉE prod (flag `ffCrmListesV2` ON fondateurs
 ### 0. Reconciliation `main` post-W26 (éditeur veille + Campagnes → trunk) [SUPERVISÉ • high • ~30 min]
 
 - **Pourquoi** : prod web tourne sur `deploy-campagnes-editeur` (éditeur veille + Campagnes, déployée 25/06), **hors `main`** pour protéger le cron veille W26. Le merge fait passer le cron de ~120 à 238 sources → à faire APRÈS le run W26. → [[project_editeur_veille_sources_editables_2026-06-24]] + [[project_module_campagnes_vague32_2026-06-22]].
-- [ ] **[BLOQUÉ - après W26 (vendredi 26/06)]** Merger **`deploy-campagnes-editeur` → `main`**, pousser, **supprimer la branche** (local + origin), vérifier 1er run veille post-merge. Findings audit éditeur veille (f7/f10/f14/f15/f16/f21 + 2 cadratins `app.css`) = dette mineure tracée.
+- **DÉBLOQUÉ 26/06 ~10:00 UTC** : le cron W26 a tourné (run `28230794599`, schedule, **success**, reportId `6db7c0e1-43d3-40c3-afed-8a169d32844b`) : **7 items publiés** (W25=2 ; cible 8-12, sous le plancher 8 = low_volume mais nette amélioration), mix local 71% (romande 2 / suisse 3 / monde 2), `keptByTrust=1` (trust-by-source OK), 0 apiError. Emails brief (pascal+antoine) + recap (pascal) **enabled** - à confirmer en boîte. Le sourcing 120→238 ne change que W27+, donc reconciliation sûre maintenant.
+- [ ] **[EXÉCUTABLE - SUPERVISÉ, W26 fait]** Merger **`deploy-campagnes-editeur` → `main`** (embarque aussi tout le non-veille livré aujourd'hui : warnings, code mort, bumps supabase+TS6), pousser, **supprimer la branche** (local + origin), vérifier 1er run veille post-merge. Reco : valider d'abord le brief W26 en boîte. Findings audit éditeur veille (f7/f10/f14/f15/f16/f21 + 2 cadratins `app.css`) = dette mineure tracée.
 
 ### 3. Veille - Lot 3 structurel (reste) [SUPERVISÉ • high • session dédiée]
 
