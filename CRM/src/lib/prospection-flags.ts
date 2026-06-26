@@ -29,6 +29,21 @@ export function filterEnabledSources(sources: readonly string[]): string[] {
 }
 
 /**
+ * Un chip Veille (terme « À lancer dans Prospection ») est-il auto-exécutable ?
+ *
+ * Invariant produit : `chip.kind` (simap|zefix|regbl) === clé de source dans
+ * `config.prospection.sources`. Le chip est exécutable ssi cette source est active.
+ * Les chips dont la source est dormante (RegBL/SIMAP coupées en V5) ne sont PAS
+ * exécutables : l'endpoint `/api/prospection/{simap,regbl}` renvoie 403 « source
+ * désactivée » (cf. ces handlers). L'UI propose alors la COPIE du terme (toujours
+ * utile : recherche manuelle) au lieu d'un bouton « Lancer la recherche » garanti
+ * d'échouer. Réversible : réactiver la source dans `config.ts` rallume l'auto-exécution.
+ */
+export function isChipExecutable(kind: string): boolean {
+	return isProspectionSourceEnabled(kind);
+}
+
+/**
  * Un onglet Prospection est-il visible ? Vrai dès qu'au moins une de ses sources est active.
  * La visibilité dérive donc de l'état des flags de source (réversible : réactiver une source
  * dans `config.ts` réaffiche l'onglet sans autre modification). SIMAP/RegBL ayant toutes leurs

@@ -10,8 +10,12 @@
 		maturityLabel,
 		geoScopeShortLabel,
 		actionabilityStyle,
-		segmentStyle
+		segmentStyle,
+		chipKindLabel,
+		chipKindIcon
 	} from '$lib/utils/veilleFormat';
+	import { isChipExecutable } from '$lib/prospection-flags';
+	import { toasts } from '$lib/stores/toast';
 
 	let { data }: { data: PageData } = $props();
 
@@ -59,6 +63,14 @@
 		}
 	}
 
+	async function copyTerm(term: string) {
+		try {
+			await navigator.clipboard.writeText(term);
+			toasts.success('Terme copié');
+		} catch {
+			toasts.error('Copie impossible');
+		}
+	}
 </script>
 
 <article class="max-w-5xl mx-auto px-4 md:px-12 py-8 md:py-12">
@@ -166,20 +178,21 @@
 			<div class="flex flex-wrap gap-2">
 				{#each data.item.search_terms as chip, idx (chip.label ?? idx)}
 					{@const isLoading = chipLoading === idx}
+					{@const executable = isChipExecutable(chip.kind)}
 					<button
 						type="button"
-						disabled={chipLoading !== null}
-						onclick={() => runChipSearch(chip, idx)}
-						title="Auto-exécuter {chip.kind === 'zefix' ? 'Zefix' : 'SIMAP'} · {chip.canton} · {chip.query}"
-						class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm bg-primary-light text-primary border border-primary hover:bg-primary/15 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+						disabled={chipLoading !== null && executable}
+						onclick={() => (executable ? runChipSearch(chip, idx) : copyTerm(chip.query))}
+						title={executable ? `Auto-exécuter ${chipKindLabel(chip.kind)} · ${chip.canton} · ${chip.query}` : `Source désactivée - copier « ${chip.query} »`}
+						class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm border transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed {executable ? 'bg-primary-light text-primary border-primary hover:bg-primary/15' : 'bg-surface-alt text-text-body border-border hover:border-primary'}"
 					>
-						<Icon name={isLoading ? 'progress_activity' : chip.kind === 'zefix' ? 'business' : 'gavel'} size={16} />
+						<Icon name={isLoading ? 'progress_activity' : executable ? chipKindIcon(chip.kind) : 'content_copy'} size={16} />
 						{chip.label}
 					</button>
 				{/each}
 			</div>
 			<p class="text-xs text-text-muted mt-2">
-				Cliquez pour lancer la recherche et importer les résultats dans Prospection.
+				Cliquez pour lancer la recherche (sources actives) ou copier le terme (sources désactivées).
 			</p>
 		</section>
 	{/if}

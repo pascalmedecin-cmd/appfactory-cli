@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { readReportItems } from './report-items';
+import { readReportItems, rowToIntelligenceReport } from './report-items';
 
 const validItem = {
 	rank: 1,
@@ -53,6 +53,33 @@ describe('readReportItems (M-19)', () => {
 		const out = readReportItems([validItem, { rank: 2 }], 'rep-mix');
 		expect(out).toHaveLength(2);
 		expect(warn).toHaveBeenCalled();
+		warn.mockRestore();
+	});
+});
+
+describe('rowToIntelligenceReport (adaptateur DB plate -> forme rendu)', () => {
+	it('mappe une ligne DB vers meta nichée + items validés + impacts', () => {
+		const row = {
+			week_label: '2026-W26',
+			generated_at: '2026-06-26T06:00:00Z',
+			compliance_tag: 'OK FilmPro',
+			executive_summary: 'x'.repeat(90),
+			items: [validItem],
+			impacts_filmpro: [{ axis: 'reglementation', note: 'note impact suffisamment longue' }],
+			id: 'r1'
+		};
+		const r = rowToIntelligenceReport(row);
+		expect(r.meta.week_label).toBe('2026-W26');
+		expect(r.meta.executive_summary.length).toBe(90);
+		expect(r.items).toHaveLength(1);
+		expect(r.items[0].title).toBe(validItem.title);
+		expect(r.impacts_filmpro).toHaveLength(1);
+	});
+
+	it('repli gracieux (pas de throw) si meta legacy non conforme', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+		const row = { week_label: 'bad', generated_at: 'nope', compliance_tag: 'X', executive_summary: '', items: null };
+		expect(() => rowToIntelligenceReport(row as never)).not.toThrow();
 		warn.mockRestore();
 	});
 });

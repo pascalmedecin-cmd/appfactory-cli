@@ -40,6 +40,14 @@ const MAX_TOKENS = 64000;
 // dense) : 128K = plafond output d'Opus 4.8 (API synchrone). Un bloc tool_use
 // tronqué n'est PAS récupérable partiellement (doc /handling-stop-reasons :
 // « retry with higher max_tokens, not continuation »), d'où la relance complète.
+//
+// Bloc C (2026-06-26) : la « décomposition du mono-appel en plusieurs passes » pour
+// franchir le plafond a été ÉVALUÉE puis ÉCARTÉE. Le goulot mesuré est la RARETÉ du
+// sourcing (semaines à 2-7 items), jamais la densité - le cap de 12 items publiés n'a
+// jamais été saturé par excès. Décomposer doublerait le budget web_search + la
+// génération (contraire à la règle dure « zéro appel LLM en plus ») pour un scénario
+// jamais atteint. La stratégie retry-à-128K puis échec gracieux + relance manuelle
+// suffit. À rouvrir seulement si un run réel échoue par max_tokens À 128K.
 const MAX_TOKENS_RETRY = 128000;
 // 22 (était 15, levier sourcing 2026-06-23) : plus de budget de recherche pour
 // élargir le sourcing local (sources romandes nommées au-delà de RTS) + fenêtre 30j,

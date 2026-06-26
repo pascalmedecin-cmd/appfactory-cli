@@ -15,8 +15,10 @@
 		maturityLabel,
 		geoScopeLabel,
 		impactAxisLabel,
-		chipKindLabel
+		chipKindLabel,
+		chipKindIcon
 	} from '$lib/utils/veilleFormat';
+	import { isChipExecutable } from '$lib/prospection-flags';
 
 	let { data }: { data: PageData } = $props();
 
@@ -89,15 +91,6 @@
 			addItemSaving = false;
 		}
 	}
-
-	// KIND_ICONS reste local : ce sont des icônes Material (pas des libellés). Les
-	// libellés enum (theme/maturity/geo/impact/kind) passent par $lib/utils/veilleFormat
-	// (source unique, anti-fuite underscore, Pascal W25 #1).
-	const KIND_ICONS: Record<string, string> = {
-		simap: 'gavel',
-		zefix: 'business',
-		regbl: 'construction'
-	};
 
 	const COMPLIANCE_STYLES: Record<string, string> = {
 		'OK FilmPro': 'bg-success-light text-success-deep border-success/20',
@@ -199,14 +192,28 @@
 				</p>
 			</div>
 			<div class="shrink-0 flex flex-col items-end gap-6">
-				<button
-					type="button"
-					onclick={() => (addItemOpen = true)}
-					class="h-9 px-3 inline-flex items-center gap-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-				>
-					<Icon name="add" size={16} />
-					Ajouter un item
-				</button>
+				<div class="flex items-center gap-2">
+					{#if items.length > 0}
+						<a
+							href="/crm/veille/{data.report.id}/brief"
+							target="_blank"
+							rel="noopener"
+							title="Ouvre le brief brandé imprimable (Enregistrer en PDF)"
+							class="h-9 px-3 inline-flex items-center gap-2 rounded-lg border border-border bg-white text-sm font-medium text-text-body hover:border-primary hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+						>
+							<Icon name="download" size={16} />
+							Exporter en PDF
+						</a>
+					{/if}
+					<button
+						type="button"
+						onclick={() => (addItemOpen = true)}
+						class="h-9 px-3 inline-flex items-center gap-2 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-dark focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+					>
+						<Icon name="add" size={16} />
+						Ajouter un item
+					</button>
+				</div>
 				<div class="text-right">
 					<div class="mag-kicker text-text-muted">Publiée le</div>
 					<div class="text-sm font-semibold text-text mt-1">
@@ -436,6 +443,7 @@
 				{#each aggregatedChips as entry, idx (entry.chip.label)}
 					{@const chip = entry.chip}
 					{@const isLoading = chipLoading === idx}
+					{@const executable = isChipExecutable(chip.kind)}
 					<li
 						class="bg-white border border-border rounded-xl p-5 flex flex-col gap-3 hover:border-primary/40 hover:shadow-md transition-all"
 					>
@@ -456,30 +464,32 @@
 									{chip.query}
 								</p>
 							</div>
-							<button
-								type="button"
-								onclick={() => copyTerm(chip.query)}
-								class="shrink-0 p-2 rounded-lg hover:bg-surface-alt text-text-muted hover:text-primary transition-colors"
-								title="Copier le terme"
-								aria-label="Copier le terme"
-							>
-								<Icon name="content_copy" size={16} />
-							</button>
+							{#if executable}
+								<button
+									type="button"
+									onclick={() => copyTerm(chip.query)}
+									class="shrink-0 p-2 rounded-lg hover:bg-surface-alt text-text-muted hover:text-primary transition-colors"
+									title="Copier le terme"
+									aria-label="Copier le terme"
+								>
+									<Icon name="content_copy" size={16} />
+								</button>
+							{/if}
 						</div>
 						<button
 							type="button"
-							disabled={chipLoading !== null}
-							onclick={() => runChipSearch(idx)}
-							class="self-start inline-flex items-center gap-2 h-10 px-4 box-border rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors group cursor-pointer"
-							title="Auto-exécuter la recherche dans Prospection"
+							disabled={chipLoading !== null && executable}
+							onclick={() => (executable ? runChipSearch(idx) : copyTerm(chip.query))}
+							class="self-start inline-flex items-center gap-2 h-10 px-4 box-border rounded-lg text-sm font-semibold transition-colors group cursor-pointer {executable ? 'bg-primary text-white hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed' : 'border border-border bg-white text-text-body hover:border-primary hover:bg-surface-alt'}"
+							title={executable ? 'Auto-exécuter la recherche dans Prospection' : 'Source désactivée - copier le terme pour une recherche manuelle'}
 						>
 							<Icon
-								name={isLoading ? 'progress_activity' : KIND_ICONS[chip.kind] ?? 'search'}
+								name={isLoading ? 'progress_activity' : executable ? chipKindIcon(chip.kind) : 'content_copy'}
 								size={16}
 								class={isLoading ? 'animate-spin' : ''}
 							/>
-							{isLoading ? 'Lancement…' : 'Lancer la recherche'}
-							{#if !isLoading}
+							{isLoading ? 'Lancement…' : executable ? 'Lancer la recherche' : 'Copier le terme'}
+							{#if !isLoading && executable}
 								<Icon
 									name="arrow_forward"
 									size={14}

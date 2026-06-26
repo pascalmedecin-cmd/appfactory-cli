@@ -120,6 +120,19 @@ export function chipKindLabel(value: string | null | undefined): string {
 	return CHIP_KIND_LABELS[(value ?? '') as ChipKind] ?? humanizeSlug(value);
 }
 
+// Icônes Material par kind de chip. Source UNIQUE (comme les libellés ci-dessus) :
+// supprime la duplication entre /veille/[id] et /veille/item/[slug]. Repli 'search'
+// pour un kind inconnu, jamais un crash.
+const CHIP_KIND_ICONS: Record<ChipKind, string> = {
+	simap: 'gavel',
+	zefix: 'business',
+	regbl: 'construction'
+};
+
+export function chipKindIcon(value: string | null | undefined): string {
+	return CHIP_KIND_ICONS[(value ?? '') as ChipKind] ?? 'search';
+}
+
 // compliance_tag : les valeurs d'enum SONT déjà des libellés humains (« OK FilmPro »,
 // « À surveiller »…). Pas de map nécessaire, mais on expose un helper pour homogénéiser
 // les appels et garder le fallback humanisé si une valeur inconnue surgissait.

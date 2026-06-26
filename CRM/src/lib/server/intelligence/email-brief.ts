@@ -79,7 +79,10 @@ export interface SendBriefResult {
 // ---------- Helpers ----------
 
 function escapeHtml(s: string): string {
-	return s
+	// Coercition String() : l'endpoint PDF de marque expose ce rendu à des lignes DB
+	// legacy potentiellement non validées par Zod (readReportItems retombe en mode brut) ;
+	// un champ non-string ne doit jamais provoquer un TypeError 500.
+	return String(s)
 		.replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')
 		.replace(/>/g, '&gt;')
@@ -288,6 +291,45 @@ export function buildBriefPayload(input: SendBriefInput): {
 		html: renderBriefHtml(input),
 		text: renderBriefText(input)
 	};
+}
+
+/**
+ * Variante IMPRIMABLE du brief (PDF de marque, Bloc C 2026-06-26).
+ *
+ * Même rendu brandé que l'email (bandeau navy + logo + signaux + impacts FilmPro),
+ * enrichi pour l'impression navigateur -> « Enregistrer en PDF ». Sert l'endpoint
+ * GET /crm/veille/[id]/brief, ouvert dans un onglet par le bouton « Exporter en PDF ».
+ *
+ * L'email lui-même n'est PAS modifié : `@page` A4 + bouton + auto-impression sont
+ * injectés ICI uniquement (les clients mail stripent <style>/<script> ; ces ajouts
+ * ne servent qu'au rendu navigateur). L'inline script/onclick est autorisé par la CSP
+ * du projet ('unsafe-inline' sur script-src, décision assumée CLAUDE.md). Pur + testable.
+ */
+export function buildBriefPrintHtml(input: SendBriefInput): string {
+	const html = renderBriefHtml(input);
+	// Garde dure : si renderBriefHtml est un jour refactoré et n'émet plus exactement un
+	// </head> + un </body>, on échoue FORT plutôt que de servir une page sans
+	// enrichissements (sinon @page/bouton/auto-print disparaîtraient en silence).
+	if (!html.includes('</head>') || !html.includes('</body>')) {
+		throw new Error(
+			'buildBriefPrintHtml: marqueurs </head>/</body> introuvables dans le rendu brief.'
+		);
+	}
+	const printStyle =
+		'<style>@page{size:A4;margin:14mm}@media print{body{background:#fff}.fp-no-print{display:none!important}}</style>';
+	const printBtn =
+		`<div class="fp-no-print" style="position:fixed;top:16px;right:16px;z-index:9;font-family:${FONT};">` +
+		`<button type="button" onclick="window.print()" style="background:${C.accent};color:${C.white};border:0;border-radius:8px;padding:10px 16px;font-size:14px;font-weight:600;cursor:pointer;">Enregistrer en PDF</button>` +
+		`</div>`;
+	// Auto-ouverture de la boîte d'impression à l'ouverture de l'onglet (best-effort,
+	// try/catch : un bloqueur ne doit pas casser la page - le bouton reste cliquable).
+	const printScript =
+		'<script>window.addEventListener("load",function(){setTimeout(function(){try{window.print()}catch(e){}},350);});</script>';
+	// Replacements par FONCTION : neutralise toute séquence $ spéciale ($&, $1...) qui
+	// pourrait surgir d'une valeur interpolée (couleur/police), au lieu d'un littéral.
+	return html
+		.replace('</head>', () => `${printStyle}</head>`)
+		.replace('</body>', () => `${printBtn}${printScript}</body>`);
 }
 
 /**

@@ -5,6 +5,8 @@
 
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { buildRedirect } from '$lib/server/intelligence/chip-redirect';
+import { isProspectionSourceEnabled } from '$lib/prospection-flags';
+import { chipKindLabel } from '$lib/utils/veilleFormat';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const CANTON_SET = new Set(['GE', 'VD', 'VS', 'NE', 'FR', 'JU']);
@@ -36,6 +38,18 @@ export const POST = async ({ request, locals, fetch }: RequestEvent) => {
 	}
 	if (!KIND_SET.has(chip.kind)) {
 		return json({ error: `kind invalide (attendu: simap|zefix|regbl)` }, { status: 400 });
+	}
+	// Defense-in-depth (Bloc C, 2026-06-26) : refuser tôt un chip dont la source cible
+	// est dormante (RegBL/SIMAP coupées en V5). Sans ce garde, le round-trip interne vers
+	// /api/prospection/{simap,regbl} renvoie quand même 403, mais avec un appel réseau
+	// gaspillé et un message générique. L'UI ne propose plus le bouton « Lancer » pour
+	// ces chips (isChipExecutable) ; ceci ferme le contrat côté serveur. Réversible :
+	// réactiver la source dans config.ts rallume l'auto-exécution.
+	if (!isProspectionSourceEnabled(chip.kind)) {
+		return json(
+			{ error: `Source "${chipKindLabel(chip.kind)}" désactivée - copier le terme et rechercher manuellement.` },
+			{ status: 403 }
+		);
 	}
 	if (!CANTON_SET.has(chip.canton)) {
 		return json({ error: `canton invalide (attendu: GE|VD|VS|NE|FR|JU)` }, { status: 400 });

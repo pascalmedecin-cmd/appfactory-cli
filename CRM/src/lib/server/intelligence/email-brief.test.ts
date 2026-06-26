@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { buildBriefPayload, sendBriefEmail, weekStartFr } from './email-brief';
+import { buildBriefPayload, buildBriefPrintHtml, sendBriefEmail, weekStartFr } from './email-brief';
 import type { EmailBriefConfig } from './deps';
 import type { IntelligenceReport } from './schema';
 
@@ -216,5 +216,31 @@ describe('sendBriefEmail - gating', () => {
 		);
 		expect(r.ok).toBe(false);
 		expect(r.reason).toContain('422');
+	});
+});
+
+
+describe('buildBriefPrintHtml (PDF de marque)', () => {
+	it('reprend le rendu brandé email (navy + signaux) et reste un HTML complet', () => {
+		const html = buildBriefPrintHtml({ weekLabel: '2026-W26', report: mockReport() });
+		expect(html).toContain('<!DOCTYPE html>');
+		expect(html).toContain('#152A45'); // navy charte FilmPro
+		expect(html).toContain('Canicule de degré 3 en Suisse romande'); // intégrité contenu
+	});
+
+	it('injecte les enrichissements impression (@page A4 + bouton + auto-print)', () => {
+		const html = buildBriefPrintHtml({ weekLabel: '2026-W26', report: mockReport() });
+		expect(html).toContain('@page');
+		expect(html).toContain('size:A4');
+		expect(html).toContain('fp-no-print');
+		expect(html).toContain('window.print()');
+	});
+
+	it('préserve l’échappement HTML du contenu (pas d’injection via le titre)', () => {
+		const xss = mockReport();
+		xss.items[0].title = '<img src=x onerror=alert(1)>';
+		const html = buildBriefPrintHtml({ weekLabel: '2026-W26', report: xss });
+		expect(html).not.toContain('<img src=x onerror=alert(1)>');
+		expect(html).toContain('&lt;img src=x onerror=alert(1)&gt;');
 	});
 });

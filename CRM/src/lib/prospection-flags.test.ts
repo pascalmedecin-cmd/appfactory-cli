@@ -6,7 +6,10 @@ import {
 	isProspectionTabVisible,
 	visibleProspectionTabs,
 	defaultProspectionTab,
+	isChipExecutable,
 } from './prospection-flags';
+import { ChipKindEnum } from './server/intelligence/schema';
+import { config } from './config';
 
 /**
  * V5 (2026-06-07) : la Prospection redevient un outil de recherche de contact à la demande.
@@ -72,5 +75,40 @@ describe('visibilité des onglets Prospection (P1)', () => {
 
 	it('defaultProspectionTab = premier onglet visible (entreprises, plus simap)', () => {
 		expect(defaultProspectionTab()).toBe('entreprises');
+	});
+});
+
+
+/**
+ * Bloc C (2026-06-26) : un chip Veille n'est auto-exécutable que si sa source cible
+ * (kind === clé de source) est active. Les chips RegBL/SIMAP (sources dormantes V5)
+ * ne sont PAS exécutables -> l'UI propose la copie du terme et l'endpoint
+ * from-intelligence renvoie 403 avant tout round-trip interne. Réversible par flag.
+ */
+describe('isChipExecutable (chips -> sources actives uniquement)', () => {
+	it('chip zefix exécutable (seule source vivante)', () => {
+		expect(isChipExecutable('zefix')).toBe(true);
+	});
+	it('chips simap / regbl NON exécutables (dormants V5)', () => {
+		expect(isChipExecutable('simap')).toBe(false);
+		expect(isChipExecutable('regbl')).toBe(false);
+	});
+	it('kind inconnu -> non exécutable (défaut sûr)', () => {
+		expect(isChipExecutable('inconnue')).toBe(false);
+	});
+});
+
+/**
+ * Invariant central de Bloc C : isChipExecutable(kind) === isProspectionSourceEnabled(kind)
+ * ne tient QUE si tout ChipKind est une vraie clé de config.prospection.sources. Sinon un
+ * nouveau kind sans source correspondante serait silencieusement NON exécutable (défaut sûr
+ * false), une dérive enum/config déguisée en état produit. Ce test convertit la dérive en échec.
+ */
+describe('invariant ChipKind sous-ensemble des clés config.prospection.sources', () => {
+	it('chaque kind de chip correspond à une vraie source prospection', () => {
+		const sourceKeys = Object.keys(config.prospection.sources);
+		for (const kind of ChipKindEnum.options) {
+			expect(sourceKeys).toContain(kind);
+		}
 	});
 });
