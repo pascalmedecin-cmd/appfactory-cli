@@ -72,18 +72,6 @@ export async function listCampagnes(
 	return { data: rows, error: null };
 }
 
-/** Toutes les campagnes (non archivées) pour les multi-sélections (filtre, import, fiche). */
-export async function listActiveCampagnesLight(
-	supabase: SupabaseClient<Database>
-): Promise<{ data: Campagne[]; error: { message: string } | null }> {
-	const { data, error } = await supabase
-		.from('campagnes')
-		.select('*')
-		.eq('archived', false)
-		.order('nom', { ascending: true });
-	return { data: (data ?? []) as Campagne[], error: error ?? null };
-}
-
 function sanitizeNom(nom: string): string {
 	return nom.trim();
 }
