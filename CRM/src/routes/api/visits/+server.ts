@@ -1,4 +1,5 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
+import type { TablesInsert } from '$lib/database.types';
 // Audit 360 M-53 : helpers de géocodage / distance / parsing extraits dans un module testable.
 import {
 	geocodeAddress,
@@ -157,7 +158,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	const { data: row, error: insErr } = await locals.supabase
 		.from('prospect_visits')
-		.insert(insertRow)
+		.insert(insertRow as TablesInsert<'prospect_visits'>)
 		.select(VISIT_COLS)
 		.single();
 

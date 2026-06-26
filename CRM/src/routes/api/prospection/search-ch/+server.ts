@@ -2,6 +2,7 @@ import { json, type RequestEvent } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { calculerScore } from '$lib/scoring';
 import { sanitizeApiKeyInLogs } from '../searchch/helpers';
+import type { TablesUpdate } from '$lib/database.types';
 
 const SEARCH_CH_ENDPOINT = 'https://search.ch/tel/api/';
 
@@ -92,7 +93,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		const cityMatch = text.match(/<tel:city>([^<]+)<\/tel:city>/);
 
 		// Build update object
-		const updates: Record<string, unknown> = {
+		const updates: TablesUpdate<'prospect_leads'> = {
 			date_modification: new Date().toISOString(),
 		};
 

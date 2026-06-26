@@ -8,7 +8,7 @@
  */
 import { z } from 'zod';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '$lib/database.types';
+import type { Database, TablesUpdate } from '$lib/database.types';
 import { isSourceTier, regimeFromClassification, type SourceTier } from './source-allowlist';
 
 export type VeilleSource = Database['public']['Tables']['veille_sources']['Row'];
@@ -189,7 +189,7 @@ export async function updateSource(
 
 	const { data, error } = await client
 		.from('veille_sources')
-		.update(patch)
+		.update(patch as TablesUpdate<'veille_sources'>)
 		.eq('id', id)
 		.select('*')
 		.single();

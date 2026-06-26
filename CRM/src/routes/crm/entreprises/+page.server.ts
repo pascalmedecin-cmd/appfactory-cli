@@ -3,6 +3,7 @@ import { fail } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import { EntrepriseCreateSchema, EntrepriseUpdateSchema, EntrepriseDeleteSchema, ENTREPRISE_FIELDS, extractForm, validate } from '$lib/schemas';
 import { dbFail, now } from '$lib/server/db-helpers';
+import type { TablesUpdate } from '$lib/database.types';
 import { buildEntrepriseInsert, buildEntrepriseUpdate } from '$lib/server/referentiel/entreprises';
 
 interface ZefixSearchResult {
@@ -219,7 +220,7 @@ export const actions: Actions = {
 				: null;
 			const purpose = best.purpose?.fr || best.purpose?.de || best.purpose?.it || null;
 
-			const updates: Record<string, string | null> = {
+			const updates: TablesUpdate<'entreprises'> = {
 				numero_ide: best.uid || null,
 				canton: best.canton?.cantonAbbreviation || null,
 				date_derniere_modification: now(),
