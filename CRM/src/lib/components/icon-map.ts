@@ -2,16 +2,16 @@
 // Lucide-Svelte (legacy Svelte 4) vs Svelte 5 Component<>.
 import {
 	Activity, Archive, ArchiveRestore, ArrowDown, ArrowLeft, ArrowRight, ArrowUp,
-	BadgeCheck, Ban, BarChart3, Bell, BellDot, BellRing, BookOpen, Bookmark, BookmarkPlus, Building, Building2,
-	Calendar, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, CircleAlert, CircleCheck, CircleCheckBig, CircleHelp, CirclePlay, CirclePlus, ClipboardCheck, Clock, CloudDownload, CloudUpload, Code, Compass, Construction, Contact, Copy,
+	BadgeCheck, Ban, BarChart3, Bell, BellDot, BellRing, BookOpen, Bookmark, BookmarkPlus, Bug, Building, Building2,
+	Calendar, CalendarDays, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, CircleAlert, CircleCheck, CircleCheckBig, CircleHelp, CirclePlay, CirclePlus, ClipboardCheck, Clock, CloudDownload, CloudUpload, Code, Compass, Construction, Contact, Copy,
 	Database, Download,
 	Eye, EyeOff, ExternalLink,
 	FilePen, FileText, FilterX, Flame,
 	Gavel, GitBranch, GripVertical,
 	Hand, Handshake, HardHat,
-	Image, ImagePlus, Images, Info,
+	Image, ImagePlus, Images, Inbox, Info,
 	Landmark, Languages, Layers, LayoutDashboard, LayoutGrid, Lightbulb, ListChecks, ListFilter, ListTree, Loader2, LogIn, LogOut, Lock, LockOpen,
-	Mail, Map, MapPin, MapPinOff, Menu, Merge, Minus, MoreVertical, Navigation,
+	Mail, Map, MapPin, MapPinOff, Maximize2, Menu, Merge, Minus, Monitor, MoreVertical, Navigation,
 	PanelRight, Pencil, Phone, PhoneForwarded, Play, Plus,
 	Radar, Repeat, Rocket, RotateCw,
 	Search, SearchX, Shield, ShieldCheck, SlidersHorizontal, Smartphone, Snowflake, Sparkles, Square, SquareCheck, SquareMinus, StickyNote,
@@ -169,6 +169,19 @@ export const ICON_MAP: Record<string, any> = {
 	verified: BadgeCheck,
 	warning: TriangleAlert,
 	waving_hand: Hand,
+	// --- Noms Material Symbols utilisés dans l'UI mais absents du map : ils rendaient
+	// un « ? » (FALLBACK_ICON) en prod. Mappés 2026-06-26 (fidélité glyphe + usage réel,
+	// vérif adversariale). Garde anti-régression : src/lib/components/icon-map.test.ts.
+	bug_report: Bug, // FAB « Signaler un bug »
+	desktop_windows: Monitor, // « Disponible uniquement depuis ordinateur »
+	domain: Building2, // KPI société (cohérent business/domain_add)
+	event: CalendarDays, // « Programmer prochaine action » (distinct de calendar_today)
+	inbox: Inbox, // état vide « Aucun retour »
+	inventory_2: Archive, // bouton/bannière « Archivées » (usage = archivage, pas inventaire)
+	monitor_heart: Activity, // action « Scanner les chantiers/marchés » (cohérent monitoring)
+	open_in_full: Maximize2, // « Agrandir le diagramme en plein écran »
+	phone: Phone, // chip téléphone / action « Appeler »
+	place: MapPin, // localisation GPS (cohérent location_on/pin_drop)
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- même raison que ICON_MAP : type
