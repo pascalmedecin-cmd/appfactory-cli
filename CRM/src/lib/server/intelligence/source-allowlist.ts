@@ -17,6 +17,14 @@
 
 export type SourceTier = 'T1' | 'T2' | 'T3' | 'T4' | 'T5' | 'T6' | 'T7A' | 'T7B';
 
+/** Liste des tiers connus (source unique pour la validation runtime des données DB). */
+export const SOURCE_TIERS: readonly SourceTier[] = ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7A', 'T7B'];
+
+/** Type guard : true si `value` est un tier reconnu. Sinon le traiter comme inconnu → strict. */
+export function isSourceTier(value: unknown): value is SourceTier {
+	return typeof value === 'string' && (SOURCE_TIERS as readonly string[]).includes(value);
+}
+
 /**
  * T1 - Sources officielles : régulation, normes, agences publiques.
  * Crédibilité : haute. Usage : autorité chiffrée, citations réglementaires.
@@ -373,8 +381,21 @@ const DENYLIST_HOSTNAME_PATTERNS = [
 	/^[^.]+\.substack\.com$/
 ];
 
-function normalizeHostname(hostname: string): string {
+export function normalizeHostname(hostname: string): string {
 	return hostname.toLowerCase().replace(/^www\./, '');
+}
+
+/**
+ * Retourne true si le hostname matche un des patterns denylist structurels
+ * (`*.blogspot`, `*.wordpress.com`, `user.medium.com`, `user.substack.com`).
+ *
+ * Ces patterns NE sont PAS des sources éditables (règle anti-spam structurelle) :
+ * ils restent en code et sont réutilisés par le loader DB (`sources-loader.ts`)
+ * pour que la classification table reproduise exactement `isDeniedSource`.
+ */
+export function matchesDenylistHostnamePattern(hostname: string): boolean {
+	const normalized = normalizeHostname(hostname);
+	return DENYLIST_HOSTNAME_PATTERNS.some((re) => re.test(normalized));
 }
 
 /**
@@ -384,7 +405,7 @@ function normalizeHostname(hostname: string): string {
 export function isDeniedSource(hostname: string): boolean {
 	const normalized = normalizeHostname(hostname);
 	if (DENYLIST.has(normalized)) return true;
-	return DENYLIST_HOSTNAME_PATTERNS.some((re) => re.test(normalized));
+	return matchesDenylistHostnamePattern(normalized);
 }
 
 /**
@@ -501,22 +522,61 @@ export function isAdvocacySource(hostname: string): boolean {
  */
 export type VerificationRegime = 'strict' | 'trusted' | 'trusted_advocacy';
 
-export function domainRegime(hostname: string): VerificationRegime {
-	const normalized = normalizeHostname(hostname);
+/**
+ * Classification atomique d'un domaine (déniée / strict verbatim / preprint /
+ * tier / advocacy), indépendante de la PROVENANCE des données (Sets en code OU
+ * table `veille_sources`). C'est la forme commune que `domainRegime` (code) et
+ * `sources-loader.ts` (DB) passent tous deux à `regimeFromClassification`.
+ */
+export interface DomainClassification {
+	denied: boolean;
+	strictVerbatim: boolean;
+	preprint: boolean;
+	tier: SourceTier | null;
+	advocacy: boolean;
+}
+
+/**
+ * POLITIQUE de régime (règle métier stable, source unique). Dérive le régime de
+ * vérification à partir de la classification atomique d'un domaine, dans l'ordre
+ * de priorité décidé au cadrage 2026-06-23. Ce n'est PAS une « source » éditable :
+ * c'est la règle qui mappe une classification (tier + flags) vers un régime.
+ *
+ * Réutilisée par `domainRegime` (données = Sets en code) ET par le classifieur DB
+ * (`sources-loader.ts`, données = table) → les deux chemins produisent forcément
+ * le même régime pour une même classification (zéro drift possible par construction).
+ */
+export function regimeFromClassification(c: DomainClassification): VerificationRegime {
 	// Sources flaggées strict, déniées, ou preprints → strict (les déniées sont
 	// déjà rejetées en amont ; ceinture-bretelles ici si jamais elles arrivent).
-	if (isDeniedSource(normalized)) return 'strict';
-	if (requiresStrictVerbatim(normalized)) return 'strict';
-	if (isPreprintSource(normalized)) return 'strict';
-	const tier = getDomainTier(normalized);
+	if (c.denied) return 'strict';
+	if (c.strictVerbatim) return 'strict';
+	if (c.preprint) return 'strict';
 	// Domaine inconnu (hors whitelist) → strict par défaut (privilège par domaine nommé).
-	if (tier === null) return 'strict';
+	if (c.tier === null) return 'strict';
 	// Cabinets/conseil (T3, chiffres non vérifiables) + concurrents/installateurs/
 	// marques (T6/T7, biais marketing) → strict en bloc.
-	if (tier === 'T3' || tier === 'T6' || tier === 'T7A' || tier === 'T7B') return 'strict';
+	if (c.tier === 'T3' || c.tier === 'T6' || c.tier === 'T7A' || c.tier === 'T7B') return 'strict';
 	// Associations / lobbies sectoriels → confiance + clause advocacy.
-	if (isAdvocacySource(normalized)) return 'trusted_advocacy';
-	// T1 (officiel/normatif/stats/agences) + T2 (presse pro) + T4 (presse qualité +
-	// agence) + T5 (peer-reviewed/brevets/labos, hors preprints) → confiance.
-	return 'trusted';
+	if (c.advocacy) return 'trusted_advocacy';
+	// Confiance RÉSERVÉE aux tiers explicitement fiables : T1 (officiel/normatif/
+	// stats/agences), T2 (presse pro), T4 (presse qualité + agence), T5 (peer-reviewed/
+	// brevets/labos, hors preprints). Tout le reste — y compris un tier invalide qui
+	// aurait échappé à la validation amont (la donnée vient d'une table éditable) —
+	// retombe en strict : fail-SAFE sur un pipeline anti-hallu (règle d'or 2026-06-23 :
+	// dans le doute, strict). Pour une donnée valide, seuls T1/T2/T4/T5 atteignent ici,
+	// donc le comportement est rigoureusement identique à l'ancien `return 'trusted'`.
+	if (c.tier === 'T1' || c.tier === 'T2' || c.tier === 'T4' || c.tier === 'T5') return 'trusted';
+	return 'strict';
+}
+
+export function domainRegime(hostname: string): VerificationRegime {
+	const normalized = normalizeHostname(hostname);
+	return regimeFromClassification({
+		denied: isDeniedSource(normalized),
+		strictVerbatim: requiresStrictVerbatim(normalized),
+		preprint: isPreprintSource(normalized),
+		tier: getDomainTier(normalized),
+		advocacy: isAdvocacySource(normalized)
+	});
 }

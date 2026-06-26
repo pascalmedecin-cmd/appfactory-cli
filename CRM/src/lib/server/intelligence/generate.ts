@@ -15,7 +15,11 @@ import {
 import { verifyUrl } from './url-verify';
 import { sanitizeUrlsBatch } from './url-sanitize';
 import { extractSearchResultUrls, recoverUrl } from './url-recover';
-import { isDeniedSource, getDomainTier } from './source-allowlist';
+import {
+	buildSourcesPromptSection,
+	getFallbackSourcesBundle,
+	type SourcesBundle
+} from './sources-loader';
 import { parseFlexibleDate, isWithinWindow } from './parse-date';
 import { isAllowedThemeSlug } from './theme-slug';
 import { costTracker, type CostSummary, type CostTracker } from './cost-tracker';
@@ -87,10 +91,12 @@ async function callModel(
 	client: Anthropic,
 	input: GenerateInput,
 	themes: ThemeBundle,
+	sources: SourcesBundle,
 	maxTokens: number
 ): Promise<Anthropic.Message> {
 	const themesSection = buildThemesPromptSection(themes);
-	const systemPrompt = buildSystemPrompt(themesSection);
+	const sourcesSection = buildSourcesPromptSection(sources);
+	const systemPrompt = buildSystemPrompt(themesSection, sourcesSection);
 	const reportSchema = buildReportJsonSchema(themes.allowedSlugs);
 	const tools: Anthropic.Tool[] = [
 		{
@@ -203,9 +209,10 @@ export async function callModelWithOverflowRetry(
 	client: Anthropic,
 	input: GenerateInput,
 	themes: ThemeBundle,
+	sources: SourcesBundle,
 	tracker: CostTracker
 ): Promise<Anthropic.Message> {
-	const first = await callModel(client, input, themes, MAX_TOKENS);
+	const first = await callModel(client, input, themes, sources, MAX_TOKENS);
 	tracker.addClaudeCall(MODEL, first.usage, 'Claude veille (1-phase)');
 	if (first.stop_reason !== 'max_tokens') return first;
 
@@ -213,7 +220,7 @@ export async function callModelWithOverflowRetry(
 		`[generate] stop_reason=max_tokens à ${MAX_TOKENS} tokens ` +
 			`(thinking_tokens=${thinkingTokensOf(first.usage) ?? 'n/a'}) — relance à ${MAX_TOKENS_RETRY}.`
 	);
-	const second = await callModel(client, input, themes, MAX_TOKENS_RETRY);
+	const second = await callModel(client, input, themes, sources, MAX_TOKENS_RETRY);
 	tracker.addClaudeCall(MODEL, second.usage, 'Claude veille (relance max_tokens)');
 	return second;
 }
@@ -234,6 +241,7 @@ async function filterAndAnnotateItems(
 	items: IntelligenceItem[],
 	windowStart: string,
 	windowEnd: string,
+	sources: SourcesBundle,
 	knownUrls: readonly string[] = []
 ): Promise<{ kept: IntelligenceItem[]; rejected: RejectedItem[]; recoveredCount: number }> {
 	// Pré-filtre denylist hard : reject avant verifyUrl pour économiser les
@@ -255,7 +263,7 @@ async function filterAndAnnotateItems(
 			});
 			continue;
 		}
-		if (isDeniedSource(host)) {
+		if (sources.isDenied(host)) {
 			rejected.push({
 				url: item.source.url,
 				title: item.title,
@@ -330,7 +338,7 @@ async function filterAndAnnotateItems(
 			);
 		}
 		// Annoter le tier whitelist (informatif, pas reject hors whitelist).
-		const tier = getDomainTier(new URL(effectiveUrl).hostname);
+		const tier = sources.tierOf(new URL(effectiveUrl).hostname);
 		if (!tier) {
 			console.log(
 				`[veille filter] item ${item.title.slice(0, 60)}... domaine ${new URL(effectiveUrl).hostname} hors whitelist (autorisé mais à auditer)`
@@ -362,6 +370,12 @@ export interface GenerateOptions {
 	 */
 	themes?: ThemeBundle;
 	/**
+	 * Bundle sources actives (chargé depuis `veille_sources` par sources-loader).
+	 * Optionnel pour rétrocompat tests. Si absent, fallback seed (= photo exacte
+	 * du code, cf. SOURCES_SEED) — le cron prod doit toujours fournir.
+	 */
+	sources?: SourcesBundle;
+	/**
 	 * Tracker de coûts à alimenter (audit 360 M-05 : DI explicite plutôt que
 	 * le singleton module-level). Défaut : le singleton `costTracker`.
 	 */
@@ -385,9 +399,12 @@ export async function generateIntelligenceReport(
 	// Themes bundle : fourni par run-generation.ts (chargé via theme-loader).
 	// Fallback explicite vers la liste hardcoded si l'appelant l'omet (tests).
 	const themes = opts.themes ?? getFallbackBundle();
+	// Sources bundle : fourni par run-generation.ts (chargé via sources-loader).
+	// Fallback seed (= photo exacte du code) si l'appelant l'omet (tests).
+	const sources = opts.sources ?? getFallbackSourcesBundle();
 	// callModelWithOverflowRetry trace lui-même chaque appel réel dans le tracker
 	// et relance à 128K si le 1er appel à 64K déborde (stop_reason=max_tokens).
-	const response = await callModelWithOverflowRetry(client, input, themes, tracker);
+	const response = await callModelWithOverflowRetry(client, input, themes, sources, tracker);
 
 	// Garde stop_reason : si le modèle a été coupé par max_tokens MÊME après la
 	// relance à 128K, l'emit_report final est tronqué (non récupérable). On échoue
@@ -471,6 +488,7 @@ export async function generateIntelligenceReport(
 		sanitizedItems,
 		windowStart,
 		input.dateEnd,
+		sources,
 		knownUrls
 	);
 	if (recoveredCount > 0) {

@@ -15,6 +15,7 @@ import { json, type RequestEvent } from '@sveltejs/kit';
 import { z } from 'zod';
 import { config } from '$lib/config';
 import { TRIAGE_ACTIONS, type TriageAction } from '$lib/api/triage-actions';
+import type { TablesUpdate } from '$lib/database.types';
 
 const TriageBodySchema = z.object({
 	leadId: z.string().uuid(),
@@ -68,7 +69,7 @@ export const POST = async ({ request, params, locals }: RequestEvent) => {
 		);
 	}
 
-	let update: Record<string, unknown>;
+	let update: TablesUpdate<'prospect_leads'>;
 	switch (action) {
 		case 'oui':
 			update = { statut: 'interesse', date_modification: ts };

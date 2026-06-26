@@ -2,7 +2,6 @@
  * Navigation clavier d'un tablist ARIA (audit 360 V2c H-27, WAI-ARIA Tabs Pattern).
  * Logique pure extraite de Tabs.svelte pour être unit-testable.
  */
-export type TabNavKey = 'ArrowRight' | 'ArrowDown' | 'ArrowLeft' | 'ArrowUp' | 'Home' | 'End';
 
 /**
  * Calcule l'index de l'onglet cible pour une touche clavier.

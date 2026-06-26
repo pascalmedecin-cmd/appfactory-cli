@@ -1,7 +1,7 @@
 // Note : ICON_MAP typé avec `any` pour absorber le mismatch types
 // Lucide-Svelte (legacy Svelte 4) vs Svelte 5 Component<>.
 import {
-	Activity, Archive, ArrowDown, ArrowLeft, ArrowRight, ArrowUp,
+	Activity, Archive, ArchiveRestore, ArrowDown, ArrowLeft, ArrowRight, ArrowUp,
 	BadgeCheck, Ban, BarChart3, Bell, BellDot, BellRing, BookOpen, Bookmark, BookmarkPlus, Building, Building2,
 	Calendar, Camera, Check, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Circle, CircleAlert, CircleCheck, CircleCheckBig, CircleHelp, CirclePlay, CirclePlus, ClipboardCheck, Clock, CloudDownload, CloudUpload, Code, Compass, Construction, Contact, Copy,
 	Database, Download,
@@ -151,6 +151,10 @@ export const ICON_MAP: Record<string, any> = {
 	security: ShieldCheck,
 	select_all: SquareCheck,
 	sell: Tag,
+	group: Users,
+	do_not_disturb: Ban,
+	visibility: Eye,
+	unarchive: ArchiveRestore,
 	shield: Shield,
 	smartphone: Smartphone,
 	source: GitBranch,

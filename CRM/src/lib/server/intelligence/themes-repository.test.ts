@@ -1,10 +1,24 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '$lib/database.types';
 import {
 	ThemeSlugSchema,
 	ThemeCreateSchema,
 	ThemeUpdateSchema,
-	ThemeCategoryEnum
+	ThemeCategoryEnum,
+	deleteTheme
 } from './themes-repository';
+
+/**
+ * Mock minimal du chaînage `client.from('veille_themes').delete().eq('id', id)`.
+ * On teste notre logique (cible le bon id + propagation d'erreur), pas le client.
+ */
+function mockDeleteClient(result: { error: { message: string } | null }) {
+	const eq = vi.fn().mockResolvedValue(result);
+	const del = vi.fn().mockReturnValue({ eq });
+	const from = vi.fn().mockReturnValue({ delete: del });
+	return { client: { from } as unknown as SupabaseClient<Database>, from, del, eq };
+}
 
 describe('ThemeSlugSchema', () => {
 	it('accepte les slugs en snake_case minuscule', () => {
@@ -105,5 +119,20 @@ describe('ThemeUpdateSchema', () => {
 		expect(ThemeUpdateSchema.safeParse({ label: '' }).success).toBe(false);
 		expect(ThemeUpdateSchema.safeParse({ sort_order: -5 }).success).toBe(false);
 		expect(ThemeUpdateSchema.safeParse({ category: 'invalid' }).success).toBe(false);
+	});
+});
+
+describe('deleteTheme', () => {
+	it('supprime par id exact sur veille_themes et résout sans erreur', async () => {
+		const { client, from, del, eq } = mockDeleteClient({ error: null });
+		await expect(deleteTheme(client, 'uuid-cible')).resolves.toBeUndefined();
+		expect(from).toHaveBeenCalledWith('veille_themes');
+		expect(del).toHaveBeenCalledTimes(1);
+		expect(eq).toHaveBeenCalledWith('id', 'uuid-cible');
+	});
+
+	it('propage une erreur DB en exception préfixée', async () => {
+		const { client } = mockDeleteClient({ error: { message: 'permission denied' } });
+		await expect(deleteTheme(client, 'uuid-x')).rejects.toThrow('deleteTheme: permission denied');
 	});
 });

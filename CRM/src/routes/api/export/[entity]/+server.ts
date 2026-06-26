@@ -10,6 +10,8 @@ import { error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { toCsv, csvFilename, csvResponseHeaders, type CsvColumn } from '$lib/server/csv-export';
 import { formatDateShort, LEADS_EXPORT_COLUMNS } from '$lib/server/export-columns';
+import { fetchCampagnesByLead } from '$lib/server/campagnes';
+import { isCampagnesEnabled } from '$lib/server/feature-gate';
 
 type ExportTable = 'contacts' | 'entreprises' | 'prospect_leads';
 
@@ -103,6 +105,11 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 		throw error(404, `Entité inconnue : ${entity}`);
 	}
 
+	// Vague 3.2 : la colonne Campagnes (leads) n'apparaît qu'en premium (defense-in-depth ;
+	// hors flag l'export leads reste byte-identique a l'existant). Sans objet pour contacts/entreprises.
+	const { user } = await locals.safeGetSession();
+	const premium = entity === 'leads' && isCampagnesEnabled(user);
+
 	let query = locals.supabase.from(config.table).select(config.select);
 	if (config.filter) {
 		query = query.eq(config.filter.column, config.filter.value);
@@ -116,7 +123,14 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	}
 
 	const rows = (data ?? []) as unknown as Record<string, unknown>[];
-	const csv = toCsv(rows, config.columns);
+	// Vague 3.2 : pour l'export leads (/reporting) EN PREMIUM, pré-attache les campagnes jointes
+	// par lead (même colonne partagée que l'export prospection filtré).
+	if (premium && rows.length > 0) {
+		const byLead = await fetchCampagnesByLead(locals.supabase, rows.map((r) => r.id as string));
+		for (const r of rows) r.campagnes = (byLead.get(r.id as string) ?? []).map((c) => c.nom).join('; ');
+	}
+	const columns = premium ? config.columns : config.columns.filter((c) => c.key !== 'campagnes');
+	const csv = toCsv(rows, columns);
 	// BOM UTF-8 (Excel). La version du schéma est dans le header HTTP X-Export-Schema-Version (M-21).
 	const body = '\ufeff' + csv;
 

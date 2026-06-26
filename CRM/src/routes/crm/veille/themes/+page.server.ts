@@ -6,6 +6,7 @@ import {
 	listAllThemes,
 	createTheme,
 	updateTheme,
+	deleteTheme,
 	ThemeCreateSchema,
 	ThemeUpdateSchema,
 	ThemeSlugSchema
@@ -36,13 +37,18 @@ export const actions: Actions = {
 		if (!user) return fail(401, { error: 'Unauthorized' });
 
 		const fd = await request.formData();
-		const input = {
+		const input: Record<string, unknown> = {
 			slug: String(fd.get('slug') ?? '').trim(),
 			label: String(fd.get('label') ?? '').trim(),
 			description: String(fd.get('description') ?? '').trim(),
 			category: String(fd.get('category') ?? '').trim(),
 			sort_order: parseSortOrder(fd.get('sort_order')),
-			active: coerceFormBoolean(fd.get('active'))
+			// `active` UNIQUEMENT s'il est explicitement fourni. Sinon on laisse le
+			// DEFAULT true de la table s'appliquer (un thème créé est actif par défaut).
+			// Sans cette garde, coerceFormBoolean(null)=false forçait active:false → le
+			// thème naissait INACTIF (donc non surveillé), défaisant le DEFAULT (bug
+			// contrat UI↔serveur : l'UI de création n'émet pas de champ `active`).
+			...(fd.get('active') !== null ? { active: coerceFormBoolean(fd.get('active')) } : {})
 		};
 
 		const parsed = ThemeCreateSchema.safeParse(input);
@@ -120,6 +126,26 @@ export const actions: Actions = {
 		} catch (err) {
 			const msg = err instanceof Error ? err.message : 'unknown';
 			console.error('[themes toggleActive]', msg);
+			return fail(500, { error: 'Erreur DB' });
+		}
+	},
+
+	delete: async ({ request, locals }) => {
+		const { user } = await locals.safeGetSession();
+		if (!user) return fail(401, { error: 'Unauthorized' });
+
+		const fd = await request.formData();
+		const idRaw = String(fd.get('id') ?? '').trim();
+		const idParsed = UuidSchema.safeParse(idRaw);
+		if (!idParsed.success) return fail(400, { error: 'id UUID invalide' });
+
+		try {
+			const service = createSupabaseServiceClient();
+			await deleteTheme(service, idParsed.data);
+			return { success: true, message: 'Thème supprimé.' };
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : 'unknown';
+			console.error('[themes delete]', msg);
 			return fail(500, { error: 'Erreur DB' });
 		}
 	},

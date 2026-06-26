@@ -11,6 +11,7 @@ import {
 	type EnrichFields,
 } from './helpers';
 import { sanitizeError } from '$lib/server/intelligence/sanitize';
+import type { TablesUpdate } from '$lib/database.types';
 
 const SEARCH_CH_ENDPOINT = 'https://search.ch/tel/api/';
 const ZEFIX_BASE = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
@@ -229,7 +230,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 						const { error: upErr } = await locals.supabase
 							.from('prospect_leads')
-							.update(allFields)
+							.update(allFields as TablesUpdate<'prospect_leads'>)
 							.eq('id', lead.id);
 
 						if (upErr) {

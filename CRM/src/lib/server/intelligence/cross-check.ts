@@ -44,7 +44,8 @@ import { z } from 'zod';
 import type { IntelligenceItem } from './schema';
 import { costTracker, type CostTracker } from './cost-tracker';
 import { isSafeUrlForFetch } from './url-guard';
-import { domainRegime, type VerificationRegime } from './source-allowlist';
+import type { VerificationRegime } from './source-allowlist';
+import { getFallbackSourcesBundle, type SourcesBundle } from './sources-loader';
 
 const CROSS_CHECK_MODEL = 'claude-sonnet-4-6';
 const CROSS_CHECK_MAX_TOKENS = 1500;
@@ -708,8 +709,11 @@ function hostOf(url: string): string {
  * garde paywall (corps trop maigre) est appliqué en aval dans crossCheckItem (il
  * nécessite le contenu fetché). Exporté pour test.
  */
-export function effectiveRegime(item: IntelligenceItem): VerificationRegime {
-	const base = domainRegime(hostOf(item.source.url));
+export function effectiveRegime(
+	item: IntelligenceItem,
+	sources: SourcesBundle = getFallbackSourcesBundle()
+): VerificationRegime {
+	const base = sources.regimeOf(hostOf(item.source.url));
 	if (base === 'strict') return 'strict';
 	if (isSponsoredOrOpinion(item.source.url, item.title)) return 'strict';
 	// Garde-fou 1 déterministe : un item qui nomme un cabinet d'études repasse strict
@@ -785,6 +789,12 @@ export interface CrossCheckOptions {
 	 * Défaut : le singleton `costTracker` (rétrocompat).
 	 */
 	tracker?: CostTracker;
+	/**
+	 * Bundle sources actives (chargé depuis `veille_sources` par sources-loader).
+	 * Optionnel pour rétrocompat tests. Si absent, fallback seed (= photo exacte
+	 * du code) — le cron prod fournit le bundle chargé en amont (run-generation).
+	 */
+	sources?: SourcesBundle;
 }
 
 const DEFAULT_CONCURRENCY = 4;
@@ -872,7 +882,8 @@ export type CrossCheckMiss = 'dead_page' | 'verifier_failed';
 export async function crossCheckItem(
 	client: Anthropic,
 	item: IntelligenceItem,
-	tracker: CostTracker = costTracker
+	tracker: CostTracker = costTracker,
+	sources?: SourcesBundle
 ): Promise<CrossCheckVerdict | CrossCheckMiss> {
 	const html = await fetchPageContent(item.source.url);
 	if (!html) return 'dead_page';
@@ -888,7 +899,7 @@ export async function crossCheckItem(
 	//  - FILET : prose réelle trop maigre (articleBodyText mesure la somme des <p> du meilleur
 	//    scope, ReDoS-safe et insensible au chrome interne « à lire aussi » - finding HIGH
 	//    résiduel ; max-sur-scopes contre le <article> minuscule - finding MEDIUM).
-	let regime = effectiveRegime(item);
+	let regime = effectiveRegime(item, sources);
 	if (regime !== 'strict') {
 		const bodyLen = articleBodyText(html).length;
 		if (looksLikePaywallTeaser(pageText) || bodyLen < TRUSTED_BODY_MIN_CHARS) {
@@ -923,6 +934,8 @@ export async function crossCheckBatch(
 	const client = new Anthropic({ apiKey: opts.anthropicApiKey });
 	const concurrency = opts.concurrency ?? DEFAULT_CONCURRENCY;
 	const tracker = opts.tracker ?? costTracker;
+	// Sources bundle résolu UNE fois pour tout le batch (fallback seed = code).
+	const sources = opts.sources ?? getFallbackSourcesBundle();
 
 	// Pool de concurrence (audit Medium #2) : limite N appels Anthropic en parallèle
 	// pour éviter rate-limit 429 + DoS amplification fetch sortants.
@@ -935,7 +948,7 @@ export async function crossCheckBatch(
 	// morte, selon rejectUnfetchable.
 	const outcomes = await runWithConcurrency(items, concurrency, async (item) => {
 		try {
-			const verdict = await crossCheckItem(client, item, tracker);
+			const verdict = await crossCheckItem(client, item, tracker, sources);
 			return { item, verdict, apiError: null as ClassifiedApiError | null };
 		} catch (e) {
 			return {
@@ -1007,7 +1020,7 @@ export async function crossCheckBatch(
 		// page authentiquement morte d'une source fiable bénéficie du keep.
 		if (verdict === 'dead_page') {
 			if (opts.rejectUnfetchable) {
-				if (effectiveRegime(item) !== 'strict') {
+				if (effectiveRegime(item, sources) !== 'strict') {
 					keptByTrust++;
 					kept.push({
 						...item,

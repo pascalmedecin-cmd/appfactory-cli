@@ -16,6 +16,7 @@
 	import BatchActionsBar from '$lib/components/prospection/BatchActionsBar.svelte';
 	import RecherchesPanel from '$lib/components/prospection/RecherchesPanel.svelte';
 	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
+	import { campClass } from '$lib/campagnes';
 	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
 	import SourcePill from '$lib/components/SourcePill.svelte';
 	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
@@ -68,6 +69,7 @@
 	// mobile. Corrige A1 « caché sur mobile » : quand `ffCrmMobileV2` affiche les cards mobiles
 	// (et masque la DataTable < 1024px), la recherche de la DataTable disparaissait. On la sort
 	// donc de la DataTable (searchable=false) pour un seul champ au-dessus des deux vues.
+	// svelte-ignore state_referenced_locally
 	let searchQuery = $state(data.search);
 	let searchTimer: ReturnType<typeof setTimeout> | null = null;
 	// Resync quand data.search change côté serveur (reset filtres, lien externe ?q=). Ne clobbe
@@ -158,19 +160,29 @@
 		}
 	});
 
-	// Filtres synchronisés avec les URL params du serveur
+	// Filtres synchronisés avec les URL params du serveur : seed unique depuis data (capture initiale voulue)
+	// svelte-ignore state_referenced_locally
 	let filterSources = $state<string[]>(data.filters.sources);
+	// svelte-ignore state_referenced_locally
 	let filterCantons = $state<string[]>(data.filters.cantons);
+	// svelte-ignore state_referenced_locally
 	let filterStatuts = $state<string[]>(data.filters.statuts);
+	// svelte-ignore state_referenced_locally
 	let filterTemperatures = $state<string[]>(data.filters.temperatures);
+	// Vague 3.2 : filtre par campagne (relation N-N, premium uniquement). Liste dynamique
+	// (data.campagnes) ; jamais affiché hors premium -> rendu OFF byte-identique.
+	// svelte-ignore state_referenced_locally
+	let filterCampagnes = $state<string[]>(data.filters.campagnes);
 	// Phase 0 : toggle "afficher les transférés" persistant via URL ?showTransferred=1
+	// svelte-ignore state_referenced_locally
 	let showTransferred = $state<boolean>(data.showTransferred);
 
 	const activeFilterCount = $derived(
 		(filterStatuts.length > 0 ? 1 : 0) +
 		(filterTemperatures.length > 0 ? 1 : 0) +
 		(filterCantons.length > 0 ? 1 : 0) +
-		(filterSources.length > 0 ? 1 : 0)
+		(filterSources.length > 0 ? 1 : 0) +
+		(filterCampagnes.length > 0 ? 1 : 0)
 	);
 
 	function buildUrl(overrides: Record<string, string | string[] | number | boolean | undefined> = {}) {
@@ -179,6 +191,7 @@
 		const cantons = overrides.canton !== undefined ? overrides.canton as string[] : filterCantons;
 		const statuts = overrides.statut !== undefined ? overrides.statut as string[] : filterStatuts;
 		const temps = overrides.temp !== undefined ? overrides.temp as string[] : filterTemperatures;
+		const campagnes = overrides.campagne !== undefined ? overrides.campagne as string[] : filterCampagnes;
 		const showTr = overrides.showTransferred !== undefined ? overrides.showTransferred as boolean : showTransferred;
 		const pg = overrides.page !== undefined ? overrides.page as number : data.page;
 		const sort = (overrides.sort as string) ?? data.sort;
@@ -197,6 +210,7 @@
 		cantons.forEach(c => params.append('canton', c));
 		statuts.forEach(s => params.append('statut', s));
 		temps.forEach(t => params.append('temp', t));
+		campagnes.forEach(c => params.append('campagne', c));
 		if (showTr) params.set('showTransferred', '1');
 
 		const qs = params.toString();
@@ -217,7 +231,7 @@
 	let filterMounted = false;
 	$effect(() => {
 		// Tracker les valeurs
-		filterSources; filterCantons; filterStatuts; filterTemperatures; showTransferred;
+		filterSources; filterCantons; filterStatuts; filterTemperatures; filterCampagnes; showTransferred;
 		if (!filterMounted) { filterMounted = true; return; }
 		if (filterDebounce) clearTimeout(filterDebounce);
 		filterDebounce = setTimeout(() => applyFilters(), 200);
@@ -272,7 +286,18 @@
 		],
 	};
 
-	const columns = $derived(columnsByTab[data.tab as ProspectionTabKey] ?? columnsByTab.simap);
+	// Vague 3.2 : colonne « Campagnes » injectée après le nom quand premium (OFF -> base inchangée).
+	const CAMPAGNES_COL = { key: 'campagnes', label: 'Campagnes', sortable: false, defaultWidth: 210, minWidth: 150 };
+	const columns = $derived.by(() => {
+		const base = columnsByTab[data.tab as ProspectionTabKey] ?? columnsByTab.simap;
+		if (!premium) return base;
+		const out = [...base];
+		const idx = out.findIndex((c) => c.key === 'raison_sociale');
+		out.splice(idx >= 0 ? idx + 1 : out.length, 0, CAMPAGNES_COL);
+		return out;
+	});
+	// Options dynamiques du filtre campagne (texte libre -> liste serveur, jamais une constante).
+	const campagneFilterOptions = $derived(data.campagnes.map((c) => ({ value: c.id, label: c.nom })));
 
 	// Configuration des onglets (icônes Lucide via icon-map, tooltips pédagogiques)
 	const tabsConfig = $derived([
@@ -497,6 +522,7 @@
 		filterCantons = [];
 		filterStatuts = [];
 		filterTemperatures = [];
+		filterCampagnes = [];
 		showTransferred = false;
 	}
 
@@ -750,6 +776,9 @@
 				<MultiSelectDropdown bind:selected={filterTemperatures} options={temperatureOptions} icon="thermostat" label="Température" tooltip="Niveau d'intérêt estimé du prospect" />
 				<MultiSelectDropdown bind:selected={filterCantons} options={cantonOptions} icon="location_on" label="Canton" tooltip="Zones géographiques" />
 				<MultiSelectDropdown bind:selected={filterSources} options={sourceOptions} icon="database" label="Source" tooltip="Registres et bases de données" />
+				{#if premium}
+					<MultiSelectDropdown bind:selected={filterCampagnes} options={campagneFilterOptions} icon="sell" label="Campagne" tooltip="Filtrer par campagne" />
+				{/if}
 			</fieldset>
 		</div>
 	{/if}
@@ -761,6 +790,9 @@
 			<MultiSelectDropdown bind:selected={filterTemperatures} options={temperatureOptions} icon="thermostat" label="Température" tooltip="Niveau d'intérêt estimé du prospect" />
 			<MultiSelectDropdown bind:selected={filterCantons} options={cantonOptions} icon="location_on" label="Canton" tooltip="Zones géographiques" />
 			<MultiSelectDropdown bind:selected={filterSources} options={sourceOptions} icon="database" label="Source" tooltip="Registres et bases de données" />
+			{#if premium}
+				<MultiSelectDropdown bind:selected={filterCampagnes} options={campagneFilterOptions} icon="sell" label="Campagne" tooltip="Filtrer par campagne" />
+			{/if}
 		</fieldset>
 		<div class="flex flex-wrap items-center gap-2 px-3 pb-3 pt-0">
 			<!-- Phase 0 : toggle "Afficher les transférés" off par défaut, persistant via URL ?showTransferred=1 -->
@@ -1007,7 +1039,7 @@
 					</p>
 					<div class="flex flex-wrap items-center justify-center gap-2">
 						<button
-							onclick={() => { resetFilters(); goto(buildUrl({ q: '', source: [], canton: [], statut: [], temp: [], showTransferred: false, page: 0 }), { keepFocus: true, noScroll: true }); }}
+							onclick={() => { resetFilters(); goto(buildUrl({ q: '', source: [], canton: [], statut: [], temp: [], campagne: [], showTransferred: false, page: 0 }), { keepFocus: true, noScroll: true }); }}
 							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-text border border-border rounded-lg bg-white hover:bg-surface-alt cursor-pointer transition-colors"
 						>
 							<Icon name="close" size={16} />
@@ -1094,6 +1126,25 @@
 						<ScorePill score={lead.score_pertinence} compact />
 					{:else if col.key === 'raison_sociale'}
 						<span class="font-medium text-text truncate block" title={lead.raison_sociale}>{lead.raison_sociale}</span>
+					{:else if col.key === 'campagnes'}
+						{@const leadCamps = data.campagnesByLead[lead.id] ?? []}
+						{#if leadCamps.length > 0}
+							<div class="camp-stack">
+								{#each leadCamps.slice(0, 2) as c (c.id)}
+									<span class="camp {campClass(c.couleur)}"><span class="cdot"></span><span class="clabel">{c.nom}</span></span>
+								{/each}
+								{#if leadCamps.length > 2}
+									<span class="camp-more" title={leadCamps.slice(2).map((c) => c.nom).join(', ')}>+{leadCamps.length - 2}</span>
+								{/if}
+								<button type="button" class="camp-edit" title="Gérer les campagnes" aria-label="Gérer les campagnes" onclick={(e) => { e.stopPropagation(); openDetail(lead); }}>
+									<Icon name="add" size={12} />
+								</button>
+							</div>
+						{:else}
+							<button type="button" class="camp-add-inline" onclick={(e) => { e.stopPropagation(); openDetail(lead); }}>
+								<Icon name="add" size={12} /> Étiqueter
+							</button>
+						{/if}
 					{:else if col.key === 'canton'}
 						{#if premium && lead.canton}
 							<span class="crm-loc"><Icon name="location_on" size={13} />{cantonNoms[lead.canton] ?? lead.canton}</span>
@@ -1139,7 +1190,7 @@
 </div>
 
 <!-- Lead detail slide-out -->
-<LeadSlideOut bind:open={slideOutOpen} bind:lead={selectedLead} bind:importResult leads={data.leads} {premium} />
+<LeadSlideOut bind:open={slideOutOpen} bind:lead={selectedLead} bind:importResult leads={data.leads} {premium} campagnes={data.campagnes} campagnesByLead={data.campagnesByLead} />
 
 <!-- Lead express modale (F3 V2 mobile terrain) -->
 <LeadExpress bind:open={leadExpressOpen} redirectAfterCreate={false} />
@@ -1155,6 +1206,8 @@
 	fromTerm={data.fromTerm}
 	allowedSources={entrepriseSources}
 	googleQuota={data.googlePlacesQuota}
+	{premium}
+	campagnes={data.campagnes}
 />
 
 <!-- Modal import sources (SIMAP/RegBL — dormant tant que leurs flags sont coupés). -->

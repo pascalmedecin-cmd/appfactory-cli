@@ -7,10 +7,13 @@
 # en S167 Bloc #2). Le handler SvelteKit reste vivant pour rétro-compat /
 # usage debug, juste plus déclenché automatiquement par Vercel.
 #
-# Cron principal : vendredi 06:27 UTC (08:27 Suisse l'été). Minute 27 et non 0 :
-# le scheduler GitHub est saturé à l'heure pile (retards mesurés de 2-4h sur ce
-# workflow entre le 08/05 et le 05/06/2026 avec '0 6'), GitHub recommande
-# d'éviter le début d'heure.
+# Cron principal : vendredi 02:27 UTC (04:27 Suisse l'été). Avancé de 06:27 à
+# 02:27 UTC le 2026-06-26 (décision Pascal) : le scheduler GitHub décale ce
+# workflow de 2-4h en pratique (ex. 26/06 : prévu 06:27, parti 09:54). En visant
+# 04:27 Suisse, le retard habituel fait atterrir le brief le matin (~06-08h Suisse)
+# au lieu de midi/soir. Minute 27 et non 0 : le scheduler GitHub est saturé à
+# l'heure pile (retards mesurés de 2-4h avec '0 6' entre le 08/05 et le 05/06/2026),
+# GitHub recommande d'éviter le début d'heure.
 # Cron rattrapage : vendredi 17:27 UTC. Filet anti-skip scheduler (le 12/06/2026,
 # le run du matin n'était toujours pas parti à 09:00 UTC) ET retry des échecs
 # (décision Pascal 2026-06-19, renverse le council 06-06) : si le run du matin a
@@ -25,7 +28,7 @@ name: Cron veille hebdomadaire FilmPro
 
 on:
   schedule:
-    - cron: '27 6 * * 5'
+    - cron: '27 2 * * 5'
     - cron: '27 17 * * 5'
   workflow_dispatch:
     inputs:

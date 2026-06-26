@@ -1,4 +1,5 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
+import type { TablesInsert } from '$lib/database.types';
 import {
 	ALLOWED_MIME,
 	MAX_PHOTO_BYTES,
@@ -142,7 +143,7 @@ export const POST = async ({ request, url, locals }: RequestEvent) => {
 	};
 	const { data: row, error: insErr } = await locals.supabase
 		.from('prospect_photos')
-		.insert(insertRow)
+		.insert(insertRow as TablesInsert<'prospect_photos'>)
 		.select('id, storage_path, caption, uploaded_at, size_bytes, mime_type')
 		.single();
 

@@ -108,14 +108,17 @@ describe('buildThemesPromptSection', () => {
 });
 
 describe('buildSystemPrompt', () => {
-	it('remplace {{themes_section}} par la section fournie', () => {
-		const out = buildSystemPrompt('SECTION_TEST');
-		expect(out).toContain('SECTION_TEST');
+	it('remplace {{themes_section}} et {{sources_section}} par les sections fournies', () => {
+		const out = buildSystemPrompt('THEMES_TEST', 'SOURCES_TEST');
+		expect(out).toContain('THEMES_TEST');
+		expect(out).toContain('SOURCES_TEST');
 		expect(out).not.toContain('{{themes_section}}');
+		expect(out).not.toContain('{{sources_section}}');
 	});
 
-	it('le template contient bien le placeholder', () => {
+	it('le template contient bien les deux placeholders', () => {
 		expect(SYSTEM_PROMPT_TEMPLATE).toContain('{{themes_section}}');
+		expect(SYSTEM_PROMPT_TEMPLATE).toContain('{{sources_section}}');
 	});
 });
 

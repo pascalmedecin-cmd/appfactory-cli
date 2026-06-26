@@ -78,6 +78,9 @@
 	const staggerIndex = $derived(Math.min(index, 8));
 </script>
 
+<!-- carte cliquable/draggable, clavier-activable (Enter/Espace) + aria-label ; role listitem pour la liste parente -->
+<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <article
 	class="card"
 	class:premium
@@ -198,6 +201,7 @@
 		line-height: 1.3;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
+		line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 		margin-bottom: 6px;

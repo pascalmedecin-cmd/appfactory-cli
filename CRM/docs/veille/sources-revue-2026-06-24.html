@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Veille FilmPro - Revue des sources</title>
+<style>
+	:root {
+		--primary: #2F5A9E;
+		--primary-hover: #264C85;
+		--navy: #0A1628;
+		--navy-soft: #152A45;
+		--surface: #FFFFFF;
+		--surface-alt: #F9FAFB;
+		--surface-sunk: #F4F6F9;
+		--border: #E5E7EB;
+		--border-strong: #D1D5DB;
+		--text: #111827;
+		--text-body: #374151;
+		--text-muted: #6B7280;
+		--success-deep: #067647;
+		--success-light: #ECFDF3;
+		--warning-deep: #B54708;
+		--warning-light: #FFFAEB;
+		--danger-deep: #B42318;
+		--danger-light: #FEF3F2;
+		--info-deep: #4A5E78;
+		--info-light: #EDF1F5;
+		--shadow-navy: 0 18px 40px -18px rgba(10, 22, 40, 0.55);
+		--radius: 12px;
+	}
+
+	* { box-sizing: border-box; }
+
+	html { scroll-behavior: smooth; }
+
+	body {
+		margin: 0;
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+		color: var(--text-body);
+		background:
+			radial-gradient(1200px 480px at 85% -10%, rgba(47, 90, 158, 0.08), transparent 60%),
+			var(--surface-sunk);
+		line-height: 1.5;
+		-webkit-font-smoothing: antialiased;
+	}
+
+	.wrap { max-width: 1180px; margin: 0 auto; padding: 0 24px 140px; }
+
+	/* ---- Masthead ---- */
+	.masthead {
+		background:
+			radial-gradient(900px 360px at 100% 0%, rgba(47, 90, 158, 0.35), transparent 55%),
+			var(--navy);
+		color: #fff;
+		border-radius: 0 0 22px 22px;
+		box-shadow: var(--shadow-navy);
+		overflow: hidden;
+		position: relative;
+	}
+	.masthead::after {
+		content: "";
+		position: absolute;
+		right: -60px; top: -80px;
+		width: 320px; height: 320px;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.04);
+		pointer-events: none;
+	}
+	.masthead-inner { max-width: 1180px; margin: 0 auto; padding: 30px 24px 26px; position: relative; }
+	.kicker {
+		text-transform: uppercase;
+		letter-spacing: 0.18em;
+		font-size: 11px;
+		font-weight: 700;
+		color: rgba(255, 255, 255, 0.62);
+	}
+	h1 { margin: 8px 0 6px; font-size: clamp(26px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; color: #fff; }
+	.sub { color: rgba(255, 255, 255, 0.78); font-size: 15px; max-width: 720px; }
+
+	.stat-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+	.stat {
+		background: rgba(255, 255, 255, 0.06);
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		border-radius: 10px;
+		padding: 10px 14px;
+		min-width: 96px;
+	}
+	.stat .n { font-size: 22px; font-weight: 700; color: #fff; font-variant-numeric: tabular-nums; }
+	.stat .l { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.6); margin-top: 2px; }
+	.stat.keep .n { color: #8ef0bf; }
+	.stat.drop .n { color: #ffb4ab; }
+
+	/* ---- Toolbar ---- */
+	.toolbar {
+		position: sticky;
+		top: 0;
+		z-index: 30;
+		background: rgba(249, 250, 251, 0.92);
+		backdrop-filter: blur(8px);
+		border-bottom: 1px solid var(--border);
+		margin: 0 -24px 8px;
+		padding: 12px 24px;
+	}
+	.toolbar-inner { max-width: 1180px; margin: 0 auto; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+	.search {
+		flex: 1 1 260px;
+		display: flex; align-items: center; gap: 8px;
+		background: #fff;
+		border: 1px solid var(--border-strong);
+		border-radius: 10px;
+		padding: 8px 12px;
+	}
+	.search input { border: 0; outline: 0; font-size: 14px; width: 100%; color: var(--text); background: transparent; }
+	.search svg { flex: none; color: var(--text-muted); }
+
+	.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+	.chip {
+		font-size: 12.5px;
+		font-weight: 600;
+		padding: 7px 12px;
+		border-radius: 999px;
+		border: 1px solid var(--border-strong);
+		background: #fff;
+		color: var(--text-body);
+		cursor: pointer;
+		transition: all 0.15s ease;
+		white-space: nowrap;
+	}
+	.chip:hover { border-color: var(--primary); color: var(--primary); }
+	.chip[aria-pressed="true"] { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+	.btn {
+		font-size: 13px; font-weight: 600;
+		padding: 9px 14px; border-radius: 10px;
+		border: 1px solid var(--border-strong); background: #fff; color: var(--text-body);
+		cursor: pointer; transition: all 0.15s ease;
+	}
+	.btn:hover { border-color: var(--primary); color: var(--primary); }
+	.btn.ghost-light { border-color: rgba(255,255,255,0.25); background: rgba(255,255,255,0.08); color: #fff; }
+	.btn.ghost-light:hover { background: rgba(255,255,255,0.16); color: #fff; }
+
+	/* ---- Legend ---- */
+	.legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 18px 0 10px; font-size: 12.5px; color: var(--text-muted); }
+	.legend .item { display: flex; align-items: center; gap: 7px; }
+	.dot { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+
+	/* ---- Category ---- */
+	.cat { margin-top: 30px; }
+	.cat-head {
+		position: sticky; top: 60px; z-index: 10;
+		display: flex; align-items: baseline; gap: 12px;
+		padding: 10px 14px;
+		background: var(--navy-soft);
+		color: #fff;
+		border-radius: 10px;
+		box-shadow: 0 6px 18px -10px rgba(10,22,40,0.5);
+	}
+	.cat-head h2 { margin: 0; font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
+	.cat-head .desc { font-size: 12.5px; color: rgba(255,255,255,0.66); flex: 1; }
+	.cat-head .count { font-size: 12px; font-variant-numeric: tabular-nums; color: rgba(255,255,255,0.85); font-weight: 600; }
+
+	.rows { margin-top: 6px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; background: #fff; }
+
+	.row {
+		display: grid;
+		grid-template-columns: 40px 1fr 132px;
+		gap: 12px;
+		align-items: start;
+		padding: 12px 14px;
+		border-bottom: 1px solid var(--border);
+	}
+	.row:last-child { border-bottom: 0; }
+	.row:hover { background: var(--surface-alt); }
+	.row.dropped { background: repeating-linear-gradient(135deg, #fff, #fff 8px, var(--danger-light) 8px, var(--danger-light) 16px); }
+	.row.dropped .src-name a { text-decoration: line-through; color: var(--text-muted); }
+	.row.hidden { display: none; }
+
+	.keepbox { display: flex; align-items: center; justify-content: center; padding-top: 2px; }
+	.keepbox input { width: 18px; height: 18px; accent-color: var(--primary); cursor: pointer; }
+
+	.src-main { min-width: 0; }
+	.src-name { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+	.src-name a { font-weight: 650; color: var(--text); text-decoration: none; font-size: 14.5px; }
+	.src-name a:hover { color: var(--primary); text-decoration: underline; }
+	.src-domain { font-size: 12px; color: var(--text-muted); font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+	.src-desc { font-size: 13px; color: var(--text-body); margin-top: 3px; }
+	.note-in {
+		margin-top: 7px; width: 100%;
+		border: 1px dashed var(--border-strong); border-radius: 8px;
+		padding: 5px 9px; font-size: 12.5px; color: var(--text-body);
+		background: var(--surface-alt); outline: none;
+	}
+	.note-in:focus { border-color: var(--primary); border-style: solid; background: #fff; }
+	.note-in::placeholder { color: #aab2bd; }
+
+	.badges { display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; align-content: flex-start; }
+	.badge {
+		font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+		padding: 3px 7px; border-radius: 6px; white-space: nowrap;
+	}
+	.b-trusted { background: var(--success-light); color: var(--success-deep); }
+	.b-advocacy { background: var(--info-light); color: var(--info-deep); }
+	.b-strict { background: var(--warning-light); color: var(--warning-deep); }
+	.b-verbatim { background: var(--danger-light); color: var(--danger-deep); }
+	.b-banned { background: var(--danger-light); color: var(--danger-deep); }
+	.b-bench { background: #EAF0FF; color: var(--primary-hover); border: 1px solid #cfe0ff; }
+	.b-new { background: #1f3a5f; color: #cfe0ff; }
+	.b-paywall { background: #F3F4F6; color: #6B7280; }
+
+	.cat.denyzone .rows { background: var(--surface-sunk); }
+	.cat.denyzone .row { grid-template-columns: 1fr 132px; }
+	.cat.denyzone .src-name a { color: var(--text-muted); text-decoration: line-through; }
+
+	/* ---- Add box ---- */
+	.addbox {
+		margin-top: 30px;
+		background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+		padding: 18px 18px 20px;
+	}
+	.addbox h3 { margin: 0 0 4px; font-size: 15px; color: var(--text); }
+	.addbox p { margin: 0 0 10px; font-size: 13px; color: var(--text-muted); }
+	.addbox textarea {
+		width: 100%; min-height: 90px; resize: vertical;
+		border: 1px solid var(--border-strong); border-radius: 10px; padding: 10px 12px;
+		font-size: 13.5px; font-family: inherit; color: var(--text); outline: none;
+	}
+	.addbox textarea:focus { border-color: var(--primary); }
+
+	/* ---- Floating export ---- */
+	.dock {
+		position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+		background: rgba(10, 22, 40, 0.96);
+		backdrop-filter: blur(6px);
+		border-top: 1px solid rgba(255,255,255,0.1);
+		color: #fff;
+	}
+	.dock-inner { max-width: 1180px; margin: 0 auto; padding: 12px 24px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+	.dock .summary { font-size: 13px; color: rgba(255,255,255,0.82); flex: 1; min-width: 200px; }
+	.dock .summary b { color: #fff; }
+	.dock .actions { display: flex; gap: 8px; }
+	.btn.primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+	.btn.primary:hover { background: var(--primary-hover); border-color: var(--primary-hover); color: #fff; }
+
+	.toast {
+		position: fixed; bottom: 76px; left: 50%; transform: translateX(-50%) translateY(20px);
+		background: var(--success-deep); color: #fff; padding: 10px 18px; border-radius: 10px;
+		font-size: 13px; font-weight: 600; opacity: 0; pointer-events: none; transition: all 0.25s ease; z-index: 50;
+	}
+	.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+	.empty { padding: 40px; text-align: center; color: var(--text-muted); font-size: 14px; display: none; }
+
+	@media (max-width: 640px) {
+		.row { grid-template-columns: 34px 1fr; }
+		.badges { grid-column: 2; justify-content: flex-start; margin-top: 4px; }
+		.cat-head { top: 56px; }
+	}
+</style>
+</head>
+<body>
+	<header class="masthead">
+		<div class="masthead-inner">
+			<div class="kicker">Veille sectorielle FilmPro</div>
+			<h1>Revue des sources</h1>
+			<p class="sub">Toutes les familles de sites que le moteur de veille consulte chaque semaine. Coche
+				<b>Retirer</b> pour ce que tu veux enlever, ajoute une note si besoin, puis exporte tes décisions
+				en bas de page. Tout est sauvegardé automatiquement dans ce navigateur.</p>
+			<div class="stat-row" id="statRow"></div>
+		</div>
+	</header>
+
+	<div class="toolbar">
+		<div class="toolbar-inner">
+			<label class="search">
+				<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+				<input id="search" type="search" placeholder="Rechercher un site, un domaine, un descriptif..." />
+			</label>
+			<div class="chips" id="filterChips">
+				<button class="chip" data-filter="bench" aria-pressed="false">Ton benchmark</button>
+				<button class="chip" data-filter="new" aria-pressed="false">Ajouts 24/06</button>
+				<button class="chip" data-filter="dropped" aria-pressed="false">Mes retraits</button>
+			</div>
+			<button class="btn" id="resetBtn">Réinitialiser</button>
+		</div>
+	</div>
+
+	<div class="wrap">
+		<div class="legend">
+			<span class="item"><span class="dot" style="background:var(--success-deep)"></span> Confiance (fait cru sauf s'il est contredit)</span>
+			<span class="item"><span class="dot" style="background:var(--info-deep)"></span> Confiance + garde sur les chiffres</span>
+			<span class="item"><span class="dot" style="background:var(--warning-deep)"></span> Strict (chaque fait vérifié sur la page)</span>
+			<span class="item"><span class="dot" style="background:var(--danger-deep)"></span> Strict renforcé / banni</span>
+		</div>
+
+		<div id="catalog"></div>
+
+		<div class="empty" id="emptyState">Aucune source ne correspond à ta recherche.</div>
+
+		<section class="addbox">
+			<h3>Sources à ajouter (texte libre)</h3>
+			<p>Un site qui manque ? Note-le ici (nom + URL + pourquoi). Je l'intégrerai au moteur après ta revue.</p>
+			<textarea id="addBox" placeholder="Ex. Batimag romand - https://... - revue d'architecture vaudoise utile pour les chantiers tertiaires"></textarea>
+		</section>
+	</div>
+
+	<div class="dock">
+		<div class="dock-inner">
+			<div class="summary" id="dockSummary"></div>
+			<div class="actions">
+				<button class="btn ghost-light" id="copyBtn">Copier le récapitulatif</button>
+				<button class="btn primary" id="downloadBtn">Télécharger (.txt)</button>
+			</div>
+		</div>
+	</div>
+
+	<div class="toast" id="toast">Copié</div>
+
+<script>
+// ===== Données : inventaire des sources du moteur de veille (état 2026-06-24) =====
+// regime: trusted | advocacy | strict | verbatim | banned
+// flags: bench (panel benchmark Pascal), new (ajout 24/06), paywall
+const CATS = [
+	{ key: "official", label: "Officiel, normes & statistiques", desc: "Régulateurs, agences publiques, normes. Autorité chiffrée et réglementaire.", regime: "trusted", sources: [
+		{n:"BAFU / OFEV", d:"bafu.admin.ch", s:"Office fédéral de l'environnement (CH)"},
+		{n:"BFE / OFEN", d:"bfe.admin.ch", s:"Office fédéral de l'énergie (CH)"},
+		{n:"ARE", d:"are.admin.ch", s:"Développement territorial (CH)"},
+		{n:"fedpol", d:"fedpol.admin.ch", s:"Office fédéral de la police (sécurité)"},
+		{n:"SIA", d:"sia.ch", s:"Société suisse des ingénieurs et architectes (normes SIA)"},
+		{n:"SNV", d:"snv.ch", s:"Association suisse de normalisation"},
+		{n:"Minergie", d:"minergie.ch", s:"Label bâtiment performant (CH)"},
+		{n:"OFL", d:"ofl.admin.ch", s:"Office fédéral du logement"},
+		{n:"Fedlex", d:"fedlex.admin.ch", s:"Droit fédéral suisse consolidé"},
+		{n:"IPI", d:"ige.ch", s:"Institut fédéral de la propriété intellectuelle"},
+		{n:"OFS (DE)", d:"bfs.admin.ch", s:"Office fédéral de la statistique"},
+		{n:"OFS (FR)", d:"ofs.admin.ch", s:"Office fédéral de la statistique"},
+		{n:"SuisseEnergie", d:"energieschweiz.ch", s:"Programme fédéral énergie"},
+		{n:"SuisseEnergie (FR)", d:"suisseenergie.ch", s:"Programme fédéral énergie"},
+		{n:"Programme Bâtiments", d:"leprogrammebatiments.ch", s:"Subventions rénovation énergétique (CH)"},
+		{n:"CECB", d:"cecb.ch", s:"Certificat énergétique cantonal des bâtiments"},
+		{n:"ADEME", d:"ademe.fr", s:"Agence de la transition écologique (FR)"},
+		{n:"CSTB", d:"cstb.fr", s:"Centre scientifique et technique du bâtiment (FR)"},
+		{n:"AFNOR", d:"afnor.org", s:"Normalisation française"},
+		{n:"Effinergie", d:"effinergie.org", s:"Label performance énergétique (FR)"},
+		{n:"OPERAT", d:"operat.ademe.fr", s:"Plateforme décret tertiaire (ADEME)"},
+		{n:"Ministère écologie", d:"ecologie.gouv.fr", s:"Politique environnementale (FR)"},
+		{n:"Légifrance", d:"legifrance.gouv.fr", s:"Droit français consolidé"},
+		{n:"ANR", d:"anr.fr", s:"Agence nationale de la recherche (FR)"},
+		{n:"Bruxelles Env.", d:"environnement.brussels", s:"Agence environnement (BE)"},
+		{n:"Guichet public LU", d:"guichet.public.lu", s:"Portail administratif (LU)"},
+		{n:"Commission UE", d:"commission.europa.eu", s:"Commission européenne"},
+		{n:"Eurostat / EC", d:"ec.europa.eu", s:"Commission / statistiques UE"},
+		{n:"EUR-Lex", d:"eur-lex.europa.eu", s:"Droit de l'Union européenne"},
+		{n:"CORDIS", d:"cordis.europa.eu", s:"Recherche & innovation UE"},
+		{n:"DIN", d:"din.de", s:"Normalisation allemande"},
+		{n:"ISO", d:"iso.org", s:"Organisation internationale de normalisation"},
+		{n:"CEN", d:"cen.eu", s:"Comité européen de normalisation"},
+		{n:"CEN-CENELEC", d:"cencenelec.eu", s:"Normes européennes"},
+		{n:"IEA / AIE", d:"iea.org", s:"Agence internationale de l'énergie"},
+		{n:"IRENA", d:"irena.org", s:"Agence internationale énergies renouvelables"},
+		{n:"INSEE", d:"insee.fr", s:"Statistique publique française"},
+		{n:"Destatis", d:"destatis.de", s:"Statistique fédérale allemande"},
+		{n:"Glass for Europe", d:"glassforeurope.com", s:"Fédération du verre plat (UE)", r:"advocacy"},
+		{n:"Glass Alliance Europe", d:"gae-eu.org", s:"Fédération faîtière du verre (UE)", r:"advocacy"},
+		{n:"GIMM", d:"gimm.eu", s:"Industries du verre minéral (UE)", r:"advocacy"},
+		{n:"Eurovent", d:"eurovent.eu", s:"Fabricants HVAC (UE)", r:"advocacy"},
+		{n:"EWFA", d:"ewfa.org", s:"European Window Film Association", r:"advocacy"},
+		{n:"IWFA", d:"iwfa.com", s:"International Window Film Association", r:"advocacy"},
+		{n:"APFV", d:"apfv.org", s:"Pros du film pour vitrage", r:"advocacy"},
+		{n:"ASFFV", d:"asffv.fr", s:"Spécialistes français du film vitrage", r:"advocacy"},
+		{n:"SIGaB", d:"sigab.ch", s:"Institut suisse du verre dans le bâtiment", r:"advocacy"},
+		{n:"SFV-ASVP", d:"sfv-asvp.ch", s:"Association suisse du verre plat", r:"advocacy"},
+		{n:"FFPV", d:"ffpv.org", s:"Fédération professionnelle du verre", r:"advocacy"},
+	]},
+	{ key: "trade", label: "Presse pro bâtiment & vitrage", desc: "Actualités sectorielles, études de cas, technique.", regime: "trusted", sources: [
+		{n:"Espazium", d:"espazium.ch", s:"Revue suisse d'architecture (Tracés)"},
+		{n:"Constructo", d:"constructo.ch", s:"Portail construction romand"},
+		{n:"Bauen+Wohnen", d:"bauen-wohnen.ch", s:"Bâtir & habiter (CH)"},
+		{n:"Hochparterre", d:"hochparterre.ch", s:"Architecture & design (CH)"},
+		{n:"Baublatt", d:"baublatt.ch", s:"Journal suisse de la construction"},
+		{n:"Batiactu", d:"batiactu.com", s:"Actualité du bâtiment (FR)"},
+		{n:"Le Moniteur", d:"lemoniteur.fr", s:"Référence BTP (FR)"},
+		{n:"Cahiers techniques", d:"cahiers-techniques-batiment.fr", s:"Technique du bâtiment (FR)"},
+		{n:"AMC", d:"amc-archi.com", s:"Architecture (FR)"},
+		{n:"Ordre architectes", d:"architectes.org", s:"Ordre des architectes (FR)"},
+		{n:"Verre & Protections", d:"verre-et-protections.com", s:"Revue verre & protection solaire (FR)"},
+		{n:"Verre et Protections", d:"verreetprotections.com", s:"Variante du précédent"},
+		{n:"DETAIL", d:"detail.de", s:"Revue d'architecture (DE/INT)"},
+		{n:"Glass on Web", d:"glassonweb.com", s:"Portail international du verre"},
+		{n:"Glass Magazine", d:"glassmagazine.com", s:"Revue verre (US)"},
+		{n:"USGlass", d:"usglassmag.com", s:"Revue verre & vitrage (US)"},
+		{n:"Window Film Mag", d:"windowfilmmag.com", s:"Seule revue dédiée aux films pour vitrage"},
+		{n:"ArchDaily", d:"archdaily.com", s:"Architecture (INT)"},
+		{n:"ArchDaily FR", d:"archdaily.fr", s:"Architecture (FR)"},
+		{n:"BUILD UP", d:"build-up.eu", s:"Plateforme bâtiment durable (UE)"},
+		{n:"Glass International", d:"glass-international.com", s:"Industrie du verre (INT)"},
+		{n:"GLASWELT", d:"glaswelt.de", s:"Fenêtre, façade, protection solaire (DE)"},
+		{n:"GFF Magazin", d:"gff-magazin.de", s:"Verre, façade, fenêtre (DE)"},
+		{n:"Baunetz Wissen", d:"baunetzwissen.de", s:"Savoir technique bâtiment (DE)"},
+		{n:"L'Écho de la Baie", d:"lechodelabaie.fr", s:"Menuiserie & fermeture (FR)"},
+	]},
+	{ key: "market", label: "Études de marché & cabinets", desc: "Chiffres marché, baromètres immobiliers. Vérification stricte des chiffres.", regime: "strict", sources: [
+		{n:"McKinsey", d:"mckinsey.com", s:"Cabinet de conseil"},
+		{n:"Roland Berger", d:"rolandberger.com", s:"Cabinet de conseil"},
+		{n:"JLL (CH)", d:"jll.ch", s:"Conseil immobilier"},
+		{n:"JLL", d:"jll.com", s:"Conseil immobilier (INT)"},
+		{n:"CBRE (CH)", d:"cbre.ch", s:"Conseil immobilier"},
+		{n:"CBRE", d:"cbre.com", s:"Conseil immobilier (INT)"},
+		{n:"CBRE media", d:"mediaassets.cbre.com", s:"Rapports & médias CBRE"},
+		{n:"BNP Paribas RE", d:"bnpparibas-realestate.com", s:"Conseil immobilier"},
+		{n:"Cushman & Wakefield", d:"cushmanwakefield.com", s:"Conseil immobilier"},
+		{n:"Savills", d:"savills.com", s:"Conseil immobilier"},
+		{n:"Deloitte", d:"deloitte.com", s:"Audit & conseil"},
+		{n:"PwC", d:"pwc.com", s:"Audit & conseil"},
+		{n:"EY", d:"ey.com", s:"Audit & conseil"},
+		{n:"WBDG", d:"wbdg.org", s:"Whole Building Design Guide (US)"},
+		{n:"Mordor Intelligence", d:"mordorintelligence.com", s:"Études marché - hallucination chiffrée connue", r:"verbatim"},
+		{n:"Fortune Business Insights", d:"fortunebusinessinsights.com", s:"Études marché - hallucination chiffrée connue", r:"verbatim"},
+		{n:"SNS Insider", d:"snsinsider.com", s:"Études marché - garde chiffres", r:"verbatim"},
+	]},
+	{ key: "press", label: "Presse généraliste & régionale", desc: "Signaux marché, décisions cantonales, contexte. Cœur du sourcing romand.", regime: "trusted", sources: [
+		{n:"RTS", d:"rts.ch", s:"Radio Télévision Suisse romande"},
+		{n:"Le Temps", d:"letemps.ch", s:"Quotidien de référence romand", f:["paywall"]},
+		{n:"24 heures", d:"24heures.ch", s:"Quotidien vaudois (VD)", f:["paywall"]},
+		{n:"Tribune de Genève", d:"tdg.ch", s:"Quotidien genevois (GE)", f:["paywall"]},
+		{n:"Le Matin", d:"lematin.ch", s:"Actualité romande", f:["paywall"]},
+		{n:"Bilan", d:"bilan.ch", s:"Magazine économique romand"},
+		{n:"L'Agefi", d:"agefi.com", s:"Quotidien financier romand"},
+		{n:"Heidi.news", d:"heidi.news", s:"Média romand (science, société)"},
+		{n:"Le Nouvelliste", d:"lenouvelliste.ch", s:"Quotidien valaisan (VS)", f:["new"]},
+		{n:"La Liberté", d:"laliberte.ch", s:"Quotidien fribourgeois (FR)", f:["new"]},
+		{n:"ArcInfo", d:"arcinfo.ch", s:"Quotidien neuchâtelois (NE)", f:["new"]},
+		{n:"La Côte", d:"lacote.ch", s:"Quotidien Nyon / Morges (VD)", f:["new"]},
+		{n:"Le Quotidien Jurassien", d:"lqj.ch", s:"Quotidien jurassien (JU)", f:["new"]},
+		{n:"Le Courrier", d:"lecourrier.ch", s:"Quotidien genevois (GE)", f:["new"]},
+		{n:"GHI", d:"ghi.ch", s:"Hebdomadaire gratuit genevois (GE)", f:["new"]},
+		{n:"SRF", d:"srf.ch", s:"Service public alémanique"},
+		{n:"swissinfo", d:"swissinfo.ch", s:"Service public international (CH)"},
+		{n:"ATS", d:"ats.ch", s:"Agence télégraphique suisse"},
+		{n:"NZZ", d:"nzz.ch", s:"Neue Zürcher Zeitung (DE)"},
+		{n:"Tages-Anzeiger", d:"tagesanzeiger.ch", s:"Quotidien zurichois"},
+		{n:"Handelszeitung", d:"handelszeitung.ch", s:"Économie (DE/CH)"},
+		{n:"Bilanz", d:"bilanz.ch", s:"Magazine économique (DE/CH)"},
+		{n:"cash", d:"cash.ch", s:"Finance (CH)"},
+		{n:"Schweizer Bauer", d:"schweizerbauer.ch", s:"Presse agricole/rurale (CH)"},
+		{n:"Le Monde", d:"lemonde.fr", s:"Quotidien de référence (FR)", f:["paywall"]},
+		{n:"Les Échos", d:"lesechos.fr", s:"Quotidien économique (FR)"},
+		{n:"Le Figaro", d:"lefigaro.fr", s:"Quotidien généraliste (FR)"},
+		{n:"Capital", d:"capital.fr", s:"Économie (FR)"},
+		{n:"Challenges", d:"challenges.fr", s:"Économie (FR)"},
+		{n:"La Tribune", d:"latribune.fr", s:"Économie (FR)"},
+		{n:"Le Dauphiné Libéré", d:"ledauphine.com", s:"Frontalier - Ain / Pays de Gex / Haute-Savoie (contexte)", f:["new"]},
+		{n:"Le Messager", d:"lemessager.fr", s:"Frontalier - Chablais / Genevois (contexte)", f:["new"]},
+		{n:"Keystone-ATS", d:"keystone-sda.ch", s:"Agence de presse nationale"},
+		{n:"RSI", d:"rsi.ch", s:"Service public italophone (SSR)"},
+		{n:"watson", d:"watson.ch", s:"Média d'actualité (CH)"},
+	]},
+	{ key: "tech", label: "Tech, R&D & brevets", desc: "Innovation matériau, smart glass, brevets, recherche académique.", regime: "trusted", sources: [
+		{n:"MIT Tech Review", d:"technologyreview.com", s:"Innovation technologique"},
+		{n:"Phys.org", d:"phys.org", s:"Actualité scientifique"},
+		{n:"IEEE", d:"ieee.org", s:"Ingénierie & électronique"},
+		{n:"IEEE Spectrum", d:"spectrum.ieee.org", s:"Magazine technique IEEE"},
+		{n:"Nature", d:"nature.com", s:"Revue scientifique (peer-reviewed)"},
+		{n:"ScienceDirect", d:"sciencedirect.com", s:"Articles scientifiques (Elsevier)"},
+		{n:"Science", d:"sciencemag.org", s:"Revue scientifique (peer-reviewed)"},
+		{n:"arXiv", d:"arxiv.org", s:"Preprints NON validés par les pairs", r:"strict"},
+		{n:"Espacenet", d:"espacenet.com", s:"Brevets européens (OEB)"},
+		{n:"WIPO / OMPI", d:"wipo.int", s:"Brevets mondiaux"},
+		{n:"Google Patents", d:"patents.google.com", s:"Recherche de brevets"},
+		{n:"USPTO", d:"uspto.gov", s:"Brevets américains"},
+		{n:"Empa", d:"empa.ch", s:"Laboratoire fédéral des matériaux (CH)"},
+		{n:"EPFL", d:"epfl.ch", s:"École polytechnique de Lausanne"},
+		{n:"EPFL Mediacom", d:"memento.epfl.ch", s:"Agenda & actualités EPFL"},
+		{n:"ETH Zurich", d:"ethz.ch", s:"École polytechnique de Zurich"},
+		{n:"HEIA-FR", d:"heia-fr.ch", s:"Haute école d'ingénierie Fribourg"},
+		{n:"ZHAW", d:"zhaw.ch", s:"Haute école zurichoise"},
+		{n:"Grenoble INP Pagora", d:"pagora.grenoble-inp.fr", s:"Électronique imprimée (FR)"},
+		{n:"Grenoble INP", d:"grenoble-inp.fr", s:"Institut polytechnique (FR)"},
+		{n:"Springer", d:"link.springer.com", s:"Revues scientifiques"},
+		{n:"Wiley", d:"onlinelibrary.wiley.com", s:"Revues scientifiques"},
+		{n:"Taylor & Francis", d:"tandfonline.com", s:"Revues scientifiques"},
+		{n:"CNRS", d:"cnrs.fr", s:"Recherche publique (FR)"},
+		{n:"Fraunhofer", d:"fraunhofer.de", s:"Instituts de recherche appliquée (DE)"},
+	]},
+	{ key: "compintl", label: "Concurrents internationaux (films & smart glass)", desc: "Signal compétitif : lancements produit, R&D. Pas une autorité chiffrée.", regime: "strict", sources: [
+		{n:"3M", d:"3m.com", s:"Films pour vitrage (groupe US)", f:["bench"]},
+		{n:"3M Suisse", d:"3msuisse.ch", s:"3M Window Films Suisse", f:["bench"]},
+		{n:"Eastman", d:"eastman.com", s:"Chimie / films (LLumar, SunTek)"},
+		{n:"LLumar", d:"llumar.com", s:"Films pour vitrage (Eastman)"},
+		{n:"Vista", d:"vista-films.com", s:"Films pour vitrage (Eastman)"},
+		{n:"SunTek", d:"suntek.com", s:"Films pour vitrage (Eastman)"},
+		{n:"Avery Dennison", d:"averydennison.com", s:"Films & matériaux"},
+		{n:"Madico", d:"madico.com", s:"Films pour vitrage (US)", f:["bench"]},
+		{n:"Solar Gard", d:"solargard.com", s:"Saint-Gobain Solar Gard (films)", f:["bench"]},
+		{n:"View", d:"view.com", s:"Smart glass électrochrome (US)"},
+		{n:"SageGlass", d:"sageglass.com", s:"Smart glass (Saint-Gobain)"},
+		{n:"Halio", d:"halio.com", s:"Smart glass à teinte variable"},
+		{n:"Kinestral", d:"kinestral.com", s:"Smart glass (Halio)"},
+		{n:"Saint-Gobain", d:"saint-gobain.com", s:"Groupe verre & matériaux"},
+		{n:"Saint-Gobain Glass", d:"saint-gobain-glass.com", s:"Vitrages performants"},
+		{n:"Guardian Glass", d:"guardianglass.com", s:"Verre (groupe US)"},
+		{n:"Hueck", d:"hueck.com", s:"Profilés aluminium / façades (DE)"},
+		{n:"Schüco", d:"schueco.com", s:"Façades & fenêtres (DE)"},
+		{n:"Vitro", d:"vitro.com", s:"Verre architectural (Amérique)"},
+		{n:"Pilkington", d:"pilkington.com", s:"Verre (NSG Group)"},
+		{n:"AGC", d:"agc.com", s:"Verre (groupe japonais)"},
+		{n:"AGC Glass Europe", d:"agc-glass.eu", s:"Verre architectural (UE)"},
+		{n:"NSG Group", d:"nsg.com", s:"Verre (Pilkington)"},
+		{n:"Riou Glass", d:"riouglass.com", s:"Transformateur verrier (FR)"},
+	]},
+	{ key: "installers", label: "Installateurs concurrents directs (benchmark)", desc: "Concurrence frontale de FilmPro. Signal explicite uniquement, jamais chiffré.", regime: "strict", sources: [
+		{n:"JP Schweizer", d:"jpschweizer.com", s:"Installateur films (CH romande)", f:["bench"]},
+		{n:"Solar Comfort", d:"solar-comfort.com", s:"Installateur films (CH romande)", f:["bench"]},
+		{n:"Vitroconcept Suisse", d:"vitroconcept.ch", s:"Installateur films (CH romande)", f:["bench"]},
+		{n:"Glaslook", d:"glaslook.ch", s:"Installateur films (CH romande)", f:["bench"]},
+		{n:"noovum", d:"noovum.ch", s:"Installateur films (CH romande)", f:["bench"]},
+		{n:"a-film / GNT Groupe", d:"a-film.ch", s:"Installateur films (CH romande)", f:["bench"]},
+		{n:"Glas Pro'tect", d:"glas-pro-tect.ch", s:"Installateur films (CH)"},
+		{n:"Seecret Films", d:"seecret.ch", s:"Films de discrétion (CH)"},
+		{n:"Vitrocsa", d:"vitrocsa.com", s:"Vitrages minimalistes (CH)"},
+		{n:"Dexypro", d:"dexypro.fr", s:"Installateur films (FR)", f:["bench"]},
+		{n:"Solis Concept", d:"solisconcept.com", s:"Installateur films (FR)", f:["bench"]},
+		{n:"Stores de France", d:"storesdefrance.com", s:"Protection solaire (FR)", f:["bench"]},
+		{n:"Protectio", d:"protectio-france.com", s:"Installateur films (FR)"},
+		{n:"SIAC France", d:"siacofrance.com", s:"Réseau de poseurs (FR)"},
+		{n:"Portail film vitrages", d:"le-portail-du-film-pour-vitrages.com", s:"Portail films (FR)"},
+		{n:"Lisa Énergie", d:"lisaenergie.be", s:"Installateur films (BE)"},
+		{n:"Vectura", d:"vectura.be", s:"Installateur films (BE)"},
+		{n:"Serisolar", d:"serisolar.com", s:"Installateur films (IT)", f:["bench"]},
+		{n:"Solaris Films", d:"solarisfilms.it", s:"Installateur films (IT)", f:["bench"]},
+		{n:"Italfilm", d:"italfilm.it", s:"Installateur films (IT)", f:["bench"]},
+		{n:"Glassfilm", d:"glassfilm.it", s:"Installateur films (IT)", f:["bench"]},
+		{n:"Pellicole risparmio", d:"pellicolerisparmioenergetico.it", s:"Blog poseur (IT)"},
+		{n:"Solar Film Protect", d:"solarfilmprotect.com", s:"Installateur films (LU)"},
+		{n:"Carlike", d:"carlikefilm.com", s:"Films (fabricant/distributeur, EU)"},
+		{n:"Window Film Depot", d:"windowfilmdepot.com", s:"Référence industrie films (US)"},
+	]},
+	{ key: "brands", label: "Marques & fabricants (benchmark)", desc: "Repères B2B specs produits, certifications, R&D matériaux.", regime: "strict", sources: [
+		{n:"Solar Screen", d:"solarscreen.eu", s:"Films pour vitrage (distributeur EU)", f:["bench"]},
+		{n:"TEGO", d:"tegofilm.com", s:"Smart films (Solar Screen Group)", f:["bench"]},
+		{n:"Swissnanotech", d:"swissnanotech.ch", s:"Films nanotechnologiques (CH)", f:["bench"]},
+		{n:"Reflectiv", d:"reflectiv.com", s:"Films décoratifs & techniques", f:["bench"]},
+		{n:"Hanita Coatings", d:"hanitacoatings.com", s:"Fabricant de films (IL)", f:["bench"]},
+		{n:"Gauzy", d:"gauzy.com", s:"Smart glass & films commutables", f:["bench"]},
+	]},
+	{ key: "verbatim", label: "Sources à chiffres - garde renforcée", desc: "Autorisées mais tout chiffre doit être copié au mot près (hallucination connue).", regime: "verbatim", sources: [
+		{n:"MarketsandMarkets", d:"marketsandmarkets.com", s:"Études de marché"},
+		{n:"GlobeNewswire", d:"globenewswire.com", s:"Fil de communiqués de presse"},
+		{n:"Business Wire", d:"businesswire.com", s:"Fil de communiqués de presse"},
+		{n:"Grand View Research", d:"grandviewresearch.com", s:"Études de marché payantes"},
+		{n:"Research and Markets", d:"researchandmarkets.com", s:"Revendeur d'études"},
+		{n:"GII Research", d:"giiresearch.com", s:"Revendeur d'études"},
+		{n:"Allied Market Research", d:"alliedmarketresearch.com", s:"Études de marché"},
+		{n:"PR Newswire", d:"prnewswire.com", s:"Fil de communiqués"},
+		{n:"ACCESS Newswire", d:"accesswire.com", s:"Fil de communiqués"},
+		{n:"EIN Presswire", d:"einpresswire.com", s:"Fil de communiqués"},
+		{n:"Newswire.ca", d:"newswire.ca", s:"Fil de communiqués (CA)"},
+	]},
+	{ key: "denylist", label: "Sources bannies (rejet automatique)", desc: "Bloquées avant toute vérification : blogs marketing déguisés, agrégateurs SEO.", regime: "banned", deny: true, sources: [
+		{n:"Le Blog Finance", d:"leblogfinance.com", s:"Blog finance (identifié W18)"},
+		{n:"NextNews", d:"nextnews.fr", s:"Agrégateur"},
+		{n:"ProjectFork", d:"projectfork.net", s:"SaaS marketing déguisé"},
+		{n:"Zyyne", d:"zyyne.com", s:"Plateforme flipbook marketing"},
+		{n:"Coast Smartfilm", d:"coast-smartfilm.com", s:"Marketing déguisé"},
+		{n:"EPX Informatique", d:"epx-informatique.com", s:"Hors-sujet (IT)"},
+		{n:"Sun Shield", d:"sun-shield.fr", s:"Blog marketing"},
+		{n:"Vitroconcept (FR)", d:"vitroconcept.com", s:"Marketing FR - à NE PAS confondre avec vitroconcept.ch (légitime)"},
+		{n:"Decilab", d:"decilab.com", s:"Identifié W18"},
+		{n:"Wikiwand", d:"wikiwand.com", s:"Miroir Wikipédia"},
+		{n:"Wikipedia mirror", d:"wikipedia-mirror.com", s:"Miroir"},
+		{n:"NewsBreak", d:"newsbreak.com", s:"Agrégateur SEO"},
+		{n:"Press Release Today", d:"pressreleasetoday.com", s:"Communiqués SEO"},
+		{n:"OpenPR", d:"openpr.com", s:"Communiqués SEO"},
+		{n:"PR.com", d:"pr.com", s:"Communiqués SEO"},
+		{n:"img.pr.com", d:"img.pr.com", s:"Communiqués SEO"},
+		{n:"Patterns bannis", d:"*.blogspot / *.wordpress / *.medium.com/@user / *.substack", s:"Blogs personnels (hostname pattern)"},
+	]},
+];
+
+const REGIME_BADGE = {
+	trusted: {cls:"b-trusted", txt:"Confiance"},
+	advocacy: {cls:"b-advocacy", txt:"Confiance + chiffres"},
+	strict: {cls:"b-strict", txt:"Strict"},
+	verbatim: {cls:"b-verbatim", txt:"Strict chiffres"},
+	banned: {cls:"b-banned", txt:"Banni"},
+};
+
+const STORE_KEY = "filmpro-sources-revue-2026-06-24";
+let state = loadState();
+
+function loadState() {
+	try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {drop:{}, notes:{}, add:""}; }
+	catch (e) { return {drop:{}, notes:{}, add:""}; }
+}
+function saveState() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+const filters = { bench:false, new:false, dropped:false };
+let searchTerm = "";
+
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+function totalSources() { return CATS.filter(c => !c.deny).reduce((a,c) => a + c.sources.length, 0); }
+
+function render() {
+	const root = document.getElementById("catalog");
+	root.innerHTML = "";
+	let visibleCount = 0;
+
+	for (const cat of CATS) {
+		const sec = document.createElement("section");
+		sec.className = "cat" + (cat.deny ? " denyzone" : "");
+
+		const rowsHtml = [];
+		let catVisible = 0;
+		for (const src of cat.sources) {
+			const regime = src.r || cat.regime;
+			const dropped = !!state.drop[src.d];
+			const isBench = (src.f||[]).includes("bench");
+			const isNew = (src.f||[]).includes("new");
+			const isPaywall = (src.f||[]).includes("paywall");
+
+			let show = true;
+			if (searchTerm) {
+				const hay = (src.n + " " + src.d + " " + src.s).toLowerCase();
+				if (!hay.includes(searchTerm)) show = false;
+			}
+			if (filters.bench && !isBench) show = false;
+			if (filters.new && !isNew) show = false;
+			if (filters.dropped && !dropped) show = false;
+			if (show) { catVisible++; visibleCount++; }
+
+			const badges = [];
+			if (isBench) badges.push('<span class="badge b-bench">Ton benchmark</span>');
+			if (isNew) badges.push('<span class="badge b-new">Ajout 24/06</span>');
+			if (isPaywall) badges.push('<span class="badge b-paywall">Paywall</span>');
+			const rb = REGIME_BADGE[regime];
+			badges.push('<span class="badge '+rb.cls+'">'+rb.txt+'</span>');
+
+			const href = src.d.includes("*") ? null : "https://" + src.d.split(" ")[0] + "/";
+			const nameHtml = href
+				? '<a href="'+href+'" target="_blank" rel="noopener">'+esc(src.n)+'</a>'
+				: '<span style="font-weight:650;color:var(--text-muted)">'+esc(src.n)+'</span>';
+
+			if (cat.deny) {
+				rowsHtml.push(
+					'<div class="row'+(show?'':' hidden')+'">'+
+						'<div class="src-main"><div class="src-name">'+nameHtml+'<span class="src-domain">'+esc(src.d)+'</span></div>'+
+						'<div class="src-desc">'+esc(src.s)+'</div></div>'+
+						'<div class="badges">'+badges.join("")+'</div>'+
+					'</div>'
+				);
+			} else {
+				const note = state.notes[src.d] || "";
+				rowsHtml.push(
+					'<div class="row'+(dropped?' dropped':'')+(show?'':' hidden')+'" data-d="'+esc(src.d)+'">'+
+						'<label class="keepbox" title="Cocher pour RETIRER cette source"><input type="checkbox" data-drop="'+esc(src.d)+'"'+(dropped?' checked':'')+'></label>'+
+						'<div class="src-main">'+
+							'<div class="src-name">'+nameHtml+'<span class="src-domain">'+esc(src.d)+'</span></div>'+
+							'<div class="src-desc">'+esc(src.s)+'</div>'+
+							'<input class="note-in" data-note="'+esc(src.d)+'" placeholder="Note (optionnel) : pourquoi retirer / remarque" value="'+esc(note)+'">'+
+						'</div>'+
+						'<div class="badges">'+badges.join("")+'</div>'+
+					'</div>'
+				);
+			}
+		}
+
+		sec.innerHTML =
+			'<div class="cat-head"><h2>'+esc(cat.label)+'</h2><span class="desc">'+esc(cat.desc)+'</span>'+
+			'<span class="count">'+catVisible+' / '+cat.sources.length+'</span></div>'+
+			'<div class="rows">'+rowsHtml.join("")+'</div>';
+		// Masquer la catégorie entière si rien de visible
+		if (catVisible === 0 && (searchTerm || filters.bench || filters.new || filters.dropped)) sec.style.display = "none";
+		root.appendChild(sec);
+	}
+
+	document.getElementById("emptyState").style.display = visibleCount === 0 ? "block" : "none";
+	wireRowEvents();
+	renderStats();
+}
+
+function renderStats() {
+	const total = totalSources();
+	const dropped = Object.keys(state.drop).filter(d => state.drop[d]).length;
+	const kept = total - dropped;
+	const benchTotal = CATS.reduce((a,c)=>a + c.sources.filter(s=>(s.f||[]).includes("bench")).length, 0);
+	const newTotal = CATS.reduce((a,c)=>a + c.sources.filter(s=>(s.f||[]).includes("new")).length, 0);
+	document.getElementById("statRow").innerHTML =
+		'<div class="stat"><div class="n">'+total+'</div><div class="l">Sources actives</div></div>'+
+		'<div class="stat keep"><div class="n">'+kept+'</div><div class="l">Gardées</div></div>'+
+		'<div class="stat drop"><div class="n">'+dropped+'</div><div class="l">À retirer</div></div>'+
+		'<div class="stat"><div class="n">'+benchTotal+'</div><div class="l">Ton benchmark</div></div>'+
+		'<div class="stat"><div class="n">'+newTotal+'</div><div class="l">Ajouts 24/06</div></div>';
+
+	const notesN = Object.keys(state.notes).filter(d => (state.notes[d]||"").trim()).length;
+	document.getElementById("dockSummary").innerHTML =
+		'<b>'+dropped+'</b> source'+(dropped>1?'s':'')+' à retirer, <b>'+notesN+'</b> note'+(notesN>1?'s':'')+
+		(state.add.trim() ? ', <b>+</b> ajouts libres' : '') + '. Sauvegarde automatique active.';
+}
+
+function wireRowEvents() {
+	document.querySelectorAll('input[data-drop]').forEach(cb => {
+		cb.addEventListener("change", () => {
+			const d = cb.getAttribute("data-drop");
+			if (cb.checked) state.drop[d] = true; else delete state.drop[d];
+			saveState();
+			const row = cb.closest(".row");
+			row.classList.toggle("dropped", cb.checked);
+			if (filters.dropped && !cb.checked) row.classList.add("hidden");
+			renderStats();
+		});
+	});
+	document.querySelectorAll('input[data-note]').forEach(inp => {
+		inp.addEventListener("input", () => {
+			const d = inp.getAttribute("data-note");
+			const v = inp.value.trim();
+			if (v) state.notes[d] = inp.value; else delete state.notes[d];
+			saveState();
+			renderStats();
+		});
+	});
+}
+
+function buildSummary() {
+	const lines = [];
+	lines.push("VEILLE FILMPRO - REVUE DES SOURCES");
+	lines.push("Date : 2026-06-24");
+	const total = totalSources();
+	const dropList = [];
+	for (const cat of CATS) {
+		if (cat.deny) continue;
+		for (const src of cat.sources) {
+			if (state.drop[src.d]) dropList.push({cat:cat.label, src});
+		}
+	}
+	lines.push("Total sources actives : " + total + " | À retirer : " + dropList.length);
+	lines.push("");
+	lines.push("=== SOURCES À RETIRER ===");
+	if (!dropList.length) lines.push("(aucune)");
+	for (const {cat, src} of dropList) {
+		const note = (state.notes[src.d]||"").trim();
+		lines.push("- [" + cat + "] " + src.n + " (" + src.d + ")" + (note ? " -- " + note : ""));
+	}
+	lines.push("");
+	lines.push("=== NOTES SUR DES SOURCES GARDÉES ===");
+	const keptNotes = [];
+	for (const cat of CATS) {
+		if (cat.deny) continue;
+		for (const src of cat.sources) {
+			const note = (state.notes[src.d]||"").trim();
+			if (note && !state.drop[src.d]) keptNotes.push("- " + src.n + " (" + src.d + ") : " + note);
+		}
+	}
+	lines.push(keptNotes.length ? keptNotes.join("\n") : "(aucune)");
+	lines.push("");
+	lines.push("=== SOURCES À AJOUTER (texte libre) ===");
+	lines.push(state.add.trim() || "(aucune)");
+	return lines.join("\n");
+}
+
+document.getElementById("search").addEventListener("input", (e) => {
+	searchTerm = e.target.value.trim().toLowerCase();
+	render();
+});
+
+document.querySelectorAll("#filterChips .chip").forEach(chip => {
+	chip.addEventListener("click", () => {
+		const f = chip.getAttribute("data-filter");
+		filters[f] = !filters[f];
+		chip.setAttribute("aria-pressed", filters[f] ? "true" : "false");
+		render();
+	});
+});
+
+document.getElementById("addBox").addEventListener("input", (e) => {
+	state.add = e.target.value;
+	saveState();
+	renderStats();
+});
+
+document.getElementById("resetBtn").addEventListener("click", () => {
+	if (!confirm("Effacer toutes tes annotations (retraits, notes, ajouts) ?")) return;
+	state = {drop:{}, notes:{}, add:""};
+	saveState();
+	document.getElementById("addBox").value = "";
+	render();
+});
+
+function showToast(msg) {
+	const t = document.getElementById("toast");
+	t.textContent = msg;
+	t.classList.add("show");
+	setTimeout(() => t.classList.remove("show"), 1600);
+}
+
+document.getElementById("copyBtn").addEventListener("click", async () => {
+	const txt = buildSummary();
+	try { await navigator.clipboard.writeText(txt); showToast("Récapitulatif copié"); }
+	catch (e) {
+		const ta = document.createElement("textarea");
+		ta.value = txt; document.body.appendChild(ta); ta.select();
+		document.execCommand("copy"); ta.remove(); showToast("Récapitulatif copié");
+	}
+});
+
+document.getElementById("downloadBtn").addEventListener("click", () => {
+	const blob = new Blob([buildSummary()], {type:"text/plain;charset=utf-8"});
+	const a = document.createElement("a");
+	a.href = URL.createObjectURL(blob);
+	a.download = "veille-filmpro-revue-sources-2026-06-24.txt";
+	a.click();
+	URL.revokeObjectURL(a.href);
+	showToast("Fichier téléchargé");
+});
+
+// Init
+document.getElementById("addBox").value = state.add || "";
+render();
+</script>
+</body>
+</html>

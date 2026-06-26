@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>FilmPro - Éditeur de la veille (mockup v2)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+	:root {
+		--primary: #2F5A9E; --primary-light: #F0F4F8; --primary-hover: #264C85; --primary-dark: #0A1628;
+		--surface: #FFFFFF; --surface-alt: #F9FAFB; --surface-sunk: #F3F5F8;
+		--border: #E5E7EB; --border-strong: #D1D5DB; --border-input: #ADB5BD;
+		--text: #111827; --text-body: #374151; --text-muted: #6B7280; --text-faint: #9CA3AF;
+		--success: #12B76A; --success-light: #ECFDF3; --success-deep: #067647;
+		--warning: #F79009; --warning-light: #FFFAEB; --warning-deep: #B54708;
+		--danger: #F04438; --danger-light: #FEF3F2; --danger-deep: #B42318;
+		--info: #5A7190; --info-light: #EDF1F5; --info-deep: #4A5E78;
+		--radius-sm: 6px; --radius-md: 8px; --radius-lg: 10px; --radius-xl: 12px; --radius-full: 9999px;
+		--shadow-xs: 0 1px 2px rgba(16,24,40,0.05);
+		--shadow-card: 0 1px 0 rgba(17,24,39,0.02), 0 0 0 1px rgba(17,24,39,0.04), 0 8px 20px -12px rgba(17,24,39,0.10);
+		--shadow-lg: 0 12px 16px -4px rgba(16,24,40,0.08), 0 4px 6px -2px rgba(16,24,40,0.03);
+		--ease: cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	* { box-sizing: border-box; }
+	html { scroll-behavior: smooth; }
+	body { margin: 0; font-family: 'DM Sans', system-ui, -apple-system, sans-serif; color: var(--text-body); background: var(--surface-sunk); -webkit-font-smoothing: antialiased; line-height: 1.5; }
+	.mono { font-family: 'DM Mono', ui-monospace, monospace; }
+
+	/* ===== Masthead ===== */
+	.shell { background: var(--surface); }
+	.masthead { max-width: 1240px; margin: 0 auto; padding: 26px 32px 0; }
+	.back { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 500; color: var(--primary); text-decoration: none; margin-bottom: 16px; }
+	.back:hover { text-decoration: underline; }
+	.kicker { text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; font-weight: 700; color: var(--primary); }
+	.title { font-size: clamp(30px, 4vw, 40px); font-weight: 800; letter-spacing: -0.03em; line-height: 1.04; color: var(--primary-dark); margin: 8px 0 0; }
+	.subtitle { font-size: 16px; line-height: 1.65; color: var(--text-body); margin: 10px 0 0; max-width: 660px; }
+
+	/* ===== Tabs ===== */
+	.tabs-bar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 24px; max-width: 1240px; margin: 22px auto 0; padding: 0 32px; background: var(--surface); border-bottom: 1px solid var(--border); }
+	.tab { height: 52px; padding: 0 20px; border: none; background: transparent; border-bottom: 3px solid transparent; font: inherit; font-size: 14.5px; font-weight: 500; color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 9px; transition: color 180ms ease, border-color 180ms ease; margin-bottom: -1px; }
+	.tab:hover { color: var(--text); }
+	.tab[aria-selected="true"] { color: var(--primary); border-bottom-color: var(--primary); font-weight: 600; }
+	.tab-count { font-size: 12px; font-weight: 600; padding: 2px 8px; background: var(--surface-alt); color: var(--text-muted); border-radius: var(--radius-full); }
+	.tab[aria-selected="true"] .tab-count { background: var(--primary-light); color: var(--primary); }
+
+	/* ===== Content ===== */
+	.wrap { max-width: 1240px; margin: 0 auto; padding: 26px 32px 90px; }
+	.panel { display: none; }
+	.panel.active { display: block; animation: fade 0.25s var(--ease); }
+	@keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+	/* ===== Callout ===== */
+	.callout { display: flex; gap: 12px; align-items: flex-start; background: var(--primary-light); border: 1px solid #d7e2f2; border-radius: var(--radius-lg); padding: 14px 17px; margin-bottom: 20px; }
+	.callout .ic { flex: none; color: var(--primary); margin-top: 1px; }
+	.callout p { margin: 0; font-size: 13.5px; color: #2b3f5e; line-height: 1.55; }
+	.callout b { color: var(--primary-dark); }
+
+	/* ===== Toolbar ===== */
+	.sec-tools { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; flex-wrap: wrap; }
+	.sec-tools .left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+	.search { display: flex; align-items: center; gap: 8px; background: #fff; border: 1px solid var(--border-input); border-radius: var(--radius-md); padding: 9px 13px; min-width: 250px; }
+	.search input { border: 0; outline: 0; font: inherit; font-size: 14px; width: 100%; color: var(--text); background: transparent; }
+	.search svg { color: var(--text-muted); flex: none; }
+	.famsel { height: 40px; border: 1px solid var(--border-input); border-radius: var(--radius-md); padding: 0 12px; font: inherit; font-size: 14px; color: var(--text-body); background: #fff; cursor: pointer; }
+
+	/* ===== Buttons ===== */
+	.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: var(--radius-lg); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 180ms var(--ease); border: 1px solid transparent; }
+	.btn-primary { background: var(--primary); color: #fff; box-shadow: 0 1px 2px rgba(16,24,40,0.12), inset 0 1px 0 rgba(255,255,255,0.14); }
+	.btn-primary:hover { background: var(--primary-hover); }
+	.btn-primary:active { transform: scale(0.98); }
+	.btn-primary:disabled { background: #aebfd8; cursor: not-allowed; box-shadow: none; }
+	.btn-secondary { background: #fff; color: var(--text-body); border-color: var(--border-strong); box-shadow: var(--shadow-xs); }
+	.btn-secondary:hover { background: var(--surface-alt); }
+	.chip { height: 34px; padding: 0 14px; border-radius: var(--radius-full); border: 1px solid var(--border-strong); background: #fff; color: var(--text-body); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 150ms ease; display: inline-flex; align-items: center; gap: 7px; }
+	.chip:hover { border-color: var(--primary); color: var(--primary); }
+	.chip[aria-pressed="true"] { background: var(--primary-dark); border-color: var(--primary-dark); color: #fff; }
+	.chip .sw { width: 9px; height: 9px; border-radius: 50%; }
+
+	/* ===== Table ===== */
+	.tablecard { background: #fff; border-radius: var(--radius-xl); box-shadow: var(--shadow-card); overflow: hidden; }
+	.thead, .trow { display: grid; align-items: center; gap: 16px; padding: 0 22px; }
+	.themes-grid { grid-template-columns: minmax(150px,1fr) minmax(160px,1.3fr) 140px 130px 100px 120px; }
+	.thead { height: 46px; background: var(--surface-alt); border-bottom: 1px solid var(--border); font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); }
+	.thead .th-r { text-align: right; justify-self: end; }
+	.trow { min-height: 72px; border-bottom: 1px solid rgba(17,24,39,0.05); position: relative; transition: background 160ms var(--ease); }
+	.trow:last-child { border-bottom: 0; }
+	.trow::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary); opacity: 0; transition: opacity 160ms var(--ease); }
+	.trow:hover { background: linear-gradient(90deg, rgba(47,90,158,0.035), rgba(47,90,158,0) 42%); }
+	.trow:hover::before { opacity: 1; }
+	.trow.off { opacity: 0.5; }
+
+	.term { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text-body); }
+	.cell-name { font-size: 14.5px; font-weight: 600; color: var(--text); }
+	.cell-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
+
+	/* ===== Badges ===== */
+	.badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; border: 1px solid transparent; white-space: nowrap; }
+	.badge.sm { padding: 3px 8px; font-size: 11px; }
+	.badge .bdot { width: 7px; height: 7px; border-radius: 50%; }
+	.b-default { background: var(--primary-light); color: var(--primary); border-color: rgba(47,90,158,0.25); }
+	.b-default .bdot { background: var(--primary); }
+	.b-info { background: var(--info-light); color: var(--info-deep); border-color: rgba(90,113,144,0.18); }
+	.b-info .bdot { background: var(--info); }
+	.b-success { background: var(--success-light); color: var(--success-deep); border-color: rgba(18,183,106,0.18); }
+	.b-success .bdot { background: var(--success); }
+	.b-warning { background: var(--warning-light); color: var(--warning-deep); border-color: rgba(247,144,9,0.18); }
+	.b-warning .bdot { background: var(--warning); }
+	.b-danger { background: var(--danger-light); color: var(--danger-deep); border-color: rgba(240,68,56,0.18); }
+	.b-danger .bdot { background: var(--danger); }
+	.b-muted { background: var(--surface-alt); color: var(--text-muted); border-color: var(--border); }
+	.b-muted .bdot { background: var(--text-muted); }
+	.tag { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; padding: 3px 8px; border-radius: var(--radius-sm); }
+	.tag-bench { background: #EAF0FF; color: var(--primary-hover); border: 1px solid #cfe0ff; }
+	.tag-new { background: #1f3a5f; color: #cfe0ff; }
+
+	/* ===== Actions ===== */
+	.actions { display: flex; align-items: center; gap: 4px; justify-content: flex-end; }
+	.iconbtn { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: var(--radius-md); border: 0; background: transparent; color: var(--text-muted); cursor: pointer; transition: all 150ms ease; position: relative; }
+	.iconbtn:hover { background: var(--surface-alt); color: var(--text); }
+	.iconbtn.danger:hover { background: var(--danger-light); color: var(--danger-deep); }
+	.iconbtn[data-tip]:hover::after { content: attr(data-tip); position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%); background: var(--primary-dark); color: #fff; font-size: 11.5px; font-weight: 500; white-space: nowrap; padding: 5px 9px; border-radius: 6px; pointer-events: none; z-index: 5; box-shadow: var(--shadow-lg); }
+
+	/* checkbox */
+	.chk { width: 19px; height: 19px; border-radius: 5px; border: 1.8px solid var(--border-strong); background: #fff; cursor: pointer; appearance: none; -webkit-appearance: none; position: relative; transition: all 140ms ease; flex: none; }
+	.chk:checked { background: var(--primary); border-color: var(--primary); }
+	.chk:checked::after { content: ''; position: absolute; left: 5.5px; top: 2px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+	.chk:hover { border-color: var(--primary); }
+
+	/* toggle (thèmes) */
+	.actcell { display: flex; align-items: center; gap: 8px; }
+
+	/* ===== Sources : confidence legend ===== */
+	.conf-legend { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 22px; background: #fff; border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 20px; }
+	.cl { display: flex; gap: 10px; align-items: flex-start; }
+	.cl .sw { width: 12px; height: 12px; border-radius: 4px; margin-top: 3px; flex: none; }
+	.cl b { display: block; font-size: 13px; color: var(--text); }
+	.cl span.t { font-size: 12.5px; color: var(--text-muted); line-height: 1.45; }
+
+	/* ===== Filters ===== */
+	.filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+	.filters .chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+	/* ===== Category ===== */
+	.cat { margin-bottom: 22px; }
+	.cat-head { display: flex; align-items: flex-start; gap: 12px; padding: 16px 20px; background: var(--primary-dark); color: #fff; border-radius: var(--radius-xl) var(--radius-xl) 0 0; }
+	.cat-head .cat-title { font-size: 15.5px; font-weight: 700; letter-spacing: -0.01em; margin: 0; }
+	.cat-head .cat-desc { font-size: 12.5px; color: rgba(255,255,255,0.68); margin: 4px 0 0; line-height: 1.45; }
+	.cat-head .cat-meta { margin-left: auto; display: flex; flex-direction: column; align-items: flex-end; gap: 7px; flex: none; }
+	.cat-head .cat-count { font-size: 12px; color: rgba(255,255,255,0.82); font-variant-numeric: tabular-nums; font-weight: 600; }
+	.src-card { background: #fff; border: 1px solid var(--border); border-top: 0; border-radius: 0 0 var(--radius-xl) var(--radius-xl); box-shadow: 0 8px 20px -14px rgba(17,24,39,0.10); overflow: hidden; }
+	.src-grid { display: grid; align-items: center; gap: 16px; padding: 0 20px; grid-template-columns: 40px minmax(220px,1.6fr) minmax(150px,1fr) 150px 92px; }
+	.src-row { min-height: 70px; border-bottom: 1px solid rgba(17,24,39,0.05); position: relative; transition: background 160ms var(--ease); }
+	.src-row:hover { background: linear-gradient(90deg, rgba(47,90,158,0.03), rgba(47,90,158,0) 42%); }
+	.src-row.off { opacity: 0.5; }
+	.src-row.extra { display: none; }
+	.cat.open .src-row.extra { display: grid; }
+	.src-id { min-width: 0; }
+	.src-name-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+	.src-name { font-size: 14px; font-weight: 600; color: var(--text); }
+	.src-name a { color: inherit; text-decoration: none; }
+	.src-name a:hover { color: var(--primary); text-decoration: underline; }
+	.src-domain { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+	.src-desc { font-size: 13px; color: var(--text-body); }
+	.cat-foot { display: flex; justify-content: center; padding: 14px 20px; background: var(--surface-alt); border-top: 1px solid var(--border); }
+	.cat-foot .btn svg { transition: transform 200ms var(--ease); }
+	.cat.open .cat-foot .btn svg { transform: rotate(180deg); }
+	.cat.open .cat-foot .show-more { display: none; }
+	.cat-foot .show-less { display: none; }
+	.cat.open .cat-foot .show-less { display: inline; }
+
+	/* ===== Modal ===== */
+	.backdrop { position: fixed; inset: 0; background: rgba(10,22,40,0.42); z-index: 50; opacity: 0; pointer-events: none; transition: opacity 200ms ease; }
+	.backdrop.open { opacity: 1; pointer-events: auto; }
+	.modal { position: fixed; z-index: 51; left: 50%; top: 50%; transform: translate(-50%, -48%) scale(0.97); width: min(560px, calc(100vw - 40px)); max-height: calc(100vh - 60px); overflow: auto; background: #fff; border-radius: var(--radius-xl); box-shadow: 0 24px 48px -12px rgba(16,24,40,0.30); opacity: 0; pointer-events: none; transition: opacity 200ms ease, transform 220ms var(--ease); }
+	.modal.open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+	.modal-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border); }
+	.modal-head h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 9px; }
+	.modal-head h3 svg { color: var(--primary); }
+	.modal-x { width: 32px; height: 32px; border: 0; background: transparent; border-radius: var(--radius-md); color: var(--text-muted); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+	.modal-x:hover { background: var(--surface-alt); color: var(--text); }
+	.modal-body { padding: 20px 22px; display: grid; gap: 17px; }
+	.field label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+	.field label .req { color: var(--danger-deep); }
+	.field .hint { font-size: 12px; color: var(--text-muted); margin-top: 6px; line-height: 1.45; }
+	.field input, .field select, .field textarea { width: 100%; font: inherit; font-size: 14px; color: var(--text); background: #fff; border: 1px solid var(--border-input); border-radius: var(--radius-md); padding: 10px 11px; outline: none; transition: border-color 150ms, box-shadow 150ms; }
+	.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(47,90,158,0.15); }
+	.field input.mono { font-family: 'DM Mono', monospace; }
+	.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+	.modal-foot { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding: 16px 22px; border-top: 1px solid var(--border); background: var(--surface-alt); }
+	.err-hint { font-size: 12.5px; color: var(--danger-deep); display: none; align-items: center; gap: 5px; margin-right: auto; }
+	.err-hint.show { display: inline-flex; }
+
+	.note-banner { position: fixed; top: 14px; left: 50%; transform: translateX(-50%); z-index: 60; background: var(--primary-dark); color: #fff; font-size: 12.5px; padding: 8px 16px; border-radius: var(--radius-full); box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 8px; }
+	.note-banner b { color: #aecbff; }
+
+	@media (max-width: 860px) {
+		.themes-grid { grid-template-columns: 1.2fr 110px 120px; }
+		.themes-grid .hide-sm { display: none; }
+		.src-grid { grid-template-columns: 40px 1.4fr 92px; }
+		.src-grid .hide-sm { display: none; }
+		.conf-legend { grid-template-columns: 1fr; }
+	}
+</style>
+</head>
+<body>
+	<div class="note-banner">Mockup v2 à valider &middot; <b>aucune donnée n'est enregistrée</b></div>
+
+	<div class="shell">
+		<div class="masthead">
+			<a href="#" class="back" onclick="return false;">
+				<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+				Retour à la veille
+			</a>
+			<div class="kicker">Veille sectorielle FilmPro</div>
+			<h1 class="title">Éditeur</h1>
+			<p class="subtitle">Gère les <b>thèmes</b> surveillés et les <b>sources</b> consultées par la veille hebdomadaire. Tes réglages sont pris en compte dès la prochaine génération du vendredi.</p>
+		</div>
+
+		<div class="tabs-bar" role="tablist" aria-label="Sections de l'éditeur">
+			<button class="tab" role="tab" aria-selected="true" data-tab="themes" onclick="switchTab('themes')">Thèmes <span class="tab-count">7</span></button>
+			<button class="tab" role="tab" aria-selected="false" data-tab="sources" onclick="switchTab('sources')">Sources <span class="tab-count">217</span></button>
+		</div>
+	</div>
+
+	<div class="wrap">
+		<!-- ============ ONGLET THÈMES ============ -->
+		<section class="panel active" id="panel-themes" role="tabpanel">
+			<div class="callout">
+				<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+				<p>Les <b>thèmes</b> sont les sujets que la veille recherche chaque semaine. La <b>priorité</b> règle l'ordre de remontée dans le brief (les thèmes prioritaires passent en tête). Désactive un thème pour l'écarter sans perdre l'historique ; supprime-le pour le retirer définitivement.</p>
+			</div>
+
+			<div class="sec-tools">
+				<div class="left">
+					<div class="search">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+						<input type="search" placeholder="Rechercher un thème...">
+					</div>
+				</div>
+				<button class="btn btn-primary" onclick="openThemeModal()">
+					<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+					Nouveau thème
+				</button>
+			</div>
+
+			<div class="tablecard">
+				<div class="thead themes-grid">
+					<span>Terme</span>
+					<span>Nom affiché</span>
+					<span class="hide-sm">Catégorie</span>
+					<span class="hide-sm">Priorité</span>
+					<span>Statut</span>
+					<span class="th-r">Actions</span>
+				</div>
+
+				<div class="trow themes-grid">
+					<span class="term">films_solaires</span>
+					<div><div class="cell-name">Films solaires</div><div class="cell-sub">Performance énergétique, contrôle solaire, thermique</div></div>
+					<span class="hide-sm"><span class="badge b-default sm"><span class="bdot"></span>Cœur métier</span></span>
+					<span class="hide-sm"><span class="badge b-default sm">Prioritaire</span></span>
+					<span><span class="badge b-success sm"><span class="bdot"></span>Actif</span></span>
+					<div class="actions">
+						<button class="iconbtn" data-tip="Modifier" onclick="openThemeModal(true)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+						<button class="iconbtn" data-tip="Désactiver"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.9 4.2A9 9 0 1 1 4.2 9.9"/><path d="M1 1l22 22"/></svg></button>
+						<button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Films solaires')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
+					</div>
+				</div>
+
+				<div class="trow themes-grid">
+					<span class="term">films_securite</span>
+					<div><div class="cell-name">Films sécurité</div><div class="cell-sub">Anti-effraction, anti-bris, sécurité passive</div></div>
+					<span class="hide-sm"><span class="badge b-default sm"><span class="bdot"></span>Cœur métier</span></span>
+					<span class="hide-sm"><span class="badge b-default sm">Prioritaire</span></span>
+					<span><span class="badge b-success sm"><span class="bdot"></span>Actif</span></span>
+					<div class="actions">
+						<button class="iconbtn" data-tip="Modifier" onclick="openThemeModal(true)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+						<button class="iconbtn" data-tip="Désactiver"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.9 4.2A9 9 0 1 1 4.2 9.9"/><path d="M1 1l22 22"/></svg></button>
+						<button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Films sécurité')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
+					</div>
+				</div>
+
+				<div class="trow themes-grid">
+					<span class="term">discretion_smartfilm</span>
+					<div><div class="cell-name">Discrétion / smart film</div><div class="cell-sub">Films opacifiants, PDLC, smart glass commutable</div></div>
+					<span class="hide-sm"><span class="badge b-default sm"><span class="bdot"></span>Cœur métier</span></span>
+					<span class="hide-sm"><span class="badge b-info sm">Standard</span></span>
+					<span><span class="badge b-success sm"><span class="bdot"></span>Actif</span></span>
+					<div class="actions">
+						<button class="iconbtn" data-tip="Modifier" onclick="openThemeModal(true)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+						<button class="iconbtn" data-tip="Désactiver"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.9 4.2A9 9 0 1 1 4.2 9.9"/><path d="M1 1l22 22"/></svg></button>
+						<button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Discrétion / smart film')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
+					</div>
+				</div>
+
+				<div class="trow themes-grid">
+					<span class="term">reglementation</span>
+					<div><div class="cell-name">Réglementation</div><div class="cell-sub">EN 410/673, MoPEC, RE 2020, certifications</div></div>
+					<span class="hide-sm"><span class="badge b-default sm"><span class="bdot"></span>Cœur métier</span></span>
+					<span class="hide-sm"><span class="badge b-info sm">Standard</span></span>
+					<span><span class="badge b-success sm"><span class="bdot"></span>Actif</span></span>
+					<div class="actions">
+						<button class="iconbtn" data-tip="Modifier" onclick="openThemeModal(true)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+						<button class="iconbtn" data-tip="Désactiver"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.9 4.2A9 9 0 1 1 4.2 9.9"/><path d="M1 1l22 22"/></svg></button>
+						<button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Réglementation')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
+					</div>
+				</div>
+
+				<div class="trow themes-grid off">
+					<span class="term">ia_outils</span>
+					<div><div class="cell-name">IA &amp; outils</div><div class="cell-sub">IA audit énergétique, drones thermiques, BIM</div></div>
+					<span class="hide-sm"><span class="badge b-info sm"><span class="bdot"></span>Adjacent</span></span>
+					<span class="hide-sm"><span class="badge b-muted sm">Secondaire</span></span>
+					<span><span class="badge b-muted sm">Inactif</span></span>
+					<div class="actions">
+						<button class="iconbtn" data-tip="Modifier" onclick="openThemeModal(true)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button>
+						<button class="iconbtn" data-tip="Réactiver"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+						<button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('IA & outils')"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5"/></svg></button>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- ============ ONGLET SOURCES ============ -->
+		<section class="panel" id="panel-sources" role="tabpanel">
+			<div class="callout">
+				<svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+				<p>Les <b>sources</b> sont les sites que la veille consulte, classés par famille. La <b>case à cocher</b> indique si la source est utilisée : décoche-la pour la mettre en pause sans la perdre (réactivable à tout moment). Le <b>niveau de confiance</b> de chaque famille fixe la rigueur de vérification des faits.</p>
+			</div>
+
+			<div class="conf-legend">
+				<div class="cl"><span class="sw" style="background:var(--success)"></span><div><b>Confiance</b><span class="t">Un fait n'est écarté que s'il est contredit par la page (sources reconnues).</span></div></div>
+				<div class="cl"><span class="sw" style="background:var(--info)"></span><div><b>Confiance + garde chiffres</b><span class="t">Faits crus, mais chaque chiffre est revérifié (associations, lobbies).</span></div></div>
+				<div class="cl"><span class="sw" style="background:var(--warning)"></span><div><b>Strict</b><span class="t">Chaque fait doit figurer mot pour mot sur la page (concurrents, cabinets).</span></div></div>
+				<div class="cl"><span class="sw" style="background:var(--danger)"></span><div><b>Strict renforcé</b><span class="t">Sources à chiffres surveillées de près (hallucinations déjà constatées).</span></div></div>
+			</div>
+
+			<div class="filters">
+				<div class="search">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+					<input type="search" placeholder="Rechercher une source...">
+				</div>
+				<select class="famsel">
+					<option>Toutes les familles</option>
+					<option>Officiel, normes &amp; statistiques</option>
+					<option>Presse pro bâtiment &amp; vitrage</option>
+					<option>Presse généraliste &amp; régionale</option>
+					<option>Tech, R&amp;D &amp; brevets</option>
+					<option>Concurrents internationaux</option>
+					<option>Installateurs concurrents (benchmark)</option>
+					<option>Marques &amp; fabricants (benchmark)</option>
+					<option>Études de marché &amp; cabinets</option>
+				</select>
+				<div class="chips">
+					<button class="chip" aria-pressed="false" onclick="toggleChip(this)"><span class="sw" style="background:var(--success)"></span>Confiance</button>
+					<button class="chip" aria-pressed="false" onclick="toggleChip(this)"><span class="sw" style="background:var(--warning)"></span>Strict</button>
+					<button class="chip" aria-pressed="false" onclick="toggleChip(this)">Mon benchmark</button>
+					<button class="chip" aria-pressed="false" onclick="toggleChip(this)">En pause</button>
+				</div>
+			</div>
+
+			<!-- Catégorie : Presse romande -->
+			<div class="cat" id="cat-presse">
+				<div class="cat-head">
+					<div>
+						<h3 class="cat-title">Presse généraliste &amp; régionale</h3>
+						<p class="cat-desc">Signaux marché, décisions cantonales, contexte. Cœur du sourcing romand.</p>
+					</div>
+					<div class="cat-meta">
+						<span class="badge b-success sm"><span class="bdot"></span>Confiance</span>
+						<span class="cat-count">37 sources</span>
+					</div>
+				</div>
+				<div class="src-card">
+					<div class="src-row src-grid"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">RTS</a></span></div><div class="src-domain mono">rts.ch</div></div>
+						<span class="src-desc hide-sm">Radio Télévision Suisse romande</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('RTS')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="src-row src-grid"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">Le Nouvelliste</a></span><span class="tag tag-new">Ajout 24/06</span></div><div class="src-domain mono">lenouvelliste.ch</div></div>
+						<span class="src-desc hide-sm">Quotidien valaisan (VS)</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Le Nouvelliste')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="src-row src-grid"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">La Liberté</a></span><span class="tag tag-new">Ajout 24/06</span></div><div class="src-domain mono">laliberte.ch</div></div>
+						<span class="src-desc hide-sm">Quotidien fribourgeois (FR)</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('La Liberté')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="src-row src-grid"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">Le Dauphiné Libéré</a></span><span class="tag tag-new">Ajout 24/06</span></div><div class="src-domain mono">ledauphine.com</div></div>
+						<span class="src-desc hide-sm">Frontalier - Ain / Pays de Gex (contexte)</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Le Dauphiné Libéré')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="src-row src-grid"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">Le Temps</a></span></div><div class="src-domain mono">letemps.ch</div></div>
+						<span class="src-desc hide-sm">Quotidien de référence romand</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Le Temps')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<!-- extra (cachées) -->
+					<div class="src-row src-grid extra"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">ArcInfo</a></span><span class="tag tag-new">Ajout 24/06</span></div><div class="src-domain mono">arcinfo.ch</div></div>
+						<span class="src-desc hide-sm">Quotidien neuchâtelois (NE)</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('ArcInfo')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="src-row src-grid extra off"><input type="checkbox" class="chk" onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">Le Matin</a></span></div><div class="src-domain mono">lematin.ch</div></div>
+						<span class="src-desc hide-sm">En pause - exemple de source décochée</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Le Matin')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="cat-foot">
+						<button class="btn btn-secondary" onclick="toggleCat('cat-presse')">
+							<span class="show-more">Afficher les 32 autres sources</span><span class="show-less">Réduire</span>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Catégorie : Installateurs concurrents -->
+			<div class="cat" id="cat-install">
+				<div class="cat-head">
+					<div>
+						<h3 class="cat-title">Installateurs concurrents directs (benchmark)</h3>
+						<p class="cat-desc">Concurrence frontale de FilmPro. Signal explicite uniquement, jamais chiffré.</p>
+					</div>
+					<div class="cat-meta">
+						<span class="badge b-warning sm"><span class="bdot"></span>Strict</span>
+						<span class="cat-count">25 sources</span>
+					</div>
+				</div>
+				<div class="src-card">
+					<div class="src-row src-grid"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">JP Schweizer</a></span><span class="tag tag-bench">Ton benchmark</span></div><div class="src-domain mono">jpschweizer.com</div></div>
+						<span class="src-desc hide-sm">Installateur films (CH romande)</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('JP Schweizer')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="src-row src-grid"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">Solaris Films</a></span><span class="tag tag-bench">Ton benchmark</span></div><div class="src-domain mono">solarisfilms.it</div></div>
+						<span class="src-desc hide-sm">Installateur films (IT) - synthèse traduite en FR</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Solaris Films')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="src-row src-grid"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">Solar Comfort</a></span><span class="tag tag-bench">Ton benchmark</span></div><div class="src-domain mono">solar-comfort.com</div></div>
+						<span class="src-desc hide-sm">Installateur films (CH romande)</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Solar Comfort')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="src-row src-grid"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">Italfilm</a></span><span class="tag tag-bench">Ton benchmark</span></div><div class="src-domain mono">italfilm.it</div></div>
+						<span class="src-desc hide-sm">Installateur films (IT) - synthèse traduite en FR</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Italfilm')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="src-row src-grid"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">noovum</a></span><span class="tag tag-bench">Ton benchmark</span></div><div class="src-domain mono">noovum.ch</div></div>
+						<span class="src-desc hide-sm">Installateur films (CH romande)</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('noovum')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="src-row src-grid extra"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">Dexypro</a></span><span class="tag tag-bench">Ton benchmark</span></div><div class="src-domain mono">dexypro.fr</div></div>
+						<span class="src-desc hide-sm">Installateur films (FR)</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Dexypro')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="cat-foot">
+						<button class="btn btn-secondary" onclick="toggleCat('cat-install')">
+							<span class="show-more">Afficher les 20 autres sources</span><span class="show-less">Réduire</span>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Catégorie : Études marché -->
+			<div class="cat" id="cat-market">
+				<div class="cat-head">
+					<div>
+						<h3 class="cat-title">Études de marché &amp; cabinets</h3>
+						<p class="cat-desc">Chiffres marché et baromètres. Tout chiffre est vérifié au mot près sur la page.</p>
+					</div>
+					<div class="cat-meta">
+						<span class="badge b-warning sm"><span class="bdot"></span>Strict</span>
+						<span class="cat-count">17 sources</span>
+					</div>
+				</div>
+				<div class="src-card">
+					<div class="src-row src-grid"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">McKinsey</a></span></div><div class="src-domain mono">mckinsey.com</div></div>
+						<span class="src-desc hide-sm">Cabinet de conseil</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('McKinsey')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="src-row src-grid"><input type="checkbox" class="chk" checked onchange="toggleRow(this)">
+						<div class="src-id"><div class="src-name-row"><span class="src-name"><a href="#" onclick="return false">Mordor Intelligence</a></span><span class="badge b-danger sm" style="margin-left:2px"><span class="bdot"></span>Strict renforcé</span></div><div class="src-domain mono">mordorintelligence.com</div></div>
+						<span class="src-desc hide-sm">Études marché - hallucination chiffrée connue</span><span></span>
+						<div class="actions"><button class="iconbtn" data-tip="Modifier" onclick="openSourceModal(true)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="iconbtn danger" data-tip="Supprimer" onclick="openDeleteModal('Mordor Intelligence')"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></div>
+					</div>
+					<div class="cat-foot">
+						<button class="btn btn-secondary" onclick="toggleCat('cat-market')">
+							<span class="show-more">Afficher les 15 autres sources</span><span class="show-less">Réduire</span>
+							<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<p style="font-size:13px;color:var(--text-muted);text-align:center;margin-top:24px">
+				+ 5 autres familles : Officiel &amp; normes, Presse pro bâtiment, Tech &amp; brevets, Concurrents internationaux, Marques &amp; fabricants.
+			</p>
+		</section>
+	</div>
+
+	<!-- ===== MODALES ===== -->
+	<div class="backdrop" id="backdrop"></div>
+
+	<div class="modal" id="themeModal">
+		<div class="modal-head">
+			<h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.6 13.4 12 22l-9-9V3h9l8.6 8.6a1.4 1.4 0 0 1 0 1.8Z"/><circle cx="7.5" cy="7.5" r="1.2" fill="currentColor"/></svg><span id="themeModalTitle">Nouveau thème</span></h3>
+			<button class="modal-x" onclick="closeModals()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+		</div>
+		<div class="modal-body">
+			<div class="field">
+				<label>Nom affiché <span class="req">*</span></label>
+				<input type="text" placeholder="ex. Vitrages haute performance">
+				<div class="hint">Le libellé lisible, affiché partout dans la veille.</div>
+			</div>
+			<div class="field">
+				<label>Terme (identifiant) <span class="req">*</span></label>
+				<input type="text" class="mono" placeholder="vitrages_haute_performance" id="themeTerm">
+				<div class="hint">Mot-clé technique unique transmis au moteur : minuscules, tirets bas, sans accent. Proposé automatiquement depuis le nom. <b>Non modifiable</b> une fois le thème créé.</div>
+			</div>
+			<div class="grid2">
+				<div class="field">
+					<label>Catégorie</label>
+					<select><option>Cœur métier</option><option>Adjacent</option></select>
+				</div>
+				<div class="field">
+					<label>Priorité</label>
+					<select><option>Prioritaire</option><option selected>Standard</option><option>Secondaire</option></select>
+					<div class="hint">Ordre de remontée dans le brief.</div>
+				</div>
+			</div>
+			<div class="field">
+				<label>Description (transmise au moteur)</label>
+				<textarea rows="2" placeholder="ex. Low-E, triple vitrage, gaz argon, coefficients Ug/Uw"></textarea>
+				<div class="hint">Aide le moteur à cerner le sujet. N'apparaît pas dans la veille publiée.</div>
+			</div>
+		</div>
+		<div class="modal-foot">
+			<button class="btn btn-secondary" onclick="closeModals()">Annuler</button>
+			<button class="btn btn-primary">Enregistrer le thème</button>
+		</div>
+	</div>
+
+	<div class="modal" id="sourceModal">
+		<div class="modal-head">
+			<h3><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5"/></svg><span id="sourceModalTitle">Nouvelle source</span></h3>
+			<button class="modal-x" onclick="closeModals()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+		</div>
+		<div class="modal-body">
+			<div class="field">
+				<label>Adresse du site (URL) <span class="req">*</span></label>
+				<input type="url" class="mono" placeholder="https://exemple.ch" id="srcUrl" oninput="checkUrl()">
+				<div class="hint">Obligatoire. Le domaine sert d'identifiant à la source.</div>
+			</div>
+			<div class="field">
+				<label>Nom de la source <span class="req">*</span></label>
+				<input type="text" placeholder="ex. Le Nouvelliste">
+			</div>
+			<div class="grid2">
+				<div class="field">
+					<label>Famille</label>
+					<select>
+						<option>Presse généraliste &amp; régionale</option>
+						<option>Officiel, normes &amp; statistiques</option>
+						<option>Presse pro bâtiment &amp; vitrage</option>
+						<option>Installateurs concurrents (benchmark)</option>
+						<option>Marques &amp; fabricants (benchmark)</option>
+						<option>Concurrents internationaux</option>
+						<option>Tech, R&amp;D &amp; brevets</option>
+						<option>Études de marché &amp; cabinets</option>
+					</select>
+				</div>
+				<div class="field">
+					<label>Niveau de confiance</label>
+					<select>
+						<option>Confiance</option>
+						<option>Confiance + garde chiffres</option>
+						<option>Strict</option>
+						<option>Strict renforcé</option>
+					</select>
+					<div class="hint">Voir la légende en haut de l'onglet.</div>
+				</div>
+			</div>
+			<div class="field">
+				<label>Descriptif court</label>
+				<input type="text" placeholder="ex. Quotidien valaisan (VS)">
+			</div>
+		</div>
+		<div class="modal-foot">
+			<span class="err-hint" id="urlErr"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg> Renseigne d'abord l'URL du site.</span>
+			<button class="btn btn-secondary" onclick="closeModals()">Annuler</button>
+			<button class="btn btn-primary" id="srcSave" disabled>Enregistrer la source</button>
+		</div>
+	</div>
+
+	<div class="modal" id="delModal" style="width:min(440px,calc(100vw - 40px))">
+		<div class="modal-body" style="text-align:center;padding:26px 24px 8px">
+			<div style="width:46px;height:46px;border-radius:50%;background:var(--danger-light);display:flex;align-items:center;justify-content:center;margin:0 auto 14px">
+				<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--danger-deep)" stroke-width="2"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+			</div>
+			<h3 style="margin:0;font-size:17px;color:var(--text)">Supprimer <span id="delName">cet élément</span> ?</h3>
+			<p style="margin:8px 0 0;font-size:13.5px;color:var(--text-muted);line-height:1.5">Cette suppression est définitive. Pour un retrait réversible, décoche simplement la source (onglet Sources) ou utilise <b>Désactiver</b> (onglet Thèmes).</p>
+		</div>
+		<div class="modal-foot" style="background:#fff;border-top:0;justify-content:center;padding:18px 24px 24px">
+			<button class="btn btn-secondary" onclick="closeModals()">Annuler</button>
+			<button class="btn btn-primary" style="background:var(--danger-deep)">Supprimer définitivement</button>
+		</div>
+	</div>
+
+<script>
+	function switchTab(key) {
+		document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === key ? 'true' : 'false'));
+		document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + key));
+		window.scrollTo({ top: 0, behavior: 'smooth' });
+	}
+	function toggleCat(id) { document.getElementById(id).classList.toggle('open'); }
+	function toggleRow(cb) { cb.closest('.src-row').classList.toggle('off', !cb.checked); }
+	function toggleChip(el) { el.setAttribute('aria-pressed', el.getAttribute('aria-pressed') === 'true' ? 'false' : 'true'); }
+	function openModal(id) { document.getElementById('backdrop').classList.add('open'); document.getElementById(id).classList.add('open'); }
+	function closeModals() { document.getElementById('backdrop').classList.remove('open'); document.querySelectorAll('.modal').forEach(m => m.classList.remove('open')); }
+	function openThemeModal(edit) {
+		document.getElementById('themeModalTitle').textContent = edit ? 'Modifier le thème' : 'Nouveau thème';
+		document.querySelector('#themeModal input.mono').disabled = !!edit;
+		openModal('themeModal');
+	}
+	function openSourceModal(edit) {
+		document.getElementById('sourceModalTitle').textContent = edit ? 'Modifier la source' : 'Nouvelle source';
+		openModal('sourceModal'); checkUrl();
+	}
+	function openDeleteModal(name) { document.getElementById('delName').textContent = '« ' + name + ' »'; openModal('delModal'); }
+	function checkUrl() {
+		const v = document.getElementById('srcUrl').value.trim();
+		const ok = v.length > 3;
+		document.getElementById('srcSave').disabled = !ok;
+		document.getElementById('urlErr').classList.toggle('show', !ok);
+	}
+	document.getElementById('backdrop').addEventListener('click', closeModals);
+	document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModals(); });
+</script>
+</body>
+</html>

@@ -233,6 +233,13 @@ export const config = {
 				icon: 'search',
 			},
 			{
+				// Vague 3.2 : visible uniquement avec le flag ffCrmListesV2 (filtré dans Sidebar).
+				href: `${CRM_BASE}/campagnes`,
+				label: 'Campagnes',
+				icon: 'sell',
+				premiumOnly: true,
+			},
+			{
 				href: `${CRM_BASE}/signaux`,
 				label: 'Signaux',
 				icon: 'notifications',

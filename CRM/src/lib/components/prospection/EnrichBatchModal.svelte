@@ -335,7 +335,7 @@
 						<div class="max-h-48 overflow-y-auto space-y-1 p-2 rounded-lg bg-surface-alt/50 border border-border/50">
 							{#each logs as log}
 								<div class="flex items-center gap-2 text-xs py-0.5">
-									<Icon name={statusIcon(log.status)} size={14} class="{statusColor(log.status)}" />
+									<Icon name={statusIcon(log.status)} size={14} class={statusColor(log.status)} />
 									<span class="font-medium text-text truncate max-w-[180px]">{log.raison_sociale}</span>
 									<span class="text-text-muted">{log.message}</span>
 								</div>
@@ -368,7 +368,7 @@
 
 						<div class="p-4 rounded-xl" style="background: linear-gradient(135deg, var(--color-prosp-enrich-bg), var(--color-prosp-import-bg))">
 							<div class="flex items-center gap-2 mb-3">
-								<Icon name={quotaWarning ? 'warning' : 'task_alt'} size={24} class="{quotaWarning ? 'text-warning-deep' : 'text-success-deep'}" />
+								<Icon name={quotaWarning ? 'warning' : 'task_alt'} size={24} class={quotaWarning ? 'text-warning-deep' : 'text-success-deep'} />
 								<h3 class="text-base font-semibold text-text">{quotaWarning ? 'Enrichissement interrompu' : 'Enrichissement terminé'}</h3>
 							</div>
 							<div class="grid grid-cols-2 gap-3">
@@ -403,7 +403,7 @@
 								<div class="mt-2 max-h-48 overflow-y-auto space-y-1 p-2 rounded-lg bg-surface-alt/50 border border-border/50">
 									{#each logs as log}
 										<div class="flex items-center gap-2 text-xs py-0.5">
-											<Icon name={statusIcon(log.status)} size={14} class="{statusColor(log.status)}" />
+											<Icon name={statusIcon(log.status)} size={14} class={statusColor(log.status)} />
 											<span class="font-medium text-text truncate max-w-[180px]">{log.raison_sociale}</span>
 											<span class="text-text-muted">{log.message}</span>
 										</div>

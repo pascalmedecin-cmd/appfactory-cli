@@ -79,9 +79,10 @@
 			</div>
 
 			<div>
-				<label class="block text-sm font-medium text-text mb-1.5">Nom de l'alerte</label>
+				<label for="alerte-nom" class="block text-sm font-medium text-text mb-1.5">Nom de l'alerte</label>
 				<input
 					type="text"
+					id="alerte-nom"
 					name="nom"
 					bind:value={nom}
 					placeholder="Ex : Construction Genève chauds"

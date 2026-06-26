@@ -12,7 +12,7 @@ import { isAllowedThemeSlug } from '$lib/server/intelligence/theme-slug';
 import { createSupabaseServiceClient } from '$lib/server/supabase';
 import { verifyUrl } from '$lib/server/intelligence/url-verify';
 import { sanitizeUrl } from '$lib/server/intelligence/url-sanitize';
-import { isDeniedSource } from '$lib/server/intelligence/source-allowlist';
+import { loadSourcesBundle } from '$lib/server/intelligence/sources-loader';
 import { listActiveThemes } from '$lib/server/intelligence/themes-repository';
 import { stripCitationTags } from '$lib/server/intelligence/strip-citations';
 import { dedashItem } from '$lib/server/intelligence/dedash';
@@ -135,9 +135,13 @@ export const actions: Actions = {
 		// Cross-check verbatim LLM non appliqué (Pascal valide manuellement le contenu).
 		const { cleaned: cleanUrl } = sanitizeUrl(parsed.data.url);
 
+		// Denylist depuis la table éditable veille_sources (fallback seed = code si la
+		// table est vide/inaccessible). Cf. sources-loader.
+		const sources = await loadSourcesBundle(locals.supabase);
+
 		try {
 			const hostname = new URL(cleanUrl).hostname.replace(/^www\./, '');
-			if (isDeniedSource(hostname)) {
+			if (sources.isDenied(hostname)) {
 				return fail(400, { error: `Source "${hostname}" en denylist`, values: input });
 			}
 		} catch {

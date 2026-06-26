@@ -53,7 +53,7 @@
 
 <!-- Sidebar unique : desktop = static, mobile = slide-in -->
 <div class="sidebar-wrapper" class:open={mobileMenuOpen}>
-	<Sidebar bind:collapsed={sidebarCollapsed} currentPath={page.url.pathname} unreadIntelligence={data.unreadIntelligence} onNavigate={() => mobileMenuOpen = false} />
+	<Sidebar bind:collapsed={sidebarCollapsed} currentPath={page.url.pathname} unreadIntelligence={data.unreadIntelligence} premium={data.featureFlags?.ffCrmListesV2 === true} onNavigate={() => mobileMenuOpen = false} />
 </div>
 
 <Header user={data.user} {sidebarCollapsed} onMenuToggle={() => mobileMenuOpen = !mobileMenuOpen} pageTitle={pageTitle()} />

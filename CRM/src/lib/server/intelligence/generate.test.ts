@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { callModelWithOverflowRetry, type GenerateInput } from './generate';
 import { getFallbackBundle } from './theme-loader';
+import { getFallbackSourcesBundle } from './sources-loader';
 import { CostTracker } from './cost-tracker';
 
 // Tests ciblés de la logique de relance max_tokens (Bloc 1, fix racine débordement
@@ -9,6 +10,7 @@ import { CostTracker } from './cost-tracker';
 // piloter stop_reason + capturer le max_tokens demandé à chaque appel. Zéro réseau.
 
 const themes = getFallbackBundle();
+const sources = getFallbackSourcesBundle();
 const input: GenerateInput = {
 	weekLabel: '2026-W25',
 	dateStart: '2026-06-15',
@@ -54,7 +56,7 @@ describe('callModelWithOverflowRetry (fix racine max_tokens)', () => {
 		const captured: number[] = [];
 		const client = fakeClient([fakeMessage('tool_use')], captured);
 		const tracker = new CostTracker();
-		const msg = await callModelWithOverflowRetry(client, input, themes, tracker);
+		const msg = await callModelWithOverflowRetry(client, input, themes, sources, tracker);
 		expect(msg.stop_reason).toBe('tool_use');
 		expect(captured).toEqual([64000]);
 		// Un seul appel réel facturé.
@@ -65,7 +67,7 @@ describe('callModelWithOverflowRetry (fix racine max_tokens)', () => {
 		const captured: number[] = [];
 		const client = fakeClient([fakeMessage('max_tokens', 50000), fakeMessage('tool_use')], captured);
 		const tracker = new CostTracker();
-		const msg = await callModelWithOverflowRetry(client, input, themes, tracker);
+		const msg = await callModelWithOverflowRetry(client, input, themes, sources, tracker);
 		expect(msg.stop_reason).toBe('tool_use');
 		// 64K d'abord, PUIS 128K (plafond Opus 4.8).
 		expect(captured).toEqual([64000, 128000]);
@@ -78,7 +80,7 @@ describe('callModelWithOverflowRetry (fix racine max_tokens)', () => {
 		const captured: number[] = [];
 		const client = fakeClient([fakeMessage('max_tokens'), fakeMessage('max_tokens')], captured);
 		const tracker = new CostTracker();
-		const msg = await callModelWithOverflowRetry(client, input, themes, tracker);
+		const msg = await callModelWithOverflowRetry(client, input, themes, sources, tracker);
 		// L'appelant (generateIntelligenceReport) traduira ce stop_reason en échec
 		// explicite « semaine exceptionnellement dense ».
 		expect(msg.stop_reason).toBe('max_tokens');
@@ -92,7 +94,7 @@ describe('callModelWithOverflowRetry (fix racine max_tokens)', () => {
 			captured
 		);
 		const tracker = new CostTracker();
-		await callModelWithOverflowRetry(client, input, themes, tracker);
+		await callModelWithOverflowRetry(client, input, themes, sources, tracker);
 		// Exactement 2 appels : pas de boucle infinie de relance.
 		expect(captured).toEqual([64000, 128000]);
 	});

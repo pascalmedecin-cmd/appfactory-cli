@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { RESULTAT_VISITE } from './types/visit-result';
+import { MAX_CAMPAGNE_IDS } from '$lib/campagnes';
 
 // -- Helpers --
 
@@ -314,6 +315,9 @@ export const ImportSelectedSchema = z.object({
 	from_intelligence: z.string().uuid().nullable().optional(),
 	from_term: z.string().max(200).nullable().optional(),
 	from_item_rank: z.number().int().min(1).max(10).nullable().optional(),
+	// Vague 3.2 : étiquetage campagne du lot (optionnel, borné anti-DoS). Les ids sont re-validés
+	// par la FK serveur au moment de l'assignation (un id inexistant -> 23503 traduit, best-effort).
+	campagneIds: z.array(z.string().uuid()).max(MAX_CAMPAGNE_IDS).optional(),
 });
 
 // -- Feedback entries (page /log) --

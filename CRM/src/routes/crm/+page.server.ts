@@ -2,6 +2,8 @@ import type { PageServerLoad } from './$types';
 import { config } from '$lib/config';
 import { ETAPES_PIPELINE_CLOSED } from '$lib/schemas';
 import { firstNameFromEmail } from '$lib/utils/dateFormat';
+import { readFeatureFlags } from '$lib/types/feature-flags';
+import { endOfWeekIso, nextDayIso, type TacheDue } from '$lib/utils/dashboardTemporel';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const today = new Date().toISOString().split('T')[0];
@@ -9,6 +11,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const { user } = await locals.safeGetSession();
 	const firstName = firstNameFromEmail(user?.email ?? null);
+
+	// Dashboard temporel (Vague 3.3, flag ffCrmListesV2) : on ne charge les « tâches dues »
+	// (relances jusqu'à la fin de semaine) que pour les utilisateurs premium → zéro coût
+	// supplémentaire pour la vue OFF, qui ne lit pas ce champ (rendu byte-identique).
+	const premium = readFeatureFlags(
+		(user?.app_metadata ?? undefined) as Record<string, unknown> | undefined
+	).ffCrmListesV2 === true;
+	const weekEnd = endOfWeekIso(today);
 
 	// Phase 1 widget triage matin : queue de leads à fort potentiel non touchés.
 	// Critères : statut=nouveau ET score>=config.scoring.triage.scoreMin (5)
@@ -25,7 +35,21 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.order('date_import', { ascending: false })
 		.limit(config.scoring.triage.queueCap);
 
-	const [contactsRes, entreprisesRes, opportunitesRes, relancesRes, activitesRes, signauxRes, alertesRes, triageRes] = await Promise.all([
+	// Tâches dues pour le dashboard temporel : relances <= fin de semaine, deals clos exclus,
+	// nom d'entreprise joint (FK unique → pas d'ambiguïté PostgREST), triées par échéance.
+	const tachesQuery = premium
+		? locals.supabase
+				.from('opportunites')
+				.select(
+					'id, titre, etape_pipeline, date_relance_prevue, entreprise:entreprises!opportunites_entreprise_id_fkey(raison_sociale)'
+				)
+				.lt('date_relance_prevue', nextDayIso(weekEnd))
+				.or(`etape_pipeline.is.null,etape_pipeline.not.in.(${ETAPES_PIPELINE_CLOSED.join(',')})`)
+				.order('date_relance_prevue', { ascending: true })
+				.limit(30)
+		: null;
+
+	const [contactsRes, entreprisesRes, opportunitesRes, relancesRes, activitesRes, signauxRes, alertesRes, triageRes, tachesRes] = await Promise.all([
 		locals.supabase.from('contacts').select('*', { count: 'exact', head: true }).eq('statut_archive', false),
 		// Aligné sur l'invariant « les accès métier excluent les archivés » (comme
 		// le compteur contacts ci-dessus) : le cron nettoyage-crm archive les
@@ -55,6 +79,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.eq('alerte_active', true)
 			.gt('nb_nouveaux', 0),
 		triageQuery,
+		tachesQuery ?? Promise.resolve({ data: [], error: null }),
 	]);
 
 	// Si la migration n'a pas été appliquée (colonne triage_snoozed_until absente),
@@ -66,8 +91,35 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const triageLeads = triageRes.error ? [] : (triageRes.data ?? []);
 	const triageTotal = triageRes.error ? 0 : (triageRes.count ?? triageLeads.length);
 
+	// Normalise l'embed entreprise (objet to-one, mais l'inférence de type peut le voir en
+	// tableau) vers la forme attendue par le dashboard temporel. Dégrade en [] sur erreur.
+	if (tachesRes.error) {
+		console.error('[dashboard.taches] query failed:', tachesRes.error.message ?? tachesRes.error);
+	}
+	const taches: TacheDue[] = tachesRes.error
+		? []
+		: ((tachesRes.data ?? []) as unknown[]).map((row) => {
+				const r = row as {
+					id: string;
+					titre: string | null;
+					etape_pipeline: string | null;
+					date_relance_prevue: string | null;
+					entreprise: { raison_sociale: string | null } | { raison_sociale: string | null }[] | null;
+				};
+				const ent = Array.isArray(r.entreprise) ? (r.entreprise[0] ?? null) : r.entreprise;
+				return {
+					id: r.id,
+					titre: r.titre,
+					etape_pipeline: r.etape_pipeline,
+					date_relance_prevue: r.date_relance_prevue,
+					entreprise: ent ? { raison_sociale: ent.raison_sociale ?? null } : null,
+				};
+			});
+
 	return {
 		firstName,
+		todayIso: today,
+		taches,
 		stats: {
 			contacts: contactsRes.count ?? 0,
 			entreprises: entreprisesRes.count ?? 0,

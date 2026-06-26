@@ -3,8 +3,8 @@
 **Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; container racine = stub. Contexte → `memory/project_appfactory_restructure.md`.
 
 **Statut :** Portail FilmPro multi-outils en prod : CRM (`/crm`) + Découpe Films (`/decoupe`) sur `filmpro-portail.vercel.app`. Formation IA = projet autonome `Formation/` (`cc` option 5). Historique (V3 terrain, Signaux V4, golden v9, restructure S173-S174) → `archive/`.
-**Derniere mise a jour :** 2026-06-24. Veille (code cron) sur main `6f8de17` (sources presse romande + règle traduction déployées pour W26) ; web prod inchangé (refonte CRM flag `ffCrmListesV2` OFF). **Derniere revue /optimize :** 2026-04-05. **Prochain bug :** #001.
-**Session courante :** 2026-06-24 (session 7) - **Éditeur veille étape 1/6 livrée** (table `veille_sources` + seed 238 + modules + tests équivalence) ; **sources presse romande + règle traduction commitées sur main `6f8de17` pour le cron W26** ; reste du chantier (étape 1 éditeur, bouton supprimer thèmes, mockups) sécurisé sur branche `editeur-veille-sources`. Session précédente : Veille sourcing W26 (main `9bef41b`, CI verte) → [[project_veille_sourcing_w26_2026-06-23]]. WIP Campagnes 3.2 intact → [[project_module_campagnes_vague32_2026-06-22]].
+**Dernière mise à jour :** 2026-06-26. Prod web = `filmpro-portail.vercel.app` = branche `deploy-campagnes-editeur` (éditeur veille + Campagnes V3.2, flag `ffCrmListesV2` **ON `pascal@`+`antoine@`** → refonte 1+2+3 live). `main` non touché. **Cron veille W26 a tourné 26/06 (success, 7 items, local 71%) → Bloc 0 reconciliation `main` DÉBLOQUÉE.** **Prochain bug :** #001.
+**Session courante :** 2026-06-26 - livraison non-veille (30 warnings svelte-check → 0, code mort retiré, bumps supabase 2.108 + TypeScript 6, cron veille avancé 04:27 suisse) + cron W26 confirmé. Tout sur la branche prod, **non poussé** (part au merge Bloc 0). Antérieur (Vague 3.3 Dashboard `ebacea6`, Campagnes V3.2 `c905952`, éditeur veille `69cd968`) → § « Livré » + `archive/`. → [[project_module_campagnes_vague32_2026-06-22]] + [[project_editeur_veille_sources_editables_2026-06-24]].
 **Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175, S122-S125, S70-S107).
 
 
@@ -94,7 +94,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 - **Auth** : OTP email 6 chiffres @filmpro.ch + session 7 jours httpOnly ; SMTP Resend (domaine verifié, free plan)
 - **APIs** : Zefix REST + search.ch + fal.ai Flux 1.1 Pro Ultra (partage clé avec Enseignement) - Pexels/Unsplash supprimés S67
 - **Crons** : `/api/cron/{signaux,alertes,nettoyage-crm,intelligence,intelligence-archive}` tous sécurisés `CRON_SECRET` + service role (Cron `media-enrich` supprimé S67)
-- **Tests** : Vitest 2085 (dernier run vérifié 2026-06-23, +4 cross-check trust-by-source) + Playwright e2e (suite + P1/P2/P3 Prospection). Accessibilité : focus trap + ConfirmModal partout, axe-core 0 violation modale P3. Sécurité : Zod sur 20 form actions/endpoints, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
+- **Tests** : Vitest 2310 (dernier run vérifié 2026-06-26, avec supabase 2.108 + TS6) + Playwright e2e (suite + P1/P2/P3 Prospection). Accessibilité : focus trap + ConfirmModal partout, axe-core 0 violation modale P3. Sécurité : Zod sur 20 form actions/endpoints, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
 
 → Détail intégral (env vars, BDD exhaustive, liste tests, liste crons, headers sécurité, pagination serveur) : `archive/infra-crm-detail.md`
 
@@ -133,56 +133,54 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Éditeur de la veille - étape 2/6** (`sources-loader` DB + filet + classifieur + test équivalence) : chantier chaud, mockup **v2 VALIDÉ**, objectif **zéro source en dur**. **Reprendre depuis la branche `editeur-veille-sources`** (chantier 24/06 sécurisé là ; presse + règle traduction déjà sur main `6f8de17` pour le cron W26). → [[project_editeur_veille_sources_editables_2026-06-24]]. Campagnes 3.2 (branche `campagnes-vague32`, `3e27c49`, non mergée) en attente derrière.
+**Prochaine attaque** : **Bloc 0 reconciliation `main`** - le cron W26 a tourné 26/06 (success), `main` est dégelé, c'est la prochaine vraie étape (merge `deploy-campagnes-editeur` → `main`, ~34 commits, embarque tout le non-veille du jour, sourcing 120→238 pour W27 ; reco : valider le brief W26 en boîte d'abord ; **NE PAS `git add -A`** : exclure l'untracked `CRM/.product-architect/daily-email/` avant merge). Puis : Bloc 2 Dependabot (post-merge), Bloc 3 veille Lot 3 (sur branche), Bloc 1 Vague 4 (attend 3 inputs Pascal). Refonte CRM 1+2+3 déployée+activée prod (flag `ffCrmListesV2` ON fondateurs), prod = `deploy-campagnes-editeur`. → [[project_refonte_crm_cadrage_2026-06-18]].
 
 > Cadrage commun refonte UX/UI CRM (validé 2026-06-18) → [[project_refonte_crm_cadrage_2026-06-18]] + golden `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html` (validé Chrome).
 
-### 0. Éditeur de la veille - migration sources code→DB (étape 2/6) [SUPERVISÉ • xhigh • cascade pas-à-pas]
+### 0. Reconciliation `main` post-W26 (éditeur veille + Campagnes → trunk) [SUPERVISÉ • high • ~30 min]
 
-- **Pourquoi** : page Éditeur 2 onglets (Thèmes + Sources éditables), mockup **v2 VALIDÉ** par Pascal. Migration pas-à-pas, étape 1 (table `veille_sources` + seed 238) livrée. Objectif Pascal : **zéro source en dur**, tests régression abo (jamais clé API).
-- **Payload** → [[project_editeur_veille_sources_editables_2026-06-24]] (plan 6 étapes, décisions UI terme/priorité/case à cocher, cartographie 3 call sites, schéma table, mockup v2).
-- **Reprise** : depuis la branche **`editeur-veille-sources`** (`177e7b5`, chantier sécurisé là), **pas `main`**. ⚠ **Dette migration** : `20260624_001_veille_sources.sql` non appliquée ET **jamais exécutée contre un vrai Postgres** (validée seulement par cohérence syntaxique + alignement 238 seed↔SQL). À l'application (étape 2/déploiement) : exécuter la migration contre la base réelle AVANT de s'y fier, puis régénérer `database.types` via `supabase gen types`.
-- [ ] **[EXÉCUTABLE]** **Étape 2** : `sources-loader.ts` (charge `veille_sources` actives + filet `sources-seed`) + classifieur sur bundle + test équivalence DB↔code. Moteur pas encore branché.
-- [ ] **[BLOQUÉ - étape 2 livrée]** **Étape 3** : brancher le moteur (3 call sites : `generate.ts` 258/333, `cross-check.ts` 711, `veille/[id]/+page.server.ts` 140).
-- [ ] **[BLOQUÉ - étape 3 livrée]** **Étape 4** : le prompt génère la section sources depuis la DB (cf. `buildThemesPromptSection`).
-- [ ] **[BLOQUÉ - étape 4 livrée]** **Étape 5** : UI page Éditeur 2 onglets (Tabs) + bouton « Éditeur » (remplace « Gérer les thèmes ») + CRUD sources (mockup v2, `redesign-skill`).
-- [ ] **[BLOQUÉ - étape 5 livrée]** **Étape 6** : retrait hardcode `source-allowlist` du runtime + QA 360 (0 H/C/M) + suite complète + déploiement validé.
-- [x] ~~**Déployer AVANT W26 les sources presse + règle traduction**~~ - 2026-06-24 : décision Pascal = DÉPLOYER. +7 cantonaux romands + 2 frontaliers + règle traduction **commités sur main `6f8de17`** (poussé pour le cron W26 de vendredi 26/06). Le bouton supprimer/retour thèmes (UI web, hors cron) reste WIP sur branche `editeur-veille-sources`, déployé plus tard avec l'éditeur. → [[project_editeur_veille_sources_editables_2026-06-24]].
+- **Pourquoi** : prod web tourne sur `deploy-campagnes-editeur` (hors `main`) pour protéger le cron W26. Le merge passe le cron 120→238 sources → à faire APRÈS le run W26. → [[project_editeur_veille_sources_editables_2026-06-24]] + [[project_module_campagnes_vague32_2026-06-22]].
+- **DÉBLOQUÉ 26/06** : cron W26 a tourné (run `28230794599`, success, reportId `6db7c0e1`) : **7 items** (W25=2 ; sous plancher 8 mais nette amélioration), local 71%, `keptByTrust=1`, 0 apiError. Emails brief (pascal+antoine)+recap enabled - confirmer en boîte. 120→238 ne change que W27 → reconciliation sûre.
+- [ ] **[EXÉCUTABLE - SUPERVISÉ, W26 fait]** Merger **`deploy-campagnes-editeur` → `main`** (embarque tout le non-veille du jour), pousser, **supprimer la branche** (local+origin), vérifier 1er run post-merge. Reco : valider le brief W26 d'abord. Findings audit éditeur veille (f7/f10/f14/f15/f16/f21 + 2 cadratins `app.css`) = dette mineure tracée.
 
 ### 3. Veille - Lot 3 structurel (reste) [SUPERVISÉ • high • session dédiée]
 
-- [ ] **[BLOQUÉ - après mesure W26+]** **Lot 3 - reste (optionnel)** : dashboard qualité + boucle feedback ; PDF de marque (`filmpro-pdf`) ; pont veille→action ; décomposer mono-appel LLM si plafond ; nettoyage enum RegBL. → [[project_veille_sourcing_w26_2026-06-23]]. (Veille W26/W25 livrés 23/06, voir mémoires veille.)
+- [ ] **[EXÉCUTABLE]** **Lot 3 - reste (optionnel)** : dashboard qualité + boucle feedback ; PDF de marque (`filmpro-pdf`) ; pont veille→action ; décomposer mono-appel LLM si plafond ; nettoyage enum RegBL. **Faisable maintenant** (PDF / pont / décompo / cleanup enum) ; seul le **dashboard qualité + boucle feedback** gagne à attendre la 1re mesure W26 (vendredi). → [[project_veille_sourcing_w26_2026-06-23]].
 
-### 1. Vague 3 (suite) + Vague 4 refonte CRM [SUPERVISÉ • xhigh • cascade par chantiers]
+### 1. Vague 4 Emailing refonte CRM [SUPERVISÉ • xhigh • cascade]
 
-- **Pourquoi** : golden Vague 3 validé Chrome (3 écrans). Chantier 3.1 Signaux + export CSV Prospection livrés. Reste Campagne, Dashboard, Emailing.
-- **Payload** → cadrage [[project-refonte-crm-cadrage-2026-06-18]] + golden `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html` + audits [[audit-secu-2026-06-19-vague3-export-csv]] + [[audit-secu-2026-06-19-vague3-signaux-actions]].
-- **Fait** : golden validé ; chantier 3.1 Signaux (`5e0c369`) + export CSV Prospection (`6626818`), flag OFF non déployé, revues 0 C/H/M.
-- [ ] **[EXÉCUTABLE]** **Vague 3.2 Module Campagnes (multi-étiquetage N-N) - backend FAIT, reste l'UI** : migration prod LIVE + module `campagnes.ts` + endpoints + 37 tests, **commités sur branche `campagnes-vague32` (`3e27c49`), pas mergés** (reprendre depuis la branche, pas `main`). **RESTE** : UI modale import + Phase 5 (filtre relationnel load/export + colonne liste + fiche + écran `/crm/campagnes` + sidebar, charger `redesign-skill`) + Phase 6 (revues + preuve flag ON). Décisions/file:line/pièges → **Payload** [[project_module_campagnes_vague32_2026-06-22]].
-- [ ] **[EXÉCUTABLE]** **Vague 3.3 Dashboard temporel** : refonte `/crm/+page.svelte` façon Capsule (En retard / Aujourd'hui / Cette semaine + fil d'activité « Ce qui s'est passé »), flag `ffCrmListesV2`, golden validé.
-- [ ] **[BLOQUÉ - prérequis externes Pascal]** **Vague 4 Emailing** (individuel → nLPD → groupé). Non codable tant que : (a) `send.filmpro.ch` vérifié Resend (DNS), (b) base légale nLPD + mention d'information validées, (c) 1er email réel décrit (réunion 3 fondateurs). → cadrage § Garde-fous emailing.
-- [ ] **[EXÉCUTABLE - décision Pascal]** **Déployer la refonte CRM** (Vagues 1+2+3) : codé/commité, **jamais activé**. `vercel deploy --prod` puis flip flag JWT `ff_crm_listes_v2` + smoke prod feature-flag (ordre deploy→flag, alias via `vercel inspect`, cf. [[feedback_smoke_prod_feature_flag_livraison]]). **Au flip : vérifier le menu `...` du slideout Signaux** (Bug 5 résiduel : ouverture vers le haut en conteneur scrollable).
+- **Pourquoi** : toute la refonte Vagues 1+2+3 (3.1 Signaux + 3.2 Campagnes + 3.3 Dashboard) livrée + déployée + activée (25/06, flag `ffCrmListesV2` ON fondateurs). Reste l'emailing. → [[project-refonte-crm-cadrage-2026-06-18]] § Garde-fous emailing.
+- [ ] **[EXÉCUTABLE]** **Vague 4 Emailing** (individuel → nLPD → groupé). Non codable tant que : (a) `send.filmpro.ch` vérifié Resend (DNS), (b) base légale nLPD + mention d'information validées, (c) 1er email réel décrit (réunion 3 fondateurs). **Pas lié à la veille → débloquée** : ces 3 prérequis sont des inputs côté Pascal (pas une dépendance système) ; dès qu'il les fournit, cadrage + code démarrent. → cadrage § Garde-fous emailing.
 
-### 2. Suite hygiène deps/CI + veille (livré 22/06, reste différés documentés) [EXÉCUTABLE]
+### 4. Module Daily Email - LIVRÉ + commité (prêt, gate OFF) [SUPERVISÉ • high]
+
+- **LIVRÉ 26/06** (`d1db821`) : email quotidien des relances dues → 2 fondateurs, 100% déterministe (zéro LLM), gate `EMAIL_DAILY_ENABLED` OFF. Design Gouvernance + charte FilmPro (bandeau navy carré), weekly intact. 44 tests / 2310 verts / revue 4 lentilles 0 C/H. → [[project_daily_email_module_2026-06-25]] + [[audit_secu_2026-06-26_daily_email_module]].
+- [ ] **[BLOQUÉ - dépend de la reconciliation Bloc 0 (prochaine session)]** **Déployer** (vient naturellement au merge reconciliation Bloc 0, désormais débloqué ; gate OFF = cron tourne en no-op, zéro envoi) puis **activer** quand feu vert : poser `EMAIL_DAILY_ENABLED=true` en env Vercel Prod (zéro redéploiement, lu via `$env/dynamic/private`). Avant ces 2 gestes : aucun envoi possible.
+
+### 2. Suite hygiène deps/CI [MIXTE • medium • ~1h]
 
 - **Livré 22/06** (PR #16 `b84b6f5`) : garde-fou CI + Dependabot durci + 6 bumps sûrs. **Ne JAMAIS `rm package-lock.json` pour bumper ce repo** (cause Vercel-fail = regen lockfile flote les transitifs). → [[project_fix_deps_ci_vercel_2026-06-22]].
-- [ ] **[EXÉCUTABLE]** **Trier les 3 PR Dependabot régénérées** (sortie ATTENDUE de la nouvelle config, ~2 min post-merge) : **#20** (groupe patch dont vite/svelte patches socle autorisés → merger si CI verte = preuve du gate) ; **#19** (`@types/node` 26 majeure) + **#21** (`js-yaml` 5 majeure) à arbitrer.
+- [ ] **[EXÉCUTABLE - dégelé (cron W26 fait), à traiter avec/après la reconciliation `main`]** **Trier les 3 PR Dependabot** (ciblent `main`). **Statut CI live (audité 26/06)** : **#20** (groupe minor-patch, 8 updates) = **CI ROUGE** (Vercel fail + `verify` fail 8s, probable lockfile/transitifs cf. [[project_fix_deps_ci_vercel_2026-06-22]]) → NE PAS merger en l'état, diagnostiquer ; **#19** (`@types/node` 26 majeure) = **CI verte** (à arbitrer, lire le changelog) ; **#21** (`js-yaml` 5 majeure) = **CADUQUE** (js-yaml retiré comme dep morte le 26/06 → **à fermer**, pas merger).
 - [ ] **[EXÉCUTABLE]** **Migration socle SvelteKit (vite 8 / plugin-svelte 7 / kit 2.66)** : différée (rolldown + layerchart incompatibles, issues #928/#1313). Rouvrir quand clean : lever les `ignore` socle `dependabot.yml`, monter le trio groupé, CI verte.
-- [ ] **[EXÉCUTABLE]** **Bump @supabase/* 2.108 + typescript 6** : différés. supabase = 6 erreurs type `RejectExcessProperties` (insert/update : photos, enrichir-batch, search-ch, triage, visits, entreprises) + smoke auth OTP réel. typescript 6 = trier les erreurs.
+- [x] ~~**Bumps supabase 2.108 + TypeScript 6 + 30 warnings svelte-check**~~ - LIVRÉ 26/06 (détail § « Livré cette session »). Reste smoke auth OTP manuel post-supabase. `@supabase/ssr` laissé à 0.10 (bump 0.12 = auth/session, séparé).
 
 ### Réserve (hors backlog actif)
 - Chantier 3 portail (non cadré) ; durcissement RLS si 4e user ([[feedback_rls_multitenant_durcissement_si_4_users]]).
-- [ ] **[EXÉCUTABLE - basse]** **Nettoyer les 29 warnings `svelte-check`** (préexistants, non bloquants, 11 fichiers ; reproductibles par `npm run check`) : `state_referenced_locally`, `a11y_no_noninteractive_tabindex`, `attribute_quoted`, compat `line-clamp` (cosmétique a11y/Svelte 5). À traiter en marge d'un chantier UI touchant ces fichiers.
+- **[SIGNAL]** knip liste ~30 `scripts/*` + `.product-architect/*` + `playwright.*.config.ts` + `tests/mint-session.mjs` comme « non importés » : **pas du code mort** (CLI-invoqués / specs / infra e2e), gardés. Archivables un jour si Pascal le décide (ex : `apply-*-migration` appliquées → `archive/`).
 
 ### Livré cette session
 
-- [x] ~~**Audit de clôture 24/06 + sécurisation + déploiement W26**~~ - 2026-06-24 : audit factuel 4 dimensions = rien cassé (main propre 2089 / working complet 2107 tests verts, svelte-check 0 erreur, prod insensible au local), rien perdu, 0 corruption git. Chantier 24/06 (18 fichiers) **sécurisé** sur branche `editeur-veille-sources` (`177e7b5`) ; sources presse romande + règle traduction **poussées sur main** (`6f8de17`+`7c2e8da`, CI verte) pour le cron W26. → [[project_editeur_veille_sources_editables_2026-06-24]].
-- [x] ~~**Éditeur veille - étape 1/6 + mockup v2 + bouton supprimer/retour thèmes + doc HTML 238 sources**~~ - 2026-06-24 : table `veille_sources` + seed 238 + repo + tests équivalence (générateur déterministe), mockup v2 VALIDÉ (8 retours), `deleteTheme` (0 C/H/M), 0 régression (584 tests intelligence). Tout sur branche `editeur-veille-sources` (sauf la presse, sur main). → [[project_editeur_veille_sources_editables_2026-06-24]].
-→ Livrés 23/06 (W26, W25, pré-flight QA, Campagnes 3.2 backend) + antérieurs → mémoires veille 06-23 + `archive/`.
+- [x] ~~**Cron veille avancé 06:27 → 02:27 UTC** (04:27 suisse)~~ - 2026-06-26 (`cron-veille.yml`, non poussé) : absorbe le retard scheduler GitHub (2-4h) → brief le matin. Effet à la reconciliation `main` (live pour W27).
+- [x] ~~**Bump TypeScript 6**~~ - 2026-06-26 (`658a8f7`, non poussé) : 5.9.3 → 6.0.3, 0 erreur (codebase déjà conforme). svelte-check 0/0, 2310 tests, build OK.
+- [x] ~~**Bump @supabase/supabase-js 2.108 + 7 fixes type**~~ - 2026-06-26 (`e420aca`, non poussé) : 2.101.1 → 2.108.2, `RejectExcessProperties` type-only via `TablesUpdate/Insert`. Reste smoke auth OTP manuel (Pascal).
+- [x] ~~**Nettoyage code mort non-veille**~~ - 2026-06-26 (`2968107`+`a9b128b`, non poussé) : knip + grep par symbole. 3 fichiers + 5 devDeps + 2 symboles morts. Constat : codebase déjà propre (2/~100 vraiment morts). Veille intacte.
+- [x] ~~**Nettoyage 30 warnings svelte-check → 0**~~ - 2026-06-26 (`3ae6209`, non poussé) : a11y (vrai fix + `svelte-ignore` justifié) + attribute_quoted + line-clamp + state_referenced_locally. 2310 tests.
+→ Antérieurs archivés (Audit 360, Daily Email `d1db821`, Vague 3.3 `ebacea6`, Campagnes V3.2) → `archive/claude-md-crm-livre-2026-06-26.md`. Plus anciens (24/06-) → mémoires veille 06-22/23/24 + `archive/`.
 
 ### Watch list active après pivot
 
-- **[WATCH] W26 (vendredi 26/06) = 1er run cron sur le nouveau sourcing + 1er brief brandé réel antoine@**. Surveiller GHA : `keptByTrust`/`keptByTrustTitles`, densité (cible 8-12, W25=2), part locale (↑ vs 33%), 0 `<cite>`/emoji/underscore. **Sources presse cantonales/frontalières + règle traduction déployées sur main `6f8de17` → W26 en bénéficiera ; surveiller leur apport (part locale, sources nommées).** → [[project_veille_sourcing_w26_2026-06-23]].
+- **[WATCH] Refonte CRM 1+2+3 activée fondateurs (`ffCrmListesV2`)** : surfaces premium à surveiller à l'usage. **Bug 5 résiduel** : menu `...` slideout Signaux (ouverture vers le haut en conteneur scrollable), à corriger s'il re-saute. Rollback = flag OFF (`raw_app_meta_data`).
+- **[WATCH] W26 a tourné 26/06 (success, 7 items, local 71%, keptByTrust=1)** : confirmer le rendu du brief en boîte (0 `<cite>`/emoji, qualité). **W27** = 1er run sur 238 sources (post-reconciliation Bloc 0) + nouvel horaire 02:27 UTC → surveiller densité/mix/horaire réel. → [[project_veille_sourcing_w26_2026-06-23]].
 - **[WATCH] Svelte 5 `onDestroy` s'exécute en SSR Vercel** (pas en `vite preview`) : window/document/localStorage/setInterval à cleanup → `$effect(() => {...; return () => cleanup})`. Tester en preview branch. → `feedback_svelte5_ondestroy_ssr_window_undefined.md`.
 - **[WATCH] Trap Vercel `rollback` → alias prod verrouillé** : après `vercel rollback`, les `git push` buildent mais ne promeuvent PAS automatiquement. Vérifier via `vercel inspect filmpro-portail.vercel.app` (domaine canonique) que l'alias pointe sur le nouveau deploy.
 - **[WATCH] Réactivation d'une source coupée V5 (2026-06-07)** : flip de flag → re-vérifier les contrôles d'origine (Zod, quota, rate-limit, anti-hallu) AVANT de rallumer en prod. Réf `audit_secu_2026-06-07_v5_signaux_prospection.md` § I-3.

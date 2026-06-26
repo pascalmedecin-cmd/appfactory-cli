@@ -34,6 +34,9 @@ export const LEADS_EXPORT_COLUMNS: CsvColumn<Record<string, unknown>>[] = [
 	{ key: 'montant', label: 'Montant' },
 	{ key: 'statut', label: 'Statut' },
 	{ key: 'score_pertinence', label: 'Score' },
+	// Vague 3.2 : campagnes (relation N-N) jointes en une cellule. La valeur est pré-attachée
+	// sous `row.campagnes` par chaque endpoint export (prospection filtré + /reporting leads).
+	{ key: 'campagnes', label: 'Campagnes' },
 	{ key: 'date_publication', label: 'Publié le', transform: formatDateShort },
 	{ key: 'date_import', label: 'Créé le', transform: formatDateShort }
 ];

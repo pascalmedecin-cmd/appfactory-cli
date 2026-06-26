@@ -3,9 +3,10 @@
 	import { config, CRM_BASE } from '$lib/config';
 	import { createSupabaseBrowserClient } from '$lib/supabase';
 
-	let { collapsed = $bindable(false), currentPath = '', unreadIntelligence = 0, onNavigate }: { collapsed?: boolean; currentPath?: string; unreadIntelligence?: number; onNavigate?: () => void } = $props();
+	let { collapsed = $bindable(false), currentPath = '', unreadIntelligence = 0, premium = false, onNavigate }: { collapsed?: boolean; currentPath?: string; unreadIntelligence?: number; premium?: boolean; onNavigate?: () => void } = $props();
 
-	const navItems = config.navigation.primary;
+	// Vague 3.2 : les entrées `premiumOnly` (Campagnes) n'apparaissent qu'avec le flag ffCrmListesV2.
+	const navItems = $derived(config.navigation.primary.filter((item) => !('premiumOnly' in item && item.premiumOnly) || premium));
 	const secondaryItems = config.navigation.secondary;
 	const supabase = createSupabaseBrowserClient();
 
