@@ -33,7 +33,18 @@ export async function GET(event: RequestEvent) {
 		return json({ error: 'Non autorisé' }, { status: 401 });
 	}
 
-	const config = buildDailyEmailConfig(env);
+	// Narrowing explicite des 4 vars consommees : `$env/dynamic/private` est type par
+	// SvelteKit avec les cles d'env ENUMEREES au `svelte-kit sync` (donc dependantes de
+	// l'environnement). Passer l'objet entier a un parametre `Partial<Record<...>>` strict
+	// declenche TS2559 « no properties in common » quand aucune des 4 cles n'est presente
+	// (cas CI, sans .env.local). On construit donc un objet aux 4 cles exactes (toujours
+	// `string | undefined`), assignable quel que soit l'environnement.
+	const config = buildDailyEmailConfig({
+		EMAIL_DAILY_ENABLED: env.EMAIL_DAILY_ENABLED,
+		RESEND_API_KEY: env.RESEND_API_KEY,
+		EMAIL_DAILY_TO: env.EMAIL_DAILY_TO,
+		EMAIL_DAILY_FROM: env.EMAIL_DAILY_FROM
+	});
 
 	try {
 		const supabase = createSupabaseServiceClient();
