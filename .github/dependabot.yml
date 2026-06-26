@@ -62,8 +62,13 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: "@sveltejs/kit"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # svelte : PATCH AUSSI tenu (exception au « patches OK »). svelte 5.55.10
+      # casse le build avec le plugin @sveltejs/vite-plugin-svelte ^6.2.4 tenu
+      # (TS non strippé dans les .svelte -> aide/+page.svelte ParseError
+      # « Expected ',', got '?' », vérifié 2026-06-26). Épinglé exact 5.55.5 dans
+      # package.json. À lever AVEC le plugin lors de la migration socle.
       - dependency-name: "svelte"
-        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
       - dependency-name: "svelte-check"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       # --- typescript 6 : majeure différée (erreurs de type à trier). ---

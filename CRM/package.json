@@ -31,7 +31,7 @@
 		"axe-core": "^4.12.1",
 		"dotenv": "^17.4.2",
 		"fast-check": "^4.8.0",
-		"svelte": "^5.54.0",
+		"svelte": "5.55.5",
 		"svelte-check": "^4.4.2",
 		"tailwindcss": "^4.2.2",
 		"tsx": "^4.22.4",
