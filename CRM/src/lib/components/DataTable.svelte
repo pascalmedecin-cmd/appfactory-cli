@@ -113,9 +113,14 @@
 		};
 	});
 
+	// Seed unique depuis les props serveur : capture de valeur initiale voulue (état local mutable ensuite)
+	// svelte-ignore state_referenced_locally
 	let search = $state(serverMode ? serverSearch : '');
+	// svelte-ignore state_referenced_locally
 	let sortKey = $state(serverMode ? serverSortKey : '');
+	// svelte-ignore state_referenced_locally
 	let sortAsc = $state(serverMode ? serverSortAsc : true);
+	// svelte-ignore state_referenced_locally
 	let currentPage = $state(serverMode ? currentServerPage : 0);
 	let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -429,6 +434,9 @@
 								{col.label}
 							{/if}
 							{#if resizable}
+								<!-- separator focusable = widget de redimensionnement, interactif par design (ARIA complet ci-dessous) -->
+								<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+								<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 								<span
 									class="col-resizer"
 									role="separator"

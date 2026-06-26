@@ -60,6 +60,8 @@
 	});
 </script>
 
+<!-- wrapper : le keydown délègue la nav clavier (Échap) au widget ; l'interactivité porte sur le <button aria-haspopup/expanded> -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="multiselect-dropdown relative w-full" onkeydown={handleKeydown}>
 	<button
 		bind:this={buttonEl}

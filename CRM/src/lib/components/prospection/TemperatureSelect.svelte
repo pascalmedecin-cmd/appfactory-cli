@@ -44,6 +44,8 @@
 	});
 </script>
 
+<!-- wrapper : le keydown délègue la nav clavier (Échap) au widget ; l'interactivité porte sur le <button> -->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="temperature-select relative" onkeydown={handleKeydown}>
 	<button
 		bind:this={buttonEl}

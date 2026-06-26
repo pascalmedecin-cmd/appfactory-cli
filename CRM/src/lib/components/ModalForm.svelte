@@ -78,7 +78,7 @@
 			<div class="flex items-center justify-between px-6 py-4 {headerVariant === 'accent' ? 'bg-primary text-white' : 'border-b border-border'}">
 				<div class="flex items-center gap-2.5">
 					{#if icon}
-						<Icon name={icon} size={22} class="{headerVariant === 'accent' ? 'text-white/80' : 'text-primary'}" />
+						<Icon name={icon} size={22} class={headerVariant === 'accent' ? 'text-white/80' : 'text-primary'} />
 					{/if}
 					<h2 id={titleId} class="text-lg font-semibold {headerVariant === 'accent' ? 'text-white' : 'text-text'}">{title}</h2>
 				</div>

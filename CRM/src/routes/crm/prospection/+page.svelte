@@ -69,6 +69,7 @@
 	// mobile. Corrige A1 « caché sur mobile » : quand `ffCrmMobileV2` affiche les cards mobiles
 	// (et masque la DataTable < 1024px), la recherche de la DataTable disparaissait. On la sort
 	// donc de la DataTable (searchable=false) pour un seul champ au-dessus des deux vues.
+	// svelte-ignore state_referenced_locally
 	let searchQuery = $state(data.search);
 	let searchTimer: ReturnType<typeof setTimeout> | null = null;
 	// Resync quand data.search change côté serveur (reset filtres, lien externe ?q=). Ne clobbe
@@ -159,15 +160,21 @@
 		}
 	});
 
-	// Filtres synchronisés avec les URL params du serveur
+	// Filtres synchronisés avec les URL params du serveur : seed unique depuis data (capture initiale voulue)
+	// svelte-ignore state_referenced_locally
 	let filterSources = $state<string[]>(data.filters.sources);
+	// svelte-ignore state_referenced_locally
 	let filterCantons = $state<string[]>(data.filters.cantons);
+	// svelte-ignore state_referenced_locally
 	let filterStatuts = $state<string[]>(data.filters.statuts);
+	// svelte-ignore state_referenced_locally
 	let filterTemperatures = $state<string[]>(data.filters.temperatures);
 	// Vague 3.2 : filtre par campagne (relation N-N, premium uniquement). Liste dynamique
 	// (data.campagnes) ; jamais affiché hors premium -> rendu OFF byte-identique.
+	// svelte-ignore state_referenced_locally
 	let filterCampagnes = $state<string[]>(data.filters.campagnes);
 	// Phase 0 : toggle "afficher les transférés" persistant via URL ?showTransferred=1
+	// svelte-ignore state_referenced_locally
 	let showTransferred = $state<boolean>(data.showTransferred);
 
 	const activeFilterCount = $derived(

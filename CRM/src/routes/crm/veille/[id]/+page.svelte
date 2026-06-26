@@ -36,6 +36,8 @@
 	let addItemOpen = $state(false);
 	let addItemSaving = $state(false);
 	let addItemError = $state<string | null>(null);
+	// Seed initial du formulaire depuis data (capture voulue : objet mutable ensuite)
+	// svelte-ignore state_referenced_locally
 	let manualItem = $state({
 		title: '',
 		summary: '',
