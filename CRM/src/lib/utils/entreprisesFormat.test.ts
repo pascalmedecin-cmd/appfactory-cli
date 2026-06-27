@@ -6,7 +6,6 @@ import {
 	emptyMessageForTab,
 	readPersistedView,
 	persistView,
-	logoUrlForSite,
 	contactCountForEntreprise,
 	type EntrepriseLite,
 	type ContactForEntrepriseLite,
@@ -168,32 +167,6 @@ describe('readPersistedView / persistView', () => {
 			},
 		};
 		expect(() => persistView(throwing, 'cards')).not.toThrow();
-	});
-});
-
-describe('logoUrlForSite', () => {
-	it('retourne null si site vide', () => {
-		expect(logoUrlForSite(null)).toBeNull();
-		expect(logoUrlForSite(undefined)).toBeNull();
-		expect(logoUrlForSite('')).toBeNull();
-	});
-
-	it('extrait hostname HTTPS', () => {
-		expect(logoUrlForSite('https://www.filmpro.ch')).toBe('https://logo.clearbit.com/www.filmpro.ch');
-	});
-
-	it('extrait hostname HTTP', () => {
-		expect(logoUrlForSite('http://example.com/page')).toBe('https://logo.clearbit.com/example.com');
-	});
-
-	it('rejette protocoles non-HTTP(S)', () => {
-		expect(logoUrlForSite('javascript:alert(1)')).toBeNull();
-		expect(logoUrlForSite('data:text/html,<script>')).toBeNull();
-		expect(logoUrlForSite('ftp://example.com')).toBeNull();
-	});
-
-	it('retourne null si URL invalide', () => {
-		expect(logoUrlForSite('not a url')).toBeNull();
 	});
 });
 

@@ -4,6 +4,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import type { ActionResult } from '@sveltejs/kit';
 	import DataTable from '$lib/components/DataTable.svelte';
+	import SearchInput from '$lib/components/SearchInput.svelte';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import PhotoGallery from '$lib/components/PhotoGallery.svelte';
 	import VisitsPanel from '$lib/components/VisitsPanel.svelte';
@@ -24,7 +25,6 @@
 		emptyMessageForTab,
 		readPersistedView,
 		persistView,
-		logoUrlForSite,
 		contactCountForEntreprise,
 		buildActiveStageByEntreprise,
 		entreprisesPremiumIndicators,
@@ -359,12 +359,11 @@
 	<EntreprisesTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)}>
 		{#snippet actions()}
 			<div class="search">
-				<Icon name="search" size={16} class="search-icon" />
-				<input
-					type="search"
-					bind:value={searchQuery}
+				<SearchInput
+					value={searchQuery}
+					oninput={(v) => (searchQuery = v)}
 					placeholder="Rechercher une entreprise…"
-					aria-label="Rechercher une entreprise"
+					ariaLabel="Rechercher une entreprise"
 				/>
 			</div>
 			{#if !forceMobileCards}
@@ -394,31 +393,16 @@
 				onRowClick={openDetail}
 				searchable={false}
 				stickyLeftCols={2}
+				pageSize={50}
 				rowAriaLabel={rowAriaLabelFor}
 				emptyMessage={searchQuery.trim() ? `Aucun résultat pour « ${searchQuery.trim()} »` : emptyMessageForTab(activeTab)}
 			>
 				{#snippet row(entreprise, _i)}
-					{@const logo = logoUrlForSite(entreprise.site_web)}
 					{@const cc = contactCountForEntreprise(entreprise.id, data.contacts)}
 					<td class="px-4 py-3">
-						{#if logo}
-							<img
-								class="logo-cell {premium ? 'logo-cell--lg' : ''}"
-								src={logo}
-								alt=""
-								onerror={(e) => {
-									(e.currentTarget as HTMLElement).style.display = 'none';
-									(e.currentTarget.nextElementSibling as HTMLElement).style.display = 'grid';
-								}}
-							/>
-							<span class="logo-cell {premium ? 'logo-cell--lg' : ''} logo-cell--placeholder">
-								{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
-							</span>
-						{:else}
-							<span class="logo-cell {premium ? 'logo-cell--lg' : ''} logo-cell--placeholder">
-								{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
-							</span>
-						{/if}
+						<span class="logo-cell {premium ? 'logo-cell--lg' : ''} logo-cell--placeholder">
+							{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
+						</span>
 					</td>
 					{#if premium}
 						{@const stage = stageByEntreprise.get(entreprise.id)}
@@ -490,20 +474,15 @@
 <!-- SlideOut détail entreprise -->
 <SlideOut bind:open={slideOutOpen} title={selectedEntreprise?.raison_sociale ?? ''}>
 	{#if selectedEntreprise}
-		{@const logo = logoUrlForSite(selectedEntreprise.site_web)}
 		{@const fStage = stageByEntreprise.get(selectedEntreprise.id)}
 		{@const fSrc = sourceMetaFor(selectedEntreprise.source)}
 		{@const fActivite = relativeTimeFr(selectedEntreprise.date_derniere_modification)}
 		<div class="space-y-6">
-			<!-- En-tête avec logo -->
+			<!-- En-tête avec initiales -->
 			<div class="flex items-center gap-4">
-				{#if logo}
-					<img src={logo} alt="" class="w-16 h-16 rounded-lg object-contain bg-white border border-border" onerror={(e) => { (e.currentTarget as HTMLElement).style.display = 'none'; }} />
-				{:else}
-					<span class="flex items-center justify-center w-16 h-16 rounded-lg bg-primary-light text-primary font-bold text-2xl">
-						{selectedEntreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
-					</span>
-				{/if}
+				<span class="flex items-center justify-center w-16 h-16 rounded-lg bg-primary-light text-primary font-bold text-2xl">
+					{selectedEntreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
+				</span>
 				{#if premium}
 					<div class="min-w-0">
 						<p class="font-semibold text-lg text-text">{selectedEntreprise.raison_sociale}</p>
@@ -748,7 +727,7 @@
 				<CantonSelect bind:value={canton} />
 			</div>
 			<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-				<FormField label="Taille estimée" bind:value={taille_estimee} placeholder="PME, ETI, GE…" />
+				<FormField label="Taille estimée" bind:value={taille_estimee} placeholder="Micro, PME, Grande…" />
 				<FormField label="Site web" type="url" bind:value={site_web} />
 			</div>
 			<FormField label="Adresse siège" bind:value={adresse_siege} placeholder="Rue, NPA, Ville" />
@@ -805,32 +784,7 @@
 <style>
 	/* Search input dans tabs-actions */
 	.search {
-		position: relative;
 		width: 256px;
-	}
-	.search input {
-		width: 100%;
-		height: 32px;
-		padding: 0 12px 0 36px;
-		border: 1px solid var(--color-border);
-		border-radius: var(--radius-md);
-		font: 13px inherit;
-		background: var(--color-surface);
-		color: var(--color-text);
-		font-family: inherit;
-	}
-	.search input:focus-visible {
-		border-color: var(--color-primary);
-		outline: none;
-		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 30%, transparent);
-	}
-	.search :global(.search-icon) {
-		position: absolute;
-		left: 12px;
-		top: 50%;
-		transform: translateY(-50%);
-		color: var(--color-text-muted);
-		pointer-events: none;
 	}
 
 	/* Logo cell dans table view */

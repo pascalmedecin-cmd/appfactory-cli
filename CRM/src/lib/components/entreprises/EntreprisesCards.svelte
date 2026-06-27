@@ -2,7 +2,7 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import StagePill from '$lib/components/StagePill.svelte';
-	import { logoUrlForSite, contactCountForEntreprise, type ContactForEntrepriseLite, type StageMeta } from '$lib/utils/entreprisesFormat';
+	import { contactCountForEntreprise, type ContactForEntrepriseLite, type StageMeta } from '$lib/utils/entreprisesFormat';
 
 	type Props = {
 		entreprises: T[];
@@ -58,7 +58,6 @@
 {:else}
 	<div class="cards-grid">
 		{#each entreprises as entreprise (entreprise.id)}
-			{@const logo = logoUrlForSite(entreprise.site_web)}
 			{@const cc = contactCountForEntreprise(entreprise.id, contacts)}
 			{@const host = siteHostname(entreprise.site_web)}
 			<button
@@ -68,24 +67,9 @@
 				aria-label={`${entreprise.raison_sociale}, ${entreprise.secteur_activite ?? 'secteur non renseigné'}, ${cc} contact${cc > 1 ? 's' : ''}, statut ${statutLabel(entreprise.statut_qualification)}`}
 			>
 				<div class="card-visite-head">
-					{#if logo}
-						<img
-							class="card-visite-logo card-visite-logo--img"
-							src={logo}
-							alt=""
-							onerror={(e) => {
-								(e.currentTarget as HTMLElement).style.display = 'none';
-								(e.currentTarget.nextElementSibling as HTMLElement).style.display = 'grid';
-							}}
-						/>
-						<span class="card-visite-logo card-visite-logo--placeholder">
-							{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
-						</span>
-					{:else}
-						<span class="card-visite-logo card-visite-logo--placeholder">
-							{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
-						</span>
-					{/if}
+					<span class="card-visite-logo card-visite-logo--placeholder">
+						{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
+					</span>
 					<div class="card-visite-meta">
 						<p class="card-visite-name">{entreprise.raison_sociale}</p>
 						{#if entreprise.secteur_activite}
@@ -175,10 +159,6 @@
 		flex-shrink: 0;
 		overflow: hidden;
 		border: 1px solid var(--color-border);
-	}
-	.card-visite-logo--img {
-		object-fit: contain;
-		background: white;
 	}
 	.card-visite-logo--placeholder {
 		background: var(--color-primary-light);

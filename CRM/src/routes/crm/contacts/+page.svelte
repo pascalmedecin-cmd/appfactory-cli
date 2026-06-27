@@ -149,16 +149,6 @@
 		entreprise_nom = '';
 	}
 
-	function logoUrl(siteWeb: string | null): string | null {
-		if (!siteWeb) return null;
-		try {
-			const domain = new URL(siteWeb).hostname;
-			return `https://logo.clearbit.com/${domain}`;
-		} catch {
-			return null;
-		}
-	}
-
 	function entrepriseForContact(contact: Contact): Entreprise | null {
 		// Audit 360 V2b H-06 : on lit l'entreprise jointe (`entreprises(id,
 		// raison_sociale, site_web)`) directement sur le contact, plus besoin de
@@ -495,20 +485,9 @@
 			{#if entrepriseForContact(selectedContact) || selectedContact.entreprises?.raison_sociale}
 				{@const ent = entrepriseForContact(selectedContact)}
 				<div class="flex items-center gap-3 p-3 bg-surface rounded-lg">
-					{#if logoUrl(ent?.site_web ?? null)}
-						<img
-							src={logoUrl(ent?.site_web ?? null)}
-							alt=""
-							class="w-10 h-10 rounded-md object-contain bg-white border border-border"
-							onerror={(e) => {
-								(e.currentTarget as HTMLElement).style.display = 'none';
-							}}
-						/>
-					{:else}
-						<span class="flex items-center justify-center w-10 h-10 rounded-md bg-primary-light text-primary font-bold text-sm">
-							{selectedContact.entreprises?.raison_sociale?.[0]?.toUpperCase() ?? '?'}
-						</span>
-					{/if}
+					<span class="flex items-center justify-center w-10 h-10 rounded-md bg-primary-light text-primary font-bold text-sm">
+						{selectedContact.entreprises?.raison_sociale?.[0]?.toUpperCase() ?? '?'}
+					</span>
 					<div>
 						<p class="font-medium text-text">{selectedContact.entreprises?.raison_sociale ?? '–'}</p>
 						<p class="text-xs text-text-muted">{selectedContact.role_fonction ?? 'Fonction non renseignée'}</p>
@@ -748,20 +727,9 @@
 								onclick={() => selectEntreprise(sug)}
 								class="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-surface cursor-pointer {entreprise_id === sug.id ? 'bg-primary-light font-medium' : ''}"
 							>
-								{#if logoUrl(sug.site_web)}
-									<img
-										src={logoUrl(sug.site_web)}
-										alt=""
-										class="w-5 h-5 rounded object-contain"
-										onerror={(e) => {
-											(e.currentTarget as HTMLElement).style.display = 'none';
-										}}
-									/>
-								{:else}
-									<span class="flex items-center justify-center w-5 h-5 rounded bg-primary-light text-primary text-[10px] font-bold">
-										{sug.raison_sociale[0]}
-									</span>
-								{/if}
+								<span class="flex items-center justify-center w-5 h-5 rounded bg-primary-light text-primary text-[10px] font-bold">
+									{sug.raison_sociale[0]}
+								</span>
 								{sug.raison_sociale}
 							</button>
 						{/each}

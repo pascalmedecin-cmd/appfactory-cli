@@ -170,22 +170,6 @@ export function persistView(storage: Pick<Storage, 'setItem'> | null | undefined
 }
 
 /**
- * Logo Clearbit pour un site web. Retourne null si site_web invalide.
- * Utilisé en cards + table cellule logo.
- * Note GDPR : envoie hostname domaine prospect à Clearbit (Watchlist S176bis).
- */
-export function logoUrlForSite(siteWeb: string | null | undefined): string | null {
-	if (!siteWeb) return null;
-	try {
-		const url = new URL(siteWeb);
-		if (url.protocol !== 'http:' && url.protocol !== 'https:') return null;
-		return `https://logo.clearbit.com/${url.hostname}`;
-	} catch {
-		return null;
-	}
-}
-
-/**
  * Compte le nombre de contacts rattachés à une entreprise donnée.
  */
 export function contactCountForEntreprise<C extends ContactForEntrepriseLite>(
