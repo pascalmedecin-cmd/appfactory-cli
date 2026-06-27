@@ -235,7 +235,7 @@
 		place-items: center;
 		background: var(--color-primary-light);
 		color: var(--color-primary);
-		border: 1px solid rgba(47, 90, 158, 0.06);
+		border: 1px solid color-mix(in srgb, var(--color-primary) 6%, transparent);
 	}
 	.card-signal-icon.icon-selected {
 		background: var(--color-primary);
@@ -300,7 +300,7 @@
 	/* V3 spec § 4 C7 : highlight jaune des matches de recherche.
 	   Prime visuellement sur la catégorie keyword (chunk search rendu sans cat). */
 	.card-signal-desc :global(mark.kw-search) {
-		background: #FEF9C3;
+		background: var(--color-highlight);
 		color: inherit;
 		padding: 0 2px;
 		border-radius: 2px;
@@ -327,14 +327,14 @@
 		color: var(--color-danger-deep);
 		text-decoration: line-through;
 		text-decoration-thickness: 1px;
-		text-decoration-color: rgba(240, 68, 56, 0.55);
+		text-decoration-color: color-mix(in srgb, var(--color-danger) 55%, transparent);
 	}
 	.card-signal-footer {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 16px;
 		padding-top: 8px;
-		border-top: 1px solid rgba(17, 24, 39, 0.05);
+		border-top: 1px solid var(--color-hairline);
 		font-size: 12px;
 		color: var(--color-text-muted);
 	}

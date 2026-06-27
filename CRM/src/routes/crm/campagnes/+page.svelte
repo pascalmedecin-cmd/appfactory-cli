@@ -199,7 +199,7 @@
 			<h2>Campagnes</h2>
 			<p>Regrouper les prospects par action commerciale. Une entreprise peut porter plusieurs campagnes.</p>
 		</div>
-		<button type="button" class="btn-primary" onclick={openCreate}>
+		<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
 			<Icon name="add" size={17} /> Nouvelle campagne
 		</button>
 	</header>
@@ -208,10 +208,10 @@
 
 	<div class="toolbar">
 		<div class="segtabs" role="tablist" aria-label="Filtrer les campagnes">
-			<button type="button" class="segtab" class:active={activeTab === 'actives'} role="tab" aria-selected={activeTab === 'actives'} onclick={() => (activeTab = 'actives')}>
+			<button type="button" id="camptab-actives" class="segtab" class:active={activeTab === 'actives'} role="tab" aria-selected={activeTab === 'actives'} aria-controls="campagnes-panel" onclick={() => (activeTab = 'actives')}>
 				Actives <span class="ct">{data.stats.actives}</span>
 			</button>
-			<button type="button" class="segtab" class:active={activeTab === 'archived'} role="tab" aria-selected={activeTab === 'archived'} onclick={() => (activeTab = 'archived')}>
+			<button type="button" id="camptab-archived" class="segtab" class:active={activeTab === 'archived'} role="tab" aria-selected={activeTab === 'archived'} aria-controls="campagnes-panel" onclick={() => (activeTab = 'archived')}>
 				Archivées <span class="ct">{data.stats.archived}</span>
 			</button>
 		</div>
@@ -221,6 +221,7 @@
 		</div>
 	</div>
 
+	<div id="campagnes-panel" role="tabpanel" aria-labelledby={`camptab-${activeTab}`}>
 	{#if visible.length === 0}
 		<div class="empty">
 			<span class="empty-ic"><Icon name={search.trim() ? 'search_off' : 'sell'} size={26} /></span>
@@ -230,7 +231,7 @@
 			{:else if activeTab === 'actives'}
 				<h3>Aucune campagne active</h3>
 				<p>Créez votre première campagne pour regrouper des prospects (salon, secteur, région…).</p>
-				<button type="button" class="btn-primary" onclick={openCreate}><Icon name="add" size={16} /> Nouvelle campagne</button>
+				<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}><Icon name="add" size={16} /> Nouvelle campagne</button>
 			{:else}
 				<h3>Aucune campagne archivée</h3>
 				<p>Les campagnes que vous archivez apparaîtront ici. L'archivage est réversible.</p>
@@ -293,6 +294,7 @@
 			</div>
 		</div>
 	{/if}
+	</div>
 </div>
 
 <!-- Création -->
@@ -361,29 +363,6 @@
 		color: var(--color-text-muted);
 		max-width: 60ch;
 	}
-	.btn-primary {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		height: 40px;
-		padding: 0 16px;
-		border: none;
-		border-radius: var(--radius-lg);
-		background: var(--color-primary);
-		color: #fff;
-		font: 600 14px var(--font-sans, inherit);
-		cursor: pointer;
-		box-shadow: 0 1px 2px rgba(16, 24, 40, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-		transition: background 200ms ease, transform 120ms ease;
-		white-space: nowrap;
-	}
-	.btn-primary:hover {
-		background: var(--color-primary-hover);
-	}
-	.btn-primary:active {
-		transform: scale(0.98);
-	}
-
 	.toolbar {
 		display: flex;
 		align-items: center;
@@ -417,19 +396,19 @@
 	}
 	.segtab.active {
 		background: var(--color-primary);
-		color: #fff;
+		color: var(--color-text-inverse);
 	}
 	.segtab .ct {
 		font-size: 11.5px;
 		padding: 1px 7px;
 		border-radius: var(--radius-full);
-		background: rgba(17, 24, 39, 0.06);
+		background: color-mix(in srgb, var(--color-text) 6%, transparent);
 		color: var(--color-text-muted);
 		font-weight: 700;
 	}
 	.segtab.active .ct {
 		background: rgba(255, 255, 255, 0.22);
-		color: #fff;
+		color: var(--color-text-inverse);
 	}
 	.search {
 		position: relative;
@@ -490,7 +469,7 @@
 		min-height: 64px;
 		padding-top: 11px;
 		padding-bottom: 11px;
-		border-bottom: 1px solid rgba(17, 24, 39, 0.05);
+		border-bottom: 1px solid var(--color-hairline);
 	}
 	.lc-row:last-of-type {
 		border-bottom: none;
@@ -547,7 +526,7 @@
 	.cstatus.active {
 		background: var(--color-success-light);
 		color: var(--color-success-deep);
-		box-shadow: inset 0 0 0 1px rgba(18, 183, 106, 0.18);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-success) 18%, transparent);
 	}
 	.cstatus.active .dot {
 		background: var(--color-success);
@@ -590,7 +569,7 @@
 		padding: 6px;
 		background: var(--color-surface);
 		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-menu, 0 12px 32px -8px rgba(16, 24, 40, 0.22));
+		box-shadow: var(--shadow-menu);
 		border: 1px solid var(--color-border);
 	}
 	.menu-item {
@@ -703,16 +682,17 @@
 		flex-wrap: wrap;
 	}
 	.swatch {
+		position: relative;
 		width: 30px;
 		height: 30px;
 		border: none;
 		padding: 0;
 		border-radius: var(--radius-md);
 		cursor: pointer;
-		box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.10);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 10%, transparent);
 	}
 	.swatch.sel {
-		box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.10), 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-text) 10%, transparent), 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary);
 	}
 	.swatch.sel::after {
 		content: '';
@@ -738,7 +718,8 @@
 		.lc-row {
 			grid-template-columns: 26px minmax(0, 1fr) 40px;
 		}
-		.hide-sm {
+		.hide-sm,
+		.hide-md {
 			display: none;
 		}
 	}

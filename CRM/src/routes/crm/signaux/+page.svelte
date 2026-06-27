@@ -163,7 +163,6 @@
 
 	// Convert form
 	let opp_titre = $state('');
-	let opp_entreprise_id = $state('');
 
 	const TYPE_SIGNAL_OPTIONS = config.signaux.types.map((t) => ({ value: t.key, label: t.label }));
 
@@ -257,6 +256,13 @@
 		filteredSignaux.length > QUEUE_CAP
 	);
 	const visibleSignaux = $derived(queueCapActive ? filteredSignaux.slice(0, QUEUE_CAP) : filteredSignaux);
+	// GOLDEN 5.11/7 : empty state contextuel. Si une recherche/un filtre est actif, l'onglet
+	// n'est pas vide « dans la base » mais « pour ce filtre » → message dédié, pas le message d'onglet.
+	const emptyMsg = $derived(
+		searchDebounced.trim() || filterCanton || filterType || hideOutOfScope
+			? 'Aucun signal ne correspond à votre recherche ou aux filtres sélectionnés.'
+			: emptyMessageForTab(activeTab)
+	);
 	const queueHiddenCount = $derived(filteredSignaux.length - visibleSignaux.length);
 
 	const cantons = $derived(
@@ -342,7 +348,6 @@
 	function openConvertModal() {
 		if (!selectedSignal) return;
 		opp_titre = selectedSignal.description_projet ?? selectedSignal.type_signal ?? '';
-		opp_entreprise_id = '';
 		convertModalOpen = true;
 	}
 
@@ -403,7 +408,7 @@
 	{/if}
 
 	{#if !data.showArchived}
-	<SignauxTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)}>
+	<SignauxTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => { activeTab = t; selectedIds = new Set(); }}>
 		{#snippet actions()}
 			<!-- Vague 1 (SPEC_VAGUE1_COHERENCE § 3) : filtre Type retiré (Signaux mono-type
 			     `appel_offres` depuis V5 ; les 6 autres types venaient de sources coupées).
@@ -559,7 +564,7 @@
 				{selectedIds}
 				onSelect={openDetail}
 				onToggleSelect={toggleSelect}
-				emptyMessage={emptyMessageForTab(activeTab)}
+				emptyMessage={emptyMsg}
 				keywords={data.keywords}
 				searchTerm={searchDebounced}
 			/>
@@ -1048,7 +1053,6 @@
 				<FormField label="Titre de l'opportunité" bind:value={opp_titre} required />
 
 				<input type="hidden" name="titre" value={opp_titre} />
-				<input type="hidden" name="entreprise_id" value={opp_entreprise_id} />
 			</div>
 
 			<div class="flex justify-end gap-3 pt-4">
