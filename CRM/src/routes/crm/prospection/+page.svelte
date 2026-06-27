@@ -924,7 +924,7 @@
 				Recherchez une entreprise dans le registre du commerce (Zefix) ou l'annuaire pro (search.ch), qualifiez-la, puis convertissez les plus pertinentes en entreprises dans votre CRM.
 			</p>
 			<button
-				onclick={() => importModalOpen = true}
+				onclick={() => entrepriseSearchOpen = true}
 				class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-md transition-colors"
 			>
 				<Icon name="search" size={18} />
