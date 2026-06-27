@@ -241,7 +241,7 @@
 					<div class="space-y-3">
 						<p class="text-xs font-semibold text-text-muted uppercase tracking-wide">Sources</p>
 						<label class="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition-colors">
-							<input type="checkbox" bind:checked={useSearchCh} class="accent-accent" />
+							<input type="checkbox" bind:checked={useSearchCh} class="accent-primary" />
 							<Icon name="phone_forwarded" class="text-text-muted" />
 							<div>
 								<span class="text-sm font-medium text-text">search.ch</span>
@@ -249,7 +249,7 @@
 							</div>
 						</label>
 						<label class="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition-colors">
-							<input type="checkbox" bind:checked={useZefix} class="accent-accent" />
+							<input type="checkbox" bind:checked={useZefix} class="accent-primary" />
 							<Icon name="business" class="text-text-muted" />
 							<div>
 								<span class="text-sm font-medium text-text">Zefix (registre du commerce)</span>

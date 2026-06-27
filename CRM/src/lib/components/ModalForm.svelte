@@ -15,6 +15,7 @@
 		footerHint = '',
 		onSave,
 		onDelete,
+		onClose,
 		children,
 		extra,
 	}: {
@@ -31,17 +32,26 @@
 		footerHint?: string;
 		onSave?: () => void;
 		onDelete?: () => void;
+		// Appelé quand la modale se ferme d'elle-même (Escape / croix / Annuler).
+		// Indispensable quand `open` est dérivé d'un état parent (ex: open={target !== null})
+		// sans bind: — sinon l'état parent n'est jamais réinitialisé et la modale ne rouvre plus.
+		onClose?: () => void;
 		children?: Snippet;
 		extra?: Snippet;
 	} = $props();
 
 	let showExtra = $state(false);
 
+	function close() {
+		open = false;
+		onClose?.();
+	}
+
 	// Nom accessible du dialog (WCAG 4.1.2) : lie le <h2> titre via aria-labelledby.
 	const titleId = $props.id();
 
 	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') open = false;
+		if (e.key === 'Escape') close();
 	}
 
 	$effect(() => {
@@ -82,7 +92,7 @@
 					{/if}
 					<h2 id={titleId} class="text-lg font-semibold {headerVariant === 'accent' ? 'text-white' : 'text-text'}">{title}</h2>
 				</div>
-				<button type="button" aria-label="Fermer" onclick={() => open = false} class="{headerVariant === 'accent' ? 'text-white/70 hover:text-white' : 'text-text-muted hover:text-text'} cursor-pointer">
+				<button type="button" aria-label="Fermer" onclick={close} class="{headerVariant === 'accent' ? 'text-white/70 hover:text-white' : 'text-text-muted hover:text-text'} cursor-pointer">
 					<Icon name="close" />
 				</button>
 			</div>
@@ -128,7 +138,7 @@
 						<div class="flex items-center gap-3 shrink-0">
 							<button
 								type="button"
-								onclick={() => open = false}
+								onclick={close}
 								class="min-h-11 inline-flex items-center px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
 							>
 								Annuler

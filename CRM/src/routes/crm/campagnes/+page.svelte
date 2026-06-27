@@ -316,7 +316,7 @@
 </ModalForm>
 
 <!-- Renommage -->
-<ModalForm open={renameTarget !== null} title="Renommer la campagne" icon="edit" saving={renameBusy} onSave={submitRename} maxWidth="max-w-md">
+<ModalForm open={renameTarget !== null} title="Renommer la campagne" icon="edit" saving={renameBusy} onSave={submitRename} onClose={() => (renameTarget = null)} maxWidth="max-w-md">
 	<div class="field">
 		<label for="camp-rename-nom">Nom</label>
 		<input id="camp-rename-nom" class="txt" type="text" bind:value={renameNom} maxlength={CAMPAGNE_NOM_MAX} onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitRename(); } }} />
@@ -332,6 +332,7 @@
 	variant="danger"
 	loading={deleteBusy}
 	onConfirm={confirmDelete}
+	onClose={() => (deleteTarget = null)}
 />
 
 <style>

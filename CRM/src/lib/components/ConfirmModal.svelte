@@ -12,6 +12,7 @@
 		variant = 'danger',
 		loading = false,
 		onConfirm,
+		onClose,
 	}: {
 		open?: boolean;
 		title?: string;
@@ -21,11 +22,19 @@
 		variant?: 'danger' | 'warning';
 		loading?: boolean;
 		onConfirm?: () => void;
+		// Appelé quand la modale se ferme d'elle-même (Escape / Annuler). Indispensable
+		// quand `open` est dérivé d'un état parent (ex: open={target !== null}) sans bind:.
+		onClose?: () => void;
 	} = $props();
+
+	function close() {
+		open = false;
+		onClose?.();
+	}
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (!open) return;
-		if (e.key === 'Escape') open = false;
+		if (e.key === 'Escape') close();
 	}
 
 	const variantClasses = $derived(
@@ -58,7 +67,7 @@
 			transition:scale={{ start: 0.95, duration: 200 }}
 		>
 			<div class="px-6 pt-6 pb-2 text-center">
-				<div class="mx-auto w-12 h-12 rounded-full bg-surface-secondary flex items-center justify-center mb-4">
+				<div class="mx-auto w-12 h-12 rounded-full bg-surface-alt flex items-center justify-center mb-4">
 					<Icon name={iconName} size={24} class={iconColor} />
 				</div>
 				<h3 id="confirm-title" class="text-lg font-semibold text-text">{title}</h3>
@@ -68,9 +77,9 @@
 			<div class="flex gap-3 px-6 pb-6 pt-4">
 				<button
 					type="button"
-					onclick={() => open = false}
+					onclick={close}
 					disabled={loading}
-					class="flex-1 px-4 py-3 text-sm font-medium text-text-muted bg-surface-secondary hover:bg-surface-secondary/80 rounded-lg cursor-pointer disabled:opacity-50 transition-colors"
+					class="flex-1 px-4 py-3 text-sm font-medium text-text-muted bg-surface-alt hover:bg-surface-alt/80 rounded-lg cursor-pointer disabled:opacity-50 transition-colors"
 				>
 					{cancelLabel}
 				</button>

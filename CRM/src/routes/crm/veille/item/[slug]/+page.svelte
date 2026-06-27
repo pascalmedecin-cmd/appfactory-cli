@@ -52,12 +52,12 @@
 			});
 			const result = await resp.json();
 			if (!resp.ok) {
-				alert(`Échec import : ${result?.error ?? resp.statusText}`);
+				toasts.error(`Échec import : ${result?.error ?? resp.statusText}`);
 				return;
 			}
 			goto(result.redirect, { invalidateAll: true });
 		} catch (err) {
-			alert(`Erreur réseau : ${String(err)}`);
+			toasts.error(`Erreur réseau : ${String(err)}`);
 		} finally {
 			chipLoading = null;
 		}

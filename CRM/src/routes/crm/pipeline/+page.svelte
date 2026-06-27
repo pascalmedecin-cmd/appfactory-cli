@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import { tick } from 'svelte';
 	import { enhance } from '$app/forms';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
@@ -236,7 +237,7 @@
 		dragOverEtape = null;
 	}
 
-	function onColumnDrop(e: DragEvent, etape: string) {
+	async function onColumnDrop(e: DragEvent, etape: string) {
 		e.preventDefault();
 		dragOverEtape = null;
 		const id = e.dataTransfer?.getData('text/plain');
@@ -246,6 +247,9 @@
 		if (!data.opportunites.some((o) => o.id === id)) return;
 		moveFormId = id;
 		moveFormEtape = etape;
+		// Svelte 5 flushe le DOM de façon asynchrone : sans tick(), requestSubmit()
+		// sérialiserait les valeurs du rendu précédent (1er drop vide, suivants stale).
+		await tick();
 		moveFormEl?.requestSubmit();
 	}
 

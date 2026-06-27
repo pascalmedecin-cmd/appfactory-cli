@@ -107,8 +107,8 @@
 		gap: 8px;
 	}
 	.stage {
-		background: var(--color-card);
-		border-radius: var(--radius-card);
+		background: var(--color-surface-raised);
+		border-radius: var(--radius-lg);
 		box-shadow: var(--shadow-card);
 		overflow: hidden;
 	}
@@ -148,7 +148,7 @@
 		height: 22px;
 		padding: 0 6px;
 		border-radius: 999px;
-		background: var(--color-border-soft);
+		background: var(--color-border);
 		color: var(--color-text-muted);
 		font-size: 12px;
 		font-weight: 600;
@@ -177,7 +177,7 @@
 		transform: scaleY(1);
 		opacity: 1;
 		padding: 0 16px 12px;
-		border-top: 1px solid var(--color-border-soft);
+		border-top: 1px solid var(--color-border);
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.chevron,
@@ -200,7 +200,7 @@
 		flex-direction: column;
 	}
 	.opps li + li {
-		border-top: 1px solid var(--color-border-soft);
+		border-top: 1px solid var(--color-border);
 	}
 	.opp {
 		display: flex;
@@ -235,7 +235,7 @@
 	.opp-montant::after {
 		content: '·';
 		margin-left: 8px;
-		color: var(--color-border-soft);
+		color: var(--color-border);
 	}
 	.opp-relance.overdue {
 		color: var(--color-danger-deep);
