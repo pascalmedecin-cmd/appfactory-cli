@@ -212,24 +212,26 @@
 		<text x="360" y="307" class="t-node t-sm">L'écran « Signaux » montre la matière première (étape 1) ; l'écran « Veille » montre l'édition finie (étape 4).</text>
 
 	{:else if name === 'scoring-prospection'}
-		<!-- Barres empilées : composition du score sur 10 -->
+		<!-- Barres : composition réelle du score (config.scoring + mots-clés). Échelle
+			 24px/pt pour que le booster mots-clés Cœur (cap +10) tienne dans la zone. -->
 		<text x="360" y="32" class="t-flow">score de priorité d'un lead, calculé automatiquement (sur 10)</text>
 		{#each [
-			['Secteur cible (bâtiment, architecte, régie…)', 3, 'node-mid'],
-			['Canton prioritaire (GE / VD / VS)', 2, 'node'],
-			['Source « chaude » : marché public SIMAP', 2, 'node'],
-			['Entreprise identifiée (registre / établissement)', 1, 'node-soft'],
-			['Source chantier : registre des bâtiments', 1, 'node-soft'],
-			['Canton secondaire (NE / FR / JU)', 1, 'node-soft']
+			{ name: 'Mots-clés Cœur métier (vitrage, films, vernis…)', pts: 10, cls: 'node-mid' },
+			{ name: 'Mots-clés bonus (secteur connexe)', pts: 4, cls: 'node' },
+			{ name: 'Secteur cible (bâtiment, architecte, régie…)', pts: 3, cls: 'node' },
+			{ name: 'Canton prioritaire (GE / VD / VS)', pts: 2, cls: 'node-soft' },
+			{ name: 'Canton secondaire (NE / FR / JU)', pts: 1, cls: 'node-soft' },
+			{ name: 'Téléphone, montant ≥ 100k, registre RegBL', pts: 1, cls: 'node-soft', ptLabel: '+1 chacun' }
 		] as row, i}
-			<rect x="24" y={64 + i * 44} width="380" height="36" rx="8" class="node {row[2]}" />
-			<text x="40" y={86 + i * 44} class="t-node t-xs t-left">{row[0]}</text>
-			<rect x="420" y={64 + i * 44} width={Number(row[1]) * 80} height="36" rx="8" class="bar" />
-			<text x={420 + Number(row[1]) * 80 + 14} y={86 + i * 44} class="t-node t-xs t-left">+{row[1]} pt{Number(row[1]) > 1 ? 's' : ''}</text>
+			<rect x="24" y={64 + i * 44} width="380" height="36" rx="8" class="node {row.cls}" />
+			<text x="40" y={86 + i * 44} class="t-node t-xs t-left">{row.name}</text>
+			<rect x="420" y={64 + i * 44} width={row.pts * 24} height="36" rx="8" class="bar" />
+			<text x={420 + row.pts * 24 + 14} y={86 + i * 44} class="t-node t-xs t-left">{row.ptLabel ?? `+${row.pts} pt${row.pts > 1 ? 's' : ''}`}</text>
 		{/each}
 		<line x1="420" y1="56" x2="420" y2="332" class="axis" />
 		<rect x="24" y="338" width="672" height="0.5" class="axis" />
-		<text x="500" y="354" class="t-node t-xs">Pastille : « Prioritaire » ≥ 7 · « À qualifier » 4-6 · « Faible signal » 0-3</text>
+		<text x="40" y="354" class="t-node t-xs t-left">Les mots-clés « à éviter » retirent des points.</text>
+		<text x="696" y="354" class="t-node t-xs" text-anchor="end">« Prioritaire » ≥ 7 · « À qualifier » 4-6 · « Faible signal » 0-3</text>
 
 	{:else if name === 'architecture'}
 		<!-- 4 couches : navigateur → application → base → services externes -->

@@ -327,7 +327,7 @@ const niveau2: AideLevel = {
 					rows: [
 						['Zefix', 'Registre du commerce suisse : entreprises inscrites, numéro d\'identification, forme juridique.'],
 						['search.ch', 'Annuaire : entreprises locales avec téléphone et catégorie d\'activité.'],
-						['SIMAP', 'Marchés publics : appels d\'offres en cours (source « chaude », bonus de score).'],
+						['SIMAP', 'Marchés publics : appels d\'offres en cours (radar Signaux).'],
 						['RegBL', 'Registre des bâtiments : chantiers et permis de construire récents.'],
 						['Google Places', 'Établissements opérationnels par type d\'activité (réseau de partenaires) - quota mensuel limité.'],
 						['Autres sources', 'Saisie manuelle d\'un lead terrain, import d\'un fichier CSV.']
