@@ -133,7 +133,7 @@
 							<span class="inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1 text-xs rounded-full font-medium bg-prosp-enrich/12 text-prosp-enrich-deep border border-prosp-enrich-border/40">
 								{mot}
 								<button type="button" onclick={() => removeMotCle(mot)} class="flex items-center justify-center w-4 h-4 rounded-full cursor-pointer transition-colors text-prosp-enrich-deep/70" aria-label="Supprimer {mot}">
-									<span class="text-[10px] leading-none font-bold">&times;</span>
+									<Icon name="close" size={12} />
 								</button>
 							</span>
 						{/each}
@@ -173,14 +173,14 @@
 			<button
 				type="button"
 				onclick={() => open = false}
-				class="inline-flex items-center h-10 px-4 box-border text-sm text-text-muted hover:text-text cursor-pointer"
+				class="inline-flex items-center h-11 px-4 box-border text-sm text-text-muted hover:text-text cursor-pointer"
 			>
 				Annuler
 			</button>
 			<button
 				type="submit"
 				disabled={saving || !nom}
-				class="inline-flex items-center h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
+				class="inline-flex items-center h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors"
 			>
 				{saving ? 'Création…' : 'Créer l\'alerte'}
 			</button>

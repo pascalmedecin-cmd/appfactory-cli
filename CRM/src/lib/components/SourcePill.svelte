@@ -26,20 +26,19 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-	/* Contrastes texte AA vérifiés (WCAG 4.5:1) : zefix #3c5840/#eef3ee ≈ 6.7:1,
-	   terrain #6f4f6e/#f2ecf1 ≈ 6.7:1 (reprend les teintes tab-entreprises/tab-terrain,
-	   assombries pour l'usage texte). google/veille via tokens -deep déjà calibrés AA. */
+	/* Contrastes texte AA vérifiés (WCAG 4.5:1) : zefix tab-entreprises-deep/-bg ≈ 6.7:1,
+	   terrain tab-terrain/-bg ≈ 6.7:1. google/veille via tokens -deep déjà calibrés AA. */
 	.src-zefix {
-		background: #eef3ee;
-		color: #3c5840;
+		background: var(--color-tab-entreprises-bg);
+		color: var(--color-tab-entreprises-deep);
 	}
 	.src-google {
 		background: var(--color-prosp-place-bg);
 		color: var(--color-prosp-place-deep);
 	}
 	.src-terrain {
-		background: #f2ecf1;
-		color: #6f4f6e;
+		background: var(--color-tab-terrain-bg);
+		color: var(--color-tab-terrain);
 	}
 	.src-veille {
 		background: var(--color-prosp-enrich-bg);

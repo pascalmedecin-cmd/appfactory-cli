@@ -189,7 +189,7 @@
 			<div class="p-3 rounded-xl bg-gradient-to-r from-surface-alt to-surface">
 				<div class="flex items-center justify-between mb-2">
 					<span class="text-sm font-semibold text-text">Scoring détaillé</span>
-					<span class="text-xs font-medium px-2 py-1 rounded-full {scoreBadgeVariant(scoreDetail.total) === 'danger' ? 'bg-danger/10 text-danger-deep' : scoreBadgeVariant(scoreDetail.total) === 'warning' ? 'bg-warning/10 text-warning-deep' : 'bg-surface-alt text-text-muted'}">{scoreDetail.total}/13 pts</span>
+					<span class="text-xs font-medium px-2 py-1 rounded-full {scoreBadgeVariant(scoreDetail.total) === 'danger' ? 'bg-danger/10 text-danger-deep' : scoreBadgeVariant(scoreDetail.total) === 'warning' ? 'bg-warning/10 text-warning-deep' : 'bg-surface-alt text-text-muted'}">{scoreDetail.total} pts</span>
 				</div>
 				<div class="space-y-1.5">
 					{#each scoreDetail.criteres as critere}

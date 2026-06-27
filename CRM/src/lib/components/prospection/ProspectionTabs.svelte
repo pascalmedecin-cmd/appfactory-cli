@@ -55,7 +55,7 @@
 				role="tab"
 				id="tab-{tab.key}"
 				aria-selected={active === tab.key}
-				aria-controls="tabpanel-{tab.key}"
+				aria-controls={active === tab.key ? `tabpanel-${tab.key}` : undefined}
 				tabindex={active === tab.key ? 0 : -1}
 				class="tab"
 				class:tab--active={active === tab.key}

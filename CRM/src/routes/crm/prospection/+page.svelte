@@ -21,6 +21,7 @@
 	import SourcePill from '$lib/components/SourcePill.svelte';
 	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
 	import { sourceMetaFor } from '$lib/utils/entreprisesFormat';
+	import { config } from '$lib/config';
 	import ProspectionTabs from '$lib/components/prospection/ProspectionTabs.svelte';
 	import MobileEntityCard from '$lib/components/mobile/MobileEntityCard.svelte';
 	import type {
@@ -244,7 +245,7 @@
 	});
 
 	// Phase 2 2026-05-01 : columns par onglet (colonne signature distincte par nature de signal).
-	const PRIORITY_TOOLTIP = 'Score 0-12 calculé automatiquement à partir du canton, du secteur, de la source, de la récence et du montant. ≥ 7 = prioritaire · 4-6 = à qualifier · ≤ 3 = faible signal.';
+	const PRIORITY_TOOLTIP = `Score 0-${config.scoring.maxPoints} calculé automatiquement à partir du canton, du secteur, de la source, de la récence et du montant. ≥ 7 = prioritaire · 4-6 = à qualifier · ≤ 3 = faible signal.`;
 
 	const baseColumns = [
 		{ key: 'score_pertinence', label: 'Priorité', shortLabel: 'Prio.', sortable: true, infoTooltip: PRIORITY_TOOLTIP, defaultWidth: 130, minWidth: 110 },
@@ -837,7 +838,7 @@
 
 	<!-- V3.4 audit S160 : panneau inline pour sauvegarder la recherche courante. -->
 	{#if savePanelOpen}
-		<div class="flex flex-wrap items-center gap-2 p-3 rounded-xl border border-primary/30 bg-primary-light/30 shadow-xs">
+		<div class="flex flex-wrap items-center gap-2 p-3 rounded-xl border border-border bg-primary-light shadow-xs">
 			<Icon name="bookmark_add" size={18} class="text-primary shrink-0" />
 			<label for="save-recherche-nom" class="text-sm font-medium text-text shrink-0">Nom de la recherche</label>
 			<input
@@ -1104,7 +1105,7 @@
 		rowAriaLabel={(lead) => {
 			const parts: string[] = [`Lead ${lead.raison_sociale}`];
 			if (lead.canton) parts.push(`canton ${lead.canton}`);
-			if (typeof lead.score_pertinence === 'number') parts.push(`score ${lead.score_pertinence} sur 12`);
+			if (typeof lead.score_pertinence === 'number') parts.push(`score ${Math.min(config.scoring.maxPoints, Math.max(0, lead.score_pertinence))} sur ${config.scoring.maxPoints}`);
 			if (lead.statut) parts.push(`statut ${statutLabel(lead.statut)}`);
 			return parts.join(', ');
 		}}

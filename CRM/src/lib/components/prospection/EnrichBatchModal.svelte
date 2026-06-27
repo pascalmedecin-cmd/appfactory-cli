@@ -205,7 +205,11 @@
 		transition:fade={{ duration: 150 }}
 	></div>
 
-	<!-- Modal -->
+	<!-- Modal. Bloc D : composite assumé (NON ré-écrit sur ModalForm) — l'UI à 3 phases
+	     (config / running SSE / done) avec Escape verrouillé en phase running et abort-on-close
+	     ne se compose pas avec le footer save/cancel figé de ModalForm. La coquille backdrop/dialog
+	     est volontairement locale ; toute factorisation passerait par une primitive Modal de base
+	     (arbitrage Pascal, hors périmètre de clôture). -->
 	<div class="fixed inset-0 z-50 flex items-end md:items-center justify-center md:p-4 pointer-events-none">
 		<div
 			class="bg-white rounded-t-2xl md:rounded-2xl shadow-2xl w-full max-w-lg pointer-events-auto flex flex-col max-h-[90vh] md:max-h-[85vh] overflow-hidden"
@@ -219,7 +223,7 @@
 			<div class="flex items-center justify-between px-6 py-4" style="background: var(--color-prosp-enrich-bg); border-bottom: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 88%)">
 				<div class="flex items-center gap-3">
 					<Icon name="auto_fix_high" size={22} class="text-prosp-enrich" />
-					<h2 id="enrich-modal-title" class="text-lg font-semibold text-text">Enrichissement batch</h2>
+					<h2 id="enrich-modal-title" class="text-lg font-semibold text-text">Enrichissement par lot</h2>
 				</div>
 				{#if phase !== 'running'}
 					<button onclick={close} aria-label="Fermer la fenêtre" class="text-text-muted hover:text-text cursor-pointer">
@@ -279,7 +283,7 @@
 						<button
 							type="button"
 							onclick={close}
-							class="inline-flex items-center h-10 px-4 box-border text-sm text-text-muted hover:text-text cursor-pointer"
+							class="inline-flex items-center h-11 px-4 box-border text-sm text-text-muted hover:text-text cursor-pointer"
 						>
 							Annuler
 						</button>
@@ -287,7 +291,7 @@
 							type="button"
 							onclick={start}
 							disabled={!useSearchCh && !useZefix}
-							class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors bg-prosp-enrich"
+							class="inline-flex items-center gap-2 h-11 px-4 box-border text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors bg-prosp-enrich"
 						>
 							<Icon name="play_arrow" size={16} />
 							Lancer l'enrichissement
@@ -346,7 +350,7 @@
 							<button
 								type="button"
 								onclick={() => { abortController?.abort(); }}
-								class="inline-flex items-center gap-1.5 h-10 px-4 box-border text-sm text-danger-deep border border-danger/30 rounded-lg hover:bg-danger-light cursor-pointer transition-colors"
+								class="inline-flex items-center gap-1.5 h-11 px-4 box-border text-sm text-danger-deep border border-danger/30 rounded-lg hover:bg-danger-light cursor-pointer transition-colors"
 							>
 								<Icon name="stop" size={16} />
 								Annuler
@@ -416,7 +420,7 @@
 							<button
 								type="button"
 								onclick={handleDone}
-								class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg cursor-pointer shadow-sm transition-colors bg-prosp-enrich"
+								class="inline-flex items-center gap-2 h-11 px-4 box-border text-sm font-semibold text-white rounded-lg cursor-pointer shadow-sm transition-colors bg-prosp-enrich"
 							>
 								Fermer
 							</button>

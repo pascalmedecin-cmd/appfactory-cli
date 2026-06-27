@@ -212,8 +212,8 @@
 		<text x="360" y="307" class="t-node t-sm">L'écran « Signaux » montre la matière première (étape 1) ; l'écran « Veille » montre l'édition finie (étape 4).</text>
 
 	{:else if name === 'scoring-prospection'}
-		<!-- Barres empilées : composition du score sur 12 -->
-		<text x="360" y="32" class="t-flow">score de priorité d'un lead, calculé automatiquement (sur 12)</text>
+		<!-- Barres empilées : composition du score sur 10 -->
+		<text x="360" y="32" class="t-flow">score de priorité d'un lead, calculé automatiquement (sur 10)</text>
 		{#each [
 			['Secteur cible (bâtiment, architecte, régie…)', 3, 'node-mid'],
 			['Canton prioritaire (GE / VD / VS)', 2, 'node'],

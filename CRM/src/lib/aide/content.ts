@@ -333,7 +333,7 @@ const niveau2: AideLevel = {
 						['Autres sources', 'Saisie manuelle d\'un lead terrain, import d\'un fichier CSV.']
 					]
 				},
-				{ type: 'diagram', name: 'scoring-prospection', caption: 'Comment le score de priorité (sur 12) est composé.' },
+				{ type: 'diagram', name: 'scoring-prospection', caption: 'Comment le score de priorité (sur 10) est composé.' },
 				{
 					type: 'list',
 					ordered: true,

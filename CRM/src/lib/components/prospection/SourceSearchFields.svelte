@@ -207,7 +207,7 @@
 	.mini {
 		width: 30px;
 		height: 30px;
-		border-radius: 9px;
+		border-radius: var(--radius-lg);
 		display: grid;
 		place-items: center;
 		background: var(--c-bg);
@@ -239,15 +239,15 @@
 		width: 100%;
 		height: 44px;
 		border: 1px solid var(--color-border-input);
-		border-radius: 9px;
-		background: #fff;
+		border-radius: var(--radius-md);
+		background: var(--color-surface);
 		padding: 0 13px;
 		font: inherit;
 		font-size: 14px;
 		color: var(--color-text);
 	}
 	.field .inp input { padding-left: 37px; }
-	.field input::placeholder { color: #9aa1ab; }
+	.field input::placeholder { color: var(--color-text-muted); }
 	.field input:focus,
 	.field select:focus {
 		outline: none;
@@ -259,9 +259,9 @@
 		height: 44px;
 		padding: 0 20px;
 		border: 0;
-		border-radius: 9px;
+		border-radius: var(--radius-lg);
 		background: var(--c);
-		color: #fff;
+		color: var(--color-text-inverse);
 		font: inherit;
 		font-size: 14px;
 		font-weight: 600;
@@ -271,7 +271,7 @@
 		cursor: pointer;
 		white-space: nowrap;
 		box-shadow: 0 1px 2px rgba(16, 24, 40, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.18);
-		transition: background 0.2s cubic-bezier(0.32, 0.72, 0, 1), transform 0.15s cubic-bezier(0.32, 0.72, 0, 1);
+		transition: background 0.2s var(--ease-smooth), transform 0.15s var(--ease-smooth);
 	}
 	.btn-search:hover:not(:disabled) { background: var(--c-deep); }
 	.btn-search:active:not(:disabled) { transform: scale(0.98); }

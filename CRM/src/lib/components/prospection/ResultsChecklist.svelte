@@ -139,9 +139,9 @@
 		height: 38px;
 		padding: 0 16px;
 		border: 0;
-		border-radius: 9px;
+		border-radius: var(--radius-lg);
 		background: var(--color-primary);
-		color: #fff;
+		color: var(--color-text-inverse);
 		font: inherit;
 		font-size: 13px;
 		font-weight: 600;
@@ -150,7 +150,7 @@
 		gap: 7px;
 		cursor: pointer;
 		box-shadow: 0 1px 2px rgba(16, 24, 40, 0.18);
-		transition: background 0.2s cubic-bezier(0.32, 0.72, 0, 1), transform 0.15s cubic-bezier(0.32, 0.72, 0, 1);
+		transition: background 0.2s var(--ease-smooth), transform 0.15s var(--ease-smooth);
 	}
 	.btn-import:hover:not(:disabled) { background: var(--color-primary-hover); }
 	.btn-import:active:not(:disabled) { transform: scale(0.98); }
@@ -169,7 +169,7 @@
 		margin: 0;
 		padding: 0;
 	}
-	.row { border-bottom: 1px solid var(--color-surface-alt); transition: background 0.2s cubic-bezier(0.32, 0.72, 0, 1); }
+	.row { border-bottom: 1px solid var(--color-surface-alt); transition: background 0.2s var(--ease-smooth); }
 	.row:last-child { border-bottom: 0; }
 	.row:hover:not(.disabled) { background: var(--color-surface-alt); }
 	.row.checked { background: var(--c-bg); }
@@ -179,15 +179,15 @@
 		height: 20px;
 		border-radius: 6px;
 		border: 1.5px solid var(--color-border-strong);
-		background: #fff;
+		background: var(--color-surface);
 		display: grid;
 		place-items: center;
 		flex-shrink: 0;
 		cursor: pointer;
 		padding: 0;
-		transition: background 0.2s cubic-bezier(0.32, 0.72, 0, 1), border-color 0.2s cubic-bezier(0.32, 0.72, 0, 1);
+		transition: background 0.2s var(--ease-smooth), border-color 0.2s var(--ease-smooth);
 	}
-	.cbx :global(svg) { color: #fff; opacity: 0; transform: scale(0.5); transition: opacity 0.2s, transform 0.2s; }
+	.cbx :global(svg) { color: var(--color-text-inverse); opacity: 0; transform: scale(0.5); transition: opacity 0.2s, transform 0.2s; }
 	.cbx.on { background: var(--c); border-color: var(--c); }
 	.cbx.on :global(svg) { opacity: 1; transform: scale(1); }
 	.cbx:disabled { cursor: not-allowed; background: var(--color-surface-alt); border-color: var(--color-border); }
@@ -195,7 +195,7 @@
 	.avatar {
 		width: 38px;
 		height: 38px;
-		border-radius: 9px;
+		border-radius: var(--radius-lg);
 		display: grid;
 		place-items: center;
 		font-size: 13px;

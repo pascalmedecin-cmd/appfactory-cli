@@ -123,7 +123,7 @@
 		border-radius: 0 0 3px 3px;
 		background: var(--c);
 		opacity: 0;
-		transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+		transition: opacity 0.3s var(--ease-smooth);
 	}
 	.source-card.is-on .accent { opacity: 1; }
 	.check {
@@ -136,10 +136,10 @@
 		display: grid;
 		place-items: center;
 		background: var(--c);
-		color: #fff;
+		color: var(--color-text-inverse);
 		opacity: 0;
 		transform: scale(0.5);
-		transition: opacity 0.3s cubic-bezier(0.32, 0.72, 0, 1), transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+		transition: opacity 0.3s var(--ease-smooth), transform 0.3s var(--ease-smooth);
 	}
 	.source-card.is-on .check { opacity: 1; transform: scale(1); }
 	.chip {

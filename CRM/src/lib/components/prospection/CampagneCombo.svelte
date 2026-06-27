@@ -309,7 +309,7 @@
 		background: var(--color-surface);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg);
-		box-shadow: var(--shadow-menu, 0 12px 32px -8px rgba(16, 24, 40, 0.22));
+		box-shadow: var(--shadow-menu);
 		padding: 6px;
 		max-height: 280px;
 		overflow-y: auto;
