@@ -19,6 +19,13 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 		locals.supabase.from('prospect_leads').select('*', { count: 'exact', head: true })
 	]);
 
+	// Bloc D : journaliser un échec DB (sinon il est masqué en faux « état vide » côté écran,
+	// et les KPI étiquetés/sans-campagne tombent silencieusement à 0). Pattern aligné sur le
+	// frère entreprises/+page.server.ts. On dégrade gracieusement (listCampagnes renvoie []).
+	if (campagnesRes.error) console.error('Erreur chargement campagnes:', campagnesRes.error.message);
+	if (taggedRes.error) console.error('Erreur chargement leads étiquetés:', taggedRes.error.message);
+	if (totalRes.error) console.error('Erreur comptage leads:', totalRes.error.message);
+
 	const campagnes = campagnesRes.data;
 	const taggedLeads = new Set((taggedRes.data ?? []).map((r) => r.lead_id)).size;
 	const totalLeads = totalRes.count ?? 0;

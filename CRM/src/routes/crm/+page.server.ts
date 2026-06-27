@@ -49,6 +49,21 @@ export const load: PageServerLoad = async ({ locals }) => {
 				.limit(30)
 		: null;
 
+	// Audit 360 M-06 : exclure les deals clos (gagné/perdu) des relances en retard.
+	// `etape_pipeline` est nullable : `NOT IN (...)` exclurait les NULL en logique
+	// ternaire SQL → on inclut explicitement `etape_pipeline IS NULL` (deal pas
+	// encore qualifié mais relance en retard = pertinent à afficher).
+	// Bloc D : seul le chemin NON premium (DashboardOff) consomme `relances` ; en premium
+	// (fondateurs, flag ON) DashboardTemporel ne lit que `taches` → on évite la requête inutile.
+	const relancesQuery = premium
+		? null
+		: locals.supabase.from('opportunites')
+				.select('id, titre, etape_pipeline, date_relance_prevue, entreprise_id')
+				.lte('date_relance_prevue', today)
+				.or(`etape_pipeline.is.null,etape_pipeline.not.in.(${ETAPES_PIPELINE_CLOSED.join(',')})`)
+				.order('date_relance_prevue', { ascending: true })
+				.limit(10);
+
 	const [contactsRes, entreprisesRes, opportunitesRes, relancesRes, activitesRes, signauxRes, alertesRes, triageRes, tachesRes] = await Promise.all([
 		locals.supabase.from('contacts').select('*', { count: 'exact', head: true }).eq('statut_archive', false),
 		// Aligné sur l'invariant « les accès métier excluent les archivés » (comme
@@ -57,16 +72,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		// NB : opportunites/signaux n'ont PAS de colonne statut_archive (ne pas filtrer).
 		locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }).eq('statut_archive', false),
 		locals.supabase.from('opportunites').select('*', { count: 'exact', head: true }),
-		// Audit 360 M-06 : exclure les deals clos (gagné/perdu) des relances en retard.
-		// `etape_pipeline` est nullable : `NOT IN (...)` exclurait les NULL en logique
-		// ternaire SQL → on inclut explicitement `etape_pipeline IS NULL` (deal pas
-		// encore qualifié mais relance en retard = pertinent à afficher).
-		locals.supabase.from('opportunites')
-			.select('id, titre, etape_pipeline, date_relance_prevue, entreprise_id')
-			.lte('date_relance_prevue', today)
-			.or(`etape_pipeline.is.null,etape_pipeline.not.in.(${ETAPES_PIPELINE_CLOSED.join(',')})`)
-			.order('date_relance_prevue', { ascending: true })
-			.limit(10),
+		relancesQuery ?? Promise.resolve({ data: [], error: null }),
 		locals.supabase.from('activites')
 			.select('id, type_activite, resume_contenu, date_heure, contact_id')
 			.order('date_heure', { ascending: false })

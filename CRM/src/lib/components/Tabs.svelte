@@ -5,7 +5,9 @@
 	- roving tabindex : l'onglet actif porte tabindex=0, les autres tabindex=-1
 	- navigation clavier sur le tablist : ArrowLeft/ArrowUp ← précédent, ArrowRight/ArrowDown → suivant
 	  (avec wrap), Home → premier, End → dernier ; activation automatique (l'onglet ciblé devient actif)
-	- aria-selected, aria-controls, id figés sur le schéma `{tabIdPrefix}-{key}` / `{panelIdPrefix}-{key}`
+	- aria-selected, id figés sur le schéma `{tabIdPrefix}-{key}` ; aria-controls=`{panelIdPrefix}-{key}`
+	  UNIQUEMENT sur l'onglet actif (Bloc D) : les consommateurs à panneau unique ne rendent que le
+	  panneau actif, donc l'aria-controls d'un onglet inactif pointerait vers un id absent du DOM.
 
 	Consommée par ContactsTabs / EntreprisesTabs / SignauxTabs / PipelineTabs / ReportingTabs.
 -->
@@ -85,7 +87,7 @@
 				role="tab"
 				type="button"
 				aria-selected={active === tab.key}
-				aria-controls={`${panelIdPrefix}-${tab.key}`}
+				aria-controls={active === tab.key ? `${panelIdPrefix}-${tab.key}` : undefined}
 				id={`${tabIdPrefix}-${tab.key}`}
 				tabindex={active === tab.key ? 0 : -1}
 				class="tab"

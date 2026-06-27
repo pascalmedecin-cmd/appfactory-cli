@@ -91,16 +91,3 @@ export async function fetchIntelligenceSignalLookup(
 		return null;
 	}
 }
-
-/**
- * Wrapper rétro-compat : seuls les champs scoring sont retournés.
- * Conservé pour ne pas casser les tests existants Bloc 3.
- */
-export async function fetchIntelligenceSignal(
-	supabase: Pick<SupabaseClient, 'from'>,
-	reportId: string,
-	itemRank: number | null | undefined
-): Promise<IntelligenceSignalInput | null> {
-	const lookup = await fetchIntelligenceSignalLookup(supabase, reportId, itemRank);
-	return lookup?.forScoring ?? null;
-}

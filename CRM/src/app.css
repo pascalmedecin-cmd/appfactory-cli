@@ -97,9 +97,16 @@
 	/* Entreprises Zefix+search.ch : sauge profond (institution, registre) */
 	--color-tab-entreprises: #4F7252;
 	--color-tab-entreprises-bg: #EEF3EE;
+	--color-tab-entreprises-deep: #3c5840; /* ~6.7:1 sur -bg (texte AA) ; consommé par SourcePill */
 	/* Terrain lead express + veille : prune sourde (humain, mobile) */
 	--color-tab-terrain: #6F4F6E;
 	--color-tab-terrain-bg: #F2ECF1;
+
+	/* Surlignage recherche (Bloc D V5) : jaune doux, aucun token équivalent existant */
+	--color-highlight: #FEF9C3;
+	/* Hairline (Bloc D V5) : filet translucide 5%, plus léger que --color-border (#E5E7EB opaque).
+	   Source unique pour les séparateurs fins (SignauxCards, campagnes, TriageQueue, ActiviteTimeline). */
+	--color-hairline: rgba(17, 24, 39, 0.05);
 
 	/* Logo */
 	--color-logo: #00003B;
@@ -124,6 +131,9 @@
 	--shadow-lg: 0 12px 16px -4px rgba(16, 24, 40, 0.08), 0 4px 6px -2px rgba(16, 24, 40, 0.03);
 	--shadow-xl: 0 20px 24px -4px rgba(16, 24, 40, 0.08), 0 8px 8px -4px rgba(16, 24, 40, 0.03);
 	--shadow-2xl: 0 24px 48px -12px rgba(16, 24, 40, 0.18);
+	/* Menu/dropdown (Bloc D V5) : ombre portée des popovers (CampagneCombo, menus campagnes).
+	   Remplace le fallback hardcodé `var(--shadow-menu, ...)` qui ne résolvait jamais le token. */
+	--shadow-menu: 0 12px 32px -8px rgba(16, 24, 40, 0.22);
 	/* --shadow-card / --shadow-card-hover / --shadow-card-active : cartes éditoriales (ring hairline + diffusion).
 	   Pattern récurrent (KpisBento, RelancesList, ActiviteTimeline, AlertesStrip, PipelineCard/Column, TriageQueue,
 	   SignauxCards, EntreprisesCards). -active = état hover/drag (ring primary). */
@@ -140,6 +150,9 @@
 	   Token unique (audit 360 V3b I-01) consommé par les transitions/animations
 	   éditoriales (fadeUp dashboard, hover cartes bento, slide-out panels, etc.). */
 	--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+	/* Courbe « spring » iOS/drawer (Bloc D V5), distincte de --ease-out-expo.
+	   Consommée par les transitions Prospection (ResultsChecklist, SourceSelector, SourceSearchFields). */
+	--ease-smooth: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* Mobile : masquer le bloc titre de page (affiché dans le header sticky) */

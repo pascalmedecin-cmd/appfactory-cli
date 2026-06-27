@@ -112,16 +112,6 @@ export async function listAllSources(client: SupabaseClient<Database>): Promise<
 	return data ?? [];
 }
 
-export async function listActiveSources(client: SupabaseClient<Database>): Promise<VeilleSource[]> {
-	const { data, error } = await client
-		.from('veille_sources')
-		.select('*')
-		.eq('active', true)
-		.order('sort_order', { ascending: true });
-	if (error) throw new Error(`listActiveSources: ${error.message}`);
-	return data ?? [];
-}
-
 export async function createSource(
 	client: SupabaseClient<Database>,
 	input: SourceCreateInput
