@@ -1,11 +1,10 @@
 <script lang="ts">
 	/**
-	 * Hero greeting personnalisé : kicker date+heure pulsing, h1 « Bonjour {firstName} »
+	 * Hero greeting personnalisé : kicker date+heure, h1 « Bonjour {firstName} »
 	 * avec gradient text sur le prénom, summary 1-ligne contextuelle selon counts.
 	 *
 	 * Identité éditoriale : « inbox du matin du fondateur ».
 	 */
-	import { onMount, onDestroy } from 'svelte';
 
 	type Props = {
 		firstName: string | null;
@@ -17,14 +16,13 @@
 	let { firstName, triageTotal, signauxCount, relancesCount }: Props = $props();
 
 	let now = $state(new Date());
-	let intervalId: ReturnType<typeof setInterval> | undefined;
 
-	onMount(() => {
-		intervalId = setInterval(() => { now = new Date(); }, 60_000);
-	});
-
-	onDestroy(() => {
-		if (intervalId) clearInterval(intervalId);
+	// $effect (client-only) au lieu de onMount/onDestroy : convention SSR-safe du projet
+	// (onDestroy s'exécute aussi en SSR Vercel). Le corps n'écrit que `now`, ne lit aucun
+	// state réactif → s'exécute une fois au mount, cleane au destroy.
+	$effect(() => {
+		const id = setInterval(() => { now = new Date(); }, 60_000);
+		return () => clearInterval(id);
 	});
 
 	const dateLabel = $derived(
@@ -113,20 +111,11 @@
 		border-radius: var(--radius-full);
 		background: var(--color-success);
 		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-success) 15%, transparent);
-		animation: pulse 2.4s var(--ease-out-expo) infinite;
-	}
-	@keyframes pulse {
-		0%, 100% { transform: scale(1); opacity: 1; }
-		50% { transform: scale(1.2); opacity: 0.8; }
 	}
 
 	@media (max-width: 768px) {
 		.hero { margin-bottom: 32px; }
 		.hero-h1 { font-size: 32px; }
 		.hero-summary { font-size: 15px; }
-	}
-
-	@media (prefers-reduced-motion: reduce) {
-		.kicker .dot { animation: none; }
 	}
 </style>

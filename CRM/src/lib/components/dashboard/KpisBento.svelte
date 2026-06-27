@@ -22,7 +22,7 @@
 	const remaining = $derived(Math.max(0, triageTotal - triageVisible));
 	const triageQueueLink = '/crm/prospection?statut=nouveau';
 
-	const trendSignaux = $derived(signauxCount > 0 ? `${signauxCount} ${signauxCount === 1 ? 'à analyser' : 'à analyser'}` : 'Aucun nouveau');
+	const trendSignaux = $derived(signauxCount > 0 ? `${signauxCount} à analyser` : 'Aucun nouveau');
 
 	type RelanceTrend = { label: string; variant: 'flat' | 'success' | 'warn' };
 	const relanceTrend = $derived<RelanceTrend>(

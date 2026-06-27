@@ -141,7 +141,7 @@
 		bottom: -10px;
 		left: 41px;
 		width: 1px;
-		background: rgba(17, 24, 39, 0.05);
+		background: var(--color-hairline);
 	}
 	.timeline-icon {
 		width: 28px;

@@ -5,7 +5,7 @@
 	 * 4 actions inline par lead (Intéressant / Écarter / Snooze / Détails).
 	 *
 	 * Refonte v9 (S175 Bloc #1) :
-	 * - Section-head externe (kicker pulsing + h2 + sub) au-dessus de la card.
+	 * - Section-head externe (kicker + h2 + sub) au-dessus de la card.
 	 * - Card radius-3xl + diffusion shadow, plus de count aside (déplacé dans KpisBento).
 	 * - Items grid 96px 1fr auto auto pour aligner les noms sur Y indépendamment du badge source.
 	 * - Footer dégradé surface→surface-alt avec CTA « Voir tous ».
@@ -165,17 +165,17 @@
 							<ScorePill score={lead.score_pertinence} compact />
 						</span>
 						<div class="tq-actions">
-							<button type="button" class="ab ab-yes" aria-label="Intéressant — marquer + ouvrir la fiche" title="Intéressant" disabled={pendingIds.has(lead.id)} onclick={() => onYes(lead)}>
-								<Icon name="check_circle" size={16} strokeWidth={1.75} />
+							<button type="button" class="ab ab-yes" aria-label="Intéressant - marquer + ouvrir la fiche" title="Intéressant" disabled={pendingIds.has(lead.id)} onclick={() => onYes(lead)}>
+								<Icon name="check_circle" size={17} strokeWidth={1.75} />
 							</button>
 							<button type="button" class="ab ab-no" aria-label="Écarter ce lead" title="Écarter" disabled={pendingIds.has(lead.id)} onclick={() => onNo(lead.id)}>
-								<Icon name="circle_x" size={16} strokeWidth={1.75} />
+								<Icon name="circle_x" size={17} strokeWidth={1.75} />
 							</button>
-							<button type="button" class="ab ab-later" aria-label="Repousser à 7 jours" title="Snooze 7 j" disabled={pendingIds.has(lead.id)} onclick={() => onLater(lead.id)}>
-								<Icon name="schedule" size={16} strokeWidth={1.75} />
+							<button type="button" class="ab ab-later" aria-label="Snooze 7 j - repousser à 7 jours" title="Snooze 7 j" disabled={pendingIds.has(lead.id)} onclick={() => onLater(lead.id)}>
+								<Icon name="schedule" size={17} strokeWidth={1.75} />
 							</button>
-							<button type="button" class="ab ab-view" aria-label="Voir la fiche en lecture seule" title="Détails" disabled={pendingIds.has(lead.id)} onclick={() => onView(lead)}>
-								<Icon name="eye" size={16} strokeWidth={1.75} />
+							<button type="button" class="ab ab-view" aria-label="Détails - voir la fiche en lecture seule" title="Détails" disabled={pendingIds.has(lead.id)} onclick={() => onView(lead)}>
+								<Icon name="eye" size={17} strokeWidth={1.75} />
 							</button>
 						</div>
 					</article>
@@ -243,11 +243,6 @@
 		border-radius: var(--radius-full);
 		background: var(--color-success);
 		box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-success) 15%, transparent);
-		animation: pulse 2.4s var(--ease-out-expo) infinite;
-	}
-	@keyframes pulse {
-		0%, 100% { transform: scale(1); opacity: 1; }
-		50% { transform: scale(1.2); opacity: 0.8; }
 	}
 
 	.tq {
@@ -300,7 +295,7 @@
 		left: 24px;
 		right: 24px;
 		height: 1px;
-		background: rgba(17, 24, 39, 0.05);
+		background: var(--color-hairline);
 	}
 	.tq-item:hover { background: var(--color-surface-alt); }
 	.tq-item.is-pending { opacity: 0.55; pointer-events: none; }
@@ -479,7 +474,6 @@
 
 	@media (prefers-reduced-motion: reduce) {
 		.tq-item { animation: none; }
-		.kicker .dot { animation: none; }
 		.ab, .tq-item { transition: none; }
 		.ab:hover:not(:disabled), .ab:active:not(:disabled) { transform: none; }
 	}

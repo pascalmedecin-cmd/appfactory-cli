@@ -35,7 +35,7 @@
 	<div class="panel-head">
 		<div>
 			<div class="panel-meta">Relances</div>
-			<div class="panel-title">{relances.length === 0 ? 'Tout est suivi' : `${relances.length} ${relances.length === 1 ? 'à traiter' : 'à traiter'}`}</div>
+			<div class="panel-title">{relances.length === 0 ? 'Tout est suivi' : `${relances.length} à traiter`}</div>
 		</div>
 		{#if relances.length > 0}
 			<a class="panel-link" href="/crm/pipeline">Pipeline →</a>
@@ -45,7 +45,7 @@
 		{#if relances.length === 0}
 			<div class="empty">
 				<p class="empty-title">Aucune relance prévue</p>
-				<p class="empty-body">Bien joué. Quand une opportunité aura une relance dûe, elle s'affichera ici.</p>
+				<p class="empty-body">Bien joué. Quand une opportunité aura une relance due, elle s'affichera ici.</p>
 			</div>
 		{:else}
 			<div class="relances-list">
