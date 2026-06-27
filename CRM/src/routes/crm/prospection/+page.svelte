@@ -918,7 +918,7 @@
 	     Sinon les onglets restent visibles (sinon impossible de revenir sur Entreprises depuis Terrain à 0). -->
 	{#if allVisibleTabsEmpty && activeFilterCount === 0}
 		<div class="flex flex-col items-center justify-center py-16 px-6">
-			<div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-6" style="background: linear-gradient(135deg, var(--color-prosp-import-bg), var(--color-prosp-enrich-bg))">
+			<div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-6" style="background: var(--color-prosp-import-bg)">
 				<Icon name="search" size={32} class="text-prosp-import" />
 			</div>
 			<h3 class="text-lg font-semibold text-text mb-2">Trouvez vos premiers prospects</h3>

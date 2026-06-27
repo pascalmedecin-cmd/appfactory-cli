@@ -196,14 +196,14 @@
 			<ResultsChecklist {candidates} source={active} pending={importing} onimport={runImport} />
 		{:else if hasSearched && !error}
 			<!-- État vide après recherche -->
-			<div class="flex flex-col items-center text-center gap-2 px-6 py-10 rounded-xl border border-dashed border-border bg-surface-alt/40">
+			<div class="flex flex-col items-center text-center gap-2 px-6 py-10 rounded-xl border border-border bg-surface-alt/40">
 				<span class="w-11 h-11 rounded-full grid place-items-center bg-white border border-border text-text-muted"><Icon name="search_off" size={20} /></span>
 				<p class="text-sm font-semibold text-text">Aucune entreprise trouvée</p>
 				<p class="text-[13px] text-text-muted max-w-[44ch]">Ajustez l’activité, le canton ou le lieu, puis relancez la recherche.</p>
 			</div>
 		{:else if !hasSearched}
 			<!-- État de départ (avant 1re recherche) -->
-			<div class="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-dashed border-border bg-surface-alt/40">
+			<div class="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-border bg-surface-alt/40">
 				<span class="w-9 h-9 rounded-lg grid place-items-center shrink-0" style="background: var({activeMeta.bgVar}); color: var({activeMeta.deepVar});"><Icon name={activeMeta.icon} size={18} /></span>
 				<p class="text-[13px] text-text-body leading-snug">
 					Lancez une recherche <b class="font-semibold">{activeMeta.title}</b> pour voir les entreprises à importer - rien n’est ajouté tant que vous n’avez pas coché et cliqué <b class="font-semibold">Importer</b>.

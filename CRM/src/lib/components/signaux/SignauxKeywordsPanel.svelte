@@ -439,7 +439,7 @@
 		font-weight: 500;
 		background: transparent;
 		color: var(--color-text-muted);
-		border: 1px dashed var(--color-border-strong);
+		border: 1px solid var(--color-border-strong);
 		cursor: pointer;
 		font-family: inherit;
 		transition: color 150ms, border-color 150ms, background 150ms;

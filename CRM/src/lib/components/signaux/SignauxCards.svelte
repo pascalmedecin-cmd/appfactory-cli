@@ -213,13 +213,13 @@
 		background: transparent;
 	}
 	.card-signal[data-dominant='coeur'] .card-signal-band {
-		background: linear-gradient(90deg, var(--color-success) 0%, color-mix(in srgb, var(--color-success) 70%, white) 100%);
+		background: var(--color-success);
 	}
 	.card-signal[data-dominant='bonus'] .card-signal-band {
-		background: linear-gradient(90deg, var(--color-primary) 0%, color-mix(in srgb, var(--color-primary) 70%, white) 100%);
+		background: var(--color-primary);
 	}
 	.card-signal[data-dominant='eviter'] .card-signal-band {
-		background: linear-gradient(90deg, var(--color-danger) 0%, color-mix(in srgb, var(--color-danger) 70%, white) 100%);
+		background: var(--color-danger);
 	}
 	.card-signal-head {
 		display: flex;

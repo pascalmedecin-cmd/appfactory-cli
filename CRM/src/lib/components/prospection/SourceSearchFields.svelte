@@ -214,7 +214,7 @@
 		color: var(--c-deep);
 		flex-shrink: 0;
 	}
-	.sp-head { background: linear-gradient(180deg, #fff, var(--color-surface-alt)); }
+	.sp-head { background: var(--color-surface-alt); }
 	.field { min-width: 0; }
 	.field label {
 		display: block;

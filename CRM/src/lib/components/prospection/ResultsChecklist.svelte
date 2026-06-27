@@ -171,8 +171,8 @@
 	}
 	.row { border-bottom: 1px solid var(--color-surface-alt); transition: background 0.2s cubic-bezier(0.32, 0.72, 0, 1); }
 	.row:last-child { border-bottom: 0; }
-	.row:hover:not(.disabled) { background: #fcfcfd; }
-	.row.checked { background: linear-gradient(90deg, var(--c-bg) 0%, #fff 16%); }
+	.row:hover:not(.disabled) { background: var(--color-surface-alt); }
+	.row.checked { background: var(--c-bg); }
 	.row.disabled { opacity: 0.55; }
 	.cbx {
 		width: 20px;

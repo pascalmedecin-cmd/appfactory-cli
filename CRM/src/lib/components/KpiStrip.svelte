@@ -66,23 +66,23 @@
 		flex-shrink: 0;
 	}
 	.kpi-ic.primary {
-		background: radial-gradient(circle at 30% 30%, rgba(47, 90, 158, 0.12), rgba(47, 90, 158, 0.02));
+		background: radial-gradient(circle at 30% 30%, rgba(47, 90, 158, 0.1), rgba(47, 90, 158, 0.02));
 		color: var(--color-primary);
 	}
 	.kpi-ic.success {
-		background: radial-gradient(circle at 30% 30%, rgba(18, 183, 106, 0.14), rgba(18, 183, 106, 0.02));
+		background: radial-gradient(circle at 30% 30%, rgba(18, 183, 106, 0.1), rgba(18, 183, 106, 0.02));
 		color: var(--color-success-deep);
 	}
 	.kpi-ic.convert {
-		background: radial-gradient(circle at 30% 30%, rgba(83, 139, 107, 0.16), rgba(83, 139, 107, 0.02));
+		background: radial-gradient(circle at 30% 30%, rgba(83, 139, 107, 0.1), rgba(83, 139, 107, 0.02));
 		color: var(--color-prosp-convert-deep);
 	}
 	.kpi-ic.warn {
-		background: radial-gradient(circle at 30% 30%, rgba(247, 144, 9, 0.14), rgba(247, 144, 9, 0.02));
+		background: radial-gradient(circle at 30% 30%, rgba(247, 144, 9, 0.1), rgba(247, 144, 9, 0.02));
 		color: var(--color-warning-deep);
 	}
 	.kpi-ic.danger {
-		background: radial-gradient(circle at 30% 30%, rgba(240, 68, 56, 0.14), rgba(240, 68, 56, 0.02));
+		background: radial-gradient(circle at 30% 30%, rgba(240, 68, 56, 0.1), rgba(240, 68, 56, 0.02));
 		color: var(--color-danger-deep);
 	}
 	.kpi-body {

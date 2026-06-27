@@ -216,7 +216,7 @@
 			transition:scale={{ start: 0.95, duration: 200 }}
 		>
 			<!-- Header -->
-			<div class="flex items-center justify-between px-6 py-4" style="background: linear-gradient(to right, var(--color-prosp-enrich-bg), var(--color-prosp-import-bg)); border-bottom: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 88%)">
+			<div class="flex items-center justify-between px-6 py-4" style="background: var(--color-prosp-enrich-bg); border-bottom: 1px solid color-mix(in srgb, var(--color-prosp-import-border), transparent 88%)">
 				<div class="flex items-center gap-3">
 					<Icon name="auto_fix_high" size={22} class="text-prosp-enrich" />
 					<h2 id="enrich-modal-title" class="text-lg font-semibold text-text">Enrichissement batch</h2>
@@ -287,7 +287,7 @@
 							type="button"
 							onclick={start}
 							disabled={!useSearchCh && !useZefix}
-							class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors !bg-prosp-enrich"
+							class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg disabled:opacity-50 cursor-pointer shadow-sm transition-colors bg-prosp-enrich"
 						>
 							<Icon name="play_arrow" size={16} />
 							Lancer l'enrichissement
@@ -366,7 +366,7 @@
 							</div>
 						{/if}
 
-						<div class="p-4 rounded-xl" style="background: linear-gradient(135deg, var(--color-prosp-enrich-bg), var(--color-prosp-import-bg))">
+						<div class="p-4 rounded-xl" style="background: var(--color-prosp-enrich-bg)">
 							<div class="flex items-center gap-2 mb-3">
 								<Icon name={quotaWarning ? 'warning' : 'task_alt'} size={24} class={quotaWarning ? 'text-warning-deep' : 'text-success-deep'} />
 								<h3 class="text-base font-semibold text-text">{quotaWarning ? 'Enrichissement interrompu' : 'Enrichissement terminé'}</h3>
@@ -416,7 +416,7 @@
 							<button
 								type="button"
 								onclick={handleDone}
-								class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg cursor-pointer shadow-sm transition-colors !bg-prosp-enrich"
+								class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white rounded-lg cursor-pointer shadow-sm transition-colors bg-prosp-enrich"
 							>
 								Fermer
 							</button>

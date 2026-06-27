@@ -198,10 +198,6 @@ export const config = {
 				key: 'fusion_acquisition',
 				label: 'Fusion / Acquisition',
 			},
-			{
-				key: 'autre',
-				label: 'Autre',
-			},
 		],
 	},
 

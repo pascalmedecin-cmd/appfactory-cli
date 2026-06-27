@@ -187,7 +187,7 @@
 		background: var(--c-bg);
 		border-color: var(--c-border);
 	}
-	.cost { border-top: 1px dashed var(--color-border); }
+	.cost { border-top: 1px solid var(--color-border); }
 	.free {
 		display: inline-flex;
 		align-items: center;

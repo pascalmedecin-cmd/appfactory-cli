@@ -101,7 +101,7 @@
 		color: var(--color-primary);
 	}
 	.indicator.warning .indicator-icon {
-		background: radial-gradient(circle at 30% 30%, rgba(192, 57, 26, 0.12), rgba(192, 57, 26, 0.02));
+		background: radial-gradient(circle at 30% 30%, rgba(192, 57, 26, 0.1), rgba(192, 57, 26, 0.02));
 		color: var(--color-danger-deep);
 	}
 	.indicator-body {
