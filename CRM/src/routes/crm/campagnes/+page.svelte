@@ -407,7 +407,7 @@
 		font-weight: 700;
 	}
 	.segtab.active .ct {
-		background: rgba(255, 255, 255, 0.22);
+		background: color-mix(in srgb, white 22%, transparent);
 		color: var(--color-text-inverse);
 	}
 	.search {

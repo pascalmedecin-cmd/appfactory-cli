@@ -205,7 +205,7 @@
 		transition:fade={{ duration: 150 }}
 	></div>
 
-	<!-- Modal. Bloc D : composite assumé (NON ré-écrit sur ModalForm) — l'UI à 3 phases
+	<!-- Modal. Bloc D : composite assumé (NON ré-écrit sur ModalForm) - l'UI à 3 phases
 	     (config / running SSE / done) avec Escape verrouillé en phase running et abort-on-close
 	     ne se compose pas avec le footer save/cancel figé de ModalForm. La coquille backdrop/dialog
 	     est volontairement locale ; toute factorisation passerait par une primitive Modal de base
