@@ -4,7 +4,6 @@
 	import { enhance } from '$app/forms';
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
-	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import FormField from '$lib/components/FormField.svelte';
 	import Select from '$lib/components/Select.svelte';
 	import Badge from '$lib/components/Badge.svelte';
@@ -41,6 +40,17 @@
 	const ETAPE_OPTIONS = ETAPES.map((e) => ({ value: e.key, label: e.label }));
 	const ETAPE_BY_KEY = Object.fromEntries(ETAPES.map((e) => [e.key, e]));
 
+	// Motif de perte : liste fermée adaptée FilmPro (B2B vitrage), jamais « Autre »
+	// (feedback_no_autre_in_lists). Le champ libre « précisions » complète la catégorie.
+	const MOTIF_PERTE_OPTIONS = [
+		{ value: 'Budget / prix', label: 'Budget / prix' },
+		{ value: 'Délai / timing', label: 'Délai / timing' },
+		{ value: 'Concurrent retenu', label: 'Concurrent retenu' },
+		{ value: 'Projet abandonné', label: 'Projet abandonné' },
+		{ value: 'Pas de besoin', label: 'Pas de besoin' },
+		{ value: 'Sans réponse', label: 'Sans réponse' },
+	];
+
 	const entrepriseOptions = $derived(data.entreprises.map((e) => ({ value: e.id, label: e.raison_sociale })));
 	const contactOptions = $derived(
 		data.contacts.map((c) => ({
@@ -57,8 +67,19 @@
 	let editMode = $state(false);
 	let saving = $state(false);
 	let archiving = $state(false);
-	let confirmArchiveOpen = $state(false);
-	let archiveFormEl: HTMLFormElement | null = $state(null);
+	let lostModalOpen = $state(false);
+	let motifPerteCat = $state('');
+	let motifPerteDetail = $state('');
+	// motif_perte sérialisé : « Catégorie - précisions », cappé à 500 (max schéma) pour
+	// garantir un submit valide sans dépendre d'un maxlength côté input.
+	const motifPerteValue = $derived(
+		(motifPerteDetail.trim()
+			? motifPerteCat
+				? `${motifPerteCat} - ${motifPerteDetail.trim()}`
+				: motifPerteDetail.trim()
+			: motifPerteCat
+		).slice(0, 500)
+	);
 	let moveFormEl: HTMLFormElement | null = $state(null);
 	let moveFormId = $state('');
 	let moveFormEtape = $state('');
@@ -423,6 +444,13 @@
 					<p class="text-text whitespace-pre-wrap">{selectedOpp.notes_libres}</p>
 				</div>
 			{/if}
+
+			{#if selectedOpp.etape_pipeline === 'perdu' && selectedOpp.motif_perte}
+				<div class="text-sm">
+					<span class="text-text-muted">Motif de perte</span>
+					<p class="text-text whitespace-pre-wrap">{selectedOpp.motif_perte}</p>
+				</div>
+			{/if}
 		</div>
 	{/if}
 
@@ -437,33 +465,15 @@
 					Modifier
 				</button>
 				{#if selectedOpp.etape_pipeline !== 'perdu' && selectedOpp.etape_pipeline !== 'gagne'}
-					<form
-						bind:this={archiveFormEl}
-						method="POST"
-						action="?/archive"
-						use:enhance={() => {
-							archiving = true;
-							return async ({ result, update }) => {
-								archiving = false;
-								slideOutOpen = false;
-								selectedOpp = null;
-								if (result.type === 'success') toasts.success('Opportunité marquée perdue');
-								else toasts.error("Erreur lors de l'archivage");
-								await update();
-							};
-						}}
+					<button
+						type="button"
+						onclick={() => (lostModalOpen = true)}
+						disabled={archiving}
+						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
 					>
-						<input type="hidden" name="id" value={selectedOpp.id} />
-						<button
-							type="button"
-							onclick={() => (confirmArchiveOpen = true)}
-							disabled={archiving}
-							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
-						>
-							<Icon name="block" size={16} />
-							{archiving ? 'En cours…' : 'Marquer perdu'}
-						</button>
-					</form>
+						<Icon name="block" size={16} />
+						{archiving ? 'En cours…' : 'Marquer perdu'}
+					</button>
 				{/if}
 			</div>
 		{/if}
@@ -540,18 +550,64 @@
 	</form>
 </ModalForm>
 
-<ConfirmModal
-	bind:open={confirmArchiveOpen}
-	title="Marquer cette opportunité comme perdue ?"
-	message="L'opportunité passera en statut perdu. Vous pourrez toujours la consulter dans le pipeline."
-	confirmLabel="Marquer perdu"
-	variant="warning"
-	loading={archiving}
-	onConfirm={() => {
-		confirmArchiveOpen = false;
-		archiveFormEl?.requestSubmit();
-	}}
-/>
+<!-- Modal « Marquer perdu » : capture du motif (liste fermée + précisions) avant archivage. -->
+<ModalForm bind:open={lostModalOpen} title="Marquer cette opportunité perdue" icon="block">
+	<form
+		method="POST"
+		action="?/archive"
+		use:enhance={() => {
+			archiving = true;
+			return async ({ result, update }) => {
+				archiving = false;
+				lostModalOpen = false;
+				slideOutOpen = false;
+				selectedOpp = null;
+				motifPerteCat = '';
+				motifPerteDetail = '';
+				if (result.type === 'success') toasts.success('Opportunité marquée perdue');
+				else toasts.error("Erreur lors de l'archivage");
+				await update();
+			};
+		}}
+	>
+		{#if selectedOpp}
+			<input type="hidden" name="id" value={selectedOpp.id} />
+		{/if}
+		<input type="hidden" name="motif_perte" value={motifPerteValue} />
+
+		<div class="space-y-4">
+			<p class="text-sm text-text-muted">
+				L'opportunité passera en statut perdu. Tu pourras toujours la consulter dans le pipeline.
+				Indiquer le motif aide à analyser les pertes (facultatif).
+			</p>
+			<Select
+				id="motif_perte_cat"
+				label="Motif de perte"
+				placeholder="-- Choisir un motif --"
+				bind:value={motifPerteCat}
+				options={MOTIF_PERTE_OPTIONS}
+			/>
+			<FormField label="Précisions (facultatif)" type="textarea" bind:value={motifPerteDetail} />
+		</div>
+
+		<div class="flex justify-end gap-3 pt-4">
+			<button
+				type="button"
+				onclick={() => (lostModalOpen = false)}
+				class="h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
+			>
+				Annuler
+			</button>
+			<button
+				type="submit"
+				disabled={archiving}
+				class="h-11 px-4 box-border text-sm font-semibold text-white bg-danger hover:bg-danger/90 rounded-lg disabled:opacity-50 cursor-pointer"
+			>
+				{archiving ? 'En cours…' : 'Marquer perdu'}
+			</button>
+		</div>
+	</form>
+</ModalForm>
 
 <style>
 	.kanban-wrap {
