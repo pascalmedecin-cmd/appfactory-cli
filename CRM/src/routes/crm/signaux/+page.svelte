@@ -22,16 +22,15 @@
 		typeIcon,
 		formatDate,
 		formatRelative,
-		scoreStyle,
 		statutLabel,
 		statutVariant,
-		clampDisplayScore,
 		type SignauxTab,
 	} from '$lib/utils/signauxFormat';
 	import SignauxIndicators from '$lib/components/signaux/SignauxIndicators.svelte';
 	import SignauxTabs from '$lib/components/signaux/SignauxTabs.svelte';
 	import SignauxCards from '$lib/components/signaux/SignauxCards.svelte';
 	import SignauxKeywordsPanel from '$lib/components/signaux/SignauxKeywordsPanel.svelte';
+	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
 	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
 	import SourcePill from '$lib/components/SourcePill.svelte';
 	import { sourceMetaFor, relativeTimeFr } from '$lib/utils/entreprisesFormat';
@@ -593,7 +592,6 @@
 <!-- SlideOut détail signal -->
 <SlideOut bind:open={slideOutOpen} title="Signal d'affaires">
 	{#if selectedSignal}
-		{@const sStyle = scoreStyle(selectedSignal.score_pertinence)}
 		{@const fSrc = sourceMetaFor(selectedSignal.source_officielle)}
 		{@const fActivite = relativeTimeFr(selectedSignal.date_detection)}
 		<div class="space-y-6">
@@ -614,10 +612,7 @@
 						{/if}
 					</div>
 				</div>
-				<span class="flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-semibold {sStyle.bgClass} {sStyle.colorClass}">
-					<Icon name={sStyle.icon} size={18} />
-					{clampDisplayScore(selectedSignal.score_pertinence, config.scoring.maxPoints)}/{config.scoring.maxPoints} : {sStyle.label}
-				</span>
+				<ScorePill score={selectedSignal.score_pertinence} variant="temperature" display="full" compact />
 			</div>
 
 			{#if selectedSignal.description_projet}

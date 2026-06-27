@@ -1,25 +1,62 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
 	import { scoreLabel, scoreToCategory, scoreIcon } from '$lib/prospection-utils';
+	import { scoreLabel as scoreTempBucket, clampDisplayScore } from '$lib/utils/signauxFormat';
 	import { config } from '$lib/config';
 
 	type Props = {
 		score: number | null;
 		breakdown?: string;
 		compact?: boolean;
+		/** 'priority' (défaut, /prospection) : libellé d'action commerciale + icônes flame/target/eye.
+		    'temperature' (/signaux) : température Chaud/Tiède/Froid + icônes thermiques. */
+		variant?: 'priority' | 'temperature';
+		/** 'label' (défaut) : libellé seul. 'value' : score numérique clampé seul (cartes denses, mobile).
+		    'full' : « valeur/max : libellé » (fiche détail signal). */
+		display?: 'label' | 'value' | 'full';
 	};
 
-	let { score, breakdown = '', compact = false }: Props = $props();
+	let { score, breakdown = '', compact = false, variant = 'priority', display = 'label' }: Props = $props();
 
 	// score=null = lead non encore scoré (lead_express en attente d'enrichissement Zefix).
 	// Variante neutre dédiée "Non scoré" avec icône clock — différencie de "Faible signal" (score=0-3 enrichi mais pas chaud).
 	const isNull = $derived(score === null);
 	const safeScore = $derived(score ?? 0);
-	const label = $derived(isNull ? 'Non scoré' : scoreLabel(safeScore));
-	const category = $derived(isNull ? 'unscored' : scoreToCategory(safeScore));
-	const iconName = $derived(isNull ? 'schedule' : scoreIcon(safeScore));
+	const maxPoints = config.scoring.maxPoints;
+	const displayValue = $derived(clampDisplayScore(score, maxPoints));
+
+	// Catégorie visuelle commune aux deux variantes : chaud / tiede / froid / unscored.
+	// Audit 360 Bloc D : Signaux convergé sur cette primitive (fin du système saturé
+	// `signal-score-pill` à dégradé — anti-pattern golden §6 + échec WCAG AA du texte blanc).
+	const rawCategory = $derived(
+		isNull ? 'unscored' : variant === 'temperature' ? scoreTempBucket(safeScore) : scoreToCategory(safeScore)
+	);
+	const category = $derived(rawCategory === 'non_qualifie' ? 'unscored' : rawCategory);
+
+	const TEMP_LABELS: Record<string, string> = {
+		chaud: 'Chaud',
+		tiede: 'Tiède',
+		froid: 'Froid',
+		unscored: 'Non qualifié',
+	};
+	const TEMP_ICONS: Record<string, string> = {
+		chaud: 'flame',
+		tiede: 'thermostat',
+		froid: 'ac_unit',
+		unscored: 'remove',
+	};
+
+	const label = $derived(
+		variant === 'temperature' ? TEMP_LABELS[category] : isNull ? 'Non scoré' : scoreLabel(safeScore)
+	);
+	const iconName = $derived(
+		variant === 'temperature' ? TEMP_ICONS[category] : isNull ? 'schedule' : scoreIcon(safeScore)
+	);
 	const titleText = $derived(
-		breakdown || (isNull ? 'En attente d\'enrichissement' : `${label} - ${safeScore}/${config.scoring.maxPoints}`)
+		breakdown ||
+			(isNull && variant === 'priority'
+				? "En attente d'enrichissement"
+				: `${label} - ${displayValue}/${maxPoints}`)
 	);
 </script>
 
@@ -29,7 +66,13 @@
 	title={titleText}
 >
 	<Icon name={iconName} size={14} />
-	<span>{label}</span>
+	{#if display === 'value'}
+		<span class="tabular-nums">{displayValue}</span>
+	{:else if display === 'full'}
+		<span class="tabular-nums">{displayValue}/{maxPoints} : {label}</span>
+	{:else}
+		<span>{label}</span>
+	{/if}
 </span>
 
 <style>

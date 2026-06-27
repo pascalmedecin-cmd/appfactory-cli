@@ -1,17 +1,15 @@
 <script lang="ts" generics="T extends import('$lib/utils/signauxFormat').SignalLite & { description_projet?: string | null; commune?: string | null; source_officielle?: string | null }">
 	import Icon from '$lib/components/Icon.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
 	import {
 		formatTypeLabel,
 		typeIcon,
 		formatRelative,
-		scoreStyle,
 		statutLabel,
 		statutVariant,
 		signalAriaLabel,
-		clampDisplayScore,
 	} from '$lib/utils/signauxFormat';
-	import { config } from '$lib/config';
 	import {
 		highlightKeywordsAndSearch,
 		dominantKeywordCategory,
@@ -69,10 +67,8 @@
 {:else}
 	<div class="cards-grid">
 		{#each signaux as signal (signal.id)}
-			{@const sStyle = scoreStyle(signal.score_pertinence)}
 			{@const isSelected = selectedIds.has(signal.id)}
 			{@const dom = dominantFor(signal)}
-			{@const displayScore = clampDisplayScore(signal.score_pertinence, config.scoring.maxPoints)}
 			<button
 				type="button"
 				class="card-signal"
@@ -101,10 +97,7 @@
 						</p>
 					</div>
 					<div class="card-signal-status">
-						<span class="score-pill {sStyle.bgClass} {sStyle.colorClass}" title={`Score ${displayScore}/${config.scoring.maxPoints}`}>
-							<Icon name={sStyle.icon} size={14} />
-							<span class="tabular-nums">{displayScore}</span>
-						</span>
+						<ScorePill score={signal.score_pertinence} variant="temperature" display="value" compact />
 						<Badge label={statutLabel(signal.statut_traitement)} variant={statutVariant(signal.statut_traitement)} />
 					</div>
 				</div>
@@ -273,16 +266,6 @@
 		gap: 8px;
 		align-items: flex-end;
 		flex-shrink: 0;
-	}
-	.score-pill {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		padding: 4px 10px;
-		border-radius: var(--radius-full);
-		font-size: 12px;
-		font-weight: 700;
-		line-height: 1;
 	}
 	.card-signal-desc {
 		font-size: 14px;

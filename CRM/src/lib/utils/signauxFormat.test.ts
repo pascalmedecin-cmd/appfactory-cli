@@ -9,7 +9,6 @@ import {
 	formatDate,
 	formatRelative,
 	scoreLabel,
-	scoreStyle,
 	statutLabel,
 	statutVariant,
 	signalAriaLabel,
@@ -160,12 +159,14 @@ describe('formatRelative', () => {
 	});
 });
 
-describe('scoreLabel + scoreStyle', () => {
+describe('scoreLabel', () => {
 	it('null → non_qualifie', () => {
 		expect(scoreLabel(null)).toBe('non_qualifie');
 	});
 	// V4 (S189) : seuils alignés sur config.scoring.labels après retrait de la
 	// temporalité (maxPoints 12 → 10). Chaud >= 7, tiede >= 4, froid >= 1.
+	// Audit 360 Bloc D : le rendu visuel (icône/couleur/label) vit désormais dans
+	// la primitive ScorePill ; scoreLabel ne porte plus que la sémantique des seuils.
 	it('seuils par défaut V4 : chaud=7 / tiede=4 / froid=1', () => {
 		expect(scoreLabel(10)).toBe('chaud');
 		expect(scoreLabel(8)).toBe('chaud');
@@ -177,26 +178,6 @@ describe('scoreLabel + scoreStyle', () => {
 		expect(scoreLabel(1)).toBe('froid');
 		expect(scoreLabel(0)).toBe('non_qualifie');
 		expect(scoreLabel(-1)).toBe('non_qualifie');
-	});
-	// V4 (S189) : SCORE_STYLES refondu, classes premium `signal-score-pill--*`
-	// (gradient saturé + ring inset + shadow). `bgClass` vidé : tout est porté
-	// par `colorClass` côté CSS global (cf. src/app.css).
-	it('scoreStyle retourne icon + classe premium + label', () => {
-		const s = scoreStyle(10);
-		expect(s.icon).toBe('local_fire_department');
-		expect(s.colorClass).toBe('signal-score-pill--chaud');
-		expect(s.bgClass).toBe('');
-		expect(s.label).toBe('Chaud');
-	});
-	it('scoreStyle pour tiède retourne signal-score-pill--tiede', () => {
-		expect(scoreStyle(5).colorClass).toBe('signal-score-pill--tiede');
-	});
-	it('scoreStyle pour froid retourne signal-score-pill--froid', () => {
-		expect(scoreStyle(2).colorClass).toBe('signal-score-pill--froid');
-	});
-	it('scoreStyle pour non qualifié retourne signal-score-pill--unscored', () => {
-		expect(scoreStyle(0).colorClass).toBe('signal-score-pill--unscored');
-		expect(scoreStyle(null).colorClass).toBe('signal-score-pill--unscored');
 	});
 });
 

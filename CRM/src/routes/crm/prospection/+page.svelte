@@ -27,13 +27,12 @@
 	import type {
 		MobileEntityCardAction,
 		MobileEntityCardBadge,
-		ScorePillLabel,
 	} from '$lib/components/mobile/mobile-entity-card.helpers';
 	import {
 		cantonNoms,
 		statutLabel, statutBadgeVariant, sourceLabel, relativeDate,
 		sourceOptions, cantonOptions, temperatureOptions, statutOptions,
-		scoreToCategory, PROSPECTION_EXPORT_CAP,
+		PROSPECTION_EXPORT_CAP,
 		type ProspectionTabKey,
 	} from '$lib/prospection-utils';
 	import { filterEnabledSources, isProspectionFeatureEnabled, isProspectionTabVisible, visibleProspectionTabs, defaultProspectionTab } from '$lib/prospection-flags';
@@ -574,12 +573,10 @@
 		return parts.join(' · ');
 	}
 
-	function leadCardScorePill(lead: Lead): { label: ScorePillLabel; value: number } | undefined {
+	function leadCardScorePill(lead: Lead): { score: number } | undefined {
 		const score = lead.score_pertinence;
 		if (typeof score !== 'number') return undefined;
-		const category = scoreToCategory(score);
-		const label: ScorePillLabel = category === 'tiede' ? 'tiède' : (category as 'chaud' | 'froid');
-		return { label, value: score };
+		return { score };
 	}
 
 	function leadCardBadges(lead: Lead): MobileEntityCardBadge[] {

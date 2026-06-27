@@ -8,26 +8,21 @@
 	 */
 	import Icon from '$lib/components/Icon.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
 	import {
 		actionVariant,
-		scorePillClass,
-		scorePillIcon,
-		scorePillTitle,
 		shouldInvokeOnClick,
 		type DominantBand,
 		type MobileEntityCardAction,
 		type MobileEntityCardBadge,
-		type ScorePillLabel,
 	} from './mobile-entity-card.helpers';
-	import { clampDisplayScore } from '$lib/utils/signauxFormat';
-	import { config } from '$lib/config';
 
 	type Props = {
 		title: string;
 		subtitle?: string;
 		badges?: MobileEntityCardBadge[];
-		/** Pastille score affichée à droite du titre. Réutilise les classes globales `.signal-score-pill--*`. */
-		scorePill?: { label: ScorePillLabel; value: number };
+		/** Pastille score affichée à droite du titre. Rendue via la primitive unifiée ScorePill (mode numérique). */
+		scorePill?: { score: number };
 		/** Bandeau coloré 3px en haut de la carte. Coeur=success, bonus=primary, eviter=danger, neutral=transparent. */
 		dominant?: DominantBand;
 		/** Métadonnées affichées en footer (canton, source, montant, etc.). */
@@ -72,11 +67,7 @@
 				{/if}
 			</div>
 			{#if scorePill}
-				{@const displayValue = clampDisplayScore(scorePill.value, config.scoring.maxPoints)}
-				<span class={scorePillClass(scorePill.label)} title={scorePillTitle(displayValue)}>
-					<Icon name={scorePillIcon(scorePill.label)} size={14} />
-					<span class="tabular-nums">{displayValue}</span>
-				</span>
+				<ScorePill score={scorePill.score} display="value" compact />
 			{/if}
 		</div>
 

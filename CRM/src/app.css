@@ -193,56 +193,11 @@
 	color: var(--color-primary);
 }
 
-/* ScorePill premium (V4 S189). Linear Priority pattern golden v9, variantes saturées
-   pour identifier Chaud/Tiède/Froid d'un coup d'œil dans une liste dense. Fond saturé,
-   texte blanc, ring 1px inset hairline, shadow douce, tabular-nums pour stabilité. */
-.signal-score-pill {
-	display: inline-flex;
-	align-items: center;
-	gap: 5px;
-	padding: 4px 10px;
-	border-radius: var(--radius-full);
-	font-size: 12px;
-	font-weight: 700;
-	line-height: 1;
-	white-space: nowrap;
-}
-.signal-score-pill > :global(svg) {
-	stroke-width: 2;
-	flex-shrink: 0;
-}
-.signal-score-pill--chaud,
-.signal-score-pill--tiede,
-.signal-score-pill--froid,
-.signal-score-pill--unscored {
-	color: white;
-	background: linear-gradient(135deg, var(--score-pill-from), var(--score-pill-to));
-	box-shadow:
-		inset 0 0 0 1px rgba(255, 255, 255, 0.18),
-		0 1px 2px var(--score-pill-shadow);
-	font-variant-numeric: tabular-nums;
-}
-.signal-score-pill--chaud {
-	--score-pill-from: #F65447;
-	--score-pill-to: #D5392C;
-	--score-pill-shadow: rgba(240, 68, 56, 0.32);
-}
-.signal-score-pill--tiede {
-	--score-pill-from: #F8A33B;
-	--score-pill-to: #D97706;
-	--score-pill-shadow: rgba(247, 144, 9, 0.30);
-}
-.signal-score-pill--froid {
-	--score-pill-from: #4F7AB8;
-	--score-pill-to: #2F5A9E;
-	--score-pill-shadow: rgba(47, 90, 158, 0.28);
-}
-.signal-score-pill--unscored {
-	--score-pill-from: #B5BAC4;
-	--score-pill-to: #9CA3AF;
-	--score-pill-shadow: rgba(107, 114, 128, 0.20);
-	color: white;
-}
+/* Audit 360 Bloc D : la pastille de score Signaux a convergé sur la primitive
+   unifiée ScorePill (src/lib/components/prospection/ScorePill.svelte, variante
+   `temperature`). L'ancien système saturé `.signal-score-pill*` (dégradé + hex en
+   dur, texte blanc échouant WCAG AA sur tiède/non-scoré) a été retiré : une seule
+   pastille pâle tokenisée et accessible dans tout le CRM. */
 
 /* V2.5 audit S160 : focus-visible globaux (WCAG 2.4.7 AA).
    Étendu à tous éléments interactifs : input/select/textarea + ARIA roles + tabindex custom.
@@ -267,7 +222,7 @@ textarea:focus-visible,
 /* ============================================================================
  * Vague 2 - primitives partagées de la « ligne premium riche » (flag ffCrmListesV2).
  * Globales (cascade Entreprises/Contacts/Signaux/Prospection/Pipeline). Rendues dans
- * les snippets DataTable (scope parent) -> non scopables, vivent ici comme signal-score-pill.
+ * les snippets DataTable (scope parent) -> non scopables, vivent ici (CSS globale).
  * Textes en --color-text-muted (AA), jamais un gris faint qui échouerait le contraste.
  * ========================================================================== */
 .crm-avatar {
@@ -466,8 +421,8 @@ textarea:focus-visible,
 /* ============================================================================
  * Vague 3.2 - module Campagnes (multi-étiquetage N-N, flag ffCrmListesV2).
  * Pastille de campagne + pile débordable + compteur de prospects + swatch.
- * Globales (rendues dans les snippets DataTable + slot SlideOut, scope parent)
- * comme .signal-score-pill. 8 couleurs stables tirées de la palette workflow
+ * Globales (rendues dans les snippets DataTable + slot SlideOut, scope parent).
+ * 8 couleurs stables tirées de la palette workflow
  * (toutes AA, c8 dé-sémantisé berry). La couleur appartient à la campagne
  * (slug c1..c8), pas au rendu. Le combo (recherche/création) vit scopé dans
  * CampagneCombo.svelte ; ici seulement les primitives d'affichage partagées.

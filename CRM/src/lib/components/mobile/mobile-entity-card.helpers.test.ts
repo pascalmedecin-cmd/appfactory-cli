@@ -1,59 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
-	scorePillModifier,
-	scorePillClass,
-	scorePillIcon,
-	scorePillTitle,
 	actionVariant,
 	shouldInvokeOnClick,
 	isValidDominant,
 } from './mobile-entity-card.helpers';
 
-describe('scorePillModifier', () => {
-	it('preserves chaud sans accent', () => {
-		expect(scorePillModifier('chaud')).toBe('chaud');
-	});
-
-	it("retire l'accent de tiède (CSS class kebab-safe)", () => {
-		expect(scorePillModifier('tiède')).toBe('tiede');
-	});
-
-	it('preserves froid sans accent', () => {
-		expect(scorePillModifier('froid')).toBe('froid');
-	});
-
-	it('preserves unscored', () => {
-		expect(scorePillModifier('unscored')).toBe('unscored');
-	});
-});
-
-describe('scorePillClass', () => {
-	it('compose la classe base + modifier pour chaud', () => {
-		expect(scorePillClass('chaud')).toBe('signal-score-pill signal-score-pill--chaud');
-	});
-
-	it("utilise tiede (sans accent) dans la classe pour 'tiède'", () => {
-		expect(scorePillClass('tiède')).toBe('signal-score-pill signal-score-pill--tiede');
-	});
-
-	it('compose la classe pour unscored', () => {
-		expect(scorePillClass('unscored')).toBe('signal-score-pill signal-score-pill--unscored');
-	});
-});
-
-describe('scorePillTitle', () => {
-	it('formate un score positif', () => {
-		expect(scorePillTitle(7)).toBe('Score 7');
-	});
-
-	it('formate un score zéro', () => {
-		expect(scorePillTitle(0)).toBe('Score 0');
-	});
-
-	it('formate un score négatif (scoring CRM autorise les pénalités)', () => {
-		expect(scorePillTitle(-3)).toBe('Score -3');
-	});
-});
+// Audit 360 Bloc D : les helpers de pastille (scorePillModifier/Class/Icon/Title)
+// ont été retirés — MobileEntityCard rend désormais la primitive unifiée ScorePill
+// (mode numérique), fin du système saturé `signal-score-pill`.
 
 describe('actionVariant', () => {
 	it("retourne 'neutral' par défaut si undefined", () => {
@@ -120,20 +74,5 @@ describe('isValidDominant', () => {
 		expect(isValidDominant(42)).toBe(false);
 		expect(isValidDominant(null)).toBe(false);
 		expect(isValidDominant(undefined)).toBe(false);
-	});
-});
-
-describe('scorePillIcon', () => {
-	it('mappe chaud → local_fire_department', () => {
-		expect(scorePillIcon('chaud')).toBe('local_fire_department');
-	});
-	it('mappe tiède → thermostat', () => {
-		expect(scorePillIcon('tiède')).toBe('thermostat');
-	});
-	it('mappe froid → ac_unit', () => {
-		expect(scorePillIcon('froid')).toBe('ac_unit');
-	});
-	it('mappe unscored → remove', () => {
-		expect(scorePillIcon('unscored')).toBe('remove');
 	});
 });

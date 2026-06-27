@@ -4,7 +4,7 @@
  * - filterSignauxByTab : filtre selon tab actif (tous, nouveau, en_analyse, interesse, converti, ecarte)
  * - signauxCountsByTab : compteurs par tab pour les pills ARIA
  * - emptyMessageForTab : message contextualisé par tab
- * - formatTypeLabel / typeIcon / formatRelative / formatDate / scoreLabel / scoreStyle / statutLabel / statutVariant
+ * - formatTypeLabel / typeIcon / formatRelative / formatDate / scoreLabel / statutLabel / statutVariant
  */
 
 import { DAY_MS } from './time-constants';
@@ -76,18 +76,10 @@ const TYPE_ICONS: Record<string, string> = {
 
 export type ScoreBucket = 'chaud' | 'tiede' | 'froid' | 'non_qualifie';
 
-export type ScoreStyle = {
-	icon: string;
-	colorClass: string;
-	bgClass: string;
-	label: string;
-};
-
-// V4 (S189) : ScorePill saturée premium. Les anciennes classes pâles
-// (`bg-danger/10 text-danger-deep`) cédaient sous le bruit visuel d'une liste dense :
-// impossible de repérer un Chaud du premier coup d'œil. Nouvelles classes
-// `signal-score-pill--*` (dans SignauxCards.svelte + SlideOut) : fond saturé, texte
-// blanc, ring 1px inset, shadow douce. Le différencier devient instantané.
+// Audit 360 Bloc D : la pastille de score Signaux a convergé sur la primitive
+// unifiée ScorePill (variante `temperature`). scoreLabel reste la source des seuils
+// Chaud/Tiède/Froid ; le rendu visuel (couleurs/icônes pâles, WCAG AA) vit désormais
+// dans ScorePill.svelte. L'ancien SCORE_STYLES + classes `signal-score-pill--*` retirés.
 
 // Borne d'affichage du score signal. La DB peut stocker un score > maxPoints
 // (somme canton+keywords+source avant cap final), utile pour le tri par
@@ -103,13 +95,6 @@ export function clampDisplayScore(
 	if (raw > maxPoints) return maxPoints;
 	return raw;
 }
-const SCORE_STYLES: Record<ScoreBucket, ScoreStyle> = {
-	chaud: { icon: 'local_fire_department', colorClass: 'signal-score-pill--chaud', bgClass: '', label: 'Chaud' },
-	tiede: { icon: 'thermostat', colorClass: 'signal-score-pill--tiede', bgClass: '', label: 'Tiède' },
-	froid: { icon: 'ac_unit', colorClass: 'signal-score-pill--froid', bgClass: '', label: 'Froid' },
-	non_qualifie: { icon: 'remove', colorClass: 'signal-score-pill--unscored', bgClass: '', label: 'Non qualifié' },
-};
-
 /**
  * Indicateurs flat premium en haut de page /signaux.
  * - total : count de tous les signaux (tous statuts)
@@ -251,16 +236,6 @@ export function scoreLabel(
 	if (score >= thresholds.tiede) return 'tiede';
 	if (score >= thresholds.froid) return 'froid';
 	return 'non_qualifie';
-}
-
-/**
- * Style visuel pour un score (icon, colorClass, bgClass, label).
- */
-export function scoreStyle(
-	score: number | null,
-	thresholds?: { chaud: number; tiede: number; froid: number }
-): ScoreStyle {
-	return SCORE_STYLES[scoreLabel(score, thresholds)];
 }
 
 /**

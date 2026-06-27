@@ -1,7 +1,6 @@
 export type BadgeVariant = 'default' | 'info' | 'success' | 'warning' | 'danger' | 'muted';
 export type DominantBand = 'coeur' | 'bonus' | 'eviter' | 'neutral';
 export type ActionVariant = 'primary' | 'neutral' | 'danger';
-export type ScorePillLabel = 'chaud' | 'tiède' | 'froid' | 'unscored';
 
 export interface MobileEntityCardAction {
 	icon: string;
@@ -22,33 +21,6 @@ const VALID_DOMINANTS: ReadonlySet<DominantBand> = new Set([
 	'eviter',
 	'neutral',
 ]);
-
-type ScorePillModifier = 'chaud' | 'tiede' | 'froid' | 'unscored';
-
-export function scorePillModifier(label: ScorePillLabel): ScorePillModifier {
-	return label === 'tiède' ? 'tiede' : label;
-}
-
-export function scorePillClass(label: ScorePillLabel): string {
-	return `signal-score-pill signal-score-pill--${scorePillModifier(label)}`;
-}
-
-export function scorePillTitle(value: number): string {
-	return `Score ${value}`;
-}
-
-// Material Symbols cohérent avec SignauxCards / SCORE_STYLES.
-// Permet à MobileEntityCard d'afficher icône + valeur sans dupliquer la map ailleurs.
-const SCORE_PILL_ICONS: Record<ScorePillLabel, string> = {
-	chaud: 'local_fire_department',
-	tiède: 'thermostat',
-	froid: 'ac_unit',
-	unscored: 'remove',
-};
-
-export function scorePillIcon(label: ScorePillLabel): string {
-	return SCORE_PILL_ICONS[label] ?? 'remove';
-}
 
 export function actionVariant(variant?: ActionVariant): ActionVariant {
 	return variant ?? 'neutral';
