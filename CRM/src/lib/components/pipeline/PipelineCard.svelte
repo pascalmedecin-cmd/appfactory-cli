@@ -158,7 +158,7 @@
 	.card {
 		background: var(--color-surface);
 		border-radius: var(--radius-xl);
-		padding: 14px;
+		padding: 12px;
 		box-shadow: var(--shadow-card);
 		cursor: grab;
 		position: relative;
@@ -204,7 +204,7 @@
 		line-clamp: 2;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
-		margin-bottom: 6px;
+		margin-bottom: 8px;
 	}
 	.card-company {
 		font-size: 12px;
@@ -248,8 +248,8 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		padding-top: 10px;
-		border-top: 1px solid rgba(17, 24, 39, 0.05);
+		padding-top: 8px;
+		border-top: 1px solid var(--color-hairline);
 	}
 	.card-avatar {
 		width: 18px;
@@ -305,8 +305,8 @@
 	.card-head {
 		display: flex;
 		align-items: flex-start;
-		gap: 10px;
-		margin-bottom: 11px;
+		gap: 8px;
+		margin-bottom: 12px;
 	}
 	.card-logo {
 		width: 30px;
@@ -328,7 +328,7 @@
 	/* Hauteur egale : titre 2 lignes + entreprise 1 ligne toujours reserves. */
 	.card.premium .card-title {
 		min-height: 2.6em;
-		margin-bottom: 2px;
+		margin-bottom: 4px;
 	}
 	.card.premium .card-company {
 		min-height: 1.3em;

@@ -82,7 +82,7 @@
 			<div class="col-icon col-icon--{etape.key}">
 				<Icon name={etape.icon} size={20} />
 			</div>
-			<div class="col-title">{etape.label}</div>
+			<h2 class="col-title">{etape.label}</h2>
 			<div class="col-count tabular-nums">{opps.length}</div>
 			{#if showCta}
 				<button
@@ -156,14 +156,14 @@
 	}
 
 	.col-head {
-		padding: 18px 16px 14px;
-		border-bottom: 1px solid rgba(17, 24, 39, 0.05);
+		padding: 16px 16px 12px;
+		border-bottom: 1px solid var(--color-hairline);
 	}
 	.col-head-row1 {
 		display: flex;
 		align-items: center;
-		gap: 10px;
-		margin-bottom: 10px;
+		gap: 8px;
+		margin-bottom: 8px;
 	}
 	.col-icon {
 		width: 36px;
@@ -201,6 +201,7 @@
 	.col-title {
 		flex: 1;
 		min-width: 0;
+		margin: 0;
 		font-size: 16px;
 		font-weight: 600;
 		color: var(--color-text);
@@ -210,7 +211,7 @@
 	.col-count {
 		font-size: 11px;
 		font-weight: 600;
-		padding: 2px 8px;
+		padding: 4px 8px;
 		background: var(--color-surface-alt);
 		color: var(--color-text-muted);
 		border-radius: var(--radius-full);
@@ -279,7 +280,7 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		gap: 10px;
+		gap: 12px;
 		min-height: 100px;
 		overflow-y: auto;
 	}
@@ -302,7 +303,7 @@
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		gap: 6px;
+		gap: 8px;
 		transition: background 180ms ease, color 180ms ease, border-color 180ms ease;
 	}
 	.col-foot-add:hover {

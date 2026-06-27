@@ -370,20 +370,14 @@
 			<div class="grid grid-cols-2 gap-4 text-sm">
 				<div>
 					<span class="text-text-muted">Entreprise</span>
-					{#if selectedOpp.entreprises?.raison_sociale}
-						<a href="/crm/entreprises" class="block font-medium text-primary hover:underline">
-							{selectedOpp.entreprises.raison_sociale}
-						</a>
-					{:else}
-						<p class="font-medium text-text">--</p>
-					{/if}
+					<p class="block font-medium text-text">{selectedOpp.entreprises?.raison_sociale ?? '--'}</p>
 				</div>
 				<div>
 					<span class="text-text-muted">Contact</span>
 					{#if selectedOpp.contacts}
-						<a href="/crm/contacts" class="block font-medium text-primary hover:underline">
+						<p class="block font-medium text-text">
 							{selectedOpp.contacts.prenom ?? ''} {selectedOpp.contacts.nom ?? ''}
-						</a>
+						</p>
 					{:else}
 						<p class="font-medium text-text">--</p>
 					{/if}
@@ -423,21 +417,18 @@
 				</div>
 			{/if}
 
-			{#if selectedOpp.motif_perte}
-				<div class="text-sm">
-					<span class="text-text-muted">Motif de perte</span>
-					<p class="font-medium text-danger-deep">{selectedOpp.motif_perte}</p>
-				</div>
-			{/if}
-
 			{#if selectedOpp.notes_libres}
 				<div class="text-sm">
 					<span class="text-text-muted">Notes</span>
 					<p class="text-text whitespace-pre-wrap">{selectedOpp.notes_libres}</p>
 				</div>
 			{/if}
+		</div>
+	{/if}
 
-			<div class="flex gap-3 pt-4 border-t border-border">
+	{#snippet footer()}
+		{#if selectedOpp}
+			<div class="flex gap-3">
 				<button
 					onclick={openEdit}
 					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
@@ -475,8 +466,8 @@
 					</form>
 				{/if}
 			</div>
-		</div>
-	{/if}
+		{/if}
+	{/snippet}
 </SlideOut>
 
 <!-- Modal création/édition -->

@@ -9,11 +9,14 @@
 		title = '',
 		width = '560px',
 		children,
+		footer,
 	}: {
 		open?: boolean;
 		title?: string;
 		width?: string;
 		children?: Snippet;
+		/** Footer sticky optionnel (actions principales, GOLDEN § 5.10). Additif : sans lui, le panneau garde son comportement actuel. */
+		footer?: Snippet;
 	} = $props();
 
 	// Nom accessible du dialog (WCAG 4.1.2) : lie le <h2> titre via aria-labelledby.
@@ -59,6 +62,12 @@
 				{@render children()}
 			{/if}
 		</div>
+
+		{#if footer}
+			<div class="shrink-0 border-t border-border px-6 py-4 bg-white">
+				{@render footer()}
+			</div>
+		{/if}
 	</div>
 {/if}
 
