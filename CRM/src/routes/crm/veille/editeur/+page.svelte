@@ -462,7 +462,7 @@
 	</p>
 </div>
 
-<div class="mt-5">
+<div class="mt-6">
 	<Tabs
 		{tabs}
 		active={activeTab}
@@ -491,7 +491,7 @@
 					<Icon name="search" size={16} class="text-text-muted" />
 					<input type="search" bind:value={themeSearch} placeholder="Rechercher un thème…" aria-label="Rechercher un thème" />
 				</label>
-				<button type="button" onclick={openCreateTheme} class="btn-primary">
+				<button type="button" onclick={openCreateTheme} class="ws-btn ws-btn-primary">
 					<Icon name="add" size={17} />
 					Nouveau thème
 				</button>
@@ -512,7 +512,7 @@
 						<span class="font-mono text-xs text-text-body">{theme.slug}</span>
 						<div>
 							<div class="text-sm font-semibold text-text">{theme.label}</div>
-							<div class="text-xs text-text-muted mt-0.5 line-clamp-1">{theme.description}</div>
+							<div class="text-xs text-text-muted mt-1 line-clamp-1">{theme.description}</div>
 						</div>
 						<span class="hide-sm">
 							<Badge
@@ -547,7 +547,7 @@
 						</div>
 					</div>
 				{:else}
-					<div class="empty">Aucun thème ne correspond.</div>
+					<div class="empty">{themeSearch.trim() ? 'Aucun thème ne correspond à ce filtre.' : 'Aucun thème surveillé pour l\'instant. Ajoute un thème.'}</div>
 				{/each}
 			</div>
 		</div>
@@ -569,11 +569,11 @@
 				<div class="cl"><span class="sw bg-info"></span><div><b>Confiance + garde chiffres</b><span>Faits crus, mais chaque chiffre revérifié (associations, lobbies).</span></div></div>
 				<div class="cl"><span class="sw bg-warning"></span><div><b>Strict</b><span>Chaque fait doit figurer mot pour mot sur la page (concurrents, cabinets).</span></div></div>
 				<div class="cl"><span class="sw bg-danger"></span><div><b>Strict renforcé</b><span>Sources à chiffres surveillées de près (cabinets d'études, fils de presse).</span></div></div>
-				<div class="cl"><span class="sw bg-danger"></span><div><b>Bloquée</b><span>Filtrée avant vérification (blog marketing, agrégateur spam).</span></div></div>
+				<div class="cl"><span class="sw bg-neutral"></span><div><b>Bloquée</b><span>Filtrée avant vérification (blog marketing, agrégateur spam).</span></div></div>
 			</div>
 
-			<div class="flex items-center justify-between gap-3 flex-wrap mb-5">
-				<div class="flex items-center gap-2.5 flex-wrap">
+			<div class="flex items-center justify-between gap-3 flex-wrap mb-6">
+				<div class="flex items-center gap-2 flex-wrap">
 					<label class="search">
 						<Icon name="search" size={16} class="text-text-muted" />
 						<input type="search" bind:value={srcSearch} placeholder="Rechercher une source…" aria-label="Rechercher une source" />
@@ -591,7 +591,7 @@
 						<button type="button" class="chip" aria-pressed={chipPause} onclick={() => (chipPause = !chipPause)}>En pause</button>
 					</div>
 				</div>
-				<button type="button" onclick={openCreateSource} class="btn-primary">
+				<button type="button" onclick={openCreateSource} class="ws-btn ws-btn-primary">
 					<Icon name="add" size={17} />
 					Nouvelle source
 				</button>
@@ -653,7 +653,7 @@
 						{/each}
 						{#if hidden > 0}
 							<div class="cat-foot">
-								<button type="button" class="btn-secondary" onclick={() => (expanded = { ...expanded, [fam.key]: !isOpen })}>
+								<button type="button" class="ws-btn ws-btn-secondary" onclick={() => (expanded = { ...expanded, [fam.key]: !isOpen })}>
 									{isOpen ? 'Réduire' : `Afficher les ${hidden} autres sources`}
 									<Icon name={isOpen ? 'expand_less' : 'expand_more'} size={16} />
 								</button>
@@ -662,7 +662,7 @@
 					</div>
 				</div>
 			{:else}
-				<div class="empty">Aucune source ne correspond aux filtres.</div>
+				<div class="empty">{srcSearch.trim() || famFilter || chipConfiance || chipStrict || chipBenchmark || chipPause ? 'Aucune source ne correspond à ce filtre.' : 'Aucune source enregistrée.'}</div>
 			{/each}
 
 			<p class="text-sm text-text-muted text-center mt-6">
@@ -773,7 +773,7 @@
 			<span class="lbl">Descriptif court</span>
 			<input type="text" bind:value={sourceForm.description} placeholder="ex. Quotidien valaisan (VS)" class="inp" maxlength="500" />
 		</label>
-		<div class="flex flex-wrap gap-x-5 gap-y-2 pt-1">
+		<div class="flex flex-wrap gap-x-6 gap-y-2 pt-1">
 			<label class="opt"><input type="checkbox" bind:checked={sourceForm.is_benchmark} /> Source benchmark (concurrent suivi)</label>
 			<label class="opt"><input type="checkbox" bind:checked={sourceForm.strict_verbatim} /> Chiffres surveillés (strict renforcé)</label>
 		</div>
@@ -856,7 +856,7 @@
 	}
 	.callout p {
 		margin: 0;
-		font-size: 13.5px;
+		font-size: 14px;
 		color: var(--color-primary-dark);
 		line-height: 1.55;
 	}
@@ -890,49 +890,6 @@
 		color: var(--color-text-body);
 		background: var(--color-surface);
 		cursor: pointer;
-	}
-
-	.btn-primary {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 8px;
-		height: 40px;
-		padding: 0 16px;
-		border-radius: var(--radius-lg, 10px);
-		font: inherit;
-		font-size: 14px;
-		font-weight: 600;
-		cursor: pointer;
-		border: 1px solid transparent;
-		background: var(--color-primary);
-		color: #fff;
-		transition: background 180ms ease;
-	}
-	.btn-primary:hover {
-		background: var(--color-primary-hover);
-	}
-	.btn-primary:active {
-		transform: scale(0.98);
-	}
-	.btn-secondary {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 7px;
-		height: 38px;
-		padding: 0 16px;
-		border-radius: var(--radius-lg, 10px);
-		font: inherit;
-		font-size: 13.5px;
-		font-weight: 600;
-		cursor: pointer;
-		background: var(--color-surface);
-		color: var(--color-text-body);
-		border: 1px solid var(--color-border-strong);
-	}
-	.btn-secondary:hover {
-		background: var(--color-surface-alt);
 	}
 
 	.chip {
@@ -979,7 +936,7 @@
 		display: grid;
 		align-items: center;
 		gap: 16px;
-		padding: 0 20px;
+		padding: 0 24px;
 	}
 	.themes-grid {
 		grid-template-columns: minmax(140px, 1fr) minmax(160px, 1.3fr) 140px 130px 100px 116px;
@@ -988,7 +945,7 @@
 		height: 46px;
 		background: var(--color-surface-alt);
 		border-bottom: 1px solid var(--color-border);
-		font-size: 11.5px;
+		font-size: 12px;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.05em;
@@ -1056,7 +1013,7 @@
 	.conf-legend {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 10px 22px;
+		gap: 12px 24px;
 		background: var(--color-surface);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-lg, 10px);
@@ -1065,7 +1022,7 @@
 	}
 	.cl {
 		display: flex;
-		gap: 10px;
+		gap: 12px;
 		align-items: flex-start;
 	}
 	.cl .sw {
@@ -1080,7 +1037,7 @@
 		color: var(--color-text);
 	}
 	.cl span {
-		font-size: 12.5px;
+		font-size: 12px;
 		color: var(--color-text-muted);
 		line-height: 1.45;
 	}
@@ -1096,6 +1053,11 @@
 	.bg-danger {
 		background: var(--color-danger);
 	}
+	/* Bloquée = exclusion (filtrée avant vérif), pas un 5e palier de confiance :
+	   swatch neutre pour ne pas étendre la palette statut (GOLDEN 11.3). */
+	.bg-neutral {
+		background: var(--color-text-muted);
+	}
 
 	/* Catégories de sources */
 	.cat {
@@ -1105,19 +1067,19 @@
 		display: flex;
 		align-items: flex-start;
 		gap: 12px;
-		padding: 16px 20px;
+		padding: 16px 24px;
 		background: var(--color-primary-dark);
 		color: #fff;
 		border-radius: var(--radius-xl, 12px) var(--radius-xl, 12px) 0 0;
 	}
 	.cat-title {
-		font-size: 15.5px;
+		font-size: 16px;
 		font-weight: 700;
 		letter-spacing: -0.01em;
 		margin: 0;
 	}
 	.cat-desc {
-		font-size: 12.5px;
+		font-size: 12px;
 		color: rgba(255, 255, 255, 0.68);
 		margin: 4px 0 0;
 		line-height: 1.45;
@@ -1146,7 +1108,7 @@
 		display: grid;
 		align-items: center;
 		gap: 16px;
-		padding: 0 20px;
+		padding: 0 24px;
 		grid-template-columns: 40px minmax(200px, 1.6fr) minmax(150px, 1fr) 84px;
 	}
 	.src-row {
@@ -1225,7 +1187,7 @@
 	}
 
 	.tag {
-		font-size: 10.5px;
+		font-size: 10px;
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.03em;
@@ -1302,7 +1264,7 @@
 		gap: 7px;
 		margin: 4px 0 0;
 		padding: 9px 11px;
-		font-size: 12.5px;
+		font-size: 12px;
 		line-height: 1.45;
 		color: var(--color-text-muted);
 		background: var(--color-surface-alt);
