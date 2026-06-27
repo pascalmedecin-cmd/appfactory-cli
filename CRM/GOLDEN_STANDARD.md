@@ -155,6 +155,8 @@ Le **dashboard** (`/`) porte une identité éditoriale assumée (« inbox du mat
 | KPI value vedette (`KpisBento.kpi-featured`) | `76px` |
 | KPI value split | `40px` (32px mobile) |
 
+**Extension sanctionnée - bandeau KPI compact (`KpiStrip`, audit 360 Bloc D)** : le strip premium `KpiStrip` (consommé par Entreprises / Contacts / Signaux / Prospection / Pipeline / Dashboard sous `ffCrmListesV2`) porte une échelle **compacte délibérée**, distincte du barème : valeur `19px`, libellé `11.5px`, gap `10px`. Choix tenu (lecture dense en tête de liste, validé visuellement et en prod). Toute évolution de ces valeurs se fait **dans la primitive** `KpiStrip.svelte` (jamais en surcharge locale) et est re-validée en Chrome sur ses pages consommatrices.
+
 ### 3.3 Tokens d'ombre carte (S178 V2c)
 
 Pattern récurrent des cartes éditoriales (ring hairline + diffusion douce), exposé en tokens pour éviter la duplication :

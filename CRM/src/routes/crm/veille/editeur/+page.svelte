@@ -454,6 +454,8 @@
 		<Icon name="arrow_back" size={17} />
 		Retour à la veille
 	</a>
+	<!-- Audit 360 Bloc D #5 (décision tracée) : header éditorial mag-* assumé. Golden §3.2
+	     autorise l'échelle mag-* en sous-page de /veille (archétype éditorial). Non-violation. -->
 	<div class="mag-kicker text-primary">Veille sectorielle FilmPro</div>
 	<h2 class="text-3xl md:text-4xl font-extrabold tracking-tight text-primary-dark mt-2">Éditeur</h2>
 	<p class="text-base text-text-body mt-2 max-w-2xl leading-relaxed">

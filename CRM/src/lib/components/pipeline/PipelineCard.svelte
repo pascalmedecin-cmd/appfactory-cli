@@ -79,6 +79,10 @@
 </script>
 
 <!-- carte cliquable/draggable, clavier-activable (Enter/Espace) + aria-label ; role listitem pour la liste parente -->
+<!-- Audit 360 Bloc D #6 (décision tracée) : role="listitem" CONSERVÉ malgré l'interactivité.
+     L'a11y est couverte (aria-label + Enter/Espace + focus-visible) ; basculer en role=button
+     romprait la sémantique de liste (role=list parent verrouillé par tests/vague2-a11y) et risquerait
+     le drag-and-drop testé. Gain réel faible → won't-fix assumé. -->
 <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <article
