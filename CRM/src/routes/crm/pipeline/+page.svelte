@@ -80,6 +80,14 @@
 			: motifPerteCat
 		).slice(0, 500)
 	);
+	// Reset idempotent : la saisie vit dans le parent et le modal est réutilisé pour
+	// N opportunités. On vide à CHAQUE ouverture (fix racine) + sur toutes les sorties
+	// (Annuler / Échap / croix / succès) pour éviter qu'un motif abandonné contamine
+	// l'archivage de l'opportunité suivante.
+	function resetMotifPerte() {
+		motifPerteCat = '';
+		motifPerteDetail = '';
+	}
 	let moveFormEl: HTMLFormElement | null = $state(null);
 	let moveFormId = $state('');
 	let moveFormEtape = $state('');
@@ -467,7 +475,10 @@
 				{#if selectedOpp.etape_pipeline !== 'perdu' && selectedOpp.etape_pipeline !== 'gagne'}
 					<button
 						type="button"
-						onclick={() => (lostModalOpen = true)}
+						onclick={() => {
+							resetMotifPerte();
+							lostModalOpen = true;
+						}}
 						disabled={archiving}
 						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
 					>
@@ -551,7 +562,7 @@
 </ModalForm>
 
 <!-- Modal « Marquer perdu » : capture du motif (liste fermée + précisions) avant archivage. -->
-<ModalForm bind:open={lostModalOpen} title="Marquer cette opportunité perdue" icon="block">
+<ModalForm bind:open={lostModalOpen} title="Marquer cette opportunité perdue" icon="block" onClose={resetMotifPerte}>
 	<form
 		method="POST"
 		action="?/archive"
@@ -562,8 +573,7 @@
 				lostModalOpen = false;
 				slideOutOpen = false;
 				selectedOpp = null;
-				motifPerteCat = '';
-				motifPerteDetail = '';
+				resetMotifPerte();
 				if (result.type === 'success') toasts.success('Opportunité marquée perdue');
 				else toasts.error("Erreur lors de l'archivage");
 				await update();
@@ -593,7 +603,10 @@
 		<div class="flex justify-end gap-3 pt-4">
 			<button
 				type="button"
-				onclick={() => (lostModalOpen = false)}
+				onclick={() => {
+					lostModalOpen = false;
+					resetMotifPerte();
+				}}
 				class="h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
 			>
 				Annuler
