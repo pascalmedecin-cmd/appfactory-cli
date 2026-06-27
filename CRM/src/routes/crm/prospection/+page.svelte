@@ -921,7 +921,7 @@
 			<div class="flex items-center justify-center w-16 h-16 rounded-2xl mb-6" style="background: var(--color-prosp-import-bg)">
 				<Icon name="search" size={32} class="text-prosp-import" />
 			</div>
-			<h3 class="text-lg font-semibold text-text mb-2">Trouvez vos premiers prospects</h3>
+			<h2 class="text-lg font-semibold text-text mb-2">Trouvez vos premiers prospects</h2>
 			<p class="text-sm text-text-muted text-center max-w-lg mb-6">
 				Recherchez une entreprise dans le registre du commerce (Zefix) ou l'annuaire pro (search.ch), qualifiez-la, puis convertissez les plus pertinentes en entreprises dans votre CRM.
 			</p>
@@ -1033,7 +1033,7 @@
 					<Icon name={activeFilterCount > 0 || data.search ? 'filter_alt_off' : emptyStateCopy.icon} size={26} class="text-text-muted" />
 				</div>
 				{#if activeFilterCount > 0 || data.search}
-					<h3 class="text-base font-semibold text-text mb-1">Aucun prospect ne correspond à ces filtres</h3>
+					<h2 class="text-base font-semibold text-text mb-1">Aucun prospect ne correspond à ces filtres</h2>
 					<p class="text-sm text-text-muted text-center max-w-md mb-5">
 						Réinitialisez les filtres pour réafficher l'onglet, ou changez de nature de signal.
 					</p>
@@ -1056,7 +1056,7 @@
 						{/if}
 					</div>
 				{:else}
-					<h3 class="text-base font-semibold text-text mb-1">{emptyStateCopy.title}</h3>
+					<h2 class="text-base font-semibold text-text mb-1">{emptyStateCopy.title}</h2>
 					<p class="text-sm text-text-muted text-center max-w-md mb-5">{emptyStateCopy.body}</p>
 					{#if showImportCta}
 					<button
@@ -1136,14 +1136,11 @@
 								{#if leadCamps.length > 2}
 									<span class="camp-more" title={leadCamps.slice(2).map((c) => c.nom).join(', ')}>+{leadCamps.length - 2}</span>
 								{/if}
-								<button type="button" class="camp-edit" title="Gérer les campagnes" aria-label="Gérer les campagnes" onclick={(e) => { e.stopPropagation(); openDetail(lead); }}>
-									<Icon name="add" size={12} />
-								</button>
 							</div>
 						{:else}
-							<button type="button" class="camp-add-inline" onclick={(e) => { e.stopPropagation(); openDetail(lead); }}>
-								<Icon name="add" size={12} /> Étiqueter
-							</button>
+							<!-- golden 14.3 : pas de bouton focusable dans la ligne cliquable.
+							     L'étiquetage se fait dans le slide-out (CampagneCombo) ouvert au clic de ligne. -->
+							<span class="text-text-muted">–</span>
 						{/if}
 					{:else if col.key === 'canton'}
 						{#if premium && lead.canton}

@@ -38,7 +38,7 @@
 	<div class="col-empty-icon">
 		<Icon name={etape.icon} size={20} />
 	</div>
-	<h3 class="col-empty-title">Aucune opportunité</h3>
+	<h2 class="col-empty-title">Aucune opportunité</h2>
 	<p class="col-empty-desc">{description(etape.key)}</p>
 	{#if showCta && onAdd}
 		<button

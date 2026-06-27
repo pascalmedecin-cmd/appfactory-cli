@@ -496,9 +496,9 @@
 
 	<div
 		class="ws-content"
-		role="tabpanel"
-		id={`panel-${activeTab}`}
-		aria-labelledby={`tab-${activeTab}`}
+		role={data.showArchived ? undefined : 'tabpanel'}
+		id={data.showArchived ? undefined : `panel-${activeTab}`}
+		aria-labelledby={data.showArchived ? undefined : `tab-${activeTab}`}
 	>
 		{#if data.signaux.length === 0}
 			<div class="empty-simple">

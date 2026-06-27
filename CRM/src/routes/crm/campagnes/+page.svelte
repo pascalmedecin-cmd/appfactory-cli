@@ -196,7 +196,7 @@
 <div class="ws-bound">
 	<header class="head">
 		<div>
-			<h1>Campagnes</h1>
+			<h2>Campagnes</h2>
 			<p>Regrouper les prospects par action commerciale. Une entreprise peut porter plusieurs campagnes.</p>
 		</div>
 		<button type="button" class="btn-primary" onclick={openCreate}>
@@ -348,7 +348,7 @@
 		gap: 24px;
 		padding: 4px 32px 18px;
 	}
-	.head h1 {
+	.head h2 {
 		margin: 0;
 		font-size: 22px;
 		font-weight: 700;

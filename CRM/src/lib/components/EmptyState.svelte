@@ -17,7 +17,7 @@
 
 <div class="flex flex-col items-center justify-center py-12 text-center" role="status" aria-live="polite">
 	<Icon name={icon} size={48} class="text-text-muted/40 mb-3" />
-	<h3 class="text-base font-medium text-text">{title}</h3>
+	<h2 class="text-base font-medium text-text">{title}</h2>
 	{#if description}
 		<p class="mt-1 text-sm text-text-muted max-w-sm">{description}</p>
 	{/if}

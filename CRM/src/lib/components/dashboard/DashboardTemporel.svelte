@@ -71,7 +71,7 @@
 <div class="dt">
 	<!-- Hero -->
 	<div class="dt-hero stagger" style="--i: 0;">
-		<h1>Bonjour{firstName ? ` ${firstName}` : ''}</h1>
+		<h2>Bonjour{firstName ? ` ${firstName}` : ''}</h2>
 		<p>{dateLabel}{dateLabel ? ' - ' : ''}{subtitle}</p>
 	</div>
 
@@ -163,7 +163,7 @@
 	.dt-hero {
 		padding: 4px 0 8px;
 	}
-	.dt-hero h1 {
+	.dt-hero h2 {
 		margin: 0;
 		font-size: 24px;
 		font-weight: 800;

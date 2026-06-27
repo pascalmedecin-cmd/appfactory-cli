@@ -526,25 +526,6 @@ textarea:focus-visible,
 	box-shadow: inset 0 0 0 1px var(--color-border);
 	flex-shrink: 0;
 }
-.camp-edit {
-	width: 22px;
-	height: 22px;
-	display: inline-grid;
-	place-items: center;
-	border: none;
-	padding: 0;
-	border-radius: 50%;
-	color: var(--color-text-muted);
-	background: var(--color-surface-alt);
-	box-shadow: inset 0 0 0 1px var(--color-border);
-	cursor: pointer;
-	flex-shrink: 0;
-	transition: color 160ms var(--ease, ease), box-shadow 160ms var(--ease, ease);
-}
-.camp-edit:hover {
-	color: var(--color-primary);
-	box-shadow: inset 0 0 0 1px rgba(47, 90, 158, 0.30);
-}
 .camp-none {
 	color: var(--color-text-muted);
 	font-size: 13px;
@@ -552,24 +533,6 @@ textarea:focus-visible,
 	align-items: center;
 	gap: 8px;
 }
-.camp-add-inline {
-	display: inline-flex;
-	align-items: center;
-	gap: 5px;
-	padding: 3px 9px 3px 7px;
-	border: none;
-	border-radius: var(--radius-full);
-	font-size: 12px;
-	font-weight: 600;
-	color: var(--color-primary);
-	background: var(--color-primary-light);
-	box-shadow: inset 0 0 0 1px rgba(47, 90, 158, 0.14);
-	cursor: pointer;
-}
-.camp-add-inline:hover {
-	box-shadow: inset 0 0 0 1px rgba(47, 90, 158, 0.30);
-}
-
 /* Compteur de prospects (écran Campagnes) - lien vers Prospection filtrée. */
 .leadcount {
 	display: inline-flex;
