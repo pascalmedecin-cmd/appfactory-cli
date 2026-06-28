@@ -12,17 +12,20 @@
 #      5.56 + plugin 6 -> TypeScript non strippé). On les GROUPE pour qu'ils
 #      montent ensemble en UNE PR vérifiée par la CI.
 #
-#   2. vite 8 = bundler rolldown (stable 03/2026). Bug amont OUVERT :
-#      vite-plugin-svelte 7 + rolldown ne strippe pas le TS de certains .svelte
-#      (les nôtres ET ceux de layerchart), build cassé même sur 8.0.16/7.1.2 +
-#      vitePreprocess (vérifié 2026-06-22). Le socle est donc TENU sur vite 7
-#      (épinglé exact dans package.json) jusqu'à une session de migration
-#      dédiée. On IGNORE ses major/minor ET patch ici pour ne pas re-proposer
-#      du cassé : un PATCH socle suffit à casser le build (svelte 5.55.10 +
-#      plugin tenu ^6.2.4 -> TS non strippé, vérifié 2026-06-26). Idem
-#      typescript 6 (majeure) et @supabase/* 2.108 (typage RejectExcessProperties
-#      + smoke auth requis).
-#      → mémoire project_fix_deps_ci_vercel_2026-06-22.
+#   2. SOCLE MIGRÉ vers vite 8 (rolldown) le 2026-06-28 : vite 8.1.0 +
+#      vite-plugin-svelte 7.1.2 + @sveltejs/kit 2.68 + svelte 5.56.4 +
+#      svelte-check 4.7.1 (build + check + test 2315 + npm ci VERTS). Le
+#      « bug TS-stripping » de l'ancienne note 06-22 était un artefact de
+#      RÉGÉN du lockfile (rm package-lock.json rehoiste des transitifs), PAS
+#      vite 8 : sur un install propre et cohérent, le compilateur Svelte 5
+#      natif strippe le TS sous rolldown. L'ERESOLVE venait du seul
+#      vite-plugin-svelte-inspector (peer vite ^7), intégré dans vps 7 donc
+#      disparu de l'arbre. Les ignore socle sont LEVÉS : Dependabot gère à
+#      nouveau le socle via le groupe `sveltekit` ci-dessus, gaté par la CI.
+#      RÈGLE DURE conservée : jamais « rm package-lock.json » pour bumper -
+#      installs ciblés depuis le lockfile sain. typescript 6 (majeure) et
+#      @supabase/* restent différés (raisons inchangées ci-dessous).
+#      → mémoires project_fix_deps_ci_vercel_2026-06-22 + migration socle 06-28.
 version: 2
 updates:
   # Dépendances npm du CRM FilmPro
@@ -57,22 +60,9 @@ updates:
           - "minor"
           - "patch"
     ignore:
-      # --- Socle SvelteKit TENU sur vite 7 (cf. en-tête, leçon 2).
-      # PATCH GELÉ AUSSI : un patch socle suffit à casser le build (svelte
-      # 5.55.10 + plugin tenu ^6.2.4 -> TS non strippé dans les .svelte,
-      # aide/+page.svelte ParseError « Expected ',', got '?' », vérifié
-      # 2026-06-26). Tout le socle coupé est épinglé exact dans package.json ;
-      # à lever ensemble lors de la migration socle dédiée. ---
-      - dependency-name: "vite"
-        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
-      - dependency-name: "@sveltejs/vite-plugin-svelte"
-        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
-      - dependency-name: "@sveltejs/kit"
-        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
-      - dependency-name: "svelte"
-        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
-      - dependency-name: "svelte-check"
-        update-types: ["version-update:semver-major", "version-update:semver-minor", "version-update:semver-patch"]
+      # --- Socle SvelteKit : ignore LEVÉ le 2026-06-28 (migration vite 8 /
+      # rolldown livrée, cf. en-tête leçon 2). Dependabot gère à nouveau le
+      # socle via le groupe `sveltekit` ci-dessus, gaté par la CI. ---
       # --- typescript 6 : majeure différée (erreurs de type à trier). ---
       - dependency-name: "typescript"
         update-types: ["version-update:semver-major"]
