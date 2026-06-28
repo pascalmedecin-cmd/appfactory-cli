@@ -2,7 +2,7 @@
 	/**
 	 * Chips KPI Entreprises (refonte Vague 2, flag ffCrmListesV2).
 	 * Wrapper de domaine : mappe les indicateurs entreprises -> primitive partagée KpiStrip.
-	 * Valeurs calculées par `entreprisesPremiumIndicators` (helper pur testé).
+	 * Valeurs calculées côté serveur (`+page.server.ts`, requêtes count séparées).
 	 */
 	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
 	import type { EntreprisesPremiumIndicatorsValues } from '$lib/utils/entreprisesFormat';

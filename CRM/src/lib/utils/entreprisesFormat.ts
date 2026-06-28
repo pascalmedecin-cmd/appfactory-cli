@@ -1,14 +1,15 @@
 /**
- * Helpers de formatage et calculs pour la page /entreprises (refonte v9 S176bis page 4/6).
- * - entreprisesIndicators : 4 KPIs flat premium (total, qualifiees, avecContact, sansCanton)
- * - filterEntreprisesByTab : filtre selon tab actif (toutes, qualifiees, a-qualifier, sans-contact)
- * - entreprisesCountsByTab : counts par tab pour pills
- *
- * Vague 2 (listes premium) : helpers PURS pour la « ligne riche » (flag ffCrmListesV2).
- * - buildActiveStageByEntreprise : etape pipeline active la plus avancee par entreprise
+ * Helpers de formatage / rendu pour la page /entreprises (refonte v9 S176bis ; refonte serveur
+ * Bloc A 2026-06-28). Les agrégats de page (KPI, counts d'onglet, filtre) sont passés CÔTÉ
+ * SERVEUR (`+page.server.ts` + `$lib/server/entreprises-query`) ; ce module ne garde que les
+ * helpers PURS de rendu par ligne (jamais throw) + les types de valeurs des composants KPI :
+ * - emptyMessageForTab : message contextualisé d'EmptyState selon l'onglet
+ * - readPersistedView / persistView : persistance vue table/cards (localStorage, SSR-safe)
+ * - contactCountForEntreprise : nb de contacts rattachés (pastille par ligne)
+ * - buildActiveStageByEntreprise : etape pipeline active la plus avancee par entreprise (pastille + KPI serveur)
  * - sourceMetaFor : pill source (zefix/google/terrain/...) sans inventer de sens
  * - relativeTimeFr : temps relatif FR compact, robuste (jamais throw)
- * - entreprisesPremiumIndicators : 4 chips KPI (total, qualifiees, affairesEnCours, sansContact)
+ * - types EntreprisesIndicatorsValues / EntreprisesPremiumIndicatorsValues : props des KPI
  */
 
 import { etapeLabel } from '$lib/utils/pipelineFormat';
@@ -16,12 +17,6 @@ import { etapeLabel } from '$lib/utils/pipelineFormat';
 export type EntreprisesTab = 'toutes' | 'qualifiees' | 'a-qualifier' | 'sans-contact';
 
 export type EntreprisesView = 'table' | 'cards';
-
-export type EntrepriseLite = {
-	id: string;
-	statut_qualification: string | null;
-	canton: string | null;
-};
 
 export type ContactForEntrepriseLite = {
 	entreprise_id: string | null;
@@ -34,97 +29,12 @@ export type EntreprisesIndicatorsValues = {
 	sansCanton: number;
 };
 
-/**
- * Calcule l'ensemble des entreprise_id ayant au moins un contact rattaché.
- * Utilisé par indicators + filter pour éviter recalcul O(n*m).
- */
-function buildEntrepriseIdsWithContact<C extends ContactForEntrepriseLite>(
-	contacts: ReadonlyArray<C>
-): Set<string> {
-	const set = new Set<string>();
-	for (const c of contacts) {
-		if (c.entreprise_id) set.add(c.entreprise_id);
-	}
-	return set;
-}
-
-/**
- * Indicateurs flat premium en haut de page /entreprises.
- * - total : count entreprises
- * - qualifiees : statut_qualification='qualifie'
- * - avecContact : count entreprises ayant ≥1 contact rattaché
- * - sansCanton : count canton=null/vide
- */
-export function entreprisesIndicators<E extends EntrepriseLite, C extends ContactForEntrepriseLite>(
-	entreprises: ReadonlyArray<E>,
-	contacts: ReadonlyArray<C>
-): EntreprisesIndicatorsValues {
-	const idsWithContact = buildEntrepriseIdsWithContact(contacts);
-
-	let total = 0;
-	let qualifiees = 0;
-	let avecContact = 0;
-	let sansCanton = 0;
-
-	for (const e of entreprises) {
-		total += 1;
-		if (e.statut_qualification === 'qualifie') qualifiees += 1;
-		if (idsWithContact.has(e.id)) avecContact += 1;
-		if (!e.canton) sansCanton += 1;
-	}
-
-	return { total, qualifiees, avecContact, sansCanton };
-}
-
-/**
- * Filtre les entreprises selon le tab actif.
- * - toutes : aucun filtre supplémentaire
- * - qualifiees : statut_qualification='qualifie'
- * - a-qualifier : statut_qualification='nouveau' OU null (à qualifier = pas encore traité)
- * - sans-contact : aucun contact rattaché
- */
-export function filterEntreprisesByTab<E extends EntrepriseLite, C extends ContactForEntrepriseLite>(
-	entreprises: ReadonlyArray<E>,
-	contacts: ReadonlyArray<C>,
-	tab: EntreprisesTab
-): E[] {
-	if (tab === 'toutes') return [...entreprises];
-	if (tab === 'qualifiees') {
-		return entreprises.filter((e) => e.statut_qualification === 'qualifie');
-	}
-	if (tab === 'a-qualifier') {
-		return entreprises.filter(
-			(e) => e.statut_qualification === 'nouveau' || e.statut_qualification === null
-		);
-	}
-	// sans-contact
-	const idsWithContact = buildEntrepriseIdsWithContact(contacts);
-	return entreprises.filter((e) => !idsWithContact.has(e.id));
-}
-
-/**
- * Counts par tab pour les pills compteur des onglets ARIA.
- */
-export function entreprisesCountsByTab<E extends EntrepriseLite, C extends ContactForEntrepriseLite>(
-	entreprises: ReadonlyArray<E>,
-	contacts: ReadonlyArray<C>
-): Record<EntreprisesTab, number> {
-	const idsWithContact = buildEntrepriseIdsWithContact(contacts);
-	let qualifiees = 0;
-	let aQualifier = 0;
-	let sansContact = 0;
-	for (const e of entreprises) {
-		if (e.statut_qualification === 'qualifie') qualifiees += 1;
-		if (e.statut_qualification === 'nouveau' || e.statut_qualification === null) aQualifier += 1;
-		if (!idsWithContact.has(e.id)) sansContact += 1;
-	}
-	return {
-		toutes: entreprises.length,
-		qualifiees,
-		'a-qualifier': aQualifier,
-		'sans-contact': sansContact,
-	};
-}
+// Refonte serveur Bloc A (2026-06-28) : les agrégats `entreprisesIndicators`,
+// `filterEntreprisesByTab`, `entreprisesCountsByTab` et `entreprisesPremiumIndicators` ont été
+// retirés — KPI, counts d'onglet et filtre/pagination sont désormais calculés CÔTÉ SERVEUR
+// (requêtes `count:'exact'` séparées) dans `+page.server.ts` via `$lib/server/entreprises-query`.
+// Les TYPES de valeurs (EntreprisesIndicatorsValues, EntreprisesPremiumIndicatorsValues) restent
+// ici car les composants KPI (EntreprisesIndicators / EntreprisesKpiStrip) les consomment.
 
 /**
  * Message contextualisé pour l'EmptyState selon le tab actif.
@@ -294,37 +204,10 @@ export function relativeTimeFr(iso: string | null | undefined, now: Date = new D
 	return `il y a ${Math.max(1, years)} an${years > 1 ? 's' : ''}`;
 }
 
+/** Valeurs du KPI premium (calculées côté serveur, cf. `+page.server.ts`). */
 export type EntreprisesPremiumIndicatorsValues = {
 	total: number;
 	qualifiees: number;
 	affairesEnCours: number;
 	sansContact: number;
 };
-
-/**
- * KPI chips premium (Vague 2) : total, qualifiees, affaires en cours (>=1 opp active),
- * sans contact. O(n). Reutilise les memes index que les indicateurs flat. Jamais throw.
- */
-export function entreprisesPremiumIndicators<
-	E extends EntrepriseLite,
-	C extends ContactForEntrepriseLite,
-	O extends OppForStage
->(
-	entreprises: ReadonlyArray<E>,
-	contacts: ReadonlyArray<C>,
-	opps: ReadonlyArray<O>
-): EntreprisesPremiumIndicatorsValues {
-	const idsWithContact = buildEntrepriseIdsWithContact(contacts);
-	const stageByEnt = buildActiveStageByEntreprise(opps);
-	let total = 0;
-	let qualifiees = 0;
-	let affairesEnCours = 0;
-	let sansContact = 0;
-	for (const e of entreprises) {
-		total += 1;
-		if (e.statut_qualification === 'qualifie') qualifiees += 1;
-		if (stageByEnt.has(e.id)) affairesEnCours += 1;
-		if (!idsWithContact.has(e.id)) sansContact += 1;
-	}
-	return { total, qualifiees, affairesEnCours, sansContact };
-}

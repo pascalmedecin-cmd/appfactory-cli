@@ -1,7 +1,9 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
 	import { enhance, deserialize } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/stores';
+	import { SEARCH_DEBOUNCE_MS } from '$lib/utils/searchMatch';
 	import type { ActionResult } from '@sveltejs/kit';
 	import DataTable from '$lib/components/DataTable.svelte';
 	import SearchInput from '$lib/components/SearchInput.svelte';
@@ -19,15 +21,11 @@
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { toasts } from '$lib/stores/toast';
 	import {
-		entreprisesIndicators,
-		entreprisesCountsByTab,
-		filterEntreprisesByTab,
 		emptyMessageForTab,
 		readPersistedView,
 		persistView,
 		contactCountForEntreprise,
 		buildActiveStageByEntreprise,
-		entreprisesPremiumIndicators,
 		sourceMetaFor,
 		relativeTimeFr,
 		type EntreprisesTab,
@@ -47,10 +45,14 @@
 	type Entreprise = (typeof data.entreprises)[number];
 	type Contact = (typeof data.contacts)[number];
 
-	// UI state
-	let activeTab: EntreprisesTab = $state('toutes');
+	// UI state. L'onglet + la recherche + la pagination + le tri vivent dans l'URL (serveur) :
+	// `activeTab` reflète `data.tab` (re-load auto sur navigation), `searchQuery` est l'état local
+	// du champ (debounce → goto). La vue table/cards reste un choix client (localStorage).
+	const activeTab = $derived<EntreprisesTab>(data.tab as EntreprisesTab);
 	let view: EntreprisesView = $state('table');
-	let searchQuery = $state('');
+	// svelte-ignore state_referenced_locally
+	let searchQuery = $state(data.search);
+	let searchTimer: ReturnType<typeof setTimeout> | null = null;
 	let slideOutOpen = $state(false);
 	let selectedEntreprise = $state<Entreprise | null>(null);
 	let modalOpen = $state(false);
@@ -189,38 +191,72 @@
 	);
 	const effectiveView = $derived<EntreprisesView>(forceMobileCards ? 'cards' : view);
 
-	const indicators = $derived(entreprisesIndicators(data.entreprises, data.contacts));
-	const counts = $derived(entreprisesCountsByTab(data.entreprises, data.contacts));
-
 	// Vague 2 « listes premium » (réversible par flag JWT). OFF → rendu actuel, zéro régression.
 	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
 	// Map entreprise_id -> étape active la plus avancée (helper pur, O(n) sur les opportunités).
 	const stageByEntreprise = $derived(buildActiveStageByEntreprise(data.opportunites));
-	const premiumIndicators = $derived(
-		entreprisesPremiumIndicators(data.entreprises, data.contacts, data.opportunites)
-	);
 
+	// KPI + counts d'onglet : calculés CÔTÉ SERVEUR (requêtes count séparées, sans limit), plus
+	// aucun calcul sur la liste partielle de la page. `data.kpi` est un sur-ensemble :
+	// EntreprisesIndicators (non-premium) lit {total, qualifiees, avecContact, sansCanton} ;
+	// EntreprisesKpiStrip (premium) {total, qualifiees, affairesEnCours, sansContact}.
 	const tabsSpec = $derived([
-		{ key: 'toutes' as EntreprisesTab, label: 'Toutes', count: counts.toutes },
-		{ key: 'qualifiees' as EntreprisesTab, label: 'Qualifiées', count: counts.qualifiees },
-		{ key: 'a-qualifier' as EntreprisesTab, label: 'À qualifier', count: counts['a-qualifier'] },
-		{ key: 'sans-contact' as EntreprisesTab, label: 'Sans contact', count: counts['sans-contact'] },
+		{ key: 'toutes' as EntreprisesTab, label: 'Toutes', count: data.tabCounts.toutes },
+		{ key: 'qualifiees' as EntreprisesTab, label: 'Qualifiées', count: data.tabCounts.qualifiees },
+		{ key: 'a-qualifier' as EntreprisesTab, label: 'À qualifier', count: data.tabCounts['a-qualifier'] },
+		{ key: 'sans-contact' as EntreprisesTab, label: 'Sans contact', count: data.tabCounts['sans-contact'] },
 	]);
 
-	const filteredByTab = $derived(filterEntreprisesByTab(data.entreprises, data.contacts, activeTab));
+	// Pagination serveur. Vue table : footer fourni par DataTable. Vue cards : footer maison
+	// (mirror exact du footer DataTable) piloté par `totalPages`.
+	const totalPages = $derived(Math.max(1, Math.ceil((data.totalEntreprises || 0) / data.pageSize)));
 
-	const filteredEntreprises = $derived.by(() => {
-		if (!searchQuery.trim()) return filteredByTab;
-		const q = searchQuery.toLowerCase();
-		return filteredByTab.filter((e: Entreprise) =>
-			e.raison_sociale.toLowerCase().includes(q) ||
-			(e.secteur_activite ?? '').toLowerCase().includes(q) ||
-			(e.canton ?? '').toLowerCase().includes(q)
-		);
-	});
+	// Construit l'URL de page en mergeant des overrides sur l'état serveur courant. Seuls les
+	// paramètres non-défaut sont écrits (URL propre) ; le tri par défaut (date desc) n'écrit rien.
+	function buildUrl(overrides: Record<string, unknown> = {}): string {
+		const params = new URLSearchParams();
+		const tab = (overrides.tab as string) ?? data.tab;
+		const pg = overrides.page !== undefined ? Number(overrides.page) : data.page;
+		const sort = (overrides.sort as string) ?? data.sort;
+		const dir = overrides.dir !== undefined ? (overrides.dir as string) : data.sortAsc ? 'asc' : 'desc';
+		const qv = overrides.q !== undefined ? (overrides.q as string) : data.search;
+		const perPage = overrides.perPage !== undefined ? Number(overrides.perPage) : data.pageSize;
+
+		if (tab && tab !== 'toutes') params.set('tab', tab);
+		if (pg > 0) params.set('page', String(pg));
+		if (sort && sort !== 'date_derniere_modification') params.set('sort', sort);
+		if (dir === 'asc') params.set('dir', 'asc');
+		if (qv) params.set('q', qv);
+		if (perPage !== 50) params.set('perPage', String(perPage));
+
+		const qs = params.toString();
+		return qs ? `?${qs}` : $page.url.pathname;
+	}
+
+	// Resync du champ quand data.search change côté serveur (reset, lien externe ?q=). Ne clobbe
+	// pas la frappe : ne se redéclenche qu'après navigation (data.search === la valeur tapée).
+	$effect(() => { searchQuery = data.search; });
+	// Cleanup du timer de recherche à la destruction (clearTimeout est SSR-safe). Évite un goto
+	// parasite après que l'utilisateur a quitté la page.
+	$effect(() => () => { if (searchTimer) clearTimeout(searchTimer); });
+
+	function onSearchInput(value: string) {
+		searchQuery = value;
+		if (searchTimer) clearTimeout(searchTimer);
+		searchTimer = setTimeout(() => {
+			goto(buildUrl({ q: value, page: 0 }), { keepFocus: true, noScroll: true });
+		}, SEARCH_DEBOUNCE_MS);
+	}
+	function selectTab(tab: EntreprisesTab) {
+		// Annule une recherche debouncée en attente : sinon le goto du timer se déclencherait APRÈS
+		// celui de l'onglet (double navigation / écrasement de l'onglet par la recherche en vol).
+		if (searchTimer) { clearTimeout(searchTimer); searchTimer = null; }
+		// Changer l'URL réinvoque load() automatiquement (pas d'invalidateAll). On repart page 0.
+		goto(buildUrl({ tab, page: 0 }), { keepFocus: true, noScroll: true });
+	}
 
 	$effect(() => {
-		const total = data.entreprises.length;
+		const total = data.tabCounts.toutes;
 		$pageSubtitle = total === 0 ? 'Aucune entreprise' : `${total} entreprise${total > 1 ? 's' : ''}`;
 	});
 
@@ -351,17 +387,17 @@
 	</div>
 
 	{#if premium}
-		<EntreprisesKpiStrip values={premiumIndicators} />
+		<EntreprisesKpiStrip values={data.kpi} />
 	{:else}
-		<EntreprisesIndicators values={indicators} />
+		<EntreprisesIndicators values={data.kpi} />
 	{/if}
 
-	<EntreprisesTabs active={activeTab} tabs={tabsSpec} onSelect={(t) => (activeTab = t)}>
+	<EntreprisesTabs active={activeTab} tabs={tabsSpec} onSelect={selectTab}>
 		{#snippet actions()}
 			<div class="search">
 				<SearchInput
 					value={searchQuery}
-					oninput={(v) => (searchQuery = v)}
+					oninput={onSearchInput}
 					placeholder="Rechercher une entreprise…"
 					ariaLabel="Rechercher une entreprise"
 				/>
@@ -378,7 +414,7 @@
 		id={`panel-${activeTab}`}
 		aria-labelledby={`tab-${activeTab}`}
 	>
-		{#if data.entreprises.length === 0}
+		{#if data.tabCounts.toutes === 0}
 			<EmptyState
 				icon="business"
 				title="Aucune entreprise"
@@ -388,14 +424,23 @@
 			/>
 		{:else if effectiveView === 'table'}
 			<DataTable
-				data={filteredEntreprises}
+				data={data.entreprises}
 				columns={premium ? premiumColumns : columns}
 				onRowClick={openDetail}
 				searchable={false}
 				stickyLeftCols={2}
-				pageSize={50}
 				rowAriaLabel={rowAriaLabelFor}
-				emptyMessage={searchQuery.trim() ? `Aucun résultat pour « ${searchQuery.trim()} »` : emptyMessageForTab(activeTab)}
+				emptyMessage={data.search ? `Aucun résultat pour « ${data.search} »` : emptyMessageForTab(activeTab)}
+				serverMode={true}
+				totalCount={data.totalEntreprises}
+				currentServerPage={data.page}
+				serverSortKey={data.sort}
+				serverSortAsc={data.sortAsc}
+				pageSize={data.pageSize}
+				pageSizeOptions={[25, 50, 100]}
+				onPageChange={(p) => goto(buildUrl({ page: p }), { keepFocus: true, noScroll: true })}
+				onSortChange={(key, asc) => goto(buildUrl({ sort: key, dir: asc ? 'asc' : 'desc', page: 0 }), { keepFocus: true, noScroll: true })}
+				onPageSizeChange={(s) => goto(buildUrl({ perPage: s, page: 0 }), { keepFocus: true, noScroll: true })}
 			>
 				{#snippet row(entreprise, _i)}
 					{@const cc = contactCountForEntreprise(entreprise.id, data.contacts)}
@@ -452,12 +497,55 @@
 			</DataTable>
 		{:else}
 			<EntreprisesCards
-				entreprises={filteredEntreprises}
+				entreprises={data.entreprises}
 				contacts={data.contacts}
 				onSelect={openDetail}
 				stageByEntreprise={premium ? stageByEntreprise : undefined}
-				emptyMessage={searchQuery.trim() ? `Aucun résultat pour « ${searchQuery.trim()} »` : emptyMessageForTab(activeTab)}
+				emptyMessage={data.search ? `Aucun résultat pour « ${data.search} »` : emptyMessageForTab(activeTab)}
 			/>
+			<!-- Pagination serveur en vue cards (mirror du footer DataTable : mêmes classes/markup). -->
+			{#if totalPages > 1 || data.totalEntreprises > 0}
+				<div class="px-4 py-3 border-t border-border flex items-center justify-between text-sm text-text-muted shrink-0 gap-2 flex-wrap">
+					<div class="flex items-center gap-3">
+						<span>{data.totalEntreprises} résultat{data.totalEntreprises > 1 ? 's' : ''}</span>
+						<label class="flex items-center gap-2 text-xs">
+							<span class="hidden md:inline">Afficher</span>
+							<select
+								class="h-8 px-2 border border-[var(--color-border-input)] rounded-md bg-white text-text cursor-pointer text-xs"
+								value={data.pageSize}
+								onchange={(e) => goto(buildUrl({ perPage: Number((e.target as HTMLSelectElement).value), page: 0 }), { keepFocus: true, noScroll: true })}
+								aria-label="Nombre d'entrées par page"
+							>
+								{#each [25, 50, 100] as opt}
+									<option value={opt}>{opt}</option>
+								{/each}
+							</select>
+							<span class="hidden md:inline">par page</span>
+						</label>
+					</div>
+					{#if totalPages > 1}
+						<div class="flex items-center gap-2">
+							<button
+								class="flex items-center justify-center h-10 w-10 rounded-lg hover:bg-surface-alt disabled:opacity-40 cursor-pointer"
+								disabled={data.page === 0}
+								onclick={() => goto(buildUrl({ page: data.page - 1 }), { keepFocus: true, noScroll: true })}
+								aria-label="Page précédente"
+							>
+								<Icon name="arrow_back" size={18} />
+							</button>
+							<span>{data.page + 1} / {totalPages}</span>
+							<button
+								class="flex items-center justify-center h-10 w-10 rounded-lg hover:bg-surface-alt disabled:opacity-40 cursor-pointer"
+								disabled={data.page >= totalPages - 1}
+								onclick={() => goto(buildUrl({ page: data.page + 1 }), { keepFocus: true, noScroll: true })}
+								aria-label="Page suivante"
+							>
+								<Icon name="arrow_forward" size={18} />
+							</button>
+						</div>
+					{/if}
+				</div>
+			{/if}
 		{/if}
 	</div>
 </div>

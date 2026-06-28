@@ -9,12 +9,9 @@ import {
 	buildActiveStageByEntreprise,
 	sourceMetaFor,
 	relativeTimeFr,
-	entreprisesPremiumIndicators,
 	type OppForStage,
 	type StageVariant,
 	type SourceVariant,
-	type EntrepriseLite,
-	type ContactForEntrepriseLite,
 } from './entreprisesFormat';
 
 /* ---- PRNG seedé (mulberry32) : fuzz reproductible, sans Math.random ---- */
@@ -36,11 +33,6 @@ const SOURCE_VARIANTS: SourceVariant[] = ['zefix', 'google', 'terrain', 'veille'
 const opp = (entreprise_id: string | null, etape_pipeline: string | null): OppForStage => ({
 	entreprise_id,
 	etape_pipeline,
-});
-const ent = (id: string, statut: string | null, canton: string | null = 'GE'): EntrepriseLite => ({
-	id,
-	statut_qualification: statut,
-	canton,
 });
 
 describe('buildActiveStageByEntreprise', () => {
@@ -150,63 +142,12 @@ describe('relativeTimeFr', () => {
 	});
 });
 
-describe('entreprisesPremiumIndicators', () => {
-	it('compte total / qualifiées / affaires en cours / sans contact', () => {
-		const entreprises = [ent('e1', 'qualifie'), ent('e2', 'nouveau'), ent('e3', null)];
-		const contacts: ContactForEntrepriseLite[] = [{ entreprise_id: 'e1' }];
-		const opps = [opp('e2', 'qualification'), opp('e1', 'gagne')]; // gagne ignoré
-		expect(entreprisesPremiumIndicators(entreprises, contacts, opps)).toEqual({
-			total: 3,
-			qualifiees: 1,
-			affairesEnCours: 1,
-			sansContact: 2,
-		});
-	});
-
-	it('tout vide → zéros', () => {
-		expect(entreprisesPremiumIndicators([], [], [])).toEqual({
-			total: 0,
-			qualifiees: 0,
-			affairesEnCours: 0,
-			sansContact: 0,
-		});
-	});
-});
-
 /* ============================ FUZZ / STRESS ============================== */
 
 describe('STRESS : invariants durs sur 5000 cas aléatoires (PRNG seedé)', () => {
-	const STATUTS = ['qualifie', 'nouveau', 'en_cours', null];
-	const CANTONS = ['GE', 'VD', 'VS', 'NE', 'FR', 'JU', null, ''];
 	const ETAPES = ['identification', 'qualification', 'proposition', 'negociation', 'gagne', 'perdu', 'xxx', null, ''];
 	const SOURCES = ['zefix', 'google', 'google_places', 'terrain', 'lead_express', 'veille', 'search_ch', 'simap', 'manuel', 'Truc', '', '   ', 'X'.repeat(60), null, undefined];
 	const WEIRD_STRINGS = ['', ' ', '<script>alert(1)</script>', '😀', 'a'.repeat(300), '\n\t', '0', 'null', '../../etc'];
-
-	it('entreprisesPremiumIndicators : total exact, compteurs bornés, jamais throw', () => {
-		const r = rng(12345);
-		for (let run = 0; run < 5000; run++) {
-			const nE = Math.floor(r() * 40);
-			const entreprises: EntrepriseLite[] = Array.from({ length: nE }, (_, i) =>
-				ent(`e${i}`, pick(r, STATUTS), pick(r, CANTONS))
-			);
-			const contacts: ContactForEntrepriseLite[] = Array.from({ length: Math.floor(r() * 60) }, () => ({
-				entreprise_id: r() < 0.2 ? null : `e${Math.floor(r() * (nE + 5))}`,
-			}));
-			const opps: OppForStage[] = Array.from({ length: Math.floor(r() * 60) }, () =>
-				opp(r() < 0.15 ? null : `e${Math.floor(r() * (nE + 5))}`, pick(r, ETAPES))
-			);
-
-			let res: ReturnType<typeof entreprisesPremiumIndicators>;
-			expect(() => (res = entreprisesPremiumIndicators(entreprises, contacts, opps))).not.toThrow();
-			res = entreprisesPremiumIndicators(entreprises, contacts, opps);
-			expect(res.total).toBe(nE);
-			for (const v of [res.qualifiees, res.affairesEnCours, res.sansContact]) {
-				expect(Number.isInteger(v)).toBe(true);
-				expect(v).toBeGreaterThanOrEqual(0);
-				expect(v).toBeLessThanOrEqual(nE);
-			}
-		}
-	});
 
 	it('buildActiveStageByEntreprise : sortie toujours bien formée, jamais throw', () => {
 		const r = rng(67890);

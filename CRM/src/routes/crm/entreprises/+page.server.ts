@@ -5,6 +5,16 @@ import { EntrepriseCreateSchema, EntrepriseUpdateSchema, EntrepriseDeleteSchema,
 import { dbFail, now } from '$lib/server/db-helpers';
 import type { TablesUpdate } from '$lib/database.types';
 import { buildEntrepriseInsert, buildEntrepriseUpdate } from '$lib/server/referentiel/entreprises';
+import { buildActiveStageByEntreprise } from '$lib/utils/entreprisesFormat';
+import {
+	parseEntreprisesQuery,
+	applyEntreprisesBaseFilter,
+	applyEntreprisesTabFilter,
+	applyEntreprisesSansCantonFilter,
+	entreprisesSearchPattern,
+	ENTREPRISES_SEARCH_FIELDS,
+	type EntreprisesTabKey,
+} from '$lib/server/entreprises-query';
 
 interface ZefixSearchResult {
 	name: string;
@@ -15,18 +25,33 @@ interface ZefixSearchResult {
 	address?: { street?: string; houseNumber?: string; swissZipCode?: string; city?: string };
 }
 
-export const load: PageServerLoad = async ({ locals }) => {
-	const { data: entreprises, error } = await locals.supabase
-		.from('entreprises')
-		.select('*')
-		.eq('statut_archive', false)
-		.order('date_derniere_modification', { ascending: false });
+/** Borne dure de l'union de recherche (par champ) : au-delà, l'utilisateur doit affiner. */
+const SEARCH_UNION_CAP = 500;
 
-	if (error) {
-		console.error('Erreur chargement entreprises:', error.message);
-		return { entreprises: [], contacts: [], opportunites: [] };
-	}
+/**
+ * Comparateur stable pour le tri en mémoire de l'union de recherche : clé demandée (comparaison
+ * texte null-safe) + tiebreaker `id` unique. Toutes les clés de tri whitelistées sont des
+ * colonnes texte/date comparables en chaîne ; `null`/vide trié en premier (immatériel sur une
+ * recherche). Le tiebreaker `id` garantit une pagination déterministe (parité avec le tri SQL).
+ */
+function compareBySortKey<T extends { id: string }>(key: string, asc: boolean): (a: T, b: T) => number {
+	const dir = asc ? 1 : -1;
+	return (a, b) => {
+		const av = (a as Record<string, unknown>)[key];
+		const bv = (b as Record<string, unknown>)[key];
+		const c = (av == null ? '' : String(av)).localeCompare(bv == null ? '' : String(bv));
+		if (c !== 0) return c * dir;
+		return String(a.id).localeCompare(String(b.id));
+	};
+}
 
+export const load: PageServerLoad = async ({ locals, url }) => {
+	const q = parseEntreprisesQuery(url);
+
+	// INVARIANT (cadrage Bloc A) : contacts + opportunités CHARGÉS ENTIERS — la fiche SlideOut et
+	// les pastilles par ligne (contact count, étape pipeline, source) en dépendent, et le set
+	// `idsWithContact` (anti-join `sans-contact` + KPI) en est dérivé. La pagination ne porte que
+	// sur les ENTREPRISES (la table qui croît le plus).
 	const [contactsRes, oppsRes] = await Promise.all([
 		locals.supabase
 			.from('contacts')
@@ -43,10 +68,112 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.limit(500),
 	]);
 
+	const contacts = contactsRes.data ?? [];
+	const opportunites = oppsRes.data ?? [];
+
+	// Set des ids entreprise ayant ≥1 contact non archivé → filtre d'onglet `sans-contact` + KPI.
+	const idsWithContact = [...new Set(contacts.map((c) => c.entreprise_id).filter((x): x is string => !!x))];
+	// Ids entreprise portant ≥1 affaire active (étape valide) → KPI « affaires en cours ». Réutilise
+	// le helper des pastilles pipeline pour garantir une sémantique IDENTIQUE à l'affichage.
+	const affairesIds = [...buildActiveStageByEntreprise(opportunites).keys()];
+
+	// Query principale : non archivées + filtre d'onglet + recherche + tri + pagination.
+	const buildBase = () =>
+		applyEntreprisesTabFilter(
+			applyEntreprisesBaseFilter(locals.supabase.from('entreprises').select('*', { count: 'exact' })),
+			q.tab,
+			idsWithContact,
+		);
+
+	type EntRow = NonNullable<Awaited<ReturnType<typeof buildBase>>['data']>[number];
+
+	const runMain = async (): Promise<{ data: EntRow[]; count: number; error: { message: string } | null }> => {
+		if (q.search) {
+			// Recherche = OR sur 3 champs. On évite le `.or()` interpolé (injection PostgREST,
+			// cf. memory/feedback_postgrest_or_filter_injection) via 3 `.ilike()` PARAMÉTRÉS en
+			// parallèle, bornés au CAP, puis UNION dédupliquée triée + paginée EN MÉMOIRE. Donne un
+			// count EXACT (≤ CAP) et une pagination STABLE au-delà de la page 0 — contrairement à
+			// l'ancienne approche range-par-champ (count `max()` approximatif, lignes sautées/
+			// dupliquées d'une page à l'autre). Borne : une recherche matchant +CAP entreprises sur
+			// un champ est tronquée (à affiner par l'utilisateur ; un tel résultat n'aide personne).
+			const pattern = entreprisesSearchPattern(q.search);
+			const queries = ENTREPRISES_SEARCH_FIELDS.map((field) =>
+				buildBase().ilike(field, pattern).range(0, SEARCH_UNION_CAP - 1),
+			);
+			const results = await Promise.all(queries);
+			const firstError = results.find((r) => r.error)?.error ?? null;
+			if (firstError) return { data: [], count: 0, error: firstError };
+			const seen = new Set<string>();
+			const merged: EntRow[] = [];
+			for (const r of results) {
+				for (const row of (r.data ?? []) as EntRow[]) {
+					if (!seen.has(row.id)) {
+						seen.add(row.id);
+						merged.push(row);
+					}
+				}
+			}
+			merged.sort(compareBySortKey(q.sortKey, q.sortAsc));
+			const start = q.page * q.pageSize;
+			return { data: merged.slice(start, start + q.pageSize), count: merged.length, error: null };
+		}
+		// Tri stable : clé demandée + tiebreaker `id` unique. Sans lui, des lignes à valeur de tri
+		// égale (canton, statut, même date) peuvent changer de page entre deux chargements (l'ordre
+		// Postgres sur des ex æquo n'est pas garanti) → lignes vues deux fois ou jamais en paginant.
+		const r = await buildBase()
+			.order(q.sortKey, { ascending: q.sortAsc })
+			.order('id', { ascending: true })
+			.range(q.page * q.pageSize, (q.page + 1) * q.pageSize - 1);
+		return { data: (r.data ?? []) as EntRow[], count: r.count ?? 0, error: r.error };
+	};
+
+	// Counts d'onglet : requêtes `count:'exact', head:true` séparées, SANS limit. Ce sont des
+	// comptes globaux par catégorie (indépendants de la recherche en cours — parité avec l'ancien
+	// `entreprisesCountsByTab`, qui comptait sur la liste complète, pas sur la vue filtrée/cherchée).
+	const tabCountBase = () =>
+		applyEntreprisesBaseFilter(locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }));
+	const runTabCount = async (tab: EntreprisesTabKey): Promise<number> => {
+		const r = await applyEntreprisesTabFilter(tabCountBase(), tab, idsWithContact);
+		return r.count ?? 0;
+	};
+
+	const [mainRes, total, qualifiees, aQualifier, sansContact, sansCantonRes, affairesRes] = await Promise.all([
+		runMain(),
+		runTabCount('toutes'),
+		runTabCount('qualifiees'),
+		runTabCount('a-qualifier'),
+		runTabCount('sans-contact'),
+		// KPI : requêtes SÉPARÉES, sans filtre d'onglet ni pagination.
+		applyEntreprisesSansCantonFilter(tabCountBase()),
+		affairesIds.length > 0
+			? applyEntreprisesBaseFilter(
+					locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }),
+			  ).in('id', affairesIds)
+			: Promise.resolve({ count: 0, error: null }),
+	]);
+
+	if (mainRes.error) {
+		console.error('Erreur chargement entreprises:', mainRes.error.message);
+	}
+
+	const sansCanton = sansCantonRes.count ?? 0;
+	const affairesEnCours = affairesRes.count ?? 0;
+	// avecContact = total - sansContact (chaque entreprise non archivée a un contact, ou non).
+	const avecContact = Math.max(0, total - sansContact);
+
 	return {
-		entreprises: entreprises ?? [],
-		contacts: contactsRes.data ?? [],
-		opportunites: oppsRes.data ?? [],
+		entreprises: mainRes.data,
+		totalEntreprises: mainRes.count,
+		tab: q.tab,
+		page: q.page,
+		pageSize: q.pageSize,
+		sort: q.sortKey,
+		sortAsc: q.sortAsc,
+		search: q.search,
+		tabCounts: { toutes: total, qualifiees, 'a-qualifier': aQualifier, 'sans-contact': sansContact },
+		kpi: { total, qualifiees, avecContact, sansCanton, affairesEnCours, sansContact },
+		contacts,
+		opportunites,
 	};
 };
 
