@@ -133,37 +133,31 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Bloc B migration socle SvelteKit** (EXÉCUTABLE, NON TRIVIAL, ~1 session worktree, peer-deps) - **Bloc A Entreprises LIVRÉ prod 28/06** (`4b3974e`). Refonte CRM 1+2+3 live, **Bloc D CLOS** (`cd5426e`). 5 tâches restantes → 3 blocs + checklist ci-dessous. **Prod = `main` auto-déployée** → push **après validation** (pattern Bloc D : preview → validation → push). → [[project_refonte_crm_cadrage_2026-06-18]] + [[project_bloc_d_audit_360_PROGRESS]].
+### Règle backlog (WIP-limité, gravée 2026-06-28)
 
-> **État vérifié 2026-06-28** : Bloc A livré prod (`4b3974e`). Reste 5 tâches (B socle EXÉCUTABLE, C dashboard BLOQUÉ W27, D Vague 4 BLOQUÉ + 2 gestes Pascal checklist). Baseline saine : **2315 tests verts**, build OK, knip 3 justifiés. **1 bloc = 1 session.** Golden cadrage refonte → [[project_refonte_crm_cadrage_2026-06-18]] + `CRM/.product-architect/refonte-vague3/golden-vague3-v1.html`.
+Le « **backlog dev** » ci-dessous ne liste QUE ce qui est actionnable par Claude **sans dépendance externe**. Tout le reste est rangé à part et **ne compte pas comme backlog** : gestes Pascal → § Chez Pascal ; attentes datées → § Parking ; idées non cadrées/conditionnelles → Watch list (jamais une tâche). **No-debt strict** : un finding de session se fixe ou se tranche dans la session, jamais différé en tâche neuve. Anti-pattern banni : « 1 tâche fermée → 2 ouvertes ». But : que le backlog dev reste à 0-1 item, pas qu'il gonfle. **État 2026-06-28** : 152 livrés, baseline saine (2315 verts, build OK).
 
-#### Blocs codables en autonomie
+### Backlog dev (actionnable par Claude)
 
-##### B. Migration socle SvelteKit [EXÉCUTABLE • NON TRIVIAL • ~1 session worktree]
+##### B. Migration socle SvelteKit [EXÉCUTABLE • EN COURS worktree `bloc-b-migration-socle`]
 
-- [ ] **[EXÉCUTABLE]** **Raison de blocage CORRIGÉE 2026-06-28** : l'ancienne (« amont rolldown/layerchart #928/#1313 ouvertes ») est **FAUSSE** - ces 2 issues sont dans `sveltejs/vite-plugin-svelte`, **fermées**, fix présent dans vps 7. **Vrai blocage** = conflit `ERESOLVE` peer-deps quand on monte `vite@8`+`vps@7` sur l'arbre actuel (vitest/kit acceptent déjà vite 8 ; `@tailwindcss/vite` aussi). Il faut monter le socle **complet et cohérent**, pas le seul trio. Test worktree 2026-06-28 = bump trio échoue dès l'install npm.
-- À faire en worktree isolé : monter vite 8 + vps 7 + kit latest (+ deps vite-consommatrices) **ensemble**, résoudre la chaîne de peers, `check`+`test`+`build` verts, lever les `ignore` socle `dependabot.yml`, **jamais `rm package-lock.json`**. → [[project_fix_deps_ci_vercel_2026-06-22]].
+- [ ] **[EN COURS 2026-06-28]** Monter le socle en **une install atomique** : `npm i vite@8 @sveltejs/vite-plugin-svelte@7.1.2 svelte-check@4.7.1` (+ svelte 5.56.4 et kit 2.68 en bumps isolés testés). **Cause ERESOLVE (recon confiance Élevé)** : vps 7 exige vite ^8 vs vite ^7 épinglé ; le seul paquet bloquant (`vite-plugin-svelte-inspector@5`) **tombe de l'arbre en vps 7** (intégré, breaking #1270). vite 8 = **rolldown seul** (rollup/esbuild retirés, pas d'opt-out). Le strip TS ici = **compilateur Svelte 5 natif** (pas vitePreprocess) ; le bug historique = restructuration d'arbre → **jamais `rm package-lock.json`**, bump en place. Levier si build casse : ajouter `vitePreprocess()`. Puis `check`+`test`+`build` verts + `npm ci` propre, lever les `ignore` socle de `dependabot.yml`, preview → validation Pascal → push. → [[project_fix_deps_ci_vercel_2026-06-22]].
 
-#### Blocs en attente d'un déblocage externe
+### Chez Pascal (hors backlog dev - gestes manuels, quand tu veux)
 
-##### C. Dashboard qualité veille [BLOQUÉ - attend 1re mesure W27 (~03/07)]
+- [ ] **Smoke OTP prod** : 1 login OTP @filmpro.ch en prod (boot + page login OK 26/06, reste le flux end-to-end). **Si KO → `vercel rollback`.**
+- [ ] **Activer Daily Email** (APRÈS smoke OTP) : poser `EMAIL_DAILY_ENABLED=true` en env Vercel Prod (zéro redéploiement). Gate OFF = 0 envoi tant que non posé. → [[project_daily_email_module_2026-06-25]].
+- [ ] **Vague 4 emailing - 3 inputs métier** (réunion 3 fondateurs) : (a) DNS `send.filmpro.ch` vérifié Resend, (b) base légale nLPD + mention d'info, (c) 1er email réel décrit. Dès fourniture → cadrage + code 1 session.
 
-- [ ] **[BLOQUÉ - attend 1re mesure W27]** dashboard qualité veille + boucle feedback (décision Pascal : après la 1re mesure réelle du sourcing élargi). Puis 1 session autonome. → [[project_veille_sourcing_w26_2026-06-23]].
+### Parking (attente datée - rien à faire avant la date)
 
-##### D. Vague 4 Emailing [BLOQUÉ - 3 inputs Pascal]
+- **C. Dashboard qualité veille** → après 1re mesure réelle W27 (~03/07), puis 1 session autonome. → [[project_veille_sourcing_w26_2026-06-23]].
 
-- [ ] **[BLOQUÉ - 3 inputs Pascal]** (individuel → nLPD → groupé) : (a) DNS `send.filmpro.ch` vérifié Resend, (b) base légale nLPD + mention d'information validées, (c) 1er email réel décrit (réunion 3 fondateurs). Dès fourniture → cadrage + code 1 session (pas une dépendance système).
+### Coupé du backlog (→ watch, plus des tâches)
 
-#### Checklist gestes Pascal (manuels, hors session de code) - Bloc B Daily Email
-
-Code en prod (`d1db821`), gate `EMAIL_DAILY_ENABLED` **OFF** = 0 envoi tant que non activé. → [[project_daily_email_module_2026-06-25]] + [[audit_secu_2026-06-26_daily_email_module]].
-
-- [ ] **[BLOQUÉ - geste Pascal : login OTP @filmpro.ch]** **Smoke OTP prod** : 1 login OTP en prod (supabase 2.108 + TS6 déjà live, push `f357e68` ; boot + page login OK 26/06, reste le flux OTP end-to-end). **Si KO → `vercel rollback` immédiat.**
-- [ ] **[BLOQUÉ - geste Pascal : accès env Vercel]** **Activer Daily Email** = poser `EMAIL_DAILY_ENABLED=true` en env Vercel Prod (zéro redéploiement, lu via `$env/dynamic/private`). À faire **APRÈS** le smoke OTP.
-
-### Réserve (hors backlog actif)
-- Chantier 3 portail (non cadré) ; durcissement RLS si 4e user ([[feedback_rls_multitenant_durcissement_si_4_users]]).
-- **knip cadré (zéro code mort, `knip.json`)** : knip 72→3 findings (3 justifiés : `Theme`/`SearchTerm` alias `@deprecated`, `MINUTE_MS`/`RATE_LIMIT_WINDOW_MS` alias sémantique). Vérifier au grep avant toute suppression (homonymes vivants) → [[feedback_knip_verify_grep_before_delete]] + commit `6c477cf`. `apply-*-migration` archivables un jour.
+- Chantier 3 portail : non cadré = pas une tâche (recadrer si l'objet redevient actuel).
+- Durcissement RLS : conditionnel à un 4e user non-fondateur (inexistant) → [[feedback_rls_multitenant_durcissement_si_4_users]].
+- knip `apply-*-migration` archivables : cosmétique, 5 min un jour (knip déjà cadré à 3 justifiés, `6c477cf`). → [[feedback_knip_verify_grep_before_delete]].
 ### Livré cette session
 
 - [x] ~~**Bloc A - refonte serveur page Entreprises** (filtre/pagination/tri/recherche)~~ - 2026-06-28 (ultracode/xhigh, **LIVRÉ PROD** `4b3974e`, push direct validé Pascal, smoke 303 OK + alias canonique sur nouveau build `87s0nnmrj`). `/crm/entreprises` chargeait `select('*')` non borné + filtrait/comptait 100 % client → refonte **100 % serveur** façon `/prospection` (URL params), counts d'onglet + KPI via `count:'exact'` SÉPARÉES (sans limit), contacts+opps gardés entiers (fiche/pastilles), anti-join `sans-contact` `.not('id','in',(uuids))` garde UUID, `affairesEnCours` réutilise `buildActiveStageByEntreprise`, `avecContact = total - sansContact`. Nouveau helper pur `$lib/server/entreprises-query` + tests. DataTable serverMode + footer pagination vue cartes (mirror) + `selectTab` annule le timer. **4 helpers d'agrégat client morts retirés** + type `EntrepriseLite` + tests (knip 3 justifiés). **Revue adversariale 5 relecteurs : 0 High/Critical** ; 3 MEDIUM corrigés (recherche multi-pages union exacte/pages disjointes vs count `max()`+saut/dup ; tri stable tiebreaker `.order('id')` ; anti double-nav onglet) ; bornes « à l'échelle » tracées (IN-list, `escapeIlike *` pré-existant, affaires cap 500 hérité). **2315 verts** (+ test invariant counts/KPI/anti-join + disjonction pages), svelte-check 0/0, build OK. Parité sémantique counts/KPI confirmée EXACTE. → [[project_bloc_a_refonte_serveur_entreprises_2026-06-28]] + [[audit_secu_2026-06-28_entreprises_refonte_serveur]].
