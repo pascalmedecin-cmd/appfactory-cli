@@ -141,6 +141,3 @@ export async function verifyUrl(rawUrl: string): Promise<UrlVerifyResult> {
 		clearTimeout(timeout);
 	}
 }
-
-// Export pour tests
-export const _internals = { PAYWALL_DOMAINS, PAYWALL_BODY_THRESHOLD };

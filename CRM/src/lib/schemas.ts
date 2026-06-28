@@ -505,10 +505,8 @@ export function validate<T>(schema: z.ZodSchema<T>, data: unknown): { success: t
 // Unités : millimètres entiers (ADR-0003). Les preprocess acceptent à la fois la
 // chaîne de formulaire (via extractForm) et la valeur native (tests Vitest).
 
-/** Familles produit (miroir de FamilleProduit dans $lib/decoupe/types). */
+/** Familles produit (catalogue de découpe). */
 export const FAMILLES_PRODUIT = ['solaire', 'securite', 'discretion'] as const;
-/** Statuts d'un chantier de découpe. */
-export const STATUTS_CHANTIER = ['en_saisie', 'lancee'] as const;
 
 /** Booléen tolérant : checkbox `'on'`/`'true'`/`'1'`, valeur native, ou absence → false. */
 const formBoolean = z.preprocess(

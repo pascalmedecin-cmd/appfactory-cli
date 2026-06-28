@@ -71,8 +71,6 @@ export const ImpactAxisEnum = z.enum([
 	'reglementation'
 ]);
 
-export const StatusEnum = z.enum(['published', 'draft', 'error', 'running']);
-
 // Refuse les schemes non-HTTP(S) (protège contre javascript:, data:, etc.)
 // Limite 2000 chars (RFC max effectif) : certains CMS/CDN ont URLs longues avec
 // tracking ou query params. Bug observé S110 W17 : 2 candidats avec URL > 500.
@@ -190,9 +188,7 @@ export const IntelligenceReportSchema = z.object({
 	impacts_filmpro: z.array(ImpactFilmproSchema).min(0).max(3).optional().default([])
 });
 
-export type Canton = z.infer<typeof CantonEnum>;
 export type ChipKind = z.infer<typeof ChipKindEnum>;
-export type SearchChip = z.infer<typeof SearchChipSchema>;
 /**
  * @deprecated Le champ `theme` accepte n'importe quel slug actif de la
  * table `veille_themes` (depuis S169). Cet alias reste exporté pour

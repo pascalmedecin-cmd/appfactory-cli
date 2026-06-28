@@ -4,8 +4,6 @@
  * Spec de référence : brief §2/§6 + `.product-architect/decoupe/`.
  */
 
-export type FamilleProduit = 'solaire' | 'securite' | 'discretion';
-
 /** Produit du catalogue de découpe (sous-ensemble utile à l'optimisation). */
 export interface ProduitDecoupe {
 	id: string;

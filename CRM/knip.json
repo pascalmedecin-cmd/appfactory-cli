@@ -1,0 +1,17 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "scripts/**/*.{ts,mjs}",
+    "tests/**/*.{ts,mjs}",
+    "playwright*.config.ts"
+  ],
+  "ignore": [
+    ".product-architect/**",
+    "src/lib/database.types.ts"
+  ],
+  "ignoreDependencies": [
+    "axe-core",
+    "playwright"
+  ],
+  "ignoreExportsUsedInFile": true
+}
