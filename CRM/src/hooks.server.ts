@@ -101,8 +101,17 @@ export const baseHandle: Handle = async ({ event, resolve }) => {
 
 	// Expiration session 7 jours (cookie cote serveur) — voir SESSION_MAX_AGE_MS (time-constants).
 	if (session && !isAuthRoute && !isCronRoute) {
+		// Le cookie `login_at` a un maxAge de 7j : le navigateur le supprime EXACTEMENT quand il
+		// deviendrait expire. Tester `loginAt && age > 7j` est une course perdue (le cookie a
+		// disparu a l'instant ou la condition serait vraie) : le plafond ne tombait jamais et la
+		// session Supabase (cookies sb-*, maxAge 400j par defaut) survivait indefiniment. On
+		// traite donc l'ABSENCE (cookie 7j expire) ET une valeur non numerique (tampering) comme
+		// une expiration. Une session < 7j garde son cookie `login_at` valide, donc aucun impact.
 		const loginAt = event.cookies.get('login_at');
-		if (loginAt && Date.now() - Number(loginAt) > SESSION_MAX_AGE_MS) {
+		const stamp = Number(loginAt);
+		const sessionExpired =
+			!loginAt || !Number.isFinite(stamp) || Date.now() - stamp > SESSION_MAX_AGE_MS;
+		if (sessionExpired) {
 			event.cookies.delete('login_at', { path: '/' });
 			await event.locals.supabase.auth.signOut();
 			throw redirect(303, '/login?error=expired');

@@ -151,6 +151,28 @@ describe('hooks.server handle (H-18)', () => {
 		expect(cookies.delete).toHaveBeenCalledWith('login_at', { path: '/' });
 	});
 
+	// Cas REEL en production : a 7 jours, le navigateur a deja supprime le cookie `login_at`
+	// (maxAge 7j) → la session Supabase (cookies sb-*, maxAge 400j) survivrait sans ce garde.
+	// L'ancien test ci-dessus forge un login_at de 8j AVEC cookie present : etat impossible
+	// dans un vrai navigateur (fausse confiance). Ce test couvre l'absence = expiration.
+	it('session présente mais cookie login_at ABSENT → signOut + redirect /login?error=expired (plafond 7j réel)', async () => {
+		mockSessionState = { session: { access_token: 'x' }, user: { email: 'pascal@filmpro.ch' } };
+		const cookies = makeCookies(); // aucun login_at : etat d'une session > 7 jours
+		const r = await runHandle(makeEvent('/dashboard', { cookies }));
+		expect(r.thrown).toBe(true);
+		expect(r.thrown && r.redirect.location).toBe('/login?error=expired');
+		expect(mockSignOut).toHaveBeenCalled();
+	});
+
+	it('session présente mais login_at non numérique (tampering) → signOut + redirect /login?error=expired', async () => {
+		mockSessionState = { session: { access_token: 'x' }, user: { email: 'pascal@filmpro.ch' } };
+		const cookies = makeCookies({ login_at: 'not-a-number' });
+		const r = await runHandle(makeEvent('/dashboard', { cookies }));
+		expect(r.thrown).toBe(true);
+		expect(r.thrown && r.redirect.location).toBe('/login?error=expired');
+		expect(mockSignOut).toHaveBeenCalled();
+	});
+
 	it('session valide sur /login → redirect /', async () => {
 		mockSessionState = { session: { access_token: 'x' }, user: { email: 'pascal@filmpro.ch' } };
 		const cookies = makeCookies({ login_at: String(Date.now()) });
