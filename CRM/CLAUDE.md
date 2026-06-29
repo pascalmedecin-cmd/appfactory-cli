@@ -133,7 +133,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **backlog dev VIDE** - rien d'actionnable côté code sans dépendance externe. Prochains déclencheurs : Bloc C dashboard veille après 1re mesure W27 (~03/07, § Parking) ; sinon gestes/inputs Pascal (§ Chez Pascal). Au prochain `/start`, ne rien forcer : confirmer l'état vide et router vers un autre projet ou un déblocage si la donnée/l'input est arrivé.
+**Prochaine attaque** : **Emailing prospection automatisée** (§ Backlog dev) - étape 1 = cadrage court du contenu/cible/séquence avec Pascal (**pas de réunion**), puis 1 session de code (templates Resend, **zéro LLM**) + gate avant prod (DNS/nLPD/contenu validé). Sinon gestes Pascal (§ Chez Pascal : smoke OTP, Daily Email).
 
 ### Règle backlog (WIP-limité, gravée 2026-06-28)
 
@@ -141,24 +141,23 @@ Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude **sans dépendanc
 
 ### Backlog dev (actionnable par Claude)
 
-**VIDE.** Bloc B migration socle **livré prod 2026-06-28** (`e75919d`). Rien d'actionnable par Claude sans dépendance externe : le reste attend Pascal (§ Chez Pascal) ou une date (§ Parking). C'est l'**état cible** de la règle WIP, pas un trou.
+- [ ] **Emailing prospection automatisée** : moteur d'envoi automatisé de séquences d'emails aux prospects (Resend, **templates pré-rédigés, zéro génération LLM** - règle dure). Étape 1 = **cadrage court avec Pascal** (contenu, cible, séquence, fréquence, déclencheur) - **pas de réunion ni de validation associés**. Puis 1 session de code + gate ON/OFF (envoi **OFF par défaut**). **À valider/confirmer AVANT mise en prod** (gate de mise en prod, pas avant le dev) : (a) DNS `send.filmpro.ch` vérifié dans Resend, (b) base légale nLPD + mention d'information, (c) contenu réel du/des emails validé. (Ex-« Vague 4 » ; le motif « réunion fondateurs » était une formulation erronée, retirée 2026-06-29.)
 
 ### Chez Pascal (hors backlog dev - gestes manuels, quand tu veux)
 
 - [ ] **[BLOQUÉ - toi : 1 login OTP en prod]** Faire le smoke OTP de production end-to-end (@filmpro.ch ; boot + page login déjà OK). **Le délog 7 j est désormais validé par test réel contre prod** (sessions mintées, 29/06) - le smoke ne reste utile que pour le login OTP réel + pages authentifiées (PDF Découpe, graphes layerchart). **Si KO → `vercel rollback`.**
 - [ ] **[BLOQUÉ - toi : poser 1 variable Vercel après le smoke OTP]** Allumer l'envoi du Daily Email : `EMAIL_DAILY_ENABLED=true` en env Vercel Prod (zéro redéploiement, gate OFF = 0 envoi). → [[project_daily_email_module_2026-06-25]].
-- [ ] **[BLOQUÉ - toi : 3 décisions de ta réunion fondateurs]** Lancer la Vague 4 (emailing prospects) : (a) DNS `send.filmpro.ch` vérifié Resend, (b) base légale nLPD + mention d'information, (c) 1er email réel décrit. Dès fourniture → cadrage + 1 session de code.
-- [ ] **[BLOQUÉ - toi : 1 toggle Supabase Dashboard, OPTIONNEL]** Time-box session côté plateforme (Supabase → Auth → Sessions) : borne le refresh token ~400 j, complète le plafond app du 29/06. Pas une faille sans. → [[audit_secu_2026-06-29_session_delog_7j]].
 
 ### Parking (attente datée - rien à faire avant la date)
 
-- [ ] **[BLOQUÉ - 1re mesure réelle de la veille W27 (~03/07)]** Construire le dashboard qualité de la veille + boucle de feedback. Puis 1 session autonome. → [[project_veille_sourcing_w26_2026-06-23]].
+**Vide.** (Dashboard qualité veille **retiré 2026-06-29** sur décision Pascal : il surveille le contenu de la veille manuellement chaque semaine et revient si besoin - pas d'écran webapp, pas de tâche, pas de watch.)
 
 ### Coupé du backlog (→ watch, plus des tâches)
 
 - Chantier 3 portail : non cadré = pas une tâche (recadrer si l'objet redevient actuel).
 - Durcissement RLS : conditionnel à un 4e user non-fondateur (inexistant) → [[feedback_rls_multitenant_durcissement_si_4_users]].
 - knip `apply-*-migration` archivables : cosmétique, 5 min un jour (knip déjà cadré à 3 justifiés, `6c477cf`). → [[feedback_knip_verify_grep_before_delete]].
+- Time-box session Supabase : geste Dashboard **one-shot remis à Pascal** (procédure ci-dessous), **confirmé non-faille** par 2 audits (le délog 7 j app suffit, prouvé prod) → retiré du backlog actif, **pas une dette**. Procédure : Supabase Dashboard → Authentication → Sessions → « Time-box user sessions » = **168 h (7 j)** + garder « Detect refresh token reuse » ON → Save. → [[audit_secu_2026-06-29_session_delog_7j]].
 ### Livré cette session
 
 - [x] ~~**Re-vérification délog 7j PROUVÉ en prod réelle + re-audit 360 indépendant (0 faille)**~~ - 2026-06-29 (ultracode/xhigh, **0 code modifié, repo clean**). Pascal redemande « pourquoi pas de délog après 7 j » (signal symptôme persistant). Le fix `c7545ed` n'avait jamais été testé en conditions réelles (smoke OTP était bloqué). **Test contre PROD Vercel** : session mintée sans OTP (`tests/mint-session.mjs`) + `curl /crm`, 3 scénarios **isolés** (le `signOut()` révoque le refresh token → 1 session fraîche par scénario, sinon faux négatif) → `login_at` absent/8j = `303 /login?error=expired`, `login_at` frais = `200`. **Le délog MARCHE** ; l'observation = **timing** (session < 7 j, plafond compté depuis le dernier login, fix du matin même). `+layout.server.ts` racine force le hook à chaque nav (SPA incluse). **Re-audit 360 indépendant** (workflow `wf_eabe90ba-dd0`, 12 agents, 5 axes session/auth + sceptique par finding) : **7 Low tous réfutés → 0 faille exploitable (PASS)**, cohérent avec la 1re passe. Baseline 2317 verts / check 0/0 / build OK. Preuve manuelle Pascal : DevTools → supprimer cookie `login_at` → recharger → délog immédiat. → [[audit_secu_2026-06-29_session_delog_7j]].
