@@ -29,8 +29,8 @@ describe('searchAide', () => {
 	});
 
 	it('trouve un terme présent dans le corps d\'une section, pas seulement le titre', () => {
-		// « magic link » n'apparaît dans aucun titre de section, uniquement dans des paragraphes.
-		const res = searchAide('magic link');
+		// « kanban » n'apparaît dans aucun titre de section, uniquement dans un paragraphe (fiche Pipeline).
+		const res = searchAide('kanban');
 		expect(res.length).toBeGreaterThan(0);
 		expect(res.every((r) => r.titleMatch === false)).toBe(true);
 	});

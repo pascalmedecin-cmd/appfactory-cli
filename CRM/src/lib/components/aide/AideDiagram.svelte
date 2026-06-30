@@ -18,6 +18,7 @@
 	let { name, caption }: { name: AideDiagramName; caption?: string } = $props();
 
 	const titles: Record<AideDiagramName, string> = {
+		portail: 'Le portail FilmPro et ses outils',
 		ecosysteme: 'Les écrans du CRM, rangés par usage',
 		'cycle-opportunite': 'Le cycle de vie d\'une opportunité dans le pipeline',
 		'veille-hebdo': 'Le déroulé d\'une édition de veille hebdomadaire',
@@ -123,11 +124,42 @@
 		</marker>
 	</defs>
 
-	{#if name === 'ecosysteme'}
+	{#if name === 'portail'}
+		<!--
+			Le portail FilmPro : un seul accès en haut, deux outils en dessous. Le CRM
+			(décrit dans cette aide) est mis en avant ; Découpe Films est le second outil.
+		-->
+		<rect x="248" y="20" width="224" height="56" rx="14" class="node node-accent" />
+		<text x="360" y="44" class="t-title t-inv">Portail FilmPro</text>
+		<text x="360" y="61" class="t-sub t-inv">un seul accès, plusieurs outils</text>
+
+		<path d="M320 76 L196 150" class="link" marker-end="url(#aide-arrow)" />
+		<path d="M400 76 L524 150" class="link" marker-end="url(#aide-arrow)" />
+
+		<!-- Outil 1 : CRM (mis en avant, « tu es ici ») -->
+		<rect x="56" y="152" width="280" height="156" rx="14" class="node node-mid" />
+		<rect x="72" y="166" width="120" height="22" rx="11" class="badge-pill" />
+		<text x="132" y="177" class="t-pill">tu es ici</text>
+		<text x="196" y="216" class="t-node t-sm">CRM</text>
+		<text x="196" y="240" class="t-node t-xs">Prospection · Pipeline</text>
+		<text x="196" y="258" class="t-node t-xs">Signaux · Veille · Reporting</text>
+		<text x="196" y="284" class="t-node t-xs">le suivi commercial du vitrage</text>
+
+		<!-- Outil 2 : Découpe Films -->
+		<rect x="384" y="152" width="280" height="156" rx="14" class="node" />
+		<text x="524" y="216" class="t-node t-sm">Découpe Films</text>
+		<text x="524" y="240" class="t-node t-xs">optimiser les plans de coupe,</text>
+		<text x="524" y="258" class="t-node t-xs">limiter les chutes de film</text>
+		<text x="524" y="284" class="t-node t-xs">réservé aux fondateurs</text>
+
+		<text x="360" y="334" class="t-flow">le logo de la barre latérale ramène toujours ici</text>
+
+	{:else if name === 'ecosysteme'}
 		<!--
 			Vue d'ensemble : où situer chaque écran. Pas de flèches de flux (le texte
-			au-dessus explique le parcours) : juste le tableau de bord en haut, puis les
-			six écrans rangés en deux familles, chacun avec son rôle en une ligne.
+			au-dessus explique le parcours) : le tableau de bord en haut, puis les écrans
+			rangés en deux familles, chacun avec son rôle en une ligne. Campagnes (avancé)
+			figure dans « tes clients ».
 		-->
 		<rect x="150" y="14" width="420" height="48" rx="12" class="node node-accent" />
 		<text x="360" y="35" class="t-title t-inv">Tableau de bord</text>
@@ -136,22 +168,23 @@
 
 		<!-- Famille 1 : tes clients -->
 		<rect x="24" y="94" width="336" height="254" rx="14" class="group-panel" />
-		<text x="192" y="115" class="t-grouplabel">Tes clients</text>
+		<text x="192" y="114" class="t-grouplabel">Tes clients</text>
 		{#each [
 			['Prospection', 'trouver de nouveaux leads'],
+			['Campagnes', 'regrouper les prospects (avancé)'],
 			['Entreprises', 'la fiche de chaque société'],
 			['Contacts', 'la fiche de chaque personne'],
 			['Pipeline', 'tes affaires en cours']
 		] as row, i}
-			{@const y = 124 + i * 56}
-			<rect x="40" y={y} width="304" height="46" rx="10" class="node" />
-			<text x="192" y={y + 20} class="t-node t-sm">{row[0]}</text>
-			<text x="192" y={y + 35} class="t-node t-xs">{row[1]}</text>
+			{@const y = 122 + i * 44}
+			<rect x="40" y={y} width="304" height="38" rx="10" class="node" />
+			<text x="192" y={y + 16} class="t-node t-sm">{row[0]}</text>
+			<text x="192" y={y + 30} class="t-node t-xs">{row[1]}</text>
 		{/each}
 
 		<!-- Famille 2 : le marché et le bilan -->
 		<rect x="384" y="94" width="312" height="254" rx="14" class="group-panel" />
-		<text x="540" y="115" class="t-grouplabel">Le marché et le bilan</text>
+		<text x="540" y="114" class="t-grouplabel">Le marché et le bilan</text>
 		{#each [
 			['Signaux', 'les alertes brutes du secteur'],
 			['Veille sectorielle', 'le résumé, une fois par semaine'],
@@ -169,7 +202,9 @@
 			<rect x={step[1]} y="60" width="120" height="56" rx="12" class="node {i === 4 ? 'node-mid' : 'node'}" />
 			<text x={Number(step[1]) + 60} y="92" class="t-node t-sm">{step[0]}</text>
 			{#if i < 4}
-				<path d={`M${Number(step[1]) + 120} 88 L${Number(step[1]) + 158} 88`} class="link" marker-end="url(#aide-arrow)" />
+				<!-- Fin de flèche au bord gauche de la boîte suivante (les boîtes opaques sont peintes
+				     ensuite et masqueraient une pointe placée plus loin). -->
+				<path d={`M${Number(step[1]) + 120} 88 L${Number(step[1]) + 132} 88`} class="link" marker-end="url(#aide-arrow)" />
 			{/if}
 		{/each}
 		<!-- step numbers -->
@@ -204,7 +239,8 @@
 			<text x={step.x + 78} y={186} class="t-node t-sm">{step.name}</text>
 			<text x={step.x + 78} y={206} class="t-node t-xs">{step.desc}</text>
 			{#if i < 3}
-				<path d={`M${step.x + 156} 180 L${step.x + 196} 180`} class="link" marker-end="url(#aide-arrow)" />
+				<!-- Fin de flèche au bord gauche de la boîte suivante (peinte ensuite, opaque). -->
+				<path d={`M${step.x + 156} 180 L${step.x + 170} 180`} class="link" marker-end="url(#aide-arrow)" />
 			{/if}
 		{/each}
 		<text x="360" y="56" class="t-flow">une édition par semaine, jamais publiée brute</text>
@@ -244,11 +280,11 @@
 		<rect x="60" y="190" width="130" height="32" rx="8" class="node node-soft" />
 		<text x="125" y="210" class="t-node t-xs">Actions serveur</text>
 		<rect x="60" y="230" width="130" height="32" rx="8" class="node node-soft" />
-		<text x="125" y="250" class="t-node t-xs">Auth (magic link)</text>
+		<text x="125" y="250" class="t-node t-xs">Auth (code e-mail)</text>
 		<rect x="210" y="190" width="130" height="72" rx="8" class="node node-soft" />
-		<text x="275" y="218" class="t-node t-xs">5 crons</text>
-		<text x="275" y="234" class="t-node t-xs">signaux · alertes</text>
-		<text x="275" y="250" class="t-node t-xs">nettoyage · veille</text>
+		<text x="275" y="208" class="t-node t-xs">6 crons</text>
+		<text x="275" y="228" class="t-node t-xs">signaux · alertes</text>
+		<text x="275" y="244" class="t-node t-xs">e-mails · entretien</text>
 
 		<rect x="430" y="150" width="250" height="56" rx="12" class="node node-accent" />
 		<text x="555" y="174" class="t-node t-inv t-sm">Base PostgreSQL (Supabase)</text>
@@ -256,12 +292,14 @@
 
 		<rect x="430" y="240" width="250" height="80" rx="12" class="node node-out" />
 		<text x="555" y="262" class="t-node t-sm">Services externes</text>
-		<text x="555" y="280" class="t-node t-xs">Zefix · search.ch · SIMAP · RegBL</text>
-		<text x="555" y="296" class="t-node t-xs">Google Places · fal.ai · Resend</text>
+		<text x="555" y="280" class="t-node t-xs">Zefix · search.ch · Google Places</text>
+		<text x="555" y="296" class="t-node t-xs">fal.ai · Resend</text>
 
 		<path d="M140 96 L140 148" class="link" marker-end="url(#aide-arrow)" />
 		<path d="M360 200 L428 178" class="link" marker-end="url(#aide-arrow)" />
 		<path d="M360 240 L428 270" class="link" marker-end="url(#aide-arrow)" />
+
+		<text x="360" y="342" class="t-flow">la veille hebdomadaire (IA) tourne en tâche externe, pas en cron Vercel</text>
 	{/if}
 {/snippet}
 
@@ -278,6 +316,7 @@
 		background: var(--color-surface-alt);
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-xl);
+		box-shadow: var(--shadow-card);
 		padding: 16px;
 		box-sizing: border-box;
 	}
@@ -366,7 +405,7 @@
 	}
 	.aide-lightbox-close:hover {
 		background: var(--color-danger);
-		color: white;
+		color: var(--color-text-inverse);
 		border-color: var(--color-danger);
 	}
 	.aide-lightbox-close:focus-visible {
@@ -461,6 +500,19 @@
 		fill: var(--color-primary);
 		stroke: var(--color-surface);
 		stroke-width: 2;
+	}
+	/* Pastille « tu es ici » (diagramme portail) : pilule pleine accent. */
+	.badge-pill {
+		fill: var(--color-primary);
+		stroke: none;
+	}
+	.t-pill {
+		font-size: 10px;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-anchor: middle;
+		dominant-baseline: central;
+		fill: var(--color-text-inverse);
 	}
 
 	/* Textes */

@@ -29,6 +29,21 @@
 	const results = $derived<AideSearchResult[]>(searchAide(query));
 	const searching = $derived(query.trim().length > 0);
 
+	// Champ de recherche + raccourci « / » pour le focaliser (pattern docs Linear/Vercel).
+	let searchInput = $state<HTMLInputElement>();
+	$effect(() => {
+		if (typeof document === 'undefined') return;
+		function onKey(e: KeyboardEvent) {
+			if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey) return;
+			const t = e.target as HTMLElement | null;
+			if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+			e.preventDefault();
+			searchInput?.focus();
+		}
+		document.addEventListener('keydown', onKey);
+		return () => document.removeEventListener('keydown', onKey);
+	});
+
 	// Section visible (mise à jour par l'IntersectionObserver) - pilote le « sur cette page ».
 	let activeSectionId = $state<string>('');
 
@@ -125,9 +140,14 @@
 <div class="aide">
 	<!-- En-tête de page (le H1 « Aide » est porté par Header.svelte ; ici on ouvre en H2). -->
 	<header class="aide-head">
-		<p class="aide-kicker">Centre d'aide</p>
-		<h2 class="aide-title">{activeLevel.label}</h2>
-		<p class="aide-tagline">{activeLevel.tagline}</p>
+		<div class="aide-head-text">
+			<p class="aide-kicker">Centre d'aide</p>
+			<h2 class="aide-title">{activeLevel.label}</h2>
+			<p class="aide-tagline">{activeLevel.tagline}</p>
+		</div>
+		<div class="aide-head-badge" aria-hidden="true">
+			<Icon name={activeLevel.icon} size={26} strokeWidth={2} />
+		</div>
 	</header>
 
 	<!-- Onglets de niveau + recherche. -->
@@ -148,8 +168,12 @@
 						type="search"
 						placeholder="Rechercher dans l'aide…"
 						bind:value={query}
+						bind:this={searchInput}
 						aria-label="Rechercher dans l'aide"
 					/>
+					{#if !searching}
+						<kbd class="aide-search-kbd" aria-hidden="true">/</kbd>
+					{/if}
 				</div>
 			{/snippet}
 		</Tabs>
@@ -263,7 +287,26 @@
 
 	/* En-tête */
 	.aide-head {
-		padding: 8px 0 24px;
+		display: flex;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: 24px;
+		padding: 8px 0 32px;
+	}
+	.aide-head-text {
+		min-width: 0;
+	}
+	.aide-head-badge {
+		flex-shrink: 0;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 52px;
+		height: 52px;
+		border-radius: var(--radius-xl);
+		background: var(--color-primary-light);
+		color: var(--color-primary);
+		box-shadow: var(--shadow-xs);
 	}
 	.aide-kicker {
 		font-size: 11px;
@@ -274,17 +317,22 @@
 		margin: 0 0 8px;
 	}
 	.aide-title {
+		/* 24px = échelle éditoriale dashboard du golden (§3.2bis), pas l'échelle universelle :
+		   titre de page « display », au-dessus des titres de section (18px = h2 universel). */
 		font-size: 24px;
 		font-weight: 600;
-		line-height: 1.15;
+		line-height: 1.12;
+		letter-spacing: -0.015em;
 		color: var(--color-text);
-		margin: 0 0 6px;
+		margin: 0 0 8px;
 	}
 	.aide-tagline {
 		font-size: 14px;
 		line-height: 1.6;
 		color: var(--color-text-muted);
+		max-width: 56ch;
 		margin: 0;
+		text-wrap: pretty;
 	}
 
 	/* Barre onglets + recherche : on neutralise le sticky de la primitive Tabs ici. */
@@ -309,16 +357,17 @@
 		pointer-events: none;
 	}
 	.aide-search input {
-		height: 34px;
-		width: 240px;
+		height: 36px;
+		width: 252px;
 		max-width: 100%;
-		padding: 6px 12px 6px 32px;
+		padding: 6px 34px 6px 32px;
 		border: 1px solid var(--color-border-input);
 		border-radius: var(--radius-md);
 		font-family: inherit;
 		font-size: 14px;
 		color: var(--color-text);
 		background: var(--color-surface);
+		transition: border-color 150ms var(--ease-out-expo), box-shadow 150ms var(--ease-out-expo);
 	}
 	.aide-search input:focus {
 		outline: none;
@@ -327,6 +376,30 @@
 	}
 	.aide-search input::placeholder {
 		color: var(--color-text-muted);
+	}
+	/* Indice clavier « / » : pilule discrète à droite, masquée dès qu'on tape. */
+	.aide-search-kbd {
+		position: absolute;
+		right: 9px;
+		top: 50%;
+		transform: translateY(-50%);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		background: var(--color-surface-alt);
+		color: var(--color-text-muted);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		line-height: 1;
+		pointer-events: none;
+	}
+	.aide-search input:focus + .aide-search-kbd {
+		opacity: 0;
 	}
 
 	/* Résultats de recherche */
@@ -433,18 +506,20 @@
 	.aide-toc-link {
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		padding: 6px 10px;
+		gap: 9px;
+		padding: 7px 11px;
 		border-radius: var(--radius-md);
 		font-size: 13px;
 		font-weight: 500;
 		color: var(--color-text-muted);
 		text-decoration: none;
 		line-height: 1.3;
+		transition: background 150ms var(--ease-out-expo), color 150ms var(--ease-out-expo);
 	}
 	.aide-toc-link :global(svg) {
 		flex-shrink: 0;
 		color: var(--color-text-muted);
+		transition: color 150ms var(--ease-out-expo);
 	}
 	.aide-toc-link:hover {
 		background: var(--color-surface-alt);
@@ -454,6 +529,7 @@
 		background: var(--color-primary-light);
 		color: var(--color-primary);
 		font-weight: 600;
+		box-shadow: inset 2px 0 0 var(--color-primary);
 	}
 	.aide-toc-link.active :global(svg) {
 		color: var(--color-primary);
@@ -483,48 +559,53 @@
 		min-width: 0;
 	}
 	.aide-section {
-		padding: 32px 0 40px;
+		padding: 32px 0 48px;
 		border-bottom: 1px solid var(--color-border);
 		scroll-margin-top: 16px;
 	}
 	.aide-section:first-child {
-		padding-top: 0;
+		padding-top: 4px;
 	}
 	.aide-section:last-child {
 		border-bottom: none;
 	}
 	.aide-section-head {
 		display: flex;
-		gap: 12px;
-		margin-bottom: 20px;
+		gap: 14px;
+		margin-bottom: 24px;
 		align-items: flex-start;
 	}
 	.aide-section-icon {
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
-		width: 36px;
-		height: 36px;
-		border-radius: var(--radius-md);
+		width: 40px;
+		height: 40px;
+		border-radius: var(--radius-lg);
 		background: var(--color-primary-light);
 		color: var(--color-primary);
+		box-shadow: var(--shadow-xs);
 		flex-shrink: 0;
 	}
 	.aide-section-title {
 		font-size: 18px;
 		font-weight: 600;
 		line-height: 1.25;
+		letter-spacing: -0.01em;
 		color: var(--color-text);
-		margin: 2px 0 6px;
+		margin: 3px 0 6px;
+		text-wrap: balance;
 	}
 	.aide-section-lead {
 		font-size: 14px;
 		line-height: 1.6;
 		color: var(--color-text-muted);
+		max-width: 64ch;
 		margin: 0;
+		text-wrap: pretty;
 	}
 	.aide-section-body {
-		max-width: 720px;
+		max-width: 700px;
 	}
 
 	/* Responsive : on replie les deux colonnes latérales. */

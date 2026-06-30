@@ -113,6 +113,7 @@
 	.aide-checklist {
 		border: 1px solid var(--color-border);
 		border-radius: var(--radius-xl);
+		box-shadow: var(--shadow-card);
 		padding: 16px;
 		margin: 0 0 12px;
 		background: var(--color-surface);

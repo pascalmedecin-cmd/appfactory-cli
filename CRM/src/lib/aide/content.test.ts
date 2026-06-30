@@ -8,6 +8,7 @@ import {
 } from './content';
 
 const ALL_DIAGRAM_NAMES = new Set([
+	'portail',
 	'ecosysteme',
 	'cycle-opportunite',
 	'veille-hebdo',
