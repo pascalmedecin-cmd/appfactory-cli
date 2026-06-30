@@ -9,6 +9,7 @@
 	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
+	import EtiquettesPanel from '$lib/components/campagnes/EtiquettesPanel.svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { toasts } from '$lib/stores/toast';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
@@ -53,6 +54,16 @@
 
 	function goToProspection(id: string) {
 		goto(`${CRM_BASE}/prospection?campagne=${id}`);
+	}
+
+	// --- Étiquettes d'adresses (publipostage) ---
+	let etiquettesOpen = $state(false);
+	let etiquettesTarget = $state<CampagneWithCount | null>(null);
+
+	function openEtiquettes(c: CampagneWithCount) {
+		menuOpenId = null;
+		etiquettesTarget = c;
+		etiquettesOpen = true;
 	}
 
 	// --- Création ---
@@ -277,6 +288,9 @@
 								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); menuOpenId = null; goToProspection(c.id); }}>
 									<Icon name="visibility" size={15} /> Voir les prospects
 								</button>
+								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); openEtiquettes(c); }}>
+									<Icon name="mail" size={15} /> Étiquettes d'adresses
+								</button>
 								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); toggleArchive(c); }}>
 									<Icon name={c.archived ? 'unarchive' : 'archive'} size={15} /> {c.archived ? 'Réactiver' : 'Archiver'}
 								</button>
@@ -336,6 +350,9 @@
 	onConfirm={confirmDelete}
 	onClose={() => (deleteTarget = null)}
 />
+
+<!-- Étiquettes d'adresses (publipostage) -->
+<EtiquettesPanel bind:open={etiquettesOpen} campagne={etiquettesTarget} />
 
 <style>
 	.ws-bound {

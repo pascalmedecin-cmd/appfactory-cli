@@ -22,6 +22,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/database.types';
+import type { ProspectAdresse } from '$lib/etiquettes/prospect-etiquette';
 import {
 	COULEUR_SLUGS,
 	DEFAULT_COULEUR,
@@ -289,4 +290,62 @@ export async function leadIdsForCampagnes(
 		.in('campagne_id', ids);
 	if (error || !data) return [];
 	return [...new Set((data as Array<{ lead_id: string }>).map((r) => r.lead_id))];
+}
+
+/**
+ * Prospects étiquetés d'UNE campagne, réduits aux champs d'adresse postale (publipostage ->
+ * planche d'étiquettes). Lit la table de lien N-N PUIS `prospect_leads` (seuls les champs
+ * nécessaires, jamais `select('*')`), triés par raison sociale pour une liste scannable.
+ *
+ * Robustesse (audit 2026-06-30) :
+ *  - PROPAGE toute erreur DB. La lecture de lien n'est volontairement PAS faite via
+ *    `leadIdsForCampagnes` (qui dégrade en silence -> [] pour le filtre prospection) : ici un
+ *    échec transitoire doit remonter (-> 500 + log côté endpoint), jamais être présenté comme
+ *    « campagne vide » (un opérateur conclurait à tort qu'aucun prospect n'est étiqueté).
+ *  - PAGINÉE des deux côtés (jamais de troncature silencieuse au cap PostgREST par défaut) : la
+ *    lecture de lien par `range`, la lecture des prospects par lots d'ids strictement < cap.
+ */
+const PG_PAGE = 1000; // cap PostgREST par défaut : on pagine pour ne jamais tronquer en silence
+const IN_CHUNK = 500; // lots d'ids pour `.in()` (< cap -> aucun lot ne peut être tronqué)
+
+async function leadIdsForCampagnePaginated(
+	supabase: SupabaseClient<Database>,
+	campagneId: string
+): Promise<{ ids: string[]; error: { message: string } | null }> {
+	const ids: string[] = [];
+	for (let from = 0; ; from += PG_PAGE) {
+		const { data, error } = await supabase
+			.from('prospect_lead_campagnes')
+			.select('lead_id')
+			.eq('campagne_id', campagneId)
+			.range(from, from + PG_PAGE - 1);
+		if (error) return { ids: [], error };
+		const batch = (data ?? []) as Array<{ lead_id: string }>;
+		for (const r of batch) ids.push(r.lead_id);
+		if (batch.length < PG_PAGE) break;
+	}
+	return { ids, error: null };
+}
+
+export async function fetchProspectsForCampagne(
+	supabase: SupabaseClient<Database>,
+	campagneId: string
+): Promise<{ data: ProspectAdresse[]; error: { message: string } | null }> {
+	const { ids: leadIds, error: linkError } = await leadIdsForCampagnePaginated(supabase, campagneId);
+	if (linkError) return { data: [], error: linkError };
+	if (leadIds.length === 0) return { data: [], error: null };
+
+	const rows: ProspectAdresse[] = [];
+	for (let i = 0; i < leadIds.length; i += IN_CHUNK) {
+		const chunk = leadIds.slice(i, i + IN_CHUNK);
+		const { data, error } = await supabase
+			.from('prospect_leads')
+			.select('id, raison_sociale, adresse, npa, localite')
+			.in('id', chunk);
+		if (error) return { data: [], error };
+		rows.push(...((data ?? []) as ProspectAdresse[]));
+	}
+	// Tri stable par raison sociale (l'ordre inter-lots n'est pas garanti par la DB).
+	rows.sort((a, b) => a.raison_sociale.localeCompare(b.raison_sociale, 'fr'));
+	return { data: rows, error: null };
 }

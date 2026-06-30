@@ -12,6 +12,7 @@ import {
 	removeCampagneFromLead,
 	fetchCampagnesByLead,
 	leadIdsForCampagnes,
+	fetchProspectsForCampagne,
 	MAX_CAMPAGNE_IDS,
 	type Campagne
 } from './campagnes';
@@ -296,5 +297,71 @@ describe('assignCampagnesToLeads (étiquetage d’un lot importé)', () => {
 		const m = createSupabaseMock({ error: { code: '23503', message: 'fk' } });
 		const { error } = await assignCampagnesToLeads(m.supabase, ['l1'], ['ghost']);
 		expect(error?.code).toBe('invalid');
+	});
+});
+
+/** Mock PAR TABLE : fetchProspectsForCampagne enchaîne 2 requêtes (lien N-N puis prospect_leads). */
+function multiTableMock(byTable: Record<string, SbResult>) {
+	const seen: string[] = [];
+	const chainFor = (table: string): unknown => {
+		const r = byTable[table] ?? {};
+		const res = { data: r.data ?? null, error: r.error ?? null, count: r.count ?? null };
+		return new Proxy(
+			{},
+			{
+				get(_t, prop: string) {
+					if (prop === 'then')
+						return (resolve: (v: unknown) => unknown, reject: (e: unknown) => unknown) =>
+							Promise.resolve(res).then(resolve, reject);
+					return () => chainFor(table);
+				}
+			}
+		);
+	};
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const supabase: any = { from: (t: string) => { seen.push(t); return chainFor(t); } };
+	return { supabase, seen };
+}
+
+describe('fetchProspectsForCampagne (panneau étiquettes)', () => {
+	it('renvoie [] sans interroger prospect_leads quand la campagne n’a aucun lead', async () => {
+		const m = multiTableMock({ prospect_lead_campagnes: { data: [] } });
+		const { data, error } = await fetchProspectsForCampagne(m.supabase, 'cmp-1');
+		expect(error).toBe(null);
+		expect(data).toEqual([]);
+		expect(m.seen).not.toContain('prospect_leads'); // court-circuit, pas de 2e requête
+	});
+
+	it('résout les lead_ids puis lit prospect_leads, trié par raison sociale', async () => {
+		const prospects = [
+			{ id: 'L2', raison_sociale: 'Régie du Lac', adresse: 'Quai 1', npa: '1006', localite: 'Lausanne' },
+			{ id: 'L1', raison_sociale: 'Boutique Léman', adresse: 'Rue Basse 7', npa: '1201', localite: 'Genève' }
+		];
+		const m = multiTableMock({
+			prospect_lead_campagnes: { data: [{ lead_id: 'L1' }, { lead_id: 'L2' }] },
+			prospect_leads: { data: prospects }
+		});
+		const { data, error } = await fetchProspectsForCampagne(m.supabase, 'cmp-1');
+		expect(error).toBe(null);
+		expect(data.map((p) => p.raison_sociale)).toEqual(['Boutique Léman', 'Régie du Lac']); // tri FR
+		expect(m.seen).toContain('prospect_leads');
+	});
+
+	it('erreur DB sur la lecture du LIEN (1re requête) -> error propagée (jamais « campagne vide » silencieuse)', async () => {
+		const m = multiTableMock({ prospect_lead_campagnes: { error: { message: 'lien-boom' } } });
+		const { data, error } = await fetchProspectsForCampagne(m.supabase, 'cmp-1');
+		expect(data).toEqual([]);
+		expect(error?.message).toBe('lien-boom'); // ne PAS masquer en {data:[], error:null}
+		expect(m.seen).not.toContain('prospect_leads'); // on n'enchaîne pas sur une erreur de lien
+	});
+
+	it('erreur DB sur prospect_leads -> data [] + error remontée', async () => {
+		const m = multiTableMock({
+			prospect_lead_campagnes: { data: [{ lead_id: 'L1' }] },
+			prospect_leads: { error: { message: 'boom' } }
+		});
+		const { data, error } = await fetchProspectsForCampagne(m.supabase, 'cmp-1');
+		expect(data).toEqual([]);
+		expect(error?.message).toBe('boom');
 	});
 });

@@ -20,6 +20,7 @@
 	"devDependencies": {
 		"@axe-core/playwright": "^4.12.1",
 		"@fontsource/dm-mono": "^5.2.7",
+		"@fontsource/outfit": "^5.2.8",
 		"@playwright/test": "^1.61.1",
 		"@sveltejs/adapter-vercel": "^6.3.4",
 		"@sveltejs/kit": "^2.68.0",
