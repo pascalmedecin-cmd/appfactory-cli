@@ -4,27 +4,6 @@
   Préfixe `df-` (decoupe) pour éviter toute collision avec les classes globales.
 */
 
-/* En-tête de page */
-.df-page-head {
-	display: flex;
-	align-items: flex-end;
-	justify-content: space-between;
-	gap: 16px;
-	margin-bottom: 22px;
-}
-.df-page-title {
-	font-size: 24px;
-	font-weight: 600;
-	letter-spacing: -0.02em;
-	color: var(--color-text);
-}
-.df-page-sub {
-	margin-top: 4px;
-	font-size: 14px;
-	color: var(--color-text-muted);
-	max-width: 64ch;
-}
-
 /* Carte qui enveloppe une DataTable (embedded) ou un bloc de contenu */
 .df-card {
 	background: var(--color-surface);
@@ -237,9 +216,6 @@
 	.df-head-action {
 		display: none;
 	}
-	.df-page-head {
-		margin-bottom: 16px;
-	}
 }
 @media (max-width: 640px) {
 	.df-form-grid {
@@ -289,7 +265,7 @@
 .df-back:hover {
 	color: var(--color-primary);
 }
-.df-back :global(.df-back-chevron) {
+.df-back .df-back-chevron {
 	transform: rotate(180deg);
 }
 .df-pagehead {
@@ -327,6 +303,11 @@
 	gap: 8px;
 	flex-wrap: wrap;
 }
+/* Nombre mis en avant dans la méta : 600 (le 700 reste réservé au chiffre roi). */
+.df-page-meta b {
+	font-weight: 600;
+	color: var(--color-text-body);
+}
 .df-dot-sep {
 	width: 3px;
 	height: 3px;
@@ -362,6 +343,11 @@
 	color: var(--df-amber-tx);
 	box-shadow: inset 0 0 0 1px var(--df-amber-bd);
 }
+.df-statepill--saisie {
+	background: var(--color-surface-alt);
+	color: var(--color-text-muted);
+	box-shadow: inset 0 0 0 1px var(--color-border-strong);
+}
 
 /* --- Bandeau KPI mis en scène --- */
 .df-kpis {
@@ -388,7 +374,7 @@
 	align-items: center;
 	gap: 6px;
 }
-.df-kpi-lbl :global(svg) {
+.df-kpi-lbl svg {
 	color: var(--df-text-faint);
 	flex: none;
 }
@@ -444,6 +430,58 @@
 .df-sec-h .df-sec-count {
 	font-variant-numeric: tabular-nums;
 	color: var(--color-text-muted);
+}
+.df-sec-line {
+	flex: 1;
+	height: 1px;
+	background: var(--color-border);
+}
+
+/* Barre de recherche (liste Chantiers / Base produit) */
+.df-listbar {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	margin-bottom: 16px;
+	flex-wrap: wrap;
+}
+.df-search {
+	position: relative;
+	flex: 1;
+	min-width: 240px;
+	max-width: 380px;
+}
+.df-search svg {
+	position: absolute;
+	left: 13px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 16px;
+	height: 16px;
+	color: var(--df-text-faint);
+	pointer-events: none;
+}
+.df-search input {
+	width: 100%;
+	height: 40px;
+	padding: 0 14px 0 38px;
+	border: 1px solid var(--color-border-strong);
+	border-radius: var(--radius-lg);
+	font-size: 14px;
+	font-family: inherit;
+	color: var(--color-text);
+	background: var(--color-surface);
+	transition:
+		border-color 180ms var(--ease-out-expo),
+		box-shadow 180ms var(--ease-out-expo);
+}
+.df-search input::placeholder {
+	color: var(--df-text-faint);
+}
+.df-search input:focus {
+	outline: none;
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 14%, transparent);
 }
 
 /* --- Callout alertes (jamais masquées) --- */
@@ -591,7 +629,7 @@
 	color: var(--df-green-tx);
 	box-shadow: inset 0 0 0 1px var(--df-green-bd);
 }
-.df-chip :global(svg) {
+.df-chip svg {
 	flex: none;
 }
 
@@ -683,79 +721,120 @@
 	box-shadow: inset 0 0 0 1px var(--df-red-bd);
 }
 
-/* --- Strip de remplissage (la bande vue de dessus) --- */
-.df-strip-wrap {
-	margin-bottom: 14px;
-}
-.df-strip-top {
-	display: flex;
-	align-items: baseline;
-	justify-content: space-between;
-	gap: 12px;
-	margin-bottom: 7px;
-}
-.df-strip-verdict {
-	font-size: 13px;
-	color: var(--color-text-muted);
-}
-.df-strip-verdict b {
-	font-size: 15px;
-	font-weight: 600;
-	color: var(--color-text);
-	letter-spacing: -0.01em;
-	font-variant-numeric: tabular-nums;
-}
-.df-strip-fill {
+/* --- Diagramme de découpe (strip refondu, échelle partagée entre films) ---
+   Refonte 2026-06-29 (demande Pascal : « plus joli et lisible »). Conteneur arrondi avec
+   léger fond sunken, cote de laize (mm) + règle de longueur (m), pièces en blocs doux
+   étiquetés en mono, chute hachurée, légende synchronisée à la liste de coupe. */
+.df-plan-note {
 	font-size: 12px;
-	font-weight: 600;
 	color: var(--color-text-muted);
-	font-variant-numeric: tabular-nums;
+	margin: -2px 0 14px;
+	display: flex;
+	align-items: center;
+	gap: 7px;
+}
+.df-plan-note svg {
+	color: var(--df-text-faint);
+	flex: none;
+}
+.df-dgm {
+	background: linear-gradient(180deg, #fcfcfd, var(--df-surface-sunken));
+	border-radius: var(--radius-xl);
+	box-shadow:
+		inset 0 0 0 1px var(--color-border),
+		var(--shadow-xs);
+	padding: 17px 19px 15px;
+	margin: 4px 0 16px;
+}
+.df-dgm-top {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 16px;
+	margin-bottom: 12px;
+}
+.df-dgm-tt {
+	min-width: 0;
+}
+.df-dgm-title {
+	font-size: 13px;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+	color: var(--color-text);
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.df-dgm-title svg {
+	color: var(--color-text-muted);
+	flex: none;
+}
+.df-dgm-sub {
+	font-size: 12.5px;
+	color: var(--color-text-muted);
+	margin-top: 4px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+.df-dgm-fill {
+	flex: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 26px;
+	padding: 0 11px;
+	border-radius: var(--radius-full);
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--color-text-body);
+	background: var(--color-surface);
+	box-shadow: inset 0 0 0 1px var(--color-border);
 	white-space: nowrap;
 }
-.df-strip {
-	position: relative;
-	display: inline-block;
-	max-width: 100%;
-	background: var(--df-surface-sunken);
-	border-radius: var(--radius-xl);
-	box-shadow: inset 0 0 0 1px var(--color-border);
-	padding: 8px;
-	overflow-x: auto;
-	vertical-align: top;
+.df-dgm-fill b {
+	font-weight: 700;
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text);
 }
-.df-strip svg {
+.df-dgm-band {
 	display: block;
-	height: 96px;
-	width: auto;
-	border-radius: var(--radius-sm);
-	overflow: visible;
+	width: 100%;
+	height: auto;
 }
-.df-strip-legend {
+.df-dgm-legend {
 	display: flex;
 	align-items: center;
 	gap: 16px;
-	margin-top: 9px;
+	margin-top: 11px;
 	font-size: 11.5px;
-	color: var(--df-text-faint);
+	font-weight: 500;
+	color: var(--color-text-muted);
 	flex-wrap: wrap;
 }
 .df-lg {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	gap: 7px;
 }
 .df-lg .df-sw {
-	width: 11px;
-	height: 11px;
-	border-radius: 3px;
+	width: 13px;
+	height: 13px;
+	border-radius: 4px;
+}
+.df-vref {
+	font-family: var(--font-mono);
+	font-weight: 500;
+	color: var(--color-text-body);
 }
 .df-sw--chute {
 	background: repeating-linear-gradient(
 		45deg,
 		var(--color-surface),
 		var(--color-surface) 3px,
-		var(--df-surface-sunken) 3px,
-		var(--df-surface-sunken) 6px
+		#e8eaed 3px,
+		#e8eaed 6px
 	);
 	box-shadow: inset 0 0 0 1px var(--color-border);
 }
@@ -1027,12 +1106,12 @@
 .df-chrow {
 	display: flex;
 	align-items: center;
-	gap: 14px;
+	gap: 17px;
 	background: var(--color-surface);
 	border-radius: var(--radius-xl);
 	box-shadow: var(--shadow-card);
-	padding: 13px 18px;
-	margin-bottom: 10px;
+	padding: 17px 18px;
+	margin-bottom: 12px;
 	text-decoration: none;
 	transition:
 		box-shadow var(--df-dur) var(--ease-out-expo),
@@ -1040,49 +1119,102 @@
 }
 .df-chrow:hover {
 	box-shadow: var(--shadow-card-hover);
-	transform: translateY(-1px);
+	transform: translateY(-2px);
+}
+.df-chrow:focus-visible {
+	outline: none;
+	box-shadow:
+		var(--shadow-card),
+		0 0 0 3px color-mix(in srgb, var(--color-primary) 35%, transparent);
 }
 .df-chrow--done {
 	opacity: 0.66;
 }
 .df-chrow-tile {
-	width: 38px;
-	height: 38px;
-	border-radius: 10px;
+	width: 54px;
+	height: 54px;
+	border-radius: 14px;
 	display: grid;
 	place-items: center;
 	color: #fff;
 	flex: none;
-	box-shadow: 0 1px 2px rgba(17, 24, 39, 0.15);
+	box-shadow:
+		0 1px 2px rgba(17, 24, 39, 0.16),
+		inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 .df-chrow-main {
 	flex: 1;
 	min-width: 0;
 }
 .df-chrow-nom {
-	font-size: 15px;
+	font-size: 16px;
 	font-weight: 600;
 	letter-spacing: -0.01em;
 	color: var(--color-text);
+	line-height: 1.25;
 }
-.df-chrow-nom .df-chrow-client {
-	font-size: 12.5px;
-	font-weight: 400;
+.df-chrow-client {
+	display: block;
+	font-size: 13px;
 	color: var(--color-text-muted);
-	margin-left: 8px;
+	margin-top: 3px;
 }
 .df-chrow-meta {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	flex-wrap: wrap;
-	margin-top: 3px;
+	margin-top: 11px;
 	font-size: 12.5px;
 	color: var(--color-text-muted);
 }
+.df-chrow-fams {
+	display: inline-flex;
+	align-items: center;
+	gap: 11px;
+	padding: 0 4px;
+}
+.df-chrow-right {
+	flex: none;
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
 .df-chrow-chev {
+	width: 20px;
+	height: 20px;
+	color: var(--color-border-strong);
+	flex: none;
+	transition:
+		transform var(--df-dur) var(--ease-out-expo),
+		color var(--df-dur) var(--ease-out-expo);
+}
+.df-chrow:hover .df-chrow-chev {
+	transform: translateX(3px);
+	color: var(--color-text-muted);
+}
+
+/* Méta-chip de ligne (compteur de vitres, date) */
+.df-mchip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: 24px;
+	padding: 0 10px;
+	border-radius: var(--radius-full);
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--color-text-body);
+	background: var(--color-surface-alt);
+	box-shadow: inset 0 0 0 1px var(--color-border);
+	white-space: nowrap;
+}
+.df-mchip svg {
 	color: var(--df-text-faint);
 	flex: none;
+}
+.df-mchip .df-num {
+	font-weight: 600;
 }
 
 @media (max-width: 560px) {

@@ -45,6 +45,8 @@
 	let restoreEl: HTMLFormElement | null = $state(null);
 
 	const count = $derived(data.produits.length);
+	const nbActifs = $derived(data.produits.filter((p) => p.actif).length);
+	const nbArchives = $derived(count - nbActifs);
 
 	const columns = [
 		{ key: 'reference', label: 'Référence', sortable: true, class: 'w-[15%]' },
@@ -102,18 +104,24 @@
 	<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /><path d="M3 3v5h5" /></svg>
 {/snippet}
 
-<section class="df-page-head">
-	<div>
+<section class="df-pagehead">
+	<div class="df-pagehead-l">
 		<div class="df-kicker">Découpe Films</div>
 		<h1 class="df-title-xl">Base produit</h1>
-		<p class="df-page-sub">
-			Catalogue descriptif des films : laizes, sens de pose, jointage. Sert de référence à la saisie des vitres.
-		</p>
+		<div class="df-page-meta">
+			<span>{count} produit{count > 1 ? 's' : ''}</span>
+			{#if count > 0}
+				<span class="df-dot-sep"></span><span>{nbActifs} actif{nbActifs > 1 ? 's' : ''}</span>
+				{#if nbArchives > 0}<span class="df-dot-sep"></span><span>{nbArchives} archivé{nbArchives > 1 ? 's' : ''}</span>{/if}
+			{/if}
+		</div>
 	</div>
-	<button type="button" class="ws-btn ws-btn-primary df-head-action" onclick={openCreate}>
-		<Icon name="add" size={18} />
-		Nouveau produit
-	</button>
+	<div class="df-pagehead-r">
+		<button type="button" class="ws-btn ws-btn-primary df-head-action" onclick={openCreate}>
+			<Icon name="add" size={18} />
+			Nouveau produit
+		</button>
+	</div>
 </section>
 
 {#if count === 0}
@@ -155,19 +163,19 @@
 				</td>
 				<td class="px-4 py-3">
 					<div class="df-chips">
-						{#if !p.actif}<span class="df-chip">Archivé</span>{/if}
-						{#if p.orientation_imposee}
-							<span class="df-chip">{@render icRotate(12)} orientation imposée</span>
-						{:else}
-							<span class="df-chip">rotation libre</span>
-						{/if}
-						{#if p.jointage_autorise}<span class="df-chip df-chip--les"><Icon name="layers" size={12} /> jointage</span>{/if}
 						{#if p.nestable}
 							<span class="df-chip df-chip--ok"><Icon name="check" size={12} /> nestable</span>
 						{:else}
 							<span class="df-chip df-chip--warn">non nestable</span>
 						{/if}
-						{#if p.marge_pose_mm > 0}<span class="df-chip">Marge {p.marge_pose_mm} mm</span>{/if}
+						{#if p.orientation_imposee}
+							<span class="df-chip df-chip--warn">{@render icRotate(12)} sens imposé</span>
+						{:else}
+							<span class="df-chip">{@render icRotate(12)} rotation libre</span>
+						{/if}
+						{#if p.jointage_autorise}<span class="df-chip df-chip--les"><Icon name="layers" size={12} /> jointage</span>{/if}
+						{#if p.marge_pose_mm > 0}<span class="df-chip">marge {p.marge_pose_mm} mm</span>{/if}
+						{#if !p.actif}<span class="df-chip">archivé</span>{/if}
 					</div>
 				</td>
 			{/snippet}

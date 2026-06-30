@@ -23,10 +23,12 @@
 		formatM2,
 		formatPct,
 		makeColorOf,
+		makeVitreRef,
 		cutGroups,
 		synthese,
 		filmMetrics,
-		stripGeometry,
+		diagramFilms,
+		pieceTextColor,
 		chuteSpark,
 		chuteColorVar
 	} from '$lib/decoupe/presenter';
@@ -39,6 +41,9 @@
 	const synth = $derived(data.ok ? synthese(data.resultat) : null);
 	const spark = $derived(synth ? chuteSpark(synth.chuteMoy) : null);
 	const colorOf = $derived(makeColorOf(data.ok ? Object.keys(data.vitresInfo) : []));
+	const vitreRefOf = $derived(makeVitreRef(data.ok ? Object.keys(data.vitresInfo) : []));
+	// Diagrammes à échelle partagée (1 par film, alignés sur l'ordre de data.resultat.plans).
+	const diagrams = $derived(data.ok ? diagramFilms(data.resultat.plans, colorOf, vitreRefOf) : []);
 
 	// Hub « Découpe » (onglet atelier, URL sans sélection). Listes dérivées pour l'affichage.
 	const hubEnSaisie = $derived(data.hub ? data.hub.chantiers.filter((c) => c.statut === 'en_saisie') : []);
@@ -138,6 +143,12 @@
 {/snippet}
 {#snippet icDownload(size: number)}
 	<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" /></svg>
+{/snippet}
+{#snippet icPlan(size: number)}
+	<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18" /><rect width="6" height="6" x="7" y="7" rx="1" /><rect width="5" height="9" x="13" y="9" rx="1" /></svg>
+{/snippet}
+{#snippet icScale(size: number)}
+	<svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3 3 21" /><path d="M21 8V3h-5" /><path d="M3 16v5h5" /></svg>
 {/snippet}
 
 {#if !data.hub}
@@ -380,11 +391,15 @@
 	<!-- Découpe interne : un plan par film -->
 	{#if data.resultat.plans.length > 0}
 		<h2 class="df-sec-h">Découpe interne<span class="df-sec-count">· {data.resultat.plans.length} film{data.resultat.plans.length > 1 ? 's' : ''}</span></h2>
-		{#each data.resultat.plans as plan (plan.produit_id)}
+		{#if data.resultat.plans.length > 1}
+			<p class="df-plan-note">{@render icScale(14)} Tous les plans sont à la même échelle : laizes et longueurs directement comparables d'un film à l'autre.</p>
+		{/if}
+		{#each data.resultat.plans as plan, pi (plan.produit_id)}
 			{@const fam = familleOf(plan.produit_id)}
 			{@const fm = filmMetrics(plan)}
-			{@const geo = stripGeometry(plan, colorOf)}
+			{@const dgm = diagrams[pi]}
 			{@const groups = cutGroups(plan)}
+			{@const legend = groups.filter((g, i, a) => a.findIndex((x) => x.vitre_id === g.vitre_id) === i)}
 			<article class="df-film">
 				<div class="df-film-head">
 					<span class="df-film-tile" style="background:{familleColor(fam)}">{@render icScissors(22)}</span>
@@ -398,37 +413,79 @@
 					<span class="df-chute df-chute--{fm.classe}">{@render icScissors(15)}<span class="df-chute-big">{formatPct(plan.taux_chute)} %</span> de chute</span>
 				</div>
 
-				<div class="df-strip-wrap">
-					<div class="df-strip-top">
-						<span class="df-strip-verdict">À découper&nbsp;&nbsp;<b>Laize {plan.laize_mm} mm × {formatMetres(plan.longueur_consommee_mm)}</b></span>
-						<span class="df-strip-fill">remplissage {formatPct(fm.remplissage)} %</span>
+				<div class="df-dgm">
+					<div class="df-dgm-top">
+						<div class="df-dgm-tt">
+							<div class="df-dgm-title">{@render icPlan(15)} Plan de découpe</div>
+							<div class="df-dgm-sub">
+								<span class="df-mono">laize {plan.laize_mm} mm</span>
+								<span class="df-dot-sep"></span>
+								<span class="df-mono">longueur {formatMetres(plan.longueur_consommee_mm)}</span>
+								<span class="df-dot-sep"></span>
+								<span>{plan.placements.length} pièce{plan.placements.length > 1 ? 's' : ''}</span>
+							</div>
+						</div>
+						<span class="df-dgm-fill"><b class="df-num">{formatPct(fm.remplissage)} %</b>&nbsp;rempli</span>
 					</div>
-					<div class="df-strip">
-						<svg viewBox="0 0 {geo.width} {geo.height + 1}" preserveAspectRatio="xMinYMin meet" role="img" aria-label={`Plan de remplissage du film ${refOf(plan.produit_id)} : laize ${plan.laize_mm} mm sur ${formatMetres(plan.longueur_consommee_mm)}. Détail dans la liste de coupe ci-dessous.`}>
+					{#if dgm}
+						<svg class="df-dgm-band" style="max-width:{dgm.renderMaxWidthPx}px" viewBox="0 0 {dgm.viewBoxW} {dgm.viewBoxH}" role="img" aria-label={`Plan de remplissage du film ${refOf(plan.produit_id)} : laize ${plan.laize_mm} mm sur ${formatMetres(plan.longueur_consommee_mm)}, ${plan.placements.length} pièces, ${formatPct(plan.taux_chute)} % de chute. Détail exact dans la liste de coupe ci-dessous.`}>
 							<defs>
-								<pattern id={`df-hatch-${plan.produit_id}`} width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
-									<rect width="6" height="6" fill="#fff" />
-									<line x1="0" y1="0" x2="0" y2="6" stroke="#EEF0F2" stroke-width="3" />
+								<pattern id={`df-hx-${plan.produit_id}`} width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+									<rect width="7" height="7" fill="#fbfcfd" />
+									<line x1="0" y1="0" x2="0" y2="7" stroke="#E8EAED" stroke-width="3.4" />
 								</pattern>
 							</defs>
-							<rect x="0" y="0" width={geo.width} height={geo.height} rx="4" fill={`url(#df-hatch-${plan.produit_id})`} stroke="#E5E7EB" stroke-width="1" />
-							{#each geo.rects as r, ri (ri)}
-								{@const cx = r.x + r.w / 2}
-								{@const cy = r.y + r.h / 2}
+							<!-- bande (le fond visible = chute) -->
+							<rect x={dgm.band.x} y={dgm.band.y} width={dgm.band.w} height={dgm.band.h} rx="7" fill={`url(#df-hx-${plan.produit_id})`} stroke="#D8DCE2" stroke-width="1" />
+							<!-- cote de laize (rail gauche : band.x - 16) -->
+							<line x1={dgm.band.x - 16} y1={dgm.band.y + 0.5} x2={dgm.band.x - 16} y2={dgm.band.y + dgm.band.h + 0.5} stroke="#9CA3AF" stroke-width="1.2" />
+							<line x1={dgm.band.x - 21} y1={dgm.band.y + 0.5} x2={dgm.band.x - 6} y2={dgm.band.y + 0.5} stroke="#9CA3AF" stroke-width="1.2" />
+							<line x1={dgm.band.x - 21} y1={dgm.band.y + dgm.band.h + 0.5} x2={dgm.band.x - 6} y2={dgm.band.y + dgm.band.h + 0.5} stroke="#9CA3AF" stroke-width="1.2" />
+							<text x={dgm.band.x - 31} y={dgm.coteMidY} transform={`rotate(-90 ${dgm.band.x - 31} ${dgm.coteMidY})`} fill="#6B7280" font-size="10" font-weight="500" text-anchor="middle" font-family="var(--font-mono)">{dgm.coteLabel}</text>
+							<!-- pièces -->
+							{#each dgm.rects as r, ri (ri)}
+								{@const rcx = r.x + r.w / 2}
+								{@const rcy = r.y + r.h / 2}
+								{@const tx = pieceTextColor(r.color)}
 								<g>
-									<rect x={r.x} y={r.y} width={r.w} height={r.h} rx="2.5" fill={r.color} fill-opacity="0.16" stroke={r.color} stroke-width="1.25" />
+									<rect x={r.x + 1.5} y={r.y + 1.5} width={Math.max(1, r.w - 3)} height={Math.max(1, r.h - 3)} rx="4.5" fill={r.color} fill-opacity="0.18" stroke={r.color} stroke-width="1.4" />
+									{#if r.w > 22 && r.h > 18}
+										<text x={r.x + 8} y={r.y + 14} fill={tx} font-size="8" font-weight="600" font-family="var(--font-mono)" opacity="0.75">{r.vitreRef}</text>
+									{/if}
 									{#if r.label}
-										<text x={cx} y={cy} transform={r.labelOrient === 'v' ? `rotate(-90 ${cx} ${cy})` : null} fill={r.color} font-size="9" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="var(--font-mono)">{r.label}</text>
+										<text x={rcx} y={rcy} transform={r.labelOrient === 'v' ? `rotate(-90 ${rcx} ${rcy})` : null} fill={tx} font-size="9.5" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="var(--font-mono)">{r.label}</text>
+										{#if r.pivot && r.labelOrient === 'h' && r.h >= 56}
+											<g transform={`translate(${rcx} ${rcy + 24})`}>
+												<rect x="-25" y="-7.5" width="50" height="15" rx="7.5" fill="#fff" stroke={r.color} stroke-width="0.9" opacity="0.92" />
+												<text x="0" y="0.5" fill={tx} font-size="7.5" font-weight="500" text-anchor="middle" dominant-baseline="central" font-family="var(--font-mono)">pivotée</text>
+											</g>
+										{/if}
 									{/if}
 								</g>
 							{/each}
-							<line x1="0" y1={geo.height} x2={geo.width} y2={geo.height} stroke="#D1D5DB" stroke-width="1" />
+							<!-- étiquette chute -->
+							{#if dgm.chute}
+								<text x={dgm.chute.x} y={dgm.chute.y} fill="#9CA3AF" font-size="8.5" font-weight="500" text-anchor="middle" font-family="var(--font-mono)">{dgm.chute.label}</text>
+							{/if}
+							<!-- règle de longueur -->
+							<line x1={dgm.band.x} y1={dgm.rulerY} x2={dgm.band.x + dgm.band.w} y2={dgm.rulerY} stroke="#D1D5DB" stroke-width="1" />
+							{#each dgm.ticks as t, ti (ti)}
+								<line x1={t.x} y1={dgm.rulerY - 4} x2={t.x} y2={dgm.rulerY + 4} stroke="#D1D5DB" stroke-width="1" />
+								<text x={t.x} y={dgm.rulerY + 16} fill="#9CA3AF" font-size="8.5" text-anchor="middle" font-family="var(--font-mono)">{t.label}</text>
+							{/each}
+							<line x1={dgm.totalX} y1={dgm.rulerY - 4} x2={dgm.totalX} y2={dgm.rulerY + 4} stroke="#D1D5DB" stroke-width="1" />
+							<text x={dgm.totalX} y={dgm.rulerY + 16} fill="#6B7280" font-size="8.5" font-weight="500" text-anchor="end" font-family="var(--font-mono)">{dgm.totalLabel}</text>
+							<!-- Titre d'axe : seulement si la bande est assez large (sinon il déborderait du viewBox étroit d'un film court). -->
+							{#if dgm.band.w >= 90}
+								<text x={dgm.axisX} y={dgm.rulerY + 34} fill="#6B7280" font-size="8.5" font-weight="500" text-anchor="middle" font-family="var(--font-mono)">longueur du film (m)</text>
+							{/if}
 						</svg>
-					</div>
-					<div class="df-strip-legend">
-						<span class="df-lg"><span class="df-sw" style="background:#5A7190;opacity:.35"></span>pièces posées</span>
+					{/if}
+					<div class="df-dgm-legend">
+						{#each legend as g (g.vitre_id)}
+							<span class="df-lg"><span class="df-sw" style="background:{colorOf(g.vitre_id)};box-shadow:inset 0 0 0 1.4px {pieceTextColor(colorOf(g.vitre_id))}"></span><span class="df-vref">{vitreRefOf(g.vitre_id)}</span> {g.w}×{g.h}{#if g.pivot} · pivotée{/if}</span>
+						{/each}
 						<span class="df-lg"><span class="df-sw df-sw--chute"></span>chute</span>
-						<span class="df-lg">échelle : la longueur du film est à l'échelle de la consommation</span>
 					</div>
 				</div>
 
@@ -442,7 +499,7 @@
 
 				<details class="df-cut">
 					<summary>
-						<span class="df-chev">{@render icChevron(15)}</span>Liste de coupe ordonnée<span class="df-ct df-num">{plan.placements.length}</span>
+						<span class="df-chev">{@render icChevron(15)}</span>Liste de coupe ordonnée<span class="df-ct df-num">{groups.length}</span>
 					</summary>
 					<table class="df-cuttable">
 						<thead>
@@ -451,7 +508,7 @@
 								<th scope="col">Qté</th>
 								<th scope="col">Dimension de coupe</th>
 								<th scope="col">Vitre source</th>
-								<th scope="col"><span class="sr-only">Particularités</span></th>
+								<th scope="col"><span class="sr-only">Pose</span></th>
 							</tr>
 						</thead>
 						<tbody>
@@ -460,7 +517,7 @@
 									<td class="df-c-sw"><span class="df-sw" style="background:{colorOf(g.vitre_id)};opacity:.85"></span></td>
 									<td class="df-c-qty df-num">×{g.n}</td>
 									<td class="df-c-dim df-num">{g.w} × {g.h} mm</td>
-									<td class="df-c-src df-num">{vitreLabel(g.vitre_id)}</td>
+									<td class="df-c-src"><span class="df-vref">{vitreRefOf(g.vitre_id)}</span> · {g.pivot ? 'pivotée' : 'à plat'}</td>
 									<td class="df-c-tag">
 										{#if g.pivot}<span class="df-chip df-chip--rot">{@render icRotate(12)} pivotée</span>{/if}
 										{#if g.les}<span class="df-chip df-chip--les">{@render icLayers(12)} en lés</span>{/if}

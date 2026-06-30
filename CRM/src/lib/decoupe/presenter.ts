@@ -265,6 +265,155 @@ export function stripGeometry(plan: PlanProduit, colorOf: (vitreId: string) => s
 	return { width, height: H, rects };
 }
 
+// --- Diagramme de découpe écran (refonte 2026-06-29) ------------------------------------------
+// Le strip ÉCRAN est refondu : tous les films sont rendus à une ÉCHELLE PARTAGÉE (isométrique,
+// même px/mm en laize ET en longueur d'un film à l'autre) avec une cote de laize (mm) et une
+// règle de longueur (m). Distinct de `stripGeometry` ci-dessus, qui reste la projection compacte
+// du PDF atelier (jsPDF/svg2pdf) — non touchée pour ne pas ré-auditer le PDF.
+
+/** Réf courte stable d'une vitre (V1, V2…), même ordre que `makeColorOf` (ordre de saisie). */
+export function makeVitreRef(orderedIds: readonly string[] = []): (vitreId: string) => string {
+	const map = new Map<string, string>();
+	const assign = (id: string) => {
+		if (!map.has(id)) map.set(id, `V${map.size + 1}`);
+		return map.get(id) as string;
+	};
+	for (const id of orderedIds) assign(id);
+	return assign;
+}
+
+// Géométrie du diagramme, en unités de viewBox SVG. Marges constantes (cote + règle) → rendues à
+// la même taille px sur tous les films grâce au facteur de rendu proportionnel `renderMaxWidthPx`.
+export const DGM_MARGIN_L = 48; // colonne de gauche (cote de laize)
+export const DGM_MARGIN_R = 16; // marge droite
+export const DGM_TOP = 10; // marge haute
+export const DGM_BAND_W_MAX = 520; // largeur de bande du film le plus long (unités viewBox)
+export const DGM_RENDER_MAX_PX = 720; // largeur px du viewBox le plus large (les autres au prorata)
+export const DGM_BELOW = 51; // bloc sous la bande : règle + libellés + titre d'axe
+export const DGM_RULER_GAP = 12; // bas de bande → ligne de règle
+export const DGM_TICK = 4; // demi-longueur d'un tiret de règle
+export const DGM_LABELS_DY = 16; // ligne de règle → libellés de mètres
+export const DGM_AXIS_DY = 34; // ligne de règle → titre d'axe
+
+export interface DiagramRect {
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+	color: string;
+	vitreRef: string; // « V1 », « V2 »… (coin haut-gauche)
+	label: string | null; // dimensions de coupe si elles tiennent
+	labelOrient: LabelOrient;
+	pivot: boolean;
+}
+export interface DiagramTick {
+	x: number;
+	label: string; // « 0 », « 1 »…
+}
+export interface DiagramFilm {
+	viewBoxW: number;
+	viewBoxH: number;
+	renderMaxWidthPx: number; // CSS max-width (préserve une échelle px commune entre films)
+	band: { x: number; y: number; w: number; h: number };
+	coteLabel: string; // « 1830 mm »
+	coteMidY: number;
+	rulerY: number;
+	ticks: DiagramTick[];
+	totalX: number;
+	totalLabel: string; // « 4,60 m »
+	axisX: number;
+	rects: DiagramRect[];
+	chute: { x: number; y: number; label: string } | null;
+}
+
+/**
+ * Projette tous les plans dans des diagrammes à ÉCHELLE PARTAGÉE.
+ * `colorOf`/`vitreRefOf` : mappings stables (ordre de saisie) partagés strip/légende/liste de coupe.
+ * Invariants (testés) : aucune pièce hors bande, échelle (px/mm) identique d'un film à l'autre,
+ * déterminisme. Axe transposé comme `stripGeometry` (x_mm = travers laize → vertical).
+ */
+export function diagramFilms(
+	plans: readonly PlanProduit[],
+	colorOf: (vitreId: string) => string,
+	vitreRefOf: (vitreId: string) => string
+): DiagramFilm[] {
+	if (plans.length === 0) return [];
+	const maxLong = Math.max(...plans.map((p) => p.longueur_consommee_mm), 1);
+	const u = DGM_BAND_W_MAX / maxLong; // unités viewBox par mm (isométrique)
+	const viewBoxWs = plans.map(
+		(p) => DGM_MARGIN_L + Math.round(p.longueur_consommee_mm * u) + DGM_MARGIN_R
+	);
+	const maxViewBoxW = Math.max(...viewBoxWs, 1);
+	const renderK = DGM_RENDER_MAX_PX / maxViewBoxW; // px par unité viewBox (commun à tous)
+
+	return plans.map((plan, i) => {
+		const bandW = Math.max(40, Math.round(plan.longueur_consommee_mm * u));
+		const bandH = Math.max(8, Math.round(plan.laize_mm * u));
+		const viewBoxW = viewBoxWs[i];
+		const viewBoxH = DGM_TOP + bandH + DGM_BELOW;
+		const bandX = DGM_MARGIN_L;
+		const bandY = DGM_TOP;
+		const bandBottom = bandY + bandH;
+
+		const rects: DiagramRect[] = plan.placements.map((pl) => {
+			const x = bandX + Math.round(pl.y_mm * u);
+			const y = bandY + Math.round(pl.x_mm * u);
+			const w = Math.max(1, Math.round(pl.hauteur_placee_mm * u));
+			const h = Math.max(1, Math.round(pl.largeur_placee_mm * u));
+			const text = `${pl.largeur_placee_mm}×${pl.hauteur_placee_mm}`;
+			const orient = labelOrientation(text.length, w, h);
+			return {
+				x,
+				y,
+				w,
+				h,
+				color: colorOf(pl.vitre_id),
+				vitreRef: vitreRefOf(pl.vitre_id),
+				label: orient ? text : null,
+				labelOrient: orient,
+				pivot: pl.pivotee
+			};
+		});
+
+		// Règle de longueur : un tiret par mètre entier.
+		const rulerY = bandBottom + DGM_RULER_GAP;
+		const nbMeters = Math.floor(plan.longueur_consommee_mm / 1000);
+		const ticks: DiagramTick[] = [];
+		for (let m = 0; m <= nbMeters; m++) {
+			ticks.push({ x: bandX + Math.round(m * 1000 * u), label: String(m) });
+		}
+
+		// Étiquette « chute » : centrée dans la bande de chute basse si elle est assez épaisse.
+		const maxPieceBottom = rects.reduce((mx, r) => Math.max(mx, r.y + r.h), bandY);
+		const bottomGap = bandBottom - maxPieceBottom;
+		const pct = Math.round(plan.taux_chute * 100);
+		const chute =
+			bottomGap >= 13
+				? {
+						x: bandX + Math.round(bandW / 2),
+						y: maxPieceBottom + Math.round(bottomGap / 2) + 3,
+						label: pct > 30 ? `chute ${pct} %` : 'chute'
+					}
+				: null;
+
+		return {
+			viewBoxW,
+			viewBoxH,
+			renderMaxWidthPx: Math.round(renderK * viewBoxW),
+			band: { x: bandX, y: bandY, w: bandW, h: bandH },
+			coteLabel: `${plan.laize_mm} mm`,
+			coteMidY: bandY + bandH / 2,
+			rulerY,
+			ticks,
+			totalX: bandX + bandW,
+			totalLabel: formatMetres(plan.longueur_consommee_mm),
+			axisX: bandX + Math.round(bandW / 2),
+			rects,
+			chute
+		};
+	});
+}
+
 // --- Arc-jauge du KPI chute (spark circulaire) ------------------------------------------------
 export interface SparkArc {
 	dash: number; // longueur du trait coloré

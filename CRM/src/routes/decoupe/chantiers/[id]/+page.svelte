@@ -7,7 +7,6 @@
 	import { tick } from 'svelte';
 	import { enhance } from '$app/forms';
 	import DataTable from '$lib/components/DataTable.svelte';
-	import Badge from '$lib/components/Badge.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
@@ -135,60 +134,85 @@
 <svelte:head><title>{data.chantier.nom} · Découpe Films</title></svelte:head>
 
 {#snippet scissorsIco()}
-	<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3" /><path d="M8.12 8.12 12 12" /><path d="M20 4 8.12 15.88" /><circle cx="6" cy="18" r="3" /><path d="M14.8 14.8 20 20" /></svg>
+	<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="3" /><path d="M8.12 8.12 12 12" /><path d="M20 4 8.12 15.88" /><circle cx="6" cy="18" r="3" /><path d="M14.8 14.8 20 20" /></svg>
+{/snippet}
+{#snippet icChevron(size: number)}
+	<svg viewBox="0 0 24 24" width={size} height={size} fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+{/snippet}
+{#snippet icCheck()}
+	<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+{/snippet}
+{#snippet icPencil()}
+	<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+{/snippet}
+{#snippet icFrame()}
+	<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M3 9h18" /><path d="M9 21V9" /></svg>
+{/snippet}
+{#snippet icMax()}
+	<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 3 3 21" /><path d="M21 3v6h-6" /><path d="M3 21h6v-6" /></svg>
+{/snippet}
+{#snippet icBox()}
+	<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" /><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" /><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" /></svg>
+{/snippet}
+{#snippet icTruck()}
+	<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></svg>
 {/snippet}
 
-<!-- Bloc haut figé (en-tête chantier + bandeau récap) -->
-<div class="fiche-freeze">
-	<a href="/decoupe" class="back-link">
-		<Icon name="expand_more" size={16} class="back-chevron" />
-		Chantiers
-	</a>
+<!-- En-tête chantier unifié (df-pagehead) + bandeau KPI unifié (df-kpi) -->
+<a href="/decoupe" class="df-back"><span class="df-back-chevron">{@render icChevron(15)}</span>Tous les chantiers</a>
 
-	<section class="fiche-head">
-		<div class="fiche-title">
-			<div class="df-kicker">{data.chantier.client || 'Fiche chantier'}</div>
-			<h1 class="df-title-xl fiche-title-xl">{data.chantier.nom}</h1>
-			<div class="fiche-meta">
-				<Badge label={lancee ? 'Lancée' : 'En saisie'} variant={lancee ? 'success' : 'muted'} />
-				<span class="df-cell-muted">{nbVitres} vitre{nbVitres > 1 ? 's' : ''}{#if nbPieces > nbVitres} · {nbPieces} pièces{/if}</span>
-			</div>
-		</div>
-		<div class="fiche-actions">
-			<button type="button" class="ws-btn ws-btn-ghost" onclick={openEditChantier}>
-				<Icon name="edit" size={16} />
-				Modifier
-			</button>
-			{#if nbVitres > 0}
-				<a class="ws-btn ws-btn-primary" href={`/decoupe/optimisation?chantiers=${data.chantier.id}`}>
-					<Icon name="layers" size={16} />
-					Optimiser ce chantier
-				</a>
+<section class="df-pagehead">
+	<div class="df-pagehead-l">
+		<div class="df-kicker">{data.chantier.client || 'Fiche chantier'}</div>
+		<h1 class="df-title-xl">{data.chantier.nom}</h1>
+		<div class="df-page-meta">
+			{#if lancee}
+				<span class="df-statepill df-statepill--ok">{@render icCheck()} Lancée</span>
+			{:else}
+				<span class="df-statepill df-statepill--saisie">{@render icPencil()} En saisie</span>
 			{/if}
+			<span class="df-dot-sep"></span>
+			<span><b class="df-num">{nbVitres}</b> vitre{nbVitres > 1 ? 's' : ''} saisie{nbVitres > 1 ? 's' : ''}{#if nbPieces > nbVitres} · {nbPieces} pièces{/if}</span>
 		</div>
-	</section>
+	</div>
+	<div class="df-pagehead-r">
+		<button type="button" class="ws-btn ws-btn-ghost" onclick={openEditChantier}>
+			<Icon name="edit" size={16} />
+			Modifier
+		</button>
+		{#if nbVitres > 0}
+			<a class="ws-btn ws-btn-primary" href={`/decoupe/optimisation?chantiers=${data.chantier.id}`}>
+				{@render scissorsIco()}
+				Optimiser ce chantier
+			</a>
+		{/if}
+	</div>
+</section>
 
-	{#if nbVitres > 0}
-		<div class="fiche-kpis">
-			<div class="fkpi">
-				<span class="fkpi-ico fkpi-ico--a"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></svg></span>
-				<div class="fkpi-body"><div class="fkpi-lbl">Vitres saisies</div><div class="fkpi-val df-num">{nbVitres}</div><div class="fkpi-sub"><b>{nbPieces}</b> pièce{nbPieces > 1 ? 's' : ''} au total</div></div>
-			</div>
-			<div class="fkpi">
-				<span class="fkpi-ico fkpi-ico--b"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 3 21" /><path d="M21 3v6h-6" /><path d="M3 21h6v-6" /></svg></span>
-				<div class="fkpi-body"><div class="fkpi-lbl">Surface vitrage</div><div class="fkpi-val df-num">{surfaceLabel} <span class="fkpi-unit">m²</span></div><div class="fkpi-sub">cumul des pièces</div></div>
-			</div>
-			<div class="fkpi">
-				<span class="fkpi-ico fkpi-ico--c"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" /><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" /><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" /></svg></span>
-				<div class="fkpi-body"><div class="fkpi-lbl">Produits mobilisés</div><div class="fkpi-val df-num">{nbProduits}</div><div class="fkpi-sub"><b>{nbFamilles}</b> famille{nbFamilles > 1 ? 's' : ''}</div></div>
-			</div>
-			<div class="fkpi">
-				<span class="fkpi-ico fkpi-ico--d"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></svg></span>
-				<div class="fkpi-body"><div class="fkpi-lbl">Sur mesure fournisseur</div><div class="fkpi-val df-num">{nbSurMesure}</div><div class="fkpi-sub"><b>{nbAtelier}</b> en découpe atelier</div></div>
-			</div>
+{#if nbVitres > 0}
+	<div class="df-kpis">
+		<div class="df-kpi">
+			<div class="df-kpi-lbl">{@render icFrame()} Vitres saisies</div>
+			<div class="df-kpi-val df-num">{nbVitres}</div>
+			<div class="df-kpi-sub"><b class="df-num">{nbPieces}</b> pièce{nbPieces > 1 ? 's' : ''} au total</div>
 		</div>
-	{/if}
-</div>
+		<div class="df-kpi">
+			<div class="df-kpi-lbl">{@render icMax()} Surface vitrage</div>
+			<div class="df-kpi-val df-num">{surfaceLabel} <span class="df-kpi-unit">m²</span></div>
+			<div class="df-kpi-sub">cumul des pièces</div>
+		</div>
+		<div class="df-kpi">
+			<div class="df-kpi-lbl">{@render icBox()} Produits mobilisés</div>
+			<div class="df-kpi-val df-num">{nbProduits}</div>
+			<div class="df-kpi-sub"><b class="df-num">{nbFamilles}</b> famille{nbFamilles > 1 ? 's' : ''}</div>
+		</div>
+		<div class="df-kpi">
+			<div class="df-kpi-lbl">{@render icTruck()} Sur mesure</div>
+			<div class="df-kpi-val df-num">{nbSurMesure}</div>
+			<div class="df-kpi-sub"><b class="df-num">{nbAtelier}</b> en découpe atelier</div>
+		</div>
+	</div>
+{/if}
 
 {#if noProduit}
 	<div class="notice">
@@ -316,7 +340,7 @@
 					<td class="px-4 py-3">
 						{#if v.sur_mesure_fournisseur}
 							<span class="posechip posechip--four">
-								<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></svg>
+								<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2" /><path d="M15 18H9" /><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14" /><circle cx="17" cy="18" r="2" /><circle cx="7" cy="18" r="2" /></svg>
 								Sur mesure
 							</span>
 						{:else}
@@ -478,133 +502,6 @@
 </form>
 
 <style>
-	/* --- Bloc haut figé --- */
-	.fiche-freeze {
-		position: sticky;
-		/* sous PortailHeader (72px) + barre d'outils Découpe (56px) */
-		top: 128px;
-		z-index: 10;
-		margin: -28px -24px 24px;
-		padding: 22px 24px 18px;
-		background: var(--color-surface-alt);
-		box-shadow: 0 1px 0 var(--color-border), 0 12px 18px -16px rgba(17, 24, 39, 0.22);
-	}
-
-	.back-link {
-		display: inline-flex;
-		align-items: center;
-		gap: 4px;
-		font-size: 13.5px;
-		font-weight: 500;
-		color: var(--color-text-muted);
-		text-decoration: none;
-		margin-bottom: 14px;
-		transition: color 180ms var(--ease-out-expo);
-	}
-	.back-link:hover {
-		color: var(--color-primary);
-	}
-	.back-link :global(.back-chevron) {
-		transform: rotate(90deg);
-	}
-
-	.fiche-head {
-		display: flex;
-		align-items: flex-end;
-		justify-content: space-between;
-		gap: 16px;
-	}
-	.fiche-title-xl {
-		font-size: 24px;
-	}
-	.fiche-meta {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		margin-top: 7px;
-		font-size: 14px;
-	}
-	.fiche-actions {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		flex: none;
-	}
-
-	/* --- Bandeau récap (KPIs) --- */
-	.fiche-kpis {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: 14px;
-		margin-top: 18px;
-	}
-	.fkpi {
-		display: flex;
-		align-items: flex-start;
-		gap: 13px;
-		background: var(--color-surface);
-		border-radius: var(--radius-2xl);
-		box-shadow: var(--shadow-card);
-		padding: 16px 18px;
-	}
-	.fkpi-ico {
-		width: 38px;
-		height: 38px;
-		border-radius: 11px;
-		display: grid;
-		place-items: center;
-		flex: none;
-	}
-	.fkpi-ico--a {
-		background: var(--color-primary-light);
-		color: var(--color-primary);
-	}
-	.fkpi-ico--b {
-		background: #eef6ff;
-		color: #1d6fbf;
-	}
-	.fkpi-ico--c {
-		background: var(--df-surface-sunken, #f3f4f6);
-		color: var(--color-text-body);
-	}
-	.fkpi-ico--d {
-		background: var(--color-warning-light);
-		color: var(--df-amber-tx, #b54708);
-	}
-	.fkpi-body {
-		min-width: 0;
-	}
-	.fkpi-lbl {
-		font-size: 12px;
-		font-weight: 500;
-		color: var(--color-text-muted);
-	}
-	.fkpi-val {
-		font-size: 24px;
-		font-weight: 600;
-		letter-spacing: -0.02em;
-		line-height: 1.1;
-		color: var(--color-text);
-		margin-top: 3px;
-		display: flex;
-		align-items: baseline;
-		gap: 5px;
-	}
-	.fkpi-unit {
-		font-size: 14px;
-		font-weight: 600;
-		color: var(--color-text-muted);
-	}
-	.fkpi-sub {
-		font-size: 12px;
-		color: var(--df-text-faint, #6b7280);
-		margin-top: 3px;
-	}
-	.fkpi-sub b {
-		color: var(--color-text-body);
-		font-weight: 600;
-	}
-
 	.notice {
 		display: flex;
 		align-items: center;
@@ -744,8 +641,8 @@
 		box-shadow: inset 0 0 0 1px var(--df-amber-bd, #fedf89);
 	}
 
-	/* L'en-tête de colonnes de la DataTable ne colle pas (le bloc figé porte déjà
-	   le contexte persistant) : sinon son thead sticky chevauche le freeze. */
+	/* L'en-tête de colonnes de la DataTable ne colle pas : la barre d'outils Découpe est
+	   déjà sticky en haut, un thead sticky la chevaucherait. */
 	.vitres-card :global(thead) {
 		position: static;
 	}
@@ -758,23 +655,11 @@
 	}
 
 	@media (max-width: 980px) {
-		.fiche-kpis {
-			grid-template-columns: 1fr 1fr;
-		}
 		.dimrow {
 			grid-template-columns: 1fr 1fr;
 		}
 	}
 	@media (max-width: 640px) {
-		.fiche-freeze {
-			top: 116px;
-			margin: -20px -16px 20px;
-			padding: 18px 16px 16px;
-		}
-		.fiche-head {
-			flex-direction: column;
-			align-items: flex-start;
-		}
 		.poserow {
 			flex-direction: column;
 			align-items: stretch;
@@ -785,9 +670,6 @@
 		}
 	}
 	@media (max-width: 560px) {
-		.fiche-kpis {
-			grid-template-columns: 1fr;
-		}
 		.dimrow {
 			grid-template-columns: 1fr 1fr;
 		}

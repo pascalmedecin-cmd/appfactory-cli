@@ -15,7 +15,14 @@ import {
 	chuteSpark,
 	chuteColorVar,
 	familleColor,
-	alerteTitre
+	alerteTitre,
+	makeVitreRef,
+	diagramFilms,
+	DGM_MARGIN_L,
+	DGM_MARGIN_R,
+	DGM_TOP,
+	DGM_BELOW,
+	DGM_RENDER_MAX_PX
 } from './presenter';
 import { optimiserDecoupe } from './optimiser';
 import type { ProduitDecoupe, Vitre, PlanProduit } from './types';
@@ -247,6 +254,111 @@ describe('stripGeometry (invariants visuels durs)', () => {
 		const geo = stripGeometry(plan, makeColorOf());
 		expect(geo.rects[0].label).not.toContain('↻');
 		expect(geo.rects[0].label).toBe('800×800');
+	});
+});
+
+describe('makeVitreRef (réf courte stable V1, V2…)', () => {
+	it('attribue V1, V2… dans l’ordre de rencontre, stable', () => {
+		const r = makeVitreRef();
+		expect(r('a')).toBe('V1');
+		expect(r('b')).toBe('V2');
+		expect(r('a')).toBe('V1'); // inchangé
+		expect(r('c')).toBe('V3');
+	});
+	it('pré-ordre fixe l’attribution', () => {
+		const r = makeVitreRef(['x', 'y', 'z']);
+		expect(r('y')).toBe('V2');
+		expect(r('x')).toBe('V1');
+	});
+});
+
+describe('diagramFilms (diagramme écran à échelle partagée)', () => {
+	const orderedIds = VITRES.map((v) => v.id);
+	const colorOf = makeColorOf(orderedIds);
+	const vitreRefOf = makeVitreRef(orderedIds);
+
+	it('un diagramme par plan, vide si aucun plan', () => {
+		expect(diagramFilms([], colorOf, vitreRefOf)).toHaveLength(0);
+		const dgms = diagramFilms(RESULTAT.plans, colorOf, vitreRefOf);
+		expect(dgms).toHaveLength(RESULTAT.plans.length);
+	});
+
+	it('ÉCHELLE PARTAGÉE : px/unité identique d’un film à l’autre (renderMaxWidthPx ∝ viewBoxW)', () => {
+		const dgms = diagramFilms(RESULTAT.plans, colorOf, vitreRefOf);
+		const ks = dgms.map((d) => d.renderMaxWidthPx / d.viewBoxW);
+		for (const k of ks) expect(k).toBeCloseTo(ks[0], 2);
+		// le film le plus long est rendu à la largeur max ; les autres en dessous.
+		const maxPx = Math.max(...dgms.map((d) => d.renderMaxWidthPx));
+		expect(maxPx).toBeLessThanOrEqual(DGM_RENDER_MAX_PX);
+		expect(Math.max(...dgms.map((d) => d.viewBoxW))).toBeGreaterThan(0);
+	});
+
+	it('échelle laize ET longueur identiques entre films (isométrie, même mm→unité)', () => {
+		const dgms = diagramFilms(RESULTAT.plans, colorOf, vitreRefOf);
+		// u = w / longueur = h / laize, partagé. On le reconstruit par film et on compare.
+		// reconstruit via band.w arrondi à l'entier → tolérance 2 décimales (l'échelle exacte
+		// partagée est déjà prouvée par le test renderMaxWidthPx/viewBoxW ci-dessus).
+		const us = dgms.map((d, i) => d.band.w / RESULTAT.plans[i].longueur_consommee_mm);
+		for (const u of us) expect(u).toBeCloseTo(us[0], 2);
+		// la laize suit la même échelle (à l’arrondi entier près).
+		dgms.forEach((d, i) => {
+			const expectedH = Math.round(RESULTAT.plans[i].laize_mm * us[0]);
+			expect(Math.abs(d.band.h - expectedH)).toBeLessThanOrEqual(2);
+		});
+	});
+
+	it('INVARIANT : aucune pièce hors de la bande', () => {
+		const dgms = diagramFilms(RESULTAT.plans, colorOf, vitreRefOf);
+		for (const d of dgms) {
+			for (const r of d.rects) {
+				expect(r.x).toBeGreaterThanOrEqual(d.band.x);
+				expect(r.y).toBeGreaterThanOrEqual(d.band.y);
+				expect(r.x + r.w).toBeLessThanOrEqual(d.band.x + d.band.w + 1);
+				expect(r.y + r.h).toBeLessThanOrEqual(d.band.y + d.band.h + 1);
+			}
+		}
+	});
+
+	it('viewBox cohérent (marges constantes) + 1 rect par placement + refs synchronisées', () => {
+		const dgms = diagramFilms(RESULTAT.plans, colorOf, vitreRefOf);
+		dgms.forEach((d, i) => {
+			expect(d.viewBoxW).toBe(DGM_MARGIN_L + d.band.w + DGM_MARGIN_R);
+			expect(d.viewBoxH).toBe(DGM_TOP + d.band.h + DGM_BELOW);
+			expect(d.rects).toHaveLength(RESULTAT.plans[i].placements.length);
+			for (const r of d.rects) {
+				expect(r.vitreRef).toMatch(/^V\d+$/);
+				expect(r.color).toMatch(/^#/);
+			}
+		});
+	});
+
+	it('règle de longueur : un tiret par mètre entier, départ à 0 sur la bande', () => {
+		const plan: PlanProduit = {
+			produit_id: 'p', laize_mm: 1500, longueur_consommee_mm: 3600, surface_pieces_mm2: 0, taux_chute: 0, poses_en_les: [],
+			placements: [{ vitre_id: 'a', piece_index: 0, x_mm: 0, y_mm: 0, largeur_placee_mm: 1500, hauteur_placee_mm: 3600, pivotee: false }]
+		};
+		const [d] = diagramFilms([plan], makeColorOf(), makeVitreRef());
+		expect(d.ticks).toHaveLength(4); // 0,1,2,3
+		expect(d.ticks[0].label).toBe('0');
+		expect(d.ticks[0].x).toBe(d.band.x);
+		expect(d.totalLabel).toBe('3,60 m');
+	});
+
+	it('étiquette chute présente si bande de chute basse assez épaisse', () => {
+		// une seule pièce occupant le haut → grosse chute basse → label.
+		const plan: PlanProduit = {
+			produit_id: 'p', laize_mm: 2000, longueur_consommee_mm: 2000, surface_pieces_mm2: 2_000_000, taux_chute: 0.5, poses_en_les: [],
+			placements: [{ vitre_id: 'a', piece_index: 0, x_mm: 0, y_mm: 0, largeur_placee_mm: 1000, hauteur_placee_mm: 2000, pivotee: false }]
+		};
+		const [d] = diagramFilms([plan], makeColorOf(), makeVitreRef());
+		expect(d.chute).not.toBeNull();
+		expect(d.chute!.label).toBe('chute 50 %');
+	});
+
+	it('déterminisme : mêmes entrées → mêmes sorties', () => {
+		const a = diagramFilms(RESULTAT.plans, makeColorOf(orderedIds), makeVitreRef(orderedIds));
+		const b = diagramFilms(RESULTAT.plans, makeColorOf(orderedIds), makeVitreRef(orderedIds));
+		expect(JSON.stringify(a)).toBe(JSON.stringify(b));
 	});
 });
 

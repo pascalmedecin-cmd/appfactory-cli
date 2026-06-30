@@ -135,9 +135,9 @@ test('optimisation : KPI, strip, liste de coupe, alertes et commande cohérents'
 	// Statut « À vérifier » (il y a des alertes) — la statepill exactement, pas le titre du callout.
 	await expect(page.getByText('À vérifier', { exact: true })).toBeVisible();
 
-	// Au moins une carte film avec strip SVG (role img) + pastille de chute + liste de coupe.
+	// Au moins une carte film avec diagramme SVG (role img) + pastille de chute + liste de coupe.
 	await expect(page.locator('.df-film').first()).toBeVisible();
-	await expect(page.locator('.df-strip svg[role="img"]').first()).toBeVisible();
+	await expect(page.locator('.df-dgm svg[role="img"]').first()).toBeVisible();
 	await expect(page.locator('.df-chute').first()).toBeVisible();
 	await expect(page.locator('.df-cuttable').first()).toBeAttached();
 

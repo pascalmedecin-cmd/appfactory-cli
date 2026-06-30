@@ -1,16 +1,14 @@
 <!--
-  Découpe Films - Liste des chantiers (écran 1). Réutilise les primitives CRM
-  (DataTable, Badge, EmptyState, ModalForm, Icon, toasts) + styles partagés decoupe.css.
-  Clic ligne → fiche chantier.
+  Découpe Films - Liste des chantiers (écran 1). Refonte 2026-06-29 : lignes-cartes premium
+  groupées par statut (En saisie / Lancées), tuile couleur-famille + nom + client + méta-chips
+  + pastille de statut. Recherche client-side. Clic ligne → fiche chantier.
 -->
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
-	import DataTable from '$lib/components/DataTable.svelte';
-	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import { familleColor } from '$lib/decoupe/presenter';
 	import { toasts } from '$lib/stores/toast';
 	import type { PageData } from './$types';
 
@@ -27,30 +25,26 @@
 	let saving = $state(false);
 	let nom = $state('');
 	let client = $state('');
+	let query = $state('');
 
 	const count = $derived(data.chantiers.length);
+	const nbEnSaisie = $derived(data.chantiers.filter((c) => c.statut !== 'lancee').length);
+	const nbLancees = $derived(data.chantiers.filter((c) => c.statut === 'lancee').length);
 
-	const columns = [
-		{ key: 'nom', label: 'Chantier', sortable: true, class: 'w-[28%]' },
-		{ key: 'client', label: 'Client', sortable: true, class: 'w-[18%] hidden md:table-cell' },
-		{ key: 'nb_vitres', label: 'Vitres', class: 'w-[10%]' },
-		{ key: 'familles', label: 'Familles', class: 'w-[20%] hidden md:table-cell' },
-		{ key: 'statut', label: 'Statut', sortable: true, class: 'w-[14%]' },
-		{ key: 'updated_at', label: 'Modifié', sortable: true, class: 'w-[12%] hidden lg:table-cell' }
-	];
+	const filtered = $derived.by(() => {
+		const q = query.trim().toLowerCase();
+		if (!q) return data.chantiers;
+		return data.chantiers.filter((c) => `${c.nom} ${c.client ?? ''}`.toLowerCase().includes(q));
+	});
+	const enSaisie = $derived(filtered.filter((c) => c.statut !== 'lancee'));
+	const lancees = $derived(filtered.filter((c) => c.statut === 'lancee'));
 
-	function statutLabel(s: string): string {
-		return s === 'lancee' ? 'Lancée' : 'En saisie';
+	// Tuile : couleur de la famille si une seule, bleu primaire si plusieurs (ou aucune).
+	function tileColor(c: Chantier): string {
+		return c.familles.length === 1 ? familleColor(c.familles[0]) : 'var(--color-primary)';
 	}
-	function statutVariant(s: string): 'success' | 'muted' {
-		return s === 'lancee' ? 'success' : 'muted';
-	}
-	function formatDate(iso: string): string {
-		return new Date(iso).toLocaleDateString('fr-CH', {
-			day: '2-digit',
-			month: 'short',
-			year: 'numeric'
-		});
+	function formatDateShort(iso: string): string {
+		return new Date(iso).toLocaleDateString('fr-CH', { day: '2-digit', month: 'short' });
 	}
 
 	function openCreate() {
@@ -58,27 +52,82 @@
 		client = '';
 		modalOpen = true;
 	}
-	function openChantier(c: Chantier) {
-		goto(`/decoupe/chantiers/${c.id}`);
-	}
 </script>
 
 <svelte:head><title>Chantiers · Découpe Films</title></svelte:head>
 
-<section class="df-page-head">
-	<div>
+<!-- Icônes Lucide inline (décoratives → aria-hidden) -->
+{#snippet icBuilding()}
+	<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" /><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" /><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" /><path d="M10 6h4" /><path d="M10 10h4" /><path d="M10 14h4" /><path d="M10 18h4" /></svg>
+{/snippet}
+{#snippet icFrame()}
+	<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" /><path d="M3 9h18" /><path d="M9 21V9" /></svg>
+{/snippet}
+{#snippet icCalendar()}
+	<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v4" /><path d="M16 2v4" /><rect width="18" height="18" x="3" y="4" rx="2" /><path d="M3 10h18" /></svg>
+{/snippet}
+{#snippet icPencil()}
+	<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+{/snippet}
+{#snippet icCheck()}
+	<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+{/snippet}
+{#snippet icChevron()}
+	<svg class="df-chrow-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+{/snippet}
+{#snippet icSearch()}
+	<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+{/snippet}
+
+{#snippet chantierCard(c: Chantier)}
+	<a
+		class="df-chrow"
+		href={`/decoupe/chantiers/${c.id}`}
+		aria-label={`Chantier ${c.nom}${c.client ? `, client ${c.client}` : ''}, ${c.nb_vitres} vitre${c.nb_vitres > 1 ? 's' : ''}, ${c.statut === 'lancee' ? 'lancée' : 'en saisie'}`}
+	>
+		<span class="df-chrow-tile" style="background:{tileColor(c)}">{@render icBuilding()}</span>
+		<div class="df-chrow-main">
+			<div class="df-chrow-nom">{c.nom}</div>
+			{#if c.client}<div class="df-chrow-client">{c.client}</div>{/if}
+			<div class="df-chrow-meta">
+				<span class="df-mchip">{@render icFrame()}<span class="df-num">{c.nb_vitres}</span> vitre{c.nb_vitres > 1 ? 's' : ''}</span>
+				{#if c.familles.length > 0}
+					<span class="df-chrow-fams">
+						{#each c.familles as f (f)}<span class="df-pastille df-pastille--{f}">{FAMILLE_LABEL[f] ?? f}</span>{/each}
+					</span>
+				{/if}
+				<span class="df-mchip">{@render icCalendar()}{formatDateShort(c.updated_at)}</span>
+			</div>
+		</div>
+		<div class="df-chrow-right">
+			{#if c.statut === 'lancee'}
+				<span class="df-statepill df-statepill--ok">{@render icCheck()} Lancée</span>
+			{:else}
+				<span class="df-statepill df-statepill--saisie">{@render icPencil()} En saisie</span>
+			{/if}
+			{@render icChevron()}
+		</div>
+	</a>
+{/snippet}
+
+<section class="df-pagehead">
+	<div class="df-pagehead-l">
 		<div class="df-kicker">Découpe Films</div>
 		<h1 class="df-title-xl">Chantiers</h1>
-		<p class="df-page-sub">
-			{count === 0
-				? 'Créez un chantier pour saisir vos vitres et optimiser la découpe.'
-				: `${count} chantier${count > 1 ? 's' : ''} · saisissez les vitres puis lancez l'optimisation.`}
-		</p>
+		<div class="df-page-meta">
+			<span>{count} chantier{count > 1 ? 's' : ''} actif{count > 1 ? 's' : ''}</span>
+			{#if count > 0}
+				<span class="df-dot-sep"></span><span>{nbEnSaisie} en saisie</span>
+				<span class="df-dot-sep"></span><span>{nbLancees} lancée{nbLancees > 1 ? 's' : ''}</span>
+			{/if}
+		</div>
 	</div>
-	<button type="button" class="ws-btn ws-btn-primary df-head-action" onclick={openCreate}>
-		<Icon name="add" size={18} />
-		Nouveau chantier
-	</button>
+	<div class="df-pagehead-r">
+		<button type="button" class="ws-btn ws-btn-primary df-head-action" onclick={openCreate}>
+			<Icon name="add" size={18} />
+			Nouveau chantier
+		</button>
+	</div>
 </section>
 
 {#if count === 0}
@@ -90,39 +139,26 @@
 		onAction={openCreate}
 	/>
 {:else}
-	<div class="df-card">
-		<DataTable
-			data={data.chantiers}
-			{columns}
-			onRowClick={openChantier}
-			searchable={false}
-			embedded
-			rowAriaLabel={(c) =>
-				`Chantier ${c.nom}${c.client ? `, client ${c.client}` : ''}, ${c.nb_vitres} vitre${c.nb_vitres > 1 ? 's' : ''}, ${statutLabel(c.statut)}`}
-			emptyMessage="Aucun chantier"
-		>
-			{#snippet row(c: Chantier)}
-				<td class="px-4 py-3"><span class="df-cell-strong">{c.nom}</span></td>
-				<td class="px-4 py-3 hidden md:table-cell df-cell-muted">{c.client || '—'}</td>
-				<td class="px-4 py-3"><span class="df-count">{c.nb_vitres}</span></td>
-				<td class="px-4 py-3 hidden md:table-cell">
-					{#if c.familles.length > 0}
-						<span class="fam-list">
-							{#each c.familles as f (f)}
-								<span class="df-pastille df-pastille--{f}">{FAMILLE_LABEL[f] ?? f}</span>
-							{/each}
-						</span>
-					{:else}
-						<span class="df-cell-muted">—</span>
-					{/if}
-				</td>
-				<td class="px-4 py-3">
-					<Badge label={statutLabel(c.statut)} variant={statutVariant(c.statut)} />
-				</td>
-				<td class="px-4 py-3 hidden lg:table-cell df-cell-muted df-num">{formatDate(c.updated_at)}</td>
-			{/snippet}
-		</DataTable>
+	<div class="df-listbar">
+		<label class="df-search">
+			<span class="sr-only">Rechercher un chantier</span>
+			{@render icSearch()}
+			<input type="search" bind:value={query} placeholder="Rechercher un chantier, un client…" />
+		</label>
 	</div>
+
+	{#if filtered.length === 0}
+		<EmptyState icon="search" title="Aucun résultat" description={`Aucun chantier ne correspond à « ${query} ».`} />
+	{:else}
+		{#if enSaisie.length > 0}
+			<h2 class="df-sec-h">En saisie<span class="df-sec-count">· {enSaisie.length}</span><span class="df-sec-line"></span></h2>
+			{#each enSaisie as c (c.id)}{@render chantierCard(c)}{/each}
+		{/if}
+		{#if lancees.length > 0}
+			<h2 class="df-sec-h">Lancées<span class="df-sec-count">· {lancees.length}</span><span class="df-sec-line"></span></h2>
+			{#each lancees as c (c.id)}{@render chantierCard(c)}{/each}
+		{/if}
+	{/if}
 {/if}
 
 <!-- FAB mobile (.ws-fab : visible < 768px uniquement) -->
@@ -175,9 +211,15 @@
 </ModalForm>
 
 <style>
-	.fam-list {
-		display: inline-flex;
-		flex-wrap: wrap;
-		gap: 6px 12px;
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
 	}
 </style>

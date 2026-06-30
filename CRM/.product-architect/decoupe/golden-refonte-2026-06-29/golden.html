@@ -1,0 +1,759 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Golden FINAL · Découpe Films · refonte 2026-06-29</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-primary:#2F5A9E;--color-primary-light:#F0F4F8;--color-primary-hover:#264C85;--color-primary-dark:#0A1628;
+  --color-surface:#FFFFFF;--color-surface-alt:#F9FAFB;
+  --color-border:#E5E7EB;--color-border-strong:#D1D5DB;--color-border-input:#ADB5BD;
+  --color-text:#111827;--color-text-body:#374151;--color-text-muted:#6B7280;--color-text-faint:#9CA3AF;
+  --color-success:#12B76A;--color-success-light:#ECFDF3;--color-success-deep:#067647;
+  --color-warning:#F79009;--color-warning-light:#FFFAEB;--color-warning-deep:#B54708;
+  --color-danger:#F04438;--color-danger-light:#FEF3F2;--color-danger-deep:#B42318;
+  --color-info:#5A7190;--color-info-light:#EDF1F5;--color-info-deep:#4A5E78;
+  --fam-solaire:#d98a23;--fam-securite:#3d6b8a;--fam-discretion:#7b6a9a;
+  --df-surface-sunken:#f3f4f6;--df-text-faint:#6b7280;
+  --df-green-tx:#027a48;--df-green-bd:#a6f4c5;--df-amber-tx:#b54708;--df-amber-bd:#fedf89;--df-red-tx:#b42318;--df-red-bd:#fecdca;
+  --logo:#00003B;
+  --radius-sm:6px;--radius-md:8px;--radius-lg:10px;--radius-xl:12px;--radius-2xl:16px;--radius-full:9999px;
+  --shadow-xs:0 1px 2px rgba(16,24,40,.05);
+  --shadow-card:0 1px 0 rgba(17,24,39,.02), 0 0 0 1px rgba(17,24,39,.04), 0 8px 20px -12px rgba(17,24,39,.10);
+  --shadow-card-hover:0 1px 3px rgba(17,24,39,.05), 0 20px 40px -15px rgba(17,24,39,.08);
+  --ease-out-expo:cubic-bezier(0.16,1,0.3,1);--dur:240ms;
+  /* teintes pièces, désaturées, dérivées du registre FilmPro (AA en texte -tx) */
+  --pc-sage:#538B6B;--pc-sage-tx:#3F6B52;
+  --pc-slate:#5A7190;--pc-slate-tx:#41557A;
+  --pc-violet:#7B6A9A;--pc-violet-tx:#5C4E78;
+  --pc-ochre:#917548;--pc-ochre-tx:#6E5836;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:126px}
+body{font-family:'DM Sans',system-ui,-apple-system,sans-serif;color:var(--color-text-body);background:radial-gradient(1200px 600px at 50% -10%,#fff 0%,var(--color-surface-alt) 55%,var(--color-surface-alt) 100%);min-height:100vh;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+.num{font-variant-numeric:tabular-nums}
+.mono{font-family:'DM Mono','Consolas',monospace;font-variant-numeric:tabular-nums}
+svg{display:block}
+.wrap{width:100%;max-width:1280px;margin:0 auto;padding:0 24px}
+
+/* Bandeau maquette (retirable) */
+.goldbar{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.03em;color:var(--color-text-muted);text-align:center;padding:7px 16px;background:repeating-linear-gradient(45deg,var(--color-surface-alt),var(--color-surface-alt) 10px,#F3F4F6 10px,#F3F4F6 20px);border-bottom:1px dashed var(--color-border-strong)}
+
+/* === Shell : header portail + barre outil === */
+.hdr{position:sticky;top:0;z-index:40;height:60px;background:rgba(255,255,255,.88);backdrop-filter:saturate(180%) blur(8px);-webkit-backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--color-border);display:flex;align-items:center}
+.hdr .wrap{display:flex;align-items:center;justify-content:space-between}
+.logo{height:30px;width:auto}
+.brand{display:inline-flex;align-items:center;gap:9px;text-decoration:none;border-radius:var(--radius-md);padding:4px 9px 4px 5px;margin-left:-5px;transition:background var(--dur) var(--ease-out-expo)}
+.brand:hover{background:var(--color-surface-alt)}
+.back-ico{width:17px;height:17px;color:var(--color-text-muted);transform:rotate(180deg)}
+.hdr-portail{font-size:13px;font-weight:500;color:var(--color-text-muted);display:none}
+@media(min-width:720px){.hdr-portail{display:inline}}
+.hdr-right{display:flex;align-items:center;gap:14px}
+.avatar{width:32px;height:32px;border-radius:var(--radius-full);background:var(--color-primary-light);color:var(--color-primary);display:grid;place-items:center;font-size:12px;font-weight:600;box-shadow:inset 0 0 0 1px rgba(47,90,158,.14)}
+
+.toolbar{position:sticky;top:60px;z-index:39;border-bottom:1px solid var(--color-border);background:rgba(255,255,255,.92);backdrop-filter:saturate(180%) blur(6px);-webkit-backdrop-filter:saturate(180%) blur(6px)}
+.toolbar .wrap{height:52px;display:flex;align-items:center;gap:26px}
+.tool-name{font-size:15px;font-weight:600;color:var(--color-text);display:flex;align-items:center;gap:10px;white-space:nowrap}
+.tool-ico{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--color-primary-light);color:var(--color-primary)}
+.tool-ico svg{width:18px;height:18px}
+.tool-nav{display:flex;gap:4px;margin-left:2px}
+.tool-nav a{position:relative;font-size:13.5px;font-weight:500;color:var(--color-text-muted);text-decoration:none;padding:8px 12px;border-radius:8px;transition:background var(--dur) var(--ease-out-expo),color var(--dur) var(--ease-out-expo)}
+.tool-nav a:hover{background:var(--color-surface-alt);color:var(--color-text-body)}
+.tool-nav a.active{color:var(--color-primary);font-weight:600}
+.tool-nav a.active::after{content:'';position:absolute;left:12px;right:12px;bottom:-9px;height:2px;border-radius:2px;background:var(--color-primary)}
+
+main{padding-top:14px;padding-bottom:96px}
+
+/* En-tête de chaque écran (sticky, repère de navigation) */
+.screen-head{position:sticky;top:112px;z-index:20;display:flex;align-items:center;gap:13px;padding:13px 0 12px;margin:28px 0 18px;background:var(--color-surface-alt);box-shadow:0 1px 0 var(--color-border),0 8px 8px -8px rgba(17,24,39,.04)}
+main>.wrap>.screen-head:first-child{margin-top:6px}
+.sh-num{flex:none;width:26px;height:26px;border-radius:8px;background:var(--color-primary);color:#fff;display:grid;place-items:center;font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;box-shadow:0 1px 2px rgba(47,90,158,.3)}
+.sh-tt{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-faint)}
+.sh-desc{font-size:12.5px;color:var(--color-text-muted);border-left:1px solid var(--color-border-strong);padding-left:13px}
+
+/* En-tête de page premium UNIFIÉ */
+.back{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--color-text-muted);text-decoration:none;margin-bottom:16px}
+.back svg{width:15px;height:15px;transform:rotate(180deg)}
+.back:hover{color:var(--color-text-body)}
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:26px}
+.ph-l{min-width:0}
+.kicker{font-size:11.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--color-text-faint);margin-bottom:9px;display:flex;align-items:center;gap:8px}
+.page-title{font-size:30px;font-weight:600;letter-spacing:-.025em;color:var(--color-text);line-height:1.1}
+.page-meta{margin-top:11px;font-size:14px;color:var(--color-text-muted);display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.dot-sep{width:3px;height:3px;border-radius:50%;background:var(--color-border-strong)}
+.ph-r{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+/* Badge statut global */
+.statepill{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 13px 0 11px;border-radius:var(--radius-full);font-size:13px;font-weight:600}
+.statepill svg{width:15px;height:15px}
+.statepill--ok{background:var(--color-success-light);color:var(--color-success-deep);box-shadow:inset 0 0 0 1px var(--df-green-bd)}
+.statepill--warn{background:var(--color-warning-light);color:var(--color-warning-deep);box-shadow:inset 0 0 0 1px var(--df-amber-bd)}
+.statepill--saisie{background:var(--color-surface-alt);color:var(--color-text-muted);box-shadow:inset 0 0 0 1px var(--color-border-strong)}
+
+/* Boutons */
+.btn{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 18px;border-radius:var(--radius-lg);font-size:14px;font-weight:600;font-family:inherit;border:1px solid transparent;cursor:pointer;transition:transform var(--dur) var(--ease-out-expo),box-shadow var(--dur) var(--ease-out-expo),background var(--dur) var(--ease-out-expo)}
+.btn svg{width:17px;height:17px}
+.btn:active{transform:scale(.985)}
+.btn-primary{background:var(--color-primary);color:#fff;box-shadow:0 1px 2px rgba(47,90,158,.25),0 6px 16px -8px rgba(47,90,158,.5)}
+.btn-primary:hover{background:var(--color-primary-hover)}
+.btn-ghost{background:#fff;border-color:var(--color-border-strong);color:var(--color-text-body)}
+.btn-ghost:hover{background:var(--color-surface-alt)}
+.btn-sm{height:38px;padding:0 15px;font-size:13.5px;border-radius:9px}
+
+/* Bandeau KPI premium UNIFIÉ */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:8px}
+.kpi{background:var(--color-surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);padding:18px 20px 17px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.kpi-lbl{font-size:12.5px;font-weight:500;color:var(--color-text-muted);display:flex;align-items:center;gap:7px}
+.kpi-lbl svg{width:14px;height:14px;color:var(--color-text-faint)}
+.kpi-val{font-size:32px;font-weight:600;letter-spacing:-.02em;line-height:1.05;color:var(--color-text);margin-top:8px;display:flex;align-items:baseline;gap:7px}
+.kpi-val .unit{font-size:17px;font-weight:600;color:var(--color-text-muted)}
+.kpi-sub{font-size:12.5px;color:var(--color-text-faint);margin-top:7px;line-height:1.45}
+.kpi-sub b{color:var(--color-text-body);font-weight:600}
+.kpi--chute .kpi-val{color:var(--kpi-c);font-weight:700}
+.kpi-spark{position:absolute;right:15px;top:15px;width:44px;height:44px}
+
+/* Diviseur de section */
+.sec-h{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--color-text-faint);margin:30px 0 14px}
+.sec-h .count{font-variant-numeric:tabular-nums;color:var(--color-text-muted)}
+.sec-h .line{flex:1;height:1px;background:var(--color-border)}
+
+/* Pastille famille */
+.fam{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:500;color:var(--color-text-body);white-space:nowrap}
+.fam::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--fam-c,var(--color-text-muted))}
+.fam--solaire{--fam-c:var(--fam-solaire)}.fam--securite{--fam-c:var(--fam-securite)}.fam--discretion{--fam-c:var(--fam-discretion)}
+
+/* Chips */
+.chip{display:inline-flex;align-items:center;gap:5px;height:23px;padding:0 9px;border-radius:var(--radius-full);font-size:11.5px;font-weight:500;background:var(--color-surface-alt);color:var(--color-text-body);box-shadow:inset 0 0 0 1px var(--color-border);white-space:nowrap}
+.chip svg{width:12px;height:12px}
+.chip--ok{background:var(--color-success-light);color:var(--color-success-deep);box-shadow:inset 0 0 0 1px var(--df-green-bd)}
+.chip--warn{background:var(--color-warning-light);color:var(--color-warning-deep);box-shadow:inset 0 0 0 1px var(--df-amber-bd)}
+.chip--info{background:var(--color-info-light);color:var(--color-info-deep);box-shadow:inset 0 0 0 1px #CBD5E1}
+
+/* === ÉCRAN 2 : Chantiers (lignes-cartes LENS B) === */
+.lc{display:flex;align-items:center;gap:17px;background:var(--color-surface);border-radius:var(--radius-xl);box-shadow:var(--shadow-card);padding:17px 18px;margin-bottom:12px;text-decoration:none;transition:transform var(--dur) var(--ease-out-expo),box-shadow var(--dur) var(--ease-out-expo)}
+.lc:hover{transform:translateY(-2px);box-shadow:var(--shadow-card-hover)}
+.lc:focus-visible{outline:none;box-shadow:var(--shadow-card),0 0 0 3px rgba(47,90,158,.35)}
+.lc-tile{flex:none;width:54px;height:54px;border-radius:14px;display:grid;place-items:center;color:#fff;box-shadow:0 1px 2px rgba(17,24,39,.16),inset 0 1px 0 rgba(255,255,255,.18)}
+.lc-tile svg{width:26px;height:26px}
+.lc-body{flex:1;min-width:0}
+.lc-title{font-size:16px;font-weight:600;letter-spacing:-.01em;color:var(--color-text);line-height:1.25}
+.lc-client{font-size:13px;color:var(--color-text-muted);margin-top:3px}
+.lc-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:11px}
+.mchip{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:500;color:var(--color-text-body);background:var(--color-surface-alt);box-shadow:inset 0 0 0 1px var(--color-border);border-radius:var(--radius-full);height:24px;padding:0 10px;white-space:nowrap}
+.mchip svg{width:13px;height:13px;color:var(--color-text-faint)}
+.mchip .num{font-weight:600}
+.lc-fams{display:inline-flex;align-items:center;gap:11px;padding:0 4px}
+.lc-right{flex:none;display:flex;align-items:center;gap:14px}
+.lc-chev{width:20px;height:20px;color:var(--color-border-strong);transition:transform var(--dur) var(--ease-out-expo),color var(--dur) var(--ease-out-expo)}
+.lc:hover .lc-chev{transform:translateX(3px);color:var(--color-text-muted)}
+
+/* === Tables (fiche vitres + base produit) === */
+.dtable{background:var(--color-surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);overflow:hidden;margin-bottom:14px}
+.dtable table{width:100%;border-collapse:collapse}
+.dtable th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-faint);padding:13px 18px;background:var(--color-surface-alt);border-bottom:1px solid var(--color-border);white-space:nowrap}
+.dtable td{padding:14px 18px;border-bottom:1px solid var(--color-border);font-size:14px;color:var(--color-text-body);vertical-align:middle}
+.dtable tr:last-child td{border-bottom:none}
+.dtable tbody tr{transition:background var(--dur) var(--ease-out-expo)}
+.dtable tbody tr:hover{background:var(--color-surface-alt)}
+.td-strong{font-weight:600;color:var(--color-text)}
+.td-ref{display:inline-flex;align-items:center;gap:11px}
+.ref-tile{flex:none;width:34px;height:34px;border-radius:9px;display:grid;place-items:center;color:#fff;box-shadow:0 1px 2px rgba(17,24,39,.14)}
+.ref-tile svg{width:18px;height:18px}
+.td-nom{color:var(--color-text-muted);font-size:13px;display:block;margin-top:1px}
+.laizechips{display:inline-flex;gap:5px;flex-wrap:wrap}
+.lz{font-size:11.5px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--color-text-body);background:var(--color-surface-alt);box-shadow:inset 0 0 0 1px var(--color-border);border-radius:var(--radius-sm);padding:2px 7px}
+.attrs{display:inline-flex;gap:5px;flex-wrap:wrap}
+.badge-st{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:var(--radius-full);font-size:12px;font-weight:600;white-space:nowrap}
+.badge-st--atelier{background:var(--color-info-light);color:var(--color-info-deep);box-shadow:inset 0 0 0 1px #CBD5E1}
+.badge-st--mesure{background:var(--color-warning-light);color:var(--color-warning-deep);box-shadow:inset 0 0 0 1px var(--df-amber-bd)}
+.archived{opacity:.6}
+
+/* Barre d'outils liste / recherche */
+.listbar{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.search{position:relative;flex:1;min-width:240px;max-width:380px}
+.search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--color-text-faint)}
+.search input{width:100%;height:40px;padding:0 14px 0 38px;border:1px solid var(--color-border-strong);border-radius:var(--radius-lg);font-size:14px;font-family:inherit;color:var(--color-text);background:#fff}
+.search input::placeholder{color:var(--color-text-faint)}
+.search input:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(47,90,158,.14)}
+
+/* === Carte de saisie rapide (cascade) === */
+.savecard{background:var(--color-surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);padding:20px 22px;margin:6px 0 18px}
+.savecard h3{font-size:16px;font-weight:600;letter-spacing:-.01em;color:var(--color-text);display:flex;align-items:center;gap:9px}
+.savecard h3 svg{width:17px;height:17px;color:var(--color-primary)}
+.savecard p{font-size:12.5px;color:var(--color-text-muted);margin:5px 0 17px}
+.cascade{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin-bottom:13px}
+.dims{display:grid;grid-template-columns:1fr 1fr 86px auto auto;gap:13px;align-items:end}
+.field label{display:block;font-size:13px;font-weight:500;color:var(--color-text-body);margin-bottom:6px}
+.field input,.field select{width:100%;height:42px;padding:0 12px;border:1px solid var(--color-border-strong);border-radius:var(--radius-md);font-size:14px;font-family:inherit;color:var(--color-text);background:#fff;appearance:none}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 11px center;padding-right:34px}
+.field input:focus,.field select:focus{outline:none;border-color:var(--color-primary);box-shadow:0 0 0 3px rgba(47,90,158,.14)}
+.field input.mono{font-family:'DM Mono',monospace}
+.seg{display:inline-flex;background:var(--color-surface-alt);border-radius:var(--radius-md);padding:3px;box-shadow:inset 0 0 0 1px var(--color-border);height:42px;position:relative}
+.seg label{display:inline-flex;align-items:center;gap:6px;height:36px;margin-bottom:0;padding:0 13px;border-radius:7px;font-size:13px;font-weight:500;color:var(--color-text-muted);cursor:pointer;white-space:nowrap;transition:all var(--dur) var(--ease-out-expo)}
+.seg label svg{width:14px;height:14px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg input:checked+label{background:#fff;color:var(--color-text);font-weight:600;box-shadow:var(--shadow-xs),inset 0 0 0 1px var(--color-border)}
+
+/* === ÉCRAN 5 : Résultat - callout, commande, films === */
+.callout{display:flex;gap:14px;padding:17px 20px;border-radius:var(--radius-2xl);background:var(--color-warning-light);box-shadow:inset 0 0 0 1px var(--df-amber-bd);border-left:3px solid var(--color-warning);margin-bottom:14px}
+.callout-ico{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#fff;color:var(--color-warning-deep);box-shadow:inset 0 0 0 1px var(--df-amber-bd)}
+.callout-ico svg{width:19px;height:19px}
+.callout-title{font-size:14px;font-weight:600;color:var(--color-warning-deep);margin-bottom:9px}
+.callout-list{list-style:none;display:grid;gap:10px}
+.callout-list li{font-size:13.5px;line-height:1.5;color:var(--color-text-body)}
+.callout-list b{color:var(--color-text);font-weight:600}
+.tagvit{display:inline-block;font-family:'DM Mono',monospace;font-size:11.5px;font-weight:500;color:var(--color-text-muted);background:#fff;border-radius:var(--radius-sm);padding:1px 7px;box-shadow:inset 0 0 0 1px var(--color-border);margin-left:3px}
+
+.ordercard{background:var(--color-surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);overflow:hidden;margin-bottom:14px}
+.order-row{display:flex;align-items:center;gap:14px;padding:15px 20px;border-bottom:1px solid var(--color-border)}
+.order-row:last-child{border-bottom:none}
+.order-ico{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#fff;box-shadow:0 1px 2px rgba(17,24,39,.14)}
+.order-ico svg{width:18px;height:18px}
+.order-main{flex:1;min-width:0}
+.order-ref{font-size:14px;font-weight:600;color:var(--color-text)}
+.order-ref .nom{font-weight:400;color:var(--color-text-muted);margin-left:7px}
+.order-dim{font-family:'DM Mono',monospace;font-size:12.5px;color:var(--color-text-muted);margin-top:2px}
+.order-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.order-foot{padding:12px 20px;font-size:12.5px;color:var(--color-text-muted);background:var(--color-surface-alt);display:flex;align-items:center;gap:8px}
+.order-foot svg{width:14px;height:14px;color:var(--color-text-faint);flex:none}
+
+.film{background:var(--color-surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);padding:22px 22px 8px;margin-bottom:14px;transition:box-shadow var(--dur) var(--ease-out-expo)}
+.film:hover{box-shadow:var(--shadow-card-hover)}
+.film-head{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.film-tile{flex:none;width:42px;height:42px;border-radius:11px;display:grid;place-items:center;color:#fff;box-shadow:0 1px 2px rgba(17,24,39,.15),inset 0 1px 0 rgba(255,255,255,.18)}
+.film-tile svg{width:22px;height:22px}
+.film-id{flex:1;min-width:0}
+.film-ref{font-size:16px;font-weight:700;letter-spacing:-.01em;color:var(--color-text)}
+.film-ref .fab{font-size:12px;font-weight:500;color:var(--color-text-faint);margin-left:8px}
+.film-sub{display:flex;align-items:center;gap:10px;margin-top:3px}
+.film-nom{font-size:13px;color:var(--color-text-muted)}
+.chute{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 13px;border-radius:var(--radius-full);font-size:12.5px;font-weight:500;white-space:nowrap;flex:none}
+.chute .big{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.chute svg{width:15px;height:15px}
+.chute--good{background:var(--color-success-light);color:var(--color-success-deep);box-shadow:inset 0 0 0 1px var(--df-green-bd)}
+.chute--mid{background:var(--color-warning-light);color:var(--color-warning-deep);box-shadow:inset 0 0 0 1px var(--df-amber-bd)}
+.chute--high{background:var(--color-danger-light);color:var(--color-danger-deep);box-shadow:inset 0 0 0 1px var(--df-red-bd)}
+
+/* === DIAGRAMME DE DÉCOUPE (le strip refondu) === */
+.dgm{background:linear-gradient(180deg,#fcfcfd,var(--df-surface-sunken));border-radius:var(--radius-xl);box-shadow:inset 0 0 0 1px var(--color-border),var(--shadow-xs);padding:17px 19px 15px;margin:4px 0 16px}
+.dgm-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:12px}
+.dgm-tt-l{min-width:0}
+.dgm-title{font-size:13px;font-weight:600;letter-spacing:-.01em;color:var(--color-text);display:flex;align-items:center;gap:8px}
+.dgm-title svg{width:15px;height:15px;color:var(--color-text-muted)}
+.dgm-sub{font-size:12.5px;color:var(--color-text-muted);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dgm-fill{flex:none;display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 11px;border-radius:var(--radius-full);font-size:12px;font-weight:500;color:var(--color-text-body);background:#fff;box-shadow:inset 0 0 0 1px var(--color-border)}
+.dgm-fill b{font-weight:700;font-variant-numeric:tabular-nums;color:var(--color-text)}
+.dgm-band{max-width:100%;height:auto}
+.dgm-legend{display:flex;align-items:center;gap:16px;margin-top:11px;font-size:11.5px;font-weight:500;color:var(--color-text-muted);flex-wrap:wrap}
+.lg{display:inline-flex;align-items:center;gap:7px}
+.lg .sw{width:13px;height:13px;border-radius:4px;flex:none}
+.lg .vref{font-family:'DM Mono',monospace;font-weight:500;color:var(--color-text-body)}
+.lg .sw--chute{background:repeating-linear-gradient(45deg,#fff,#fff 3px,#E8EAED 3px,#E8EAED 6px);box-shadow:inset 0 0 0 1px var(--color-border)}
+
+/* Footer métrique + liste de coupe */
+.film-foot{display:flex;align-items:center;gap:9px;flex-wrap:wrap;font-size:12.5px;color:var(--color-text-muted);padding:7px 0 14px;border-top:1px solid var(--color-border);margin-top:4px}
+.film-foot .strong{color:var(--color-text-body);font-weight:600}
+details.cut{border-top:1px solid var(--color-border)}
+.cut summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;padding:14px 0;font-size:13px;font-weight:600;color:var(--color-text-body)}
+.cut summary::-webkit-details-marker{display:none}
+.cut summary .chev{width:15px;height:15px;color:var(--color-text-faint);transition:transform var(--dur) var(--ease-out-expo)}
+.cut[open] summary .chev{transform:rotate(90deg)}
+.cut summary .ct{margin-left:auto;font-size:12px;font-weight:600;color:var(--color-text-muted);background:var(--color-surface-alt);box-shadow:inset 0 0 0 1px var(--color-border);border-radius:var(--radius-full);padding:2px 10px}
+.cuttable{width:100%;border-collapse:collapse;margin-bottom:14px}
+.cuttable th{text-align:left;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-faint);padding:0 12px 9px 0;border-bottom:1px solid var(--color-border)}
+.cuttable td{padding:11px 12px 11px 0;border-bottom:1px solid var(--color-border);font-size:13.5px;vertical-align:middle}
+.cuttable tr:last-child td{border-bottom:none}
+.cuttable .c-sw{width:24px}
+.cuttable .sw{width:14px;height:14px;border-radius:4px;display:inline-block}
+.cuttable .c-qty{font-family:'DM Mono',monospace;font-weight:700;width:48px}
+.cuttable .c-dim{font-family:'DM Mono',monospace;font-weight:500;color:var(--color-text)}
+.cuttable .c-src{color:var(--color-text-muted)}
+.cuttable .c-tag{text-align:right}
+
+/* Actions par ligne (table vitres - greffe variante A) */
+.icobtn{width:30px;height:30px;border-radius:var(--radius-md);display:grid;place-items:center;color:var(--color-text-muted);background:transparent;border:0;cursor:pointer;transition:all var(--dur) var(--ease-out-expo)}
+.icobtn svg{width:16px;height:16px}
+.icobtn:hover{background:var(--color-surface-alt);color:var(--color-text-body)}
+.icobtn--danger:hover{background:var(--color-danger-light);color:var(--color-danger-deep)}
+.rowacts{display:inline-flex;gap:2px;justify-content:flex-end}
+.th-r{text-align:right}
+
+/* Échelle partagée des plans + note */
+.plan-note{font-size:12px;color:var(--color-text-muted);margin:-4px 0 14px;display:flex;align-items:center;gap:7px}
+.plan-note svg{width:14px;height:14px;color:var(--color-text-faint);flex:none}
+
+/* État vide soigné (greffe variante A) */
+.empty{background:var(--color-surface);border-radius:var(--radius-2xl);box-shadow:var(--shadow-card);padding:46px 28px;text-align:center;max-width:480px;margin:0 auto}
+.empty-ico{width:60px;height:60px;border-radius:var(--radius-2xl);background:var(--color-primary-light);color:var(--color-primary);display:grid;place-items:center;margin:0 auto 16px}
+.empty-ico svg{width:28px;height:28px}
+.empty h3{font-size:16px;font-weight:600;color:var(--color-text);letter-spacing:-.01em}
+.empty p{font-size:13.5px;color:var(--color-text-muted);margin:8px auto 20px;max-width:34ch;line-height:1.5}
+
+@media(max-width:980px){.kpis{grid-template-columns:1fr 1fr}.cascade{grid-template-columns:1fr 1fr}.dims{grid-template-columns:1fr 1fr}}
+@media(max-width:620px){.kpis{grid-template-columns:1fr}.cascade{grid-template-columns:1fr}.page-title{font-size:25px}.lc-right .lc-chev{display:none}}
+</style></head>
+<body>
+<div class="goldbar">GOLDEN FINAL · Découpe Films - refonte 2026-06-29 · données illustratives · maquette de design à valider à l'oeil, ne pas déployer telle quelle</div>
+
+<!-- ============ SHELL : header portail ============ -->
+<header class="hdr"><div class="wrap">
+  <a class="brand" href="#" title="Retour au portail FilmPro"><svg class="back-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg><svg class="logo" role="img" aria-label="FilmPro" xmlns="http://www.w3.org/2000/svg" viewBox="150 645 1200 212"><g><g><g><path fill="#00003B" d="M193.419,849.762h-38.175V662.449h119.879v35.163h-81.705v43.793h73.718v34.115h-73.718V849.762z M159.244,845.762h30.175v-74.241h73.718v-26.115h-73.718v-51.793h81.705v-27.163H159.244V845.762z"/></g><g><path fill="#00003B" d="M329.33,849.762h-37.651V714.824h37.651V849.762z M295.679,845.762h29.651V718.824h-29.651V845.762z M310.439,696.827c-6.233,0-11.698-2.017-16.244-5.994c-4.624-4.047-6.968-9.442-6.968-16.039c0-6.598,2.344-11.994,6.968-16.039c4.546-3.978,10.011-5.994,16.244-5.994s11.698,2.017,16.244,5.994c4.624,4.045,6.968,9.441,6.968,16.039c0,6.597-2.344,11.992-6.968,16.039C322.137,694.811,316.672,696.827,310.439,696.827z M310.439,656.761c-5.309,0-9.761,1.637-13.61,5.004c-3.77,3.299-5.602,7.561-5.602,13.029c0,5.468,1.833,9.729,5.602,13.029c3.848,3.367,8.3,5.004,13.61,5.004s9.761-1.637,13.61-5.004c3.77-3.3,5.602-7.562,5.602-13.029c0-5.469-1.833-9.73-5.602-13.029C320.2,658.397,315.749,656.761,310.439,656.761z"/></g><g><path fill="#00003B" d="M388.383,849.762h-37.651v-192.55h37.651V849.762z M354.731,845.762h29.651v-184.55h-29.651V845.762z"/></g><g><path fill="#00003B" d="M627.866,849.762h-37.65v-77.943c0-7.927-2.125-14.379-6.315-19.177c-4.18-4.781-10.24-7.105-18.527-7.105c-5.306,0-10.113,1.171-14.286,3.481c-4.163,2.303-7.481,5.476-9.861,9.429c-2.373,3.941-3.576,8.528-3.576,13.634v77.682H500v-77.943c0-7.927-2.125-14.379-6.315-19.177c-4.18-4.781-10.24-7.105-18.527-7.105c-5.306,0-10.113,1.171-14.286,3.481c-4.163,2.303-7.481,5.476-9.861,9.429c-2.373,3.941-3.576,8.528-3.576,13.634v77.682h-37.651V714.824h37.651v13.59c2.631-3.028,5.519-5.658,8.631-7.854c4.606-3.252,9.602-5.703,14.847-7.287c5.232-1.576,10.581-2.376,15.898-2.376c10.64,0,19.77,2.397,27.137,7.125c6.303,4.048,11.04,9.229,14.122,15.435c5.826-7.831,12.814-13.509,20.81-16.901c8.85-3.755,18.055-5.658,27.361-5.658c12.646,0,22.885,2.535,30.434,7.533c7.549,5.004,13.04,11.517,16.322,19.358c3.231,7.719,4.869,15.908,4.869,24.341V849.762z"/></g></g><g><g><path fill="#00003B" d="M676.095,847.762V664.449h68.873c13.18,0,24.878,2.292,35.091,6.875c10.214,4.582,18.222,11.194,24.027,19.837c5.805,8.642,8.707,19.03,8.707,31.163c0,12.396-2.684,22.871-8.052,31.425c-5.369,8.556-13.16,15.058-23.373,19.51s-22.609,6.678-37.186,6.678H710.27v67.825H676.095z M710.27,750.999h33.781c10.911,0,19.399-2.269,25.468-6.809c6.066-4.538,9.101-11.608,9.101-21.212c0-9.514-3.122-16.715-9.362-21.604c-6.242-4.888-14.557-7.333-24.943-7.333H710.27V750.999z"/></g><g><path fill="#00003B" d="M827.196,847.762V716.824h33.65v17.153c4.538-7.681,10.233-13.137,17.088-16.367c6.852-3.229,14.249-4.845,22.193-4.845c2.793,0,5.368,0.131,7.726,0.393c2.356,0.262,4.626,0.655,6.809,1.179l-4.189,34.567c-2.707-0.872-5.522-1.571-8.446-2.095c-2.925-0.524-5.826-0.786-8.707-0.786c-9.428,0-17.197,2.838-23.307,8.511c-6.111,5.676-9.166,13.532-9.166,23.569v69.658H827.196z"/></g><g><path fill="#00003B" d="M982.619,851.689c-13.968,0-26.341-3.165-37.121-9.492c-10.781-6.328-19.248-14.751-25.401-25.271c-6.154-10.518-9.231-22.062-9.231-34.633c0-9.251,1.768-18.069,5.303-26.449s8.511-15.777,14.927-22.193s13.988-11.478,22.718-15.189c8.728-3.709,18.331-5.564,28.807-5.564c13.879,0,26.208,3.143,36.989,9.428c10.78,6.285,19.248,14.688,25.402,25.205c6.154,10.521,9.23,22.108,9.23,34.764c0,9.254-1.768,18.049-5.303,26.384c-3.535,8.337-8.49,15.735-14.861,22.194c-6.373,6.461-13.924,11.545-22.652,15.254C1002.695,849.834,993.093,851.689,982.619,851.689z M982.488,822.36c7.418,0,14.01-1.637,19.771-4.91c5.761-3.273,10.299-7.899,13.617-13.88c3.316-5.979,4.976-13.071,4.976-21.277c0-8.204-1.637-15.319-4.91-21.343c-3.273-6.022-7.813-10.648-13.617-13.879c-5.807-3.229-12.419-4.845-19.837-4.845c-7.333,0-13.902,1.616-19.706,4.845c-5.807,3.23-10.345,7.856-13.618,13.879c-3.273,6.023-4.91,13.139-4.91,21.343c0,8.206,1.657,15.299,4.976,21.277c3.316,5.98,7.856,10.606,13.618,13.88C968.608,820.724,975.155,822.36,982.488,822.36z"/></g></g></g><g><g opacity="0.24"><rect x="1223.987" y="647.388" fill="#00003B" width="120" height="120"/></g><g opacity="0.62"><rect x="1182.781" y="687.575" fill="#00003B" width="120" height="120"/></g><g><rect x="1141.575" y="727.762" fill="#00003B" width="120" height="120"/></g></g></svg></a>
+  <div class="hdr-right"><span class="hdr-portail">Portail FilmPro</span><span class="avatar">PM</span></div>
+</div></header>
+
+<!-- ============ Barre outil ============ -->
+<div class="toolbar"><div class="wrap">
+  <span class="tool-name"><span class="tool-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg></span>Découpe Films</span>
+  <nav class="tool-nav"><a href="#chantiers" class="active">Chantiers</a><a href="#resultat">Découpe</a><a href="#base">Base produit</a></nav>
+</div></div>
+
+<main><div class="wrap">
+
+<!-- ====================================================== -->
+<!-- ÉCRAN 2 : CHANTIERS (liste lignes-cartes) -->
+<!-- ====================================================== -->
+<div class="screen-head" id="chantiers"><span class="sh-num">2</span><span class="sh-tt">Chantiers</span><span class="sh-desc">Liste des chantiers à découper, regroupés par statut</span></div>
+
+<div class="page-head">
+  <div class="ph-l"><div class="kicker">Découpe Films</div><h1 class="page-title">Chantiers</h1>
+    <div class="page-meta"><span>5 chantiers actifs</span><span class="dot-sep"></span><span>3 en saisie</span><span class="dot-sep"></span><span>2 lancées</span></div>
+  </div>
+  <div class="ph-r"><button class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Nouveau chantier</button></div>
+</div>
+
+<div class="listbar">
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input placeholder="Rechercher un chantier, un client..."></div>
+</div>
+
+<h2 class="sec-h">En saisie<span class="count">· 3</span><span class="line"></span></h2>
+
+<a class="lc" href="#fiche">
+  <span class="lc-tile" style="background:var(--color-primary)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></span>
+  <div class="lc-body">
+    <div class="lc-title">Villa Léman, étage 2</div>
+    <div class="lc-client">Régie Naef</div>
+    <div class="lc-meta">
+      <span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg><span class="num">13</span> vitres</span>
+      <span class="lc-fams"><span class="fam fam--solaire">Solaire</span><span class="fam fam--securite">Sécurité</span><span class="fam fam--discretion">Discrétion</span></span>
+      <span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>24 juin</span>
+    </div>
+  </div>
+  <div class="lc-right"><span class="statepill statepill--saisie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>En saisie</span><svg class="lc-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+</a>
+
+<a class="lc" href="#fiche">
+  <span class="lc-tile" style="background:var(--fam-securite)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></span>
+  <div class="lc-body">
+    <div class="lc-title">Tour Edelweiss R+6</div>
+    <div class="lc-client">Pilet &amp; Renaud</div>
+    <div class="lc-meta">
+      <span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg><span class="num">38</span> vitres</span>
+      <span class="lc-fams"><span class="fam fam--securite">Sécurité</span></span>
+      <span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>22 juin</span>
+    </div>
+  </div>
+  <div class="lc-right"><span class="statepill statepill--saisie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>En saisie</span><svg class="lc-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+</a>
+
+<a class="lc" href="#fiche">
+  <span class="lc-tile" style="background:var(--color-primary)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></span>
+  <div class="lc-body">
+    <div class="lc-title">Clinique des Grangettes, aile B</div>
+    <div class="lc-client">Facility manager SPIE</div>
+    <div class="lc-meta">
+      <span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg><span class="num">27</span> vitres</span>
+      <span class="lc-fams"><span class="fam fam--solaire">Solaire</span><span class="fam fam--securite">Sécurité</span><span class="fam fam--discretion">Discrétion</span></span>
+      <span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>18 juin</span>
+    </div>
+  </div>
+  <div class="lc-right"><span class="statepill statepill--saisie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>En saisie</span><svg class="lc-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+</a>
+
+<h2 class="sec-h">Lancées<span class="count">· 2</span><span class="line"></span></h2>
+
+<a class="lc" href="#resultat">
+  <span class="lc-tile" style="background:var(--fam-discretion)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></span>
+  <div class="lc-body">
+    <div class="lc-title">Showroom Rue du Rhône</div>
+    <div class="lc-client">Architecte Bassi Carella</div>
+    <div class="lc-meta">
+      <span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg><span class="num">9</span> vitres</span>
+      <span class="lc-fams"><span class="fam fam--discretion">Discrétion</span></span>
+      <span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>19 juin</span>
+    </div>
+  </div>
+  <div class="lc-right"><span class="statepill statepill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>Lancée</span><svg class="lc-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+</a>
+
+<a class="lc" href="#resultat">
+  <span class="lc-tile" style="background:var(--fam-solaire)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg></span>
+  <div class="lc-body">
+    <div class="lc-title">Bureaux Pictet Acacias</div>
+    <div class="lc-client">Régie Brolliet</div>
+    <div class="lc-meta">
+      <span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg><span class="num">6</span> vitres</span>
+      <span class="lc-fams"><span class="fam fam--solaire">Solaire</span></span>
+      <span class="mchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/></svg>12 juin</span>
+    </div>
+  </div>
+  <div class="lc-right"><span class="statepill statepill--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>Lancée</span><svg class="lc-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></div>
+</a>
+
+<!-- ====================================================== -->
+<!-- ÉCRAN 3 : FICHE CHANTIER -->
+<!-- ====================================================== -->
+<div class="screen-head" id="fiche"><span class="sh-num">3</span><span class="sh-tt">Fiche chantier</span><span class="sh-desc">Saisie des vitres d'un chantier avant optimisation</span></div>
+
+<a href="#chantiers" class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>Tous les chantiers</a>
+
+<div class="page-head">
+  <div class="ph-l"><div class="kicker">Régie Naef</div><h1 class="page-title">Villa Léman, étage 2</h1>
+    <div class="page-meta"><span class="statepill statepill--saisie"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>En saisie</span><span class="dot-sep"></span><span><b style="color:var(--color-text-body);font-weight:600" class="num">13</b> vitres saisies</span></div>
+  </div>
+  <div class="ph-r">
+    <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Importer un CSV</button>
+    <button class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>Optimiser ce chantier</button>
+  </div>
+</div>
+
+<div class="kpis" style="margin-bottom:22px">
+  <div class="kpi">
+    <div class="kpi-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>Vitres saisies</div>
+    <div class="kpi-val num">13</div>
+    <div class="kpi-sub"><b>4 lignes</b> de produit</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 3 21"/><path d="M21 8V3h-5"/><path d="M3 16v5h5"/></svg>Surface totale</div>
+    <div class="kpi-val num">13,8 <span class="unit">m&sup2;</span></div>
+    <div class="kpi-sub">avant calcul des chutes</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Produits mobilisés</div>
+    <div class="kpi-val num">3</div>
+    <div class="kpi-sub">Solaire · Sécurité · Discrétion</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>Sur-mesure</div>
+    <div class="kpi-val num">1</div>
+    <div class="kpi-sub"><b>SEC-LAM-44</b> · hors découpe interne</div>
+  </div>
+</div>
+
+<div class="savecard">
+  <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Ajouter une vitre</h3>
+  <p>Choisissez le produit en cascade, saisissez les dimensions, la ligne reste prête pour la vitre suivante.</p>
+  <div class="cascade">
+    <div class="field"><label>Famille</label><select><option>Solaire</option><option>Sécurité</option><option>Discrétion</option></select></div>
+    <div class="field"><label>Fabricant</label><select><option>3M</option><option>Hanita</option><option>Solar Screen</option></select></div>
+    <div class="field"><label>Produit</label><select><option>SOL-70 - Film solaire 70 %</option><option>SEC-LAM-44 - Sécurité feuilleté 44.2</option><option>DIS-FROST - Dépoli discrétion</option></select></div>
+  </div>
+  <div class="dims">
+    <div class="field"><label>Largeur (mm)</label><input class="mono" value="1200" inputmode="numeric"></div>
+    <div class="field"><label>Hauteur (mm)</label><input class="mono" value="800" inputmode="numeric"></div>
+    <div class="field"><label>Qté</label><input class="mono" value="4" inputmode="numeric"></div>
+    <div class="field"><label>Type de pose</label>
+      <div class="seg">
+        <input type="radio" name="pose" id="pose-a" checked><label for="pose-a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20h20"/><path d="M5 20V8.2a1 1 0 0 1 .4-.8l5.6-4.2a1 1 0 0 1 1.2 0l5.6 4.2a1 1 0 0 1 .4.8V20"/></svg>Atelier</label>
+        <input type="radio" name="pose" id="pose-b"><label for="pose-b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>Sur-mesure</label>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-sm" style="height:42px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Ajouter</button>
+  </div>
+</div>
+
+<div class="dtable"><table>
+  <thead><tr><th>Produit</th><th>Famille</th><th>Dimensions</th><th>Qté</th><th>Pose</th><th class="th-r" aria-label="Actions"></th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="td-ref"><span class="ref-tile" style="background:var(--fam-solaire)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><span><span class="td-strong">SOL-70</span><span class="td-nom">Film solaire 70 %</span></span></span></td>
+      <td><span class="fam fam--solaire">Solaire</span></td>
+      <td class="mono td-strong">1200 &times; 800 mm</td>
+      <td class="mono">&times;4</td>
+      <td><span class="badge-st badge-st--atelier">Atelier</span></td>
+      <td class="rowacts"><button class="icobtn" aria-label="Modifier la vitre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="icobtn icobtn--danger" aria-label="Supprimer la vitre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>
+    </tr>
+    <tr>
+      <td><span class="td-ref"><span class="ref-tile" style="background:var(--fam-solaire)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><span><span class="td-strong">SOL-70</span><span class="td-nom">Film solaire 70 %</span></span></span></td>
+      <td><span class="fam fam--solaire">Solaire</span></td>
+      <td class="mono td-strong">1640 &times; 1100 mm</td>
+      <td class="mono">&times;2</td>
+      <td><span class="badge-st badge-st--atelier">Atelier</span></td>
+      <td class="rowacts"><button class="icobtn" aria-label="Modifier la vitre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="icobtn icobtn--danger" aria-label="Supprimer la vitre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>
+    </tr>
+    <tr>
+      <td><span class="td-ref"><span class="ref-tile" style="background:var(--fam-securite)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1Z"/></svg></span><span><span class="td-strong">SEC-LAM-44</span><span class="td-nom">Sécurité feuilleté 44.2</span></span></span></td>
+      <td><span class="fam fam--securite">Sécurité</span></td>
+      <td class="mono td-strong">2100 &times; 1500 mm</td>
+      <td class="mono">&times;1</td>
+      <td><span class="badge-st badge-st--mesure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>Sur-mesure</span></td>
+      <td class="rowacts"><button class="icobtn" aria-label="Modifier la vitre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="icobtn icobtn--danger" aria-label="Supprimer la vitre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>
+    </tr>
+    <tr>
+      <td><span class="td-ref"><span class="ref-tile" style="background:var(--fam-discretion)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg></span><span><span class="td-strong">DIS-FROST</span><span class="td-nom">Dépoli discrétion · imposte</span></span></span></td>
+      <td><span class="fam fam--discretion">Discrétion</span></td>
+      <td class="mono td-strong">900 &times; 600 mm</td>
+      <td class="mono">&times;6</td>
+      <td><span class="badge-st badge-st--atelier">Atelier</span></td>
+      <td class="rowacts"><button class="icobtn" aria-label="Modifier la vitre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button><button class="icobtn icobtn--danger" aria-label="Supprimer la vitre"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button></td>
+    </tr>
+  </tbody>
+</table></div>
+
+<!-- ====================================================== -->
+<!-- ÉCRAN 4 : BASE PRODUIT -->
+<!-- ====================================================== -->
+<div class="screen-head" id="base"><span class="sh-num">4</span><span class="sh-tt">Base produit</span><span class="sh-desc">Catalogue des films et vernis, laizes et contraintes de découpe</span></div>
+
+<div class="page-head">
+  <div class="ph-l"><div class="kicker">Découpe Films</div><h1 class="page-title">Base produit</h1>
+    <div class="page-meta"><span>4 produits</span><span class="dot-sep"></span><span>3 actifs</span><span class="dot-sep"></span><span>1 archivé</span></div>
+  </div>
+  <div class="ph-r"><button class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Nouveau produit</button></div>
+</div>
+
+<div class="listbar">
+  <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input placeholder="Rechercher une référence, un fabricant..."></div>
+  <span class="chip chip--info">Solaire</span><span class="chip chip--info">Sécurité</span><span class="chip chip--info">Discrétion</span>
+</div>
+
+<div class="dtable"><table>
+  <thead><tr><th>Réf.</th><th>Famille</th><th>Fabricant</th><th>Laizes (mm)</th><th>Contraintes de découpe</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><span class="td-ref"><span class="ref-tile" style="background:var(--fam-solaire)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span><span><span class="td-strong">SOL-70</span><span class="td-nom">Film solaire 70 %</span></span></span></td>
+      <td><span class="fam fam--solaire">Solaire</span></td>
+      <td class="c-src" style="color:var(--color-text-muted)">3M</td>
+      <td><span class="laizechips"><span class="lz">1520</span><span class="lz">1830</span></span></td>
+      <td><span class="attrs"><span class="chip chip--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>nestable</span><span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>rotation libre</span><span class="chip">marge 5 mm</span></span></td>
+    </tr>
+    <tr>
+      <td><span class="td-ref"><span class="ref-tile" style="background:var(--fam-securite)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1Z"/></svg></span><span><span class="td-strong">SEC-LAM-44</span><span class="td-nom">Sécurité feuilleté 44.2</span></span></span></td>
+      <td><span class="fam fam--securite">Sécurité</span></td>
+      <td class="c-src" style="color:var(--color-text-muted)">Hanita</td>
+      <td><span class="laizechips"><span class="lz">1830</span></span></td>
+      <td><span class="attrs"><span class="chip chip--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>nestable</span><span class="chip chip--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>sens imposé</span><span class="chip">jointage</span></span></td>
+    </tr>
+    <tr>
+      <td><span class="td-ref"><span class="ref-tile" style="background:var(--fam-discretion)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M3 15h18"/><path d="M9 3v18"/><path d="M15 3v18"/></svg></span><span><span class="td-strong">DIS-FROST</span><span class="td-nom">Dépoli discrétion</span></span></span></td>
+      <td><span class="fam fam--discretion">Discrétion</span></td>
+      <td class="c-src" style="color:var(--color-text-muted)">Solar Screen</td>
+      <td><span class="laizechips"><span class="lz">1220</span><span class="lz">1520</span></span></td>
+      <td><span class="attrs"><span class="chip chip--ok"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>nestable</span></span></td>
+    </tr>
+    <tr class="archived">
+      <td><span class="td-ref"><span class="ref-tile" style="background:var(--color-text-faint)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m9 11-6 6v3h9l3-3"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/></svg></span><span><span class="td-strong">VRN-AR</span><span class="td-nom">Vernis anti-rayures</span></span></span></td>
+      <td><span class="fam fam--securite">Sécurité</span></td>
+      <td class="c-src" style="color:var(--color-text-muted)">-</td>
+      <td><span class="laizechips"><span class="lz">s.o.</span></span></td>
+      <td><span class="attrs"><span class="chip chip--warn">non nestable</span><span class="chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>archivé</span></span></td>
+    </tr>
+  </tbody>
+</table></div>
+
+<!-- ====================================================== -->
+<!-- ÉCRAN 5 : RÉSULTAT OPTIMISATION -->
+<!-- ====================================================== -->
+<div class="screen-head" id="resultat"><span class="sh-num">5</span><span class="sh-tt">Résultat de l'optimisation</span><span class="sh-desc">Plan de découpe calculé : chutes, films, pièces à commander</span></div>
+
+<a href="#fiche" class="back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>Fiche du chantier</a>
+
+<div class="page-head">
+  <div class="ph-l"><div class="kicker">Résultat de l'optimisation</div><h1 class="page-title">Villa Léman, étage 2</h1>
+    <div class="page-meta"><span class="num">13 vitres</span><span class="dot-sep"></span><span>3 produits mobilisés</span><span class="dot-sep"></span><span class="num">calculé à 14:32</span></div>
+  </div>
+  <div class="ph-r">
+    <span class="statepill statepill--warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>À vérifier</span>
+    <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg>Exporter en PDF</button>
+    <button class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>Lancer la découpe</button>
+  </div>
+</div>
+
+<div class="kpis" style="margin-bottom:24px">
+  <div class="kpi kpi--chute" style="--kpi-c:var(--color-warning-deep)">
+    <svg class="kpi-spark" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--df-surface-sunken)" stroke-width="5"/><circle cx="22" cy="22" r="18" fill="none" stroke="var(--color-warning)" stroke-width="5" stroke-linecap="round" stroke-dasharray="20.8 92.3" transform="rotate(-90 22 22)"/></svg>
+    <div class="kpi-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg>Taux de chute moyen</div>
+    <div class="kpi-val num">18,4 <span class="unit">%</span></div>
+    <div class="kpi-sub">remplissage <b class="num">81,6 %</b> · <span class="num">10,7 m&sup2;</span> posés sur <span class="num">13,1 m&sup2;</span></div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></svg>Film à découper</div>
+    <div class="kpi-val num">8,2 <span class="unit">m</span></div>
+    <div class="kpi-sub"><b class="num">3,2 m économisés</b> vs pose séquentielle</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>Découpe interne</div>
+    <div class="kpi-val num">2 <span class="unit">films</span></div>
+    <div class="kpi-sub"><b class="num">12 pièces</b> posées · 2 produits</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.62l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg>À commander</div>
+    <div class="kpi-val num">1 <span class="unit">pièce</span></div>
+    <div class="kpi-sub">sur-mesure · hors découpe interne</div>
+  </div>
+</div>
+
+<div class="callout">
+  <span class="callout-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+  <div class="callout-body">
+    <div class="callout-title">2 points à vérifier avant de lancer</div>
+    <ul class="callout-list">
+      <li><b>SEC-LAM-44, pièce non plaçable</b> - largeur 2100 mm supérieure à la laize max (1830 mm), sens imposé (pas de pivot) et jointage non retenu sur le feuilleté sécurité &rarr; sortie en commande sur-mesure.<span class="tagvit">2100 &times; 1500 mm</span></li>
+      <li><b>DIS-FROST, orientation imposée</b> - impostes posées dans le sens du dépoli &rarr; chute élevée (26 %). Vérifier si un regroupement des impostes réduit la perte.<span class="tagvit">900 &times; 600 mm</span></li>
+    </ul>
+  </div>
+</div>
+
+<h2 class="sec-h">À commander chez le fournisseur<span class="count">· 1</span><span class="line"></span></h2>
+<div class="ordercard">
+  <div class="order-row">
+    <span class="order-ico" style="background:var(--fam-securite)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg></span>
+    <div class="order-main"><div class="order-ref">SEC-LAM-44<span class="nom">Sécurité feuilleté 44.2</span></div><div class="order-dim">2100 &times; 1500 mm · &times;1</div></div>
+    <div class="order-tags"><span class="chip chip--warn">Sur-mesure fournisseur</span><span class="chip">2100 &gt; laize 1830</span><span class="chip">sens imposé</span></div>
+  </div>
+  <div class="order-foot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>Cette pièce sort de la découpe interne : à commander découpée au fournisseur.</div>
+</div>
+
+<h2 class="sec-h">Découpe interne<span class="count">· 2 films</span><span class="line"></span></h2>
+<p class="plan-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 3 21"/><path d="M21 8V3h-5"/><path d="M3 16v5h5"/></svg>Les deux plans sont à la même échelle : laizes et longueurs directement comparables d'un film à l'autre.</p>
+
+<!-- ---------- FILM 1 : SOL-70 ---------- -->
+<article class="film">
+  <div class="film-head">
+    <span class="film-tile" style="background:var(--fam-solaire)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg></span>
+    <div class="film-id">
+      <div class="film-ref">SOL-70<span class="fab">3M</span></div>
+      <div class="film-sub"><span class="film-nom">Film solaire 70 %</span><span class="fam fam--solaire">Solaire</span></div>
+    </div>
+    <span class="chute chute--good"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span class="big num">12 %</span>&nbsp;de chute</span>
+  </div>
+
+  <div class="dgm">
+    <div class="dgm-top">
+      <div class="dgm-tt-l">
+        <div class="dgm-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect width="6" height="6" x="7" y="7" rx="1"/><rect width="5" height="9" x="13" y="9" rx="1"/></svg>Plan de découpe</div>
+        <div class="dgm-sub"><span class="mono">laize 1830 mm</span><span class="dot-sep"></span><span class="mono">longueur 4,60 m</span><span class="dot-sep"></span>6 pièces</div>
+      </div>
+      <span class="dgm-fill"><b class="num">88 %</b>&nbsp;rempli</span>
+    </div>
+    <svg class="dgm-band" style="width:100%;max-width:720px" viewBox="0 0 584 268" role="img" aria-label="Plan de remplissage du film SOL-70 : laize 1830 mm sur 4,60 m, 6 pièces, 12 % de chute">
+      <defs><pattern id="hx-sol" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#fbfcfd"/><line x1="0" y1="0" x2="0" y2="7" stroke="#E8EAED" stroke-width="3.4"/></pattern></defs>
+      <!-- bande (fond = chute) -->
+      <rect x="48" y="10" width="520" height="207" rx="7" fill="url(#hx-sol)" stroke="#D8DCE2" stroke-width="1"/>
+      <!-- cote laize (rail gauche) -->
+      <line x1="32" y1="10.5" x2="32" y2="216.5" stroke="#9CA3AF" stroke-width="1.2"/>
+      <line x1="27" y1="10.5" x2="42" y2="10.5" stroke="#9CA3AF" stroke-width="1.2"/>
+      <line x1="27" y1="216.5" x2="42" y2="216.5" stroke="#9CA3AF" stroke-width="1.2"/>
+      <text x="17" y="113.5" transform="rotate(-90 17 113.5)" fill="#6B7280" font-size="10" font-weight="500" text-anchor="middle" font-family="'DM Mono',monospace">1830 mm</text>
+      <!-- pièces V2 (1640x1100, slate, à plat) -->
+      <g><rect x="49.5" y="11.5" width="121" height="182" rx="4.5" fill="#5A7190" fill-opacity="0.17" stroke="#5A7190" stroke-width="1.4"/><text x="110" y="100" fill="#41557A" font-size="9.5" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">1640&times;1100</text><text x="58" y="25" fill="#41557A" font-size="8" font-weight="600" font-family="'DM Mono',monospace" opacity="0.75">V2</text></g>
+      <g><rect x="173.5" y="11.5" width="121" height="182" rx="4.5" fill="#5A7190" fill-opacity="0.17" stroke="#5A7190" stroke-width="1.4"/><text x="234" y="100" fill="#41557A" font-size="9.5" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">1640&times;1100</text><text x="182" y="25" fill="#41557A" font-size="8" font-weight="600" font-family="'DM Mono',monospace" opacity="0.75">V2</text></g>
+      <!-- pièces V1 (1200x800, sage, pivotées) -->
+      <g><rect x="297.5" y="11.5" width="133" height="87" rx="4.5" fill="#538B6B" fill-opacity="0.18" stroke="#538B6B" stroke-width="1.4"/><text x="364" y="49" fill="#3F6B52" font-size="9" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">1200&times;800</text><g transform="translate(364,82)"><rect x="-25" y="-7.5" width="50" height="15" rx="7.5" fill="#fff" stroke="#538B6B" stroke-width="0.9" opacity="0.92"/><text x="0" y="0.5" fill="#3F6B52" font-size="7.5" font-weight="500" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">pivotée</text></g></g>
+      <g><rect x="297.5" y="101.5" width="133" height="87" rx="4.5" fill="#538B6B" fill-opacity="0.18" stroke="#538B6B" stroke-width="1.4"/><text x="364" y="139" fill="#3F6B52" font-size="9" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">1200&times;800</text><g transform="translate(364,172)"><rect x="-25" y="-7.5" width="50" height="15" rx="7.5" fill="#fff" stroke="#538B6B" stroke-width="0.9" opacity="0.92"/><text x="0" y="0.5" fill="#3F6B52" font-size="7.5" font-weight="500" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">pivotée</text></g></g>
+      <g><rect x="433.5" y="11.5" width="133" height="87" rx="4.5" fill="#538B6B" fill-opacity="0.18" stroke="#538B6B" stroke-width="1.4"/><text x="500" y="49" fill="#3F6B52" font-size="9" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">1200&times;800</text><g transform="translate(500,82)"><rect x="-25" y="-7.5" width="50" height="15" rx="7.5" fill="#fff" stroke="#538B6B" stroke-width="0.9" opacity="0.92"/><text x="0" y="0.5" fill="#3F6B52" font-size="7.5" font-weight="500" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">pivotée</text></g></g>
+      <g><rect x="433.5" y="101.5" width="133" height="87" rx="4.5" fill="#538B6B" fill-opacity="0.18" stroke="#538B6B" stroke-width="1.4"/><text x="500" y="139" fill="#3F6B52" font-size="9" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">1200&times;800</text><g transform="translate(500,172)"><rect x="-25" y="-7.5" width="50" height="15" rx="7.5" fill="#fff" stroke="#538B6B" stroke-width="0.9" opacity="0.92"/><text x="0" y="0.5" fill="#3F6B52" font-size="7.5" font-weight="500" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">pivotée</text></g></g>
+      <!-- étiquette chute -->
+      <text x="120" y="208" fill="#9CA3AF" font-size="8.5" font-weight="500" text-anchor="middle" font-family="'DM Mono',monospace">chute</text>
+      <!-- règle de longueur -->
+      <line x1="48" y1="229" x2="568" y2="229" stroke="#D1D5DB" stroke-width="1"/>
+      <g stroke="#D1D5DB" stroke-width="1"><line x1="48" y1="225" x2="48" y2="233"/><line x1="161" y1="225" x2="161" y2="233"/><line x1="274" y1="225" x2="274" y2="233"/><line x1="387" y1="225" x2="387" y2="233"/><line x1="500" y1="225" x2="500" y2="233"/><line x1="568" y1="225" x2="568" y2="233"/></g>
+      <g fill="#9CA3AF" font-size="8.5" font-family="'DM Mono',monospace" text-anchor="middle"><text x="48" y="245">0</text><text x="161" y="245">1</text><text x="274" y="245">2</text><text x="387" y="245">3</text><text x="500" y="245">4</text></g>
+      <text x="568" y="245" fill="#6B7280" font-size="8.5" font-weight="500" text-anchor="end" font-family="'DM Mono',monospace">4,60 m</text>
+      <text x="308" y="263" fill="#6B7280" font-size="8.5" font-weight="500" text-anchor="middle" font-family="'DM Mono',monospace">longueur du film (m)</text>
+    </svg>
+    <div class="dgm-legend">
+      <span class="lg"><span class="sw" style="background:#5A7190;box-shadow:inset 0 0 0 1.4px #41557A"></span><span class="vref">V2</span> 1640&times;1100</span>
+      <span class="lg"><span class="sw" style="background:#538B6B;box-shadow:inset 0 0 0 1.4px #3F6B52"></span><span class="vref">V1</span> 1200&times;800 · pivotée</span>
+      <span class="lg"><span class="sw sw--chute"></span>chute</span>
+    </div>
+  </div>
+
+  <div class="film-foot"><span class="strong">6 pièces</span><span class="dot-sep"></span><span class="num">7,45 m&sup2; utiles</span><span class="dot-sep"></span><span class="num">0,97 m&sup2; de chute</span></div>
+  <details class="cut" open>
+    <summary><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>Liste de coupe ordonnée<span class="ct num">2</span></summary>
+    <table class="cuttable">
+      <thead><tr><th></th><th>Qté</th><th>Dimension de coupe</th><th>Vitre source</th><th class="c-tag">Pose</th></tr></thead>
+      <tbody>
+        <tr><td class="c-sw"><span class="sw" style="background:#5A7190"></span></td><td class="c-qty num">&times;2</td><td class="c-dim num">1640 &times; 1100 mm</td><td class="c-src">V2 · à plat</td><td class="c-tag"></td></tr>
+        <tr><td class="c-sw"><span class="sw" style="background:#538B6B"></span></td><td class="c-qty num">&times;4</td><td class="c-dim num">1200 &times; 800 mm</td><td class="c-src">V1 · pivotée</td><td class="c-tag"><span class="chip chip--info">pivotée</span></td></tr>
+      </tbody>
+    </table>
+  </details>
+</article>
+
+<!-- ---------- FILM 2 : DIS-FROST ---------- -->
+<article class="film">
+  <div class="film-head">
+    <span class="film-tile" style="background:var(--fam-discretion)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><path d="M8.12 8.12 12 12"/><path d="M20 4 8.12 15.88"/><circle cx="6" cy="18" r="3"/><path d="M14.8 14.8 20 20"/></svg></span>
+    <div class="film-id">
+      <div class="film-ref">DIS-FROST<span class="fab">Solar Screen</span></div>
+      <div class="film-sub"><span class="film-nom">Dépoli discrétion</span><span class="fam fam--discretion">Discrétion</span></div>
+    </div>
+    <span class="chute chute--high"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span class="big num">26 %</span>&nbsp;de chute</span>
+  </div>
+
+  <div class="dgm">
+    <div class="dgm-top">
+      <div class="dgm-tt-l">
+        <div class="dgm-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect width="6" height="6" x="7" y="7" rx="1"/><rect width="5" height="9" x="13" y="9" rx="1"/></svg>Plan de découpe</div>
+        <div class="dgm-sub"><span class="mono">laize 1220 mm</span><span class="dot-sep"></span><span class="mono">longueur 3,60 m</span><span class="dot-sep"></span><span class="chip chip--warn" style="height:20px;font-size:11px">orientation imposée</span></div>
+      </div>
+      <span class="dgm-fill"><b class="num">74 %</b>&nbsp;rempli</span>
+    </div>
+    <svg class="dgm-band" style="width:100%;max-width:580px" viewBox="0 0 472 200" role="img" aria-label="Plan de remplissage du film DIS-FROST : laize 1220 mm sur 3,60 m, 6 pièces, 26 % de chute, orientation imposée">
+      <defs><pattern id="hx-dis" width="7" height="7" patternTransform="rotate(45)" patternUnits="userSpaceOnUse"><rect width="7" height="7" fill="#fbfcfd"/><line x1="0" y1="0" x2="0" y2="7" stroke="#E8EAED" stroke-width="3.4"/></pattern></defs>
+      <rect x="48" y="10" width="408" height="138" rx="7" fill="url(#hx-dis)" stroke="#D8DCE2" stroke-width="1"/>
+      <!-- cote laize -->
+      <line x1="32" y1="10.5" x2="32" y2="147.5" stroke="#9CA3AF" stroke-width="1.2"/>
+      <line x1="27" y1="10.5" x2="42" y2="10.5" stroke="#9CA3AF" stroke-width="1.2"/>
+      <line x1="27" y1="147.5" x2="42" y2="147.5" stroke="#9CA3AF" stroke-width="1.2"/>
+      <text x="17" y="79" transform="rotate(-90 17 79)" fill="#6B7280" font-size="10" font-weight="500" text-anchor="middle" font-family="'DM Mono',monospace">1220 mm</text>
+      <!-- 6 pièces V4 (900x600, violet, orientation imposée) -->
+      <g><rect x="49.5" y="11.5" width="65" height="99" rx="4.5" fill="#7B6A9A" fill-opacity="0.20" stroke="#7B6A9A" stroke-width="1.4"/><text x="82" y="61" fill="#5C4E78" font-size="8" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">900&times;600</text><text x="57" y="24" fill="#5C4E78" font-size="8" font-weight="600" font-family="'DM Mono',monospace" opacity="0.75">V4</text></g>
+      <g><rect x="117.5" y="11.5" width="65" height="99" rx="4.5" fill="#7B6A9A" fill-opacity="0.20" stroke="#7B6A9A" stroke-width="1.4"/><text x="150" y="61" fill="#5C4E78" font-size="8" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">900&times;600</text></g>
+      <g><rect x="185.5" y="11.5" width="65" height="99" rx="4.5" fill="#7B6A9A" fill-opacity="0.20" stroke="#7B6A9A" stroke-width="1.4"/><text x="218" y="61" fill="#5C4E78" font-size="8" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">900&times;600</text></g>
+      <g><rect x="253.5" y="11.5" width="65" height="99" rx="4.5" fill="#7B6A9A" fill-opacity="0.20" stroke="#7B6A9A" stroke-width="1.4"/><text x="286" y="61" fill="#5C4E78" font-size="8" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">900&times;600</text></g>
+      <g><rect x="321.5" y="11.5" width="65" height="99" rx="4.5" fill="#7B6A9A" fill-opacity="0.20" stroke="#7B6A9A" stroke-width="1.4"/><text x="354" y="61" fill="#5C4E78" font-size="8" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">900&times;600</text></g>
+      <g><rect x="389.5" y="11.5" width="65" height="99" rx="4.5" fill="#7B6A9A" fill-opacity="0.20" stroke="#7B6A9A" stroke-width="1.4"/><text x="422" y="61" fill="#5C4E78" font-size="8" font-weight="600" text-anchor="middle" dominant-baseline="central" font-family="'DM Mono',monospace">900&times;600</text></g>
+      <!-- étiquette chute (bande sous les pièces) -->
+      <text x="252" y="132" fill="#9CA3AF" font-size="9" font-weight="500" text-anchor="middle" font-family="'DM Mono',monospace">chute 26 %</text>
+      <!-- règle de longueur -->
+      <line x1="48" y1="160" x2="456" y2="160" stroke="#D1D5DB" stroke-width="1"/>
+      <g stroke="#D1D5DB" stroke-width="1"><line x1="48" y1="156" x2="48" y2="164"/><line x1="161" y1="156" x2="161" y2="164"/><line x1="274" y1="156" x2="274" y2="164"/><line x1="387" y1="156" x2="387" y2="164"/><line x1="456" y1="156" x2="456" y2="164"/></g>
+      <g fill="#9CA3AF" font-size="8.5" font-family="'DM Mono',monospace" text-anchor="middle"><text x="48" y="176">0</text><text x="161" y="176">1</text><text x="274" y="176">2</text><text x="387" y="176">3</text></g>
+      <text x="456" y="176" fill="#6B7280" font-size="8.5" font-weight="500" text-anchor="end" font-family="'DM Mono',monospace">3,60 m</text>
+      <text x="252" y="194" fill="#6B7280" font-size="8.5" font-weight="500" text-anchor="middle" font-family="'DM Mono',monospace">longueur du film (m)</text>
+    </svg>
+    <div class="dgm-legend">
+      <span class="lg"><span class="sw" style="background:#7B6A9A;box-shadow:inset 0 0 0 1.4px #5C4E78"></span><span class="vref">V4</span> 900&times;600 · imposte</span>
+      <span class="lg"><span class="sw sw--chute"></span>chute</span>
+    </div>
+  </div>
+
+  <div class="film-foot"><span class="strong">6 pièces</span><span class="dot-sep"></span><span class="num">3,24 m&sup2; utiles</span><span class="dot-sep"></span><span class="num">1,15 m&sup2; de chute</span></div>
+  <details class="cut">
+    <summary><span class="chev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg></span>Liste de coupe ordonnée<span class="ct num">1</span></summary>
+    <table class="cuttable">
+      <thead><tr><th></th><th>Qté</th><th>Dimension de coupe</th><th>Vitre source</th><th class="c-tag">Pose</th></tr></thead>
+      <tbody>
+        <tr><td class="c-sw"><span class="sw" style="background:#7B6A9A"></span></td><td class="c-qty num">&times;6</td><td class="c-dim num">900 &times; 600 mm</td><td class="c-src">V4 · imposte</td><td class="c-tag"><span class="chip chip--warn">sens imposé</span></td></tr>
+      </tbody>
+    </table>
+  </details>
+</article>
+
+<!-- ====================================================== -->
+<!-- PATTERN : état vide (fiche sans vitre) -->
+<!-- ====================================================== -->
+<div class="screen-head"><span class="sh-tt">Pattern · État vide</span><span class="sh-desc">Fiche d'un chantier sans aucune vitre saisie</span></div>
+
+<div class="empty">
+  <span class="empty-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></span>
+  <h3>Aucune vitre saisie</h3>
+  <p>Ajoutez une première vitre pour lancer l'optimisation de découpe de ce chantier.</p>
+  <button class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Ajouter une vitre</button>
+</div>
+
+<div style="height:8px"></div>
+
+</div></main>
+</body></html>
