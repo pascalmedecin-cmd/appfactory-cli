@@ -45,10 +45,12 @@ test.describe('AC-019 redirects 308 anciennes URLs', () => {
 			if (res.status() === 308) r308.push(res.url());
 		});
 		await page.goto('/crm', { waitUntil: 'networkidle' });
-		// Les quick-actions du dashboard pointent directement sous /crm (pas de filet 308).
+		// Les quick-actions n'existent que sur le dashboard standard ; le dashboard premium
+		// (flag ffCrmListesV2) a une autre structure. Si elles sont présentes, elles pointent
+		// directement sous /crm (pas de filet 308).
 		const hrefs = await page.locator('.qa-card').evaluateAll((els) => els.map((e) => e.getAttribute('href')));
-		expect(hrefs.length).toBeGreaterThan(0);
 		for (const h of hrefs) expect(h, `href quick-action ${h}`).toMatch(/^\/crm\//);
+		// Invariant cœur (vrai quel que soit le dashboard) : aucun 308 émis depuis /crm.
 		expect(r308, `aucun 308 attendu, vu: ${r308.join(', ')}`).toEqual([]);
 	});
 
@@ -70,13 +72,18 @@ test.describe('Home portail', () => {
 		await expect(page.getByRole('heading', { name: 'Bonjour, par où commencer ?' })).toBeVisible();
 	});
 
-	test('AC-001 : exactement 2 cards (CRM active + Découpe Films bientot)', async ({ page }) => {
+	test('AC-001 : exactement 2 cards (CRM active ; Découpe active ou « bientôt » selon le flag)', async ({ page }) => {
 		await page.goto('/');
 		await expect(page.locator('.card')).toHaveCount(2);
-		// CRM = vrai lien navigable
+		// CRM = toujours un vrai lien navigable
 		await expect(page.getByRole('link', { name: /Ouvrir le CRM/ })).toBeVisible();
-		// Découpe Films = conteneur non interactif, badge bientot
-		await expect(page.getByText('Bientôt disponible')).toBeVisible();
+		// Découpe Films : selon le flag ff_decoupe, soit un lien actif, soit la carte « bientôt ».
+		const decoupeLien = page.getByRole('link', { name: /Ouvrir Découpe Films/ });
+		if ((await decoupeLien.count()) > 0) {
+			await expect(decoupeLien).toBeVisible();
+		} else {
+			await expect(page.getByText('Bientôt disponible')).toBeVisible();
+		}
 	});
 
 	test('AC-018 : le vrai logo FilmPro est dans le header de la home', async ({ page }) => {
@@ -96,12 +103,18 @@ test.describe('Home portail', () => {
 		await expect(page.locator('main')).toBeVisible();
 	});
 
-	test('AC-003 : la card Découpe Films ne navigue pas (aria-disabled, aucun href)', async ({ page }) => {
+	test('AC-003 : la card Découpe Films respecte son flag (lien /decoupe si ON, sinon désactivée non navigable)', async ({ page }) => {
 		await page.goto('/');
+		const decoupeLien = page.getByRole('link', { name: /Ouvrir Découpe Films/ });
+		if ((await decoupeLien.count()) > 0) {
+			// ff_decoupe ON : vrai lien navigable vers /decoupe.
+			await expect(decoupeLien).toHaveAttribute('href', '/decoupe');
+			return;
+		}
+		// ff_decoupe OFF : conteneur non interactif, aria-disabled, aucun <a>, non navigable.
 		const decoupe = page.locator('.card--disabled');
 		await expect(decoupe).toHaveCount(1);
 		await expect(decoupe).toHaveAttribute('aria-disabled', 'true');
-		// Pas de lien actif dans la card Découpe Films
 		expect(await decoupe.locator('a').count()).toBe(0);
 		// Clic dans la zone (force : l'element est aria-disabled donc "disabled" pour
 		// Playwright) : aucune navigation possible faute de <a>, on reste sur la home.
