@@ -291,9 +291,8 @@ export const DGM_BAND_W_MAX = 520; // largeur de bande du film le plus long (uni
 export const DGM_RENDER_MAX_PX = 720; // largeur px du viewBox le plus large (les autres au prorata)
 export const DGM_BELOW = 51; // bloc sous la bande : règle + libellés + titre d'axe
 export const DGM_RULER_GAP = 12; // bas de bande → ligne de règle
-export const DGM_TICK = 4; // demi-longueur d'un tiret de règle
-export const DGM_LABELS_DY = 16; // ligne de règle → libellés de mètres
-export const DGM_AXIS_DY = 34; // ligne de règle → titre d'axe
+// Offsets de rendu de la règle (tiret ±4, libellés +16, titre d'axe +34 sous la ligne)
+// sont appliqués en littéraux dans le SVG (cohérent avec les autres offsets de cote du strip).
 
 export interface DiagramRect {
 	x: number;
