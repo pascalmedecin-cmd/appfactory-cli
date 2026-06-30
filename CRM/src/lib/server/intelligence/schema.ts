@@ -189,12 +189,6 @@ export const IntelligenceReportSchema = z.object({
 });
 
 export type ChipKind = z.infer<typeof ChipKindEnum>;
-/**
- * @deprecated Le champ `theme` accepte n'importe quel slug actif de la
- * table `veille_themes` (depuis S169). Cet alias reste exporté pour
- * rétrocompat des éditions antérieures, mais utilisez `string` côté code.
- */
-export type Theme = z.infer<typeof ThemeEnum> | string;
 export type Maturity = z.infer<typeof MaturityEnum>;
 export type GeoScope = z.infer<typeof GeoScopeEnum>;
 export type ComplianceTag = z.infer<typeof ComplianceTagEnum>;
@@ -203,8 +197,5 @@ export type Actionability = z.infer<typeof ActionabilityEnum>;
 export type ImpactAxis = z.infer<typeof ImpactAxisEnum>;
 export type IntelligenceItem = z.infer<typeof IntelligenceItemSchema>;
 export type ImpactFilmpro = z.infer<typeof ImpactFilmproSchema>;
-export type LegacySearchTerm = z.infer<typeof LegacySearchTermSchema>;
-/** @deprecated : alias legacy, sera retiré en Phase 2 (refonte UI /veille). */
-export type SearchTerm = LegacySearchTerm;
 export type IntelligenceEdition = z.infer<typeof IntelligenceEditionSchema>;
 export type IntelligenceReport = z.infer<typeof IntelligenceReportSchema>;

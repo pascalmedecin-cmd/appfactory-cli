@@ -157,6 +157,7 @@ Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude **sans dépendanc
 - Chantier 3 portail : non cadré = pas une tâche (recadrer si l'objet redevient actuel).
 - Durcissement RLS : conditionnel à un 4e user non-fondateur (inexistant) → [[feedback_rls_multitenant_durcissement_si_4_users]].
 - knip `apply-*-migration` archivables : cosmétique, 5 min un jour (knip déjà cadré à 3 justifiés, `6c477cf`). → [[feedback_knip_verify_grep_before_delete]].
+- knip : 1 finding restant **assumé non-dette** = `MINUTE_MS|RATE_LIMIT_WINDOW_MS` (`utils/time-constants.ts`), faux positif « duplicate exports » sur deux exports **légitimes et live** (RATE_LIMIT_WINDOW_MS utilisé dans `hooks.server.ts`, MINUTE_MS = unité de base de la librairie de durées, audit L-18). Le mutiler regresserait la nomenclature sémantique ; pas de knob knip propre pour l'ignorer. **Ne pas ré-investiguer.** (Les types morts `Theme`/`SearchTerm`/`LegacySearchTerm` du module veille ont été soldés 2026-06-30 lors de la passe « zéro dette » aide.)
 - Time-box session Supabase : geste Dashboard **one-shot remis à Pascal** (procédure ci-dessous), **confirmé non-faille** par 2 audits (le délog 7 j app suffit, prouvé prod) → retiré du backlog actif, **pas une dette**. Procédure : Supabase Dashboard → Authentication → Sessions → « Time-box user sessions » = **168 h (7 j)** + garder « Detect refresh token reuse » ON → Save. → [[audit_secu_2026-06-29_session_delog_7j]].
 ### Livré cette session
 
