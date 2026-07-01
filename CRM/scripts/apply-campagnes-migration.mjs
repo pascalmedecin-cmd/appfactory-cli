@@ -21,7 +21,7 @@ loadEnv();
 const url = process.env.DATABASE_URL_ADMIN;
 if (!url) { console.error('DATABASE_URL_ADMIN absent'); process.exit(1); }
 
-const file = '../supabase/migrations/20260622_001_campagnes_module.sql';
+const file = '../supabase/migrations/20260622000001_campagnes_module.sql';
 
 const client = new pg.Client({ connectionString: url });
 await client.connect();

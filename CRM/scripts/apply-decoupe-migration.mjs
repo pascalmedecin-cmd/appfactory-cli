@@ -23,7 +23,7 @@ loadEnv();
 const url = process.env.DATABASE_URL_ADMIN;
 if (!url) { console.error('DATABASE_URL_ADMIN absent'); process.exit(1); }
 
-const migFile = '../supabase/migrations/20260605_001_decoupe_films.sql';
+const migFile = '../supabase/migrations/20260605000001_decoupe_films.sql';
 const client = new pg.Client({ connectionString: url });
 await client.connect();
 try {

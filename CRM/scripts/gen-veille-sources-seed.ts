@@ -6,7 +6,7 @@
  * descriptifs lisibles du document de revue
  * (.product-architect/editeur-veille/.. ou docs/veille/sources-revue-2026-06-24.html).
  *
- * Sortie : supabase/migrations/20260624_001_veille_sources.sql (schéma + seed) +
+ * Sortie : supabase/migrations/20260624000001_veille_sources.sql (schéma + seed) +
  * un rapport d'écarts sur stdout (domaines sans métadonnée, métadonnées orphelines).
  *
  * Lancement : npx tsx scripts/gen-veille-sources-seed.ts
@@ -250,7 +250,7 @@ ${valuesLines}
 ON CONFLICT (hostname) DO NOTHING;
 `;
 
-const outPath = join(ROOT, 'supabase/migrations/20260624_001_veille_sources.sql');
+const outPath = join(ROOT, 'supabase/migrations/20260624000001_veille_sources.sql');
 writeFileSync(outPath, sql, 'utf8');
 
 // --- 4bis. Émettre le module TS (filet de secours + base du test d'équivalence) ---

@@ -21,8 +21,8 @@ const url = process.env.DATABASE_URL_ADMIN;
 if (!url) { console.error('DATABASE_URL_ADMIN absent'); process.exit(1); }
 
 const files = [
-	'../supabase/migrations/20260512_002_api_quota_log.sql',
-	'../supabase/migrations/20260512_003_prospect_leads_source_google_places.sql',
+	'../supabase/migrations/20260512000002_api_quota_log.sql',
+	'../supabase/migrations/20260512000003_prospect_leads_source_google_places.sql',
 ];
 
 const client = new pg.Client({ connectionString: url });

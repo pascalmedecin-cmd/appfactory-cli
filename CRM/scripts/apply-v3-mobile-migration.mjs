@@ -21,7 +21,7 @@ loadEnv();
 const url = process.env.DATABASE_URL_ADMIN;
 if (!url) { console.error('DATABASE_URL_ADMIN absent'); process.exit(1); }
 
-const migFile = '../supabase/migrations/20260531_001_v3_mobile_terrain.sql';
+const migFile = '../supabase/migrations/20260531000001_v3_mobile_terrain.sql';
 
 const client = new pg.Client({ connectionString: url });
 await client.connect();

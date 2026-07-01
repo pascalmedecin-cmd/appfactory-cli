@@ -24,7 +24,7 @@ loadEnv();
 const url = process.env.DATABASE_URL_ADMIN;
 if (!url) { console.error('DATABASE_URL_ADMIN absent'); process.exit(1); }
 
-const migPath = new URL('../supabase/migrations/20260624_001_veille_sources.sql', import.meta.url);
+const migPath = new URL('../supabase/migrations/20260624000001_veille_sources.sql', import.meta.url);
 const sql = fs.readFileSync(migPath, 'utf-8');
 
 // Référence : nombre de lignes VALUES dans le SQL source (lignes "  ('host', ...").
@@ -33,7 +33,7 @@ const expectedRows = (sql.match(/^\s{2}\('/gm) ?? []).length;
 const client = new pg.Client({ connectionString: url });
 await client.connect();
 try {
-	process.stdout.write('=== Application 20260624_001_veille_sources.sql ===\n');
+	process.stdout.write('=== Application 20260624000001_veille_sources.sql ===\n');
 	await client.query(sql);
 	console.log('OK (idempotent)');
 
