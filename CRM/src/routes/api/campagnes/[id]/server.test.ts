@@ -72,6 +72,14 @@ describe('PATCH /api/campagnes/[id]', () => {
 	it('200 archivage (updateCampagne)', async () => {
 		expect((await PATCH(event({ archived: true }))).status).toBe(200);
 	});
+
+	it('200 changement de statut (active)', async () => {
+		expect((await PATCH(event({ statut: 'active' }))).status).toBe(200);
+	});
+
+	it('400 sur statut hors périmètre (Zod enum strict)', async () => {
+		expect((await PATCH(event({ statut: 'lance' }))).status).toBe(400);
+	});
 });
 
 describe('DELETE /api/campagnes/[id]', () => {

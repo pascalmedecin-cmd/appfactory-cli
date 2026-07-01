@@ -30,14 +30,29 @@ import {
 	CAMPAGNE_NOM_MAX,
 	CAMPAGNE_DESC_MAX,
 	MAX_CAMPAGNE_IDS,
+	CAMPAGNE_STATUTS,
+	DEFAULT_CAMPAGNE_STATUT,
+	isCampagneStatut,
+	campagneStatutLabel,
 } from '$lib/campagnes';
-import type { Campagne, CampagneWithCount, CouleurSlug } from '$lib/campagnes';
+import type { Campagne, CampagneWithCount, CouleurSlug, CampagneStatut } from '$lib/campagnes';
 
 // Constantes/types Campagnes : source unique dans le module client-safe `$lib/campagnes`
-// (partagé UI + serveur, aucune dérive de palette). Ré-exportés ici pour compat : les
+// (partagé UI + serveur, aucune dérive de palette/statut). Ré-exportés ici pour compat : les
 // endpoints, le filtre `prospection-query` et les tests les importent depuis ce module.
-export { COULEUR_SLUGS, DEFAULT_COULEUR, isCouleurSlug, CAMPAGNE_NOM_MAX, CAMPAGNE_DESC_MAX, MAX_CAMPAGNE_IDS };
-export type { Campagne, CampagneWithCount, CouleurSlug };
+export {
+	COULEUR_SLUGS,
+	DEFAULT_COULEUR,
+	isCouleurSlug,
+	CAMPAGNE_NOM_MAX,
+	CAMPAGNE_DESC_MAX,
+	MAX_CAMPAGNE_IDS,
+	CAMPAGNE_STATUTS,
+	DEFAULT_CAMPAGNE_STATUT,
+	isCampagneStatut,
+	campagneStatutLabel,
+};
+export type { Campagne, CampagneWithCount, CouleurSlug, CampagneStatut };
 
 export type CampagneError = { code: 'duplicate' | 'invalid' | 'db'; message: string };
 
@@ -147,11 +162,11 @@ export async function renameCampagne(
 	return { data: data as Campagne, error: null };
 }
 
-/** Met à jour les champs éditables (couleur / description / archivage) d'une campagne. */
+/** Met à jour les champs éditables (couleur / description / archivage / statut) d'une campagne. */
 export async function updateCampagne(
 	supabase: SupabaseClient<Database>,
 	id: string,
-	patch: { couleur?: string; description?: string | null; archived?: boolean }
+	patch: { couleur?: string; description?: string | null; archived?: boolean; statut?: string }
 ): Promise<{ data: Campagne | null; error: CampagneError | null }> {
 	const update: Database['public']['Tables']['campagnes']['Update'] = {};
 	if (patch.couleur !== undefined) {
@@ -162,6 +177,15 @@ export async function updateCampagne(
 	}
 	if (patch.description !== undefined) update.description = sanitizeDescription(patch.description);
 	if (patch.archived !== undefined) update.archived = patch.archived;
+	if (patch.statut !== undefined) {
+		// Statut contraint aux 2 valeurs du cycle de vie (source unique CAMPAGNE_STATUTS +
+		// CHECK SQL). Contrairement à la couleur (qui retombe sur le défaut), un statut hors
+		// périmètre est une erreur explicite : jamais deviner l'intention d'un champ métier.
+		if (!isCampagneStatut(patch.statut)) {
+			return { data: null, error: { code: 'invalid', message: 'Statut invalide.' } };
+		}
+		update.statut = patch.statut;
+	}
 
 	if (Object.keys(update).length === 0) {
 		return { data: null, error: { code: 'invalid', message: 'Aucune modification.' } };

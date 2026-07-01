@@ -36,3 +36,27 @@ export const CAMPAGNE_NOM_MAX = 80;
 export const CAMPAGNE_DESC_MAX = 280;
 /** Garde DoS sur les multi-sélections campagne (cohérent avec MAX_FILTER_VALUES prospection). */
 export const MAX_CAMPAGNE_IDS = 50;
+
+/**
+ * Statuts de cycle de vie d'une campagne (Lot 3). Source UNIQUE, alignée sur le CHECK SQL
+ * (`campagnes_statut_check`) et le Zod des endpoints. Distinct de l'archivage (`archived`).
+ *  - en_cours : préparation + identification des prospects (défaut à la création) ;
+ *  - active   : campagne lancée.
+ */
+export const CAMPAGNE_STATUTS = ['en_cours', 'active'] as const;
+export type CampagneStatut = (typeof CAMPAGNE_STATUTS)[number];
+export const DEFAULT_CAMPAGNE_STATUT: CampagneStatut = 'en_cours';
+
+export function isCampagneStatut(v: unknown): v is CampagneStatut {
+	return typeof v === 'string' && (CAMPAGNE_STATUTS as readonly string[]).includes(v);
+}
+
+const CAMPAGNE_STATUT_LABELS: Record<CampagneStatut, string> = {
+	en_cours: 'En cours',
+	active: 'Active',
+};
+
+/** Libellé humain d'un statut de campagne (retombe sur le défaut si valeur inconnue). */
+export function campagneStatutLabel(statut: string | null | undefined): string {
+	return CAMPAGNE_STATUT_LABELS[isCampagneStatut(statut) ? statut : DEFAULT_CAMPAGNE_STATUT];
+}

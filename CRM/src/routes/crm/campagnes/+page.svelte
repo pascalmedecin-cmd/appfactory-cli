@@ -9,17 +9,23 @@
 	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
+	import EntrepriseSearchModal from '$lib/components/prospection/EntrepriseSearchModal.svelte';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { SvelteSet } from 'svelte/reactivity';
 	import { toasts } from '$lib/stores/toast';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { CRM_BASE } from '$lib/config';
+	import { filterEnabledSources } from '$lib/prospection-flags';
+	import type { EntrepriseSource } from '$lib/components/prospection/source-meta';
 	import {
 		COULEUR_SLUGS,
 		DEFAULT_COULEUR,
 		CAMPAGNE_NOM_MAX,
 		CAMPAGNE_DESC_MAX,
 		swatchClass,
+		campagneStatutLabel,
 		type CouleurSlug,
+		type CampagneStatut,
 		type CampagneWithCount,
 	} from '$lib/campagnes';
 	import type { PageData } from './$types';
@@ -30,8 +36,16 @@
 	let search = $state('');
 	let menuOpenId = $state<string | null>(null);
 
+	// Lot 3 : sources entreprises actives (mêmes flags que la Prospection, dérivées client-side ;
+	// config statique -> identique des deux côtés). Le quota Google est auto-récupéré par la modale
+	// à l'ouverture de l'onglet Google (pas besoin de le charger côté serveur ici).
+	const PREVIEW_SOURCES: EntrepriseSource[] = ['search_ch', 'google_places', 'zefix'];
+	const entrepriseSources = $derived(
+		filterEnabledSources(PREVIEW_SOURCES).filter((s): s is EntrepriseSource => PREVIEW_SOURCES.includes(s as EntrepriseSource)),
+	);
+
 	$effect(() => {
-		$pageSubtitle = `${data.stats.actives} campagne${data.stats.actives > 1 ? 's' : ''} active${data.stats.actives > 1 ? 's' : ''}`;
+		$pageSubtitle = `${data.stats.actives} campagne${data.stats.actives > 1 ? 's' : ''} ouverte${data.stats.actives > 1 ? 's' : ''}`;
 	});
 
 	const visible = $derived(
@@ -40,9 +54,17 @@
 			.filter((c) => c.nom.toLowerCase().includes(search.trim().toLowerCase())),
 	);
 
+	// Lot 3 : campagnes ouvertes (non archivées) déjà lancées (statut = active), pour le KPI.
+	const activeStatutCount = $derived(data.campagnes.filter((c) => !c.archived && c.statut === 'active').length);
+
+	// Cibles d'étiquetage du modal de recherche = campagnes OUVERTES uniquement (jamais une
+	// archivée : cohérent avec la Prospection qui charge le même modal en includeArchived:false).
+	const openCampagnes = $derived(data.campagnes.filter((c) => !c.archived));
+
 	const kpiItems = $derived<KpiItem[]>([
-		{ icon: 'sell', value: data.stats.actives, label: 'Campagnes actives', tone: 'primary' },
-		{ icon: 'group', value: data.stats.taggedLeads, label: 'Prospects étiquetés', tone: 'convert' },
+		{ icon: 'sell', value: data.stats.actives, label: 'Campagnes ouvertes', tone: 'primary' },
+		{ icon: 'rocket_launch', value: activeStatutCount, label: 'Campagnes actives', tone: 'convert' },
+		{ icon: 'group', value: data.stats.taggedLeads, label: 'Prospects étiquetés', tone: 'primary' },
 		{ icon: 'do_not_disturb', value: data.stats.sansCampagne, label: 'Sans campagne', tone: 'primary' },
 	]);
 
@@ -156,6 +178,58 @@
 		}
 	}
 
+	// --- Statut (cycle de vie En cours / Active) — édition inline + menu ---
+	// Set d'ids en cours de mise à jour : parallélisme par id, garde anti double-clic
+	// (cf. feedback_svelteset_parallel_by_id). L'update est optimiste côté serveur via PATCH.
+	const statutBusy = new SvelteSet<string>();
+
+	async function setStatut(c: CampagneWithCount, statut: CampagneStatut) {
+		menuOpenId = null;
+		if (c.statut === statut || statutBusy.has(c.id)) return;
+		statutBusy.add(c.id);
+		try {
+			const resp = await fetch(`/api/campagnes/${c.id}`, {
+				method: 'PATCH',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ statut }),
+			});
+			if (resp.ok) {
+				toasts.success(statut === 'active' ? `« ${c.nom} » lancée` : `« ${c.nom} » repassée en préparation`);
+				await invalidateAll();
+			} else {
+				const d = await resp.json().catch(() => null);
+				toasts.error(d?.error || 'Changement de statut impossible');
+			}
+		} catch {
+			toasts.error('Erreur réseau');
+		} finally {
+			statutBusy.delete(c.id);
+		}
+	}
+
+	// --- Recherche de prospects embarquée par campagne (Lot 3) ---
+	// Ouvre EntrepriseSearchModal avec la campagne pré-cochée : le lot importé sera étiqueté
+	// à cette campagne. La modale appelle invalidateAll après import (compteurs à jour).
+	let searchOpen = $state(false);
+	let searchPresetIds = $state<string[]>([]);
+	let searchImportResult = $state<{ message: string; type: 'success' | 'error' } | null>(null);
+
+	function openSearch(c: CampagneWithCount) {
+		menuOpenId = null;
+		searchPresetIds = [c.id];
+		searchImportResult = null;
+		searchOpen = true;
+	}
+
+	// Retour d'import (message serveur) -> toast, puis on consomme le résultat (pas de re-toast).
+	$effect(() => {
+		if (!searchImportResult) return;
+		const { message, type } = searchImportResult;
+		if (type === 'success') toasts.success(message);
+		else toasts.error(message);
+		searchImportResult = null;
+	});
+
 	// --- Suppression ---
 	let deleteTarget = $state<CampagneWithCount | null>(null);
 	let deleteBusy = $state(false);
@@ -215,7 +289,7 @@
 	<div class="toolbar">
 		<div class="segtabs" role="tablist" aria-label="Filtrer les campagnes">
 			<button type="button" id="camptab-actives" class="segtab" class:active={activeTab === 'actives'} role="tab" aria-selected={activeTab === 'actives'} aria-controls="campagnes-panel" onclick={() => (activeTab = 'actives')}>
-				Actives <span class="ct">{data.stats.actives}</span>
+				Ouvertes <span class="ct">{data.stats.actives}</span>
 			</button>
 			<button type="button" id="camptab-archived" class="segtab" class:active={activeTab === 'archived'} role="tab" aria-selected={activeTab === 'archived'} aria-controls="campagnes-panel" onclick={() => (activeTab = 'archived')}>
 				Archivées <span class="ct">{data.stats.archived}</span>
@@ -246,7 +320,12 @@
 	{:else}
 		<div class="listcard">
 			<div class="lc-head">
-				<span></span><span>Campagne</span><span class="hide-sm">Prospects</span><span class="hide-md">Créée le</span><span class="hide-sm">Statut</span><span></span>
+				<span></span>
+				<span>Campagne</span>
+				<span class="hide-sm">Statut</span>
+				<span class="hide-sm">Prospects</span>
+				<span class="hide-md"></span>
+				<span></span>
 			</div>
 			{#each visible as c (c.id)}
 				<div class="lc-row">
@@ -254,16 +333,33 @@
 					<div class="lc-id">
 						<div class="lc-name">{c.nom}</div>
 						{#if c.description}<div class="lc-desc">{c.description}</div>{/if}
+						<div class="lc-meta">Créée le {dateLong(c.date_creation)}</div>
 					</div>
+
+					<!-- Statut (cycle de vie) : contrôle inline pour les ouvertes, chip figé pour les archivées. -->
+					{#if c.archived}
+						<span class="cstatus muted hide-sm"><span class="dot"></span>Archivée</span>
+					{:else}
+						<div class="statut-seg hide-sm" role="group" aria-label={`Statut de ${c.nom}`}>
+							<button type="button" class="seg" class:on={c.statut === 'en_cours'} aria-pressed={c.statut === 'en_cours'} disabled={statutBusy.has(c.id)} onclick={() => setStatut(c, 'en_cours')}>En cours</button>
+							<button type="button" class="seg" class:on={c.statut === 'active'} class:launched={c.statut === 'active'} aria-pressed={c.statut === 'active'} disabled={statutBusy.has(c.id)} onclick={() => setStatut(c, 'active')}>Active</button>
+						</div>
+					{/if}
+
 					<button type="button" class="leadcount hide-sm" class:zero={c.lead_count === 0} onclick={() => goToProspection(c.id)} title="Voir ces prospects dans la Prospection">
 						<Icon name="arrow_forward" size={13} />
 						{c.lead_count} prospect{c.lead_count > 1 ? 's' : ''}
 					</button>
-					<span class="lc-date hide-md">{dateLong(c.date_creation)}</span>
-					<span class="cstatus hide-sm" class:active={!c.archived && c.lead_count > 0} class:muted={c.archived || c.lead_count === 0}>
-						<span class="dot"></span>
-						{c.archived ? 'Archivée' : c.lead_count === 0 ? 'Sans prospect' : 'Active'}
-					</span>
+
+					<!-- Action clé Lot 3 : trouver des prospects pour cette campagne (ouvertes uniquement). -->
+					{#if c.archived}
+						<span class="hide-md"></span>
+					{:else}
+						<button type="button" class="trouver hide-md" onclick={() => openSearch(c)}>
+							<Icon name="radar" size={15} /> Trouver des prospects
+						</button>
+					{/if}
+
 					<div class="act-menu">
 						<button
 							type="button"
@@ -277,6 +373,21 @@
 						</button>
 						{#if menuOpenId === c.id}
 							<div class="menu" role="menu">
+								{#if !c.archived}
+									<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); openSearch(c); }}>
+										<Icon name="radar" size={15} /> Trouver des prospects
+									</button>
+									{#if c.statut === 'en_cours'}
+										<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); setStatut(c, 'active'); }}>
+											<Icon name="rocket_launch" size={15} /> Lancer la campagne
+										</button>
+									{:else}
+										<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); setStatut(c, 'en_cours'); }}>
+											<Icon name="tune" size={15} /> Repasser en préparation
+										</button>
+									{/if}
+									<div class="menu-sep"></div>
+								{/if}
 								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); openRename(c); }}>
 									<Icon name="edit" size={15} /> Renommer
 								</button>
@@ -299,7 +410,7 @@
 				</div>
 			{/each}
 			<div class="lc-foot">
-				{visible.length} campagne{visible.length > 1 ? 's' : ''} {activeTab === 'actives' ? 'active' : 'archivée'}{visible.length > 1 ? 's' : ''}
+				{visible.length} campagne{visible.length > 1 ? 's' : ''} {activeTab === 'actives' ? 'ouverte' : 'archivée'}{visible.length > 1 ? 's' : ''}
 			</div>
 		</div>
 	{/if}
@@ -344,6 +455,18 @@
 	loading={deleteBusy}
 	onConfirm={confirmDelete}
 	onClose={() => (deleteTarget = null)}
+/>
+
+<!-- Lot 3 : recherche de prospects embarquée par campagne. La campagne est pré-cochée
+     (presetCampagneIds) : le lot importé est étiqueté à cette campagne + apparaît en Prospection.
+     La modale appelle invalidateAll après import -> compteurs de la liste à jour. -->
+<EntrepriseSearchModal
+	bind:open={searchOpen}
+	bind:importResult={searchImportResult}
+	allowedSources={entrepriseSources}
+	premium={true}
+	campagnes={openCampagnes}
+	presetCampagneIds={searchPresetIds}
 />
 
 <style>
@@ -461,7 +584,7 @@
 	.lc-head,
 	.lc-row {
 		display: grid;
-		grid-template-columns: 26px minmax(0, 1fr) 150px 130px 120px 40px;
+		grid-template-columns: 26px minmax(0, 1fr) 176px 140px 196px 40px;
 		align-items: center;
 		gap: 16px;
 		padding: 0 18px;
@@ -504,9 +627,84 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}
-	.lc-date {
-		font-size: 12.5px;
+	.lc-meta {
+		font-size: 11.5px;
 		color: var(--color-text-muted);
+		margin-top: 3px;
+	}
+
+	/* Contrôle segmenté du statut (cycle de vie En cours / Active) — édition inline. */
+	.statut-seg {
+		display: inline-flex;
+		gap: 2px;
+		padding: 3px;
+		width: fit-content;
+		background: var(--color-surface-alt);
+		border-radius: var(--radius-lg);
+		box-shadow: inset 0 0 0 1px var(--color-border);
+	}
+	.seg {
+		border: none;
+		background: transparent;
+		cursor: pointer;
+		padding: 5px 11px;
+		border-radius: var(--radius-md);
+		font: 600 12px var(--font-sans, inherit);
+		color: var(--color-text-muted);
+		white-space: nowrap;
+		transition: background 180ms ease, color 180ms ease, box-shadow 180ms ease;
+	}
+	.seg:hover:not(.on):not(:disabled) {
+		color: var(--color-text);
+	}
+	.seg.on {
+		background: var(--color-surface);
+		color: var(--color-text);
+		box-shadow: var(--shadow-xs);
+	}
+	.seg.on.launched {
+		color: var(--color-success-deep);
+	}
+	.seg:disabled {
+		opacity: 0.55;
+		cursor: default;
+	}
+	.seg:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 1px;
+	}
+
+	/* Action clé Lot 3 : « Trouver des prospects » (bouton secondaire discret). */
+	.trouver {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		justify-self: start;
+		padding: 7px 13px;
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
+		color: var(--color-primary-dark);
+		border-radius: var(--radius-lg);
+		font: 600 12.5px var(--font-sans, inherit);
+		cursor: pointer;
+		box-shadow: var(--shadow-xs);
+		white-space: nowrap;
+		transition: background 180ms ease, border-color 180ms ease, transform 120ms ease;
+	}
+	.trouver:hover {
+		background: var(--color-surface-alt);
+		border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+	}
+	.trouver:active {
+		transform: translateY(1px);
+	}
+	.trouver :global(svg) {
+		color: var(--color-primary);
+		flex-shrink: 0;
+	}
+	.trouver:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
 	}
 	button.leadcount {
 		border: none;
@@ -532,14 +730,6 @@
 		width: 6px;
 		height: 6px;
 		border-radius: 50%;
-	}
-	.cstatus.active {
-		background: var(--color-success-light);
-		color: var(--color-success-deep);
-		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-success) 18%, transparent);
-	}
-	.cstatus.active .dot {
-		background: var(--color-success);
 	}
 	.cstatus.muted {
 		background: var(--color-surface-alt);
@@ -739,7 +929,7 @@
 		}
 		.lc-head,
 		.lc-row {
-			grid-template-columns: 26px minmax(0, 1fr) 150px 120px 40px;
+			grid-template-columns: 26px minmax(0, 1fr) 176px 140px 40px;
 		}
 	}
 </style>

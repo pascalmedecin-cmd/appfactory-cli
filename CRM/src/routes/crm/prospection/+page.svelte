@@ -17,7 +17,7 @@
 	import BatchActionsBar from '$lib/components/prospection/BatchActionsBar.svelte';
 	import RecherchesPanel from '$lib/components/prospection/RecherchesPanel.svelte';
 	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
-	import { campClass } from '$lib/campagnes';
+	import { campClass, campagneStatutLabel } from '$lib/campagnes';
 	import SourcePill from '$lib/components/SourcePill.svelte';
 	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
 	import { sourceMetaFor } from '$lib/utils/entreprisesFormat';
@@ -1143,10 +1143,14 @@
 						{#if leadCamps.length > 0}
 							<div class="camp-stack">
 								{#each leadCamps.slice(0, 2) as c (c.id)}
-									<span class="camp {campClass(c.couleur)}"><span class="cdot"></span><span class="clabel">{c.nom}</span></span>
+									<span class="camp {campClass(c.couleur)}" title={`${c.nom} · ${c.archived ? 'Archivée' : campagneStatutLabel(c.statut)}`}>
+										<span class="cdot"></span>
+										<span class="clabel">{c.nom}</span>
+										{#if c.statut === 'active' && !c.archived}<Icon name="rocket_launch" size={11} class="camp-live" />{/if}
+									</span>
 								{/each}
 								{#if leadCamps.length > 2}
-									<span class="camp-more" title={leadCamps.slice(2).map((c) => c.nom).join(', ')}>+{leadCamps.length - 2}</span>
+									<span class="camp-more" title={leadCamps.slice(2).map((c) => `${c.nom} (${c.archived ? 'Archivée' : campagneStatutLabel(c.statut)})`).join(', ')}>+{leadCamps.length - 2}</span>
 								{/if}
 							</div>
 						{:else}
@@ -1293,6 +1297,15 @@
 />
 
 <style>
+	/* Lot 3 : marqueur « campagne lancée » (statut active) dans la pastille de la colonne
+	   Campagnes. La pastille .camp est une primitive globale (app.css) : on cible juste
+	   l'icône ajoutée au site d'appel. `currentColor` -> teinte de la pastille. */
+	:global(.camp .camp-live) {
+		flex-shrink: 0;
+		margin-left: -1px;
+		opacity: 0.9;
+	}
+
 	/* Refonte mobile (S190bis) : cards mobile masquées par défaut. Visible uniquement
 	   viewport < 1024px ET flag ffCrmMobileV2 activé. Quand visible, masque le DataTable. */
 	.prospection-mobile-cards {

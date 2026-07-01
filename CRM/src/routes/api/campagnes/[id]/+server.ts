@@ -1,13 +1,14 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { z } from 'zod';
-import { renameCampagne, updateCampagne, deleteCampagne, CAMPAGNE_NOM_MAX, CAMPAGNE_DESC_MAX } from '$lib/server/campagnes';
+import { renameCampagne, updateCampagne, deleteCampagne, CAMPAGNE_NOM_MAX, CAMPAGNE_DESC_MAX, CAMPAGNE_STATUTS } from '$lib/server/campagnes';
 import { isCampagnesEnabled } from '$lib/server/feature-gate';
 
 /**
- * PATCH /api/campagnes/[id]  — renomme / recolore / (dé)archive une campagne (écran dédié).
- * DELETE /api/campagnes/[id] — supprime une campagne (les liens N-N partent en cascade ; AUCUN
+ * PATCH /api/campagnes/[id]  — renomme / recolore / (dé)archive / change le statut d'une campagne
+ *                              (écran dédié). DELETE — supprime (liens N-N en cascade ; AUCUN
  *                              prospect supprimé). Auth obligatoire ; payload Zod borné ; conflit
- *                              de nom (insensible à la casse) -> 409 ; couleur hors palette -> défaut.
+ *                              de nom (insensible à la casse) -> 409 ; couleur hors palette -> défaut ;
+ *                              statut hors {en_cours, active} -> 400 (champ métier contraint).
  */
 const idSchema = z.string().uuid();
 
@@ -16,7 +17,10 @@ const PatchSchema = z.object({
 	// Couleur libre : le repo contraint à la palette c1..c8 (défaut si hors palette).
 	couleur: z.string().max(8).optional(),
 	description: z.string().max(CAMPAGNE_DESC_MAX).nullable().optional(),
-	archived: z.boolean().optional()
+	archived: z.boolean().optional(),
+	// Statut strict (2 valeurs, source unique CAMPAGNE_STATUTS) : rejet propre en 400 côté API,
+	// re-validé par le repo (defense-in-depth).
+	statut: z.enum(CAMPAGNE_STATUTS).optional()
 });
 
 export const PATCH = async ({ request, params, locals }: RequestEvent) => {
@@ -31,8 +35,8 @@ export const PATCH = async ({ request, params, locals }: RequestEvent) => {
 	const parsed = PatchSchema.safeParse(raw);
 	if (!parsed.success) return json({ error: 'Données invalides' }, { status: 400 });
 
-	const { nom, couleur, description, archived } = parsed.data;
-	if (nom === undefined && couleur === undefined && description === undefined && archived === undefined) {
+	const { nom, couleur, description, archived, statut } = parsed.data;
+	if (nom === undefined && couleur === undefined && description === undefined && archived === undefined && statut === undefined) {
 		return json({ error: 'Aucune modification' }, { status: 400 });
 	}
 
@@ -48,8 +52,8 @@ export const PATCH = async ({ request, params, locals }: RequestEvent) => {
 		}
 		last = data;
 	}
-	if (couleur !== undefined || description !== undefined || archived !== undefined) {
-		const { data, error } = await updateCampagne(locals.supabase, id.data, { couleur, description, archived });
+	if (couleur !== undefined || description !== undefined || archived !== undefined || statut !== undefined) {
+		const { data, error } = await updateCampagne(locals.supabase, id.data, { couleur, description, archived, statut });
 		if (error) {
 			const status = error.code === 'invalid' ? 400 : 500;
 			return json({ error: error.message }, { status });

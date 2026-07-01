@@ -14,6 +14,10 @@ import {
 	leadIdsForCampagnes,
 	fetchProspectsForCampagne,
 	MAX_CAMPAGNE_IDS,
+	CAMPAGNE_STATUTS,
+	DEFAULT_CAMPAGNE_STATUT,
+	isCampagneStatut,
+	campagneStatutLabel,
 	type Campagne
 } from './campagnes';
 
@@ -63,7 +67,8 @@ const baseCampagne: Campagne = {
 	description: null,
 	archived: false,
 	date_creation: '2026-06-23T00:00:00Z',
-	created_by: null
+	created_by: null,
+	statut: 'en_cours'
 };
 
 describe('isCouleurSlug', () => {
@@ -151,6 +156,35 @@ describe('updateCampagne', () => {
 		const m = createSupabaseMock({ data: { ...baseCampagne, archived: true } });
 		await updateCampagne(m.supabase, 'cmp-1', { archived: true, description: '  notes  ' });
 		expect(arg(m.calls, 'update')?.[0]).toEqual({ archived: true, description: 'notes' });
+	});
+	it('statut valide (active) transmis à l’update', async () => {
+		const m = createSupabaseMock({ data: { ...baseCampagne, statut: 'active' } });
+		const { error } = await updateCampagne(m.supabase, 'cmp-1', { statut: 'active' });
+		expect(error).toBe(null);
+		expect(arg(m.calls, 'update')?.[0]).toEqual({ statut: 'active' });
+	});
+	it('statut hors périmètre -> invalid, aucune requête (pas de retombée silencieuse)', async () => {
+		const m = createSupabaseMock();
+		const { error } = await updateCampagne(m.supabase, 'cmp-1', { statut: 'lance' });
+		expect(error?.code).toBe('invalid');
+		expect(m.calls.length).toBe(0);
+	});
+});
+
+describe('statut de campagne (cycle de vie Lot 3)', () => {
+	it('CAMPAGNE_STATUTS = en_cours (défaut) + active', () => {
+		expect(CAMPAGNE_STATUTS).toEqual(['en_cours', 'active']);
+		expect(DEFAULT_CAMPAGNE_STATUT).toBe('en_cours');
+	});
+	it('isCampagneStatut accepte les 2 valeurs, rejette le reste', () => {
+		for (const s of ['en_cours', 'active']) expect(isCampagneStatut(s)).toBe(true);
+		for (const s of ['EN_COURS', 'lance', 'archived', '', null, undefined, 1]) expect(isCampagneStatut(s)).toBe(false);
+	});
+	it('campagneStatutLabel : libellés FR + retombée défaut sur valeur inconnue', () => {
+		expect(campagneStatutLabel('en_cours')).toBe('En cours');
+		expect(campagneStatutLabel('active')).toBe('Active');
+		expect(campagneStatutLabel('garbage')).toBe('En cours');
+		expect(campagneStatutLabel(null)).toBe('En cours');
 	});
 });
 

@@ -127,6 +127,7 @@ export type Database = {
           description: string | null
           id: string
           nom: string
+          statut: string
         }
         Insert: {
           archived?: boolean
@@ -136,6 +137,7 @@ export type Database = {
           description?: string | null
           id?: string
           nom: string
+          statut?: string
         }
         Update: {
           archived?: boolean
@@ -145,6 +147,7 @@ export type Database = {
           description?: string | null
           id?: string
           nom?: string
+          statut?: string
         }
         Relationships: []
       }

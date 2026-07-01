@@ -21,6 +21,7 @@
 		googleQuota = null,
 		premium = false,
 		campagnes = [],
+		presetCampagneIds = [],
 	}: {
 		open: boolean;
 		importResult: { message: string; type: 'success' | 'error' } | null;
@@ -32,6 +33,13 @@
 		/** Vague 3.2 (flag ffCrmListesV2) : active l'étiquetage campagne du lot importé. */
 		premium?: boolean;
 		campagnes?: CampagneWithCount[];
+		/**
+		 * Lot 3 : campagnes pré-cochées à l'ouverture (ouverture « depuis une campagne » :
+		 * le lot importé sera étiqueté à cette/ces campagne(s) par défaut). L'opérateur reste
+		 * libre de décocher / ajouter dans le combo. Appliqué UNIQUEMENT à la transition
+		 * d'ouverture ; vidé à la fermeture (rien ne fuit d'une session à l'autre).
+		 */
+		presetCampagneIds?: string[];
 	} = $props();
 
 	// Vague 3.2 : campagnes assignées à TOUT le lot importé (lot-level, pas par candidat).
@@ -57,6 +65,14 @@
 
 	const activeMeta = $derived(SOURCE_CARDS[active]);
 
+	// Lot 3 : noms des campagnes pré-cochées (ouverture « depuis une campagne »), pour un rappel
+	// visible dès l'ouverture — le combo d'étiquetage n'apparaît, lui, qu'après une recherche.
+	const presetNames = $derived(
+		premium
+			? presetCampagneIds.map((id) => campagnes.find((c) => c.id === id)?.nom).filter((n): n is string => !!n)
+			: [],
+	);
+
 	// Changement de source = on repart de l'écran de recherche : les résultats d'une source ne
 	// s'appliquent pas à une autre. (Comparaison à la valeur précédente car `bind:active` met à
 	// jour `active` AVANT tout callback : on ne peut pas se fier à un onselect côté carte.)
@@ -71,9 +87,20 @@
 		}
 	});
 
-	// Reset complet à la fermeture (rien ne fuit d'une ouverture à l'autre).
+	// Transitions d'ouverture/fermeture (état propre d'une session à l'autre) :
+	//  - fermeture -> reset complet (rien ne fuit) ;
+	//  - ouverture -> pré-remplissage campagne (Lot 3, premium uniquement) si un preset est fourni.
+	// `prevOpen` (marqueur non réactif) évite de réinitialiser à chaque re-run de l'effet : seule
+	// la vraie transition d'état déclenche l'action. Les autres deps (presetCampagneIds/premium)
+	// re-déclenchent l'effet mais la garde `open === prevOpen` court-circuite (pas d'écrasement
+	// du choix de l'opérateur pendant que la modale est ouverte).
+	let prevOpen = false;
 	$effect(() => {
-		if (!open) {
+		if (open === prevOpen) return;
+		prevOpen = open;
+		if (open) {
+			campagneIds = premium ? [...presetCampagneIds] : [];
+		} else {
 			candidates = [];
 			hasSearched = false;
 			error = null;
@@ -172,6 +199,13 @@
 			Choisissez une source, lancez une recherche ciblée, puis cochez les entreprises à importer.
 			Une seule source à la fois - zéro doublon.
 		</p>
+
+		{#if presetNames.length > 0}
+			<div class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg bg-primary/5 border border-primary/15 text-[13px] text-text-body">
+				<Icon name="sell" size={16} class="shrink-0 text-primary" />
+				<span>Les entreprises importées seront étiquetées à la campagne <b class="font-semibold">{presetNames.join(', ')}</b>.</span>
+			</div>
+		{/if}
 
 		<SourceSelector {sources} bind:active googleQuota={quota} />
 
