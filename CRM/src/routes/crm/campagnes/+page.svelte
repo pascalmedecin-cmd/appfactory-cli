@@ -9,7 +9,6 @@
 	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
-	import EtiquettesPanel from '$lib/components/campagnes/EtiquettesPanel.svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { toasts } from '$lib/stores/toast';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
@@ -56,14 +55,10 @@
 		goto(`${CRM_BASE}/prospection?campagne=${id}`);
 	}
 
-	// --- Étiquettes d'adresses (publipostage) ---
-	let etiquettesOpen = $state(false);
-	let etiquettesTarget = $state<CampagneWithCount | null>(null);
-
-	function openEtiquettes(c: CampagneWithCount) {
+	// --- Étiquettes d'adresses (publipostage) : page dédiée ---
+	function goToEtiquettes(c: CampagneWithCount) {
 		menuOpenId = null;
-		etiquettesTarget = c;
-		etiquettesOpen = true;
+		goto(`${CRM_BASE}/campagnes/${c.id}/etiquettes`);
 	}
 
 	// --- Création ---
@@ -288,7 +283,7 @@
 								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); menuOpenId = null; goToProspection(c.id); }}>
 									<Icon name="visibility" size={15} /> Voir les prospects
 								</button>
-								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); openEtiquettes(c); }}>
+								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); goToEtiquettes(c); }}>
 									<Icon name="mail" size={15} /> Étiquettes d'adresses
 								</button>
 								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); toggleArchive(c); }}>
@@ -351,12 +346,10 @@
 	onClose={() => (deleteTarget = null)}
 />
 
-<!-- Étiquettes d'adresses (publipostage) -->
-<EtiquettesPanel bind:open={etiquettesOpen} campagne={etiquettesTarget} />
-
 <style>
 	.ws-bound {
-		max-width: 1100px;
+		/* Marges resserrées / alignées sur la page Étiquettes et les autres surfaces (gouttière 32px). */
+		max-width: 1160px;
 		margin: 0 auto;
 		padding: 8px 0 64px;
 	}

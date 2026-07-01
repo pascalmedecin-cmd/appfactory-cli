@@ -6,15 +6,16 @@ import {
 	PAGE_W,
 	PAGE_H
 } from '../src/lib/etiquettes/pdf-etiquettes';
-import { DMSANS_400, DMSANS_700 } from '../src/lib/decoupe/pdf-fonts';
+import { OUTFIT_400, OUTFIT_700 } from '../src/lib/etiquettes/etiquettes-fonts';
 import type { EtiquetteEntry } from '../src/lib/etiquettes/prospect-etiquette';
 
 /**
  * Validation que **svg2pdf** (le convertisseur SVG → PDF utilisé à l'export) rend bien la planche
- * d'étiquettes d'adresses sur le VRAI PDF généré (mêmes libs que l'app), polices Outfit 400/700
- * réellement embarquées. Méthode identique à `decoupe-pdf.test.ts` : page `about:blank` + libs
- * injectées depuis node_modules + SVG calculés en Node par le moteur pur `pdf-etiquettes.ts`.
- * Aucune session/aucune auth -> robuste (n'exerce pas le flux UI, couvert par le panneau côté app).
+ * d'étiquettes d'adresses sur le VRAI PDF généré (mêmes libs que l'app), avec les VRAIES polices de
+ * production **Outfit 400/700** (celles embarquées par `exportEtiquettesPdf`, family `Outfit`, comme
+ * dans le SVG `font-family="Outfit"`). Méthode identique à `decoupe-pdf.test.ts` : page `about:blank`
+ * + libs injectées depuis node_modules + SVG calculés en Node par le moteur pur `pdf-etiquettes.ts`.
+ * Aucune session/aucune auth -> robuste (n'exerce pas le flux UI, couvert par la page côté app).
  */
 const JSPDF_UMD = readFileSync(new URL('../node_modules/jspdf/dist/jspdf.umd.min.js', import.meta.url), 'utf8');
 const SVG2PDF_UMD = readFileSync(new URL('../node_modules/svg2pdf.js/dist/svg2pdf.umd.min.js', import.meta.url), 'utf8');
@@ -30,16 +31,16 @@ async function svgToPdf(page: Page, svg: string, withFonts = false): Promise<str
 				output: () => string;
 			};
 			if (withFonts) {
-				doc.addFileToVFS('DMSans-Regular.ttf', fonts.s4);
-				doc.addFont('DMSans-Regular.ttf', 'DMSans', 'normal');
-				doc.addFileToVFS('DMSans-Bold.ttf', fonts.s7);
-				doc.addFont('DMSans-Bold.ttf', 'DMSans', 'bold');
+				doc.addFileToVFS('Outfit-Regular.ttf', fonts.s4);
+				doc.addFont('Outfit-Regular.ttf', 'Outfit', 'normal');
+				doc.addFileToVFS('Outfit-Bold.ttf', fonts.s7);
+				doc.addFont('Outfit-Bold.ttf', 'Outfit', 'bold');
 			}
 			const el = new DOMParser().parseFromString(svg, 'image/svg+xml').documentElement;
 			await svg2pdf(el, doc, { x: 0, y: 0, width: w, height: h });
 			return doc.output();
 		},
-		{ svg, w: PAGE_W, h: PAGE_H, withFonts, fonts: { s4: DMSANS_400, s7: DMSANS_700 } }
+		{ svg, w: PAGE_W, h: PAGE_H, withFonts, fonts: { s4: OUTFIT_400, s7: OUTFIT_700 } }
 	);
 }
 
@@ -76,6 +77,22 @@ test('planche multi-page (25 adresses -> 2 pages) : chaque page se convertit', a
 		const pdf = await svgToPdf(page, svg, true);
 		expect(pdf.startsWith('%PDF')).toBe(true);
 	}
+});
+
+test('planche AVEC destinataires (« à l’attention de ») se convertit en PDF valide', async ({ page }) => {
+	await prepare(page);
+	const withDest: EtiquetteEntry[] = [
+		{ nom: 'Naef Immobilier SA', destinataire: 'Service technique, M. Roth', rue: 'Rue du Rhône 12', cpVille: '1204 Genève' },
+		{ nom: 'Comptoir Immobilier SA', destinataire: 'Service technique', rue: 'Rue de la Corraterie 24', cpVille: '1204 Genève' },
+		{ nom: 'Grange Immobilier SA', rue: 'Route de Florissant 8', cpVille: '1206 Genève' } // sans destinataire
+	];
+	const svg = buildEtiquettesPagesSvg(withDest)[0];
+	// La ligne destinataire est bien présente dans le SVG source (sous le nom).
+	expect(svg).toContain('Service technique, M. Roth');
+	expect(svg).toContain('Service technique');
+	const pdf = await svgToPdf(page, svg, true);
+	expect(pdf.startsWith('%PDF')).toBe(true);
+	expect(pdf.length, 'document substantiel (noms + destinataires + adresses)').toBeGreaterThan(4000);
 });
 
 test('le texte des étiquettes émet réellement du contenu vectoriel (vs page vide)', async ({ page }) => {

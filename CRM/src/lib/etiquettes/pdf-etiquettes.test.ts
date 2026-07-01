@@ -18,7 +18,12 @@ import {
 import type { EtiquetteEntry } from './prospect-etiquette';
 
 function entry(p: Partial<EtiquetteEntry> = {}): EtiquetteEntry {
-	return { nom: p.nom ?? 'Régie Léman SA', rue: p.rue ?? 'Rue du Rhône 100', cpVille: p.cpVille ?? '1204 Genève' };
+	return {
+		nom: p.nom ?? 'Régie Léman SA',
+		...(p.destinataire ? { destinataire: p.destinataire } : {}),
+		rue: p.rue ?? 'Rue du Rhône 100',
+		cpVille: p.cpVille ?? '1204 Genève'
+	};
 }
 function entries(n: number): EtiquetteEntry[] {
 	return Array.from({ length: n }, (_, i) => entry({ nom: `Société ${i + 1}` }));
@@ -114,6 +119,24 @@ describe('layoutEtiquettes', () => {
 		expect(lines[0].bold).toBe(true); // nom
 		expect(lines.slice(1).every((l) => l.bold === false)).toBe(true);
 	});
+
+	it('étiquette PLEINE (nom 2 lignes + destinataire + rue + cp/ville) reste DANS la cellule', () => {
+		const pleine = entry({
+			nom: 'Régie Immobilière du Grand Genève et de la Côte Lémanique Réunies SA', // force 2 lignes
+			destinataire: 'Service technique, Mme Bianchi',
+			rue: 'Boulevard Georges-Favon 14',
+			cpVille: '1204 Genève'
+		});
+		const { pages } = layoutEtiquettes([pleine]);
+		const lab = pages[0][0];
+		// Au plus 5 lignes (2 nom + 1 dest + 1 rue + 1 cp/ville) et jamais de débordement vertical.
+		expect(lab.lines.length).toBeLessThanOrEqual(5);
+		for (const ln of lab.lines) {
+			expect(ln.baseline).toBeGreaterThan(lab.cellY);
+			expect(ln.baseline).toBeLessThan(lab.cellY + GEOMETRY.LABEL_H);
+			expect(ln.estWidth).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
+		}
+	});
 });
 
 describe('labelLines', () => {
@@ -134,6 +157,44 @@ describe('labelLines', () => {
 		const nomLines = lines.filter((l) => l.bold);
 		expect(nomLines.length).toBeLessThanOrEqual(2);
 		expect(nomLines.length).toBeGreaterThanOrEqual(1);
+	});
+
+	it('insère le destinataire SOUS le nom, avant l’adresse (non gras)', () => {
+		const lines = labelLines({
+			nom: 'Naef Immobilier SA',
+			destinataire: 'Service technique, M. Roth',
+			rue: 'Rue du Rhône 12',
+			cpVille: '1204 Genève'
+		});
+		expect(lines.map((l) => l.text)).toEqual([
+			'Naef Immobilier SA',
+			'Service technique, M. Roth',
+			'Rue du Rhône 12',
+			'1204 Genève'
+		]);
+		expect(lines[0].bold).toBe(true); // nom gras
+		expect(lines[1].bold).toBe(false); // destinataire non gras
+	});
+
+	it('destinataire absent ou vide -> aucune ligne destinataire', () => {
+		expect(labelLines({ nom: 'X', rue: 'Rue 1', cpVille: '1200 Genève' }).map((l) => l.text)).toEqual([
+			'X',
+			'Rue 1',
+			'1200 Genève'
+		]);
+		expect(labelLines({ nom: 'X', destinataire: '   ', rue: '', cpVille: '' }).map((l) => l.text)).toEqual(['X']);
+	});
+
+	it('destinataire tenu sur UNE ligne (ellipse si trop long)', () => {
+		const lines = labelLines({
+			nom: 'X',
+			destinataire: 'Service technique et gérance immobilière, à l’attention de Monsieur Jean-Baptiste de la Tour du Pin',
+			rue: 'Rue 1',
+			cpVille: '1200 Genève'
+		});
+		const dest = lines[1];
+		expect(dest.text.endsWith('…')).toBe(true);
+		expect(estWidth(dest.text, dest.size)).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
 	});
 });
 

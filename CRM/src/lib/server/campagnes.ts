@@ -73,6 +73,20 @@ export async function listCampagnes(
 	return { data: rows, error: null };
 }
 
+/**
+ * Charge UNE campagne par id (objet complet), ou `null` si elle n'existe pas. Sépare l'absence
+ * (data null, error null -> 404 côté page) d'un échec DB (error propagée -> 500 + log). Utilisée
+ * par la page dédiée d'impression d'étiquettes.
+ */
+export async function getCampagne(
+	supabase: SupabaseClient<Database>,
+	id: string
+): Promise<{ data: Campagne | null; error: { message: string } | null }> {
+	const { data, error } = await supabase.from('campagnes').select('*').eq('id', id).maybeSingle();
+	if (error) return { data: null, error };
+	return { data: (data as Campagne) ?? null, error: null };
+}
+
 function sanitizeNom(nom: string): string {
 	return nom.trim();
 }

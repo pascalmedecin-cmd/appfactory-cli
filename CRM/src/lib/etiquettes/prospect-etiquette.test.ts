@@ -60,4 +60,28 @@ describe('toEtiquetteEntry', () => {
 		expect(toEtiquetteEntry(lead({ npa: null, localite: 'Sion' })).cpVille).toBe('Sion');
 		expect(toEtiquetteEntry(lead({ npa: null, localite: null })).cpVille).toBe('');
 	});
+
+	it('sans destinataire : entrée à 3 clés (rétro-compatible, aucune clé destinataire)', () => {
+		const e = toEtiquetteEntry(lead({ adresse: 'Rue Basse 7', localite: 'Genève' }));
+		expect(e.destinataire).toBeUndefined();
+		expect(Object.keys(e).sort()).toEqual(['cpVille', 'nom', 'rue']);
+	});
+
+	it('avec destinataire : ajouté (trim) sous le nom', () => {
+		const e = toEtiquetteEntry(
+			lead({ raison_sociale: 'Naef Immobilier SA', adresse: 'Rue du Rhône 12', npa: '1204', localite: 'Genève' }),
+			'  Service technique, M. Roth  '
+		);
+		expect(e).toEqual({
+			nom: 'Naef Immobilier SA',
+			destinataire: 'Service technique, M. Roth',
+			rue: 'Rue du Rhône 12',
+			cpVille: '1204 Genève'
+		});
+	});
+
+	it('destinataire vide ou blanc = pas de clé destinataire', () => {
+		expect(toEtiquetteEntry(lead({}), '').destinataire).toBeUndefined();
+		expect(toEtiquetteEntry(lead({}), '   ').destinataire).toBeUndefined();
+	});
 });

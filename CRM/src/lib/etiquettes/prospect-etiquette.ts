@@ -21,9 +21,18 @@ export interface ProspectAdresse {
 	localite: string | null;
 }
 
-/** Les 3 lignes rendues sur une étiquette physique (nom en gras, puis rue, puis cp + ville). */
+/**
+ * Les lignes rendues sur une étiquette physique : nom en gras, puis (optionnel) le destinataire
+ * du mailing « à l'attention de » sous le nom, puis rue, puis cp + ville.
+ *
+ * `destinataire` est saisi dans l'UI de la page (générique tout mailing, ex. « Service technique »
+ * ou « Service technique, M. X ») et n'est **jamais persisté** : il vit dans l'état de la page et
+ * n'est injecté qu'à la construction du PDF. Absent/vide -> la ligne n'apparaît pas (étiquette
+ * classique raison sociale + adresse, aucune ligne en trop).
+ */
 export interface EtiquetteEntry {
 	nom: string;
+	destinataire?: string;
 	rue: string;
 	cpVille: string;
 }
@@ -47,11 +56,15 @@ export function adresseStatut(p: ProspectAdresse): AdresseStatut {
 	return { complete: manque.length === 0, manque };
 }
 
-/** Convertit un prospect en entrée d'étiquette (3 lignes). cpVille = « NPA Ville » compacté. */
-export function toEtiquetteEntry(p: ProspectAdresse): EtiquetteEntry {
-	return {
-		nom: clean(p.raison_sociale),
-		rue: clean(p.adresse),
-		cpVille: `${clean(p.npa)} ${clean(p.localite)}`.replace(/\s+/g, ' ').trim()
-	};
+/**
+ * Convertit un prospect en entrée d'étiquette. cpVille = « NPA Ville » compacté. `destinataire`
+ * (optionnel, saisi côté UI, non persisté) est nettoyé et n'est ajouté que s'il est non vide ->
+ * une entrée sans destinataire reste `{ nom, rue, cpVille }` (rétro-compatible, aucune ligne en trop).
+ */
+export function toEtiquetteEntry(p: ProspectAdresse, destinataire?: string): EtiquetteEntry {
+	const nom = clean(p.raison_sociale);
+	const rue = clean(p.adresse);
+	const cpVille = `${clean(p.npa)} ${clean(p.localite)}`.replace(/\s+/g, ' ').trim();
+	const dest = clean(destinataire);
+	return dest ? { nom, destinataire: dest, rue, cpVille } : { nom, rue, cpVille };
 }

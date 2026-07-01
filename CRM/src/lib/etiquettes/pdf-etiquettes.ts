@@ -39,6 +39,7 @@ const USABLE_W = LABEL_W - 2 * PAD_X; // largeur de texte utile dans une étique
 
 // --- Typographie (centrée, NOM gras) -----------------------------------------------------------
 const NOM_SIZE = 10.5;
+const DEST_SIZE = 9.5; // destinataire (« à l'attention de »), même corps que l'adresse, non gras
 const ADDR_SIZE = 9.5;
 const LINE_H = 13; // interligne uniforme (bloc centré)
 const NOM_MAX_LINES = 2; // un nom long passe sur 2 lignes max, puis ellipse
@@ -117,7 +118,14 @@ export interface PlacedLabel {
 	lines: LabelLine[];
 }
 
-/** Lignes d'une étiquette (NOM gras ≤ 2 lignes, rue, cp/ville), lignes vides omises. */
+/**
+ * Lignes d'une étiquette, lignes vides omises, dans l'ordre postal :
+ *   NOM gras (≤ 2 lignes) -> destinataire « à l'attention de » (≤ 1 ligne) -> rue -> cp/ville.
+ *
+ * Le destinataire est borné à UNE ligne (ellipse si trop long) : c'est ce qui garantit qu'une
+ * étiquette pleine tient dans la cellule Avery (nom 2 + destinataire 1 + rue 1 + cp/ville 1 = 5
+ * lignes max ≤ hauteur utile). Voir le test « préservation de la cellule ».
+ */
 export function labelLines(entry: EtiquetteEntry): { text: string; size: number; bold: boolean }[] {
 	const out: { text: string; size: number; bold: boolean }[] = [];
 	const nom = entry.nom.trim();
@@ -126,6 +134,8 @@ export function labelLines(entry: EtiquetteEntry): { text: string; size: number;
 			out.push({ text: ln, size: NOM_SIZE, bold: true });
 		}
 	}
+	const dest = (entry.destinataire ?? '').trim();
+	if (dest) out.push({ text: ellipsize(dest, DEST_SIZE, USABLE_W), size: DEST_SIZE, bold: false });
 	const rue = entry.rue.trim();
 	if (rue) out.push({ text: ellipsize(rue, ADDR_SIZE, USABLE_W), size: ADDR_SIZE, bold: false });
 	const cpVille = entry.cpVille.trim();
