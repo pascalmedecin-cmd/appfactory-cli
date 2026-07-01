@@ -93,7 +93,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 - **Auth** : OTP email 6 chiffres @filmpro.ch + session 7 jours httpOnly ; SMTP Resend (domaine verifié, free plan)
 - **APIs** : Zefix REST + search.ch + fal.ai Flux 1.1 Pro Ultra (partage clé avec Enseignement) - Pexels/Unsplash supprimés S67
 - **Crons** : **6 crons Vercel** `/api/cron/{signaux,alertes,lead-rescore,daily-email,intelligence-archive,nettoyage-crm}` sécurisés `CRON_SECRET` + service role. La **veille hebdo NE tourne PAS en cron Vercel** : GitHub Actions vendredi (cap durée Vercel). Le cron `intelligence` (génération veille) n'existe plus ; `media-enrich` supprimé S67.
-- **Tests** : Vitest 2379 (dernier run vérifié 2026-07-01, étiquettes page dédiée ; supabase 2.108 + TS6) + Playwright e2e (suite + P1/P2/P3 Prospection). Accessibilité : focus trap + ConfirmModal partout, axe-core 0 violation modale P3. Sécurité : Zod sur 20 form actions/endpoints, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
+- **Tests** : Vitest 2362 (dernier run vérifié 2026-07-01, Lot 2 Prospects+Pipeline ; supabase 2.108 + TS6) + Playwright e2e (suite + P1/P2/P3 Prospection). Accessibilité : focus trap + ConfirmModal partout, axe-core 0 violation modale P3. Sécurité : Zod sur 20 form actions/endpoints, rate limiting 10/min, headers CSP/XFO/referrer, timing-safe secrets
 
 → Détail intégral (env vars, BDD exhaustive, liste tests, liste crons, headers sécurité, pagination serveur) : `archive/infra-crm-detail.md`
 
@@ -136,7 +136,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ### Règle backlog (WIP-limité, gravée 2026-06-28)
 
-Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude **sans dépendance externe** ; le reste rangé à part (gestes Pascal → § Chez Pascal ; attentes datées → § Parking ; idées → Watch, jamais une tâche). **No-debt strict** : un finding se fixe/tranche dans la session, jamais différé. Anti-pattern banni : « 1 fermée → 2 ouvertes ». **Titre d'un item bloqué = explicite** : `[BLOQUÉ - {qui/quoi débloque}] {action claire}`, jamais cryptique. Détail + exemples → [[feedback_backlog_wip_anti_gonflement]]. **État 2026-07-01** : baseline saine (2379 verts, build OK).
+Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude **sans dépendance externe** ; le reste rangé à part (gestes Pascal → § Chez Pascal ; attentes datées → § Parking ; idées → Watch, jamais une tâche). **No-debt strict** : un finding se fixe/tranche dans la session, jamais différé. Anti-pattern banni : « 1 fermée → 2 ouvertes ». **Titre d'un item bloqué = explicite** : `[BLOQUÉ - {qui/quoi débloque}] {action claire}`, jamais cryptique. Détail + exemples → [[feedback_backlog_wip_anti_gonflement]]. **État 2026-07-01** : baseline saine (2362 verts, build OK ; Lot 2 a retiré des tests température/transferer).
 
 ### Backlog dev (actionnable par Claude)
 
