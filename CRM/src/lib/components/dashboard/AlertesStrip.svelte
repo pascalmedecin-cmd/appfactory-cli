@@ -48,7 +48,7 @@
 							{signauxCount} {signauxCount === 1 ? "signal d'affaires à traiter" : "signaux d'affaires à traiter"}
 						</p>
 						<p class="alert-desc">
-							Appels d'offres, permis de construire, créations d'entreprises à analyser ou convertir.
+							Appels d'offres publics (SIMAP) captés chaque matin, à trier : garder « À suivre » ou archiver.
 						</p>
 					</div>
 					<span class="alert-arrow" aria-hidden="true">

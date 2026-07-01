@@ -146,25 +146,3 @@ describe('H-14 ActionResult shape : signaux.deleteBatch', () => {
 		expect(result).toMatchObject({ success: true, deleted: 2 });
 	});
 });
-
-describe('H-14 ActionResult shape : signaux.createOpportunite', () => {
-	it('Zod invalide → success: false + error string', async () => {
-		const supabase = makeMockSupabase();
-		const result = await callAction('./signaux/+page.server', 'createOpportunite', supabase, {
-			signal_id: 'not-a-uuid', // requiredUUID → fail
-			titre: ''
-		});
-		expect(result).toMatchObject({ data: { success: false } });
-		expect(result.data.error).toBeTypeOf('string');
-		expect(result.status).toBe(400);
-	});
-
-	it('happy path → success: true + redirectTo /crm/pipeline', async () => {
-		const supabase = makeMockSupabase();
-		const result = await callAction('./signaux/+page.server', 'createOpportunite', supabase, {
-			signal_id: '550e8400-e29b-41d4-a716-446655440000',
-			titre: 'Opportunité issue d\'un signal'
-		});
-		expect(result).toMatchObject({ success: true, redirectTo: '/crm/pipeline' });
-	});
-});

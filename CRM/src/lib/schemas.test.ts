@@ -4,7 +4,7 @@ import {
 	ContactCreateSchema, ContactUpdateSchema, ContactDeleteSchema,
 	EntrepriseCreateSchema, EntrepriseUpdateSchema, EntrepriseDeleteSchema,
 	OpportuniteCreateSchema, OpportuniteUpdateSchema, OpportuniteMoveSchema, OpportuniteArchiveSchema,
-	SignalCreateSchema, SignalUpdateSchema, SignalUpdateStatutSchema, SignalCreateOpportuniteSchema, SignalBatchDeleteSchema,
+	SignalUpdateStatutSchema, SignalBatchDeleteSchema,
 	LeadCreateSchema, LeadUpdateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema,
 	RechercheCreateSchema, RechercheDeleteSchema,
 } from './schemas';
@@ -452,81 +452,21 @@ describe('OpportuniteArchiveSchema', () => {
 	});
 });
 
-// -- SignalCreateSchema --
-
-describe('SignalCreateSchema', () => {
-	it('accepte un signal minimal (tous optionnels)', () => {
-		const r = validate(SignalCreateSchema, {});
-		expect(r.success).toBe(true);
-	});
-
-	it('accepte un signal complet', () => {
-		const r = validate(SignalCreateSchema, {
-			type_signal: 'appel_offres',
-			description_projet: 'Construction immeuble',
-			maitre_ouvrage: 'Ville de Geneve',
-			canton: 'GE',
-			commune: 'Geneve',
-		});
-		expect(r.success).toBe(true);
-	});
-
-	it('rejette un type_signal invalide', () => {
-		const r = validate(SignalCreateSchema, { type_signal: 'inconnu' });
-		expect(r.success).toBe(false);
-	});
-
-	it('rejette un canton invalide', () => {
-		const r = validate(SignalCreateSchema, { canton: 'XX' });
-		expect(r.success).toBe(false);
-	});
-
-	// Audit 360 H-07 : date_publication strict YYYY-MM-DD.
-	it('rejette une date_publication non YYYY-MM-DD (audit 360 H-07)', () => {
-		const r = validate(SignalCreateSchema, { date_publication: '15/06/2026' });
-		expect(r.success).toBe(false);
-	});
-
-	it('accepte une date_publication YYYY-MM-DD valide (audit 360 H-07)', () => {
-		const r = validate(SignalCreateSchema, { date_publication: '2026-05-08' });
-		expect(r.success).toBe(true);
-	});
-});
-
-// -- SignalUpdateSchema --
-
-describe('SignalUpdateSchema', () => {
-	const validUUID = '550e8400-e29b-41d4-a716-446655440000';
-
-	it('accepte un update avec id', () => {
-		const r = validate(SignalUpdateSchema, { id: validUUID, type_signal: 'permis_construire' });
-		expect(r.success).toBe(true);
-	});
-
-	it('rejette sans id', () => {
-		const r = validate(SignalUpdateSchema, { type_signal: 'permis_construire' });
-		expect(r.success).toBe(false);
-	});
-
-	it('accepte un statut_traitement valide', () => {
-		const r = validate(SignalUpdateSchema, { id: validUUID, statut_traitement: 'en_analyse' });
-		expect(r.success).toBe(true);
-	});
-
-	it('rejette un statut_traitement invalide', () => {
-		const r = validate(SignalUpdateSchema, { id: validUUID, statut_traitement: 'fantaisie' });
-		expect(r.success).toBe(false);
-	});
-});
-
-// -- SignalUpdateStatutSchema --
+// -- SignalUpdateStatutSchema (modèle simplifié 2026-07-01) --
 
 describe('SignalUpdateStatutSchema', () => {
 	const validUUID = '550e8400-e29b-41d4-a716-446655440000';
 
-	it('accepte un changement de statut valide', () => {
-		const r = validate(SignalUpdateStatutSchema, { id: validUUID, statut_traitement: 'interesse' });
-		expect(r.success).toBe(true);
+	it('accepte les statuts du modèle simplifié', () => {
+		for (const statut of ['nouveau', 'a_suivre', 'archive']) {
+			expect(validate(SignalUpdateStatutSchema, { id: validUUID, statut_traitement: statut }).success).toBe(true);
+		}
+	});
+
+	it('rejette un ancien statut retiré (interesse / converti / ecarte)', () => {
+		for (const statut of ['interesse', 'converti', 'ecarte', 'en_analyse']) {
+			expect(validate(SignalUpdateStatutSchema, { id: validUUID, statut_traitement: statut }).success).toBe(false);
+		}
 	});
 
 	it('rejette sans statut', () => {
@@ -537,36 +477,6 @@ describe('SignalUpdateStatutSchema', () => {
 	it('rejette un statut invalide', () => {
 		const r = validate(SignalUpdateStatutSchema, { id: validUUID, statut_traitement: 'supprime' });
 		expect(r.success).toBe(false);
-	});
-});
-
-// -- SignalCreateOpportuniteSchema --
-
-describe('SignalCreateOpportuniteSchema', () => {
-	const validUUID = '550e8400-e29b-41d4-a716-446655440000';
-
-	it('accepte une conversion valide', () => {
-		const r = validate(SignalCreateOpportuniteSchema, { signal_id: validUUID, titre: 'Nouvelle opp' });
-		expect(r.success).toBe(true);
-	});
-
-	it('rejette sans titre', () => {
-		const r = validate(SignalCreateOpportuniteSchema, { signal_id: validUUID, titre: '' });
-		expect(r.success).toBe(false);
-	});
-
-	it('rejette sans signal_id', () => {
-		const r = validate(SignalCreateOpportuniteSchema, { titre: 'Test' });
-		expect(r.success).toBe(false);
-	});
-
-	it('accepte entreprise_id optionnel', () => {
-		const r = validate(SignalCreateOpportuniteSchema, {
-			signal_id: validUUID,
-			titre: 'Opp',
-			entreprise_id: validUUID,
-		});
-		expect(r.success).toBe(true);
 	});
 });
 

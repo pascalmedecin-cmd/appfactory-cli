@@ -574,41 +574,33 @@ C = bloquant (page inutilisable/données perdues/sécu) · H = régression UX vi
 
 > Radar d'affaires métier centré SIMAP. Saisie manuelle supprimée (le cron remplit la page).
 
-#### US-SIG-01 - Onglets par statut + file courte
+> Modèle de statut simplifié (2026-07-01) : `nouveau` (à trier) / `a_suivre` / `archive`.
+> Le tri passe par le bouton « Statut » du slide-out. Plus d'édition libre ni de conversion
+> signal -> opportunité (le pipeline part des prospects, pas des signaux).
+
+#### US-SIG-01 - Onglets + file courte
 - Parcours : ouvrir `/crm/signaux`.
-- Attendu : onglets `nouveau` (défaut), `en_analyse`, `interesse`, `converti`, `ecarte` ; sur `nouveau` sans filtre, file capée 25 + bouton « Voir plus ».
-- Critères : [ ] 5 onglets (pas de « Tous ») ; [ ] cap 25 ; [ ] « Voir plus » déplie.
-- Réf : `signaux/+page.svelte:159-165,217-234,527-537`.
+- Attendu : onglets `À trier` (`nouveau`, défaut) et `À suivre` (`a_suivre`) ; sur `À trier` sans filtre, file capée 25 + bouton « Voir plus ». Indicateurs : Signaux / À trier / À suivre.
+- Critères : [ ] 2 onglets ; [ ] cap 25 ; [ ] « Voir plus » déplie.
+- Réf : `signaux/+page.svelte` (tabsSpec, queueCap), `signauxFormat.ts`.
 
 #### US-SIG-02 - Vue Archivées
 - Parcours : cliquer « Archivées » (visible si count > 0).
-- Attendu : `?vue=archivees` affiche les signaux `statut_traitement='archive'` (ex. ~1227 Zefix soft-archivés), bannière + bouton retour.
+- Attendu : `?vue=archivees` affiche les signaux `statut_traitement='archive'` (Zefix soft-archivés + signaux archivés depuis la file), bannière + bouton retour.
 - Critères : [ ] vue archivées ; [ ] bannière ; [ ] retour ; [ ] bouton masqué si 0 archivé.
-- Réf : `signaux/+page.svelte:326-344`, `+page.server.ts:60-64`.
+- Réf : `signaux/+page.svelte`, `+page.server.ts` (load, showArchived).
 
-#### US-SIG-03 - Détail d'un signal (slide-out)
+#### US-SIG-03 - Détail d'un signal (slide-out) + lien SIMAP
 - Parcours : cliquer un signal.
-- Attendu : acteurs, localisation, source, scoring détaillé, lien opportunité éventuel.
-- Critères : [ ] slide-out complet.
-- Réf : `signaux/+page.svelte:550-732`.
+- Attendu : acteurs, localisation, source, scoring détaillé. Pour une source SIMAP : lien « Voir sur SIMAP » (`https://www.simap.ch/fr/project-detail/{source_id}`, nouvel onglet) ; aucune source non-SIMAP n'affiche de lien.
+- Critères : [ ] slide-out complet ; [ ] lien SIMAP présent et correct sur source `simap` uniquement.
+- Réf : `signaux/+page.svelte` (section Source & dates).
 
-#### US-SIG-04 - Modifier un signal
-- Parcours : slide-out -> « Modifier » -> changer un champ métier + statut -> Enregistrer.
-- Attendu : toast, valeurs à jour.
-- Critères : [ ] toast ; [ ] persistance.
-- Réf : `signaux/+page.svelte:740-813`, `+page.server.ts:179-203`.
-
-#### US-SIG-05 - Écarter un signal
-- Parcours : slide-out -> « Écarter ».
-- Attendu : statut `ecarte`, toast.
-- Critères : [ ] statut ; [ ] toast.
-- Réf : `+page.server.ts:205-216`.
-
-#### US-SIG-06 - Convertir un signal en opportunité
-- Parcours : slide-out -> « Convertir en opportunité ».
-- Attendu : crée une `opportunites` (étape identification), signal -> `converti`, redirection pipeline.
-- Critères : [ ] opportunité créée ; [ ] statut converti ; [ ] redirection.
-- Réf : `signaux/+page.svelte:822-873`, `+page.server.ts:249-282`.
+#### US-SIG-04 - Bouton Statut (À suivre / Archivé) + restauration
+- Parcours : slide-out -> « Statut » -> choisir « À suivre » ou « Archivé » ; depuis la vue archivées -> « À suivre » (restauration).
+- Attendu : `updateStatut` pose le statut choisi (borné DB à `nouveau`/`a_suivre`/`archive`), toast ; l'option courante est désactivée (« Actuel ») ; restaurer depuis la vue archivées renavigue vers la file active.
+- Critères : [ ] statut posé ; [ ] toast ; [ ] option courante disabled ; [ ] restauration -> file active.
+- Réf : `signaux/+page.svelte` (menu Statut, statutEnhance), `+page.server.ts` (updateStatut).
 
 #### US-SIG-07 - Supprimer un signal (hard delete)
 - Parcours : slide-out -> « Supprimer » -> ConfirmModal -> confirmer.
@@ -625,7 +617,7 @@ C = bloquant (page inutilisable/données perdues/sécu) · H = régression UX vi
 #### US-SIG-09 - Mots-clés : ADMIN ajoute un mot-clé + rescore
 - Précondition : connecté en `pascal@filmpro.ch`.
 - Parcours : ouvrir le drawer mots-clés -> ajouter `pare-soleil` (catégorie coeur) -> valider.
-- Attendu : insert `signaux_mots_cles` + re-score rétroactif des signaux actifs (`nouveau`+`en_analyse`).
+- Attendu : insert `signaux_mots_cles` + re-score rétroactif des signaux de la file active (`nouveau`+`a_suivre`).
 - Critères : [ ] mot-clé ajouté ; [ ] scores recalculés.
 - Réf : `signaux/+page.server.ts:103-150`, `SignauxKeywordsPanel`.
 

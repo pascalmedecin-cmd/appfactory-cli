@@ -24,13 +24,11 @@ export const ETAPES_PIPELINE = [
 /** Étapes terminales (deal clos) : exclues des relances / du Kanban "en cours". */
 export const ETAPES_PIPELINE_CLOSED = ['gagne', 'perdu'] as const;
 
+// Modèle simplifié 2026-07-01 (radar SIMAP) : à trier -> à suivre / archivé.
+// 'nouveau' = défaut à l'import (non trié) ; 'a_suivre'/'archive' = choix utilisateur
+// via le bouton Statut. 'archive' est désormais first-class (plus write-only).
 export const STATUTS_TRAITEMENT = [
-	'nouveau', 'en_analyse', 'interesse', 'ecarte', 'converti',
-] as const;
-
-export const TYPES_SIGNAL = [
-	'appel_offres', 'permis_construire', 'creation_entreprise', 'demenagement',
-	'expansion', 'fusion_acquisition', 'autre',
+	'nouveau', 'a_suivre', 'archive',
 ] as const;
 
 // -- Form extraction helpers --
@@ -143,24 +141,9 @@ export const OpportuniteNextActionSchema = z.object({
 });
 
 // -- Signaux d'affaires --
-
-export const SignalCreateSchema = z.object({
-	type_signal: z.enum(TYPES_SIGNAL).optional().or(z.literal('')),
-	description_projet: optionalText,
-	maitre_ouvrage: optionalString,
-	architecte_bureau: optionalString,
-	canton: z.enum(CANTONS).optional().or(z.literal('')),
-	commune: optionalString,
-	source_officielle: optionalString,
-	date_publication: z.string().max(10).regex(/^\d{4}-\d{2}-\d{2}$/, 'Format YYYY-MM-DD requis').optional().or(z.literal('')),
-	notes_libres: optionalText,
-	responsable_filmpro: optionalString,
-});
-
-export const SignalUpdateSchema = SignalCreateSchema.extend({
-	id: requiredUUID,
-	statut_traitement: z.enum(STATUTS_TRAITEMENT).optional().or(z.literal('')),
-});
+// Modèle 2026-07-01 : le signal se trie via le bouton Statut (updateStatut vers
+// 'a_suivre'/'archive'/'nouveau') ou se supprime. Plus d'édition libre du signal
+// ni de conversion en opportunité (le pipeline part des prospects, pas des signaux).
 
 export const SignalUpdateStatutSchema = z.object({
 	id: requiredUUID,
@@ -168,12 +151,6 @@ export const SignalUpdateStatutSchema = z.object({
 });
 
 export const SignalDeleteSchema = z.object({
-	id: requiredUUID,
-});
-
-// Vague 3 : archivage réversible d'un signal (statut_traitement = 'archive', valeur
-// write-only hors STATUTS_TRAITEMENT, déjà utilisée par le soft-archive Zefix). id seul.
-export const SignalArchiveSchema = z.object({
 	id: requiredUUID,
 });
 
@@ -188,12 +165,6 @@ export const SignalBatchDeleteSchema = z.object({
 				.min(1, 'Aucun signal sélectionné')
 				.max(500, 'Maximum 500 signaux par lot')
 		),
-});
-
-export const SignalCreateOpportuniteSchema = z.object({
-	signal_id: requiredUUID,
-	titre: z.string().min(1, 'Le titre est requis').max(300),
-	entreprise_id: optionalUUID,
 });
 
 // -- Prospect Leads --
@@ -440,11 +411,6 @@ export const ENTREPRISE_FIELDS = [
 export const OPP_FIELDS = [
 	'titre', 'contact_id', 'entreprise_id', 'montant_estime',
 	'etape_pipeline', 'date_relance_prevue', 'notes_libres', 'responsable', 'signal_affaires_id',
-] as const;
-
-export const SIGNAL_FIELDS = [
-	'type_signal', 'description_projet', 'maitre_ouvrage', 'architecte_bureau',
-	'canton', 'commune', 'source_officielle', 'date_publication', 'notes_libres', 'responsable_filmpro',
 ] as const;
 
 export const LEAD_FIELDS = [

@@ -7,8 +7,8 @@
  *
  * Lit `.env.local` (DATABASE_URL_ADMIN), connecte via `pg`, charge tous les
  * mots-clés actifs, recalcule `score_pertinence` + `notes_libres` pour les
- * signaux à statut `nouveau` ou `en_analyse`. Les archivés (`converti`, `ecarte`)
- * sont laissés intacts (cf. spec § 3 hors-scope).
+ * signaux de la file active (`nouveau` ou `a_suivre`). Les `archive` sont
+ * laissés intacts (rangés hors file). Modèle simplifié 2026-07-01.
  *
  * Sécurité : DRY-RUN par défaut. Ajoute `--apply` pour exécuter les UPDATE.
  *
@@ -94,7 +94,7 @@ async function main() {
 		// `computeFullScore` après le retrait du composant temporel.
 		`SELECT id, canton, description_projet, maitre_ouvrage, source_officielle, score_pertinence, notes_libres
 		 FROM signaux_affaires
-		 WHERE statut_traitement IN ('nouveau', 'en_analyse')`
+		 WHERE statut_traitement IN ('nouveau', 'a_suivre')`
 	);
 	console.log(`Signaux actifs à rescorer : ${signauxRes.rows.length}`);
 

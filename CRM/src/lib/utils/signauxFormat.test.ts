@@ -18,12 +18,13 @@ import {
 
 const NOW = new Date('2026-05-09T10:00:00');
 
+// Modèle simplifié 2026-07-01 : nouveau (à trier) / a_suivre / archive.
 const sample: SignalLite[] = [
 	{ id: '1', type_signal: 'appel_offres', canton: 'VD', statut_traitement: 'nouveau', score_pertinence: 11, date_detection: '2026-05-09', date_publication: '2026-05-08' },
-	{ id: '2', type_signal: 'permis_construire', canton: 'GE', statut_traitement: 'en_analyse', score_pertinence: 8, date_detection: '2026-05-08', date_publication: '2026-05-07' },
-	{ id: '3', type_signal: 'creation_entreprise', canton: 'VD', statut_traitement: 'interesse', score_pertinence: 5, date_detection: '2026-05-05', date_publication: '2026-05-04' },
-	{ id: '4', type_signal: 'expansion', canton: 'FR', statut_traitement: 'converti', score_pertinence: 12, date_detection: '2026-05-02', date_publication: '2026-05-01' },
-	{ id: '5', type_signal: 'autre', canton: null, statut_traitement: 'ecarte', score_pertinence: 2, date_detection: '2026-04-25', date_publication: '2026-04-24' },
+	{ id: '2', type_signal: 'permis_construire', canton: 'GE', statut_traitement: 'a_suivre', score_pertinence: 8, date_detection: '2026-05-08', date_publication: '2026-05-07' },
+	{ id: '3', type_signal: 'creation_entreprise', canton: 'VD', statut_traitement: 'a_suivre', score_pertinence: 5, date_detection: '2026-05-05', date_publication: '2026-05-04' },
+	{ id: '4', type_signal: 'expansion', canton: 'FR', statut_traitement: 'archive', score_pertinence: 12, date_detection: '2026-05-02', date_publication: '2026-05-01' },
+	{ id: '5', type_signal: 'autre', canton: null, statut_traitement: 'archive', score_pertinence: 2, date_detection: '2026-04-25', date_publication: '2026-04-24' },
 	{ id: '6', type_signal: null, canton: 'NE', statut_traitement: null, score_pertinence: null, date_detection: '2026-05-09', date_publication: null },
 ];
 
@@ -35,71 +36,49 @@ describe('signauxIndicators', () => {
 		// id 1 nouveau + id 6 null → fallback nouveau
 		expect(signauxIndicators(sample).nouveaux).toBe(2);
 	});
-	it('compte aConvertir = statut interesse', () => {
-		expect(signauxIndicators(sample).aConvertir).toBe(1);
-	});
-	it('compte convertis = statut converti', () => {
-		expect(signauxIndicators(sample).convertis).toBe(1);
+	it('compte aSuivre = statut a_suivre', () => {
+		expect(signauxIndicators(sample).aSuivre).toBe(2);
 	});
 	it('liste vide → tous zéros', () => {
-		expect(signauxIndicators([])).toEqual({ total: 0, nouveaux: 0, aConvertir: 0, convertis: 0 });
+		expect(signauxIndicators([])).toEqual({ total: 0, nouveaux: 0, aSuivre: 0 });
 	});
 });
 
 describe('filterSignauxByTab', () => {
-	it('tab=tous → retourne tout (y compris écartés)', () => {
-		expect(filterSignauxByTab(sample, 'tous')).toHaveLength(6);
-	});
 	it('tab=nouveau → statut nouveau OU null fallback', () => {
 		const out = filterSignauxByTab(sample, 'nouveau');
 		expect(out.map((s) => s.id).sort()).toEqual(['1', '6']);
 	});
-	it('tab=en_analyse → statut en_analyse uniquement', () => {
-		expect(filterSignauxByTab(sample, 'en_analyse').map((s) => s.id)).toEqual(['2']);
+	it('tab=a_suivre → statut a_suivre uniquement', () => {
+		expect(filterSignauxByTab(sample, 'a_suivre').map((s) => s.id).sort()).toEqual(['2', '3']);
 	});
-	it('tab=interesse → statut interesse uniquement', () => {
-		expect(filterSignauxByTab(sample, 'interesse').map((s) => s.id)).toEqual(['3']);
-	});
-	it('tab=converti → statut converti uniquement', () => {
-		expect(filterSignauxByTab(sample, 'converti').map((s) => s.id)).toEqual(['4']);
-	});
-	it('tab=ecarte → statut ecarte uniquement', () => {
-		expect(filterSignauxByTab(sample, 'ecarte').map((s) => s.id)).toEqual(['5']);
+	it("n'inclut pas les archivés dans les onglets actifs", () => {
+		expect(filterSignauxByTab(sample, 'nouveau').some((s) => s.statut_traitement === 'archive')).toBe(false);
+		expect(filterSignauxByTab(sample, 'a_suivre').some((s) => s.statut_traitement === 'archive')).toBe(false);
 	});
 });
 
 describe('signauxCountsByTab', () => {
 	it('counts cohérents avec filterSignauxByTab', () => {
 		expect(signauxCountsByTab(sample)).toEqual({
-			tous: 6,
 			nouveau: 2, // id 1 + id 6 fallback
-			en_analyse: 1,
-			interesse: 1,
-			converti: 1,
-			ecarte: 1,
+			a_suivre: 2,
 		});
 	});
-	it('liste vide → counts tous à 0 sauf tous=0', () => {
+	it('liste vide → counts à 0', () => {
 		expect(signauxCountsByTab([])).toEqual({
-			tous: 0,
 			nouveau: 0,
-			en_analyse: 0,
-			interesse: 0,
-			converti: 0,
-			ecarte: 0,
+			a_suivre: 0,
 		});
 	});
 });
 
 describe('emptyMessageForTab', () => {
-	it('tous → message générique', () => {
-		expect(emptyMessageForTab('tous')).toBe('Aucun signal ne correspond aux filtres.');
-	});
 	it('nouveau → message ciblé triage', () => {
-		expect(emptyMessageForTab('nouveau')).toContain('triager');
+		expect(emptyMessageForTab('nouveau')).toContain('trier');
 	});
-	it('converti → message ciblé conversion', () => {
-		expect(emptyMessageForTab('converti')).toContain('converti');
+	it('a_suivre → message ciblé suivi', () => {
+		expect(emptyMessageForTab('a_suivre')).toContain('suivre');
 	});
 });
 
@@ -165,8 +144,6 @@ describe('scoreLabel', () => {
 	});
 	// V4 (S189) : seuils alignés sur config.scoring.labels après retrait de la
 	// temporalité (maxPoints 12 → 10). Chaud >= 7, tiede >= 4, froid >= 1.
-	// Audit 360 Bloc D : le rendu visuel (icône/couleur/label) vit désormais dans
-	// la primitive ScorePill ; scoreLabel ne porte plus que la sémantique des seuils.
 	it('seuils par défaut V4 : chaud=7 / tiede=4 / froid=1', () => {
 		expect(scoreLabel(10)).toBe('chaud');
 		expect(scoreLabel(8)).toBe('chaud');
@@ -182,21 +159,17 @@ describe('scoreLabel', () => {
 });
 
 describe('statutLabel + statutVariant', () => {
-	it('null → fallback Nouveau / muted', () => {
-		expect(statutLabel(null)).toBe('Nouveau');
+	it('null → fallback À trier / muted', () => {
+		expect(statutLabel(null)).toBe('À trier');
 		expect(statutVariant(null)).toBe('muted');
 	});
-	it('mappings statuts', () => {
-		expect(statutLabel('nouveau')).toBe('Nouveau');
+	it('mappings statuts (modèle simplifié)', () => {
+		expect(statutLabel('nouveau')).toBe('À trier');
 		expect(statutVariant('nouveau')).toBe('warning');
-		expect(statutLabel('en_analyse')).toBe('En analyse');
-		expect(statutVariant('en_analyse')).toBe('info');
-		expect(statutLabel('interesse')).toBe('Intéressé');
-		expect(statutVariant('interesse')).toBe('success');
-		expect(statutLabel('converti')).toBe('Converti');
-		expect(statutVariant('converti')).toBe('default');
-		expect(statutLabel('ecarte')).toBe('Écarté');
-		expect(statutVariant('ecarte')).toBe('muted');
+		expect(statutLabel('a_suivre')).toBe('À suivre');
+		expect(statutVariant('a_suivre')).toBe('info');
+		expect(statutLabel('archive')).toBe('Archivé');
+		expect(statutVariant('archive')).toBe('muted');
 	});
 });
 
@@ -206,7 +179,7 @@ describe('signalAriaLabel', () => {
 		expect(label).toContain("Appel d'offres");
 		expect(label).toContain('VD');
 		expect(label).toContain('11');
-		expect(label).toContain('Nouveau');
+		expect(label).toContain('À trier');
 	});
 	it('fallback canton non renseigné', () => {
 		const label = signalAriaLabel(sample[4]);
@@ -237,14 +210,5 @@ describe('clampDisplayScore', () => {
 	});
 	it('0 → 0', () => {
 		expect(clampDisplayScore(0, 10)).toBe(0);
-	});
-});
-
-describe("statut 'archive' (Vague 3 - valeur write-only hors enum)", () => {
-	it("statutLabel('archive') → 'Archivé' (jamais le fallback 'Nouveau')", () => {
-		expect(statutLabel('archive')).toBe('Archivé');
-	});
-	it("statutVariant('archive') → 'muted' (pas le warning de 'nouveau')", () => {
-		expect(statutVariant('archive')).toBe('muted');
 	});
 });

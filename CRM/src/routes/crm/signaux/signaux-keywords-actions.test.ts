@@ -234,12 +234,15 @@ describe('signaux form actions - retrait ?/create', () => {
 		expect(mod.actions.create).toBeUndefined();
 	});
 
-	it("les form actions existantes (update, delete, etc.) sont préservées", async () => {
+	it("les form actions du modèle simplifié sont préservées ; les obsolètes retirées", async () => {
 		const mod = await import('./+page.server');
-		expect(mod.actions.update).toBeDefined();
+		expect(mod.actions.updateStatut).toBeDefined();
 		expect(mod.actions.delete).toBeDefined();
 		expect(mod.actions.deleteBatch).toBeDefined();
-		expect(mod.actions.createOpportunite).toBeDefined();
-		expect(mod.actions.updateStatut).toBeDefined();
+		expect(mod.actions.addKeyword).toBeDefined();
+		expect(mod.actions.removeKeyword).toBeDefined();
+		// Retirées le 2026-07-01 (modèle simplifié + suppression conversion signal->opportunité).
+		expect(mod.actions.update).toBeUndefined();
+		expect(mod.actions.createOpportunite).toBeUndefined();
 	});
 });

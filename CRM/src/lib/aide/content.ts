@@ -390,13 +390,13 @@ const niveau2: AideLevel = {
 			icon: 'notifications',
 			lead: 'Les événements du secteur captés automatiquement : appels d\'offres et mouvements d\'entreprises.',
 			blocks: [
-				{ type: 'paragraph', text: 'Les signaux sont la matière première brute, captée automatiquement chaque matin par un robot du CRM : un appel d\'offres sur SIMAP, une création ou un déménagement d\'entreprise repérés au registre du commerce. C\'est l\'amont commercial. Chaque signal porte un score de priorité et des critères ; tu tries, et tu convertis les bons en opportunités du pipeline.' },
+				{ type: 'paragraph', text: 'Les signaux sont la matière première brute, captée automatiquement chaque matin par un robot du CRM : un appel d\'offres sur SIMAP (marchés publics de construction en Suisse romande). C\'est l\'amont commercial. Chaque signal porte un score de priorité et des critères ; tu tries la file : ceux à travailler passent « À suivre », les autres sont « Archivés ».' },
 				{
 					type: 'list',
 					items: [
-						'La page ouvre sur les signaux « Nouveau » à trier ; les onglets suivent le statut (En analyse, Intéressé, Converti, Écarté).',
+						'La page ouvre sur les signaux « À trier » ; un second onglet regroupe ceux marqués « À suivre ». Les archivés sont rangés dans une vue à part.',
 						'Trier par pertinence (défaut) ou par date ; rechercher et filtrer par canton ; masquer les signaux hors-scope (score nul ou négatif).',
-						'Ouvrir un signal pour voir les acteurs, la source et le détail, puis le convertir en opportunité, l\'écarter ou l\'archiver.',
+						'Ouvrir un signal pour voir les acteurs, la source et le détail. Le bouton « Statut » le passe « À suivre » ou « Archivé » ; un lien ouvre la fiche officielle sur SIMAP.',
 						'La file courte (vingt-cinq signaux) affiche la tête de liste ; un bouton déplie le reste, à plus faible score.'
 					]
 				},

@@ -28,30 +28,20 @@
 		</div>
 		<div class="indicator-body">
 			<span class="indicator-value tabular-nums">{values.nouveaux}</span>
-			<div class="indicator-label">{values.nouveaux === 1 ? 'À triager' : 'À triager'}</div>
+			<div class="indicator-label">À trier</div>
 			{#if nouveauxWarn}
 				<div class="indicator-trend warning">Action requise</div>
 			{/if}
 		</div>
 	</div>
 
-	<div class="indicator">
-		<div class="indicator-icon">
-			<Icon name="track_changes" size={22} />
-		</div>
-		<div class="indicator-body">
-			<span class="indicator-value tabular-nums">{values.aConvertir}</span>
-			<div class="indicator-label">À convertir</div>
-		</div>
-	</div>
-
 	<div class="indicator success">
 		<div class="indicator-icon">
-			<Icon name="check_circle" size={22} />
+			<Icon name="bookmark" size={22} />
 		</div>
 		<div class="indicator-body">
-			<span class="indicator-value tabular-nums">{values.convertis}</span>
-			<div class="indicator-label">{values.convertis === 1 ? 'Converti' : 'Convertis'}</div>
+			<span class="indicator-value tabular-nums">{values.aSuivre}</span>
+			<div class="indicator-label">À suivre</div>
 		</div>
 	</div>
 </section>
@@ -59,7 +49,7 @@
 <style>
 	.indicators {
 		display: grid;
-		grid-template-columns: repeat(4, 1fr);
+		grid-template-columns: repeat(3, 1fr);
 		gap: 0;
 		padding: 24px 32px 28px;
 		background: var(--color-surface);

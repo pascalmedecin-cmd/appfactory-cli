@@ -4,11 +4,7 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 	import SlideOut from '$lib/components/SlideOut.svelte';
-	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
-	import FormField from '$lib/components/FormField.svelte';
-	import Select from '$lib/components/Select.svelte';
-	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { toasts } from '$lib/stores/toast';
@@ -50,17 +46,15 @@
 	let activeTab: SignauxTab = $state('nouveau');
 	let slideOutOpen = $state(false);
 	let selectedSignal = $state<Signal | null>(null);
-	let modalOpen = $state(false);
-	let saving = $state(false);
-	let convertModalOpen = $state(false);
 	let confirmDeleteOpen = $state(false);
+	// Menu du bouton « Statut » du slide-out (À suivre / Archivé).
+	let statutMenuOpen = $state(false);
+	let statutActing = $state(false);
 	let deleting = $state(false);
 	let deleteFormEl: HTMLFormElement | null = $state(null);
-	// Vague 3 : menu d'actions secondaires (...) du slideout premium.
-	let menuOpen = $state(false);
+	// Éléments DOM du menu « Statut » (fermeture au clic hors menu / Escape / scroll).
 	let menuEl: HTMLElement | null = $state(null);
 	let kebabEl: HTMLButtonElement | null = $state(null);
-	let menuActing = $state(false);
 	let selectMode = $state(false);
 	let selectedIds = $state<Set<string>>(new Set());
 	let batchDeleting = $state(false);
@@ -147,24 +141,6 @@
 		}
 	}
 
-	// Form fields
-	let type_signal = $state('');
-	let description_projet = $state('');
-	let maitre_ouvrage = $state('');
-	let architecte_bureau = $state('');
-	let canton = $state('');
-	let commune = $state('');
-	let source_officielle = $state('');
-	let date_publication = $state('');
-	let notes_libres = $state('');
-	let responsable_filmpro = $state('');
-	let statut_traitement = $state('nouveau');
-
-	// Convert form
-	let opp_titre = $state('');
-
-	const TYPE_SIGNAL_OPTIONS = config.signaux.types.map((t) => ({ value: t.key, label: t.label }));
-
 	const indicators = $derived(signauxIndicators(data.signaux));
 	const counts = $derived(signauxCountsByTab(data.signaux));
 
@@ -175,19 +151,15 @@
 	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
 	const kpiItems = $derived<KpiItem[]>([
 		{ icon: 'radar', value: indicators.total, label: indicators.total === 1 ? 'Signal' : 'Signaux', tone: 'primary' },
-		{ icon: 'fiber_new', value: indicators.nouveaux, label: 'À triager', tone: 'warn', highlight: indicators.nouveaux > 0 },
-		{ icon: 'track_changes', value: indicators.aConvertir, label: 'À convertir', tone: 'convert' },
-		{ icon: 'check_circle', value: indicators.convertis, label: indicators.convertis === 1 ? 'Converti' : 'Convertis', tone: 'success' },
+		{ icon: 'fiber_new', value: indicators.nouveaux, label: 'À trier', tone: 'warn', highlight: indicators.nouveaux > 0 },
+		{ icon: 'bookmark', value: indicators.aSuivre, label: 'À suivre', tone: 'success' },
 	]);
 
 	// V4 (S189) : tab "Tous" retiré. La page commence sur "Nouveau" (cf. activeTab
 	// default). L'intégralité est lisible en cumulant les autres tabs si besoin.
 	const tabsSpec = $derived([
-		{ key: 'nouveau' as SignauxTab, label: 'Nouveau', count: counts.nouveau },
-		{ key: 'en_analyse' as SignauxTab, label: 'En analyse', count: counts.en_analyse },
-		{ key: 'interesse' as SignauxTab, label: 'Intéressé', count: counts.interesse },
-		{ key: 'converti' as SignauxTab, label: 'Converti', count: counts.converti },
-		{ key: 'ecarte' as SignauxTab, label: 'Écarté', count: counts.ecarte },
+		{ key: 'nouveau' as SignauxTab, label: 'À trier', count: counts.nouveau },
+		{ key: 'a_suivre' as SignauxTab, label: 'À suivre', count: counts.a_suivre },
 	]);
 
 	// V5 : en vue « archivées » on affiche toutes les fiches chargées (toutes statut=archive),
@@ -298,25 +270,23 @@
 	function openDetail(signal: Signal) {
 		selectedSignal = signal;
 		slideOutOpen = true;
-		menuOpen = false;
+		statutMenuOpen = false;
 	}
 
-	// Vague 3 : menu d'actions secondaires (...) du slideout premium. Fermeture au clic
-	// hors menu (pattern $effect + listener document, comme la barre mobile prospection).
+	// Menu « Statut » du slide-out : fermeture au clic hors menu / Escape / scroll
+	// (le menu est positionné en absolute dans le slide-out scrollable).
 	$effect(() => {
-		if (!menuOpen) return;
+		if (!statutMenuOpen) return;
 		function onDocClick(e: MouseEvent) {
-			if (menuEl && !menuEl.contains(e.target as Node)) menuOpen = false;
+			if (menuEl && !menuEl.contains(e.target as Node)) statutMenuOpen = false;
 		}
 		function onKey(e: KeyboardEvent) {
 			if (e.key === 'Escape') {
-				menuOpen = false;
+				statutMenuOpen = false;
 				kebabEl?.focus(); // restitue le focus au déclencheur (a11y).
 			}
 		}
-		// Ferme au scroll : le menu est positionné en absolute dans le slideout scrollable ;
-		// sans ça il resterait figé/désancré au défilement du contenu.
-		function onScroll() { menuOpen = false; }
+		function onScroll() { statutMenuOpen = false; }
 		document.addEventListener('click', onDocClick);
 		document.addEventListener('keydown', onKey);
 		window.addEventListener('scroll', onScroll, true); // capture : attrape le scroll du conteneur interne.
@@ -327,41 +297,25 @@
 		};
 	});
 
-	function openEdit() {
-		if (!selectedSignal) return;
-		type_signal = selectedSignal.type_signal ?? '';
-		description_projet = selectedSignal.description_projet ?? '';
-		maitre_ouvrage = selectedSignal.maitre_ouvrage ?? '';
-		architecte_bureau = selectedSignal.architecte_bureau ?? '';
-		canton = selectedSignal.canton ?? '';
-		commune = selectedSignal.commune ?? '';
-		source_officielle = selectedSignal.source_officielle ?? '';
-		date_publication = selectedSignal.date_publication ?? '';
-		notes_libres = selectedSignal.notes_libres ?? '';
-		responsable_filmpro = selectedSignal.responsable_filmpro ?? '';
-		statut_traitement = selectedSignal.statut_traitement ?? 'nouveau';
-		slideOutOpen = false;
-		modalOpen = true;
-	}
-
-	function openConvertModal() {
-		if (!selectedSignal) return;
-		opp_titre = selectedSignal.description_projet ?? selectedSignal.type_signal ?? '';
-		convertModalOpen = true;
-	}
-
-	function resetForm() {
-		type_signal = '';
-		description_projet = '';
-		maitre_ouvrage = '';
-		architecte_bureau = '';
-		canton = '';
-		commune = '';
-		source_officielle = '';
-		date_publication = '';
-		notes_libres = '';
-		responsable_filmpro = '';
-		statut_traitement = 'nouveau';
+	// Applique un statut au signal sélectionné (bouton Statut du slide-out). Restauration
+	// depuis la vue archivées (archive -> a_suivre) : on renavigue vers la file active.
+	function statutEnhance(fromArchived: boolean) {
+		return () => {
+			statutActing = true;
+			return async ({ result, update }: { result: { type: string }; update: () => Promise<void> }) => {
+				statutActing = false;
+				statutMenuOpen = false;
+				slideOutOpen = false;
+				selectedSignal = null;
+				if (result.type === 'success') {
+					toasts.success('Statut mis à jour');
+					if (fromArchived) { await goto('?'); return; }
+				} else {
+					toasts.error('Erreur lors de la mise à jour');
+				}
+				await update();
+			};
+		};
 	}
 </script>
 
@@ -594,6 +548,7 @@
 	{#if selectedSignal}
 		{@const fSrc = sourceMetaFor(selectedSignal.source_officielle)}
 		{@const fActivite = relativeTimeFr(selectedSignal.date_detection)}
+		{@const st = selectedSignal.statut_traitement ?? 'nouveau'}
 		<div class="space-y-6">
 			<!-- En-tête : type + statut + score -->
 			<div class="flex items-start justify-between gap-3">
@@ -670,7 +625,19 @@
 				<div class="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<span class="text-text-muted">Source</span>
-						<p class="font-medium text-text uppercase">{selectedSignal.source_officielle ?? '–'}</p>
+						{#if selectedSignal.source_officielle === 'simap' && selectedSignal.source_id}
+							<a
+								href={`https://www.simap.ch/fr/project-detail/${selectedSignal.source_id}`}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="inline-flex items-center gap-1 font-medium text-primary hover:underline"
+							>
+								Voir sur SIMAP
+								<Icon name="open_in_new" size={14} />
+							</a>
+						{:else}
+							<p class="font-medium text-text uppercase">{selectedSignal.source_officielle ?? '–'}</p>
+						{/if}
 					</div>
 					<div>
 						<span class="text-text-muted">Date publication</span>
@@ -694,381 +661,77 @@
 				</div>
 			{/if}
 
-			{#if selectedSignal.opportunite_associee_id}
-				<div class="text-sm p-3 bg-success/10 rounded-lg">
-					<span class="text-success-deep font-medium">Converti en opportunité</span>
-					<a href="/crm/pipeline" class="block text-primary hover:underline text-sm mt-1">Voir dans le pipeline</a>
-				</div>
-			{/if}
-
-			{#if premium}
-				<!-- Vague 3 : actions primaires en clair + secondaires (Archiver / Restaurer /
-				     Écarter / Supprimer) dans un menu ... pour ne pas saturer la barre. -->
-				{@const st = selectedSignal.statut_traitement}
-				{@const canAct = st !== 'converti' && st !== 'ecarte' && st !== 'archive'}
-				{@const isArchived = st === 'archive'}
-				<div class="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
+			<div class="flex flex-wrap items-center gap-3 pt-4 border-t border-border">
+				<!-- Bouton Statut : À suivre / Archivé (menu déroulant). -->
+				<div bind:this={menuEl} class="relative">
 					<button
+						bind:this={kebabEl}
 						type="button"
-						onclick={openEdit}
+						onclick={(e) => { e.stopPropagation(); statutMenuOpen = !statutMenuOpen; }}
+						aria-haspopup="true"
+						aria-controls="signal-statut-menu"
+						aria-expanded={statutMenuOpen}
 						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
 					>
-						<Icon name="edit" size={16} />
-						Modifier
+						<Icon name="flag" size={16} />
+						Statut : {statutLabel(st)}
+						<Icon name="expand_more" size={16} />
 					</button>
-					{#if canAct}
-						<button
-							type="button"
-							onclick={openConvertModal}
-							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-primary bg-primary-light hover:bg-primary/20 rounded-lg cursor-pointer"
-						>
-							<Icon name="arrow_forward" size={16} />
-							Créer opportunité
-						</button>
-					{/if}
-
-					<div bind:this={menuEl} class="relative ml-auto">
-						<button
-							bind:this={kebabEl}
-							type="button"
-							onclick={(e) => { e.stopPropagation(); menuOpen = !menuOpen; }}
-							aria-haspopup="true"
-							aria-controls="signal-actions-menu"
-							aria-expanded={menuOpen}
-							aria-label="Plus d'actions"
-							class="flex items-center justify-center w-10 h-10 box-border rounded-lg border border-border text-text-muted hover:bg-surface-alt cursor-pointer"
-						>
-							<Icon name="more_vert" size={18} />
-						</button>
-						{#if menuOpen}
-							<div id="signal-actions-menu" class="absolute right-0 bottom-full mb-2 min-w-[208px] p-1.5 bg-surface rounded-xl shadow-lg border border-border z-20">
-								{#if canAct}
-									<form
-										method="POST"
-										action="?/archive"
-										use:enhance={() => {
-											menuActing = true;
-											return async ({ result, update }) => {
-												menuActing = false;
-												menuOpen = false;
-												slideOutOpen = false;
-												selectedSignal = null;
-												if (result.type === 'success') toasts.success('Signal archivé');
-												else toasts.error("Erreur lors de l'archivage");
-												await update();
-											};
-										}}
-									>
-										<input type="hidden" name="id" value={selectedSignal.id} />
-										<button type="submit" disabled={menuActing} class="flex items-center gap-2.5 w-full px-2.5 py-2 text-sm font-medium text-text-body rounded-lg hover:bg-surface-alt cursor-pointer text-left disabled:opacity-50">
-											<Icon name="archive" size={16} /> Archiver
-										</button>
-									</form>
-								{/if}
-								{#if isArchived}
-									<form
-										method="POST"
-										action="?/unarchive"
-										use:enhance={() => {
-											menuActing = true;
-											return async ({ result, update }) => {
-												menuActing = false;
-												menuOpen = false;
-												if (result.type === 'success') {
-													toasts.success('Signal restauré');
-													slideOutOpen = false;
-													selectedSignal = null;
-													// Restauré → il vit dans la file active, plus dans la vue archivées.
-													await goto('?');
-												} else {
-													toasts.error('Erreur lors de la restauration');
-													await update();
-												}
-											};
-										}}
-									>
-										<input type="hidden" name="id" value={selectedSignal.id} />
-										<button type="submit" disabled={menuActing} class="flex items-center gap-2.5 w-full px-2.5 py-2 text-sm font-medium text-text-body rounded-lg hover:bg-surface-alt cursor-pointer text-left disabled:opacity-50">
-											<Icon name="arrow_back" size={16} /> Restaurer
-										</button>
-									</form>
-								{/if}
-								{#if canAct}
-									<form
-										method="POST"
-										action="?/updateStatut"
-										use:enhance={() => {
-											menuActing = true;
-											return async ({ result, update }) => {
-												menuActing = false;
-												menuOpen = false;
-												slideOutOpen = false;
-												selectedSignal = null;
-												if (result.type === 'success') toasts.success('Signal écarté');
-												else toasts.error('Erreur lors de la mise à jour');
-												await update();
-											};
-										}}
-									>
-										<input type="hidden" name="id" value={selectedSignal.id} />
-										<input type="hidden" name="statut_traitement" value="ecarte" />
-										<button type="submit" disabled={menuActing} class="flex items-center gap-2.5 w-full px-2.5 py-2 text-sm font-medium text-text-body rounded-lg hover:bg-surface-alt cursor-pointer text-left disabled:opacity-50">
-											<Icon name="close" size={16} /> Écarter
-										</button>
-									</form>
-								{/if}
-								<div class="h-px bg-border my-1.5 mx-1"></div>
-								<button
-									type="button"
-									onclick={() => { menuOpen = false; confirmDeleteOpen = true; }}
-									class="flex items-center gap-2.5 w-full px-2.5 py-2 text-sm font-medium text-danger-deep rounded-lg hover:bg-danger/5 cursor-pointer text-left"
-								>
-									<Icon name="delete" size={16} /> Supprimer
+					{#if statutMenuOpen}
+						<div id="signal-statut-menu" class="absolute left-0 bottom-full mb-2 min-w-[220px] p-1.5 bg-surface rounded-xl shadow-lg border border-border z-20">
+							<form method="POST" action="?/updateStatut" use:enhance={statutEnhance(data.showArchived)}>
+								<input type="hidden" name="id" value={selectedSignal.id} />
+								<input type="hidden" name="statut_traitement" value="a_suivre" />
+								<button type="submit" disabled={statutActing || st === 'a_suivre'} class="flex items-center gap-2.5 w-full px-2.5 py-2 text-sm font-medium text-text-body rounded-lg hover:bg-surface-alt cursor-pointer text-left disabled:opacity-40 disabled:cursor-default">
+									<Icon name="bookmark" size={16} /> À suivre
+									{#if st === 'a_suivre'}<span class="ml-auto text-xs text-text-muted">Actuel</span>{/if}
 								</button>
-							</div>
-						{/if}
-					</div>
-
-					<!-- Form delete (caché) soumis par la ConfirmModal via deleteFormEl. -->
-					<form
-						bind:this={deleteFormEl}
-						method="POST"
-						action="?/delete"
-						class="hidden"
-						use:enhance={() => {
-							deleting = true;
-							return async ({ result, update }) => {
-								deleting = false;
-								slideOutOpen = false;
-								selectedSignal = null;
-								if (result.type === 'success') toasts.success('Signal supprimé');
-								else toasts.error('Erreur lors de la suppression');
-								await update();
-							};
-						}}
-					>
-						<input type="hidden" name="id" value={selectedSignal.id} />
-					</form>
-				</div>
-			{:else}
-				<div class="flex flex-wrap gap-3 pt-4 border-t border-border">
-					<button
-						type="button"
-						onclick={openEdit}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
-					>
-						<Icon name="edit" size={16} />
-						Modifier
-					</button>
-
-					{#if selectedSignal.statut_traitement !== 'converti' && selectedSignal.statut_traitement !== 'ecarte'}
-						<button
-							type="button"
-							onclick={openConvertModal}
-							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-primary bg-primary-light hover:bg-primary/20 rounded-lg cursor-pointer"
-						>
-							<Icon name="arrow_forward" size={16} />
-							Créer opportunité
-						</button>
-
-						<form
-							method="POST"
-							action="?/updateStatut"
-							use:enhance={() => {
-								return async ({ result, update }) => {
-									slideOutOpen = false;
-									selectedSignal = null;
-									if (result.type === 'success') toasts.success('Signal écarté');
-									else toasts.error('Erreur lors de la mise à jour');
-									await update();
-								};
-							}}
-						>
-							<input type="hidden" name="id" value={selectedSignal.id} />
-							<input type="hidden" name="statut_traitement" value="ecarte" />
-							<button
-								type="submit"
-								class="flex items-center gap-2 px-4 py-2 text-sm text-text-muted hover:text-danger-deep cursor-pointer"
-							>
-								<Icon name="close" size={16} />
-								Écarter
-							</button>
-						</form>
+							</form>
+							<form method="POST" action="?/updateStatut" use:enhance={statutEnhance(false)}>
+								<input type="hidden" name="id" value={selectedSignal.id} />
+								<input type="hidden" name="statut_traitement" value="archive" />
+								<button type="submit" disabled={statutActing || st === 'archive'} class="flex items-center gap-2.5 w-full px-2.5 py-2 text-sm font-medium text-text-body rounded-lg hover:bg-surface-alt cursor-pointer text-left disabled:opacity-40 disabled:cursor-default">
+									<Icon name="inventory_2" size={16} /> Archivé
+									{#if st === 'archive'}<span class="ml-auto text-xs text-text-muted">Actuel</span>{/if}
+								</button>
+							</form>
+						</div>
 					{/if}
-
-					<form
-						bind:this={deleteFormEl}
-						method="POST"
-						action="?/delete"
-						use:enhance={() => {
-							deleting = true;
-							return async ({ result, update }) => {
-								deleting = false;
-								slideOutOpen = false;
-								selectedSignal = null;
-								if (result.type === 'success') toasts.success('Signal supprimé');
-								else toasts.error('Erreur lors de la suppression');
-								await update();
-							};
-						}}
-					>
-						<input type="hidden" name="id" value={selectedSignal.id} />
-						<button
-							type="button"
-							onclick={() => (confirmDeleteOpen = true)}
-							disabled={deleting}
-							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
-						>
-							<Icon name="delete" size={16} />
-							{deleting ? 'Suppression…' : 'Supprimer'}
-						</button>
-					</form>
 				</div>
-			{/if}
+
+				<!-- Supprimer : action destructive séparée, confirmation obligatoire. -->
+				<form
+					bind:this={deleteFormEl}
+					method="POST"
+					action="?/delete"
+					class="hidden"
+					use:enhance={() => {
+						deleting = true;
+						return async ({ result, update }) => {
+							deleting = false;
+							slideOutOpen = false;
+							selectedSignal = null;
+							if (result.type === 'success') toasts.success('Signal supprimé');
+							else toasts.error('Erreur lors de la suppression');
+							await update();
+						};
+					}}
+				>
+					<input type="hidden" name="id" value={selectedSignal.id} />
+				</form>
+				<button
+					type="button"
+					onclick={() => (confirmDeleteOpen = true)}
+					disabled={deleting}
+					class="ml-auto flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
+				>
+					<Icon name="delete" size={16} />
+					{deleting ? 'Suppression…' : 'Supprimer'}
+				</button>
+			</div>
 		</div>
 	{/if}
 </SlideOut>
-
-<!-- Modal édition signal (création supprimée 2026-05-13 : décision Pascal, scan auto suffit) -->
-<ModalForm
-	bind:open={modalOpen}
-	title="Modifier le signal"
-	{saving}
->
-	<form
-		method="POST"
-		action="?/update"
-		use:enhance={() => {
-			saving = true;
-			return async ({ result, update }) => {
-				saving = false;
-				modalOpen = false;
-				resetForm();
-				if (result.type === 'success') toasts.success('Signal modifié');
-				else toasts.error("Erreur lors de l'enregistrement");
-				await update();
-			};
-		}}
-	>
-		{#if selectedSignal}
-			<input type="hidden" name="id" value={selectedSignal.id} />
-		{/if}
-
-		<div class="space-y-4">
-			<Select
-				id="type_signal"
-				label="Type de signal"
-				required
-				placeholder="-- Choisir --"
-				bind:value={type_signal}
-				options={TYPE_SIGNAL_OPTIONS}
-			/>
-			<FormField label="Description du projet" type="textarea" bind:value={description_projet} />
-			<div class="grid grid-cols-2 gap-4">
-				<CantonSelect bind:value={canton} />
-				<FormField label="Maître d'ouvrage" bind:value={maitre_ouvrage} />
-			</div>
-
-			<div class="grid grid-cols-2 gap-4">
-				<FormField label="Architecte / Bureau" bind:value={architecte_bureau} />
-				<FormField label="Commune" bind:value={commune} />
-			</div>
-			<div class="grid grid-cols-2 gap-4">
-				<FormField label="Source officielle" bind:value={source_officielle} />
-				<FormField label="Date publication" type="date" bind:value={date_publication} />
-			</div>
-			<FormField label="Notes" type="textarea" bind:value={notes_libres} />
-		</div>
-
-		<input type="hidden" name="type_signal" value={type_signal} />
-		<input type="hidden" name="description_projet" value={description_projet} />
-		<input type="hidden" name="maitre_ouvrage" value={maitre_ouvrage} />
-		<input type="hidden" name="architecte_bureau" value={architecte_bureau} />
-		<input type="hidden" name="canton" value={canton} />
-		<input type="hidden" name="commune" value={commune} />
-		<input type="hidden" name="source_officielle" value={source_officielle} />
-		<input type="hidden" name="date_publication" value={date_publication} />
-		<input type="hidden" name="notes_libres" value={notes_libres} />
-		<input type="hidden" name="responsable_filmpro" value={responsable_filmpro} />
-
-		<div class="flex justify-end gap-3 pt-4">
-			<button
-				type="button"
-				onclick={() => (modalOpen = false)}
-				class="px-4 py-2 text-sm text-text-muted hover:text-text cursor-pointer"
-			>
-				Annuler
-			</button>
-			<button
-				type="submit"
-				disabled={saving}
-				class="h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
-			>
-				{saving ? 'Enregistrement…' : 'Enregistrer'}
-			</button>
-		</div>
-	</form>
-</ModalForm>
-
-<!-- Modal conversion signal -> opportunité -->
-<ModalForm
-	bind:open={convertModalOpen}
-	title="Créer une opportunité depuis ce signal"
-	{saving}
->
-	{#if selectedSignal}
-		<form
-			method="POST"
-			action="?/createOpportunite"
-			use:enhance={() => {
-				saving = true;
-				return async ({ result, update }) => {
-					saving = false;
-					convertModalOpen = false;
-					slideOutOpen = false;
-					selectedSignal = null;
-					if (result.type === 'success') {
-						toasts.success('Opportunité créée');
-						await goto('/crm/pipeline');
-					} else {
-						toasts.error('Erreur lors de la conversion');
-						await update();
-					}
-				};
-			}}
-		>
-			<input type="hidden" name="signal_id" value={selectedSignal.id} />
-
-			<div class="space-y-4">
-				<div class="p-3 bg-surface-alt/50 rounded-lg text-sm">
-					<p class="text-text-muted">Signal source</p>
-					<p class="font-medium text-text">{formatTypeLabel(selectedSignal.type_signal)} : {selectedSignal.maitre_ouvrage ?? ''}</p>
-				</div>
-
-				<FormField label="Titre de l'opportunité" bind:value={opp_titre} required />
-
-				<input type="hidden" name="titre" value={opp_titre} />
-			</div>
-
-			<div class="flex justify-end gap-3 pt-4">
-				<button
-					type="button"
-					onclick={() => (convertModalOpen = false)}
-					class="h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
-				>
-					Annuler
-				</button>
-				<button
-					type="submit"
-					disabled={saving}
-					class="h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
-				>
-					{saving ? 'Création…' : 'Créer et aller au pipeline'}
-				</button>
-			</div>
-		</form>
-	{/if}
-</ModalForm>
 
 <ConfirmModal
 	bind:open={confirmDeleteOpen}

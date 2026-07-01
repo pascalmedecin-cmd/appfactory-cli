@@ -1,7 +1,7 @@
 /**
- * Helpers de formatage et calculs pour la page /signaux (refonte v9 S176bis page 5/6).
- * - signauxIndicators : 4 KPIs flat premium (total, nouveaux, a-convertir, convertis)
- * - filterSignauxByTab : filtre selon tab actif (tous, nouveau, en_analyse, interesse, converti, ecarte)
+ * Helpers de formatage et calculs pour la page /signaux (modèle simplifié 2026-07-01).
+ * - signauxIndicators : 3 indicateurs flat premium (total, nouveaux, aSuivre)
+ * - filterSignauxByTab : filtre selon tab actif (nouveau, a_suivre) — les archivés vivent dans la vue `?vue=archivees`
  * - signauxCountsByTab : compteurs par tab pour les pills ARIA
  * - emptyMessageForTab : message contextualisé par tab
  * - formatTypeLabel / typeIcon / formatRelative / formatDate / scoreLabel / statutLabel / statutVariant
@@ -9,13 +9,11 @@
 
 import { DAY_MS } from './time-constants';
 
-// Audit 360 M-25 : casing des clés de tab — asymétrie assumée. Ici (signaux),
-// les clés non-`tous` sont en snake_case car elles MAPPENT 1:1 sur l'enum DB
-// `signaux_affaires.statut_traitement` (`en_analyse`, `ecarte`, …) : un kebab
-// imposerait une table de conversion. Sur /contacts, /entreprises, /pipeline,
-// au contraire, les clés de tab sont des regroupements UI-only (`a-qualifier`,
-// `sans-entreprise`) sans correspondance directe DB → kebab-case lisible.
-export type SignauxTab = 'tous' | 'nouveau' | 'en_analyse' | 'interesse' | 'converti' | 'ecarte';
+// Clés de tab en snake_case car elles MAPPENT 1:1 sur l'enum DB
+// `signaux_affaires.statut_traitement` (`nouveau`, `a_suivre`). L'archivage
+// (`archive`) n'est PAS un onglet : il vit dans une vue dédiée (`?vue=archivees`).
+// Modèle simplifié 2026-07-01 (radar SIMAP) : à trier -> à suivre / archivé.
+export type SignauxTab = 'nouveau' | 'a_suivre';
 
 export type SignalLite = {
 	id: string;
@@ -30,27 +28,20 @@ export type SignalLite = {
 export type SignauxIndicatorsValues = {
 	total: number;
 	nouveaux: number;
-	aConvertir: number;
-	convertis: number;
+	aSuivre: number;
 };
 
 const STATUT_LABELS: Record<string, string> = {
-	nouveau: 'Nouveau',
-	en_analyse: 'En analyse',
-	interesse: 'Intéressé',
-	ecarte: 'Écarté',
-	converti: 'Converti',
-	// 'archive' = valeur write-only (hors STATUTS_TRAITEMENT) : soft-archive Zefix +
-	// archivage Vague 3. Doit figurer ici, sinon une fiche/carte archivée s'affiche « Nouveau ».
+	nouveau: 'À trier',
+	a_suivre: 'À suivre',
+	// 'archive' : rangé hors de la file de triage (vue `?vue=archivees`). Reste
+	// dans la table des labels, sinon une fiche/carte archivée s'affiche « À trier ».
 	archive: 'Archivé',
 };
 
 const STATUT_VARIANTS: Record<string, 'default' | 'info' | 'success' | 'warning' | 'muted'> = {
 	nouveau: 'warning',
-	en_analyse: 'info',
-	interesse: 'success',
-	ecarte: 'muted',
-	converti: 'default',
+	a_suivre: 'info',
 	archive: 'muted',
 };
 
@@ -96,41 +87,35 @@ export function clampDisplayScore(
 	return raw;
 }
 /**
- * Indicateurs flat premium en haut de page /signaux.
- * - total : count de tous les signaux (tous statuts)
- * - nouveaux : count statut_traitement='nouveau' (à triager)
- * - aConvertir : count statut_traitement='interesse' (action commerciale prioritaire)
- * - convertis : count statut_traitement='converti'
+ * Indicateurs flat premium en haut de page /signaux (vue active, hors archivés).
+ * - total : count des signaux chargés (file active)
+ * - nouveaux : count statut_traitement='nouveau' (à trier)
+ * - aSuivre : count statut_traitement='a_suivre' (retenus, à travailler)
  */
 export function signauxIndicators<T extends SignalLite>(
 	signaux: ReadonlyArray<T>
 ): SignauxIndicatorsValues {
 	let total = 0;
 	let nouveaux = 0;
-	let aConvertir = 0;
-	let convertis = 0;
+	let aSuivre = 0;
 
 	for (const s of signaux) {
 		total += 1;
 		const st = s.statut_traitement ?? 'nouveau';
 		if (st === 'nouveau') nouveaux += 1;
-		else if (st === 'interesse') aConvertir += 1;
-		else if (st === 'converti') convertis += 1;
+		else if (st === 'a_suivre') aSuivre += 1;
 	}
 
-	return { total, nouveaux, aConvertir, convertis };
+	return { total, nouveaux, aSuivre };
 }
 
 /**
- * Filtre les signaux selon le tab actif.
- * - tous : retourne tous (incluant écartés)
- * - nouveau / en_analyse / interesse / converti / ecarte : statut_traitement === tab
+ * Filtre les signaux selon le tab actif (nouveau / a_suivre).
  */
 export function filterSignauxByTab<T extends SignalLite>(
 	signaux: ReadonlyArray<T>,
 	tab: SignauxTab
 ): T[] {
-	if (tab === 'tous') return [...signaux];
 	return signaux.filter((s) => (s.statut_traitement ?? 'nouveau') === tab);
 }
 
@@ -141,16 +126,12 @@ export function signauxCountsByTab<T extends SignalLite>(
 	signaux: ReadonlyArray<T>
 ): Record<SignauxTab, number> {
 	const counts: Record<SignauxTab, number> = {
-		tous: signaux.length,
 		nouveau: 0,
-		en_analyse: 0,
-		interesse: 0,
-		converti: 0,
-		ecarte: 0,
+		a_suivre: 0,
 	};
 	for (const s of signaux) {
 		const st = (s.statut_traitement ?? 'nouveau') as SignauxTab;
-		if (st in counts && st !== 'tous') counts[st] += 1;
+		if (st in counts) counts[st] += 1;
 	}
 	return counts;
 }
@@ -161,16 +142,9 @@ export function signauxCountsByTab<T extends SignalLite>(
 export function emptyMessageForTab(tab: SignauxTab): string {
 	switch (tab) {
 		case 'nouveau':
-			return 'Aucun signal nouveau à triager.';
-		case 'en_analyse':
-			return "Aucun signal en analyse pour l'instant.";
-		case 'interesse':
-			return 'Aucun signal qualifié intéressant.';
-		case 'converti':
-			return 'Aucun signal converti en opportunité.';
-		case 'ecarte':
-			return 'Aucun signal écarté.';
-		case 'tous':
+			return 'Aucun signal à trier.';
+		case 'a_suivre':
+			return 'Aucun signal à suivre pour le moment.';
 		default:
 			return 'Aucun signal ne correspond aux filtres.';
 	}
@@ -239,10 +213,10 @@ export function scoreLabel(
 }
 
 /**
- * Label humain du statut. Fallback 'Nouveau'.
+ * Label humain du statut. Fallback 'À trier' (statut null = non trié).
  */
 export function statutLabel(statut: string | null): string {
-	return STATUT_LABELS[statut ?? ''] ?? 'Nouveau';
+	return STATUT_LABELS[statut ?? ''] ?? 'À trier';
 }
 
 /**

@@ -1,8 +1,8 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
-import { SignalUpdateSchema, SignalUpdateStatutSchema, SignalDeleteSchema, SignalArchiveSchema, SignalBatchDeleteSchema, SignalCreateOpportuniteSchema, SIGNAL_FIELDS, extractForm, validate } from '$lib/schemas';
-import { dbFail, newId, now } from '$lib/server/db-helpers';
+import { SignalUpdateStatutSchema, SignalDeleteSchema, SignalBatchDeleteSchema, extractForm, validate } from '$lib/schemas';
+import { dbFail } from '$lib/server/db-helpers';
 import { isAdminEmail } from '$lib/feedback/admin';
 import { POIDS_PAR_CATEGORIE, type KeywordRow } from '$lib/scoring/keywords';
 import { calculerScore } from '$lib/scoring';
@@ -17,15 +17,15 @@ const KeywordRemoveSchema = z.object({
 	id: z.string().uuid('ID invalide'),
 });
 
-// Rescoring rétroactif : recalcule score_pertinence pour tous les signaux à statut
-// `nouveau` ou `en_analyse` avec la liste de mots-clés courante. Ne touche pas les
-// archivés (`converti`, `ecarte`) — cohérent spec critère 12. Bulk UPDATE en parallèle
-// (131 entrées en BDD aujourd'hui, plafond opérationnel ~500 avant bascule async).
+// Rescoring rétroactif : recalcule score_pertinence pour les signaux de la file
+// active (`nouveau` = à trier, `a_suivre` = retenus) avec la liste de mots-clés
+// courante. Ne touche pas les `archive` (rangés). Bulk UPDATE en parallèle
+// (~430 entrées actives en BDD, plafond opérationnel ~500 avant bascule async).
 async function rescoreActiveSignaux(supabase: App.Locals['supabase'], keywords: KeywordRow[]): Promise<void> {
 	const { data: rows, error } = await supabase
 		.from('signaux_affaires')
 		.select('id, canton, description_projet, maitre_ouvrage, source_officielle, date_publication, statut_traitement')
-		.in('statut_traitement', ['nouveau', 'en_analyse']);
+		.in('statut_traitement', ['nouveau', 'a_suivre']);
 	if (error || !rows) return;
 
 	const updates = rows.map(async (s) => {
@@ -140,7 +140,7 @@ export const actions: Actions = {
 		}
 
 		// Rescoring rétroactif synchrone : on relit la liste à jour et on rejoue le
-		// score sur les signaux actifs (`nouveau` + `en_analyse`).
+		// score sur les signaux de la file active (`nouveau` + `a_suivre`).
 		const { data: kwData } = await locals.supabase
 			.from('signaux_mots_cles' as never)
 			.select('id, terme, terme_norm, categorie, poids');
@@ -176,32 +176,9 @@ export const actions: Actions = {
 		return { success: true };
 	},
 
-	update: async ({ request, locals }) => {
-		const form = await request.formData();
-		const raw = extractForm(form, ['id', ...SIGNAL_FIELDS, 'statut_traitement']);
-		const parsed = validate(SignalUpdateSchema, raw);
-		if (!parsed.success) return fail(400, { error: parsed.error });
-
-		const { error } = await locals.supabase
-			.from('signaux_affaires')
-			.update({
-				type_signal: parsed.data.type_signal || null,
-				description_projet: parsed.data.description_projet || null,
-				maitre_ouvrage: parsed.data.maitre_ouvrage || null,
-				architecte_bureau: parsed.data.architecte_bureau || null,
-				canton: parsed.data.canton || null,
-				commune: parsed.data.commune || null,
-				source_officielle: parsed.data.source_officielle || null,
-				date_publication: parsed.data.date_publication || null,
-				notes_libres: parsed.data.notes_libres || null,
-				responsable_filmpro: parsed.data.responsable_filmpro || null,
-				statut_traitement: parsed.data.statut_traitement || null,
-			})
-			.eq('id', parsed.data.id);
-
-		return dbFail(error) ?? { success: true };
-	},
-
+	// Bouton Statut du slide-out : trie un signal (nouveau -> a_suivre / archive,
+	// ou restaure archive -> a_suivre). Simple update, borné par le CHECK DB à
+	// ('nouveau','a_suivre','archive') et par SignalUpdateStatutSchema (Zod).
 	updateStatut: async ({ request, locals }) => {
 		const form = await request.formData();
 		const parsed = validate(SignalUpdateStatutSchema, extractForm(form, ['id', 'statut_traitement']));
@@ -211,39 +188,6 @@ export const actions: Actions = {
 			.from('signaux_affaires')
 			.update({ statut_traitement: parsed.data.statut_traitement })
 			.eq('id', parsed.data.id);
-
-		return dbFail(error) ?? { success: true };
-	},
-
-	// Vague 3 : archivage réversible (range hors-vue). statut_traitement='archive' = même
-	// valeur que le soft-archive Zefix, masquée de la file par le load V5. Garde serveur :
-	// on n'archive pas un signal converti (il vit dans le pipeline).
-	archive: async ({ request, locals }) => {
-		const form = await request.formData();
-		const parsed = validate(SignalArchiveSchema, extractForm(form, ['id']));
-		if (!parsed.success) return fail(400, { error: parsed.error });
-
-		const { error } = await locals.supabase
-			.from('signaux_affaires')
-			.update({ statut_traitement: 'archive' })
-			.eq('id', parsed.data.id)
-			.neq('statut_traitement', 'converti');
-
-		return dbFail(error) ?? { success: true };
-	},
-
-	// Vague 3 : restauration depuis la vue archivées → repasse en 'nouveau'. Garde serveur :
-	// ne touche que les signaux réellement archivés (defense-in-depth).
-	unarchive: async ({ request, locals }) => {
-		const form = await request.formData();
-		const parsed = validate(SignalArchiveSchema, extractForm(form, ['id']));
-		if (!parsed.success) return fail(400, { error: parsed.error });
-
-		const { error } = await locals.supabase
-			.from('signaux_affaires')
-			.update({ statut_traitement: 'nouveau' })
-			.eq('id', parsed.data.id)
-			.eq('statut_traitement', 'archive');
 
 		return dbFail(error) ?? { success: true };
 	},
@@ -276,63 +220,5 @@ export const actions: Actions = {
 			.in('id', ids);
 
 		return dbFail(error) ?? { success: true as const, deleted: ids.length };
-	},
-
-	// Audit 360 H-14 : ActionResult discriminated union (`success: true|false`).
-	createOpportunite: async ({ request, locals }) => {
-		const form = await request.formData();
-		const parsed = validate(SignalCreateOpportuniteSchema, extractForm(form, ['signal_id', 'titre', 'entreprise_id']));
-		if (!parsed.success) return fail(400, { success: false as const, error: parsed.error });
-
-		const ts = now();
-		const oppId = newId();
-
-		// Idempotence serveur : on RÉSERVE d'abord le signal via un UPDATE conditionnel
-		// (le filtre `.is('opportunite_associee_id', null)` joue le rôle de verrou
-		// logique). Si 0 ligne revient, le signal est déjà converti (double-clic, page
-		// stale, requête forgée) → on s'arrête AVANT tout insert, donc aucune
-		// opportunité orpheline n'est créée.
-		const { data: reserved, error: lockError } = await locals.supabase
-			.from('signaux_affaires')
-			.update({
-				statut_traitement: 'converti',
-				opportunite_associee_id: oppId,
-			})
-			.eq('id', parsed.data.signal_id)
-			.is('opportunite_associee_id', null)
-			.select('id');
-
-		const lockFail = dbFail(lockError);
-		if (lockFail) return lockFail;
-
-		if (!reserved || reserved.length === 0) {
-			// Déjà converti : réponse idempotente (pas une erreur), on renvoie au pipeline.
-			return { success: true as const, redirectTo: '/crm/pipeline', alreadyConverted: true as const };
-		}
-
-		const { error: oppError } = await locals.supabase.from('opportunites').insert({
-			id: oppId,
-			titre: parsed.data.titre,
-			entreprise_id: parsed.data.entreprise_id || null,
-			etape_pipeline: 'identification',
-			signal_affaires_id: parsed.data.signal_id,
-			lie_signal_affaires: true,
-			date_creation: ts,
-			date_derniere_modification: ts,
-		});
-
-		const oppFail = dbFail(oppError);
-		if (oppFail) {
-			// L'insert a échoué après la réservation : on libère le signal pour qu'un
-			// nouvel essai soit possible (sinon il pointerait vers un oppId inexistant).
-			await locals.supabase
-				.from('signaux_affaires')
-				.update({ statut_traitement: 'en_analyse', opportunite_associee_id: null })
-				.eq('id', parsed.data.signal_id)
-				.eq('opportunite_associee_id', oppId);
-			return oppFail;
-		}
-
-		return { success: true as const, redirectTo: '/crm/pipeline' };
 	},
 };

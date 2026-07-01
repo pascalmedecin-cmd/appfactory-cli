@@ -1,9 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
 
 /**
- * Tests des form actions Vague 3 `/signaux?/{archive,unarchive}`.
- * Archive = statut_traitement -> 'archive' (sauf converti) ; unarchive -> 'nouveau'
- * (seulement si réellement archivé). Zod gate (400) + happy path + chaîne de filtres.
+ * Tests de la form action `/signaux?/updateStatut` (modèle simplifié 2026-07-01).
+ * Le tri d'un signal (À suivre / Archivé, ou restauration) passe par un simple
+ * update de statut_traitement, borné par le CHECK DB à ('nouveau','a_suivre','archive')
+ * et par SignalUpdateStatutSchema (Zod). Les anciennes actions archive/unarchive
+ * (Vague 3) et createOpportunite sont supprimées.
  */
 
 vi.mock('$app/environment', () => ({ browser: false, dev: true, building: false }));
@@ -36,64 +38,63 @@ function makeFormData(values: Record<string, string>): FormData {
 	return fd;
 }
 
-async function callAction(name: 'archive' | 'unarchive', supabase: ReturnType<typeof createMock>, fields: Record<string, string>) {
+async function callUpdateStatut(supabase: ReturnType<typeof createMock>, fields: Record<string, string>) {
 	const mod = await import('./+page.server');
-	const action = mod.actions[name]!;
+	const action = mod.actions.updateStatut!;
 	const request = { formData: async () => makeFormData(fields) } as unknown as Request;
 	return action({ request, locals: { supabase } } as unknown as Parameters<typeof action>[0]);
 }
 
 const VALID_UUID = '11111111-1111-4111-8111-111111111111';
 
-describe('signaux form actions - archive', () => {
-	it('existe', async () => {
+describe('signaux form action - updateStatut', () => {
+	it('existe ; les anciennes actions archive/unarchive/createOpportunite/update sont supprimées', async () => {
 		const mod = await import('./+page.server');
-		expect(mod.actions.archive).toBeDefined();
-		expect(mod.actions.unarchive).toBeDefined();
+		expect(mod.actions.updateStatut).toBeDefined();
+		expect(mod.actions.archive).toBeUndefined();
+		expect(mod.actions.unarchive).toBeUndefined();
+		expect(mod.actions.createOpportunite).toBeUndefined();
+		expect(mod.actions.update).toBeUndefined();
 	});
 
 	it('refuse 400 si id invalide', async () => {
 		const supabase = createMock();
-		const result = (await callAction('archive', supabase, { id: 'pas-un-uuid' })) as { status: number };
+		const result = (await callUpdateStatut(supabase, { id: 'pas-un-uuid', statut_traitement: 'a_suivre' })) as { status: number };
 		expect(result.status).toBe(400);
 		expect(supabase._calls()).toHaveLength(0);
 	});
 
-	it('happy path : update statut=archive, eq id, neq converti', async () => {
+	it('refuse 400 si statut hors modèle (interesse / converti / ecarte retirés)', async () => {
+		for (const statut of ['interesse', 'converti', 'ecarte', 'en_analyse', 'supprime']) {
+			const supabase = createMock();
+			const result = (await callUpdateStatut(supabase, { id: VALID_UUID, statut_traitement: statut })) as { status: number };
+			expect(result.status).toBe(400);
+			expect(supabase._calls()).toHaveLength(0);
+		}
+	});
+
+	it('happy path À suivre : update statut=a_suivre, eq id', async () => {
 		const supabase = createMock();
-		const result = (await callAction('archive', supabase, { id: VALID_UUID })) as { success: boolean };
+		const result = (await callUpdateStatut(supabase, { id: VALID_UUID, statut_traitement: 'a_suivre' })) as { success: boolean };
+		expect(result.success).toBe(true);
+		const calls = supabase._calls();
+		const upd = calls.find((c) => c.op === 'update');
+		expect((upd!.payload as { statut_traitement: string }).statut_traitement).toBe('a_suivre');
+		expect(calls.some((c) => c.op === 'eq' && c.col === 'id' && c.val === VALID_UUID)).toBe(true);
+	});
+
+	it('happy path Archivé : update statut=archive, eq id', async () => {
+		const supabase = createMock();
+		const result = (await callUpdateStatut(supabase, { id: VALID_UUID, statut_traitement: 'archive' })) as { success: boolean };
 		expect(result.success).toBe(true);
 		const calls = supabase._calls();
 		const upd = calls.find((c) => c.op === 'update');
 		expect((upd!.payload as { statut_traitement: string }).statut_traitement).toBe('archive');
-		expect(calls.some((c) => c.op === 'eq' && c.col === 'id' && c.val === VALID_UUID)).toBe(true);
-		// Garde : ne pas archiver un converti.
-		expect(calls.some((c) => c.op === 'neq' && c.col === 'statut_traitement' && c.val === 'converti')).toBe(true);
 	});
 
 	it('propage une erreur DB', async () => {
 		const supabase = createMock({ updateError: { message: 'boom' } });
-		const result = (await callAction('archive', supabase, { id: VALID_UUID })) as { error?: string; success?: boolean };
+		const result = (await callUpdateStatut(supabase, { id: VALID_UUID, statut_traitement: 'archive' })) as { error?: string; success?: boolean };
 		expect(result.success).toBeUndefined();
-	});
-});
-
-describe('signaux form actions - unarchive', () => {
-	it('refuse 400 si id invalide', async () => {
-		const supabase = createMock();
-		const result = (await callAction('unarchive', supabase, { id: 'x' })) as { status: number };
-		expect(result.status).toBe(400);
-	});
-
-	it('happy path : update statut=nouveau, eq id, eq statut=archive (garde)', async () => {
-		const supabase = createMock();
-		const result = (await callAction('unarchive', supabase, { id: VALID_UUID })) as { success: boolean };
-		expect(result.success).toBe(true);
-		const calls = supabase._calls();
-		const upd = calls.find((c) => c.op === 'update');
-		expect((upd!.payload as { statut_traitement: string }).statut_traitement).toBe('nouveau');
-		expect(calls.some((c) => c.op === 'eq' && c.col === 'id' && c.val === VALID_UUID)).toBe(true);
-		// Garde : ne restaure que des signaux réellement archivés.
-		expect(calls.some((c) => c.op === 'eq' && c.col === 'statut_traitement' && c.val === 'archive')).toBe(true);
 	});
 });
