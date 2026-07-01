@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Golden v2 - Page Impression d'étiquettes - CRM FilmPro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..800;1,9..40,400..600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ===== Tokens charte CRM FilmPro (source de vérité app.css) ===== */
+  :root {
+    --primary: #2F5A9E; --primary-light: #F0F4F8; --primary-hover: #264C85; --primary-dark: #0A1628;
+    --surface: #FFFFFF; --surface-alt: #F9FAFB; --shell: #F4F6F9;
+    --border: #E5E7EB; --border-strong: #D1D5DB; --border-input: #ADB5BD;
+    --text: #111827; --text-body: #374151; --muted: #6B7280; --faint: #9CA3AF;
+    --success: #12B76A; --success-light: #ECFDF3; --success-deep: #067647;
+    --warning: #F79009; --warning-light: #FFFAEB; --warning-deep: #B54708;
+    --info: #5A7190; --info-light: #EDF1F5; --info-deep: #4A5E78;
+    --enrich: #7B6A9A; --enrich-bg: #F0ECF5; --enrich-deep: #6F5E8E;
+    --font: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --mono: 'DM Mono', 'Consolas', monospace;
+    --r-sm: 6px; --r-md: 8px; --r-lg: 10px; --r-xl: 12px; --r-2xl: 16px; --r-full: 9999px;
+    --sh-xs: 0 1px 2px rgba(16,24,40,0.05);
+    --sh-card: 0 1px 0 rgba(17,24,39,0.02), 0 0 0 1px rgba(17,24,39,0.04), 0 8px 20px -12px rgba(17,24,39,0.10);
+    --sh-card-hover: 0 1px 3px rgba(17,24,39,0.05), 0 20px 40px -15px rgba(17,24,39,0.08);
+    --sh-panel: 0 24px 48px -12px rgba(16,24,40,0.20), 0 2px 6px -2px rgba(16,24,40,0.10);
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body {
+    margin: 0; font-family: var(--font);
+    background: radial-gradient(1200px 640px at 82% -12%, rgba(47,90,158,0.06), transparent 60%), var(--shell);
+    color: var(--text); line-height: 1.5;
+  }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  /* ===== Cadre documentaire ===== */
+  .doc { max-width: 1320px; margin: 0 auto; padding: 56px 32px 128px; }
+  .doc-head { margin-bottom: 40px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: var(--r-full); background: var(--surface); box-shadow: var(--sh-card); font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--primary); }
+  .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--enrich); box-shadow: 0 0 0 3px rgba(123,106,154,0.20); }
+  .doc-title { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin: 24px 0 12px; color: var(--primary-dark); }
+  .doc-sub { font-size: 16px; line-height: 1.6; color: var(--muted); max-width: 68ch; }
+
+  .section { display: flex; align-items: center; gap: 16px; margin: 56px 0 24px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .section-n { width: 32px; height: 32px; flex-shrink: 0; border-radius: var(--r-md); display: grid; place-items: center; background: var(--primary-dark); color: #fff; font-size: 14px; font-weight: 700; }
+  .section h2 { font-size: 20px; font-weight: 700; letter-spacing: -0.01em; margin: 0; color: var(--text); }
+  .section p { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: var(--muted); max-width: 78ch; }
+
+  .callout { margin: 24px 0 0; padding: 16px 20px; background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--sh-card); font-size: 14px; line-height: 1.55; color: var(--text-body); display: flex; gap: 12px; align-items: flex-start; }
+  .callout svg { flex-shrink: 0; margin-top: 2px; color: var(--primary); }
+  .callout b { color: var(--text); font-weight: 600; }
+
+  /* ===== Cadre écran CRM ===== */
+  .screen { position: relative; background: var(--surface-alt); border-radius: var(--r-2xl); box-shadow: var(--sh-card); overflow: hidden; border: 1px solid var(--border); }
+  .topbar { height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 20px; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 14px; color: var(--primary-dark); letter-spacing: -0.01em; }
+  .brand .sq { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, #2F5A9E, #0A1628); }
+  .crumb { font-size: 13px; color: var(--muted); }
+  .crumb a { color: var(--muted); text-decoration: none; }
+  .crumb a:hover { color: var(--primary); }
+  .crumb b { color: var(--text); font-weight: 600; }
+  .spacer { flex: 1; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--primary-light); color: var(--primary); display: grid; place-items: center; font-weight: 700; font-size: 12px; }
+
+  /* marges resserrées, alignées sur les autres surfaces : gouttière constante 32px */
+  .ws { max-width: 1160px; margin: 0 auto; padding: 0 32px; }
+
+  /* Zone 1 : identité de page (focal) */
+  .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 32px 0 0; }
+  .back { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); text-decoration: none; margin-bottom: 12px; }
+  .back:hover { color: var(--primary); }
+  .head h1 { margin: 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; color: var(--text); }
+  .subline { margin-top: 8px; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--muted); }
+  .camp { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: var(--r-full); font-size: 12px; font-weight: 600; background: var(--enrich-bg); color: var(--enrich-deep); box-shadow: inset 0 0 0 1px rgba(17,24,39,0.04); }
+  .camp .cdot { width: 7px; height: 7px; border-radius: 50%; background: var(--enrich); }
+  .subline .sep { width: 3px; height: 3px; border-radius: 50%; background: var(--faint); }
+
+  .btn-primary { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border: none; border-radius: var(--r-lg); background: var(--primary); color: #fff; font: 600 14px var(--font); cursor: pointer; box-shadow: 0 1px 2px rgba(16,24,40,0.14), inset 0 1px 0 rgba(255,255,255,0.16); transition: background 200ms var(--ease), transform 120ms var(--ease); }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-ghost { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); color: var(--text-body); font: 600 14px var(--font); cursor: pointer; box-shadow: var(--sh-xs); }
+  .btn-ghost:hover { border-color: var(--border-strong); background: var(--surface-alt); }
+  .btn-ghost svg { color: var(--muted); }
+
+  /* Zone 3 : outils (poids faible) */
+  .tools { display: flex; align-items: center; gap: 12px; padding: 24px 0 16px; }
+  .search { position: relative; width: 300px; }
+  .search svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+  .search input { width: 100%; height: 40px; padding: 0 14px 0 40px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); font: 14px var(--font); color: var(--text); box-shadow: var(--sh-xs); }
+  .search input::placeholder { color: var(--faint); }
+  .search input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(47,90,158,0.16); }
+  .link { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border: none; background: transparent; border-radius: var(--r-lg); font: 600 13px var(--font); color: var(--primary); cursor: pointer; }
+  .link:hover { background: var(--primary-light); }
+  .tools .spacer { flex: 1; }
+  .toggle { display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 16px 0 12px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--sh-xs); font: 600 13px var(--font); color: var(--text-body); cursor: pointer; }
+  .toggle .sw { width: 34px; height: 20px; border-radius: var(--r-full); background: var(--border-strong); position: relative; transition: background 200ms var(--ease); }
+  .toggle .sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: var(--sh-xs); transition: transform 200ms var(--ease); }
+
+  /* Zone 4 : contenu (le focus) */
+  .card { background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--sh-card); overflow: hidden; margin-bottom: 96px; }
+  .thead, .trow { display: grid; grid-template-columns: 48px minmax(200px, 1fr) minmax(300px, 1.35fr) 128px; align-items: center; gap: 24px; padding: 0 24px; }
+  .thead > *, .trow > * { min-width: 0; }
+  .thead { height: 48px; border-bottom: 1px solid var(--border); }
+  .thead span { font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--faint); }
+  .thead .h-dest { padding-left: 13px; }         /* aligne avec le texte du champ */
+  .thead .h-stat { text-align: right; }
+
+  .trow { min-height: 80px; position: relative; border-bottom: 1px solid rgba(17,24,39,0.06); transition: background 160ms var(--ease); }
+  .trow:last-of-type { border-bottom: none; }
+  .trow::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--primary); opacity: 0; transition: opacity 160ms var(--ease); }
+  .trow:hover { background: rgba(47,90,158,0.022); }
+  .trow.sel { background: rgba(47,90,158,0.045); }
+  .trow.sel::before { opacity: 1; }
+
+  /* case à cocher */
+  .cbx { width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--border-strong); display: grid; place-items: center; background: var(--surface); cursor: pointer; color: #fff; transition: background 140ms var(--ease), border-color 140ms var(--ease); }
+  .cbx svg { opacity: 0; }
+  .cbx.on { background: var(--primary); border-color: var(--primary); }
+  .cbx.on svg { opacity: 1; }
+
+  /* colonne prospect : nom (ancre) + adresse (de-emphasized) */
+  .p-name { font-size: 16px; font-weight: 600; color: var(--text); letter-spacing: -0.01em; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .p-addr { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 13px; color: var(--muted); line-height: 1.25; }
+  .p-addr svg { flex-shrink: 0; color: var(--info); }
+  .p-addr span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .p-tag { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 2px 8px; border-radius: var(--r-sm); background: var(--warning-light); color: var(--warning-deep); font-size: 12px; font-weight: 600; }
+
+  /* colonne destinataire : édition inline (la valeur, emphasized) */
+  .dest-input { width: 100%; height: 40px; padding: 0 12px; border: 1px solid transparent; border-radius: var(--r-lg); background: transparent; font: 500 14px var(--font); color: var(--text); transition: background 140ms var(--ease), border-color 140ms var(--ease), box-shadow 140ms var(--ease); }
+  .dest-input::placeholder { color: var(--faint); font-weight: 400; }
+  .dest-input:hover { background: var(--surface-alt); }
+  .dest-input:focus { outline: none; background: var(--surface); border-color: var(--primary); box-shadow: 0 0 0 3px rgba(47,90,158,0.16); }
+  .dest-input:disabled { color: var(--faint); background: transparent; cursor: not-allowed; }
+
+  /* colonne statut (à droite) */
+  .stat { display: flex; align-items: center; justify-content: flex-end; }
+  .ready { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: var(--success-deep); }
+  .ready .bd { width: 7px; height: 7px; border-radius: 50%; background: var(--success); }
+  .complete { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 13px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface); color: var(--primary); font: 600 13px var(--font); cursor: pointer; box-shadow: var(--sh-xs); }
+  .complete:hover { border-color: rgba(47,90,158,0.35); background: var(--primary-light); }
+
+  .foot { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-top: 1px solid var(--border); font-size: 13px; color: var(--muted); }
+
+  /* ===== barre d'actions groupées (claire, premium, aérée) ===== */
+  .bulkbar { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 12; display: flex; align-items: center; gap: 16px; height: 64px; padding: 0 12px 0 20px; background: var(--surface); border-radius: var(--r-2xl); box-shadow: var(--sh-panel); border: 1px solid rgba(17,24,39,0.06); }
+  .bulk-count { display: inline-flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; color: var(--text); white-space: nowrap; }
+  .bulk-count .n { min-width: 24px; height: 24px; padding: 0 7px; border-radius: var(--r-full); background: var(--primary); color: #fff; font-size: 12px; font-weight: 700; display: inline-grid; place-items: center; }
+  .bulk-sep { width: 1px; height: 32px; background: var(--border); }
+  .bulk-lab { font-size: 13px; color: var(--muted); white-space: nowrap; }
+  .bulk-input { width: 300px; height: 40px; padding: 0 14px; border: 1px solid var(--border-input); border-radius: var(--r-lg); background: var(--surface); font: 14px var(--font); color: var(--text); }
+  .bulk-input::placeholder { color: var(--faint); }
+  .bulk-input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(47,90,158,0.16); }
+  .bulk-apply { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border: none; border-radius: var(--r-lg); background: var(--primary); color: #fff; font: 600 14px var(--font); cursor: pointer; box-shadow: 0 1px 2px rgba(16,24,40,0.14), inset 0 1px 0 rgba(255,255,255,0.16); }
+  .bulk-apply:hover { background: var(--primary-hover); }
+  .bulk-clear { border: none; background: transparent; color: var(--muted); font: 600 13px var(--font); cursor: pointer; padding: 0 6px; height: 40px; }
+  .bulk-clear:hover { color: var(--text); }
+  .bulk-x { width: 40px; height: 40px; display: grid; place-items: center; border: none; background: transparent; border-radius: var(--r-lg); color: var(--faint); cursor: pointer; }
+  .bulk-x:hover { background: var(--surface-alt); color: var(--text); }
+
+  /* ===== écran d'aperçu (au clic Télécharger) ===== */
+  .prev-stage { padding: 40px; display: grid; place-items: center; background: rgba(10,22,40,0.40); border-radius: var(--r-2xl); border: 1px solid var(--border); }
+  .prev { width: 720px; max-width: 100%; background: var(--surface); border-radius: var(--r-xl); box-shadow: var(--sh-panel); overflow: hidden; }
+  .prev-h { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border-bottom: 1px solid var(--border); }
+  .prev-h h3 { margin: 0; font-size: 16px; font-weight: 700; color: var(--text); }
+  .prev-h .x { width: 36px; height: 36px; display: grid; place-items: center; border: none; background: transparent; color: var(--muted); border-radius: var(--r-md); cursor: pointer; }
+  .prev-h .x:hover { background: var(--surface-alt); color: var(--text); }
+  .prev-canvas { padding: 40px; display: grid; place-items: center; background: repeating-linear-gradient(135deg, rgba(17,24,39,0.012) 0 2px, transparent 2px 11px), var(--surface-alt); }
+  .sheet { width: 348px; background: #fff; box-shadow: 0 12px 32px -12px rgba(16,24,40,0.28), 0 0 0 1px rgba(17,24,39,0.05); border-radius: 4px; padding: 14px 12px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(8, 1fr); gap: 5px; aspect-ratio: 210 / 297; }
+  .etq { border: 1px dashed #E4E7EC; border-radius: 3px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 3px; line-height: 1.22; overflow: hidden; }
+  .etq b { font-size: 6px; font-weight: 700; color: var(--text); }
+  .etq .d { font-size: 5.6px; color: var(--text-body); }
+  .etq .a { font-size: 5.4px; color: var(--muted); }
+  .etq.empty { border-color: #EFF1F4; }
+  .prev-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px; border-top: 1px solid var(--border); }
+  .prev-foot .count { font-size: 13px; color: var(--muted); }
+  .prev-foot .count b { color: var(--text); font-weight: 600; }
+  .prev-foot .actions { display: flex; align-items: center; gap: 12px; }
+
+  @media (max-width: 900px) { .thead { display: none; } }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <div class="doc-head">
+    <span class="eyebrow"><span class="dot"></span> Refonte CRM &middot; Page Impression d'étiquettes &middot; v2</span>
+    <h1 class="doc-title">Impression d'étiquettes</h1>
+    <p class="doc-sub">Une page dédiée, ouverte depuis une campagne (jamais dans le menu latéral). Générique pour tout mailing. On choisit les prospects, on saisit le destinataire directement dans la ligne, on l'applique en lot, on prévisualise, on télécharge. Mêmes tokens et primitives que les surfaces CRM déjà validées.</p>
+  </div>
+
+  <!-- ========== SECTION 1 : LA PAGE ========== -->
+  <div class="section">
+    <span class="section-n">1</span>
+    <div><h2>La page</h2><p>Trois colonnes lisibles : le prospect (nom + adresse), le destinataire éditable directement, le statut. Lignes hautes et aérées, grille alignée au pixel. La barre claire flotte au-dessus quand on coche des lignes.</p></div>
+  </div>
+
+  <div class="screen">
+    <div class="topbar">
+      <span class="brand"><span class="sq"></span> FilmPro CRM</span>
+      <span class="crumb"><a href="#">Campagnes</a> / <a href="#">Mailing Régies - Vernis solaire</a> / <b>Étiquettes</b></span>
+      <span class="spacer"></span>
+      <span class="avatar">PM</span>
+    </div>
+
+    <div class="ws">
+      <div class="head">
+        <div>
+          <a class="back" href="#"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Retour à la campagne</a>
+          <h1>Impression d'étiquettes</h1>
+          <div class="subline">
+            <span class="camp"><span class="cdot"></span> Mailing Régies - Vernis solaire</span>
+            <span class="sep"></span>
+            <span>20 prospects &middot; 19 adresses complètes &middot; 12 destinataires renseignés</span>
+          </div>
+        </div>
+        <button class="btn-primary">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          Télécharger le PDF
+        </button>
+      </div>
+
+      <div class="tools">
+        <div class="search">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="search" placeholder="Rechercher un prospect..." />
+        </div>
+        <button class="link"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Tout sélectionner</button>
+        <span class="spacer"></span>
+        <button class="toggle"><span class="sw"></span> Inclure les adresses incomplètes</button>
+      </div>
+
+      <div class="card">
+        <div class="thead">
+          <span></span>
+          <span>Prospect</span>
+          <span class="h-dest">Destinataire</span>
+          <span class="h-stat">Statut</span>
+        </div>
+
+        <div class="trow sel">
+          <span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+          <div>
+            <div class="p-name">Naef Immobilier SA</div>
+            <div class="p-addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Rue du Rhône 12, 1204 Genève</span></div>
+          </div>
+          <input class="dest-input" value="Service technique, M. Roth" />
+          <div class="stat"><span class="ready"><span class="bd"></span> Prête</span></div>
+        </div>
+
+        <div class="trow sel">
+          <span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+          <div>
+            <div class="p-name">Comptoir Immobilier SA</div>
+            <div class="p-addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Rue de la Corraterie 24, 1204 Genève</span></div>
+          </div>
+          <input class="dest-input" value="Service technique" />
+          <div class="stat"><span class="ready"><span class="bd"></span> Prête</span></div>
+        </div>
+
+        <div class="trow sel">
+          <span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+          <div>
+            <div class="p-name">Grange Immobilier SA</div>
+            <div class="p-addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Route de Florissant 8, 1206 Genève</span></div>
+          </div>
+          <input class="dest-input" placeholder="Ajouter un destinataire" />
+          <div class="stat"><span class="ready"><span class="bd"></span> Prête</span></div>
+        </div>
+
+        <div class="trow sel">
+          <span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+          <div>
+            <div class="p-name">Pilet &amp; Renaud SA</div>
+            <div class="p-addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Boulevard Georges-Favon 14, 1204 Genève</span></div>
+          </div>
+          <input class="dest-input" value="Service technique, Mme Bianchi" />
+          <div class="stat"><span class="ready"><span class="bd"></span> Prête</span></div>
+        </div>
+
+        <div class="trow sel">
+          <span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+          <div>
+            <div class="p-name">Régie Tournier SA</div>
+            <div class="p-addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Rue du Cendrier 15, 1201 Genève</span></div>
+          </div>
+          <input class="dest-input" value="Service technique" />
+          <div class="stat"><span class="ready"><span class="bd"></span> Prête</span></div>
+        </div>
+
+        <div class="trow">
+          <span class="cbx"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+          <div>
+            <div class="p-name">Régie du Centre SA</div>
+            <div class="p-addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span style="color:var(--faint)">Localité manquante</span></div>
+            <span class="p-tag"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.5 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.5a2 2 0 0 0-3.4 0Z"/></svg> Adresse incomplète</span>
+          </div>
+          <input class="dest-input" placeholder="Complétez l'adresse d'abord" disabled />
+          <div class="stat"><button class="complete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg> Compléter</button></div>
+        </div>
+
+        <div class="foot"><span>20 prospects dans cette campagne &middot; 20 sélectionnés</span><span>Faites défiler pour voir les 14 autres</span></div>
+      </div>
+    </div>
+
+    <div class="bulkbar">
+      <span class="bulk-count"><span class="n tabular">6</span> sélectionnés</span>
+      <span class="bulk-sep"></span>
+      <span class="bulk-lab">Adresser à</span>
+      <input class="bulk-input" placeholder="ex. Service technique" value="Service technique" />
+      <button class="bulk-apply"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg> Appliquer</button>
+      <button class="bulk-clear">Effacer</button>
+      <button class="bulk-x" title="Tout désélectionner"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+  </div>
+
+  <div class="callout">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+    <div><b>Un geste de sélection, deux usages.</b> Les lignes cochées sont à la fois ce qui s'imprime et la cible de la barre. Coche tout puis <b>Appliquer</b> = adresser tout le monde d'un coup ; coche un sous-groupe = adresser ce groupe ; un nom précis se tape directement dans sa ligne. La barre disparaît dès qu'on désélectionne tout.</div>
+  </div>
+
+  <!-- ========== SECTION 2 : APERCU ========== -->
+  <div class="section">
+    <span class="section-n">2</span>
+    <div><h2>Aperçu avant téléchargement</h2><p>Le clic sur « Télécharger le PDF » ouvre la planche Avery telle qu'elle sortira, puis le téléchargement. Rien d'autre : pas de réglages superflus.</p></div>
+  </div>
+
+  <div class="prev-stage">
+    <div class="prev">
+      <div class="prev-h">
+        <h3>Aperçu de la planche</h3>
+        <button class="x"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="prev-canvas">
+        <div class="sheet">
+          <div class="etq"><b>Naef Immobilier SA</b><span class="d">Service technique, M. Roth</span><span class="a">Rue du Rhône 12</span><span class="a">1204 Genève</span></div>
+          <div class="etq"><b>Comptoir Immobilier SA</b><span class="d">Service technique</span><span class="a">Rue de la Corraterie 24</span><span class="a">1204 Genève</span></div>
+          <div class="etq"><b>Grange Immobilier SA</b><span class="a">Route de Florissant 8</span><span class="a">1206 Genève</span></div>
+          <div class="etq"><b>Pilet &amp; Renaud SA</b><span class="d">Service technique, Mme Bianchi</span><span class="a">Bd Georges-Favon 14</span><span class="a">1204 Genève</span></div>
+          <div class="etq"><b>Régie Tournier SA</b><span class="d">Service technique</span><span class="a">Rue du Cendrier 15</span><span class="a">1201 Genève</span></div>
+          <div class="etq"><b>Argecil SA</b><span class="a">Rue de Lausanne 60</span><span class="a">1202 Genève</span></div>
+          <div class="etq"><b>Millenium Properties SA</b><span class="d">Service technique</span><span class="a">Quai du Mont-Blanc 3</span><span class="a">1201 Genève</span></div>
+          <div class="etq"><b>Bordier-Schmidhauser</b><span class="d">Service technique</span><span class="a">Rue du Marché 7</span><span class="a">1204 Genève</span></div>
+          <div class="etq"><b>Daudin Châtelain SA</b><span class="a">Rue de la Fontaine 9</span><span class="a">1204 Genève</span></div>
+          <div class="etq"><b>NETTILAC SA</b><span class="d">Service technique</span><span class="a">Rue de Berne 10</span><span class="a">1201 Genève</span></div>
+          <div class="etq"><b>m3 Immobilier</b><span class="a">Rue du Rhône 118</span><span class="a">1204 Genève</span></div>
+          <div class="etq"><b>BEFI SA</b><span class="d">Service technique</span><span class="a">Route de Chêne 5</span><span class="a">1207 Genève</span></div>
+          <div class="etq"><b>Burger Immobilier SA</b><span class="a">Rue de Rive 4</span><span class="a">1204 Genève</span></div>
+          <div class="etq"><b>EdM16 Immobilier</b><span class="d">Service technique</span><span class="a">Rue de Montbrillant 16</span><span class="a">1201 Genève</span></div>
+          <div class="etq"><b>Régie VPI SA</b><span class="a">Av. de Champel 8</span><span class="a">1206 Genève</span></div>
+          <div class="etq"><b>Immobilier 2012 SA</b><span class="d">Service technique</span><span class="a">Rue de Carouge 40</span><span class="a">1205 Genève</span></div>
+          <div class="etq"><b>Régie du Rhône SA</b><span class="a">Rue de la Cité 1</span><span class="a">1204 Genève</span></div>
+          <div class="etq"><b>Régie P. Béguin</b><span class="d">Service technique</span><span class="a">Rue Ancienne 12</span><span class="a">1227 Carouge</span></div>
+          <div class="etq"><b>Gerofinance SA</b><span class="a">Rue du Stand 60</span><span class="a">1204 Genève</span></div>
+          <div class="etq"><b>SPG Intercity</b><span class="d">Service technique</span><span class="a">Route de Frontenex 41</span><span class="a">1207 Genève</span></div>
+          <div class="etq empty"></div>
+          <div class="etq empty"></div>
+          <div class="etq empty"></div>
+          <div class="etq empty"></div>
+        </div>
+      </div>
+      <div class="prev-foot">
+        <span class="count"><b>20 étiquettes</b> &middot; 1 page A4 &middot; Avery 6122</span>
+        <div class="actions">
+          <button class="btn-ghost">Fermer</button>
+          <button class="btn-primary"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg> Télécharger le PDF</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

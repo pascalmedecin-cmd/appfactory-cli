@@ -1,0 +1,471 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Golden - Page Impression d'etiquettes - CRM FilmPro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..800;1,9..40,400..600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  /* ===== Tokens charte CRM FilmPro (extrait app.css, source de verite) ===== */
+  :root {
+    --color-primary: #2F5A9E; --color-primary-light: #F0F4F8; --color-primary-hover: #264C85; --color-primary-dark: #0A1628;
+    --color-surface: #FFFFFF; --color-surface-alt: #F9FAFB; --color-shell: #F4F6F9;
+    --color-border: #E5E7EB; --color-border-strong: #D1D5DB; --color-border-input: #ADB5BD;
+    --color-text: #111827; --color-text-body: #374151; --color-text-muted: #6B7280; --color-text-faint: #9CA3AF; --color-text-inverse: #FFFFFF;
+    --color-success: #12B76A; --color-success-light: #ECFDF3; --color-success-deep: #067647;
+    --color-warning: #F79009; --color-warning-light: #FFFAEB; --color-warning-deep: #B54708;
+    --color-danger: #F04438; --color-danger-light: #FEF3F2; --color-danger-deep: #B42318;
+    --color-info: #5A7190; --color-info-light: #EDF1F5; --color-info-deep: #4A5E78;
+    --color-prosp-enrich: #7B6A9A; --color-prosp-enrich-bg: #F0ECF5; --color-prosp-enrich-deep: #6F5E8E;
+    --color-prosp-convert: #538B6B; --color-prosp-convert-bg: #EBF3EF; --color-prosp-convert-deep: #417959;
+    --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'DM Mono', 'Consolas', monospace;
+    --radius-sm: 6px; --radius-md: 8px; --radius-lg: 10px; --radius-xl: 12px; --radius-2xl: 16px; --radius-full: 9999px;
+    --shadow-xs: 0 1px 2px rgba(16,24,40,0.05);
+    --shadow-card: 0 1px 0 rgba(17,24,39,0.02), 0 0 0 1px rgba(17,24,39,0.04), 0 8px 20px -12px rgba(17,24,39,0.10);
+    --shadow-card-hover: 0 1px 3px rgba(17,24,39,0.05), 0 20px 40px -15px rgba(17,24,39,0.08);
+    --shadow-panel: 0 24px 48px -12px rgba(16,24,40,0.18);
+    --shadow-menu: 0 12px 32px -8px rgba(16,24,40,0.22), 0 0 0 1px rgba(17,24,39,0.05);
+    --shadow-bulk: 0 20px 44px -14px rgba(10,22,40,0.55), 0 0 0 1px rgba(255,255,255,0.04) inset;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+  body {
+    margin: 0; font-family: var(--font-sans);
+    background: radial-gradient(1200px 600px at 80% -10%, rgba(47,90,158,0.06), transparent 60%), var(--color-shell);
+    color: var(--color-text); line-height: 1.5;
+  }
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  /* ===== Cadre documentaire ===== */
+  .doc { max-width: 1340px; margin: 0 auto; padding: 52px 28px 120px; }
+  .doc-head { margin-bottom: 34px; }
+  .doc-eyebrow { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: var(--radius-full); background: var(--color-surface); box-shadow: var(--shadow-card); font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-primary); }
+  .doc-eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--color-prosp-enrich); box-shadow: 0 0 0 3px rgba(123,106,154,0.20); }
+  .doc-title { font-size: 33px; font-weight: 800; letter-spacing: -0.03em; margin: 18px 0 10px; color: var(--color-primary-dark); }
+  .doc-sub { font-size: 15.5px; color: var(--color-text-muted); max-width: 900px; }
+
+  .section-label { display: flex; align-items: center; gap: 14px; margin: 54px 0 20px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border); }
+  .section-num { width: 30px; height: 30px; flex-shrink: 0; border-radius: var(--radius-md); display: grid; place-items: center; background: var(--color-primary-dark); color: #fff; font-size: 13px; font-weight: 700; }
+  .section-label h2 { font-size: 19px; font-weight: 700; letter-spacing: -0.01em; margin: 0; color: var(--color-text); }
+  .section-label p { margin: 2px 0 0; font-size: 13px; color: var(--color-text-muted); }
+
+  .callout { margin: 0 0 22px; padding: 14px 18px; background: var(--color-surface); border-radius: var(--radius-lg); box-shadow: var(--shadow-card); font-size: 13.5px; color: var(--color-text-body); display: flex; gap: 12px; align-items: flex-start; }
+  .callout svg { flex-shrink: 0; margin-top: 1px; color: var(--color-primary); }
+  .callout b { color: var(--color-text); }
+
+  /* ===== Cadre ecran CRM ===== */
+  .screen { position: relative; background: var(--color-surface-alt); border-radius: var(--radius-2xl); box-shadow: var(--shadow-card); overflow: hidden; border: 1px solid var(--color-border); }
+  .screen-topbar { height: 52px; display: flex; align-items: center; gap: 12px; padding: 0 18px; background: var(--color-surface); border-bottom: 1px solid var(--color-border); }
+  .brand-dot { display: inline-flex; align-items: center; gap: 9px; font-weight: 700; font-size: 14px; color: var(--color-primary-dark); letter-spacing: -0.01em; }
+  .brand-dot .sq { width: 22px; height: 22px; border-radius: 6px; background: linear-gradient(135deg, #2F5A9E, #0A1628); }
+  .crumb { font-size: 13px; color: var(--color-text-muted); margin-left: 4px; }
+  .crumb b { color: var(--color-text); font-weight: 600; }
+  .crumb a { color: var(--color-text-muted); text-decoration: none; }
+  .crumb a:hover { color: var(--color-primary); }
+  .topbar-spacer { flex: 1; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--color-primary-light); color: var(--color-primary); display: grid; place-items: center; font-weight: 700; font-size: 12px; }
+
+  .workspace { padding: 0 0 26px; }
+  .ws-bound { max-width: 1200px; margin: 0 auto; }
+
+  /* marges resserrees (alignees sur les autres surfaces CRM) : 20px vertical / 24px horizontal */
+  .ws-toolbar-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding: 20px 24px 14px; }
+  .backlink { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--color-text-muted); text-decoration: none; margin-bottom: 8px; }
+  .backlink:hover { color: var(--color-primary); }
+  .ws-titleblock h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-text); }
+  .ws-titleblock .meta { margin-top: 4px; font-size: 13px; color: var(--color-text-muted); display: inline-flex; align-items: center; gap: 8px; }
+  .ws-titleblock .meta .camp { transform: translateY(-0.5px); }
+  .top-actions { display: flex; align-items: center; gap: 10px; padding-top: 22px; }
+
+  /* pastille de campagne (reprise du golden Campagnes) */
+  .camp { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 8px; border-radius: var(--radius-full); font-size: 12px; font-weight: 600; white-space: nowrap; box-shadow: inset 0 0 0 1px rgba(17,24,39,0.04); }
+  .camp .cdot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .camp--c2 { background: var(--color-prosp-enrich-bg); color: var(--color-prosp-enrich-deep); } .camp--c2 .cdot { background: var(--color-prosp-enrich); }
+
+  /* KPI chips */
+  .kpi-strip { display: flex; gap: 10px; flex-wrap: wrap; padding: 0 24px 14px; }
+  .kpi { display: inline-flex; align-items: center; gap: 11px; padding: 9px 14px 9px 10px; background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-card); transition: box-shadow 220ms var(--ease), transform 220ms var(--ease); }
+  .kpi:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px); }
+  .kpi-ic { width: 32px; height: 32px; border-radius: var(--radius-md); display: grid; place-items: center; flex-shrink: 0; }
+  .kpi-ic.primary { background: radial-gradient(circle at 30% 30%, rgba(47,90,158,0.12), rgba(47,90,158,0.02)); color: var(--color-primary); }
+  .kpi-ic.success { background: radial-gradient(circle at 30% 30%, rgba(18,183,106,0.16), rgba(18,183,106,0.02)); color: var(--color-success-deep); }
+  .kpi-ic.enrich { background: radial-gradient(circle at 30% 30%, rgba(123,106,154,0.16), rgba(123,106,154,0.02)); color: var(--color-prosp-enrich-deep); }
+  .kpi-body { display: flex; flex-direction: column; line-height: 1.1; }
+  .kpi-val { font-size: 19px; font-weight: 700; letter-spacing: -0.02em; color: var(--color-primary-dark); }
+  .kpi-lab { font-size: 11.5px; color: var(--color-text-muted); font-weight: 500; margin-top: 2px; }
+
+  /* toolbar : recherche + tout/rien + toggle incompletes */
+  .ws-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 6px 24px 16px; }
+  .crm-search { position: relative; width: 300px; }
+  .crm-search svg { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--color-text-muted); pointer-events: none; }
+  .crm-search input { width: 100%; height: 40px; padding: 0 14px 0 40px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); font: 14px var(--font-sans); color: var(--color-text); box-shadow: var(--shadow-xs); }
+  .crm-search input::placeholder { color: var(--color-text-faint); }
+  .crm-search input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(47,90,158,0.16); }
+  .toolbar-spacer { flex: 1; }
+  .linkbtn { display: inline-flex; align-items: center; gap: 7px; height: 40px; padding: 0 12px; border: none; background: transparent; border-radius: var(--radius-lg); font: 600 13px var(--font-sans); color: var(--color-primary); cursor: pointer; }
+  .linkbtn:hover { background: var(--color-primary-light); }
+  .linkbtn svg { color: var(--color-primary); }
+
+  .toggle { display: inline-flex; align-items: center; gap: 9px; height: 40px; padding: 0 14px 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); box-shadow: var(--shadow-xs); font: 600 13px var(--font-sans); color: var(--color-text-body); cursor: pointer; }
+  .toggle .sw { width: 34px; height: 20px; border-radius: var(--radius-full); background: var(--color-border-strong); position: relative; transition: background 200ms var(--ease); flex-shrink: 0; }
+  .toggle .sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: var(--shadow-xs); transition: transform 200ms var(--ease); }
+  .toggle.on { color: var(--color-primary); border-color: rgba(47,90,158,0.30); background: var(--color-primary-light); }
+  .toggle.on .sw { background: var(--color-primary); }
+  .toggle.on .sw::after { transform: translateX(14px); }
+
+  /* boutons */
+  .btn-primary { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 18px; border: none; border-radius: var(--radius-lg); background: var(--color-primary); color: #fff; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(16,24,40,0.12), inset 0 1px 0 rgba(255,255,255,0.14); transition: background 200ms var(--ease), transform 120ms var(--ease); }
+  .btn-primary:hover { background: var(--color-primary-hover); }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-secondary { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 15px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); color: var(--color-text-body); font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: var(--shadow-xs); transition: border-color 200ms var(--ease), background 200ms var(--ease); }
+  .btn-secondary:hover { border-color: var(--color-border-strong); background: var(--color-surface-alt); }
+  .btn-secondary svg { color: var(--color-text-muted); }
+
+  /* ===== liste ===== */
+  .listcard { margin: 0 24px; background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-card); overflow: hidden; }
+  .list-head, .crm-row { align-items: center; gap: 16px; padding: 0 18px; }
+  .list-head.etq, .crm-row.etq { display: grid; grid-template-columns: 30px minmax(190px, 1.5fr) 1.3fr 1.55fr 118px; }
+  .list-head { height: 40px; border-bottom: 1px solid var(--color-border); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--color-text-faint); }
+  .crm-row { min-height: 62px; padding-top: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(17,24,39,0.05); position: relative; transition: background 160ms var(--ease); }
+  .crm-row:last-child { border-bottom: none; }
+  .crm-row::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--color-primary); opacity: 0; transition: opacity 160ms var(--ease); }
+  .crm-row:hover { background: linear-gradient(90deg, rgba(47,90,158,0.028), rgba(47,90,158,0) 42%); }
+  .crm-row.sel { background: linear-gradient(90deg, rgba(47,90,158,0.06), rgba(47,90,158,0.015) 55%); }
+  .crm-row.sel::before { opacity: 1; }
+
+  /* case a cocher premium */
+  .cbx { width: 19px; height: 19px; border-radius: 5px; border: 1.5px solid var(--color-border-strong); display: grid; place-items: center; flex-shrink: 0; background: var(--color-surface); cursor: pointer; color: #fff; transition: background 140ms var(--ease), border-color 140ms var(--ease); }
+  .cbx svg { opacity: 0; }
+  .cbx.on { background: var(--color-primary); border-color: var(--color-primary); }
+  .cbx.on svg { opacity: 1; }
+
+  .id-cell { min-width: 0; }
+  .id-name { font-size: 14.5px; font-weight: 600; color: var(--color-text); letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .id-sec { font-size: 12px; color: var(--color-text-faint); margin-top: 2px; }
+
+  .addr { display: inline-flex; align-items: center; gap: 7px; min-width: 0; font-size: 13px; color: var(--color-text-body); }
+  .addr svg { color: var(--color-info); flex-shrink: 0; }
+  .addr span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* destinataire : edition INLINE (cellule -> champ au focus) */
+  .dest { display: flex; align-items: center; gap: 7px; min-width: 0; }
+  .dest-input { width: 100%; height: 38px; padding: 0 12px; border: 1px solid transparent; border-radius: var(--radius-lg); background: transparent; font: 14px var(--font-sans); color: var(--color-text); transition: background 140ms var(--ease), border-color 140ms var(--ease), box-shadow 140ms var(--ease); }
+  .dest-input::placeholder { color: var(--color-text-faint); font-weight: 500; }
+  .dest-input:hover { background: var(--color-surface-alt); }
+  .dest-input:focus { outline: none; background: var(--color-surface); border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(47,90,158,0.16); }
+  .dest-input.filled { font-weight: 600; }
+  .dest-pen { color: var(--color-text-faint); flex-shrink: 0; opacity: 0; transition: opacity 140ms var(--ease); }
+  .crm-row:hover .dest-pen { opacity: 1; }
+
+  /* colonne action / statut */
+  .rowact { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+  .ok-dot { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--color-success-deep); }
+  .ok-dot .bd { width: 7px; height: 7px; border-radius: 50%; background: var(--color-success); }
+  .warn-badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: var(--radius-md); background: var(--color-warning-light); color: var(--color-warning-deep); font-size: 11.5px; font-weight: 600; }
+  .btn-complete { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 11px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-surface); color: var(--color-primary); font: 600 12.5px var(--font-sans); cursor: pointer; box-shadow: var(--shadow-xs); }
+  .btn-complete:hover { border-color: rgba(47,90,158,0.35); background: var(--color-primary-light); }
+
+  .list-foot { display: flex; align-items: center; justify-content: space-between; padding: 13px 20px; border-top: 1px solid var(--color-border); font-size: 12.5px; color: var(--color-text-muted); }
+
+  /* ===== barre d'actions groupees (contextuelle, sombre = signature premium) ===== */
+  .bulkbar { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); z-index: 12; display: flex; align-items: center; gap: 10px; padding: 9px 10px 9px 16px; background: linear-gradient(180deg, #12233D, var(--color-primary-dark)); border-radius: var(--radius-xl); box-shadow: var(--shadow-bulk); }
+  .bulk-count { display: inline-flex; align-items: center; gap: 9px; font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; }
+  .bulk-count .n { min-width: 22px; height: 22px; padding: 0 7px; border-radius: var(--radius-full); background: var(--color-primary); display: inline-grid; place-items: center; font-size: 12px; font-weight: 700; }
+  .bulk-sep { width: 1px; height: 26px; background: rgba(255,255,255,0.14); }
+  .bulk-field { position: relative; }
+  .bulk-field svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.5); pointer-events: none; }
+  .bulk-input { width: 232px; height: 38px; padding: 0 12px 0 34px; border-radius: var(--radius-lg); border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.08); color: #fff; font: 14px var(--font-sans); }
+  .bulk-input::placeholder { color: rgba(255,255,255,0.5); }
+  .bulk-input:focus { outline: none; border-color: rgba(255,255,255,0.4); background: rgba(255,255,255,0.12); }
+  .bulk-apply { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 15px; border: none; border-radius: var(--radius-lg); background: #fff; color: var(--color-primary-dark); font: 700 13px var(--font-sans); cursor: pointer; }
+  .bulk-apply:hover { background: #EAF0F7; }
+  .bulk-ghost { display: inline-flex; align-items: center; gap: 6px; height: 38px; padding: 0 12px; border: none; border-radius: var(--radius-lg); background: transparent; color: rgba(255,255,255,0.72); font: 600 13px var(--font-sans); cursor: pointer; }
+  .bulk-ghost:hover { background: rgba(255,255,255,0.08); color: #fff; }
+  .bulk-close { width: 34px; height: 38px; display: grid; place-items: center; border: none; background: transparent; border-radius: var(--radius-lg); color: rgba(255,255,255,0.6); cursor: pointer; }
+  .bulk-close:hover { background: rgba(255,255,255,0.08); color: #fff; }
+
+  /* ===== ecran d'apercu (au clic Telecharger) ===== */
+  .preview-stage { background: rgba(10,22,40,0.42); border-radius: var(--radius-2xl); border: 1px solid var(--color-border); padding: 34px; display: grid; place-items: center; }
+  .preview { width: 760px; max-width: 100%; background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-panel); overflow: hidden; }
+  .preview-h { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid var(--color-border); }
+  .preview-h h3 { margin: 0; font-size: 15px; font-weight: 700; color: var(--color-text); }
+  .preview-h .icon-btn { width: 34px; height: 34px; display: grid; place-items: center; border: none; background: transparent; color: var(--color-text-muted); border-radius: var(--radius-md); cursor: pointer; }
+  .preview-h .icon-btn:hover { background: var(--color-surface-alt); color: var(--color-text); }
+  .preview-body { display: grid; grid-template-columns: 1fr 264px; gap: 0; }
+  .preview-canvas { padding: 26px; background: repeating-linear-gradient(135deg, rgba(17,24,39,0.012) 0 2px, transparent 2px 10px), var(--color-surface-alt); display: grid; place-items: center; border-right: 1px solid var(--color-border); }
+
+  /* planche A4 Avery 6122 : 3 colonnes x 8 lignes */
+  .sheet { width: 300px; background: #fff; box-shadow: var(--shadow-card); border-radius: 3px; padding: 12px 10px; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(8, 1fr); gap: 4px; aspect-ratio: 210 / 297; }
+  .etq { border: 1px dashed #E2E5EA; border-radius: 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 2px; line-height: 1.18; overflow: hidden; }
+  .etq b { font-size: 5.6px; font-weight: 700; color: var(--color-text); }
+  .etq .d { font-size: 5.2px; color: var(--color-text-body); }
+  .etq .a { font-size: 5px; color: var(--color-text-muted); }
+  .etq.empty { border-style: dotted; border-color: #EEF0F3; }
+
+  .preview-side { padding: 22px 20px; display: flex; flex-direction: column; gap: 18px; }
+  .set-block .set-h { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--color-text-faint); margin-bottom: 10px; }
+  .set-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 13px; color: var(--color-text-body); }
+  .set-row + .set-row { margin-top: 12px; }
+  .set-val { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--color-text); }
+  .stepper { display: inline-flex; align-items: center; border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-xs); }
+  .stepper button { width: 30px; height: 34px; border: none; background: var(--color-surface); color: var(--color-text-muted); font-size: 16px; cursor: pointer; }
+  .stepper button:hover { background: var(--color-surface-alt); color: var(--color-text); }
+  .stepper .v { width: 40px; height: 34px; display: grid; place-items: center; font: 600 14px var(--font-mono); border-left: 1px solid var(--color-border); border-right: 1px solid var(--color-border); }
+  .set-count { padding: 11px 13px; border-radius: var(--radius-lg); background: var(--color-primary-light); color: var(--color-primary); font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .preview-side .spacer { flex: 1; }
+  .btn-download { display: inline-flex; align-items: center; justify-content: center; gap: 9px; width: 100%; height: 44px; border: none; border-radius: var(--radius-lg); background: var(--color-primary); color: #fff; font: 600 14px var(--font-sans); cursor: pointer; box-shadow: 0 1px 2px rgba(16,24,40,0.12), inset 0 1px 0 rgba(255,255,255,0.14); }
+  .btn-download:hover { background: var(--color-primary-hover); }
+
+  /* legende primitives */
+  .prims { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 6px; }
+  .prim { background: var(--color-surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-card); padding: 16px 18px; }
+  .prim-name { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--color-prosp-enrich-deep); background: var(--color-prosp-enrich-bg); padding: 4px 10px; border-radius: var(--radius-md); }
+  .prim p { margin: 10px 0 0; font-size: 12.5px; color: var(--color-text-body); }
+
+  @media (max-width: 940px) {
+    .list-head { display: none; }
+    .preview-body { grid-template-columns: 1fr; }
+    .preview-canvas { border-right: none; border-bottom: 1px solid var(--color-border); }
+    .prims { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="doc">
+
+  <div class="doc-head">
+    <span class="doc-eyebrow"><span class="dot"></span> Refonte CRM - Page Impression d'etiquettes</span>
+    <h1 class="doc-title">Impression d'etiquettes : page dediee, edition en lot</h1>
+    <p class="doc-sub">Une page a part entiere (ouverte depuis une campagne, jamais dans le menu lateral) qui remplace le volet de la V1. Tout tient au large : choisir les prospects, saisir le destinataire directement dans la ligne, l'appliquer en lot a plusieurs prospects d'un coup, previsualiser puis telecharger. Meme charte, memes tokens et primitives que les goldens Campagnes deja valides. A valider dans Chrome avant toute ligne de code.</p>
+  </div>
+
+  <div class="callout">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16" r=".5" fill="currentColor"/></svg>
+    <div><b>Decisions tranchees avec toi :</b> feature <b>generique pour tout mailing</b> (pas seulement les regies) ; destinataire <b>optionnel</b> (vide = etiquette d'aujourd'hui) ; saisie <b>inline dans la liste</b>, aucune modale ni volet ; <b>edition en lot</b> via une barre d'actions groupees qui apparait a la selection ; <b>non persiste</b> (saisi au moment d'imprimer) ; l'apercu s'ouvre <b>au clic Telecharger</b>, pas en direct. Marges de la page <b>resserrees</b> pour s'aligner sur les autres surfaces.</div>
+  </div>
+
+  <!-- ============ SECTION 1 : LA PAGE ============ -->
+  <div class="section-label">
+    <span class="section-num">1</span>
+    <div><h2>La page (etat de travail)</h2><p>Surface unique pleine largeur. A gauche : qui imprimer. Au centre : ou. A droite de chaque ligne : a qui (destinataire editable directement). La barre sombre en bas s'affiche des qu'on coche des lignes.</p></div>
+  </div>
+
+  <div class="screen">
+    <div class="screen-topbar">
+      <span class="brand-dot"><span class="sq"></span> FilmPro CRM</span>
+      <span class="crumb"><a href="#">Campagnes</a> / <a href="#">Mailing Regies - Vernis solaire</a> / <b>Etiquettes</b></span>
+      <span class="topbar-spacer"></span>
+      <span class="avatar">PM</span>
+    </div>
+    <div class="workspace">
+      <div class="ws-bound">
+
+        <div class="ws-toolbar-top">
+          <div class="ws-titleblock">
+            <a class="backlink" href="#"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Retour a la campagne</a>
+            <h1>Impression d'etiquettes</h1>
+            <div class="meta">
+              <span class="camp camp--c2"><span class="cdot"></span> Mailing Regies - Vernis solaire</span>
+              <span>planche Avery 6122 - 24 par page</span>
+            </div>
+          </div>
+          <div class="top-actions">
+            <button class="btn-primary">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              Telecharger le PDF
+            </button>
+          </div>
+        </div>
+
+        <div class="kpi-strip">
+          <div class="kpi"><span class="kpi-ic primary"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m9 11 3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">20</span><span class="kpi-lab">Selectionnes a imprimer</span></span></div>
+          <div class="kpi"><span class="kpi-ic success"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">19</span><span class="kpi-lab">Adresses completes</span></span></div>
+          <div class="kpi"><span class="kpi-ic enrich"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="kpi-body"><span class="kpi-val tabular">12</span><span class="kpi-lab">Destinataires renseignes</span></span></div>
+        </div>
+
+        <div class="ws-toolbar">
+          <div class="crm-search">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="search" placeholder="Rechercher un prospect..." />
+          </div>
+          <button class="linkbtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M9 11l3 3 8-8"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg> Tout selectionner</button>
+          <span class="toolbar-spacer"></span>
+          <button class="toggle"><span class="sw"></span> Inclure les adresses incompletes</button>
+        </div>
+
+        <div class="listcard">
+          <div class="list-head etq">
+            <span></span><span>Prospect</span><span>Adresse</span><span>Destinataire</span><span></span>
+          </div>
+
+          <!-- ligne selectionnee + destinataire precis -->
+          <div class="crm-row etq sel">
+            <span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <div class="id-cell"><div class="id-name">Naef Immobilier SA</div><div class="id-sec">Regie - Geneve</div></div>
+            <span class="addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Rue du Rhone 12, 1204 Geneve</span></span>
+            <div class="dest"><input class="dest-input filled" value="Service technique, M. Roth" /><svg class="dest-pen" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+            <div class="rowact"><span class="ok-dot"><span class="bd"></span> Prete</span></div>
+          </div>
+
+          <!-- ligne selectionnee + destinataire generique -->
+          <div class="crm-row etq sel">
+            <span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <div class="id-cell"><div class="id-name">Comptoir Immobilier SA</div><div class="id-sec">Regie - Geneve</div></div>
+            <span class="addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Rue de la Corraterie 24, 1204 Geneve</span></span>
+            <div class="dest"><input class="dest-input filled" value="Service technique" /><svg class="dest-pen" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+            <div class="rowact"><span class="ok-dot"><span class="bd"></span> Prete</span></div>
+          </div>
+
+          <!-- ligne selectionnee sans destinataire (placeholder) -->
+          <div class="crm-row etq sel">
+            <span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <div class="id-cell"><div class="id-name">Grange Immobilier SA</div><div class="id-sec">Regie - Geneve</div></div>
+            <span class="addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Route de Florissant 8, 1206 Geneve</span></span>
+            <div class="dest"><input class="dest-input" placeholder="Ajouter un destinataire" /><svg class="dest-pen" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+            <div class="rowact"><span class="ok-dot"><span class="bd"></span> Prete</span></div>
+          </div>
+
+          <!-- ligne selectionnee + destinataire precis -->
+          <div class="crm-row etq sel">
+            <span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <div class="id-cell"><div class="id-name">Pilet &amp; Renaud SA</div><div class="id-sec">Regie - Geneve</div></div>
+            <span class="addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Boulevard Georges-Favon 14, 1204 Geneve</span></span>
+            <div class="dest"><input class="dest-input filled" value="Service technique, Mme Bianchi" /><svg class="dest-pen" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+            <div class="rowact"><span class="ok-dot"><span class="bd"></span> Prete</span></div>
+          </div>
+
+          <!-- ligne selectionnee generique -->
+          <div class="crm-row etq sel">
+            <span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <div class="id-cell"><div class="id-name">Regie Tournier SA</div><div class="id-sec">Regie - Geneve</div></div>
+            <span class="addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Rue du Cendrier 15, 1201 Geneve</span></span>
+            <div class="dest"><input class="dest-input filled" value="Service technique" /><svg class="dest-pen" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+            <div class="rowact"><span class="ok-dot"><span class="bd"></span> Prete</span></div>
+          </div>
+
+          <!-- ligne NON selectionnee, adresse incomplete -->
+          <div class="crm-row etq">
+            <span class="cbx"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <div class="id-cell"><div class="id-name">Regie du Centre SA</div><div class="id-sec">Regie - Geneve</div></div>
+            <span class="addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span style="color:var(--color-text-faint)">Localite manquante</span></span>
+            <div class="dest"><input class="dest-input" placeholder="Ajouter un destinataire" disabled style="opacity:.55" /></div>
+            <div class="rowact"><span class="warn-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.5 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.5a2 2 0 0 0-3.4 0Z"/></svg> Incomplete</span><button class="btn-complete"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg> Completer</button></div>
+          </div>
+
+          <!-- ligne selectionnee generique -->
+          <div class="crm-row etq sel">
+            <span class="cbx on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+            <div class="id-cell"><div class="id-name">Argecil SA</div><div class="id-sec">Regie - Geneve</div></div>
+            <span class="addr"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>Rue de Lausanne 60, 1202 Geneve</span></span>
+            <div class="dest"><input class="dest-input" placeholder="Ajouter un destinataire" /><svg class="dest-pen" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+            <div class="rowact"><span class="ok-dot"><span class="bd"></span> Prete</span></div>
+          </div>
+
+          <div class="list-foot"><span>20 prospects dans cette campagne - 20 selectionnes - 19 adresses completes</span><span>Faites defiler pour voir les 13 autres</span></div>
+        </div>
+
+      </div>
+
+      <!-- barre d'actions groupees (visible car des lignes sont cochees) -->
+      <div class="bulkbar">
+        <span class="bulk-count"><span class="n tabular">6</span> selectionnes</span>
+        <span class="bulk-sep"></span>
+        <span class="bulk-field">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M16 21v-2a4 4 0 0 0-8 0v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <input class="bulk-input" placeholder="Destinataire commun, ex. Service technique" value="Service technique" />
+        </span>
+        <button class="bulk-apply"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg> Appliquer aux 6</button>
+        <button class="bulk-ghost">Effacer</button>
+        <button class="bulk-close" title="Tout deselectionner"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:22px">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="m9 12 2 2 4-4"/><circle cx="12" cy="12" r="9"/></svg>
+    <div><b>Un seul geste de selection, deux usages :</b> les lignes cochees sont a la fois <b>ce qui s'imprime</b> et <b>la cible de la barre en lot</b>. Coche tout puis <b>Appliquer</b> = adresser tout le monde d'un coup. Coche un sous-groupe = adresser juste ce groupe. Un cas particulier (un nom precis trouve pour une regie) se tape <b>directement dans sa ligne</b>. La barre disparait des qu'on decoche tout.</div>
+  </div>
+
+  <!-- ============ SECTION 2 : APERCU AU CLIC TELECHARGER ============ -->
+  <div class="section-label">
+    <span class="section-num">2</span>
+    <div><h2>Apercu avant telechargement</h2><p>Le clic sur « Telecharger le PDF » ouvre cet ecran : la vraie planche Avery telle qu'elle sortira, les reglages d'impression, puis le telechargement reel. Pas d'apercu pendant l'edition, seulement ici.</p></div>
+  </div>
+
+  <div class="preview-stage">
+    <div class="preview">
+      <div class="preview-h">
+        <h3>Apercu de la planche</h3>
+        <button class="icon-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div class="preview-body">
+        <div class="preview-canvas">
+          <div class="sheet">
+            <div class="etq"><b>Naef Immobilier SA</b><span class="d">Service technique, M. Roth</span><span class="a">Rue du Rhone 12</span><span class="a">1204 Geneve</span></div>
+            <div class="etq"><b>Comptoir Immobilier SA</b><span class="d">Service technique</span><span class="a">Rue de la Corraterie 24</span><span class="a">1204 Geneve</span></div>
+            <div class="etq"><b>Grange Immobilier SA</b><span class="a">Route de Florissant 8</span><span class="a">1206 Geneve</span></div>
+            <div class="etq"><b>Pilet &amp; Renaud SA</b><span class="d">Service technique, Mme Bianchi</span><span class="a">Bd Georges-Favon 14</span><span class="a">1204 Geneve</span></div>
+            <div class="etq"><b>Regie Tournier SA</b><span class="d">Service technique</span><span class="a">Rue du Cendrier 15</span><span class="a">1201 Geneve</span></div>
+            <div class="etq"><b>Argecil SA</b><span class="a">Rue de Lausanne 60</span><span class="a">1202 Geneve</span></div>
+            <div class="etq"><b>Millenium Properties SA</b><span class="d">Service technique</span><span class="a">Quai du Mont-Blanc 3</span><span class="a">1201 Geneve</span></div>
+            <div class="etq"><b>Bordier-Schmidhauser</b><span class="d">Service technique</span><span class="a">Rue du Marche 7</span><span class="a">1204 Geneve</span></div>
+            <div class="etq"><b>Daudin Chatelain SA</b><span class="a">Rue de la Fontaine 9</span><span class="a">1204 Geneve</span></div>
+            <div class="etq"><b>NETTILAC SA</b><span class="d">Service technique</span><span class="a">Rue de Berne 10</span><span class="a">1201 Geneve</span></div>
+            <div class="etq"><b>m3 Immobilier</b><span class="a">Rue du Rhone 118</span><span class="a">1204 Geneve</span></div>
+            <div class="etq"><b>BEFI SA</b><span class="d">Service technique</span><span class="a">Route de Chene 5</span><span class="a">1207 Geneve</span></div>
+            <div class="etq"><b>Burger Immobilier SA</b><span class="a">Rue de Rive 4</span><span class="a">1204 Geneve</span></div>
+            <div class="etq"><b>EdM16 Immobilier</b><span class="d">Service technique</span><span class="a">Rue de Montbrillant 16</span><span class="a">1201 Geneve</span></div>
+            <div class="etq"><b>Regie VPI SA</b><span class="a">Av. de Champel 8</span><span class="a">1206 Geneve</span></div>
+            <div class="etq"><b>Immobilier 2012 SA</b><span class="d">Service technique</span><span class="a">Rue de Carouge 40</span><span class="a">1205 Geneve</span></div>
+            <div class="etq"><b>Regie du Rhone SA</b><span class="a">Rue de la Cite 1</span><span class="a">1204 Geneve</span></div>
+            <div class="etq"><b>Regie P. Beguin</b><span class="d">Service technique</span><span class="a">Rue Ancienne 12</span><span class="a">1227 Carouge</span></div>
+            <div class="etq"><b>Gerofinance SA</b><span class="a">Rue du Stand 60</span><span class="a">1204 Geneve</span></div>
+            <div class="etq"><b>SPG Intercity</b><span class="d">Service technique</span><span class="a">Route de Frontenex 41</span><span class="a">1207 Geneve</span></div>
+            <div class="etq empty"></div>
+            <div class="etq empty"></div>
+            <div class="etq empty"></div>
+            <div class="etq empty"></div>
+          </div>
+        </div>
+        <div class="preview-side">
+          <div class="set-block">
+            <div class="set-h">Reglages d'impression</div>
+            <div class="set-row"><span>Format</span><span class="set-val">Avery 6122</span></div>
+            <div class="set-row"><span>Demarrer a l'etiquette</span>
+              <span class="stepper"><button>-</button><span class="v">1</span><button>+</button></span>
+            </div>
+          </div>
+          <div class="set-count">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v16M3 9h18M3 14h18"/></svg>
+            20 etiquettes - 1 page A4
+          </div>
+          <div class="spacer"></div>
+          <button class="btn-download">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 3v12m0 0 4-4m-4 4-4-4"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            Telecharger le PDF
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ primitives ============ -->
+  <div class="section-label">
+    <span class="section-num" style="background:var(--color-surface);color:var(--color-text-muted);box-shadow:inset 0 0 0 1px var(--color-border)">P</span>
+    <div><h2>Primitives introduites</h2><p>Reutilisent les tokens existants. Nommees pour l'implementation, comme les goldens precedents.</p></div>
+  </div>
+
+  <div class="prims">
+    <div class="prim"><span class="prim-name">.dest-input</span><p>Champ destinataire en edition <b>inline</b> dans la ligne : invisible au repos, fond gris au survol, bordure primaire au focus. Vide = placeholder discret. C'est la seule zone editable de la liste.</p></div>
+    <div class="prim"><span class="prim-name">.bulkbar</span><p>Barre d'actions groupees <b>contextuelle et sombre</b> (signature premium). Apparait des qu'une ligne est cochee : compteur + champ commun + Appliquer + Effacer. Absorbe le « destinataire pour tous ».</p></div>
+    <div class="prim"><span class="prim-name">.preview + .sheet</span><p>Ecran d'apercu ouvert au clic Telecharger : planche Avery reelle (3 x 8), reglages (format, etiquette de depart), compteur, et le bouton de telechargement final.</p></div>
+    <div class="prim"><span class="prim-name">.toggle</span><p>Interrupteur « inclure les adresses incompletes » (decoche par defaut : on n'imprime pas une adresse trouee sans le vouloir). Reprend l'echelle de couleur primaire.</p></div>
+  </div>
+
+</div>
+</body>
+</html>

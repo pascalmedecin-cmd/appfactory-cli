@@ -133,7 +133,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Emailing prospection automatisée** (§ Backlog dev) - étape 1 = cadrage court du contenu/cible/séquence avec Pascal (**pas de réunion**), puis 1 session de code (templates Resend, **zéro LLM**) + gate avant prod (DNS/nLPD/contenu validé). Sinon gestes Pascal (§ Chez Pascal : smoke OTP, Daily Email).
+**Prochaine attaque** : **Étiquettes : destinataire de mailing + page dédiée** (§ Backlog dev) - **cadrage + golden v2 VALIDÉS 01/07, build frais** (décision Pascal). Page dédiée + destinataire éditable inline (non persisté, 0 migration DB) + édition en lot + aperçu au download ; golden `.product-architect/refonte-vague3/golden-etiquettes-page-v2.html`. Payload complet → [[project_etiquettes_destinataire_page_dediee_2026-07-01]]. Puis Emailing prospection (à cadrer). Sinon gestes Pascal (§ Chez Pascal : smoke OTP, Daily Email).
 
 ### Règle backlog (WIP-limité, gravée 2026-06-28)
 
@@ -141,6 +141,7 @@ Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude **sans dépendanc
 
 ### Backlog dev (actionnable par Claude)
 
+- [ ] **[EXÉCUTABLE]** Étiquettes : destinataire de mailing + page dédiée (**cadrage + golden v2 VALIDÉS 01/07, build frais prochaine session**). Migrer le module Étiquettes (volet V1 livré 30/06) vers une **page dédiée** `/crm/campagnes/[id]/etiquettes` avec destinataire éditable inline (générique tout mailing, **non persisté = 0 migration DB**), **édition en lot** (barre d'actions groupées), **aperçu au clic Télécharger**. Ligne destinataire **sous la raison sociale** sur l'étiquette Avery. Retirer l'ancien volet `EtiquettesPanel.svelte`. Resserrer les marges de la page Campagnes. Golden validé = `.product-architect/refonte-vague3/golden-etiquettes-page-v2.html`. Fait établi : **aucune API ne fournit le contact « service technique »** (recherche 31 pistes), saisie manuelle par Pascal. Payload complet (spec, décisions, cartographie fichiers, skills) → [[project_etiquettes_destinataire_page_dediee_2026-07-01]].
 - [ ] **[EXÉCUTABLE]** Emailing prospection automatisée : moteur d'envoi automatisé de séquences d'emails aux prospects (Resend, **templates pré-rédigés, zéro LLM** - règle dure). Étape 1 = cadrage court Pascal (contenu/cible/séquence/fréquence/déclencheur, **pas de réunion**), puis 1 session de code + gate ON/OFF (**OFF par défaut**). **Gate de mise en prod** (pas avant le dev) : (a) DNS `send.filmpro.ch` Resend, (b) base légale nLPD + mention, (c) contenu validé. (Ex-« Vague 4 ».)
 
 ### Chez Pascal (hors backlog dev - gestes manuels, quand tu veux)
