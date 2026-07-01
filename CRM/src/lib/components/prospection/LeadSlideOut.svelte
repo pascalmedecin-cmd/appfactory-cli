@@ -342,50 +342,54 @@
 			{/if}
 
 			<!-- Actions -->
-			{#if lead.statut !== 'transfere'}
+			{#if lead.statut === 'transfere'}
+				<div class="flex items-center gap-2 pt-4 border-t border-border text-sm text-success-deep font-medium">
+					<Icon name="check_circle" size={18} />
+					Ce prospect a été converti en client
+				</div>
+			{:else if lead.statut === 'ecarte'}
+				<!-- Vue « Écartés » : réactiver remet le prospect dans la file de tri (statut vide). -->
+				<div class="pt-4 border-t border-border space-y-3">
+					<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider">Actions</h4>
+					<form method="POST" action="?/updateStatut" use:enhance={enhanceStatut('vide', 'Prospect réactivé')}>
+						<input type="hidden" name="id" value={lead.id} />
+						<input type="hidden" name="statut" value="vide" />
+						<button type="submit" class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 cursor-pointer transition-colors">
+							<Icon name="unarchive" size={16} />
+							Réactiver
+						</button>
+					</form>
+				</div>
+			{:else}
+				<!-- File de tri (statut vide) ou déjà au pipeline (a_contacter). -->
 				<div class="pt-4 border-t border-border space-y-3">
 					<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider">Actions</h4>
 					<div class="flex flex-wrap gap-3">
-						{#if lead.statut !== 'interesse'}
-							<form method="POST" action="?/updateStatut" use:enhance={enhanceStatut('interesse', 'Prospect marqué intéressé')}>
+						{#if lead.statut !== 'a_contacter'}
+							<form method="POST" action="?/markForContact" use:enhance={() => {
+								return async ({ result, update }) => {
+									closeAndClear();
+									if (result.type === 'success') toasts.success('Prospect ajouté au pipeline (à contacter)');
+									else toasts.error('Erreur lors du passage au pipeline');
+									await update();
+								};
+							}}>
 								<input type="hidden" name="id" value={lead.id} />
-								<input type="hidden" name="statut" value="interesse" />
-								<button type="submit" class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/10 cursor-pointer transition-colors">
-									<Icon name="thumb_up" size={16} />
-									Marquer intéressé
+								<button type="submit" class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-sm transition-colors">
+									<Icon name="arrow_forward" size={16} />
+									À contacter
 								</button>
 							</form>
 						{/if}
-						{#if lead.statut !== 'ecarte'}
-							<form method="POST" action="?/updateStatut" use:enhance={enhanceStatut('ecarte', 'Prospect écarté')}>
-								<input type="hidden" name="id" value={lead.id} />
-								<input type="hidden" name="statut" value="ecarte" />
-								<button type="submit" class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm text-text-muted hover:text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors">
-									<Icon name="block" size={16} />
-									Écarter
-								</button>
-							</form>
-						{/if}
-						<form method="POST" action="?/transferer" use:enhance={() => {
-							return async ({ result, update }) => {
-								closeAndClear();
-								if (result.type === 'success') toasts.success('Prospect converti en entreprise');
-								else toasts.error('Erreur lors de la conversion');
-								await update();
-							};
-						}}>
+						<form method="POST" action="?/updateStatut" use:enhance={enhanceStatut('ecarte', 'Prospect écarté')}>
 							<input type="hidden" name="id" value={lead.id} />
-							<button type="submit" class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-sm transition-colors">
-								<Icon name="domain_add" size={16} />
-								Convertir en entreprise
+							<input type="hidden" name="statut" value="ecarte" />
+							<button type="submit" class="inline-flex items-center gap-2 h-10 px-4 box-border text-sm text-text-muted hover:text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors">
+								<Icon name="block" size={16} />
+								Écarter
 							</button>
 						</form>
 					</div>
-				</div>
-			{:else}
-				<div class="flex items-center gap-2 pt-4 border-t border-border text-sm text-success-deep font-medium">
-					<Icon name="check_circle" size={18} />
-					Ce prospect a été converti en entreprise
 				</div>
 			{/if}
 		</div>

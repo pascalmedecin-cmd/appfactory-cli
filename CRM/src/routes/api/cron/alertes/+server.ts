@@ -111,7 +111,7 @@ export async function GET(event: RequestEvent) {
 			let query = supabase
 				.from('prospect_leads')
 				.select('raison_sociale,description,secteur_detecte')
-				.eq('statut', 'nouveau');
+				.eq('statut', 'vide');
 
 			if (rech.dernier_check) query = query.gte('date_import', rech.dernier_check);
 			if (rech.sources && rech.sources.length > 0) query = query.in('source', rech.sources);
@@ -128,7 +128,7 @@ export async function GET(event: RequestEvent) {
 			let query = supabase
 				.from('prospect_leads')
 				.select('*', { count: 'exact', head: true })
-				.eq('statut', 'nouveau');
+				.eq('statut', 'vide');
 
 			if (rech.dernier_check) query = query.gte('date_import', rech.dernier_check);
 			if (rech.sources && rech.sources.length > 0) query = query.in('source', rech.sources);

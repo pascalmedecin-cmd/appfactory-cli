@@ -1,6 +1,7 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { enhance } from '$app/forms';
 	import { page } from '$app/stores';
 	import { toasts } from '$lib/stores/toast';
 	import DataTable from '$lib/components/DataTable.svelte';
@@ -17,7 +18,6 @@
 	import RecherchesPanel from '$lib/components/prospection/RecherchesPanel.svelte';
 	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
 	import { campClass } from '$lib/campagnes';
-	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
 	import SourcePill from '$lib/components/SourcePill.svelte';
 	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
 	import { sourceMetaFor } from '$lib/utils/entreprisesFormat';
@@ -31,7 +31,7 @@
 	import {
 		cantonNoms,
 		statutLabel, statutBadgeVariant, sourceLabel, relativeDate,
-		sourceOptions, cantonOptions, temperatureOptions, statutOptions,
+		sourceOptions, cantonOptions,
 		PROSPECTION_EXPORT_CAP,
 		type ProspectionTabKey,
 	} from '$lib/prospection-utils';
@@ -167,19 +167,16 @@
 	let filterCantons = $state<string[]>(data.filters.cantons);
 	// svelte-ignore state_referenced_locally
 	let filterStatuts = $state<string[]>(data.filters.statuts);
-	// svelte-ignore state_referenced_locally
-	let filterTemperatures = $state<string[]>(data.filters.temperatures);
 	// Vague 3.2 : filtre par campagne (relation N-N, premium uniquement). Liste dynamique
 	// (data.campagnes) ; jamais affiché hors premium -> rendu OFF byte-identique.
 	// svelte-ignore state_referenced_locally
 	let filterCampagnes = $state<string[]>(data.filters.campagnes);
-	// Phase 0 : toggle "afficher les transférés" persistant via URL ?showTransferred=1
+	// Lot 2 : toggle "voir les écartés" persistant via URL ?ecartes=1
 	// svelte-ignore state_referenced_locally
-	let showTransferred = $state<boolean>(data.showTransferred);
+	let showDismissed = $state<boolean>(data.showDismissed);
 
 	const activeFilterCount = $derived(
 		(filterStatuts.length > 0 ? 1 : 0) +
-		(filterTemperatures.length > 0 ? 1 : 0) +
 		(filterCantons.length > 0 ? 1 : 0) +
 		(filterSources.length > 0 ? 1 : 0) +
 		(filterCampagnes.length > 0 ? 1 : 0)
@@ -190,9 +187,8 @@
 		const sources = overrides.source !== undefined ? overrides.source as string[] : filterSources;
 		const cantons = overrides.canton !== undefined ? overrides.canton as string[] : filterCantons;
 		const statuts = overrides.statut !== undefined ? overrides.statut as string[] : filterStatuts;
-		const temps = overrides.temp !== undefined ? overrides.temp as string[] : filterTemperatures;
 		const campagnes = overrides.campagne !== undefined ? overrides.campagne as string[] : filterCampagnes;
-		const showTr = overrides.showTransferred !== undefined ? overrides.showTransferred as boolean : showTransferred;
+		const showDism = overrides.ecartes !== undefined ? overrides.ecartes as boolean : showDismissed;
 		const pg = overrides.page !== undefined ? overrides.page as number : data.page;
 		const sort = (overrides.sort as string) ?? data.sort;
 		const dir = overrides.dir !== undefined ? overrides.dir as string : (data.sortAsc ? 'asc' : 'desc');
@@ -202,16 +198,15 @@
 
 		if (tab && tab !== defaultProspTab) params.set('tab', tab);
 		if (pg > 0) params.set('page', String(pg));
-		if (sort !== 'score_pertinence') params.set('sort', sort);
+		if (sort !== 'date_import') params.set('sort', sort);
 		if (dir === 'asc') params.set('dir', 'asc');
 		if (q) params.set('q', q);
 		if (perPage !== 25) params.set('perPage', String(perPage));
 		sources.forEach(s => params.append('source', s));
 		cantons.forEach(c => params.append('canton', c));
 		statuts.forEach(s => params.append('statut', s));
-		temps.forEach(t => params.append('temp', t));
 		campagnes.forEach(c => params.append('campagne', c));
-		if (showTr) params.set('showTransferred', '1');
+		if (showDism) params.set('ecartes', '1');
 
 		const qs = params.toString();
 		return qs ? `?${qs}` : $page.url.pathname;
@@ -231,7 +226,7 @@
 	let filterMounted = false;
 	$effect(() => {
 		// Tracker les valeurs
-		filterSources; filterCantons; filterStatuts; filterTemperatures; filterCampagnes; showTransferred;
+		filterSources; filterCantons; filterStatuts; filterCampagnes; showDismissed;
 		if (!filterMounted) { filterMounted = true; return; }
 		if (filterDebounce) clearTimeout(filterDebounce);
 		filterDebounce = setTimeout(() => applyFilters(), 200);
@@ -244,10 +239,8 @@
 	});
 
 	// Phase 2 2026-05-01 : columns par onglet (colonne signature distincte par nature de signal).
-	const PRIORITY_TOOLTIP = `Score 0-${config.scoring.maxPoints} calculé automatiquement à partir du canton, du secteur, de la source, de la récence et du montant. ≥ 7 = prioritaire · 4-6 = à qualifier · ≤ 3 = faible signal.`;
-
+	// Lot 2 : colonne « Priorité » (score) retirée -> l'identité du prospect est la 1re colonne.
 	const baseColumns = [
-		{ key: 'score_pertinence', label: 'Priorité', shortLabel: 'Prio.', sortable: true, infoTooltip: PRIORITY_TOOLTIP, defaultWidth: 130, minWidth: 110 },
 		{ key: 'raison_sociale', label: '', srLabel: 'Entreprise', sortable: true, defaultWidth: 240, minWidth: 160 },
 	];
 
@@ -257,7 +250,7 @@
 			{ key: 'montant', label: 'Montant estimé', sortable: true, defaultWidth: 140, minWidth: 110 },
 			{ key: 'canton', label: 'Canton', sortable: true, defaultWidth: 80, minWidth: 70, class: 'hidden md:table-cell' },
 			{ key: 'date_publication', label: 'Publié le', sortable: true, defaultWidth: 110, minWidth: 100, class: 'hidden lg:table-cell' },
-			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 120, minWidth: 100 },
+			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 160, minWidth: 130 },
 			{ key: 'date_import', label: 'Ajouté', sortable: true, defaultWidth: 100, minWidth: 90, class: 'hidden lg:table-cell' },
 		],
 		regbl: [
@@ -265,7 +258,7 @@
 			{ key: 'description', label: 'Type de travaux', sortable: false, defaultWidth: 220, minWidth: 160 },
 			{ key: 'localite', label: 'Adresse', sortable: true, defaultWidth: 200, minWidth: 140, class: 'hidden md:table-cell' },
 			{ key: 'canton', label: 'Canton', sortable: true, defaultWidth: 80, minWidth: 70 },
-			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 120, minWidth: 100 },
+			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 160, minWidth: 130 },
 			{ key: 'date_import', label: 'Ajouté', sortable: true, defaultWidth: 100, minWidth: 90, class: 'hidden lg:table-cell' },
 		],
 		entreprises: [
@@ -274,14 +267,14 @@
 			{ key: 'canton', label: 'Canton', sortable: true, defaultWidth: 80, minWidth: 70 },
 			{ key: 'source', label: 'Source', sortable: true, defaultWidth: 140, minWidth: 110, class: 'hidden lg:table-cell' },
 			{ key: 'date_publication', label: 'Inscription', sortable: true, defaultWidth: 110, minWidth: 100, class: 'hidden lg:table-cell' },
-			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 120, minWidth: 100 },
+			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 160, minWidth: 130 },
 		],
 		terrain: [
 			...baseColumns,
 			{ key: 'description', label: 'Note terrain', sortable: false, defaultWidth: 240, minWidth: 160 },
 			{ key: 'telephone', label: 'Téléphone', sortable: false, defaultWidth: 140, minWidth: 110, class: 'hidden md:table-cell' },
 			{ key: 'canton', label: 'Canton', sortable: true, defaultWidth: 80, minWidth: 70 },
-			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 120, minWidth: 100 },
+			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 160, minWidth: 130 },
 			{ key: 'date_import', label: 'Ajouté', sortable: true, defaultWidth: 100, minWidth: 90, class: 'hidden lg:table-cell' },
 		],
 	};
@@ -505,11 +498,9 @@
 	function chargerRecherche(r: {
 		sources: string[] | null;
 		cantons: string[] | null;
-		temperatures: string[] | null;
 	}) {
 		filterSources = r.sources ?? [];
 		filterCantons = r.cantons ?? [];
-		filterTemperatures = r.temperatures ?? [];
 		filterStatuts = [];
 		recherchesOpen = false;
 	}
@@ -521,9 +512,8 @@
 		filterSources = [];
 		filterCantons = [];
 		filterStatuts = [];
-		filterTemperatures = [];
 		filterCampagnes = [];
-		showTransferred = false;
+		showDismissed = false;
 	}
 
 	// V1.1 audit S160 : count des leads enrichissables sur la page courante.
@@ -545,7 +535,6 @@
 			fd.set('nom', nom);
 			fd.set('sources', JSON.stringify(filterSources));
 			fd.set('cantons', JSON.stringify(filterCantons));
-			fd.set('temperatures', JSON.stringify(filterTemperatures));
 			fd.set('alerte_active', 'false');
 			const res = await fetch('?/saveRecherche', { method: 'POST', body: fd });
 			if (res.ok) {
@@ -571,12 +560,6 @@
 		if (lead.localite) parts.push(lead.localite);
 		parts.push(sourceLabel(lead.source));
 		return parts.join(' · ');
-	}
-
-	function leadCardScorePill(lead: Lead): { score: number } | undefined {
-		const score = lead.score_pertinence;
-		if (typeof score !== 'number') return undefined;
-		return { score };
 	}
 
 	function leadCardBadges(lead: Lead): MobileEntityCardBadge[] {
@@ -612,6 +595,35 @@
 		if (typeof lead.score_pertinence === 'number') parts.push(`score ${lead.score_pertinence}`);
 		if (lead.statut) parts.push(`statut ${statutLabel(lead.statut)}`);
 		return parts.join(', ');
+	}
+
+	// Lot 2 : édition statut inline dans le tableau (mêmes actions que le sidepane LeadSlideOut).
+	// Succès -> toast + refresh via update() (invalidateAll : le lead change de portée et quitte
+	// la vue courante). Aucun panneau à fermer ici. Le stopPropagation posé sur les boutons
+	// empêche l'ouverture du sidepane au clic (la ligne DataTable est cliquable).
+	function enhanceInlineStatut(successMsg: string) {
+		return () => {
+			return async ({ result, update }: { result: { type: string }; update: () => Promise<void> }) => {
+				if (result.type === 'success') {
+					toasts.success(successMsg);
+					// S160 : le lead quitte la vue (change de portée) -> purger la sélection pour
+					// éviter qu'un batch ultérieur agisse sur un lead devenu invisible.
+					selectedIds = new Set();
+				} else toasts.error('Erreur lors de la mise à jour');
+				await update();
+			};
+		};
+	}
+
+	function enhanceInlineContact() {
+		return async ({ result, update }: { result: { type: string }; update: () => Promise<void> }) => {
+			if (result.type === 'success') {
+				toasts.success('Prospect ajouté au pipeline (à contacter)');
+				// S160 : idem, le lead passe au pipeline et quitte la vue -> purger la sélection.
+				selectedIds = new Set();
+			} else toasts.error('Erreur lors du passage au pipeline');
+			await update();
+		};
 	}
 </script>
 
@@ -770,13 +782,20 @@
 			<!-- V3.6 audit S160 (M-30) : fieldset+legend pour grouper les filtres sémantiquement. -->
 			<fieldset class="grid grid-cols-2 gap-3 p-3">
 				<legend class="sr-only">Filtres prospection</legend>
-				<MultiSelectDropdown bind:selected={filterStatuts} options={statutOptions} icon="checklist" label="Statut" tooltip="Filtrer par statut de traitement" />
-				<MultiSelectDropdown bind:selected={filterTemperatures} options={temperatureOptions} icon="thermostat" label="Température" tooltip="Niveau d'intérêt estimé du prospect" />
 				<MultiSelectDropdown bind:selected={filterCantons} options={cantonOptions} icon="location_on" label="Canton" tooltip="Zones géographiques" />
 				<MultiSelectDropdown bind:selected={filterSources} options={sourceOptions} icon="database" label="Source" tooltip="Registres et bases de données" />
 				{#if premium}
 					<MultiSelectDropdown bind:selected={filterCampagnes} options={campagneFilterOptions} icon="sell" label="Campagne" tooltip="Filtrer par campagne" />
 				{/if}
+				<!-- Lot 2 : toggle "Voir les écartés" aussi sur mobile (parité desktop, sinon impossible de réafficher les écartés depuis un téléphone). -->
+				<label class="col-span-2 flex items-center gap-2 text-xs text-text-muted cursor-pointer select-none">
+					<input
+						type="checkbox"
+						bind:checked={showDismissed}
+						class="h-4 w-4 cursor-pointer accent-primary"
+					/>
+					<span class="inline-flex items-center gap-1"><Icon name="visibility" size={14} class="text-text-muted" />Voir les écartés</span>
+				</label>
 			</fieldset>
 		</div>
 	{/if}
@@ -784,8 +803,6 @@
 	<div class="hidden md:block rounded-xl border border-border bg-white shadow-xs">
 		<fieldset class="grid grid-cols-2 lg:grid-cols-4 gap-3 p-3">
 			<legend class="sr-only">Filtres prospection</legend>
-			<MultiSelectDropdown bind:selected={filterStatuts} options={statutOptions} icon="checklist" label="Statut" tooltip="Filtrer par statut de traitement" />
-			<MultiSelectDropdown bind:selected={filterTemperatures} options={temperatureOptions} icon="thermostat" label="Température" tooltip="Niveau d'intérêt estimé du prospect" />
 			<MultiSelectDropdown bind:selected={filterCantons} options={cantonOptions} icon="location_on" label="Canton" tooltip="Zones géographiques" />
 			<MultiSelectDropdown bind:selected={filterSources} options={sourceOptions} icon="database" label="Source" tooltip="Registres et bases de données" />
 			{#if premium}
@@ -793,14 +810,14 @@
 			{/if}
 		</fieldset>
 		<div class="flex flex-wrap items-center gap-2 px-3 pb-3 pt-0">
-			<!-- Phase 0 : toggle "Afficher les transférés" off par défaut, persistant via URL ?showTransferred=1 -->
+			<!-- Lot 2 : toggle "Voir les écartés" off par défaut, persistant via URL ?ecartes=1 -->
 			<label class="flex items-center gap-2 text-xs text-text-muted cursor-pointer select-none">
 				<input
 					type="checkbox"
-					bind:checked={showTransferred}
+					bind:checked={showDismissed}
 					class="h-4 w-4 cursor-pointer accent-primary"
 				/>
-				<span>Afficher aussi les leads transférés</span>
+				<span class="inline-flex items-center gap-1"><Icon name="visibility" size={14} class="text-text-muted" />Voir les écartés</span>
 			</label>
 			<div class="flex items-center gap-2 ml-auto">
 				{#if activeFilterCount > 0}
@@ -909,7 +926,7 @@
 	{/if}
 
 	<!-- Barre actions batch -->
-	<BatchActionsBar bind:selectedIds bind:enrichBatchIds bind:enrichBatchOpen />
+	<BatchActionsBar bind:selectedIds bind:enrichBatchIds bind:enrichBatchOpen showDismissed={showDismissed} />
 
 	<div class="flex-1 min-h-0 flex flex-col">
 	<!-- Empty state global UNIQUEMENT si tous les onglets VISIBLES sont vides (système jamais peuplé).
@@ -1037,7 +1054,7 @@
 					</p>
 					<div class="flex flex-wrap items-center justify-center gap-2">
 						<button
-							onclick={() => { resetFilters(); goto(buildUrl({ q: '', source: [], canton: [], statut: [], temp: [], campagne: [], showTransferred: false, page: 0 }), { keepFocus: true, noScroll: true }); }}
+							onclick={() => { resetFilters(); goto(buildUrl({ q: '', source: [], canton: [], statut: [], campagne: [], ecartes: false, page: 0 }), { keepFocus: true, noScroll: true }); }}
 							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-text border border-border rounded-lg bg-white hover:bg-surface-alt cursor-pointer transition-colors"
 						>
 							<Icon name="close" size={16} />
@@ -1076,7 +1093,6 @@
 					title={lead.raison_sociale}
 					subtitle={leadCardSubtitle(lead)}
 					badges={leadCardBadges(lead)}
-					scorePill={leadCardScorePill(lead)}
 					footerItems={leadCardFooterItems(lead)}
 					actions={leadCardActions(lead)}
 					onTap={() => openDetail(lead)}
@@ -1092,7 +1108,7 @@
 		embedded={true}
 		dense={true}
 		resizable={true}
-		stickyLeftCols={2}
+		stickyLeftCols={1}
 		storageKey="prospection-{data.tab}"
 		pageSizeOptions={[25, 50, 100]}
 		onPageSizeChange={(s) => goto(buildUrl({ perPage: s, page: 0 }), { keepFocus: true, noScroll: true })}
@@ -1120,9 +1136,7 @@
 		{#snippet row(lead, _i)}
 			{#each columns as col}
 				<td class="dt-td {col.class ?? ''}">
-					{#if col.key === 'score_pertinence'}
-						<ScorePill score={lead.score_pertinence} compact />
-					{:else if col.key === 'raison_sociale'}
+					{#if col.key === 'raison_sociale'}
 						<span class="font-medium text-text truncate block" title={lead.raison_sociale}>{lead.raison_sociale}</span>
 					{:else if col.key === 'campagnes'}
 						{@const leadCamps = data.campagnesByLead[lead.id] ?? []}
@@ -1160,7 +1174,53 @@
 							<span class="text-text-muted text-xs">{sourceLabel(lead.source)}</span>
 						{/if}
 					{:else if col.key === 'statut'}
-						<Badge label={statutLabel(lead.statut)} variant={statutBadgeVariant(lead.statut)} dot={true} />
+						<div class="flex items-center gap-1.5 flex-nowrap">
+							<Badge label={statutLabel(lead.statut)} variant={statutBadgeVariant(lead.statut)} dot={true} />
+							{#if lead.statut === 'vide'}
+								<form method="POST" action="?/markForContact" class="shrink-0 leading-none" use:enhance={enhanceInlineContact}>
+									<input type="hidden" name="id" value={lead.id} />
+									<button
+										type="submit"
+										title="Passer au pipeline (à contacter)"
+										aria-label="Passer {lead.raison_sociale} au pipeline (à contacter)"
+										onclick={(e) => e.stopPropagation()}
+										onkeydown={(e) => e.stopPropagation()}
+										class="inline-flex items-center justify-center h-7 w-7 rounded-md text-primary hover:bg-primary/10 cursor-pointer transition-colors"
+									>
+										<Icon name="arrow_forward" size={15} />
+									</button>
+								</form>
+								<form method="POST" action="?/updateStatut" class="shrink-0 leading-none" use:enhance={enhanceInlineStatut('Prospect écarté')}>
+									<input type="hidden" name="id" value={lead.id} />
+									<input type="hidden" name="statut" value="ecarte" />
+									<button
+										type="submit"
+										title="Écarter ce prospect"
+										aria-label="Écarter {lead.raison_sociale}"
+										onclick={(e) => e.stopPropagation()}
+										onkeydown={(e) => e.stopPropagation()}
+										class="inline-flex items-center justify-center h-7 w-7 rounded-md text-text-muted hover:text-text hover:bg-surface-alt cursor-pointer transition-colors"
+									>
+										<Icon name="block" size={15} />
+									</button>
+								</form>
+							{:else if lead.statut === 'ecarte'}
+								<form method="POST" action="?/updateStatut" class="shrink-0 leading-none" use:enhance={enhanceInlineStatut('Prospect réactivé')}>
+									<input type="hidden" name="id" value={lead.id} />
+									<input type="hidden" name="statut" value="vide" />
+									<button
+										type="submit"
+										title="Réactiver ce prospect"
+										aria-label="Réactiver {lead.raison_sociale}"
+										onclick={(e) => e.stopPropagation()}
+										onkeydown={(e) => e.stopPropagation()}
+										class="inline-flex items-center justify-center h-7 w-7 rounded-md text-primary hover:bg-primary/10 cursor-pointer transition-colors"
+									>
+										<Icon name="unarchive" size={15} />
+									</button>
+								</form>
+							{/if}
+						</div>
 					{:else if col.key === 'date_import' || col.key === 'date_publication'}
 						<span class="text-text-muted text-xs">{relativeDate(lead[col.key as 'date_import' | 'date_publication'])}</span>
 					{:else if col.key === 'montant'}

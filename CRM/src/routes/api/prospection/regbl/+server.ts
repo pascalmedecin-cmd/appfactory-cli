@@ -202,7 +202,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			montant: null,
 			date_publication: null,
 			score_pertinence: scoreResult.total,
-			statut: 'nouveau',
+			statut: 'vide',
 			date_import: now,
 			date_modification: now,
 			source_intelligence_id: fromIntelligence,

@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail } from '@sveltejs/kit';
-import { OpportuniteCreateSchema, OpportuniteUpdateSchema, OpportuniteMoveSchema, OpportuniteArchiveSchema, OpportuniteNextActionSchema, OPP_FIELDS, extractForm, validate } from '$lib/schemas';
+import { OpportuniteCreateSchema, OpportuniteUpdateSchema, OpportuniteMoveSchema, OpportuniteArchiveSchema, OpportuniteNextActionSchema, OpportuniteConvertSchema, OPP_FIELDS, extractForm, validate } from '$lib/schemas';
 import { PipelineOpportuniteRowSchema } from '$lib/utils/pipelineFormat';
 import { dbFail, newId, now } from '$lib/server/db-helpers';
 
@@ -83,6 +83,76 @@ export const actions: Actions = {
 		});
 
 		return dbFail(error) ?? { success: true };
+	},
+
+	// Lot 2 : « Convertir en client ». Sur une opportunité issue d'un prospect
+	// (prospect_lead_id), crée l'entreprise + contact via RPC transfer_lead_to_crm
+	// (atomique), puis lie l'opportunité à l'entreprise créée. C'est le SEUL chemin
+	// prospect -> entreprise (le bouton a quitté la prospection au Lot 2).
+	convertToClient: async ({ request, locals }) => {
+		const form = await request.formData();
+		const parsed = validate(OpportuniteConvertSchema, extractForm(form, ['id']));
+		if (!parsed.success) return fail(400, { error: parsed.error });
+
+		// select('*') + cast : prospect_lead_id (migration 20260701000002) pas encore
+		// dans les types Database générés (même pattern que les RPC castées `as never`).
+		const { data: oppData, error: readErr } = await locals.supabase
+			.from('opportunites')
+			.select('*')
+			.eq('id', parsed.data.id)
+			.maybeSingle();
+		if (readErr) {
+			console.error('[convertToClient] lecture opportunité:', readErr.message);
+			return fail(500, { error: 'Erreur lecture opportunité' });
+		}
+		const opp = oppData as { id: string; entreprise_id: string | null; prospect_lead_id: string | null } | null;
+		if (!opp) return fail(404, { error: 'Opportunité introuvable' });
+		if (opp.entreprise_id) return fail(409, { error: 'Opportunité déjà convertie en client' });
+		if (!opp.prospect_lead_id) return fail(400, { error: "Cette opportunité n'est pas liée à un prospect" });
+
+		// Lie l'opportunité à l'entreprise (+contact) créés. Un échec ici N'EST PAS masqué en
+		// faux succès (règle anti-fallback-silencieux) : on renvoie une erreur actionnable.
+		const linkOpp = async (entrepriseId: string, contactId: string | null) => {
+			const { error: linkErr } = await locals.supabase
+				.from('opportunites')
+				.update({ entreprise_id: entrepriseId, contact_id: contactId, date_derniere_modification: now() })
+				.eq('id', parsed.data.id);
+			if (linkErr) {
+				console.error('[convertToClient] lien opportunité<->entreprise:', linkErr.message);
+				return fail(500, { error: "Client créé, mais la liaison de l'opportunité a échoué. Réessayez." });
+			}
+			return null;
+		};
+
+		// Récupération : si le prospect est DÉJÀ transféré (ex. lien échoué à un essai
+		// précédent), l'entreprise existe -> on relie l'opportunité SANS re-appeler la RPC
+		// (qui lèverait P0001 et laisserait l'opportunité orpheline pour toujours).
+		const { data: leadRow } = await locals.supabase
+			.from('prospect_leads')
+			.select('statut, transfere_vers_entreprise_id, transfere_vers_contact_id')
+			.eq('id', opp.prospect_lead_id)
+			.maybeSingle();
+		if (leadRow?.statut === 'transfere' && leadRow.transfere_vers_entreprise_id) {
+			const failLink = await linkOpp(leadRow.transfere_vers_entreprise_id, leadRow.transfere_vers_contact_id ?? null);
+			return failLink ?? { success: true, entrepriseId: leadRow.transfere_vers_entreprise_id };
+		}
+
+		const { data, error: rpcErr } = await locals.supabase.rpc(
+			'transfer_lead_to_crm' as never,
+			{ p_lead_id: opp.prospect_lead_id } as never
+		);
+		if (rpcErr) {
+			const code = (rpcErr as { code?: string }).code;
+			if (code === 'P0002') return fail(400, { error: 'Prospect introuvable' });
+			if (code === 'P0001') return fail(409, { error: 'Prospect déjà converti en client' });
+			console.error('[convertToClient] RPC transfer_lead_to_crm:', rpcErr.message);
+			return fail(500, { error: 'Erreur lors de la conversion (transaction annulée)' });
+		}
+		const result = data as { entreprise_id?: string; contact_id?: string | null } | null;
+		if (!result?.entreprise_id) return fail(500, { error: 'Réponse RPC invalide' });
+
+		const failLink = await linkOpp(result.entreprise_id, result.contact_id ?? null);
+		return failLink ?? { success: true, entrepriseId: result.entreprise_id };
 	},
 
 	update: async ({ request, locals }) => {

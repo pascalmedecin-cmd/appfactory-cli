@@ -37,14 +37,10 @@ describe('parseProspectionFilter', () => {
 		expect(f.sourceFilterIncompatible).toBe(true);
 	});
 
-	it('température hors liste ignorée', () => {
-		expect(parseProspectionFilter(u('?temp=chaud&temp=zzz')).filterTemperatures).toEqual(['chaud']);
-	});
-
-	it('recherche bornée à 200 + tri whitelisté', () => {
+	it('recherche bornée à 200 + tri whitelisté (défaut date_import)', () => {
 		const f = parseProspectionFilter(u('?q=' + 'a'.repeat(300) + '&sort=evil'));
 		expect(f.search.length).toBe(200);
-		expect(f.sortKey).toBe('score_pertinence');
+		expect(f.sortKey).toBe('date_import');
 		expect(parseProspectionFilter(u('?sort=raison_sociale')).sortKey).toBe('raison_sociale');
 		expect(parseProspectionFilter(u('?dir=asc')).sortAsc).toBe(true);
 	});
@@ -54,9 +50,10 @@ describe('parseProspectionFilter', () => {
 		expect(parseProspectionFilter(u('?' + many)).filterCantons.length).toBe(MAX_FILTER_VALUES);
 	});
 
-	it('showTransferred=1 reconnu', () => {
-		expect(parseProspectionFilter(u('?showTransferred=1')).showTransferred).toBe(true);
-		expect(parseProspectionFilter(u('?showTransferred=0')).showTransferred).toBe(false);
+	it('ecartes=1 reconnu → showDismissed (vue « Écartés »)', () => {
+		expect(parseProspectionFilter(u('?ecartes=1')).showDismissed).toBe(true);
+		expect(parseProspectionFilter(u('?ecartes=0')).showDismissed).toBe(false);
+		expect(parseProspectionFilter(u('')).showDismissed).toBe(false);
 	});
 });
 
@@ -65,19 +62,19 @@ function spyBuilder() {
 	const calls: Call[] = [];
 	const b: Record<string, unknown> = {
 		in(c: string, v: unknown) { calls.push(['in', c, v]); return b; },
-		neq(c: string, v: unknown) { calls.push(['neq', c, v]); return b; },
-		or(e: unknown) { calls.push(['or', e]); return b; },
+		eq(c: string, v: unknown) { calls.push(['eq', c, v]); return b; },
 	};
 	return { b, calls };
 }
 
 describe('applyProspectionFilters / applyProspectionScopeFilters', () => {
-	it('filtre complet = source de l’onglet + canton + neq transfere par défaut', () => {
+	it('filtre complet = source de l’onglet + canton + eq statut=vide par défaut (file de tri)', () => {
 		const { b, calls } = spyBuilder();
 		applyProspectionFilters(b, parseProspectionFilter(u('?tab=entreprises&canton=GE')));
 		expect(calls.find((c) => c[0] === 'in' && c[1] === 'source')?.[2]).toEqual(['zefix', 'search_ch', 'google_places']);
 		expect(calls.find((c) => c[0] === 'in' && c[1] === 'canton')?.[2]).toEqual(['GE']);
-		expect(calls.some((c) => c[0] === 'neq' && c[1] === 'statut')).toBe(true);
+		// Lot 2 : défaut = file de tri (statut='vide'), plus de neq transfere.
+		expect(calls.find((c) => c[0] === 'eq' && c[1] === 'statut')?.[2]).toBe('vide');
 	});
 
 	it('scope-only n’applique PAS le filtre source (utilisé pour les compteurs par onglet)', () => {
@@ -87,17 +84,18 @@ describe('applyProspectionFilters / applyProspectionScopeFilters', () => {
 		expect(calls.some((c) => c[0] === 'in' && c[1] === 'canton')).toBe(true);
 	});
 
-	it('statut explicite → in(statut) sans neq transfere', () => {
+	it('showDismissed (?ecartes=1) → eq statut=ecarte au lieu de vide', () => {
 		const { b, calls } = spyBuilder();
-		applyProspectionFilters(b, parseProspectionFilter(u('?tab=entreprises&statut=nouveau')));
-		expect(calls.find((c) => c[0] === 'in' && c[1] === 'statut')?.[2]).toEqual(['nouveau']);
-		expect(calls.some((c) => c[0] === 'neq' && c[1] === 'statut')).toBe(false);
+		applyProspectionScopeFilters(b, parseProspectionFilter(u('?tab=entreprises&ecartes=1')));
+		expect(calls.find((c) => c[0] === 'eq' && c[1] === 'statut')?.[2]).toBe('ecarte');
 	});
 
-	it('température chaud → or(score>=7), littéraux seuls', () => {
+	it('statut explicite (?statut=) → in(statut) et aucun eq statut par défaut', () => {
 		const { b, calls } = spyBuilder();
-		applyProspectionScopeFilters(b, parseProspectionFilter(u('?temp=chaud')));
-		expect(String(calls.find((c) => c[0] === 'or')?.[1])).toContain('score_pertinence.gte.7');
+		applyProspectionFilters(b, parseProspectionFilter(u('?tab=entreprises&statut=ecarte')));
+		expect(calls.find((c) => c[0] === 'in' && c[1] === 'statut')?.[2]).toEqual(['ecarte']);
+		// Un filtre statut explicite prime : pas de eq('statut','vide'/'ecarte') implicite.
+		expect(calls.some((c) => c[0] === 'eq' && c[1] === 'statut')).toBe(false);
 	});
 });
 

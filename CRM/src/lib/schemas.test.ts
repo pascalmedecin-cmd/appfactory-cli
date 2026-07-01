@@ -5,7 +5,8 @@ import {
 	EntrepriseCreateSchema, EntrepriseUpdateSchema, EntrepriseDeleteSchema,
 	OpportuniteCreateSchema, OpportuniteUpdateSchema, OpportuniteMoveSchema, OpportuniteArchiveSchema,
 	SignalUpdateStatutSchema, SignalBatchDeleteSchema,
-	LeadCreateSchema, LeadUpdateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema,
+	LeadCreateSchema, LeadUpdateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema,
+	LeadMarkForContactSchema, LeadTransfertSchema,
 	RechercheCreateSchema, RechercheDeleteSchema,
 } from './schemas';
 
@@ -144,16 +145,16 @@ describe('LeadCreateSchema', () => {
 });
 
 describe('LeadBatchStatutSchema', () => {
-	it('accepte un batch valide', () => {
+	it('accepte un batch valide (statut manuel ecarte)', () => {
 		const r = validate(LeadBatchStatutSchema, {
 			ids: ['550e8400-e29b-41d4-a716-446655440000'],
-			statut: 'interesse',
+			statut: 'ecarte',
 		});
 		expect(r.success).toBe(true);
 	});
 
 	it('rejette un batch sans ids', () => {
-		const r = validate(LeadBatchStatutSchema, { ids: [], statut: 'interesse' });
+		const r = validate(LeadBatchStatutSchema, { ids: [], statut: 'ecarte' });
 		expect(r.success).toBe(false);
 	});
 
@@ -165,13 +166,22 @@ describe('LeadBatchStatutSchema', () => {
 		expect(r.success).toBe(false);
 	});
 
+	// Lot 2 durcissement : le batch n'autorise que les transitions manuelles (vide/ecarte).
+	// « a_contacter » passe par la RPC mark_lead_for_contact ; « transfere » par le pipeline.
+	it('rejette les statuts non manuels (a_contacter, transfere) - durcissement Lot 2', () => {
+		const id = '550e8400-e29b-41d4-a716-446655440000';
+		for (const statut of ['a_contacter', 'transfere', 'interesse', 'nouveau']) {
+			expect(validate(LeadBatchStatutSchema, { ids: [id], statut }).success).toBe(false);
+		}
+	});
+
 	it('rejette un lot de plus de 500 ids (cap anti-DoS, parité avec SignalBatchDeleteSchema)', () => {
 		const uuid = '550e8400-e29b-41d4-a716-446655440000';
 		const tooMany = Array.from({ length: 501 }, () => uuid);
-		expect(validate(LeadBatchStatutSchema, { ids: tooMany, statut: 'interesse' }).success).toBe(false);
+		expect(validate(LeadBatchStatutSchema, { ids: tooMany, statut: 'ecarte' }).success).toBe(false);
 		// 500 pile passe (borne inclusive).
 		const exactly500 = Array.from({ length: 500 }, () => uuid);
-		expect(validate(LeadBatchStatutSchema, { ids: exactly500, statut: 'interesse' }).success).toBe(true);
+		expect(validate(LeadBatchStatutSchema, { ids: exactly500, statut: 'ecarte' }).success).toBe(true);
 	});
 });
 
@@ -506,9 +516,19 @@ describe('LeadUpdateSchema', () => {
 describe('LeadUpdateStatutSchema', () => {
 	const validUUID = '550e8400-e29b-41d4-a716-446655440000';
 
-	it('accepte un changement de statut valide', () => {
-		const r = validate(LeadUpdateStatutSchema, { id: validUUID, statut: 'interesse' });
-		expect(r.success).toBe(true);
+	// Lot 2 : seules les transitions manuelles vide/ecarte sont acceptées.
+	it('accepte les statuts manuels vide et ecarte', () => {
+		for (const statut of ['vide', 'ecarte']) {
+			expect(validate(LeadUpdateStatutSchema, { id: validUUID, statut }).success).toBe(true);
+		}
+	});
+
+	// Durcissement Lot 2 : a_contacter (RPC) et transfere (pipeline) ne sont plus des
+	// transitions manuelles directes ; les anciens statuts interesse/nouveau sont retirés.
+	it('rejette les statuts non manuels (a_contacter, transfere, interesse, nouveau)', () => {
+		for (const statut of ['a_contacter', 'transfere', 'interesse', 'nouveau']) {
+			expect(validate(LeadUpdateStatutSchema, { id: validUUID, statut }).success).toBe(false);
+		}
 	});
 
 	it('rejette un statut invalide', () => {
@@ -517,8 +537,25 @@ describe('LeadUpdateStatutSchema', () => {
 	});
 
 	it('rejette sans id', () => {
-		const r = validate(LeadUpdateStatutSchema, { statut: 'interesse' });
+		const r = validate(LeadUpdateStatutSchema, { statut: 'ecarte' });
 		expect(r.success).toBe(false);
+	});
+});
+
+// -- LeadMarkForContactSchema (Lot 2 : « À contacter » → entre au pipeline via RPC) --
+
+describe('LeadMarkForContactSchema', () => {
+	it('accepte un UUID valide', () => {
+		const r = validate(LeadMarkForContactSchema, { id: '550e8400-e29b-41d4-a716-446655440000' });
+		expect(r.success).toBe(true);
+	});
+
+	it('rejette un id non-UUID', () => {
+		expect(validate(LeadMarkForContactSchema, { id: 'pas-un-uuid' }).success).toBe(false);
+	});
+
+	it('rejette sans id', () => {
+		expect(validate(LeadMarkForContactSchema, {}).success).toBe(false);
 	});
 });
 

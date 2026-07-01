@@ -37,7 +37,9 @@ const CAMPAGNE_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 /** Bornage de la saisie de recherche (cohérent avec l'ancien export/all-ids). */
 const MAX_SEARCH_LEN = 200;
 
-const VALID_TEMPS = new Set(['chaud', 'tiede', 'froid']);
+/** Lot 2 : remap défensif des anciens liens/bookmarks (?statut=nouveau|interesse) vers
+ *  le nouveau modèle, pour éviter un filtre silencieusement mort après la migration. */
+const LEGACY_STATUT_REMAP: Record<string, string> = { nouveau: 'vide', interesse: 'a_contacter' };
 
 export type ProspectionFilter = {
 	tab: ProspectionTabKey;
@@ -49,10 +51,10 @@ export type ProspectionFilter = {
 	filterSources: string[];
 	filterCantons: string[];
 	filterStatuts: string[];
-	filterTemperatures: string[];
 	/** Vague 3.2 : campagnes demandées (relation N-N, filtre « porte ≥1 de ces campagnes »). */
 	filterCampagnes: string[];
-	showTransferred: boolean;
+	/** Lot 2 : vue « Écartés » (statut=ecarte) au lieu de la file de tri (statut=vide). */
+	showDismissed: boolean;
 	search: string;
 	sortKey: string;
 	sortAsc: boolean;
@@ -79,14 +81,15 @@ export function parseProspectionFilter(url: URL): ProspectionFilter {
 
 	const filterSources = url.searchParams.getAll('source').slice(0, MAX_FILTER_VALUES);
 	const filterCantons = url.searchParams.getAll('canton').slice(0, MAX_FILTER_VALUES);
-	const filterStatuts = url.searchParams.getAll('statut').slice(0, MAX_FILTER_VALUES);
+	const filterStatuts = [...new Set(
+		url.searchParams.getAll('statut').map((s) => LEGACY_STATUT_REMAP[s] ?? s)
+	)].slice(0, MAX_FILTER_VALUES);
 	const filterCampagnes = url.searchParams.getAll('campagne').filter((id) => CAMPAGNE_ID_RE.test(id)).slice(0, MAX_FILTER_VALUES);
-	const filterTemperatures = url.searchParams.getAll('temp').filter((t) => VALID_TEMPS.has(t));
 	const search = (url.searchParams.get('q') ?? '').slice(0, MAX_SEARCH_LEN);
-	const showTransferred = url.searchParams.get('showTransferred') === '1';
+	const showDismissed = url.searchParams.get('ecartes') === '1';
 
 	const rawSort = url.searchParams.get('sort') ?? '';
-	const sortKey = (VALID_SORT_KEYS as readonly string[]).includes(rawSort) ? rawSort : 'score_pertinence';
+	const sortKey = (VALID_SORT_KEYS as readonly string[]).includes(rawSort) ? rawSort : 'date_import';
 	const sortAsc = url.searchParams.get('dir') === 'asc';
 
 	const effectiveSources = filterSources.length > 0
@@ -96,18 +99,9 @@ export function parseProspectionFilter(url: URL): ProspectionFilter {
 
 	return {
 		tab, tabSources, effectiveSources, sourceFilterIncompatible,
-		filterSources, filterCantons, filterStatuts, filterTemperatures, filterCampagnes,
-		showTransferred, search, sortKey, sortAsc,
+		filterSources, filterCantons, filterStatuts, filterCampagnes,
+		showDismissed, search, sortKey, sortAsc,
 	};
-}
-
-/** Expression `.or()` PostgREST pour les températures (littéraux seuls, jamais de saisie). */
-function temperatureOrExpression(temps: string[]): string | null {
-	const ranges: string[] = [];
-	if (temps.includes('chaud')) ranges.push('score_pertinence.gte.7');
-	if (temps.includes('tiede')) ranges.push('and(score_pertinence.gte.4,score_pertinence.lte.6)');
-	if (temps.includes('froid')) ranges.push('score_pertinence.lte.3');
-	return ranges.length > 0 ? ranges.join(',') : null;
 }
 
 // Les query builders PostgREST se chaînent en renvoyant le même type ; on garde le type de
@@ -115,16 +109,18 @@ function temperatureOrExpression(temps: string[]): string | null {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
- * Applique les filtres « de portée » (canton, statut/transférés, température) — identiques
- * pour la vue principale ET les compteurs par onglet. N'applique PAS le filtre source.
+ * Applique les filtres « de portée » (canton, statut) — identiques pour la vue principale
+ * ET les compteurs par onglet. N'applique PAS le filtre source.
  */
 export function applyProspectionScopeFilters<T>(query: T, f: ProspectionFilter): T {
 	let q = query as any;
 	if (f.filterCantons.length > 0) q = q.in('canton', f.filterCantons);
+	// Lot 2 : portée par statut. Défaut = file de tri (statut='vide'). La vue « Écartés »
+	// (showDismissed) montre les 'ecarte'. Un filtre statut explicite (?statut=) prime.
+	// a_contacter (au pipeline) et transfere (clients) ne s'affichent jamais en prospection.
 	if (f.filterStatuts.length > 0) q = q.in('statut', f.filterStatuts);
-	else if (!f.showTransferred) q = q.neq('statut', 'transfere');
-	const tempOr = temperatureOrExpression(f.filterTemperatures);
-	if (tempOr) q = q.or(tempOr);
+	else if (f.showDismissed) q = q.eq('statut', 'ecarte');
+	else q = q.eq('statut', 'vide');
 	return q as T;
 }
 

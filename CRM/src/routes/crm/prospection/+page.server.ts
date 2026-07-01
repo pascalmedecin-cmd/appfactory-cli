@@ -1,6 +1,6 @@
 import type { PageServerLoad, Actions } from './$types';
 import { fail, redirect } from '@sveltejs/kit';
-import { LeadCreateSchema, LeadExpressCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadTransfertSchema, RechercheCreateSchema, RechercheDeleteSchema, LEAD_FIELDS, LEAD_EXPRESS_FIELDS, extractForm, validate, coerceFormBoolean } from '$lib/schemas';
+import { LeadCreateSchema, LeadExpressCreateSchema, LeadUpdateStatutSchema, LeadBatchStatutSchema, LeadMarkForContactSchema, RechercheCreateSchema, RechercheDeleteSchema, LEAD_FIELDS, LEAD_EXPRESS_FIELDS, extractForm, validate, coerceFormBoolean } from '$lib/schemas';
 import { calculerScore } from '$lib/scoring';
 import { dbFail, escapeIlike, newId, now } from '$lib/server/db-helpers';
 import { TAB_SOURCE_MAP } from '$lib/prospection-utils';
@@ -108,7 +108,7 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 	};
 
 	// Indicateurs honnêtes (remplacent l'ancien funnel décoratif 4 cartes).
-	// 1. Leads actifs : statut ∈ {nouveau, interesse} = ce qui reste à traiter.
+	// 1. Leads actifs : statut ∈ {vide, a_contacter} = à trier + au pipeline.
 	// 2. Marchés publics ouverts : SIMAP non écartés.
 	// 3. Transférés ce mois : statut=transfere AND date_modification >= 1er du mois courant.
 	const monthStart = new Date();
@@ -173,7 +173,7 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 		locals.supabase
 			.from('prospect_leads')
 			.select('*', { count: 'exact', head: true })
-			.in('statut', ['nouveau', 'interesse']),
+			.in('statut', ['vide', 'a_contacter']),
 		locals.supabase
 			.from('prospect_leads')
 			.select('*', { count: 'exact', head: true })
@@ -232,12 +232,12 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 		pageSize,
 		sort: filter.sortKey,
 		sortAsc: filter.sortAsc,
-		filters: { sources: filter.filterSources, cantons: filter.filterCantons, statuts: filter.filterStatuts, temperatures: filter.filterTemperatures, campagnes: filter.filterCampagnes },
+		filters: { sources: filter.filterSources, cantons: filter.filterCantons, statuts: filter.filterStatuts, campagnes: filter.filterCampagnes },
 		// Vague 3.2 (premium uniquement, sinon vides -> rendu OFF byte-identique).
 		campagnes: campagnesList,
 		campagnesByLead,
 		sourceFilterIncompatible: filter.sourceFilterIncompatible,
-		showTransferred: filter.showTransferred,
+		showDismissed: filter.showDismissed,
 		search: filter.search,
 		entreprises: entreprisesRes.data ?? [],
 		// V5 (2026-06-07) : recherches sauvegardées coupées → liste vide côté UI (masque les
@@ -322,7 +322,7 @@ export const actions: Actions = {
 			montant: d.montant != null && d.montant !== '' ? Number(d.montant) : null,
 			date_publication: d.date_publication || null,
 			score_pertinence: scoreResult.total,
-			statut: 'nouveau',
+			statut: 'vide',
 			date_import: now(),
 			date_modification: now(),
 			source_intelligence_id: fromIntelligence,
@@ -346,6 +346,33 @@ export const actions: Actions = {
 			.eq('id', parsed.data.id);
 
 		return dbFail(error) ?? { success: true };
+	},
+
+	// Lot 2 : « À contacter » — le prospect entre au pipeline. RPC atomique qui passe
+	// le statut à a_contacter ET crée l'opportunité d'entrée (étape identification).
+	// Le prospect disparaît ensuite de la file de prospection (filtre de portée).
+	markForContact: async ({ request, locals }) => {
+		const form = await request.formData();
+		const parsed = validate(LeadMarkForContactSchema, extractForm(form, ['id']));
+		if (!parsed.success) return fail(400, { error: parsed.error });
+
+		// Cast `as never` : RPC créée par migration 20260701000002, pas encore dans les types.
+		const { data, error: rpcErr } = await locals.supabase.rpc(
+			'mark_lead_for_contact' as never,
+			{ p_lead_id: parsed.data.id } as never
+		);
+
+		if (rpcErr) {
+			const code = (rpcErr as { code?: string }).code;
+			if (code === 'P0002') return fail(400, { error: 'Prospect introuvable' });
+			// P0001 = lead déjà écarté / converti (non ré-activable via ce chemin).
+			if (code === 'P0001') return fail(409, { error: 'Prospect déjà traité' });
+			console.error('[markForContact] RPC mark_lead_for_contact failed:', rpcErr.message);
+			return fail(500, { error: 'Erreur lors du passage au pipeline' });
+		}
+
+		const result = data as { opportunite_id?: string; created?: boolean } | null;
+		return { success: true, opportuniteId: result?.opportunite_id ?? null };
 	},
 
 	batchStatut: async ({ request, locals }) => {
@@ -372,43 +399,6 @@ export const actions: Actions = {
 			.in('id', parsed.data.ids);
 
 		return dbFail(error) ?? { success: true };
-	},
-
-	transferer: async ({ request, locals }) => {
-		const form = await request.formData();
-		const parsed = validate(LeadTransfertSchema, extractForm(form, ['id']));
-		if (!parsed.success) return fail(400, { error: parsed.error });
-
-		// Audit 360 V2b H-10 : transfert atomique via RPC plpgsql
-		// `transfer_lead_to_crm` (migration 20260510_007). Rollback automatique
-		// si l'un des INSERT/UPDATE échoue (transaction implicite Postgres).
-		// Avant le fix : 3 INSERT/UPDATE séquentiels en JS = état partiel
-		// corrompu (entreprise sans contact, ou orphelins) si erreur en cours.
-		// Cast `as never` : la fonction RPC est créée par migration 20260510_007 ;
-		// les types Database générés ne la connaissent pas encore. Tracé pour
-		// regen post-merge (prochaine génération `supabase gen types`).
-		const { data, error: rpcErr } = await locals.supabase.rpc(
-			'transfer_lead_to_crm' as never,
-			{ p_lead_id: parsed.data.id } as never
-		);
-
-		if (rpcErr) {
-			// P0002 = lead_introuvable.
-			if (rpcErr.code === 'P0002') return fail(400, { error: 'Lead introuvable' });
-			// P0001 = lead_already_transferred (audit V2b bug-hunter F2 fix).
-			if (rpcErr.code === 'P0001') {
-				return fail(409, { error: 'Lead déjà transféré dans le CRM' });
-			}
-			console.error('[transferer] RPC transfer_lead_to_crm failed:', rpcErr.message);
-			return fail(500, { error: 'Erreur lors du transfert (transaction annulée)' });
-		}
-
-		const result = data as { entreprise_id?: string; contact_id?: string | null } | null;
-		if (!result?.entreprise_id) {
-			return fail(500, { error: 'Réponse RPC invalide' });
-		}
-
-		return { success: true, entrepriseId: result.entreprise_id };
 	},
 
 	saveRecherche: async ({ request, locals }) => {
@@ -549,7 +539,7 @@ export const actions: Actions = {
 			// score_pertinence reste null jusqu'à enrichissement Zefix : évite que les
 			// leads terrain soient filtrés "froid" par le filtre température (seuil ≤ 3).
 			score_pertinence: null,
-			statut: 'nouveau',
+			statut: 'vide',
 			date_import: ts,
 			date_modification: ts,
 		});

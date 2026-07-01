@@ -4,8 +4,8 @@ import { EXPORT_SCHEMA_VERSION } from '$lib/server/csv-export';
 
 /**
  * Tests du handler `GET /api/export/prospection` (export CSV filtré, miroir du
- * `load` de /crm/prospection). Couvre : sources par onglet, filtres canton/statut/
- * température, recherche 3 champs + dédup, filtre source incompatible → CSV vide,
+ * `load` de /crm/prospection). Couvre : sources par onglet, filtres canton/statut,
+ * recherche 3 champs + dédup, filtre source incompatible → CSV vide,
  * headers (BOM, content-type, disposition, schema version), erreur Supabase → 500.
  */
 
@@ -17,8 +17,7 @@ function createMock(rows: Row[], opts: { dbError?: { message: string }; count?: 
 	const builder: Record<string, unknown> = {
 		select(...a: unknown[]) { calls.push(['select', ...a]); return builder; },
 		in(c: string, v: unknown) { calls.push(['in', c, v]); return builder; },
-		neq(c: string, v: unknown) { calls.push(['neq', c, v]); return builder; },
-		or(e: unknown) { calls.push(['or', e]); return builder; },
+		eq(c: string, v: unknown) { calls.push(['eq', c, v]); return builder; },
 		ilike(c: string, v: unknown) { calls.push(['ilike', c, v]); return builder; },
 		order(c: string, o: unknown) { calls.push(['order', c, o]); return builder; },
 		limit(n: number) {
@@ -52,7 +51,7 @@ function hasCall(mock: ReturnType<typeof createMock>, method: string, col?: stri
 vi.mock('$app/environment', () => ({ browser: false, dev: true, building: false }));
 
 describe('GET /api/export/prospection', () => {
-	it('onglet Entreprises sans filtre → CSV des sources de l\'onglet + neq transfere par défaut', async () => {
+	it('onglet Entreprises sans filtre → CSV des sources de l\'onglet + eq statut=vide par défaut', async () => {
 		const mock = createMock([
 			{ id: '1', raison_sociale: 'Acme Vitrage', source: 'zefix', canton: 'GE', score_pertinence: 7 },
 		]);
@@ -70,10 +69,11 @@ describe('GET /api/export/prospection', () => {
 		// Sources de l'onglet entreprises (zefix + search_ch + google_places).
 		const inSource = mock.calls().find((c) => c[0] === 'in' && c[1] === 'source');
 		expect(inSource?.[2]).toEqual(['zefix', 'search_ch', 'google_places']);
-		// Pas de filtre statut explicite → cache les transférés par défaut.
-		expect(hasCall(mock, 'neq', 'statut')).toBe(true);
-		// Tri par défaut score_pertinence.
-		expect(mock.calls().some((c) => c[0] === 'order' && c[1] === 'score_pertinence')).toBe(true);
+		// Lot 2 : pas de filtre statut explicite → file de tri (statut='vide') par défaut.
+		const eqStatut = mock.calls().find((c) => c[0] === 'eq' && c[1] === 'statut');
+		expect(eqStatut?.[2]).toBe('vide');
+		// Tri par défaut date_import (Lot 2 : le tri par score est retiré de l'UI).
+		expect(mock.calls().some((c) => c[0] === 'order' && c[1] === 'date_import')).toBe(true);
 	});
 
 	it('filtre canton → .in(canton, [...])', async () => {
@@ -83,19 +83,13 @@ describe('GET /api/export/prospection', () => {
 		expect(inCanton?.[2]).toEqual(['VD', 'GE']);
 	});
 
-	it('filtre statut explicite → .in(statut) ET pas de neq transfere', async () => {
+	it('filtre statut explicite → .in(statut) ET aucun eq statut implicite', async () => {
 		const mock = createMock([{ id: '1', raison_sociale: 'X', source: 'zefix' }]);
-		await callGet('?tab=entreprises&statut=nouveau', mock);
+		await callGet('?tab=entreprises&statut=ecarte', mock);
 		const inStatut = mock.calls().find((c) => c[0] === 'in' && c[1] === 'statut');
-		expect(inStatut?.[2]).toEqual(['nouveau']);
-		expect(hasCall(mock, 'neq', 'statut')).toBe(false);
-	});
-
-	it('température chaud → filtre .or(score>=7)', async () => {
-		const mock = createMock([{ id: '1', raison_sociale: 'X', source: 'zefix' }]);
-		await callGet('?tab=entreprises&temp=chaud', mock);
-		const or = mock.calls().find((c) => c[0] === 'or');
-		expect(String(or?.[1])).toContain('score_pertinence.gte.7');
+		expect(inStatut?.[2]).toEqual(['ecarte']);
+		// Un filtre statut explicite prime : pas de eq('statut','vide') implicite.
+		expect(hasCall(mock, 'eq', 'statut')).toBe(false);
 	});
 
 	it('recherche → 3 .ilike (raison_sociale, localite, canton) + dédup par id', async () => {

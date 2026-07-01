@@ -165,7 +165,7 @@ export function candidateToInsertRow(
 		montant: null,
 		date_publication: core.date_publication,
 		score_pertinence: score,
-		statut: 'nouveau',
+		statut: 'vide',
 		date_import: opts.now,
 		date_modification: opts.now,
 		source_intelligence_id: opts.fromIntelligence,

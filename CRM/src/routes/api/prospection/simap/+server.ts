@@ -169,7 +169,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			id: randomUUID(),
 			source: 'simap' as const,
 			source_id: project.id,
-			source_url: `https://www.simap.ch/publications/${project.projectNumber}`,
+			// Lot 2 : l'ancien /publications/{projectNumber} est périmé (404). Format
+			// vérifié navigateur réel au Lot 1 : /fr/project-detail/{id SIMAP} (= project.id).
+			source_url: `https://www.simap.ch/fr/project-detail/${project.id}`,
 			raison_sociale: procOffice || title,
 			nom_contact: null,
 			adresse: null,
@@ -184,7 +186,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			montant: null,
 			date_publication: project.publicationDate,
 			score_pertinence: scoreResult.total,
-			statut: 'nouveau',
+			statut: 'vide',
 			date_import: now,
 			date_modification: now,
 			source_intelligence_id: fromIntelligence,

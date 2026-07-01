@@ -1,15 +1,17 @@
 /**
- * Phase 1 widget triage matin : 3 actions sur un lead à fort potentiel (queue dashboard).
- * - POST /api/prospection/triage/oui      → statut=interesse + redirect fiche
- * - POST /api/prospection/triage/non      → statut=ecarte
+ * Phase 1 widget triage matin : 3 actions sur un lead à trier (queue dashboard).
+ * - POST /api/prospection/triage/oui       → « à contacter » : RPC mark_lead_for_contact
+ *   (statut=a_contacter + crée l'opportunité d'entrée au pipeline, atomique).
+ * - POST /api/prospection/triage/non       → statut=ecarte
  * - POST /api/prospection/triage/plus-tard → triage_snoozed_until = now + N jours (config.triage.snoozeDays)
  *
  * Body : {leadId: string (uuid)}
  * Auth : session utilisateur. Whitelist 3 fondateurs côté hooks (queue partagée par design).
  * Rate limit : 10/min par IP via hooks.server.ts (préfixe /api/prospection/*).
  *
- * Concurrency : queue partagée 3 fondateurs → guard optimistic sur statut='nouveau'
+ * Concurrency : queue partagée 3 fondateurs → guard optimistic sur statut='vide'
  * pour éviter qu'un fondateur écrase silencieusement la décision d'un autre.
+ * Pour 'oui', l'atomicité + le guard de concurrence sont portés par la RPC (FOR UPDATE).
  */
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { z } from 'zod';
@@ -45,7 +47,8 @@ export const POST = async ({ request, params, locals }: RequestEvent) => {
 
 	// Lecture initiale : RLS authenticated_full_access (queue partagée 3 fondateurs).
 	// Le commentaire ci-dessous est factuel : on lit pour valider l'existence + verrouiller
-	// la transition optimiste (cf. UPDATE ci-dessous qui filtre sur statut='nouveau').
+	// la transition optimiste (cf. UPDATE ci-dessous qui filtre sur statut='vide' ;
+	// pour 'oui', l'atomicité passe par la RPC mark_lead_for_contact).
 	const { data: lead, error: readErr } = await locals.supabase
 		.from('prospect_leads')
 		.select('id, statut, triage_snoozed_until')
@@ -59,21 +62,39 @@ export const POST = async ({ request, params, locals }: RequestEvent) => {
 	if (!lead) return json({ error: 'Lead introuvable' }, { status: 404 });
 
 	// Concurrency guard 1 : un fondateur ne peut pas réécraser la décision d'un autre.
-	// Si un autre fondateur a déjà passé le lead à interesse / ecarte / transfere depuis
+	// Si un autre fondateur a déjà passé le lead à a_contacter / ecarte / transfere depuis
 	// le SELECT initial du widget, on retourne 409 Conflict + le statut courant pour que
 	// l'UI rafraîchisse la queue.
-	if (lead.statut !== 'nouveau') {
+	if (lead.statut !== 'vide') {
 		return json(
 			{ error: 'Lead déjà traité par un autre fondateur', currentStatus: lead.statut },
 			{ status: 409 }
 		);
 	}
 
+	// 'oui' = « à contacter » : la RPC passe le lead à a_contacter ET crée l'opportunité
+	// d'entrée au pipeline, atomiquement. Le guard de concurrence (FOR UPDATE + check statut)
+	// est porté par la RPC : si un autre fondateur a traité le lead entre-temps → P0001 → 409.
+	if (action === 'oui') {
+		// Cast `as never` : RPC créée par migration 20260701000002, pas encore dans les
+		// types Database générés (même pattern que transfer_lead_to_crm).
+		const { data, error: rpcErr } = await locals.supabase.rpc(
+			'mark_lead_for_contact' as never,
+			{ p_lead_id: leadId } as never
+		);
+		if (rpcErr) {
+			if (rpcErr.code === 'P0001') {
+				return json({ error: 'Lead déjà traité par un autre fondateur' }, { status: 409 });
+			}
+			console.error('[triage] rpc mark_lead_for_contact', { leadId, code: rpcErr.code });
+			return json({ error: 'Erreur mise à jour' }, { status: 500 });
+		}
+		const opportuniteId = (data as { opportunite_id?: string } | null)?.opportunite_id ?? null;
+		return json({ ok: true, action, leadId, opportuniteId });
+	}
+
 	let update: TablesUpdate<'prospect_leads'>;
 	switch (action) {
-		case 'oui':
-			update = { statut: 'interesse', date_modification: ts };
-			break;
 		case 'non':
 			update = { statut: 'ecarte', date_modification: ts };
 			break;
@@ -95,7 +116,7 @@ export const POST = async ({ request, params, locals }: RequestEvent) => {
 		}
 	}
 
-	// Concurrency guard 2 : UPDATE atomique conditionnel sur statut='nouveau'.
+	// Concurrency guard 2 : UPDATE atomique conditionnel sur statut='vide'.
 	// Si le statut a changé entre notre SELECT et notre UPDATE (race window ~ms),
 	// l'UPDATE ne touche aucune ligne. PostgREST ne renvoie pas count par défaut, donc
 	// on demande explicitement count='exact' sur le filterBuilder.
@@ -103,7 +124,7 @@ export const POST = async ({ request, params, locals }: RequestEvent) => {
 		.from('prospect_leads')
 		.update(update, { count: 'exact' })
 		.eq('id', leadId)
-		.eq('statut', 'nouveau');
+		.eq('statut', 'vide');
 
 	if (updErr) {
 		console.error('[triage] update error', { leadId, action, code: updErr.code });

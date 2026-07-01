@@ -21,8 +21,9 @@ export const TAB_SOURCE_MAP: Record<ProspectionTabKey, readonly string[]> = {
 } as const;
 
 // Champs de tri exposés à l'utilisateur (cohérent avec VALID_SORT_KEYS côté serveur).
+// Lot 2 : tri par priorité (score) retiré de l'UI (le score reste calculé/stocké et
+// affiché ailleurs : sidepane, tri matinal, mobile). Défaut serveur = date_import.
 export const SORT_FIELDS = [
-	{ value: 'score_pertinence', label: 'Priorité (score)' },
 	{ value: 'raison_sociale', label: 'Entreprise (A-Z)' },
 	{ value: 'date_import', label: 'Date ajout' },
 	{ value: 'date_publication', label: 'Date publication' },
@@ -87,8 +88,8 @@ export function scoreIcon(score: number): 'flame' | 'target' | 'eye' {
 
 export function statutLabel(statut: string): string {
 	const labels: Record<string, string> = {
-		nouveau: 'Nouveau',
-		interesse: 'Intéressé',
+		vide: 'À trier',
+		a_contacter: 'À contacter',
 		ecarte: 'Écarté',
 		transfere: 'Converti',
 	};
@@ -97,8 +98,8 @@ export function statutLabel(statut: string): string {
 
 export function statutBadgeVariant(statut: string): 'default' | 'info' | 'success' | 'warning' | 'danger' | 'muted' {
 	switch (statut) {
-		case 'nouveau': return 'warning';
-		case 'interesse': return 'info';
+		case 'vide': return 'warning';
+		case 'a_contacter': return 'info';
 		case 'ecarte': return 'muted';
 		case 'transfere': return 'success';
 		default: return 'default';
@@ -133,19 +134,6 @@ export const sourceOptions = [
 const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
 
 export const cantonOptions = cantons.map(c => ({ value: c, label: `${cantonNoms[c] ?? c} (${c})` }));
-
-export const temperatureOptions = [
-	{ value: 'chaud', label: 'Chaud', dotColor: 'bg-danger' },
-	{ value: 'tiede', label: 'Tiède', dotColor: 'bg-warning' },
-	{ value: 'froid', label: 'Froid', dotColor: 'bg-text-muted' },
-];
-
-export const statutOptions = [
-	{ value: 'nouveau', label: 'Nouveau' },
-	{ value: 'interesse', label: 'Intéressé' },
-	{ value: 'ecarte', label: 'Écarté' },
-	{ value: 'transfere', label: 'Converti' },
-];
 
 // --- Date relative ---
 

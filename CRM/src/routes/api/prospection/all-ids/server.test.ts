@@ -17,8 +17,7 @@ function createMock(rows: Row[], opts: { dbError?: { message: string }; count?: 
 	const builder: Record<string, unknown> = {
 		select(...a: unknown[]) { calls.push(['select', ...a]); return builder; },
 		in(c: string, v: unknown) { calls.push(['in', c, v]); return builder; },
-		neq(c: string, v: unknown) { calls.push(['neq', c, v]); return builder; },
-		or(e: unknown) { calls.push(['or', e]); return builder; },
+		eq(c: string, v: unknown) { calls.push(['eq', c, v]); return builder; },
 		ilike(c: string, v: unknown) { calls.push(['ilike', c, v]); return builder; },
 		order(c: string, o: unknown) { calls.push(['order', c, o]); return builder; },
 		limit(n: number) {
@@ -54,8 +53,10 @@ describe('GET /api/prospection/all-ids (fusion filtres)', () => {
 		// FIX 1 : sources de l'onglet (avant : aucune borne source).
 		const inSource = mock.calls().find((c) => c[0] === 'in' && c[1] === 'source');
 		expect(inSource?.[2]).toEqual(['zefix', 'search_ch', 'google_places']);
-		// FIX 2 : transférés exclus par défaut (avant : inclus).
-		expect(hasCall(mock, 'neq', 'statut')).toBe(true);
+		// FIX 2 (Lot 2) : file de tri par défaut → eq statut=vide (avant : neq transfere).
+		// a_contacter/transfere/ecarte ne sont jamais sélectionnés par défaut en prospection.
+		const eqStatut = mock.calls().find((c) => c[0] === 'eq' && c[1] === 'statut');
+		expect(eqStatut?.[2]).toBe('vide');
 		// Sélection d'ids seulement.
 		expect(mock.calls().find((c) => c[0] === 'select')?.[1]).toBe('id');
 	});
@@ -67,11 +68,12 @@ describe('GET /api/prospection/all-ids (fusion filtres)', () => {
 		expect(ilikeFields).toEqual(['raison_sociale', 'localite', 'canton']);
 	});
 
-	it('statut explicite (transfere) → in(statut) sans neq', async () => {
+	it('statut explicite (transfere) → in(statut) et aucun eq statut implicite', async () => {
 		const mock = createMock([{ id: '1' }], { count: 1 });
 		await callGet('?tab=entreprises&statut=transfere', mock);
 		expect(mock.calls().find((c) => c[0] === 'in' && c[1] === 'statut')?.[2]).toEqual(['transfere']);
-		expect(hasCall(mock, 'neq', 'statut')).toBe(false);
+		// Un filtre statut explicite prime : pas de eq('statut','vide') implicite.
+		expect(hasCall(mock, 'eq', 'statut')).toBe(false);
 	});
 
 	it('source incompatible avec l’onglet → ids vide, aucune requête DB', async () => {

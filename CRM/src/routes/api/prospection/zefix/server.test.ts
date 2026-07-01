@@ -95,7 +95,7 @@ describe('POST /api/prospection/zefix', () => {
 		expect(inserted).toHaveLength(2);
 		expect(inserted[0].source).toBe('zefix');
 		expect(inserted[0].source_id).toBe('CHE-1');
-		expect(inserted[0].statut).toBe('nouveau');
+		expect(inserted[0].statut).toBe('vide');
 		expect(inserted[0].canton).toBe('GE');
 	});
 

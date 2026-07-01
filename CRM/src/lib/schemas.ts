@@ -130,6 +130,13 @@ export const OpportuniteArchiveSchema = z.object({
 	motif_perte: optionalString,
 });
 
+// Lot 2 : « Convertir en client » depuis le pipeline. Sur une opportunité issue d'un
+// prospect (prospect_lead_id), crée l'entreprise + contact (RPC transfer_lead_to_crm)
+// et lie l'opportunité à l'entreprise. Seul chemin prospect -> entreprise désormais.
+export const OpportuniteConvertSchema = z.object({
+	id: requiredUUID,
+});
+
 // F4 V2 mobile : update minimal de la prochaine action sur une opportunité
 // (date relance + notes libres). Utilisé par PipelineQuickAdvance.svelte.
 // Format date strict YYYY-MM-DD pour éviter qu'une saisie libre ("avant juin")
@@ -173,9 +180,19 @@ export const SOURCES_LEAD = [
 	'zefix', 'simap', 'search_ch', 'regbl', 'lead_express', 'google_places',
 ] as const;
 
+// Lot 2 : modèle simplifié VIDE (à trier) / a_contacter (entre au pipeline) /
+// ecarte (masqué, réactivable). 'transfere' conservé pour la conversion client
+// depuis le pipeline (RPC transfer_lead_to_crm). Aligné migration 20260701000002
+// (CHECK prospect_leads_statut_check) - drift DB<->Zod = 23514 silencieux.
 export const STATUTS_LEAD = [
-	'nouveau', 'interesse', 'ecarte', 'transfere',
+	'vide', 'a_contacter', 'ecarte', 'transfere',
 ] as const;
+
+// Transitions manuelles directes autorisées via updateStatut / batchStatut :
+// écarter (ecarte) et réactiver (vide). 'a_contacter' passe EXCLUSIVEMENT par la RPC
+// mark_lead_for_contact (crée l'opportunité) ; 'transfere' par transfer_lead_to_crm au
+// pipeline. Invariant préservé : a_contacter => une opportunité liée existe toujours.
+export const STATUTS_LEAD_MANUELS = ['vide', 'ecarte'] as const;
 
 export const CANTONS_LEAD = [
 	'GE', 'VD', 'VS', 'NE', 'FR', 'JU',
@@ -220,7 +237,7 @@ export const LEAD_EXPRESS_FIELDS = [
 
 export const LeadUpdateStatutSchema = z.object({
 	id: z.string().uuid(),
-	statut: z.enum(STATUTS_LEAD),
+	statut: z.enum(STATUTS_LEAD_MANUELS),
 });
 
 export const LeadBatchStatutSchema = z.object({
@@ -228,7 +245,12 @@ export const LeadBatchStatutSchema = z.object({
 		.array(z.string().uuid())
 		.min(1, 'Selectionnez au moins un lead')
 		.max(500, 'Maximum 500 leads par lot'),
-	statut: z.enum(STATUTS_LEAD),
+	statut: z.enum(STATUTS_LEAD_MANUELS),
+});
+
+// « À contacter » : le prospect entre au pipeline (RPC mark_lead_for_contact).
+export const LeadMarkForContactSchema = z.object({
+	id: z.string().uuid(),
 });
 
 export const LeadTransfertSchema = z.object({

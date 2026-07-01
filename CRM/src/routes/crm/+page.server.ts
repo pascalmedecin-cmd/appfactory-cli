@@ -21,14 +21,14 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const weekEnd = endOfWeekIso(today);
 
 	// Phase 1 widget triage matin : queue de leads à fort potentiel non touchés.
-	// Critères : statut=nouveau ET score>=config.scoring.triage.scoreMin (5)
+	// Critères : statut='vide' (à trier) ET score>=config.scoring.triage.scoreMin (5)
 	// ET (triage_snoozed_until IS NULL OR <= now()).
 	// Ordre : score DESC puis date_import DESC. Cap (config.scoring.triage.queueCap = 25).
 	// La colonne triage_snoozed_until est apportée par migration 20260501_001_triage_snoozed_until.sql.
 	const triageQuery = locals.supabase
 		.from('prospect_leads')
 		.select('id, raison_sociale, score_pertinence, statut, source, source_id, source_url, canton, localite, adresse, npa, telephone, email, nom_contact, site_web, secteur_detecte, description, date_publication, montant', { count: 'exact' })
-		.eq('statut', 'nouveau')
+		.eq('statut', 'vide')
 		.gte('score_pertinence', config.scoring.triage.scoreMin)
 		.or(`triage_snoozed_until.is.null,triage_snoozed_until.lte.${nowIso}`)
 		.order('score_pertinence', { ascending: false })

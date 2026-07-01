@@ -102,7 +102,7 @@ describe('POST /api/prospection/import-selected', () => {
 		const inserted = ev.captured.current as Array<Record<string, unknown>>;
 		expect(inserted).toHaveLength(2);
 		expect(inserted.map((r) => r.source_id).sort()).toEqual(['s1', 's2']);
-		expect(inserted[0].statut).toBe('nouveau');
+		expect(inserted[0].statut).toBe('vide');
 		expect(inserted[0].source).toBe('search_ch');
 	});
 

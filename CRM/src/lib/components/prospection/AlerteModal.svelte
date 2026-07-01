@@ -4,7 +4,7 @@
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import MultiSelectDropdown from '$lib/components/MultiSelectDropdown.svelte';
 	import { toasts } from '$lib/stores/toast';
-	import { sourceOptions, cantonOptions, temperatureOptions } from '$lib/prospection-utils';
+	import { sourceOptions, cantonOptions } from '$lib/prospection-utils';
 
 	let {
 		open = $bindable(false),
@@ -15,7 +15,6 @@
 	let nom = $state('');
 	let sources = $state<string[]>([]);
 	let cantons = $state<string[]>([]);
-	let temperatures = $state<string[]>([]);
 	let frequence = $state('quotidien');
 	let motsCles = $state<string[]>([]);
 	let motCleInput = $state('');
@@ -25,7 +24,6 @@
 		nom = '';
 		sources = [];
 		cantons = [];
-		temperatures = [];
 		motsCles = [];
 		motCleInput = '';
 		frequence = 'quotidien';
@@ -110,13 +108,6 @@
 					label="Cantons"
 					tooltip="Zones géographiques à surveiller"
 				/>
-				<MultiSelectDropdown
-					bind:selected={temperatures}
-					options={temperatureOptions}
-					icon="thermostat"
-					label="Température"
-					tooltip="Niveau d'intérêt estimé du prospect"
-				/>
 			</div>
 
 			<div class="p-4 rounded-xl" style="background: var(--color-prosp-enrich-bg); border: 1px solid color-mix(in srgb, var(--color-prosp-enrich-border), transparent 80%)">
@@ -165,7 +156,6 @@
 		<!-- Hidden fields -->
 		<input type="hidden" name="sources" value={sources.length > 0 ? JSON.stringify(sources) : ''} />
 		<input type="hidden" name="cantons" value={cantons.length > 0 ? JSON.stringify(cantons) : ''} />
-		<input type="hidden" name="temperatures" value={temperatures.length > 0 ? JSON.stringify(temperatures) : ''} />
 		<input type="hidden" name="mots_cles" value={motsCles.length > 0 ? JSON.stringify(motsCles) : ''} />
 		<input type="hidden" name="alerte_active" value="true" />
 

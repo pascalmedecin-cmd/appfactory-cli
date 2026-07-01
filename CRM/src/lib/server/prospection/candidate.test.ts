@@ -67,7 +67,7 @@ describe('candidate — scoreCandidate', () => {
 describe('candidate — candidateToInsertRow', () => {
 	it('construit une ligne serveur (id/dates/statut serveur, score injecté)', () => {
 		const row = candidateToInsertRow(baseCore(), 7, { now: '2026-06-18T00:00:00.000Z', fromIntelligence: null, fromTerm: null });
-		expect(row.statut).toBe('nouveau');
+		expect(row.statut).toBe('vide');
 		expect(row.score_pertinence).toBe(7);
 		expect(row.source).toBe('search_ch');
 		expect(row.date_import).toBe('2026-06-18T00:00:00.000Z');

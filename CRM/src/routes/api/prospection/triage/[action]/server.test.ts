@@ -20,15 +20,28 @@ type MockBehavior = {
 	leadFound?: boolean;
 	readError?: boolean;
 	updateError?: boolean;
-	leadStatut?: string; // statut du lead retourné par le SELECT (défaut 'nouveau')
+	leadStatut?: string; // statut du lead retourné par le SELECT (défaut 'vide')
 	leadSnoozedUntil?: string | null; // pour test cumul snooze
 	capturedUpdate?: { current: Record<string, unknown> | null };
+	// Lot 2 : l'action « oui » passe par la RPC mark_lead_for_contact (crée l'opportunité).
+	rpcData?: Record<string, unknown> | null; // data renvoyé par la RPC (succès)
+	rpcError?: { code?: string; message: string } | null; // erreur RPC (P0001 => 409, autre => 500)
+	capturedRpc?: { current: { name: string; params: unknown } | null };
 };
 
 type MockResult = { data: unknown; error: { message: string } | null };
 
 function createMockSupabase(behavior: MockBehavior) {
 	return {
+		// La RPC est appelée au niveau client Supabase (pas sur le query builder).
+		rpc(name: string, params: unknown): Promise<{ data: unknown; error: { code?: string; message: string } | null }> {
+			if (behavior.capturedRpc) behavior.capturedRpc.current = { name, params };
+			if (behavior.rpcError) return Promise.resolve({ data: null, error: behavior.rpcError });
+			return Promise.resolve({
+				data: behavior.rpcData ?? { opportunite_id: 'opp-x', created: true },
+				error: null,
+			});
+		},
 		from(_table: string) {
 			const state: {
 				mode: 'select' | 'update' | null;
@@ -54,7 +67,7 @@ function createMockSupabase(behavior: MockBehavior) {
 						return {
 							data: {
 								id: '00000000-0000-0000-0000-000000000001',
-								statut: behavior.leadStatut ?? 'nouveau',
+								statut: behavior.leadStatut ?? 'vide',
 								triage_snoozed_until: behavior.leadSnoozedUntil ?? null,
 							},
 							error: null,
@@ -87,7 +100,8 @@ function makeEvent(
 	opts: MockBehavior = { leadFound: true }
 ) {
 	const captured = { current: null as Record<string, unknown> | null };
-	const supabase = createMockSupabase({ ...opts, capturedUpdate: captured });
+	const capturedRpc = { current: null as { name: string; params: unknown } | null };
+	const supabase = createMockSupabase({ ...opts, capturedUpdate: captured, capturedRpc });
 	return {
 		event: {
 			request: new Request('http://test/api/prospection/triage/' + action, {
@@ -106,6 +120,7 @@ function makeEvent(
 			},
 		},
 		captured,
+		capturedRpc,
 	};
 }
 
@@ -152,12 +167,38 @@ describe('POST /api/prospection/triage/[action]', () => {
 		expect(res.status).toBe(500);
 	});
 
-	it('action oui → set statut interesse + date_modification', async () => {
-		const { event, captured } = makeEvent('oui', { leadId: VALID_ID });
+	it('action oui → appelle la RPC mark_lead_for_contact et renvoie opportuniteId (aucun UPDATE)', async () => {
+		const { event, captured, capturedRpc } = makeEvent('oui', { leadId: VALID_ID });
 		const res = await POST(event as unknown as Parameters<typeof POST>[0]);
 		expect(res.status).toBe(200);
-		expect(captured.current?.statut).toBe('interesse');
-		expect(captured.current?.date_modification).toBeTruthy();
+		// La RPC est appelée avec le nom exact et le paramètre p_lead_id (cast `as never` côté prod
+		// = même valeur à l'exécution).
+		expect(capturedRpc.current?.name).toBe('mark_lead_for_contact');
+		expect(capturedRpc.current?.params).toEqual({ p_lead_id: VALID_ID });
+		// L'action « oui » ne fait plus d'UPDATE optimiste : l'atomicité est portée par la RPC.
+		expect(captured.current).toBeNull();
+		const body = await res.json();
+		expect(body.opportuniteId).toBe('opp-x');
+	});
+
+	it('action oui sur lead déjà traité (RPC P0001) → 409', async () => {
+		const { event } = makeEvent(
+			'oui',
+			{ leadId: VALID_ID },
+			{ leadFound: true, rpcError: { code: 'P0001', message: 'Lead déjà traité (concurrence)' } }
+		);
+		const res = await POST(event as unknown as Parameters<typeof POST>[0]);
+		expect(res.status).toBe(409);
+	});
+
+	it('action oui, erreur RPC non-P0001 → 500', async () => {
+		const { event } = makeEvent(
+			'oui',
+			{ leadId: VALID_ID },
+			{ leadFound: true, rpcError: { code: 'XX000', message: 'boom' } }
+		);
+		const res = await POST(event as unknown as Parameters<typeof POST>[0]);
+		expect(res.status).toBe(500);
 	});
 
 	it('action non → set statut ecarte', async () => {
@@ -179,9 +220,9 @@ describe('POST /api/prospection/triage/[action]', () => {
 		expect(Math.abs(snooze - expected)).toBeLessThan(5_000);
 	});
 
-	it('500 si UPDATE échoue (préserve atomicité)', async () => {
+	it('500 si UPDATE échoue (préserve atomicité) - action non', async () => {
 		const { event } = makeEvent(
-			'oui',
+			'non',
 			{ leadId: VALID_ID },
 			{ leadFound: true, updateError: true }
 		);
@@ -199,16 +240,17 @@ describe('POST /api/prospection/triage/[action]', () => {
 	});
 
 	// Concurrency : queue partagée 3 fondateurs, anti-écrase silencieux (Bug-hunter H2)
-	it('409 si lead déjà traité par un autre fondateur (statut=interesse)', async () => {
+	// Lot 2 : le guard rejette tout statut != 'vide' (a_contacter, ecarte, transfere).
+	it('409 si lead déjà passé au pipeline par un autre fondateur (statut=a_contacter)', async () => {
 		const { event } = makeEvent(
 			'non',
 			{ leadId: VALID_ID },
-			{ leadFound: true, leadStatut: 'interesse' }
+			{ leadFound: true, leadStatut: 'a_contacter' }
 		);
 		const res = await POST(event as unknown as Parameters<typeof POST>[0]);
 		expect(res.status).toBe(409);
 		const body = await res.json();
-		expect(body.currentStatus).toBe('interesse');
+		expect(body.currentStatus).toBe('a_contacter');
 	});
 
 	it('409 si lead déjà transféré (statut=transfere)', async () => {
@@ -227,7 +269,7 @@ describe('POST /api/prospection/triage/[action]', () => {
 		const { event, captured } = makeEvent(
 			'plus-tard',
 			{ leadId: VALID_ID },
-			{ leadFound: true, leadStatut: 'nouveau', leadSnoozedUntil: futureSnooze }
+			{ leadFound: true, leadStatut: 'vide', leadSnoozedUntil: futureSnooze }
 		);
 		const res = await POST(event as unknown as Parameters<typeof POST>[0]);
 		expect(res.status).toBe(200);
@@ -243,7 +285,7 @@ describe('POST /api/prospection/triage/[action]', () => {
 		const { event, captured } = makeEvent(
 			'plus-tard',
 			{ leadId: VALID_ID },
-			{ leadFound: true, leadStatut: 'nouveau', leadSnoozedUntil: pastSnooze }
+			{ leadFound: true, leadStatut: 'vide', leadSnoozedUntil: pastSnooze }
 		);
 		const res = await POST(event as unknown as Parameters<typeof POST>[0]);
 		expect(res.status).toBe(200);

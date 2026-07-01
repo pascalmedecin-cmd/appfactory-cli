@@ -303,7 +303,7 @@ describe('POST /api/prospection/searchch', () => {
 		expect(inserted[0].adresse).toBe('Rue du Lac 12');
 		expect(inserted[0].npa).toBe('1200');
 		expect(inserted[0].canton).toBe('GE');
-		expect(inserted[0].statut).toBe('nouveau');
+		expect(inserted[0].statut).toBe('vide');
 		expect(inserted[0].score_pertinence).toBeTypeOf('number');
 		// source_id = tel:id stable préfixé id: (UID search.ch fait foi sur dédup intra-source).
 		expect(inserted[0].source_id).toBe('id:aaaaaaaaaaaaaaa1');

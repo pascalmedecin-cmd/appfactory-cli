@@ -67,6 +67,7 @@
 	let editMode = $state(false);
 	let saving = $state(false);
 	let archiving = $state(false);
+	let converting = $state(false);
 	let lostModalOpen = $state(false);
 	let motifPerteCat = $state('');
 	let motifPerteDetail = $state('');
@@ -117,6 +118,21 @@
 
 	const totals = $derived(totalsByEtape(data.opportunites));
 	const indicators = $derived(pipelineIndicators(data.opportunites));
+
+	// Lot 2 : « Convertir en client » visible seulement pour une opportunité issue
+	// d'un prospect (prospect_lead_id non-null), pas encore convertie (sans entreprise_id)
+	// et en étape active (ni gagné ni perdu). `prospect_lead_id` n'est pas encore dans les
+	// types Database générés (migration 20260701000002) → lecture par cast local.
+	const canConvertToClient = $derived.by(() => {
+		if (!selectedOpp) return false;
+		const leadId = (selectedOpp as { prospect_lead_id?: string | null }).prospect_lead_id;
+		return (
+			!!leadId &&
+			!selectedOpp.entreprise_id &&
+			selectedOpp.etape_pipeline !== 'gagne' &&
+			selectedOpp.etape_pipeline !== 'perdu'
+		);
+	});
 
 	// Vague 2 « listes premium » (même flag JWT que les autres pages). OFF → rendu actuel,
 	// zéro régression. Delta kanban : bande géante → strip de chips, cartes à accent d'étape
@@ -472,6 +488,36 @@
 					<Icon name="edit" size={16} />
 					Modifier
 				</button>
+				{#if canConvertToClient}
+					<form
+						method="POST"
+						action="?/convertToClient"
+						use:enhance={() => {
+							converting = true;
+							return async ({ result, update }) => {
+								converting = false;
+								if (result.type === 'success') {
+									toasts.success('Prospect converti en client');
+									slideOutOpen = false;
+									selectedOpp = null;
+								} else {
+									toasts.error('Erreur lors de la conversion');
+								}
+								await update();
+							};
+						}}
+					>
+						<input type="hidden" name="id" value={selectedOpp.id} />
+						<button
+							type="submit"
+							disabled={converting}
+							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer disabled:opacity-50"
+						>
+							<Icon name="handshake" size={16} />
+							{converting ? 'Conversion…' : 'Convertir en client'}
+						</button>
+					</form>
+				{/if}
 				{#if selectedOpp.etape_pipeline !== 'perdu' && selectedOpp.etape_pipeline !== 'gagne'}
 					<button
 						type="button"
