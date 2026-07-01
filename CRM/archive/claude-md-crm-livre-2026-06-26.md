@@ -14,3 +14,7 @@ Entrées « Livré cette session » archivées depuis `CRM/CLAUDE.md` (condensat
 - **Bloc C veille (faisables maintenant) - fix pont/RegBL cul-de-sac + PDF de marque** - 2026-06-26 (`b767056`, CI verte, auto-déployé prod) : chips vers sources dormantes (RegBL/SIMAP) → « Copier le terme » au lieu d'un « Lancer » garanti d'échouer (helper `isChipExecutable` + guard 403) ; PDF de marque = endpoint auth-gaté `/crm/veille/[id]/brief` + bouton « Exporter en PDF » ; NO-OP « décomposer le mono-appel LLM » gravé. Workflow 4 lentilles 0 C/H, secu 0 vuln ; 12 findings traités. → `project_veille_bloc_c_pont_pdf_2026-06-26` + `audit_secu_2026-06-26_bloc_c_veille_pont_pdf`.
 - **Backlog consolidé en blocs 1-session + knip cadré (72→3)** - 2026-06-28 (`6c477cf`). → `feedback_knip_verify_grep_before_delete`.
 - **Bloc A - refonte serveur page Entreprises** (filtre/pagination/tri/recherche, 100 % serveur) - 2026-06-28 (`4b3974e`, LIVRÉ PROD) : revue 5 relecteurs 0 High/Critical, 3 MEDIUM corrigés, parité counts/KPI exacte. → `project_bloc_a_refonte_serveur_entreprises_2026-06-28` + `audit_secu_2026-06-28_entreprises_refonte_serveur`.
+
+## Archivé le 2026-07-01 (condensation POIDS, /fin-session)
+
+- [x] ~~**Bloc B - migration socle SvelteKit (vite 8 rolldown + vps 7 + kit 2.68 + svelte 5.56.4)**~~ - 2026-06-28 (**LIVRÉ PROD** `e75919d`, PR #24). Gates verts, 0 finding supply-chain. Jamais `rm package-lock.json`. → [[project_fix_deps_ci_vercel_2026-06-22]].
