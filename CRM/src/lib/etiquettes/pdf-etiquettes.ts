@@ -146,17 +146,26 @@ export type EtiquetteItem =
 	| { kind: 'adresse'; entry: EtiquetteEntry }
 	| { kind: 'transition'; nom: string };
 
-/** Taille de rendu d'un intercalaire : 15 pt, rétrécie si le nom déborde (avances réelles). */
+/**
+ * Libellé rendu d'un intercalaire : CAPITALES (demande Pascal 2026-07-02, uppercase FR -
+ * les accents restent accentués : « Régies » -> « RÉGIES », couverts par le subset Outfit).
+ */
+export function transitionLabel(nom: string): string {
+	return nom.toLocaleUpperCase('fr');
+}
+
+/** Taille de rendu d'un intercalaire : 15 pt, rétrécie si le LIBELLÉ CAPITALISÉ déborde. */
 export function transitionFontSize(nom: string): number {
-	const w1 = measureOutfitBold(nom, 1); // largeur à 1 pt (linéaire en la taille)
+	const w1 = measureOutfitBold(transitionLabel(nom), 1); // largeur à 1 pt (linéaire en la taille)
 	if (w1 <= 0) return TRANSITION_SIZE;
 	return Math.min(TRANSITION_SIZE, USABLE_W / w1);
 }
 
-/** Place un intercalaire : 1 ligne, gras, centrée H + V dans la cellule. */
+/** Place un intercalaire : 1 ligne CAPITALES, gras, centrée H + V dans la cellule. */
 function placeTransition(nom: string, index: number, col: number, row: number): PlacedLabel {
 	const cellX = col * LABEL_W;
 	const cellY = MARGIN_TOP + row * LABEL_H;
+	const label = transitionLabel(nom);
 	const size = transitionFontSize(nom);
 	return {
 		index,
@@ -168,12 +177,12 @@ function placeTransition(nom: string, index: number, col: number, row: number): 
 		kind: 'transition',
 		lines: [
 			{
-				text: nom,
+				text: label,
 				size,
 				bold: true,
 				// Même construction de baseline que le bloc adresse (1 ligne centrée).
 				baseline: cellY + (LABEL_H - LINE_H) / 2 + 0.5 * LINE_H + size * 0.34,
-				estWidth: measureOutfitBold(nom, size),
+				estWidth: measureOutfitBold(label, size),
 			},
 		],
 	};

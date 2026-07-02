@@ -10,6 +10,7 @@ import {
 	layoutEtiquettes,
 	layoutEtiquettesItems,
 	transitionFontSize,
+	transitionLabel,
 	labelLines,
 	buildEtiquettesPagesSvg,
 	buildEtiquettesItemsPagesSvg,
@@ -269,7 +270,7 @@ describe('etiquettesFileName (convention explicite, décision Pascal 02/07)', ()
 
 // ===== Étiquettes de TRANSITION (intercalaires de groupe, 2026-07-02) ===========================
 
-/** Noms réalistes ≤ 24 chars (borne CRM stress-testée) : tous doivent rester à 15 pt pleins. */
+/** Noms réalistes ≤ 24 chars (borne CRM stress-testée), rendus en CAPITALES depuis le 02/07. */
 const NOMS_REALISTES = [
 	'Régies immobilières',
 	'Facility management',
@@ -282,11 +283,17 @@ const NOMS_REALISTES = [
 	'CVC / HVAC'
 ];
 
-describe('transitionFontSize (fit-to-width par avances réelles Outfit Bold)', () => {
-	it('15 pt plein pour tous les noms réalistes ≤ 24 caractères (stress test 2026-07-02)', () => {
+describe('transitionFontSize (fit-to-width par avances réelles, libellé CAPITALISÉ)', () => {
+	it('capitales (demande Pascal 02/07) : 15 pt plein pour les noms courants, rétréci mais LISIBLE (≥ 11 pt) pour les plus longs', () => {
+		for (const nom of ['Commerces', 'Régies', 'CVC / HVAC', 'Sans groupe']) {
+			expect(transitionFontSize(nom), nom).toBe(15);
+		}
 		for (const nom of NOMS_REALISTES) {
 			expect(nom.length).toBeLessThanOrEqual(24);
-			expect(transitionFontSize(nom), nom).toBe(15);
+			const size = transitionFontSize(nom);
+			expect(size, nom).toBeGreaterThanOrEqual(11);
+			expect(size, nom).toBeLessThanOrEqual(15);
+			expect(measureOutfitBold(transitionLabel(nom), size), nom).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
 		}
 	});
 
@@ -298,13 +305,15 @@ describe('transitionFontSize (fit-to-width par avances réelles Outfit Bold)', (
 		expect(measureOutfitBold(degenere, size)).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
 	});
 
-	it('stress : AUCUNE chaîne ≤ 24 chars ne déborde la cellule (y compris caractères inconnus)', () => {
-		const alphabets = ['W', 'M', '@', '€', 'Æ', 'm', 'É', ' ', '-'];
+	it('stress : AUCUNE chaîne ≤ 24 chars ne déborde la cellule (capitalisation + caractères inconnus inclus)', () => {
+		const alphabets = ['W', 'M', '@', '€', 'Æ', 'm', 'é', ' ', '-'];
 		for (let len = 1; len <= 24; len++) {
 			for (const ch of alphabets) {
 				const nom = ch.repeat(len);
 				const size = transitionFontSize(nom);
-				expect(measureOutfitBold(nom, size), `« ${ch} » × ${len}`).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
+				expect(measureOutfitBold(transitionLabel(nom), size), `« ${ch} » × ${len}`).toBeLessThanOrEqual(
+					GEOMETRY.USABLE_W + 0.01
+				);
 			}
 		}
 	});
@@ -349,13 +358,14 @@ describe('layoutEtiquettesItems (flux continu adresses + intercalaires)', () => 
 });
 
 describe('buildEtiquettesItemsPagesSvg (rendu intercalaires)', () => {
-	it('rend le nom du groupe en gras 15 pt centré, fond blanc (ni sombre ni inversé)', () => {
+	it('rend le nom du groupe en CAPITALES (accents préservés), gras 15 pt centré, fond blanc (ni sombre ni inversé)', () => {
 		const svgs = buildEtiquettesItemsPagesSvg([
-			{ kind: 'transition', nom: 'Régies immobilières' },
+			{ kind: 'transition', nom: 'Régies' },
 			{ kind: 'adresse', entry: entry() }
 		]);
 		expect(svgs).toHaveLength(1);
-		expect(svgs[0]).toContain('Régies immobilières');
+		expect(svgs[0]).toContain('>RÉGIES</text>'); // capitales, demande Pascal 02/07
+		expect(svgs[0]).not.toContain('>Régies</text>');
 		expect(svgs[0]).toContain('font-size="15"');
 		expect(svgs[0]).toContain('font-weight="700"');
 		// Un seul rect = le fond de page blanc : l'intercalaire n'ajoute AUCUN aplat (pas d'inversé).
@@ -363,9 +373,17 @@ describe('buildEtiquettesItemsPagesSvg (rendu intercalaires)', () => {
 		expect(svgs[0]).toContain('fill="#ffffff"');
 	});
 
+	it('un nom long capitalisé est rétréci (fit-to-width) mais rendu ENTIER, sans ellipse', () => {
+		const nom = 'Administration publique';
+		const svgs = buildEtiquettesItemsPagesSvg([{ kind: 'transition', nom }]);
+		expect(svgs[0]).toContain('>ADMINISTRATION PUBLIQUE</text>');
+		expect(svgs[0]).toContain(`font-size="${transitionFontSize(nom)}"`);
+		expect(svgs[0]).not.toContain('…');
+	});
+
 	it('échappe le XML du nom de groupe (saisie utilisateur)', () => {
 		const svgs = buildEtiquettesItemsPagesSvg([{ kind: 'transition', nom: 'R&D <Vitrages>' }]);
-		expect(svgs[0]).toContain('R&amp;D &lt;Vitrages&gt;');
+		expect(svgs[0]).toContain('R&amp;D &lt;VITRAGES&gt;');
 	});
 
 	it('retire les caractères de contrôle illégaux XML (audit sécu 2026-07-02 : un C0 cassait le DOMParser)', () => {
