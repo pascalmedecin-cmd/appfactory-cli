@@ -490,6 +490,12 @@
 						&middot; {previewTransitions} intercalaire{previewTransitions > 1 ? 's' : ''} de groupe
 					{/if}
 					&middot; {pageCount(previewCount + previewTransitions)} page{pageCount(previewCount + previewTransitions) > 1 ? 's' : ''} A4 &middot; Avery 6122
+					{#if previewTransitions > 0}
+						<span class="read-hint">
+							<Icon name="info" size={13} />
+							Lecture horizontale (de gauche à droite) : le premier prospect d'une catégorie se trouve à droite de son intercalaire.
+						</span>
+					{/if}
 				</span>
 				<div class="actions">
 					<button type="button" class="btn-ghost" onclick={closePreview}>Fermer</button>
@@ -1218,6 +1224,19 @@
 	.prev-foot .count {
 		font-size: 13px;
 		color: var(--color-text-muted);
+	}
+	/* Note de lecture de la planche (visible seulement quand il y a des intercalaires). */
+	.read-hint {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		margin-top: 6px;
+		font-size: 12px;
+		color: var(--color-text-muted);
+	}
+	.read-hint :global(svg) {
+		flex-shrink: 0;
+		color: var(--color-info);
 	}
 	.prev-foot .count b {
 		color: var(--color-text);

@@ -150,23 +150,59 @@ export type EtiquetteItem =
  * Libellé rendu d'un intercalaire : CAPITALES (demande Pascal 2026-07-02, uppercase FR -
  * les accents restent accentués : « Régies » -> « RÉGIES », couverts par le subset Outfit).
  */
-export function transitionLabel(nom: string): string {
+function transitionLabel(nom: string): string {
 	return nom.toLocaleUpperCase('fr');
 }
 
-/** Taille de rendu d'un intercalaire : 15 pt, rétrécie si le LIBELLÉ CAPITALISÉ déborde. */
-export function transitionFontSize(nom: string): number {
-	const w1 = measureOutfitBold(transitionLabel(nom), 1); // largeur à 1 pt (linéaire en la taille)
-	if (w1 <= 0) return TRANSITION_SIZE;
-	return Math.min(TRANSITION_SIZE, USABLE_W / w1);
+/** Interligne du bloc intercalaire : 15 pt gras respire mieux qu'au LINE_H 13 des adresses. */
+const TRANSITION_LINE_H = 17;
+/**
+ * Seuil de CONFORT du wrap (80 % de la largeur utile) : un libellé multi-mots qui dépasse ce
+ * seuil passe à la ligne plutôt que de remplir la cellule bord à bord (« RÉGIES IMMOBILIÈRES »
+ * tiendrait à 159/175.75 pt sur 1 ligne mais se lit mieux sur 2 - exemple cité par Pascal
+ * 02/07). La garantie DURE de non-débordement reste USABLE_W (fit-to-width en dernier recours).
+ */
+const TRANSITION_COMFORT_W = USABLE_W * 0.8;
+
+/** Wrap par MOTS du libellé capitalisé, aux avances réelles, à la taille nominale 15 pt. */
+function wrapTransition(label: string): string[] {
+	const words = label.split(/\s+/).filter(Boolean);
+	const lines: string[] = [];
+	let cur = '';
+	for (const w of words) {
+		const cand = cur ? `${cur} ${w}` : w;
+		if (measureOutfitBold(cand, TRANSITION_SIZE) <= TRANSITION_COMFORT_W || !cur) {
+			cur = cand;
+		} else {
+			lines.push(cur);
+			cur = w;
+		}
+	}
+	if (cur) lines.push(cur);
+	return lines.length > 0 ? lines : [label];
 }
 
-/** Place un intercalaire : 1 ligne CAPITALES, gras, centrée H + V dans la cellule. */
+/**
+ * Layout du libellé d'intercalaire (demande Pascal 2026-07-02, 2e passe) : MULTI-LIGNES
+ * d'abord (« RÉGIES IMMOBILIÈRES » -> 2 lignes à 15 pt pleins, wrap par mots), et seulement
+ * si une ligne reste trop large (mot UNIQUE dégénéré, ex. 24 « M ») rétrécissement du bloc
+ * entier (taille homogène, jamais d'ellipse). 24 chars capitalisés = 4 lignes max
+ * théoriques × 17 pt = 68 pt, toujours dans la hauteur utile de la cellule (~97 pt).
+ */
+export function transitionLayout(nom: string): { lines: string[]; size: number } {
+	const lines = wrapTransition(transitionLabel(nom));
+	const widest = Math.max(...lines.map((l) => measureOutfitBold(l, 1))); // largeur à 1 pt
+	const size = widest <= 0 ? TRANSITION_SIZE : Math.min(TRANSITION_SIZE, USABLE_W / widest);
+	return { lines, size };
+}
+
+/** Place un intercalaire : bloc CAPITALES gras (1-2 lignes usuelles), centré H + V. */
 function placeTransition(nom: string, index: number, col: number, row: number): PlacedLabel {
 	const cellX = col * LABEL_W;
 	const cellY = MARGIN_TOP + row * LABEL_H;
-	const label = transitionLabel(nom);
-	const size = transitionFontSize(nom);
+	const { lines, size } = transitionLayout(nom);
+	// Bloc centré verticalement, même construction de baselines que placeLabel (interligne dédié).
+	const blockTop = cellY + (LABEL_H - lines.length * TRANSITION_LINE_H) / 2;
 	return {
 		index,
 		col,
@@ -175,16 +211,13 @@ function placeTransition(nom: string, index: number, col: number, row: number): 
 		cellY,
 		centerX: cellX + LABEL_W / 2,
 		kind: 'transition',
-		lines: [
-			{
-				text: label,
-				size,
-				bold: true,
-				// Même construction de baseline que le bloc adresse (1 ligne centrée).
-				baseline: cellY + (LABEL_H - LINE_H) / 2 + 0.5 * LINE_H + size * 0.34,
-				estWidth: measureOutfitBold(label, size),
-			},
-		],
+		lines: lines.map((text, i) => ({
+			text,
+			size,
+			bold: true,
+			baseline: blockTop + (i + 0.5) * TRANSITION_LINE_H + size * 0.34,
+			estWidth: measureOutfitBold(text, size),
+		})),
 	};
 }
 

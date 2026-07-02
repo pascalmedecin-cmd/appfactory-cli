@@ -9,8 +9,7 @@ import {
 	pageCount,
 	layoutEtiquettes,
 	layoutEtiquettesItems,
-	transitionFontSize,
-	transitionLabel,
+	transitionLayout,
 	labelLines,
 	buildEtiquettesPagesSvg,
 	buildEtiquettesItemsPagesSvg,
@@ -283,37 +282,44 @@ const NOMS_REALISTES = [
 	'CVC / HVAC'
 ];
 
-describe('transitionFontSize (fit-to-width par avances réelles, libellé CAPITALISÉ)', () => {
-	it('capitales (demande Pascal 02/07) : 15 pt plein pour les noms courants, rétréci mais LISIBLE (≥ 11 pt) pour les plus longs', () => {
-		for (const nom of ['Commerces', 'Régies', 'CVC / HVAC', 'Sans groupe']) {
-			expect(transitionFontSize(nom), nom).toBe(15);
-		}
+describe('transitionLayout (capitales + multi-lignes, fit-to-width par avances réelles)', () => {
+	it('TOUS les noms réalistes ≤ 24 chars rendent à 15 pt pleins (wrap par mots si besoin)', () => {
 		for (const nom of NOMS_REALISTES) {
 			expect(nom.length).toBeLessThanOrEqual(24);
-			const size = transitionFontSize(nom);
-			expect(size, nom).toBeGreaterThanOrEqual(11);
-			expect(size, nom).toBeLessThanOrEqual(15);
-			expect(measureOutfitBold(transitionLabel(nom), size), nom).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
+			const { lines, size } = transitionLayout(nom);
+			expect(size, nom).toBe(15);
+			expect(lines.length, nom).toBeLessThanOrEqual(2);
+			for (const l of lines) {
+				expect(measureOutfitBold(l, size), `${nom} / ${l}`).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
+			}
 		}
 	});
 
-	it('un nom dégénéré (24 lettres larges) est RÉTRÉCI, jamais tronqué ni débordant', () => {
+	it('« Régies immobilières » -> 2 lignes CAPITALES 15 pt (exemple Pascal 02/07)', () => {
+		expect(transitionLayout('Régies immobilières')).toEqual({ lines: ['RÉGIES', 'IMMOBILIÈRES'], size: 15 });
+		expect(transitionLayout('Régies')).toEqual({ lines: ['RÉGIES'], size: 15 });
+	});
+
+	it('un MOT unique dégénéré (24 lettres larges, insécable) est rétréci, jamais tronqué', () => {
 		const degenere = 'M'.repeat(24);
-		const size = transitionFontSize(degenere);
+		const { lines, size } = transitionLayout(degenere);
+		expect(lines).toEqual([degenere]); // pas de wrap possible
 		expect(size).toBeLessThan(15);
 		expect(size).toBeGreaterThan(8); // plancher théorique ~8.5 pt (24 « M » à 0.858 em)
 		expect(measureOutfitBold(degenere, size)).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
 	});
 
-	it('stress : AUCUNE chaîne ≤ 24 chars ne déborde la cellule (capitalisation + caractères inconnus inclus)', () => {
-		const alphabets = ['W', 'M', '@', '€', 'Æ', 'm', 'é', ' ', '-'];
+	it('stress : AUCUNE chaîne ≤ 24 chars ne déborde la cellule (largeur ET hauteur, wrap + capitales)', () => {
+		const alphabets = ['W', 'M', '@', '€', 'Æ', 'm', 'é', '-', 'W ', 'M W '];
 		for (let len = 1; len <= 24; len++) {
-			for (const ch of alphabets) {
-				const nom = ch.repeat(len);
-				const size = transitionFontSize(nom);
-				expect(measureOutfitBold(transitionLabel(nom), size), `« ${ch} » × ${len}`).toBeLessThanOrEqual(
-					GEOMETRY.USABLE_W + 0.01
-				);
+			for (const base of alphabets) {
+				const nom = base.repeat(Math.ceil(len / base.length)).slice(0, len);
+				const { lines, size } = transitionLayout(nom);
+				for (const l of lines) {
+					expect(measureOutfitBold(l, size), `« ${base} » × ${len} / ${l}`).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
+				}
+				// Le bloc tient TOUJOURS en hauteur dans la cellule (17 pt d'interligne).
+				expect(lines.length * 17, `« ${base} » × ${len}`).toBeLessThanOrEqual(GEOMETRY.LABEL_H - 2 * GEOMETRY.PAD_Y);
 			}
 		}
 	});
@@ -337,17 +343,29 @@ describe('layoutEtiquettesItems (flux continu adresses + intercalaires)', () => 
 		expect(indexes).toEqual(Array.from({ length: 28 }, (_, i) => i)); // flux continu, zéro trou
 	});
 
-	it('l’intercalaire = 1 ligne grasse, marquée kind:transition, dans les bornes de sa cellule', () => {
+	it('l’intercalaire = bloc gras CAPITALES marqué kind:transition, dans les bornes de sa cellule', () => {
 		const { pages } = layoutEtiquettesItems(mixed(2, 0));
 		const t = pages[0][0];
 		expect(t.kind).toBe('transition');
-		expect(t.lines).toHaveLength(1);
+		expect(t.lines).toHaveLength(1); // « RÉGIES » tient sur 1 ligne
+		expect(t.lines[0].text).toBe('RÉGIES');
 		expect(t.lines[0].bold).toBe(true);
 		expect(t.lines[0].size).toBe(15);
 		expect(t.lines[0].estWidth).toBeLessThanOrEqual(GEOMETRY.USABLE_W);
 		// La ligne vit dans sa cellule (baseline entre bord haut et bord bas).
 		expect(t.lines[0].baseline).toBeGreaterThan(t.cellY);
 		expect(t.lines[0].baseline).toBeLessThan(t.cellY + GEOMETRY.LABEL_H);
+	});
+
+	it('intercalaire MULTI-LIGNES : chaque baseline reste dans la cellule', () => {
+		const { pages } = layoutEtiquettesItems([{ kind: 'transition', nom: 'Régies immobilières' }]);
+		const t = pages[0][0];
+		expect(t.lines.map((l) => l.text)).toEqual(['RÉGIES', 'IMMOBILIÈRES']);
+		for (const ln of t.lines) {
+			expect(ln.size).toBe(15);
+			expect(ln.baseline).toBeGreaterThan(t.cellY);
+			expect(ln.baseline).toBeLessThan(t.cellY + GEOMETRY.LABEL_H);
+		}
 	});
 
 	it('layoutEtiquettes (API historique) = layoutEtiquettesItems en adresses seules', () => {
@@ -373,11 +391,11 @@ describe('buildEtiquettesItemsPagesSvg (rendu intercalaires)', () => {
 		expect(svgs[0]).toContain('fill="#ffffff"');
 	});
 
-	it('un nom long capitalisé est rétréci (fit-to-width) mais rendu ENTIER, sans ellipse', () => {
-		const nom = 'Administration publique';
-		const svgs = buildEtiquettesItemsPagesSvg([{ kind: 'transition', nom }]);
-		expect(svgs[0]).toContain('>ADMINISTRATION PUBLIQUE</text>');
-		expect(svgs[0]).toContain(`font-size="${transitionFontSize(nom)}"`);
+	it('un nom long est WRAPPÉ en capitales 15 pt pleins (2 <text>), entier, sans ellipse', () => {
+		const svgs = buildEtiquettesItemsPagesSvg([{ kind: 'transition', nom: 'Administration publique' }]);
+		expect(svgs[0]).toContain('>ADMINISTRATION</text>');
+		expect(svgs[0]).toContain('>PUBLIQUE</text>');
+		expect(svgs[0]).toContain('font-size="15"');
 		expect(svgs[0]).not.toContain('…');
 	});
 
