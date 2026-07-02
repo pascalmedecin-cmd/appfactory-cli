@@ -140,6 +140,30 @@
 	function adresseCourte(p: ProspectCampagne): string {
 		return [p.npa, p.localite].filter(Boolean).join(' ') || '–';
 	}
+
+	// --- Téléchargement PDF de la liste (A4 paysage, pastilles Google Maps cliquables) ---
+	// Réutilise les prospects déjà chargés par le panneau ; moteur en dynamic import (hors bundle).
+	let pdfBusy = $state(false);
+
+	async function downloadPdf() {
+		const c = campagne;
+		if (!c || pdfBusy || loading || prospects.length === 0) return;
+		// Snapshot AVANT tout await : le composant est réutilisé sans remount, `prospects` peut être
+		// remplacé pendant le chargement du chunk jsPDF (campagne changée) -> PDF mal étiqueté sinon.
+		const rows = prospects;
+		pdfBusy = true;
+		try {
+			const { exportListeProspectsPdf } = await import('$lib/campagnes-pdf/pdf-liste-prospects');
+			// Garde cross-campagne (même pattern que removeFromCampagne) : si l'opérateur a ouvert une
+			// AUTRE campagne pendant l'import du chunk, ne pas télécharger un PDF périmé.
+			if (campagne?.id !== c.id) return;
+			await exportListeProspectsPdf(c.nom, rows);
+		} catch {
+			toasts.error('Génération du PDF impossible');
+		} finally {
+			pdfBusy = false;
+		}
+	}
 </script>
 
 <SlideOut bind:open title={campagne?.nom ?? ''} width="600px">
@@ -151,7 +175,7 @@
 				<Icon name="arrow_back" size={15} /> Retour à la liste des campagnes
 			</button>
 
-			<!-- Rappel de contexte : couleur + statut + compteur -->
+			<!-- Rappel de contexte : couleur + statut + compteur + export PDF -->
 			<div class="flex items-center gap-2.5 flex-wrap">
 				<span class="camp-chip {campClass(campagne.couleur)}">
 					{campagne.archived ? 'Archivée' : campagneStatutLabel(campagne.statut)}
@@ -159,6 +183,17 @@
 				<span class="text-sm text-text-muted">
 					{shownCount} prospect{shownCount > 1 ? 's' : ''} étiqueté{shownCount > 1 ? 's' : ''}
 				</span>
+				{#if !loading && !loadError && prospects.length > 0}
+					<button
+						type="button"
+						class="pdf-btn"
+						disabled={pdfBusy}
+						onclick={downloadPdf}
+						title="Télécharger la liste complète en PDF (A4 paysage, liens Google Maps cliquables) - le filtre de recherche n'est pas appliqué"
+					>
+						<Icon name="download" size={14} /> {pdfBusy ? 'Génération…' : 'Télécharger (PDF)'}
+					</button>
+				{/if}
 			</div>
 
 			{#if loading}
@@ -282,6 +317,41 @@
 		color: var(--color-text);
 	}
 	.back-campagnes:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 1px;
+	}
+
+	/* Bouton export PDF : discret, aligné à droite de la ligne de contexte. */
+	.pdf-btn {
+		margin-left: auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 6px 11px;
+		border: 1px solid var(--color-border);
+		background: var(--color-surface);
+		border-radius: var(--radius-lg);
+		font-size: 12.5px;
+		font-weight: 600;
+		color: var(--color-primary-dark);
+		cursor: pointer;
+		box-shadow: var(--shadow-xs);
+		white-space: nowrap;
+		transition: background 160ms ease, border-color 160ms ease;
+	}
+	.pdf-btn:hover:not(:disabled) {
+		background: var(--color-surface-alt);
+		border-color: color-mix(in srgb, var(--color-primary) 35%, var(--color-border));
+	}
+	.pdf-btn:disabled {
+		opacity: 0.6;
+		cursor: default;
+	}
+	.pdf-btn :global(svg) {
+		color: var(--color-primary);
+		flex-shrink: 0;
+	}
+	.pdf-btn:focus-visible {
 		outline: 2px solid var(--color-primary);
 		outline-offset: 1px;
 	}

@@ -97,6 +97,39 @@
 		goto(`${CRM_BASE}/campagnes/${c.id}/etiquettes`);
 	}
 
+	// --- Liste des prospects en PDF (A4 paysage, pastilles Google Maps cliquables) ---
+	// Depuis le menu de la ligne : charge les prospects puis génère côté navigateur (dynamic
+	// import, hors bundle). Parallélisme par id (cf. feedback_svelteset_parallel_by_id).
+	const pdfBusyIds = new SvelteSet<string>();
+
+	async function downloadListePdf(c: CampagneWithCount) {
+		menuOpenId = null;
+		if (pdfBusyIds.has(c.id)) return;
+		if (c.lead_count === 0) {
+			toasts.info('Cette campagne n’a aucun prospect étiqueté : rien à télécharger.');
+			return;
+		}
+		pdfBusyIds.add(c.id);
+		try {
+			const resp = await fetch(`/api/campagnes/${c.id}/prospects`);
+			const d = await resp.json().catch(() => null);
+			if (!resp.ok || !d || !Array.isArray(d.prospects)) {
+				toasts.error(d?.error || 'Chargement des prospects impossible');
+				return;
+			}
+			if (d.prospects.length === 0) {
+				toasts.info('Cette campagne n’a aucun prospect étiqueté : rien à télécharger.');
+				return;
+			}
+			const { exportListeProspectsPdf } = await import('$lib/campagnes-pdf/pdf-liste-prospects');
+			await exportListeProspectsPdf(c.nom, d.prospects);
+		} catch {
+			toasts.error('Génération du PDF impossible');
+		} finally {
+			pdfBusyIds.delete(c.id);
+		}
+	}
+
 	// --- Création ---
 	let createOpen = $state(false);
 	let createNom = $state('');
@@ -423,6 +456,9 @@
 								</button>
 								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); goToEtiquettes(c); }}>
 									<Icon name="mail" size={15} /> Étiquettes d'adresses
+								</button>
+								<button type="button" class="menu-item" role="menuitem" disabled={pdfBusyIds.has(c.id)} onclick={(e) => { e.stopPropagation(); downloadListePdf(c); }}>
+									<Icon name="download" size={15} /> {pdfBusyIds.has(c.id) ? 'Génération du PDF…' : 'Liste des prospects (PDF)'}
 								</button>
 								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); toggleArchive(c); }}>
 									<Icon name={c.archived ? 'unarchive' : 'archive'} size={15} /> {c.archived ? 'Réactiver' : 'Archiver'}
@@ -879,6 +915,10 @@
 	}
 	.menu-item:hover {
 		background: var(--color-surface-alt);
+	}
+	.menu-item:disabled {
+		opacity: 0.55;
+		cursor: default;
 	}
 	.menu-item :global(svg) {
 		color: var(--color-text-muted);

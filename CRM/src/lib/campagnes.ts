@@ -76,6 +76,10 @@ export interface ProspectCampagne {
 	statut: string;
 	score_pertinence: number | null;
 	source: string;
+	/** Lien vers la fiche source (pour `google_places` : URL Google Maps). Alimente le PDF de liste. */
+	source_url: string | null;
+	/** Description d'import (pour `google_places` : adresse formatée + types Google). Alimente le PDF de liste. */
+	description: string | null;
 }
 
 /** Normalisation de recherche : minuscules + sans diacritiques (« regie » matche « Régie »). */

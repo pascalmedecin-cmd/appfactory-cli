@@ -7,7 +7,7 @@ import { filterProspectsCampagne, type ProspectCampagne } from './campagnes';
  * (copie neuve, jamais la référence d'origine), localité null tolérée.
  */
 function p(id: string, raison_sociale: string, localite: string | null): ProspectCampagne {
-	return { id, raison_sociale, adresse: null, npa: null, localite, statut: 'vide', score_pertinence: null, source: 'zefix' };
+	return { id, raison_sociale, adresse: null, npa: null, localite, statut: 'vide', score_pertinence: null, source: 'zefix', source_url: null, description: null };
 }
 
 const LIST: ProspectCampagne[] = [

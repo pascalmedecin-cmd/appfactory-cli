@@ -378,7 +378,7 @@ export async function fetchProspectsForCampagne(
 		const chunk = leadIds.slice(i, i + IN_CHUNK);
 		const { data, error } = await supabase
 			.from('prospect_leads')
-			.select('id, raison_sociale, adresse, npa, localite, statut, score_pertinence, source')
+			.select('id, raison_sociale, adresse, npa, localite, statut, score_pertinence, source, source_url, description')
 			.in('id', chunk);
 		if (error) return { data: [], error };
 		rows.push(...((data ?? []) as ProspectCampagne[]));
