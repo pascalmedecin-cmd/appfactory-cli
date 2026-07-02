@@ -145,6 +145,12 @@
 <SlideOut bind:open title={campagne?.nom ?? ''} width="600px">
 	{#if campagne}
 		<div class="flex flex-col gap-4 h-full">
+			<!-- Retour explicite : ferme le panneau et rend la liste des campagnes (la croix seule
+			     ne suffit pas comme affordance de navigation, demande Pascal 2026-07-02). -->
+			<button type="button" class="back-campagnes" onclick={() => (open = false)}>
+				<Icon name="arrow_back" size={15} /> Retour à la liste des campagnes
+			</button>
+
 			<!-- Rappel de contexte : couleur + statut + compteur -->
 			<div class="flex items-center gap-2.5 flex-wrap">
 				<span class="camp-chip {campClass(campagne.couleur)}">
@@ -254,6 +260,32 @@
 </SlideOut>
 
 <style>
+	/* Bouton retour : lien-bouton discret en tête de panneau, aligné à gauche. */
+	.back-campagnes {
+		align-self: flex-start;
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		margin: -6px 0 -4px -8px;
+		padding: 6px 10px 6px 8px;
+		border: none;
+		background: transparent;
+		border-radius: var(--radius-md);
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--color-text-muted);
+		cursor: pointer;
+		transition: background 160ms ease, color 160ms ease;
+	}
+	.back-campagnes:hover {
+		background: var(--color-surface-alt);
+		color: var(--color-text);
+	}
+	.back-campagnes:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 1px;
+	}
+
 	/* Chip campagne (couleur .camp--cN d'app.css : fournit fond + texte). */
 	.camp-chip {
 		display: inline-flex;
