@@ -253,10 +253,11 @@ describe('buildEtiquettesPagesSvg', () => {
 	});
 });
 
-describe('etiquettesFileName', () => {
-	it('slugifie le libellé de campagne', () => {
-		expect(etiquettesFileName('Salon Habitat 2026')).toBe('etiquettes-salon-habitat-2026.pdf');
-		expect(etiquettesFileName('Régies — Genève')).toBe('etiquettes-regies-geneve.pdf');
-		expect(etiquettesFileName('   ')).toBe('etiquettes-campagne.pdf');
+describe('etiquettesFileName (convention explicite, décision Pascal 02/07)', () => {
+	const d = new Date(2026, 6, 2); // 02.07.2026
+	it('nom de campagne verbatim + date du jour, tiret long normalisé', () => {
+		expect(etiquettesFileName('Salon Habitat 2026', d)).toBe('Étiquettes - Salon Habitat 2026 - 02.07.2026.pdf');
+		expect(etiquettesFileName('Régies — Genève', d)).toBe('Étiquettes - Régies - Genève - 02.07.2026.pdf');
+		expect(etiquettesFileName('   ', d)).toBe('Étiquettes - Campagne - 02.07.2026.pdf');
 	});
 });

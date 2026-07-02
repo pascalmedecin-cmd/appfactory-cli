@@ -201,11 +201,13 @@ describe('buildListePagesSvg (rendu + zones cliquables)', () => {
 	});
 });
 
-describe('listeFileName', () => {
-	it('slugifie le nom de campagne (accents, espaces)', () => {
-		expect(listeFileName('Salon Habitat 2026 - Genève')).toBe('prospects-salon-habitat-2026-geneve.pdf');
+describe('listeFileName (convention explicite, décision Pascal 02/07)', () => {
+	const d = new Date(2026, 6, 2); // 02.07.2026
+	it('nom de campagne verbatim (accents conservés) + date du jour', () => {
+		expect(listeFileName('Salon Habitat 2026 - Genève', d)).toBe('Prospects - Salon Habitat 2026 - Genève - 02.07.2026.pdf');
 	});
-	it('nom vide -> fallback', () => {
-		expect(listeFileName('***')).toBe('prospects-campagne.pdf');
+	it('caractères interdits par les systèmes de fichiers remplacés, fallback si vide', () => {
+		expect(listeFileName('Vernis / Films : "test"', d)).toBe('Prospects - Vernis Films test - 02.07.2026.pdf');
+		expect(listeFileName('///', d)).toBe('Prospects - Campagne - 02.07.2026.pdf');
 	});
 });

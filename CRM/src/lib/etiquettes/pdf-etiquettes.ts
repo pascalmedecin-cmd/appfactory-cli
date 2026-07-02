@@ -20,6 +20,7 @@
  * largeur utile, bloc centré qui tient dans la hauteur) -> invariant testable `layoutEtiquettes`.
  */
 import type { EtiquetteEntry } from './prospect-etiquette';
+import { campagnePdfFileName } from '$lib/pdf/pdf-filename';
 
 // --- Géométrie A4 + grille Avery 6122 (points PDF : 1 mm = 2.834645 pt) ------------------------
 const MM = 2.834645;
@@ -214,16 +215,12 @@ export function buildEtiquettesPagesSvg(entries: EtiquetteEntry[], opts: Etiquet
 }
 
 // --- Export effectif (impur : dynamic import jsPDF + svg2pdf + polices, hors bundle initial) ----
-/** Nom de fichier slugifié à partir du libellé de campagne. */
-export function etiquettesFileName(label: string): string {
-	const slug = label
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-zA-Z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.toLowerCase()
-		.slice(0, 60);
-	return `etiquettes-${slug || 'campagne'}.pdf`;
+/**
+ * Nom de fichier explicite (convention source unique : src/lib/pdf/pdf-filename.ts).
+ * `date` = jour du téléchargement (défaut : maintenant ; les tests passent une date fixe).
+ */
+export function etiquettesFileName(label: string, date: Date = new Date()): string {
+	return campagnePdfFileName('Étiquettes', label, date);
 }
 
 /**

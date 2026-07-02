@@ -24,6 +24,7 @@
 import type { ProspectCampagne } from '$lib/campagnes';
 import { estWidth, ellipsize } from '$lib/etiquettes/pdf-etiquettes';
 import { safeHttpUrl } from '$lib/utils/safe-url';
+import { campagnePdfFileName } from '$lib/pdf/pdf-filename';
 
 // --- Géométrie A4 PAYSAGE (points PDF : 1 mm = 2.834645 pt) ------------------------------------
 const MM = 2.834645;
@@ -304,16 +305,9 @@ export function buildListePagesSvg(
 	return { svgs, links };
 }
 
-// --- Nom de fichier -------------------------------------------------------------------------------
-export function listeFileName(campagneNom: string): string {
-	const slug = campagneNom
-		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
-		.replace(/[^a-zA-Z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.toLowerCase()
-		.slice(0, 60);
-	return `prospects-${slug || 'campagne'}.pdf`;
+// --- Nom de fichier (convention source unique : src/lib/pdf/pdf-filename.ts) --------------------
+export function listeFileName(campagneNom: string, date: Date): string {
+	return campagnePdfFileName('Prospects', campagneNom, date);
 }
 
 // --- Export effectif (impur : dynamic import jsPDF + svg2pdf + polices + logo) -------------------
@@ -332,7 +326,8 @@ export async function exportListeProspectsPdf(campagneNom: string, prospects: Pr
 	const svg2pdf = (svg2pdfMod as { svg2pdf: (el: Element, doc: unknown, opts?: unknown) => Promise<unknown> }).svg2pdf;
 
 	const rows = prospects.map(toListeRow);
-	const dateLabel = new Date().toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' });
+	const now = new Date();
+	const dateLabel = now.toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' });
 	const logoFragment = logoMod.filmproLogoSvg(MARGIN, MARGIN, 18, C.logo);
 	const { svgs, links } = buildListePagesSvg(campagneNom, dateLabel, rows, logoFragment);
 
@@ -351,7 +346,7 @@ export async function exportListeProspectsPdf(campagneNom: string, prospects: Pr
 			if (l.page === i) doc.link(l.x, l.y, l.w, l.h, { url: l.url });
 		}
 	}
-	doc.save(listeFileName(campagneNom));
+	doc.save(listeFileName(campagneNom, now));
 }
 
 // Exposé pour les tests géométriques.
