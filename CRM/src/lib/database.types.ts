@@ -145,6 +145,44 @@ export type Database = {
           },
         ]
       }
+      campagne_validation_liens: {
+        Row: {
+          campagne_id: string
+          created_by: string | null
+          date_creation: string
+          expires_at: string
+          id: string
+          revoked_at: string | null
+          token_hash: string
+        }
+        Insert: {
+          campagne_id: string
+          created_by?: string | null
+          date_creation?: string
+          expires_at: string
+          id?: string
+          revoked_at?: string | null
+          token_hash: string
+        }
+        Update: {
+          campagne_id?: string
+          created_by?: string | null
+          date_creation?: string
+          expires_at?: string
+          id?: string
+          revoked_at?: string | null
+          token_hash?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campagne_validation_liens_campagne_id_fkey"
+            columns: ["campagne_id"]
+            isOneToOne: false
+            referencedRelation: "campagnes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campagnes: {
         Row: {
           archived: boolean
@@ -930,18 +968,24 @@ export type Database = {
           date_assignation: string
           groupe_id: string | null
           lead_id: string
+          validation_at: string | null
+          validation_statut: string | null
         }
         Insert: {
           campagne_id: string
           date_assignation?: string
           groupe_id?: string | null
           lead_id: string
+          validation_at?: string | null
+          validation_statut?: string | null
         }
         Update: {
           campagne_id?: string
           date_assignation?: string
           groupe_id?: string | null
           lead_id?: string
+          validation_at?: string | null
+          validation_statut?: string | null
         }
         Relationships: [
           {

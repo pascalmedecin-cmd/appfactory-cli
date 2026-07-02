@@ -91,6 +91,23 @@
 .ws-btn-ghost:hover {
 	color: var(--color-text);
 }
+/* Tertiaire (mockup v3 golden « btn-ter ») : pleine hauteur, sans bordure, teinte texte, hover
+   surface. Le rouge d'une action destructrice n'apparaît QUE dans la ConfirmModal (spec §3). */
+.ws-btn-tertiary {
+	background: transparent;
+	color: var(--color-text);
+}
+.ws-btn-tertiary:hover {
+	background: var(--color-surface-alt);
+}
+.ws-btn-tertiary:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+/* Modificateur « btn-ter-muted » : même tertiaire, teinte atténuée (ex. Révoquer). */
+.ws-btn-tertiary-muted {
+	color: var(--color-text-muted);
+}
 
 /* Selects de filtre inline. */
 .ws-filter-select {

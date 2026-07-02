@@ -34,6 +34,7 @@ function lead(over: Partial<ProspectCampagne> = {}): ProspectCampagne {
 		description: 'Quai des Fleurs 12, 1006 Lausanne, Suisse — real_estate_agency / point_of_interest / establishment',
 		google_types: null,
 		groupe_id: null,
+		validation_statut: null,
 		...over
 	};
 }

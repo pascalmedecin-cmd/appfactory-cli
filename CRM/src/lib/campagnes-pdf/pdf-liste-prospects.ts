@@ -24,7 +24,7 @@
 import type { ProspectCampagne } from '$lib/campagnes';
 import { sortGroupes, SANS_GROUPE_LABEL } from '$lib/campagne-groupes';
 import { estWidth, ellipsize } from '$lib/etiquettes/pdf-etiquettes';
-import { safeHttpUrl } from '$lib/utils/safe-url';
+import { GOOGLE_SOURCE, safeMapsUrl } from '$lib/maps-url';
 import { campagnePdfFileName } from '$lib/pdf/pdf-filename';
 
 // --- Géométrie A4 PAYSAGE (points PDF : 1 mm = 2.834645 pt) ------------------------------------
@@ -75,26 +75,9 @@ const FOOTER_RULE_Y = PAGE_H - MARGIN - 16;
 const CONTENT_BOTTOM = FOOTER_RULE_Y - 6;
 
 // --- Extraction des données Google (depuis les champs stockés du lead) --------------------------
-const GOOGLE_SOURCE = 'google_places';
+// Hôtes admis + lien Maps : source unique $lib/maps-url (partagée avec la page publique de
+// validation externe - même promesse « le libellé Google mène chez Google »).
 const TYPE_TOKEN_RE = /^[a-z][a-z0-9_]*$/;
-
-/**
- * Hôtes admis pour la pastille « Ouvrir sur Google Maps » : le libellé promet Google, l'URL doit
- * tenir la promesse (durcissement audit sécu 02/07 - un `source_url` arbitraire ne doit jamais
- * devenir un lien PDF étiqueté Google). L'import Google écrit `googleMapsUri` ou
- * `placeMapsUrl(placeId)` : tous deux vivent sur ces hôtes.
- */
-const MAPS_HOSTS = new Set(['www.google.com', 'google.com', 'maps.google.com', 'www.google.ch', 'maps.app.goo.gl', 'goo.gl']);
-
-function safeMapsUrl(url: string | null): string | null {
-	const safe = safeHttpUrl(url);
-	if (!safe) return null;
-	try {
-		return MAPS_HOSTS.has(new URL(safe).hostname.toLowerCase()) ? safe : null;
-	} catch {
-		return null;
-	}
-}
 
 /**
  * Ré-extrait les types Google Places sérialisés dans `description` par l'import (segments joints

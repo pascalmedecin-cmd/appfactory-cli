@@ -50,6 +50,8 @@
 	const patches = new SvelteMap<string, ProspectAdresse>();
 	let search = $state('');
 	let includeIncomplete = $state(false);
+	// Validation externe : n'imprimer que les « garder ». Coché par défaut quand l'option apparaît.
+	let validesSeulement = $state(true);
 	let bulkValue = $state('');
 	let generating = $state(false);
 
@@ -84,6 +86,7 @@
 		patches.clear();
 		search = '';
 		includeIncomplete = false;
+		validesSeulement = true;
 		bulkValue = '';
 		// Aperçu + génération + jeton anti-race : réinitialisés aussi, sinon un aperçu ouvert (ou une
 		// réponse de complétion en vol) de l'ancienne campagne « fuiterait » sur la nouvelle.
@@ -107,6 +110,22 @@
 	const summary = $derived(summarize(prospects, destinataires));
 	const incompleteCount = $derived(summary.total - summary.completes);
 	const selectedList = $derived(prospects.filter((p) => selected.has(p.id)));
+	// Validation externe : décision par prospect, lue de `data.prospects` (les patches d'adresse
+	// search.ch ne portent pas la décision). L'option « validés seulement » n'apparaît que si une
+	// validation existe sur la campagne ; active, elle restreint l'IMPRESSION aux « garder ».
+	const validationById = $derived(new Map(data.prospects.map((p) => [p.id, p.validation_statut])));
+	const vGarder = $derived(data.prospects.filter((p) => p.validation_statut === 'garder').length);
+	const vRetirer = $derived(data.prospects.filter((p) => p.validation_statut === 'retirer').length);
+	const hasValidation = $derived(vGarder + vRetirer > 0);
+	const vNonVerifies = $derived(data.prospects.length - vGarder - vRetirer);
+	// Liste réellement imprimée : la sélection, restreinte aux « garder » quand l'option est active.
+	// Le filtre agit AVANT le flux d'intercalaires -> un groupe entièrement exclu ne produit AUCUN
+	// intercalaire orphelin (buildGroupedEtiquetteItems ne voit que les prospects imprimés).
+	const printList = $derived(
+		hasValidation && validesSeulement
+			? selectedList.filter((p) => validationById.get(p.id) === 'garder')
+			: selectedList
+	);
 	// « Tout sélectionner » n'agit QUE sur les lignes complètes visibles (les sélectionnables).
 	const selectableFiltered = $derived(filtered.filter((p) => statutById.get(p.id)?.complete));
 	const allSelectableSelected = $derived(
@@ -227,16 +246,16 @@
 	 * (l'aperçu EST le PDF).
 	 */
 	function buildItems(): EtiquetteItem[] {
-		return buildGroupedEtiquetteItems(selectedList, data.groupes, destinataires);
+		return buildGroupedEtiquetteItems(printList, data.groupes, destinataires);
 	}
 
 	async function openPreview() {
-		if (selectedList.length === 0) return;
+		if (printList.length === 0) return;
 		const items = buildItems();
 		await ensureOutfitLoaded();
 		previewSvgs = buildEtiquettesItemsPagesSvg(items, { guides: true });
-		previewCount = selectedList.length;
-		previewTransitions = items.length - selectedList.length;
+		previewCount = printList.length;
+		previewTransitions = items.length - printList.length;
 		previewOpen = true;
 	}
 	function closePreview() {
@@ -244,11 +263,11 @@
 	}
 
 	async function downloadPdf() {
-		if (generating || selectedList.length === 0) return;
+		if (generating || printList.length === 0) return;
 		generating = true;
 		try {
 			const items = buildItems();
-			const n = selectedList.length;
+			const n = printList.length;
 			await exportEtiquettesItemsPdf(items, etiquettesFileName(data.campagne.nom));
 			toasts.success(`${n} étiquette${n > 1 ? 's' : ''} générée${n > 1 ? 's' : ''}`);
 			previewOpen = false;
@@ -302,8 +321,12 @@
 			type="button"
 			class="btn-primary"
 			onclick={openPreview}
-			disabled={selectedList.length === 0}
-			title={selectedList.length === 0 ? 'Sélectionnez au moins un prospect' : 'Prévisualiser puis télécharger'}
+			disabled={printList.length === 0}
+			title={printList.length === 0
+				? selectedList.length === 0
+					? 'Sélectionnez au moins un prospect'
+					: 'Aucun prospect validé « Garder » à imprimer (décochez l’option pour imprimer toute la sélection)'
+				: 'Prévisualiser puis télécharger'}
 		>
 			<Icon name="download" size={17} /> Télécharger le PDF
 		</button>
@@ -332,6 +355,22 @@
 			</button>
 		{/if}
 	</div>
+
+	<!-- Option validation externe : n'apparaît que si une décision existe sur la campagne. -->
+	{#if hasValidation}
+		<button
+			type="button"
+			class="et-opt"
+			aria-pressed={validesSeulement}
+			onclick={() => (validesSeulement = !validesSeulement)}
+		>
+			<span class="et-chk" class:on={validesSeulement} aria-hidden="true"></span>
+			<span class="et-txt">
+				<span class="et-t">N’imprimer que les prospects validés « Garder » ({vGarder} sur {data.prospects.length})</span>
+				<span class="et-d">{vRetirer} prospect{vRetirer > 1 ? 's' : ''} marqué{vRetirer > 1 ? 's' : ''} « Retirer » et {vNonVerifies} non vérifié{vNonVerifies > 1 ? 's' : ''} seront exclus de la planche. Décochez pour imprimer toute la campagne.</span>
+			</span>
+		</button>
+	{/if}
 
 	<!-- Zone 4 : contenu -->
 	<div class="card">
@@ -724,6 +763,69 @@
 	}
 	.toggle .sw.on::after {
 		transform: translateX(14px);
+	}
+
+	/* ===== Option validation externe (mockup v3, vue 5) ===== */
+	.et-opt {
+		display: flex;
+		align-items: flex-start;
+		gap: 11px;
+		margin: 0 32px 16px;
+		padding: 14px 16px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-lg);
+		background: var(--color-surface);
+		box-shadow: var(--shadow-xs);
+		max-width: 620px;
+		text-align: left;
+		font: inherit;
+		color: var(--color-text);
+		cursor: pointer;
+		transition: border-color 140ms ease;
+	}
+	.et-opt:hover {
+		border-color: var(--color-border-strong);
+	}
+	.et-opt:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+	}
+	.et-chk {
+		width: 18px;
+		height: 18px;
+		margin-top: 1px;
+		border-radius: 5px;
+		border: 1.5px solid var(--color-border-strong);
+		background: var(--color-surface);
+		flex-shrink: 0;
+		position: relative;
+	}
+	.et-chk.on {
+		background: var(--color-primary);
+		border-color: var(--color-primary);
+	}
+	.et-chk.on::after {
+		content: '';
+		position: absolute;
+		inset: 4px 3px 5px;
+		border: solid #fff;
+		border-width: 0 0 2.5px 2.5px;
+		transform: rotate(-45deg) translateY(-1px);
+	}
+	.et-txt {
+		display: block;
+	}
+	.et-t {
+		display: block;
+		font-size: 14px;
+		font-weight: 600;
+		color: var(--color-text);
+	}
+	.et-d {
+		display: block;
+		font-size: 13px;
+		color: var(--color-text-muted);
+		margin-top: 2px;
 	}
 
 	/* ===== Zone 4 : contenu ===== */

@@ -7,6 +7,7 @@
  * (CHECK SQL c1..c8), le picker côté UI et les classes CSS `.camp--cN` / `.swN` (app.css).
  */
 import type { Database } from '$lib/database.types';
+import { prospectMapsUrl } from '$lib/maps-url';
 
 export type Campagne = Database['public']['Tables']['campagnes']['Row'];
 export type CampagneWithCount = Campagne & { lead_count: number };
@@ -84,6 +85,70 @@ export interface ProspectCampagne {
 	google_types: string[] | null;
 	/** Groupe du prospect DANS cette campagne (null = sans groupe). Porté par le lien N-N. */
 	groupe_id: string | null;
+	/** Décision de validation externe (lien partagé) : garder / retirer / null = pas encore vérifié. */
+	validation_statut: ValidationDecision | null;
+}
+
+/** Décisions possibles de la validation externe (alignées sur le CHECK SQL + le Zod des endpoints). */
+export const VALIDATION_DECISIONS = ['garder', 'retirer'] as const;
+export type ValidationDecision = (typeof VALIDATION_DECISIONS)[number];
+
+export function isValidationDecision(v: unknown): v is ValidationDecision {
+	return typeof v === 'string' && (VALIDATION_DECISIONS as readonly string[]).includes(v);
+}
+
+/** Avancement de la validation externe d'une liste de prospects (pur, testé). */
+export interface ValidationProgress {
+	total: number;
+	verifies: number;
+	garder: number;
+	retirer: number;
+}
+
+export function validationProgress(list: readonly Pick<ProspectCampagne, 'validation_statut'>[]): ValidationProgress {
+	let garder = 0;
+	let retirer = 0;
+	for (const p of list) {
+		if (p.validation_statut === 'garder') garder++;
+		else if (p.validation_statut === 'retirer') retirer++;
+	}
+	return { total: list.length, verifies: garder + retirer, garder, retirer };
+}
+
+/**
+ * Cap de volume de la lecture PUBLIQUE (page de validation externe) : borne la sérialisation
+ * envoyée à un appelant anonyme (aligné sur le cas étiquettes). Au-delà, `fetchProspectsForCampagne`
+ * tronque et signale `truncated` -> pas de sérialisation illimitée vers un anonyme (spec §5.4).
+ */
+export const PUBLIC_MAX_PROSPECTS = 1000;
+
+/**
+ * Vue MINIMALE d'un prospect exposée à la page publique (personne SANS compte CRM). Clés closes :
+ * aucun champ sensible (score, statut de tri, source, description, google_types, id de campagne)
+ * ne doit transiter. `id` = lead_id, requis par l'API decision, ne porte aucune info exploitable.
+ */
+export interface PublicProspect {
+	id: string;
+	nom: string;
+	adresse: string;
+	mapsUrl: string | null;
+	decision: ValidationDecision | null;
+}
+
+/**
+ * Projette un prospect de campagne vers sa vue publique minimale. Fonction PURE, SOURCE UNIQUE de
+ * la minimisation publique : remplace le `.map()` inline non testé (spec §5.3). Le test de forme
+ * (clés exactement ['adresse','decision','id','mapsUrl','nom']) casse si un champ sensible fuit
+ * un jour par recopie accidentelle du select serveur.
+ */
+export function toPublicProspect(p: ProspectCampagne): PublicProspect {
+	return {
+		id: p.id,
+		nom: p.raison_sociale,
+		adresse: [p.adresse, [p.npa, p.localite].filter(Boolean).join(' ')].filter(Boolean).join(', '),
+		mapsUrl: prospectMapsUrl(p),
+		decision: p.validation_statut,
+	};
 }
 
 /** Normalisation de recherche : minuscules + sans diacritiques (« regie » matche « Régie »). */

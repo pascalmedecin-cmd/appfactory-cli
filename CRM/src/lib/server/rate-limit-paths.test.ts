@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isRateLimitedPath } from './rate-limit-paths';
+import { isRateLimitedPath, isValidationPublicRoute } from './rate-limit-paths';
 
 describe('isRateLimitedPath', () => {
 	it('rate-limite /api/contact-suggestions (POST création + resolve) — audit V3 Medium', () => {
@@ -28,5 +28,24 @@ describe('isRateLimitedPath', () => {
 		expect(isRateLimitedPath('/api/entreprises/search', 'GET')).toBe(false);
 		expect(isRateLimitedPath('/api/foo', 'POST')).toBe(false);
 		expect(isRateLimitedPath('/', 'GET')).toBe(false);
+	});
+});
+
+describe('isValidationPublicRoute (exemption d’auth = surface sensible, motifs EXACTS)', () => {
+	it('reconnaît les 2 seules routes publiques : page (1 segment token) + API decision', () => {
+		expect(isValidationPublicRoute('/validation/Kx3abc')).toBe(true);
+		expect(isValidationPublicRoute('/validation/Kx3abc/')).toBe(true); // slash final toléré
+		expect(isValidationPublicRoute('/api/validation/Kx3abc/decision')).toBe(true);
+		expect(isValidationPublicRoute('/api/validation/Kx3abc/decision/')).toBe(true);
+	});
+
+	it('NE reconnaît PAS une sous-route inventée (pas d’héritage d’exemption via startsWith)', () => {
+		// C'est le durcissement clé : /admin ne doit jamais hériter de l'exemption d'auth.
+		expect(isValidationPublicRoute('/api/validation/Kx3abc/admin')).toBe(false);
+		expect(isValidationPublicRoute('/api/validation/Kx3abc/decision/extra')).toBe(false);
+		expect(isValidationPublicRoute('/validation/Kx3abc/edit')).toBe(false);
+		expect(isValidationPublicRoute('/validation')).toBe(false);
+		expect(isValidationPublicRoute('/api/validation/')).toBe(false);
+		expect(isValidationPublicRoute('/api/validationX/token/decision')).toBe(false);
 	});
 });

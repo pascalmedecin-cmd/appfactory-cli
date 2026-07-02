@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from '$lib/server/supabase';
 import { isEmailAllowed, parseEnvList } from '$lib/server/auth';
 import { createRateLimiter } from '$lib/server/rate-limiter';
-import { isRateLimitedPath } from '$lib/server/rate-limit-paths';
+import { isRateLimitedPath, isValidationPublicRoute } from '$lib/server/rate-limit-paths';
 import { legacyHostRedirect } from '$lib/server/legacy-redirects';
 import { CRM_BASE } from '$lib/config';
 import { json, redirect, type Handle } from '@sveltejs/kit';
@@ -12,8 +12,15 @@ import { RATE_LIMIT_WINDOW_MS, SESSION_MAX_AGE_MS } from '$lib/utils/time-consta
 // (audit 360 M-14). Le timer de nettoyage est arrêté en HMR dev (audit 360 M-11).
 const rateLimiter = createRateLimiter({ windowMs: RATE_LIMIT_WINDOW_MS, max: 10, mapCap: 10_000 });
 
+// Limiteur DÉDIÉ aux routes publiques de validation externe (60 req/min/IP) : la personne
+// externe enchaîne les décisions bien plus vite que 10/min ; un scan de tokens reste borné.
+const validationRateLimiter = createRateLimiter({ windowMs: RATE_LIMIT_WINDOW_MS, max: 60, mapCap: 10_000 });
+
 if (import.meta.hot) {
-	import.meta.hot.dispose(() => rateLimiter.dispose());
+	import.meta.hot.dispose(() => {
+		rateLimiter.dispose();
+		validationRateLimiter.dispose();
+	});
 }
 
 // Anciennes URLs internes du CRM (favoris des fondateurs) avant la reorg portail
@@ -65,6 +72,21 @@ export const baseHandle: Handle = async ({ event, resolve }) => {
 		}
 	}
 
+	// Routes publiques de validation externe : limiteur dédié 60 req/min/IP (la personne
+	// externe enchaîne les décisions ; un scan de tokens reste borné).
+	const isValidationRoute = isValidationPublicRoute(event.url.pathname);
+	if (isValidationRoute) {
+		const ip = event.getClientAddress();
+		if (!validationRateLimiter.check(ip)) {
+			// Ce 429 court-circuite le bloc de headers final : on pose no-store + noindex ici pour
+			// que MÊME la réponse de rate-limit d'une route publique reste non indexée / non cachée.
+			return json(
+				{ error: 'Trop de requetes. Reessayez dans une minute.' },
+				{ status: 429, headers: { 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow' } }
+			);
+		}
+	}
+
 	event.locals.supabase = createSupabaseServerClient(event.cookies);
 
 	event.locals.safeGetSession = async () => {
@@ -86,12 +108,16 @@ export const baseHandle: Handle = async ({ event, resolve }) => {
 		event.url.pathname.startsWith('/api/cron/') ||
 		event.url.pathname === '/api/intelligence/recheck-historical';
 
-	if (!session && !isAuthRoute && !isCronRoute) {
+	// Les routes publiques de validation externe (page + API) sont exemptées du gate auth :
+	// l'AUTORISATION est le token secret (résolu à chaque requête côté route, service role
+	// après résolution). Une session CRM présente n'y change rien - et une session expirée
+	// ne doit surtout pas rediriger la personne externe vers /login.
+	if (!session && !isAuthRoute && !isCronRoute && !isValidationRoute) {
 		throw redirect(303, '/login');
 	}
 
 	// Verifier que l'email est autorise (whitelist domaine/email)
-	if (session && !isAuthRoute && !isCronRoute) {
+	if (session && !isAuthRoute && !isCronRoute && !isValidationRoute) {
 		if (!isEmailAllowed(user?.email ?? undefined, parseEnvList(env.ALLOWED_DOMAINS), parseEnvList(env.ALLOWED_EMAILS))) {
 			// Deconnecter l'utilisateur non autorise
 			await event.locals.supabase.auth.signOut();
@@ -100,7 +126,7 @@ export const baseHandle: Handle = async ({ event, resolve }) => {
 	}
 
 	// Expiration session 7 jours (cookie cote serveur) — voir SESSION_MAX_AGE_MS (time-constants).
-	if (session && !isAuthRoute && !isCronRoute) {
+	if (session && !isAuthRoute && !isCronRoute && !isValidationRoute) {
 		// Le cookie `login_at` a un maxAge de 7j : le navigateur le supprime EXACTEMENT quand il
 		// deviendrait expire. Tester `loginAt && age > 7j` est une course perdue (le cookie a
 		// disparu a l'instant ou la condition serait vraie) : le plafond ne tombait jamais et la
@@ -154,6 +180,15 @@ export const baseHandle: Handle = async ({ event, resolve }) => {
 		'Strict-Transport-Security',
 		'max-age=63072000; includeSubDomains; preload'
 	);
+
+	// Porte publique de validation externe : jamais indexée, jamais mise en cache (secret dans
+	// l'URL). Posé ICI, dans le hook, pour couvrir TOUTES les réponses de ces routes - succès,
+	// `throw error` (404/500), 410 expiré, POST decision - alors qu'un `setHeaders` dans le seul
+	// `load` ratait les chemins d'erreur (spec §4). `isValidationRoute` = motifs exacts.
+	if (isValidationRoute) {
+		response.headers.set('Cache-Control', 'no-store');
+		response.headers.set('X-Robots-Tag', 'noindex, nofollow');
+	}
 
 	return response;
 };

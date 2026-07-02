@@ -1,0 +1,576 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup v3 golden - Processus campagne + validation externe (02.07.2026)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+	/* ======= Tokens golden v9 (tokens.json + app.css) - AUCUNE couleur hors tokens ======= */
+	:root {
+		--primary: #2F5A9E; --primary-hover: #264C85; --primary-light: #F0F4F8; --primary-dark: #0A1628;
+		--background: #FFFFFF; --surface: #F9FAFB; --surface-alt: #F3F4F6;
+		--text: #111827; --text-body: #374151; --muted: #6B7280;
+		--border: #E5E7EB; --border-input: #D1D5DB; --hairline: #F3F4F6;
+		--success: #538B6B; --success-bg: #ECFDF5;
+		--info: #5A7190; --info-bg: #EDF1F5;
+		--warning: #F79009; --warning-bg: #FFFAEB; --warning-deep: #B54708;
+		--danger: #F04438; --danger-hover: #C9342A;
+		--violet: #7B6A9A;
+		--pill-chaud-bg: #FFF1EC; --pill-chaud: #C0391A;
+		--pill-tiede-bg: #FFF7E6; --pill-tiede: #B54708;
+		--r-sm: 6px; --r-md: 8px; --r-lg: 10px; --r-xl: 12px; --r-full: 9999px;
+		--shadow-xs: 0 1px 2px rgba(16,24,40,.05);
+		--shadow-md: 0 8px 24px -6px rgba(16,24,40,.14);
+		--ease: cubic-bezier(0.16, 1, 0.3, 1);
+	}
+	* { box-sizing: border-box; }
+	body { margin: 0; background: #E9EDF2; font-family: 'DM Sans', system-ui, sans-serif; color: var(--text); font-size: 14px; line-height: 1.43; }
+	.tabular { font-variant-numeric: tabular-nums; }
+	button { font-family: inherit; }
+	.ic { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+	.ic-s { width: 13px; height: 13px; }
+	.ic-l { width: 17px; height: 17px; stroke-width: 1.75; }
+
+	/* ======= Chrome du mockup ======= */
+	.mk-top { position: sticky; top: 0; z-index: 50; background: var(--primary-dark); color: #fff; padding: 14px 22px 0; }
+	.mk-top h1 { margin: 0; font-size: 15px; font-weight: 600; }
+	.mk-top p { margin: 3px 0 12px; font-size: 12px; color: rgba(255,255,255,.6); }
+	.mk-tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+	.mk-tab { border: none; background: rgba(255,255,255,.08); color: rgba(255,255,255,.85); font-size: 12px; font-weight: 600; padding: 9px 15px; border-radius: 9px 9px 0 0; cursor: pointer; }
+	.mk-tab.on { background: #E9EDF2; color: var(--primary-dark); }
+	.mk-view { display: none; max-width: 1220px; margin: 0 auto; padding: 26px 22px 80px; }
+	.mk-view.on { display: block; }
+	.note { display: flex; gap: 9px; align-items: flex-start; background: var(--warning-bg); border: 1px solid #F2DFA7; border-radius: var(--r-lg); padding: 10px 13px; font-size: 12px; color: #6B5518; margin: 0 0 16px; }
+	.note b { color: #4d3d0f; }
+	.note .n, .pin { flex-shrink: 0; min-width: 20px; height: 20px; padding: 0 5px; border-radius: var(--r-full); background: #E8C355; color: #4d3d0f; display: inline-grid; place-items: center; font-size: 11px; font-weight: 700; }
+	.pin { min-width: 18px; height: 18px; font-size: 10.5px; vertical-align: 2px; margin-left: 6px; }
+	.h2m { font-size: 18px; font-weight: 600; margin: 0 0 4px; }
+	.subm { font-size: 13px; color: var(--muted); margin: 0 0 16px; }
+
+	/* ======= Primitives golden ======= */
+	/* Button § 5.1 : h 40, radius 10, padding 8/16, 14px/600. */
+	.btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 40px; border-radius: var(--r-lg); font-size: 14px; font-weight: 600; padding: 8px 16px; cursor: pointer; border: 1px solid transparent; transition: background 160ms var(--ease), border-color 160ms var(--ease), transform 80ms; }
+	.btn:active { transform: scale(.98); }
+	.btn-pri { background: var(--primary); color: #fff; }
+	.btn-pri:hover { background: var(--primary-hover); }
+	.btn-sec { background: transparent; color: var(--violet); border-color: rgba(123,106,154,.3); }
+	.btn-sec:hover { background: rgba(123,106,154,.06); }
+	.btn-ter { background: transparent; color: var(--text); }
+	.btn-ter:hover { background: var(--surface-alt); }
+	.btn-ter-muted { color: var(--muted); }
+	.btn-des { background: var(--danger); color: #fff; }
+	.btn-des:hover { background: var(--danger-hover); }
+	.btn[disabled] { opacity: .55; cursor: default; }
+	.btn-modal { height: 44px; } /* § 14.1 : pied de modale = h-11 */
+	/* Card § 5.3 : radius 10, border, padding 16, shadow xs. */
+	.card { background: var(--background); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); padding: 16px; }
+	/* Badge § 5.8 : radius 10, 4/8, 12px/500. */
+	.badge { display: inline-flex; align-items: center; padding: 4px 8px; border-radius: var(--r-lg); font-size: 12px; font-weight: 500; background: var(--surface-alt); color: var(--text-body); }
+	/* ScorePill § 5.7 compact (calibrée golden, sourde, PAS criarde) : h 26, radius 6, 12px/600, icône 14. */
+	.spill { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px; border-radius: var(--r-sm); font-size: 12px; font-weight: 600; letter-spacing: .005em; }
+	.spill .ic { width: 14px; height: 14px; }
+	.spill-chaud { background: var(--pill-chaud-bg); color: var(--pill-chaud); }
+	.spill-tiede { background: var(--pill-tiede-bg); color: var(--pill-tiede); }
+	.spill-froid { background: var(--info-bg); color: #475669; }
+	/* Chip campagne (couleur c5 ardoise sourde). */
+	.camp-chip { display: inline-flex; align-items: center; padding: 4px 11px; border-radius: var(--r-full); font-size: 12px; font-weight: 600; background: var(--info-bg); color: #475669; }
+
+	/* Statut segmenté 50/50 (source unique, consommé page 1 ET page 2) - fiche design. */
+	.seg-wrap { display: grid; grid-template-columns: 1fr 1fr; width: 176px; height: 36px; padding: 4px; gap: 4px; background: var(--surface-alt); border: 1px solid var(--border); border-radius: var(--r-md); box-sizing: border-box; }
+	.seg { display: inline-flex; align-items: center; justify-content: center; min-width: 0; border: none; background: transparent; border-radius: var(--r-sm); font-size: 12px; font-weight: 500; line-height: 1; color: var(--muted); cursor: pointer; transition: background 140ms var(--ease), color 140ms var(--ease); }
+	.seg.on { background: var(--primary); color: #fff; font-weight: 600; box-shadow: var(--shadow-xs); }
+
+	.chk { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--border-input); background: var(--background); flex-shrink: 0; position: relative; }
+	.chk.on { background: var(--primary); border-color: var(--primary); }
+	.chk.on::after { content: ''; position: absolute; inset: 4px 3px 5px; border: solid #fff; border-width: 0 0 2.5px 2.5px; transform: rotate(-45deg) translateY(-1px); }
+
+	/* ======= Vue 1 : liste ======= */
+	.lrow { display: grid; grid-template-columns: 14px 1fr 176px 176px 40px; gap: 14px; align-items: center; padding: 13px 16px; background: var(--background); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); }
+	.lsw { width: 12px; height: 32px; border-radius: 4px; background: var(--info); }
+	.lname { font-size: 14px; font-weight: 600; color: var(--primary); background: none; border: none; padding: 0; text-align: left; cursor: pointer; }
+	.lname:hover { text-decoration: underline; text-underline-offset: 3px; }
+	.lmeta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+	.kebab { border: none; background: none; color: var(--muted); cursor: pointer; padding: 6px; border-radius: var(--r-md); }
+	.kebab:hover { background: var(--surface-alt); }
+
+	/* ======= Vue 2 : page campagne (archétype workspace) ======= */
+	.back { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 600; color: var(--muted); margin-bottom: 12px; background: none; border: none; padding: 6px 10px 6px 8px; margin-left: -8px; border-radius: var(--r-md); cursor: pointer; }
+	.back:hover { background: var(--surface-alt); color: var(--text); }
+	.pg-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+	.pg-title { margin: 8px 0 0; font-size: 22px; font-weight: 600; line-height: 1.1; }
+	.pg-desc { margin: 6px 0 0; font-size: 14px; color: var(--muted); max-width: 64ch; }
+
+	/* Fil d'étapes : indicateurs FLAT factuels cliquables (pas de funnel décoratif, § 6). */
+	.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+	.step { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--background); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-xs); cursor: pointer; text-align: left; transition: border-color 160ms var(--ease); }
+	.step:hover { border-color: rgba(47,90,158,.4); }
+	.step-num { width: 24px; height: 24px; flex-shrink: 0; display: grid; place-items: center; border-radius: var(--r-full); background: var(--surface-alt); border: 1px solid var(--border); font-size: 12px; font-weight: 700; color: var(--muted); }
+	.step.fait .step-num { background: var(--success); border-color: var(--success); color: #fff; }
+	.step.encours .step-num { background: var(--primary-light); border-color: rgba(47,90,158,.35); color: var(--primary); }
+	.step-t { font-size: 13px; font-weight: 600; display: block; }
+	.step-d { font-size: 12px; color: var(--muted); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+	.grid2 { display: grid; grid-template-columns: minmax(0,1fr) 340px; gap: 16px; align-items: start; }
+	.side { display: flex; flex-direction: column; gap: 16px; }
+	.card-t { margin: 0; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }
+	.card-t .ic { color: var(--primary); }
+	.card-t .cnt { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 7px; border-radius: var(--r-full); background: var(--primary-light); color: var(--primary); font-size: 12px; font-weight: 700; }
+	.card-p { margin: 8px 0 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+
+	.psearch { position: relative; margin-top: 16px; }
+	.psearch .ic { position: absolute; left: 11px; top: 10px; color: var(--muted); }
+	.psearch input { width: 100%; height: 34px; padding: 6px 12px 6px 34px; border: 1px solid var(--border); border-radius: var(--r-md); font: 14px 'DM Sans', sans-serif; }
+	.psearch input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(47,90,158,.16); }
+
+	/* Chips groupes : PAS de dashed (§ 6). */
+	.chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+	.gchip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border: 1px solid var(--border); background: var(--background); border-radius: var(--r-full); font-size: 12px; font-weight: 600; color: var(--text-body); cursor: pointer; transition: background 140ms var(--ease); }
+	.gchip:hover { background: var(--surface); }
+	.gchip.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+	.gchip .n { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-full); background: var(--surface-alt); color: var(--muted); font-size: 11px; font-weight: 700; }
+	.gchip.on .n { background: rgba(255,255,255,.22); color: #fff; }
+	.gchip-none { background: var(--surface); color: var(--muted); }
+	.gadd { display: inline-flex; align-items: center; gap: 4px; border: 1px solid rgba(47,90,158,.25); color: var(--primary); background: var(--primary-light); border-radius: var(--r-full); padding: 4px 10px; font-size: 12px; font-weight: 600; cursor: pointer; }
+	.gadd:hover { border-color: rgba(47,90,158,.45); }
+
+	.prow { display: flex; align-items: center; gap: 10px; padding: 12px 4px; border-bottom: 1px solid var(--hairline); }
+	.prow:last-child { border-bottom: none; }
+	.pname { font-size: 14px; font-weight: 500; }
+	.psub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+	.psub .sep { margin: 0 6px; }
+	.gtag { display: inline-block; padding: 1px 7px; border-radius: var(--r-full); background: var(--surface-alt); color: var(--text-body); font-size: 11px; font-weight: 600; }
+	.pside { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+	/* Chips de décision par ligne : sourds golden - Garde = sauge, Retire = ardoise (JAMAIS de rouge). */
+	.vchip { display: inline-flex; align-items: center; gap: 4px; padding: 3px 8px; border-radius: var(--r-full); font-size: 11px; font-weight: 600; }
+	.vchip.g { background: var(--success-bg); color: var(--success); }
+	.vchip.r { background: var(--info-bg); color: var(--info); }
+	.xrm { border: none; background: none; color: var(--muted); cursor: pointer; width: 30px; height: 30px; display: grid; place-items: center; border-radius: var(--r-md); }
+	.xrm:hover { background: var(--surface-alt); color: var(--text); }
+
+	.bulk { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--hairline); padding-top: 12px; margin-top: 8px; }
+	.bulk-badge { min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--r-full); background: var(--primary); color: #fff; font-size: 11.5px; font-weight: 700; display: inline-grid; place-items: center; }
+	.bulk select { height: 34px; border: 1px solid var(--border-input); border-radius: var(--r-md); font: 14px 'DM Sans', sans-serif; padding: 0 10px; background: var(--background); }
+
+	/* Validation externe : compteur + barre NUS sur la carte (plus de boîte-dans-boîte). */
+	.vprog-top { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+	.vprog-count { font-size: 14px; font-weight: 600; color: var(--text); }
+	.vprog-det { font-size: 12px; font-weight: 400; color: var(--muted); }
+	/* Barre MONO bleue (un seul accent, plus de bicolore vert+rouge). */
+	.vbar { height: 8px; margin-top: 8px; border-radius: var(--r-full); background: var(--surface-alt); overflow: hidden; }
+	.vbar .fill { display: block; height: 100%; background: var(--primary); transition: width 260ms var(--ease); }
+	.vlien { display: flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; color: var(--text-body); margin: 12px 0 0; }
+	.vlien .ic { color: var(--primary); }
+	.stack { display: flex; flex-direction: column; gap: 8px; margin-top: 16px; }
+
+	.diff { width: 100%; display: flex; align-items: center; gap: 11px; padding: 11px 12px; border: 1px solid var(--border); background: var(--background); border-radius: var(--r-lg); cursor: pointer; text-align: left; transition: border-color 150ms var(--ease), background 150ms var(--ease); }
+	.diff:hover:not([disabled]) { background: var(--surface); border-color: rgba(47,90,158,.35); }
+	.diff[disabled] { opacity: .55; cursor: default; }
+	.diff-ic { width: 34px; height: 34px; flex-shrink: 0; display: grid; place-items: center; border-radius: var(--r-md); background: var(--primary-light); color: var(--primary); }
+	.diff-t { font-size: 13px; font-weight: 600; display: block; }
+	.diff-d { font-size: 12px; color: var(--muted); display: block; }
+	.diff .chev { margin-left: auto; color: var(--muted); }
+
+	/* ======= Vue 3 : modale § 5.4 ======= */
+	.mo-back { background: rgba(0,0,0,.4); border-radius: var(--r-xl); padding: 46px 18px; display: flex; justify-content: center; }
+	.mo { background: var(--background); border-radius: var(--r-xl); max-width: 560px; width: 100%; box-shadow: var(--shadow-md); overflow: hidden; }
+	.mo-h { display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid var(--border); }
+	.mo-h b { font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 9px; }
+	.mo-h .ic-l { color: var(--primary); }
+	.mo-b { padding: 16px 24px 24px; }
+	.mo-hint { margin: 0 0 12px; font-size: 13px; color: var(--text-body); }
+	.msg { margin: 0; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); font: 13px/1.6 'DM Sans', sans-serif; color: var(--text-body); white-space: pre-wrap; }
+	.mo-actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+
+	/* ======= Vue 4 : page publique - colonne centrée claire, aérée (fiche design) ======= */
+	.val-page { max-width: 640px; margin: 0 auto; background: var(--background); border: 1px solid var(--border); border-radius: var(--r-xl); overflow: hidden; }
+	.val-head { padding: 24px; border-bottom: 1px solid var(--border); }
+	.val-head img { height: 22px; display: block; }
+	.val-kick { margin: 16px 0 4px; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+	.val-title { margin: 0; font-size: 22px; font-weight: 600; color: var(--text); }
+	.val-hsub { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+	.val-body { padding: 24px; display: flex; flex-direction: column; gap: 24px; }
+	/* "Comment faire" : texte, PAS une carte. */
+	.val-howto-t { margin: 0 0 8px; font-size: 12px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+	.val-howto ol { margin: 0; padding-left: 20px; font-size: 14px; color: var(--text-body); display: flex; flex-direction: column; gap: 4px; }
+	.val-howto p { margin: 12px 0 0; font-size: 13px; color: var(--muted); }
+	/* Progression sticky fine, barre MONO bleue. */
+	.val-prog { position: sticky; top: 8px; background: var(--background); padding: 12px 0; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); z-index: 5; }
+	.val-prog-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+	.val-prog-c { font-size: 16px; font-weight: 600; color: var(--text); }
+	.val-prog-d { font-size: 12px; font-weight: 400; color: var(--muted); }
+	.val-filtres { display: flex; gap: 8px; margin-top: 12px; }
+	.vf { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--border); background: var(--background); border-radius: var(--r-full); font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; }
+	.vf.on { background: var(--surface-alt); color: var(--text); border-color: var(--border); }
+	.vf .n { display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--r-full); background: var(--surface-alt); color: var(--muted); font-size: 11px; font-weight: 700; }
+	.vf.on .n { background: var(--background); }
+	/* Liste : lignes séparées par un filet (pas de carte par ligne, pas de liseré coloré). */
+	.val-list { display: flex; flex-direction: column; }
+	.val-row { padding: 20px 0; border-bottom: 1px solid var(--hairline); }
+	.val-row:first-child { padding-top: 4px; }
+	.val-row:last-child { border-bottom: none; }
+	.val-nom { margin: 0; font-size: 15px; font-weight: 600; }
+	.val-nom .flag { font-size: 12px; font-weight: 600; margin-left: 8px; }
+	.val-nom .flag.g { color: var(--success); }
+	.val-nom .flag.r { color: var(--info); }
+	.val-adr { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+	.val-maps { display: inline-flex; align-items: center; gap: 7px; margin-top: 12px; min-height: 44px; padding: 0 16px; border-radius: var(--r-full); background: var(--surface-alt); font-size: 14px; font-weight: 600; color: var(--primary); text-decoration: none; cursor: pointer; }
+	.val-maps:hover { background: #E9EDF2; }
+	.val-acts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+	.val-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; border-radius: var(--r-lg); border: 1px solid var(--border-input); background: var(--background); font-size: 14px; font-weight: 600; color: var(--text-body); cursor: pointer; transition: background 140ms var(--ease), border-color 140ms var(--ease), color 140ms var(--ease), transform 80ms; }
+	.val-btn:active { transform: scale(.99); }
+	.val-btn.g-h:hover:not(.g-on) { border-color: var(--success); color: var(--success); }
+	.val-btn.r-h:hover:not(.r-on) { border-color: var(--info); color: var(--info); }
+	.val-btn.g-on { background: var(--success); border-color: var(--success); color: #fff; }
+	.val-btn.r-on { background: var(--info); border-color: var(--info); color: #fff; }
+	.val-foot { margin-top: 32px; text-align: center; font-size: 11px; letter-spacing: .05em; color: var(--muted); }
+	.val-expired { max-width: 640px; margin: 0 auto; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-xl); padding: 24px; }
+	.val-expired b { display: block; font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+	.val-expired p { margin: 0; font-size: 14px; color: var(--text-body); }
+
+	/* ======= Vue 5 : étiquettes ======= */
+	.et-opt { display: flex; align-items: flex-start; gap: 11px; padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--background); box-shadow: var(--shadow-xs); max-width: 620px; }
+	.et-opt .chk { margin-top: 2px; }
+	.et-t { font-size: 14px; font-weight: 600; }
+	.et-d { font-size: 13px; color: var(--muted); margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<!-- Sprite Lucide (viewBox sur chaque symbol) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+	<symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+	<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+	<symbol id="i-cross" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M22 12h-4M6 12H2M12 6V2M12 22v-4"/></symbol>
+	<symbol id="i-dl" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+	<symbol id="i-mail" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+	<symbol id="i-trend" viewBox="0 0 24 24"><path d="m22 7-8.5 8.5-5-5L2 17"/><path d="M16 7h6v6"/></symbol>
+	<symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></symbol>
+	<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+	<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+	<symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+	<symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+	<symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></symbol>
+	<symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+	<symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+	<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></symbol>
+	<symbol id="i-umin" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 11h-6"/></symbol>
+	<symbol id="i-userck" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/></symbol>
+	<symbol id="i-send" viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+	<symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></symbol>
+	<symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></symbol>
+</svg>
+
+<div class="mk-top">
+	<h1>Mockup v3 (golden v9) - Processus campagne + validation externe</h1>
+	<p>CRM FilmPro · 02.07.2026 · UI raffinée après retours : segment 50/50, couleurs sourdes, page publique aérée. Pastilles jaunes = points à valider.</p>
+	<div class="mk-tabs">
+		<button class="mk-tab on" data-v="v1">1 · Liste des campagnes</button>
+		<button class="mk-tab" data-v="v2">2 · Page campagne</button>
+		<button class="mk-tab" data-v="v3">3 · Modale message</button>
+		<button class="mk-tab" data-v="v4">4 · Page collaboratrice</button>
+		<button class="mk-tab" data-v="v5">5 · Étiquettes (option)</button>
+	</div>
+</div>
+
+<!-- ============ VUE 1 ============ -->
+<section class="mk-view on" id="v1">
+	<h2 class="h2m">Liste des campagnes</h2>
+	<p class="subm">Correction : le contrôle « En cours / Active » a désormais deux moitiés strictement égales (50/50) et se remplit du seul bleu FilmPro. Rien d'autre ne bouge.</p>
+	<div class="note"><span class="n">1</span><span><b>À valider :</b> le segment de statut en 50/50 net (radius carré, un seul accent bleu, plus de vert « Active »). Cliquer le nom ouvre la page campagne (vue 2).</span></div>
+	<div class="lrow">
+		<span class="lsw"></span>
+		<div>
+			<button class="lname" onclick="show('v2')">Mailing Régies Lausanne</button><span class="pin">1</span>
+			<div class="lmeta">Créée le 28 juin 2026 · 48 prospects</div>
+		</div>
+		<span class="seg-wrap"><button class="seg on">En cours</button><button class="seg">Active</button></span>
+		<button class="btn btn-sec" style="height:34px; font-size:12px; padding:6px 12px;"><svg class="ic ic-s"><use href="#i-cross"/></svg> Trouver des prospects</button>
+		<button class="kebab" aria-label="Actions"><svg class="ic"><use href="#i-more"/></svg></button>
+	</div>
+	<p class="subm" style="margin-top:14px;">Astuce mockup : cliquez le nom de la campagne pour ouvrir la vue 2.</p>
+</section>
+
+<!-- ============ VUE 2 ============ -->
+<section class="mk-view" id="v2">
+	<h2 class="h2m">Page campagne : le poste de pilotage</h2>
+	<p class="subm">Fil d'étapes cliquable, prospects au centre, Validation et Diffusion à droite.</p>
+	<div class="note"><span class="n">2</span><span><b>À valider :</b> bloc « Validation externe » assaini - un seul bleu pour l'action, barre de progression bleue unie (plus de vert + rouge), libellés raccourcis, chips « Garde / Retire » en tons sourds.</span></div>
+
+	<button class="back"><svg class="ic"><use href="#i-back"/></svg> Retour aux campagnes</button>
+	<div class="pg-head">
+		<div>
+			<span class="camp-chip">En cours</span>
+			<h2 class="pg-title">Mailing Régies Lausanne</h2>
+			<p class="pg-desc">Courrier de prospection - régies et administrations de biens, bassin lémanique.</p>
+		</div>
+		<span class="seg-wrap"><button class="seg on">En cours</button><button class="seg">Active</button></span>
+	</div>
+
+	<nav class="steps" aria-label="Étapes de la campagne">
+		<button class="step fait"><span class="step-num"><svg class="ic ic-s"><use href="#i-check"/></svg></span><span><span class="step-t">Constituer</span><span class="step-d">48 prospects</span></span></button>
+		<button class="step fait"><span class="step-num"><svg class="ic ic-s"><use href="#i-check"/></svg></span><span><span class="step-t">Organiser</span><span class="step-d">2 groupes · 6 sans groupe</span></span></button>
+		<button class="step encours"><span class="step-num">3</span><span><span class="step-t">Valider</span><span class="step-d">34/48 vérifiés</span></span></button>
+		<button class="step"><span class="step-num">4</span><span><span class="step-t">Diffuser</span><span class="step-d">Étiquettes · PDF · Pipeline</span></span></button>
+	</nav>
+
+	<div class="grid2">
+		<div class="card">
+			<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+				<h3 class="card-t">Prospects <span class="cnt tabular">48</span></h3>
+				<button class="btn btn-sec"><svg class="ic"><use href="#i-cross"/></svg> Trouver des prospects</button>
+			</div>
+			<div class="psearch"><svg class="ic"><use href="#i-search"/></svg><input placeholder="Filtrer par nom ou localité…"></div>
+			<div class="chips">
+				<button class="gchip on">Tous <span class="n">48</span></button>
+				<button class="gchip">Régies <span class="n">31</span></button>
+				<button class="gchip">Architectes <span class="n">11</span></button>
+				<button class="gchip gchip-none">Sans groupe <span class="n">6</span></button>
+				<button class="gadd"><svg class="ic ic-s"><use href="#i-plus"/></svg> Groupe</button>
+			</div>
+
+			<div style="margin-top:8px;">
+				<div class="prow">
+					<span class="chk on"></span>
+					<div style="min-width:0;">
+						<div class="pname">Bernard Nicod SA</div>
+						<div class="psub">1003 Lausanne<span class="sep">·</span>Google Maps<span class="sep">·</span><span class="gtag">Régies</span></div>
+					</div>
+					<div class="pside">
+						<span class="vchip g"><svg class="ic ic-s"><use href="#i-check"/></svg> Garde</span><span class="pin">3</span>
+						<span class="spill spill-chaud"><svg class="ic"><use href="#i-flame"/></svg> 9</span>
+						<span class="badge">À trier</span>
+						<button class="xrm" aria-label="Retirer"><svg class="ic"><use href="#i-x"/></svg></button>
+					</div>
+				</div>
+				<div class="prow">
+					<span class="chk on"></span>
+					<div style="min-width:0;">
+						<div class="pname">Régie Braun SA</div>
+						<div class="psub">1002 Lausanne<span class="sep">·</span>Google Maps<span class="sep">·</span><span class="gtag">Régies</span></div>
+					</div>
+					<div class="pside">
+						<span class="vchip g"><svg class="ic ic-s"><use href="#i-check"/></svg> Garde</span>
+						<span class="spill spill-chaud"><svg class="ic"><use href="#i-flame"/></svg> 8</span>
+						<span class="badge">À trier</span>
+						<button class="xrm" aria-label="Retirer"><svg class="ic"><use href="#i-x"/></svg></button>
+					</div>
+				</div>
+				<div class="prow">
+					<span class="chk"></span>
+					<div style="min-width:0;">
+						<div class="pname">Atelier Niv-o Architectes Sàrl</div>
+						<div class="psub">1004 Lausanne<span class="sep">·</span>Google Maps<span class="sep">·</span><span class="gtag">Architectes</span></div>
+					</div>
+					<div class="pside">
+						<span class="vchip r"><svg class="ic ic-s"><use href="#i-x"/></svg> Retire</span>
+						<span class="spill spill-tiede"><svg class="ic"><use href="#i-target"/></svg> 5</span>
+						<span class="badge">À trier</span>
+						<button class="xrm" aria-label="Retirer"><svg class="ic"><use href="#i-x"/></svg></button>
+					</div>
+				</div>
+				<div class="prow">
+					<span class="chk"></span>
+					<div style="min-width:0;">
+						<div class="pname">Domicim - Lausanne</div>
+						<div class="psub">1005 Lausanne<span class="sep">·</span>Google Maps<span class="sep">·</span><span class="gtag">Régies</span></div>
+					</div>
+					<div class="pside">
+						<span class="spill spill-chaud"><svg class="ic"><use href="#i-flame"/></svg> 8</span>
+						<span class="badge">À trier</span>
+						<button class="xrm" aria-label="Retirer"><svg class="ic"><use href="#i-x"/></svg></button>
+					</div>
+				</div>
+			</div>
+
+			<div class="bulk">
+				<span style="font-weight:600; font-size:13px;"><span class="bulk-badge tabular">2</span> sélectionnés</span>
+				<select><option>Déplacer vers…</option></select>
+				<button class="btn btn-sec"><svg class="ic"><use href="#i-trend"/></svg> Envoyer au pipeline</button><span class="pin">4</span>
+				<button class="btn btn-ter">Annuler</button>
+			</div>
+		</div>
+
+		<div class="side">
+			<div class="card">
+				<h3 class="card-t"><svg class="ic ic-l"><use href="#i-userck"/></svg> Validation externe</h3>
+				<p class="card-p">Une personne sans compte vérifie chaque prospect et le marque « à garder » ou « à retirer ».</p>
+
+				<div class="vprog-top"><span class="vprog-count tabular">34/48 vérifiés</span><span class="vprog-det tabular">29 à garder · 5 à retirer</span></div>
+				<div class="vbar"><span class="fill" style="width:71%"></span></div>
+				<p class="vlien"><svg class="ic"><use href="#i-link"/></svg> Lien actif jusqu'au 4 juillet, 15:30</p>
+
+				<div class="stack">
+					<button class="btn btn-pri" onclick="show('v3')"><svg class="ic"><use href="#i-share"/></svg> Partager le lien</button>
+					<button class="btn btn-ter"><svg class="ic"><use href="#i-umin"/></svg> Appliquer les retraits (5)</button><span class="pin" style="align-self:flex-start; margin:-4px 0 0;">5</span>
+					<button class="btn btn-ter btn-ter-muted">Révoquer le lien</button>
+				</div>
+			</div>
+
+			<div class="card">
+				<h3 class="card-t"><svg class="ic ic-l"><use href="#i-send"/></svg> Diffuser</h3>
+				<p class="card-p">Les sorties de la campagne, une fois la liste au propre.</p>
+				<div class="stack">
+					<button class="diff"><span class="diff-ic"><svg class="ic ic-l"><use href="#i-mail"/></svg></span><span><span class="diff-t">Étiquettes d'adresses</span><span class="diff-d">Planche Avery - option « validés seulement »</span></span><svg class="ic chev"><use href="#i-chev"/></svg></button>
+					<button class="diff"><span class="diff-ic"><svg class="ic ic-l"><use href="#i-dl"/></svg></span><span><span class="diff-t">Liste des prospects (PDF)</span><span class="diff-d">A4 paysage, liens Google Maps cliquables</span></span><svg class="ic chev"><use href="#i-chev"/></svg></button>
+					<button class="diff"><span class="diff-ic"><svg class="ic ic-l"><use href="#i-trend"/></svg></span><span><span class="diff-t">Envoyer les validés au pipeline (29)</span><span class="diff-d">Les « garder » deviennent des opportunités</span></span><svg class="ic chev"><use href="#i-chev"/></svg></button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="note" style="margin-top:16px;"><span class="n">3</span><span>La décision de la collaboratrice apparaît sur chaque ligne (chip « Garde » / « Retire »). <b>Elle ne supprime rien</b> : toi seul appliques les retraits (pastille 5, confirmation avant, où le rouge réapparaît une seule fois). <span class="pin">4</span> « Envoyer au pipeline » marche aussi sur une sélection manuelle.</span></div>
+</section>
+
+<!-- ============ VUE 3 ============ -->
+<section class="mk-view" id="v3">
+	<h2 class="h2m">Modale à la génération du lien</h2>
+	<p class="subm">Message complet prêt à copier, sans le nom de la destinataire. Le lien secret n'est affiché qu'ici, une seule fois.</p>
+	<div class="note"><span class="n">6</span><span><b>À valider :</b> le texte du message (envoyable par email ou WhatsApp tel quel) et la validité de <b>2 jours</b>. En cas de perte : générer un nouveau lien (l'ancien est coupé).</span></div>
+	<div class="mo-back">
+		<div class="mo">
+			<div class="mo-h"><b><svg class="ic ic-l"><use href="#i-share"/></svg> Lien de validation prêt</b><button class="kebab" aria-label="Fermer"><svg class="ic"><use href="#i-x"/></svg></button></div>
+			<div class="mo-b">
+				<p class="mo-hint">Copiez ce message et envoyez-le (email ou WhatsApp). Le lien est secret : il n'est affiché qu'une seule fois - en cas de perte, générez simplement un nouveau lien.</p>
+				<pre class="msg">Bonjour,
+
+Merci de vérifier les prospects de la campagne « Mailing Régies Lausanne » avant l'envoi.
+
+1. Ouvre ce lien : https://filmpro-portail.vercel.app/validation/Kx3…9fQ
+2. Pour chaque prospect, clique sur « Ouvrir sur Google Maps » et vérifie que l'adresse et l'activité correspondent.
+3. Choisis « Garder » ou « Retirer ». Tes choix s'enregistrent automatiquement.
+
+Le lien est valable jusqu'au 4 juillet, 15:30.
+
+Merci d'avance.</pre>
+				<div class="mo-actions">
+					<button class="btn btn-pri btn-modal"><svg class="ic"><use href="#i-copy"/></svg> Copier le message</button>
+					<button class="btn btn-ter btn-modal" style="border:1px solid var(--border-input);"><svg class="ic"><use href="#i-link"/></svg> Copier le lien seul</button>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<!-- ============ VUE 4 ============ -->
+<section class="mk-view" id="v4">
+	<h2 class="h2m">Ce que voit ta collaboratrice (sans compte, mobile ou ordinateur)</h2>
+	<p class="subm">Page claire, aérée, en colonne centrée comme les autres pages CRM. Palette sourde, zéro couleur criarde. Cliquez Garder / Retirer : le mockup réagit comme la vraie page (re-cliquer annule).</p>
+	<div class="note"><span class="n">7</span><span><b>À valider :</b> page publique claire et aérée (fini le cadre téléphone et le bandeau sombre), logo FilmPro en tête, lignes séparées par un simple filet, boutons Garder/Retirer sourds (sauge / ardoise, jamais de rouge), compteur collant.</span></div>
+
+	<div class="val-page" id="pubList">
+		<div class="val-head">
+			<img src="../../static/FilmPro_logo.svg" alt="FilmPro">
+			<p class="val-kick">Vérification des prospects</p>
+			<h1 class="val-title">Mailing Régies Lausanne</h1>
+			<p class="val-hsub">Lien actif jusqu'au 4 juillet, 15:30</p>
+		</div>
+		<div class="val-body">
+			<div class="val-howto">
+				<p class="val-howto-t">Comment faire</p>
+				<ol>
+					<li>Ouvrez la fiche <b>Google Maps</b> du prospect.</li>
+					<li>Vérifiez que l'adresse et l'activité correspondent.</li>
+					<li>Choisissez <b>Garder</b> ou <b>Retirer</b> - c'est enregistré aussitôt.</li>
+				</ol>
+				<p>Un clic de trop ? Re-cliquez sur votre choix pour l'annuler.</p>
+			</div>
+
+			<div class="val-prog">
+				<div class="val-prog-top"><span class="val-prog-c tabular" id="pc">34/48 vérifiés</span><span class="val-prog-d tabular" id="pd">29 à garder · 5 à retirer</span></div>
+				<div class="vbar" style="margin-top:8px;"><span class="fill" id="bf" style="width:71%"></span></div>
+				<div class="val-filtres">
+					<button class="vf on">À vérifier <span class="n" id="pr">14</span></button>
+					<button class="vf">Tous <span class="n">48</span></button>
+				</div>
+			</div>
+
+			<div class="val-list">
+				<div class="val-row" data-d="">
+					<p class="val-nom">Publiaz Immobilier SA</p>
+					<p class="val-adr">Rue de la Gare 15, 1020 Renens</p>
+					<a class="val-maps"><svg class="ic"><use href="#i-pin"/></svg> Ouvrir sur Google Maps</a>
+					<div class="val-acts"><button class="val-btn g-h bg-btn"><svg class="ic"><use href="#i-check"/></svg> Garder</button><button class="val-btn r-h br-btn"><svg class="ic"><use href="#i-x"/></svg> Retirer</button></div>
+				</div>
+				<div class="val-row" data-d="">
+					<p class="val-nom">Naef Immobilier Lausanne SA</p>
+					<p class="val-adr">Avenue d'Ouchy 66, 1006 Lausanne</p>
+					<a class="val-maps"><svg class="ic"><use href="#i-pin"/></svg> Ouvrir sur Google Maps</a>
+					<div class="val-acts"><button class="val-btn g-h bg-btn"><svg class="ic"><use href="#i-check"/></svg> Garder</button><button class="val-btn r-h br-btn"><svg class="ic"><use href="#i-x"/></svg> Retirer</button></div>
+				</div>
+				<div class="val-row" data-d="">
+					<p class="val-nom">GEFISWISS SA</p>
+					<p class="val-adr">Avenue du Théâtre 1, 1005 Lausanne</p>
+					<a class="val-maps"><svg class="ic"><use href="#i-pin"/></svg> Ouvrir sur Google Maps</a>
+					<div class="val-acts"><button class="val-btn g-h bg-btn"><svg class="ic"><use href="#i-check"/></svg> Garder</button><button class="val-btn r-h br-btn"><svg class="ic"><use href="#i-x"/></svg> Retirer</button></div>
+				</div>
+			</div>
+			<p class="val-foot">FilmPro · page de vérification sécurisée</p>
+		</div>
+	</div>
+
+	<div class="note" style="margin-top:20px;"><span class="n">8</span><span><b>Sécurité (résumé exec) :</b> lien impossible à deviner, valable 2 jours, révocable, une seule action possible (marquer garder/retirer sur CETTE campagne). Elle ne voit ni scores, ni sources, ni le reste du CRM. Audit sécurité avant mise en prod.</span></div>
+
+	<p class="subm" style="margin-top:18px;">État « lien expiré / révoqué » (après 2 jours ou révocation) :</p>
+	<div class="val-expired">
+		<b>Ce lien n'est plus actif</b>
+		<p>Le lien de vérification a expiré ou a été remplacé. Vos choix déjà enregistrés sont conservés. Demandez simplement un nouveau lien à la personne qui vous l'a envoyé.</p>
+	</div>
+</section>
+
+<!-- ============ VUE 5 ============ -->
+<section class="mk-view" id="v5">
+	<h2 class="h2m">Page Étiquettes : une option en plus, rien d'autre ne bouge</h2>
+	<p class="subm">Visible uniquement quand une validation existe sur la campagne.</p>
+	<div class="note"><span class="n">9</span><span><b>À valider :</b> quand des décisions existent, la page Étiquettes propose de n'imprimer que les prospects « Garder » (cochée par défaut). Impossible d'imprimer par erreur un prospect marqué « Retirer ».</span></div>
+	<div class="et-opt">
+		<span class="chk on"></span>
+		<div>
+			<div class="et-t">N'imprimer que les prospects validés « Garder » (29 sur 48)</div>
+			<div class="et-d">5 prospects marqués « Retirer » et 14 non vérifiés seront exclus de la planche. Décochez pour imprimer toute la campagne.</div>
+		</div>
+	</div>
+</section>
+
+<script>
+	function show(id) {
+		document.querySelectorAll('.mk-view').forEach(v => v.classList.toggle('on', v.id === id));
+		document.querySelectorAll('.mk-tab').forEach(t => t.classList.toggle('on', t.dataset.v === id));
+		window.scrollTo({ top: 0 });
+	}
+	document.querySelectorAll('.mk-tab').forEach(t => t.addEventListener('click', () => show(t.dataset.v)));
+
+	// Démo interactive de la page publique (état local uniquement).
+	let g = 29, r = 5; const total = 48;
+	function paint() {
+		document.getElementById('pc').textContent = (g + r) + '/' + total + ' vérifiés';
+		document.getElementById('pd').textContent = g + ' à garder · ' + r + ' à retirer';
+		document.getElementById('pr').textContent = total - g - r;
+		document.getElementById('bf').style.width = ((g + r) / total * 100) + '%';
+	}
+	document.querySelectorAll('.val-row').forEach(row => {
+		const bg = row.querySelector('.bg-btn'), br = row.querySelector('.br-btn');
+		const nom = row.querySelector('.val-nom');
+		function set(d) {
+			const prev = row.dataset.d;
+			if (prev === 'g') g--; if (prev === 'r') r--;
+			row.dataset.d = prev === d ? '' : d;
+			if (row.dataset.d === 'g') g++; if (row.dataset.d === 'r') r++;
+			bg.classList.toggle('g-on', row.dataset.d === 'g');
+			br.classList.toggle('r-on', row.dataset.d === 'r');
+			nom.querySelectorAll('.flag').forEach(f => f.remove());
+			if (row.dataset.d) {
+				const f = document.createElement('span');
+				f.className = 'flag ' + row.dataset.d;
+				f.textContent = row.dataset.d === 'g' ? 'À garder' : 'À retirer';
+				nom.appendChild(f);
+			}
+			paint();
+		}
+		bg.addEventListener('click', () => set('g'));
+		br.addEventListener('click', () => set('r'));
+	});
+</script>
+</body>
+</html>

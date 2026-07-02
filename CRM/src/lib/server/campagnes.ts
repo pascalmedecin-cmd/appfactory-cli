@@ -22,7 +22,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/database.types';
-import type { ProspectCampagne } from '$lib/campagnes';
+import { isValidationDecision, type ProspectCampagne } from '$lib/campagnes';
 import {
 	COULEUR_SLUGS,
 	DEFAULT_COULEUR,
@@ -346,37 +346,59 @@ export async function leadIdsForCampagnes(
 const PG_PAGE = 1000; // cap PostgREST par défaut : on pagine pour ne jamais tronquer en silence
 const IN_CHUNK = 500; // lots d'ids pour `.in()` (< cap -> aucun lot ne peut être tronqué)
 
+type LienInfo = { groupe_id: string | null; validation_statut: string | null };
+
 async function leadIdsForCampagnePaginated(
 	supabase: SupabaseClient<Database>,
-	campagneId: string
-): Promise<{ ids: string[]; groupeByLead: Map<string, string | null>; error: { message: string } | null }> {
+	campagneId: string,
+	maxRows?: number
+): Promise<{ ids: string[]; lienByLead: Map<string, LienInfo>; truncated: boolean; error: { message: string } | null }> {
 	const ids: string[] = [];
-	// Le groupe (2026-07-02) vit sur le LIEN N-N : lu dans la même passe paginée (0 requête en plus).
-	const groupeByLead = new Map<string, string | null>();
+	// Le groupe (2026-07-02) et la décision de validation externe vivent sur le LIEN N-N :
+	// lus dans la même passe paginée (0 requête en plus).
+	const lienByLead = new Map<string, LienInfo>();
+	let truncated = false;
 	for (let from = 0; ; from += PG_PAGE) {
 		const { data, error } = await supabase
 			.from('prospect_lead_campagnes')
-			.select('lead_id, groupe_id')
+			.select('lead_id, groupe_id, validation_statut')
 			.eq('campagne_id', campagneId)
 			.range(from, from + PG_PAGE - 1);
-		if (error) return { ids: [], groupeByLead, error };
-		const batch = (data ?? []) as Array<{ lead_id: string; groupe_id: string | null }>;
+		if (error) return { ids: [], lienByLead, truncated: false, error };
+		const batch = (data ?? []) as Array<{ lead_id: string } & LienInfo>;
 		for (const r of batch) {
 			ids.push(r.lead_id);
-			groupeByLead.set(r.lead_id, r.groupe_id);
+			lienByLead.set(r.lead_id, { groupe_id: r.groupe_id, validation_statut: r.validation_statut });
+		}
+		// Cap de volume (lecture publique) : dès qu'on a lu STRICTEMENT plus que maxRows, on sait
+		// qu'il y a « plus » -> on tronque à la borne dure. Sans maxRows, comportement inchangé.
+		if (maxRows != null && ids.length > maxRows) {
+			truncated = true;
+			break;
 		}
 		if (batch.length < PG_PAGE) break;
 	}
-	return { ids, groupeByLead, error: null };
+	const cappedIds = truncated && maxRows != null ? ids.slice(0, maxRows) : ids;
+	return { ids: cappedIds, lienByLead, truncated, error: null };
 }
 
+/**
+ * @param opts.maxRows borne dure du nombre de prospects retournés (lecture PUBLIQUE anonyme :
+ *   passer `PUBLIC_MAX_PROSPECTS`). `truncated: true` signale qu'au moins un prospect a été
+ *   écarté par la borne. Absent (appel fondateur) = aucune borne, comportement historique.
+ */
 export async function fetchProspectsForCampagne(
 	supabase: SupabaseClient<Database>,
-	campagneId: string
-): Promise<{ data: ProspectCampagne[]; error: { message: string } | null }> {
-	const { ids: leadIds, groupeByLead, error: linkError } = await leadIdsForCampagnePaginated(supabase, campagneId);
-	if (linkError) return { data: [], error: linkError };
-	if (leadIds.length === 0) return { data: [], error: null };
+	campagneId: string,
+	opts?: { maxRows?: number }
+): Promise<{ data: ProspectCampagne[]; error: { message: string } | null; truncated: boolean }> {
+	const { ids: leadIds, lienByLead, truncated, error: linkError } = await leadIdsForCampagnePaginated(
+		supabase,
+		campagneId,
+		opts?.maxRows
+	);
+	if (linkError) return { data: [], error: linkError, truncated: false };
+	if (leadIds.length === 0) return { data: [], error: null, truncated: false };
 
 	const rows: ProspectCampagne[] = [];
 	for (let i = 0; i < leadIds.length; i += IN_CHUNK) {
@@ -385,12 +407,18 @@ export async function fetchProspectsForCampagne(
 			.from('prospect_leads')
 			.select('id, raison_sociale, adresse, npa, localite, statut, score_pertinence, source, source_url, description, google_types')
 			.in('id', chunk);
-		if (error) return { data: [], error };
-		for (const r of (data ?? []) as Array<Omit<ProspectCampagne, 'groupe_id'>>) {
-			rows.push({ ...r, groupe_id: groupeByLead.get(r.id) ?? null });
+		if (error) return { data: [], error, truncated: false };
+		for (const r of (data ?? []) as Array<Omit<ProspectCampagne, 'groupe_id' | 'validation_statut'>>) {
+			const lien = lienByLead.get(r.id);
+			rows.push({
+				...r,
+				groupe_id: lien?.groupe_id ?? null,
+				// Le CHECK SQL garantit garder/retirer ; le garde-type protège d'une dérive de schéma.
+				validation_statut: isValidationDecision(lien?.validation_statut) ? lien.validation_statut : null,
+			});
 		}
 	}
 	// Tri stable par raison sociale (l'ordre inter-lots n'est pas garanti par la DB).
 	rows.sort((a, b) => a.raison_sociale.localeCompare(b.raison_sociale, 'fr'));
-	return { data: rows, error: null };
+	return { data: rows, error: null, truncated };
 }

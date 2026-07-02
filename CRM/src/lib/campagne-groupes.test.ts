@@ -34,6 +34,7 @@ function p(
 		description: null,
 		google_types: null,
 		groupe_id: null,
+		validation_statut: null,
 		...over
 	};
 }

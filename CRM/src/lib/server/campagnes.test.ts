@@ -398,4 +398,49 @@ describe('fetchProspectsForCampagne (panneau étiquettes)', () => {
 		expect(data).toEqual([]);
 		expect(error?.message).toBe('boom');
 	});
+
+	it('remonte validation_statut du lien N-N (garde-type : valeur inconnue -> null)', async () => {
+		const m = multiTableMock({
+			prospect_lead_campagnes: {
+				data: [
+					{ lead_id: 'L1', groupe_id: null, validation_statut: 'garder' },
+					{ lead_id: 'L2', groupe_id: 'g1', validation_statut: 'DERIVE' }, // hors domaine -> null
+				],
+			},
+			prospect_leads: {
+				data: [
+					{ id: 'L1', raison_sociale: 'Alpha', adresse: null, npa: null, localite: null, statut: 'vide', score_pertinence: null, source: 'zefix' },
+					{ id: 'L2', raison_sociale: 'Beta', adresse: null, npa: null, localite: null, statut: 'vide', score_pertinence: null, source: 'zefix' },
+				],
+			},
+		});
+		const { data } = await fetchProspectsForCampagne(m.supabase, 'cmp-1');
+		const byId = new Map(data.map((p) => [p.id, p]));
+		expect(byId.get('L1')?.validation_statut).toBe('garder');
+		expect(byId.get('L2')?.validation_statut).toBe(null); // dérive de schéma neutralisée
+	});
+
+	it('cap maxRows : borne le volume et signale truncated (lecture publique anonyme)', async () => {
+		const m = multiTableMock({
+			prospect_lead_campagnes: { data: [{ lead_id: 'L1' }, { lead_id: 'L2' }, { lead_id: 'L3' }] },
+			prospect_leads: {
+				data: [
+					{ id: 'L1', raison_sociale: 'Alpha', adresse: null, npa: null, localite: null, statut: 'vide', score_pertinence: null, source: 'zefix' },
+					{ id: 'L2', raison_sociale: 'Beta', adresse: null, npa: null, localite: null, statut: 'vide', score_pertinence: null, source: 'zefix' },
+				],
+			},
+		});
+		const { data, truncated } = await fetchProspectsForCampagne(m.supabase, 'cmp-1', { maxRows: 2 });
+		expect(truncated).toBe(true);
+		expect(data).toHaveLength(2); // borné avant la lecture des prospects
+	});
+
+	it('sans maxRows : truncated=false (appel fondateur, aucune borne)', async () => {
+		const m = multiTableMock({
+			prospect_lead_campagnes: { data: [{ lead_id: 'L1' }] },
+			prospect_leads: { data: [{ id: 'L1', raison_sociale: 'Alpha', adresse: null, npa: null, localite: null, statut: 'vide', score_pertinence: null, source: 'zefix' }] },
+		});
+		const { truncated } = await fetchProspectsForCampagne(m.supabase, 'cmp-1');
+		expect(truncated).toBe(false);
+	});
 });

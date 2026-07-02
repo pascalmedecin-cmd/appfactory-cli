@@ -13,6 +13,7 @@
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import EntrepriseSearchModal from '$lib/components/prospection/EntrepriseSearchModal.svelte';
 	import CampagneProspectsPanel from '$lib/components/campagnes/CampagneProspectsPanel.svelte';
+	import StatutSegment from '$lib/components/campagnes/StatutSegment.svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { toasts } from '$lib/stores/toast';
@@ -400,9 +401,14 @@
 					{#if c.archived}
 						<span class="cstatus muted hide-sm"><span class="dot"></span>Archivée</span>
 					{:else}
-						<div class="statut-seg hide-sm" role="group" aria-label={`Statut de ${c.nom}`}>
-							<button type="button" class="seg" class:on={c.statut === 'en_cours'} aria-pressed={c.statut === 'en_cours'} disabled={statutBusy.has(c.id)} onclick={() => setStatut(c, 'en_cours')}>En cours</button>
-							<button type="button" class="seg" class:on={c.statut === 'active'} class:launched={c.statut === 'active'} aria-pressed={c.statut === 'active'} disabled={statutBusy.has(c.id)} onclick={() => setStatut(c, 'active')}>Active</button>
+						{@const cStatut = c.statut}
+						<div class="hide-sm">
+							<StatutSegment
+								statut={cStatut}
+								busy={statutBusy.has(c.id)}
+								onChange={(s) => setStatut(c, s)}
+								ariaLabel={`Statut de ${c.nom}`}
+							/>
 						</div>
 					{/if}
 
@@ -760,46 +766,7 @@
 		margin-top: 3px;
 	}
 
-	/* Contrôle segmenté du statut (cycle de vie En cours / Active) — édition inline. */
-	.statut-seg {
-		display: inline-flex;
-		gap: 2px;
-		padding: 3px;
-		width: fit-content;
-		background: var(--color-surface-alt);
-		border-radius: var(--radius-lg);
-		box-shadow: inset 0 0 0 1px var(--color-border);
-	}
-	.seg {
-		border: none;
-		background: transparent;
-		cursor: pointer;
-		padding: 5px 11px;
-		border-radius: var(--radius-md);
-		font: 600 12px var(--font-sans, inherit);
-		color: var(--color-text-muted);
-		white-space: nowrap;
-		transition: background 180ms ease, color 180ms ease, box-shadow 180ms ease;
-	}
-	.seg:hover:not(.on):not(:disabled) {
-		color: var(--color-text);
-	}
-	.seg.on {
-		background: var(--color-surface);
-		color: var(--color-text);
-		box-shadow: var(--shadow-xs);
-	}
-	.seg.on.launched {
-		color: var(--color-success-deep);
-	}
-	.seg:disabled {
-		opacity: 0.55;
-		cursor: default;
-	}
-	.seg:focus-visible {
-		outline: 2px solid var(--color-primary);
-		outline-offset: 1px;
-	}
+	/* Statut segmenté : composant partagé StatutSegment.svelte (source unique liste + page campagne). */
 
 	/* Action clé Lot 3 : « Trouver des prospects » (bouton secondaire discret). */
 	.trouver {

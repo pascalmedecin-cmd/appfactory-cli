@@ -269,3 +269,42 @@ describe('hooks.server handle (H-18)', () => {
 		expect(r.thrown ? 0 : r.response.status).not.toBe(429);
 	});
 });
+
+describe('hooks.server : porte publique de validation externe', () => {
+	const TOKEN = 'Kx3abcdefghijklmnopqrstuvwxyz0123456789ABCD'; // 43 chars (forme réelle)
+
+	it('page /validation/<token> SANS session → PAS de redirect (exemption d’auth par le token)', async () => {
+		const r = await runHandle(makeEvent(`/validation/${TOKEN}`));
+		expect(r.thrown).toBe(false);
+		expect(r.resolve).toHaveBeenCalled();
+	});
+
+	it('API /api/validation/<token>/decision SANS session → PAS de redirect', async () => {
+		const r = await runHandle(makeEvent(`/api/validation/${TOKEN}/decision`, { method: 'POST' }));
+		expect(r.thrown).toBe(false);
+	});
+
+	it('les réponses publiques portent no-store + X-Robots-Tag (couvre succès/erreur/POST via le hook)', async () => {
+		const r = await runHandle(makeEvent(`/validation/${TOKEN}`));
+		expect(r.thrown).toBe(false);
+		const h = r.thrown ? undefined : r.response.headers;
+		expect(h?.get('Cache-Control')).toBe('no-store');
+		expect(h?.get('X-Robots-Tag')).toBe('noindex, nofollow');
+	});
+
+	it('sous-route inventée /api/validation/<token>/admin → PAS exemptée → redirect /login', async () => {
+		const r = await runHandle(makeEvent(`/api/validation/${TOKEN}/admin`));
+		expect(r.thrown).toBe(true);
+		expect(r.thrown && r.redirect.location).toBe('/login');
+	});
+
+	it('une route protégée ordinaire NE reçoit PAS les headers publics', async () => {
+		mockSessionState = { session: { access_token: 'x' }, user: { email: 'pascal@filmpro.ch' } };
+		const cookies = makeCookies({ login_at: String(Date.now()) });
+		const r = await runHandle(makeEvent('/dashboard', { cookies }));
+		expect(r.thrown).toBe(false);
+		const h = r.thrown ? undefined : r.response.headers;
+		expect(h?.get('Cache-Control')).toBe(null);
+		expect(h?.get('X-Robots-Tag')).toBe(null);
+	});
+});
