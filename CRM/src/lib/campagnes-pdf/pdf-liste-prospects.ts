@@ -22,6 +22,7 @@
  * signature (tokens snake_case), format produit par notre propre code - source unique, testé.
  */
 import type { ProspectCampagne } from '$lib/campagnes';
+import { sortGroupes, SANS_GROUPE_LABEL } from '$lib/campagne-groupes';
 import { estWidth, ellipsize } from '$lib/etiquettes/pdf-etiquettes';
 import { safeHttpUrl } from '$lib/utils/safe-url';
 import { campagnePdfFileName } from '$lib/pdf/pdf-filename';
@@ -127,7 +128,13 @@ export interface ListeProspectRow {
 
 export function toListeRow(p: ProspectCampagne): ListeProspectRow {
 	const isGoogle = p.source === GOOGLE_SOURCE;
-	const types = isGoogle ? googleTypesFromDescription(p.description) : [];
+	// Colonne structurée d'abord (2026-07-02), repli sur le parsing de description (leads
+	// antérieurs au backfill ou ré-imports d'un payload sans types).
+	const types = isGoogle
+		? p.google_types && p.google_types.length > 0
+			? p.google_types
+			: googleTypesFromDescription(p.description)
+		: [];
 	return {
 		nom: p.raison_sociale.trim(),
 		adresse: (p.adresse ?? '').trim(),
@@ -136,6 +143,44 @@ export function toListeRow(p: ProspectCampagne): ListeProspectRow {
 		typePrincipal: types.length > 0 ? humanizeGoogleType(types[0]) : null,
 		mapsUrl: isGoogle ? safeMapsUrl(p.source_url) : null
 	};
+}
+
+// --- Sections par groupe (2026-07-02) ------------------------------------------------------------
+/** Groupe minimal (id + nom suffisent au tri et aux en-têtes de section). */
+export interface GroupeLite {
+	id: string;
+	nom: string;
+}
+/** Ligne du flux paginé : un en-tête de section (groupe) ou une ligne prospect. */
+export type ListeItem =
+	| { kind: 'section'; nom: string; count: number }
+	| { kind: 'row'; row: ListeProspectRow };
+
+/**
+ * Flux d'items sectionné par groupe : même ordre que partout (alphabétique fr, « Sans
+ * groupe » en fin, sections vides omises). Sans aucun groupe défini -> lignes seules
+ * (sortie IDENTIQUE à l'historique). Ordre d'entrée préservé dans une section.
+ */
+export function buildListeItems(prospects: readonly ProspectCampagne[], groupes: readonly GroupeLite[]): ListeItem[] {
+	if (groupes.length === 0) return prospects.map((p) => ({ kind: 'row', row: toListeRow(p) }));
+	const items: ListeItem[] = [];
+	const push = (nom: string, members: readonly ProspectCampagne[]) => {
+		if (members.length === 0) return;
+		items.push({ kind: 'section', nom, count: members.length });
+		for (const p of members) items.push({ kind: 'row', row: toListeRow(p) });
+	};
+	for (const g of sortGroupes(groupes)) {
+		push(
+			g.nom,
+			prospects.filter((p) => p.groupe_id === g.id)
+		);
+	}
+	push(
+		SANS_GROUPE_LABEL,
+		// Sans groupe = pas de groupe OU groupe inconnu de la liste (lien orphelin défensif).
+		prospects.filter((p) => !p.groupe_id || !groupes.some((g) => g.id === p.groupe_id))
+	);
+	return items;
 }
 
 // --- Pagination PURE ----------------------------------------------------------------------------
@@ -158,14 +203,40 @@ export function paginateRows(n: number): number[] {
 	return pages;
 }
 
+/**
+ * Découpe le flux d'ITEMS en pages avec contrôle d'orphelin (bug-hunter 2026-07-02, M2) : un
+ * en-tête de section qui tomberait sur le DERNIER slot d'une page est reporté en tête de page
+ * suivante (le slot reste vide - une section n'est jamais séparée de sa première ligne). Sans
+ * sections (liste plate), découpe identique à `paginateRows`.
+ */
+export function paginateItems(items: ListeItem[]): ListeItem[][] {
+	const pages: ListeItem[][] = [];
+	let i = 0;
+	let first = true;
+	while (i < items.length) {
+		const cap = rowsCapacity(first ? TABLE_TOP_P1 : TABLE_TOP_PN);
+		let take = Math.min(items.length - i, cap);
+		// Anti-orphelin : dernier slot occupé par une section alors qu'il reste du contenu après.
+		if (take > 1 && i + take < items.length && items[i + take - 1].kind === 'section') take--;
+		pages.push(items.slice(i, i + take));
+		i += take;
+		first = false;
+	}
+	return pages;
+}
+
 // --- Helpers SVG (attributs inline, doctrine svg2pdf) -------------------------------------------
 function f(n: number): string {
 	return Number(n.toFixed(2)).toString();
 }
 function esc(s: string): string {
-	// Normalise les tirets longs en tiret court (règle typo FR) puis échappe les entités XML.
+	// Normalise les tirets longs en tiret court (règle typo FR), retire les caractères de
+	// contrôle illégaux XML 1.0 (sinon DOMParser échoue -> aucun PDF ; audit sécu 2026-07-02,
+	// Low), puis échappe les entités XML.
 	return s
 		.replace(/[—–]/g, '-')
+		// eslint-disable-next-line no-control-regex
+		.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
 		.replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')
 		.replace(/>/g, '&gt;')
@@ -245,26 +316,39 @@ function renderRow(row: ListeProspectRow, rowTop: number, zebra: boolean, pageIn
 	return s;
 }
 
+/** En-tête de section (groupe) : bandeau discret pleine largeur, nom en gras + compteur. */
+function renderSection(nom: string, count: number, rowTop: number): string {
+	let s = rect(MARGIN, rowTop + 3, CW, ROW_H - 6, C.headBg, 4);
+	const baseline = rowTop + 15.2;
+	s += text(MARGIN + 8, baseline, ellipsize(nom, ROW_FONT + 0.5, 300), { size: ROW_FONT + 0.5, fill: C.text, weight: 700 });
+	s += text(MARGIN + 8 + estWidth(nom, ROW_FONT + 0.5) + 10, baseline, `${count} prospect${count > 1 ? 's' : ''}`, {
+		size: 8,
+		fill: C.muted
+	});
+	return s;
+}
+
 export interface ListePagesResult {
 	svgs: string[];
 	links: ListeLink[];
 }
 
 /**
- * SVG (chaîne) de chaque page A4 paysage + zones cliquables. `logoFragment` = fragment SVG du
- * logo déjà positionné (injecté par l'export ; les tests peuvent passer '').
+ * SVG (chaîne) de chaque page A4 paysage + zones cliquables, pour un flux d'ITEMS (lignes +
+ * en-têtes de section par groupe). `logoFragment` = fragment SVG du logo déjà positionné
+ * (injecté par l'export ; les tests peuvent passer '').
  */
-export function buildListePagesSvg(
+export function buildListeItemsPagesSvg(
 	campagneNom: string,
 	dateLabel: string,
-	rows: ListeProspectRow[],
+	items: ListeItem[],
 	logoFragment: string
 ): ListePagesResult {
-	const perPage = paginateRows(rows.length);
-	const total = Math.max(1, perPage.length);
+	const pageItems = paginateItems(items);
+	const total = Math.max(1, pageItems.length);
+	const nbRows = items.reduce((n, it) => n + (it.kind === 'row' ? 1 : 0), 0);
 	const links: ListeLink[] = [];
 	const svgs: string[] = [];
-	let cursor = 0;
 
 	for (let pi = 0; pi < total; pi++) {
 		let body = '';
@@ -276,19 +360,27 @@ export function buildListePagesSvg(
 		if (pi === 0) {
 			// Bloc titre : nom de campagne + date du jour de téléchargement (demande Pascal).
 			body += text(MARGIN, MARGIN + 56, ellipsize(campagneNom, 17, CW), { size: 17, fill: C.text, weight: 700 });
-			const n = rows.length;
-			body += text(MARGIN, MARGIN + 74, `${n} prospect${n > 1 ? 's' : ''} · liste téléchargée le ${dateLabel}`, { size: 9.5, fill: C.muted });
+			body += text(MARGIN, MARGIN + 74, `${nbRows} prospect${nbRows > 1 ? 's' : ''} · liste téléchargée le ${dateLabel}`, { size: 9.5, fill: C.muted });
 			tableTop = TABLE_TOP_P1;
 		} else {
 			tableTop = TABLE_TOP_PN;
 		}
 
 		body += renderTableHead(tableTop);
-		const count = perPage[pi] ?? 0;
-		for (let r = 0; r < count; r++) {
+		// La zébrure ne compte que les LIGNES prospect (un bandeau de section la réinitialise
+		// visuellement) : parité suivie séparément de l'index d'item.
+		let rowParity = 0;
+		const page = pageItems[pi] ?? [];
+		for (let r = 0; r < page.length; r++) {
 			const rowTop = tableTop + HEAD_H + r * ROW_H;
-			body += renderRow(rows[cursor], rowTop, r % 2 === 1, pi, links);
-			cursor++;
+			const item = page[r];
+			if (item.kind === 'section') {
+				body += renderSection(item.nom, item.count, rowTop);
+				rowParity = 0;
+			} else {
+				body += renderRow(item.row, rowTop, rowParity % 2 === 1, pi, links);
+				rowParity++;
+			}
 		}
 
 		// Pied de page : numéro de page seul, CENTRÉ (template validé Pascal 02/07).
@@ -305,6 +397,16 @@ export function buildListePagesSvg(
 	return { svgs, links };
 }
 
+/** SVG de chaque page pour des lignes SANS sections (API historique, mêmes garanties). */
+export function buildListePagesSvg(
+	campagneNom: string,
+	dateLabel: string,
+	rows: ListeProspectRow[],
+	logoFragment: string
+): ListePagesResult {
+	return buildListeItemsPagesSvg(campagneNom, dateLabel, rows.map((row) => ({ kind: 'row', row })), logoFragment);
+}
+
 // --- Nom de fichier (convention source unique : src/lib/pdf/pdf-filename.ts) --------------------
 export function listeFileName(campagneNom: string, date: Date): string {
 	return campagnePdfFileName('Prospects', campagneNom, date);
@@ -313,9 +415,14 @@ export function listeFileName(campagneNom: string, date: Date): string {
 // --- Export effectif (impur : dynamic import jsPDF + svg2pdf + polices + logo) -------------------
 /**
  * Génère et télécharge la liste PDF (appelée depuis l'écran Campagnes, côté navigateur).
- * No-op si aucun prospect (les appelants gardent déjà le bouton).
+ * `groupes` (2026-07-02) : sectionne la liste par groupe (même ordre que le panneau et les
+ * étiquettes) ; liste plate si la campagne n'a aucun groupe. No-op si aucun prospect.
  */
-export async function exportListeProspectsPdf(campagneNom: string, prospects: ProspectCampagne[]): Promise<void> {
+export async function exportListeProspectsPdf(
+	campagneNom: string,
+	prospects: ProspectCampagne[],
+	groupes: readonly GroupeLite[] = []
+): Promise<void> {
 	if (prospects.length === 0) return;
 	const [{ jsPDF }, svg2pdfMod, fonts, logoMod] = await Promise.all([
 		import('jspdf'),
@@ -325,11 +432,11 @@ export async function exportListeProspectsPdf(campagneNom: string, prospects: Pr
 	]);
 	const svg2pdf = (svg2pdfMod as { svg2pdf: (el: Element, doc: unknown, opts?: unknown) => Promise<unknown> }).svg2pdf;
 
-	const rows = prospects.map(toListeRow);
+	const items = buildListeItems(prospects, groupes);
 	const now = new Date();
 	const dateLabel = now.toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' });
 	const logoFragment = logoMod.filmproLogoSvg(MARGIN, MARGIN, 18, C.logo);
-	const { svgs, links } = buildListePagesSvg(campagneNom, dateLabel, rows, logoFragment);
+	const { svgs, links } = buildListeItemsPagesSvg(campagneNom, dateLabel, items, logoFragment);
 
 	const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape', compress: true });
 	doc.addFileToVFS('Outfit-Regular.ttf', fonts.OUTFIT_400);

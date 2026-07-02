@@ -13,6 +13,8 @@ import {
 	type ProspectAdresse,
 	type EtiquetteEntry
 } from './prospect-etiquette';
+import type { EtiquetteItem } from './pdf-etiquettes';
+import { sortGroupes, SANS_GROUPE_LABEL } from '$lib/campagne-groupes';
 
 /** Compteurs affichés dans la sous-ligne (« N prospects · N adresses complètes · N destinataires »). */
 export interface EtiquettesSummary {
@@ -74,4 +76,56 @@ export function buildEtiquetteEntries(
 	destinataires: ReadonlyMap<string, string>
 ): EtiquetteEntry[] {
 	return prospects.map((p) => toEtiquetteEntry(p, destinataires.get(p.id)));
+}
+
+/** Groupe minimal côté page (id + nom suffisent au tri et aux intercalaires). */
+export interface GroupeLite {
+	id: string;
+	nom: string;
+}
+/** Prospect d'étiquette porteur (optionnellement) de son groupe dans la campagne. */
+export type ProspectAdresseGroupe = ProspectAdresse & { groupe_id?: string | null };
+
+export { SANS_GROUPE_LABEL };
+
+/**
+ * Construit le FLUX d'items de la planche, groupé par catégorie (2026-07-02) :
+ *  - aucun groupe défini dans la campagne -> adresses seules, ordre d'entrée (sortie IDENTIQUE
+ *    à l'historique : zéro intercalaire) ;
+ *  - sinon : groupes en ordre alphabétique fr (même ordre que panneau + PDF liste), chaque
+ *    groupe NON VIDE précédé d'un intercalaire à son nom ; les sans-groupe EN FIN, précédés
+ *    de l'intercalaire « Sans groupe ». Un groupe sans prospect sélectionné n'émet rien.
+ *  - flux continu : l'intercalaire occupe 1 cellule, aucune cellule laissée vide entre les
+ *    groupes -> le seul « coût » est 1 étiquette par catégorie représentée.
+ * L'ordre d'entrée (tri serveur par raison sociale) est préservé À L'INTÉRIEUR d'un groupe.
+ * Choix ASSUMÉ (revue 2026-07-02, L4) : l'intercalaire est émis même quand UN SEUL bucket est
+ * représenté - il nomme la pile physique (à quoi correspond ce paquet d'étiquettes), ce n'est
+ * pas du gaspillage.
+ */
+export function buildGroupedEtiquetteItems(
+	prospects: readonly ProspectAdresseGroupe[],
+	groupes: readonly GroupeLite[],
+	destinataires: ReadonlyMap<string, string>
+): EtiquetteItem[] {
+	if (groupes.length === 0) {
+		return prospects.map((p) => ({ kind: 'adresse', entry: toEtiquetteEntry(p, destinataires.get(p.id)) }));
+	}
+	const items: EtiquetteItem[] = [];
+	const pushGroup = (nom: string, members: readonly ProspectAdresseGroupe[]) => {
+		if (members.length === 0) return;
+		items.push({ kind: 'transition', nom });
+		for (const p of members) items.push({ kind: 'adresse', entry: toEtiquetteEntry(p, destinataires.get(p.id)) });
+	};
+	for (const g of sortGroupes(groupes)) {
+		pushGroup(
+			g.nom,
+			prospects.filter((p) => p.groupe_id === g.id)
+		);
+	}
+	pushGroup(
+		SANS_GROUPE_LABEL,
+		// Sans groupe = pas de groupe OU groupe inconnu de la liste (lien orphelin défensif).
+		prospects.filter((p) => !p.groupe_id || !groupes.some((g) => g.id === p.groupe_id))
+	);
+	return items;
 }

@@ -26,6 +26,7 @@ import {
 	scoreCandidate,
 	candidateToInsertRow,
 	toPublicCandidate,
+	sanitizeGoogleTypes,
 } from '$lib/server/prospection/candidate';
 
 const PLACES_ENDPOINT = 'https://places.googleapis.com/v1/places:searchText';
@@ -225,6 +226,10 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			secteur_detecte: secteur,
 			description,
 			date_publication: null,
+			// Types Places STRUCTURÉS (colonne dédiée depuis 2026-07-02), filtrés par la même
+			// allowlist que l'import sélectif (source unique). La sérialisation dans
+			// `description` ci-dessus est conservée (rétro-compat lecteurs existants).
+			google_types: sanitizeGoogleTypes(entry.types, SOURCE_KEY),
 		};
 		// Score serveur sur le canton RÉEL (null si Google n'a pas su classer le lieu dans un
 		// canton cible → pas de bonus canton, plus honnête qu'un repli sur le canton choisi qui

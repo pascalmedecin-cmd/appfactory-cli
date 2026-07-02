@@ -3,6 +3,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { z } from 'zod';
 import { CRM_BASE } from '$lib/config';
 import { getCampagne, fetchProspectsForCampagne } from '$lib/server/campagnes';
+import { listGroupes } from '$lib/server/campagne-groupes';
 
 /**
  * Page dédiée « Impression d'étiquettes » d'UNE campagne (migration du volet V1 vers une page).
@@ -37,5 +38,13 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 		throw error(500, 'Chargement impossible');
 	}
 
-	return { campagne, prospects };
+	// Groupes de la campagne (2026-07-02) : la planche sort groupe par groupe avec intercalaires.
+	// Même doctrine que les prospects : un échec DB remonte (jamais « pas de groupes » menteur).
+	const { data: groupes, error: grpErr } = await listGroupes(locals.supabase, id.data);
+	if (grpErr) {
+		console.error('Erreur chargement groupes (étiquettes):', grpErr.message);
+		throw error(500, 'Chargement impossible');
+	}
+
+	return { campagne, prospects, groupes };
 };

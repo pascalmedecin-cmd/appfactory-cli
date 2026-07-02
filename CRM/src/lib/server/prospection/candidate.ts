@@ -38,6 +38,8 @@ export interface CandidateCore {
 	secteur_detecte: string | null;
 	description: string | null;
 	date_publication: string | null;
+	/** Types Google Places (ordre API, le 1er = principal). null pour zefix/search_ch. */
+	google_types: string[] | null;
 }
 
 /** Candidat public renvoyé par l'aperçu (consommé par le checklist, re-soumis à l'import). */
@@ -116,6 +118,24 @@ export function isImportable(status: CandidateStatus): boolean {
 	return status === 'new' || status === 'known_zefix';
 }
 
+const GOOGLE_TYPE_RE = /^[a-z][a-z0-9_]*$/;
+
+/**
+ * Filtre allowlist des types Google Places (source unique, aperçu ET import sélectif) : seuls
+ * les tokens snake_case conformes passent, bornés à 20, et UNIQUEMENT pour la source
+ * google_places. Anti all-or-nothing (bug-hunter 2026-07-02, L2) : un token inattendu est
+ * écarté, jamais le candidat entier - même principe que le NPA search.ch (cf. normalizeNpa).
+ */
+export function sanitizeGoogleTypes(
+	types: readonly string[] | null | undefined,
+	source: LeadPreviewSource
+): string[] | null {
+	if (source !== 'google_places' || !types) return null;
+	// Conformité + borne de longueur par token (64 = large pour un type Google réel ~40 max).
+	const ok = types.filter((t) => typeof t === 'string' && t.length <= 64 && GOOGLE_TYPE_RE.test(t)).slice(0, 20);
+	return ok.length > 0 ? ok : null;
+}
+
 /**
  * Calcule le score serveur d'un candidat (jamais le score client). Score sur le canton
  * réel du candidat : un lead sans canton exploitable ne reçoit pas de bonus canton.
@@ -162,6 +182,7 @@ export function candidateToInsertRow(
 		email: core.email,
 		secteur_detecte: core.secteur_detecte,
 		description: core.description,
+		google_types: core.google_types,
 		montant: null,
 		date_publication: core.date_publication,
 		score_pertinence: score,

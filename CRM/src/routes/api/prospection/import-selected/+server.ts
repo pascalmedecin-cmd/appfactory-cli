@@ -10,6 +10,7 @@ import {
 	statusFor,
 	scoreCandidate,
 	candidateToInsertRow,
+	sanitizeGoogleTypes,
 } from '$lib/server/prospection/candidate';
 import { assignCampagnesToLeads } from '$lib/server/campagnes';
 import { isCampagnesEnabled } from '$lib/server/feature-gate';
@@ -105,6 +106,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			secteur_detecte: c.secteur_detecte ?? null,
 			description: c.description ?? null,
 			date_publication: c.date_publication ?? null,
+			// Allowlist par FILTRAGE (jamais de rejet du candidat pour un token inattendu) +
+			// cohérence : les types Places n'existent QUE pour google_places (audit 02/07).
+			google_types: sanitizeGoogleTypes(c.google_types, source as LeadPreviewSource),
 		};
 		const score = scoreCandidate(core, { intelligenceSignal });
 		inserts.push(candidateToInsertRow(core, score, { now, fromIntelligence: from_intelligence ?? null, fromTerm: from_term ?? null }));

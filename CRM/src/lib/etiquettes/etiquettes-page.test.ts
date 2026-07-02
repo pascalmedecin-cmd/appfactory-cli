@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { summarize, filterProspects, buildEtiquetteEntries } from './etiquettes-page';
+import {
+	summarize,
+	filterProspects,
+	buildEtiquetteEntries,
+	buildGroupedEtiquetteItems,
+	SANS_GROUPE_LABEL,
+	type ProspectAdresseGroupe
+} from './etiquettes-page';
 import type { ProspectAdresse } from './prospect-etiquette';
 
 function lead(p: Partial<ProspectAdresse> & { id: string }): ProspectAdresse {
@@ -71,5 +78,58 @@ describe('buildEtiquetteEntries', () => {
 		// complet2 sans destinataire -> pas de clé destinataire
 		expect(entries[1].destinataire).toBeUndefined();
 		expect(entries[1].nom).toBe('Comptoir Immobilier SA');
+	});
+});
+
+describe('buildGroupedEtiquetteItems (planche groupée par catégorie, 2026-07-02)', () => {
+	const g = (id: string, nom: string) => ({ id, nom });
+	const pg = (id: string, nom: string, groupe_id: string | null): ProspectAdresseGroupe => ({
+		...lead({ id, raison_sociale: nom, adresse: 'Rue Un 1', npa: '1204', localite: 'Genève' }),
+		groupe_id
+	});
+	const noDest = new Map<string, string>();
+
+	it('AUCUN groupe défini -> adresses seules, ordre d’entrée, zéro intercalaire (sortie historique)', () => {
+		const items = buildGroupedEtiquetteItems([pg('a', 'Alpha', null), pg('b', 'Beta', null)], [], noDest);
+		expect(items.map((i) => i.kind)).toEqual(['adresse', 'adresse']);
+		expect(items[0].kind === 'adresse' && items[0].entry.nom).toBe('Alpha');
+	});
+
+	it('groupes en ordre alphabétique fr, intercalaire avant chaque groupe NON vide, sans-groupe EN FIN', () => {
+		const groupes = [g('g2', 'Régies'), g('g1', 'Architectes'), g('g3', 'Vide')];
+		const prospects = [
+			pg('a', 'Zurich SA', 'g2'),
+			pg('b', 'Aarau SA', 'g1'),
+			pg('c', 'Berne SA', null),
+			pg('d', 'Delémont SA', 'g2')
+		];
+		const items = buildGroupedEtiquetteItems(prospects, groupes, noDest);
+		const flat = items.map((i) => (i.kind === 'transition' ? `[${i.nom}]` : i.entry.nom));
+		expect(flat).toEqual([
+			'[Architectes]',
+			'Aarau SA',
+			'[Régies]',
+			'Zurich SA', // ordre d'entrée préservé À L'INTÉRIEUR du groupe
+			'Delémont SA',
+			`[${SANS_GROUPE_LABEL}]`,
+			'Berne SA'
+		]);
+		// Le groupe « Vide » (0 prospect) n'émet RIEN : pas d'intercalaire orphelin.
+		expect(flat).not.toContain('[Vide]');
+	});
+
+	it('groupe_id orphelin (groupe supprimé côté liste) -> compté sans groupe, jamais perdu', () => {
+		const items = buildGroupedEtiquetteItems([pg('a', 'Alpha', 'g-disparu')], [g('g1', 'Régies')], noDest);
+		expect(items.map((i) => (i.kind === 'transition' ? `[${i.nom}]` : i.entry.nom))).toEqual([
+			`[${SANS_GROUPE_LABEL}]`,
+			'Alpha'
+		]);
+	});
+
+	it('tous groupés -> pas d’intercalaire « Sans groupe » ; destinataires injectés', () => {
+		const dest = new Map([['a', 'Service technique']]);
+		const items = buildGroupedEtiquetteItems([pg('a', 'Alpha', 'g1')], [g('g1', 'Régies')], dest);
+		expect(items.map((i) => i.kind)).toEqual(['transition', 'adresse']);
+		expect(items[1].kind === 'adresse' && items[1].entry.destinataire).toBe('Service technique');
 	});
 });

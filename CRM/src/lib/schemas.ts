@@ -284,6 +284,11 @@ export const CandidateImportSchema = z.object({
 	secteur_detecte: z.string().max(120).nullable().optional(),
 	description: z.string().max(5000).nullable().optional(),
 	date_publication: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date invalide (YYYY-MM-DD)').nullable().optional(),
+	// Types Google Places : bornes larges anti-abus SEULEMENT (taille/nombre). La conformité
+	// des tokens (allowlist snake_case) est appliquée par FILTRAGE au mapping
+	// (`sanitizeGoogleTypes`) et non ici : un token inattendu ne doit jamais faire rejeter le
+	// candidat entier (anti all-or-nothing, même principe que le NPA - bug-hunter 02/07, L2).
+	google_types: z.array(z.string().max(100)).max(40).nullable().optional(),
 });
 export type CandidateImport = z.infer<typeof CandidateImportSchema>;
 

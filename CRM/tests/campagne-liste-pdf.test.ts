@@ -43,7 +43,9 @@ function leads(n: number, googleEvery = 2): ProspectCampagne[] {
 			score_pertinence: 5,
 			source: isGoogle ? 'google_places' : 'zefix',
 			source_url: isGoogle ? `https://maps.google.com/?cid=${1000 + i}` : `https://zefix.ch/x${i}`,
-			description: isGoogle ? `Rue de l’Exemple ${i + 1}, ${npa} ${localite}, Suisse — real_estate_agency / establishment` : null
+			description: isGoogle ? `Rue de l’Exemple ${i + 1}, ${npa} ${localite}, Suisse — real_estate_agency / establishment` : null,
+			google_types: isGoogle ? ['real_estate_agency', 'establishment'] : null,
+			groupe_id: null
 		};
 	});
 }

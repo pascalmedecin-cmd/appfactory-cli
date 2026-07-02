@@ -349,27 +349,32 @@ const IN_CHUNK = 500; // lots d'ids pour `.in()` (< cap -> aucun lot ne peut êt
 async function leadIdsForCampagnePaginated(
 	supabase: SupabaseClient<Database>,
 	campagneId: string
-): Promise<{ ids: string[]; error: { message: string } | null }> {
+): Promise<{ ids: string[]; groupeByLead: Map<string, string | null>; error: { message: string } | null }> {
 	const ids: string[] = [];
+	// Le groupe (2026-07-02) vit sur le LIEN N-N : lu dans la même passe paginée (0 requête en plus).
+	const groupeByLead = new Map<string, string | null>();
 	for (let from = 0; ; from += PG_PAGE) {
 		const { data, error } = await supabase
 			.from('prospect_lead_campagnes')
-			.select('lead_id')
+			.select('lead_id, groupe_id')
 			.eq('campagne_id', campagneId)
 			.range(from, from + PG_PAGE - 1);
-		if (error) return { ids: [], error };
-		const batch = (data ?? []) as Array<{ lead_id: string }>;
-		for (const r of batch) ids.push(r.lead_id);
+		if (error) return { ids: [], groupeByLead, error };
+		const batch = (data ?? []) as Array<{ lead_id: string; groupe_id: string | null }>;
+		for (const r of batch) {
+			ids.push(r.lead_id);
+			groupeByLead.set(r.lead_id, r.groupe_id);
+		}
 		if (batch.length < PG_PAGE) break;
 	}
-	return { ids, error: null };
+	return { ids, groupeByLead, error: null };
 }
 
 export async function fetchProspectsForCampagne(
 	supabase: SupabaseClient<Database>,
 	campagneId: string
 ): Promise<{ data: ProspectCampagne[]; error: { message: string } | null }> {
-	const { ids: leadIds, error: linkError } = await leadIdsForCampagnePaginated(supabase, campagneId);
+	const { ids: leadIds, groupeByLead, error: linkError } = await leadIdsForCampagnePaginated(supabase, campagneId);
 	if (linkError) return { data: [], error: linkError };
 	if (leadIds.length === 0) return { data: [], error: null };
 
@@ -378,10 +383,12 @@ export async function fetchProspectsForCampagne(
 		const chunk = leadIds.slice(i, i + IN_CHUNK);
 		const { data, error } = await supabase
 			.from('prospect_leads')
-			.select('id, raison_sociale, adresse, npa, localite, statut, score_pertinence, source, source_url, description')
+			.select('id, raison_sociale, adresse, npa, localite, statut, score_pertinence, source, source_url, description, google_types')
 			.in('id', chunk);
 		if (error) return { data: [], error };
-		rows.push(...((data ?? []) as ProspectCampagne[]));
+		for (const r of (data ?? []) as Array<Omit<ProspectCampagne, 'groupe_id'>>) {
+			rows.push({ ...r, groupe_id: groupeByLead.get(r.id) ?? null });
+		}
 	}
 	// Tri stable par raison sociale (l'ordre inter-lots n'est pas garanti par la DB).
 	rows.sort((a, b) => a.raison_sociale.localeCompare(b.raison_sociale, 'fr'));

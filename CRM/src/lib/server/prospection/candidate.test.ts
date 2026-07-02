@@ -6,6 +6,7 @@ import {
 	scoreCandidate,
 	candidateToInsertRow,
 	toPublicCandidate,
+	sanitizeGoogleTypes,
 	type DedupSets,
 } from './candidate';
 
@@ -24,7 +25,24 @@ const baseCore = (over: Partial<CandidateCore> = {}): CandidateCore => ({
 	secteur_detecte: null,
 	description: null,
 	date_publication: null,
+	google_types: null,
 	...over,
+});
+
+describe('sanitizeGoogleTypes (allowlist par filtrage, jamais all-or-nothing)', () => {
+	it('filtre les tokens non conformes au lieu de rejeter le lot ; borne à 20', () => {
+		expect(sanitizeGoogleTypes(['real_estate_agency', 'Bad Token', 'a'.repeat(200), 'store'], 'google_places')).toEqual([
+			'real_estate_agency',
+			'store'
+		]);
+		expect(sanitizeGoogleTypes(Array.from({ length: 30 }, () => 'store'), 'google_places')).toHaveLength(20);
+	});
+	it('null si source non-Google, liste vide, ou aucun token conforme', () => {
+		expect(sanitizeGoogleTypes(['real_estate_agency'], 'zefix')).toBe(null);
+		expect(sanitizeGoogleTypes([], 'google_places')).toBe(null);
+		expect(sanitizeGoogleTypes(['NOPE'], 'google_places')).toBe(null);
+		expect(sanitizeGoogleTypes(null, 'google_places')).toBe(null);
+	});
 });
 
 const sets = (existing: string[] = [], dismissed: string[] = []): DedupSets => ({

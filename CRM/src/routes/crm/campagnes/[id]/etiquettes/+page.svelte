@@ -26,12 +26,13 @@
 	import { CRM_BASE } from '$lib/config';
 	import { campClass } from '$lib/campagnes';
 	import { adresseStatut, type ProspectAdresse } from '$lib/etiquettes/prospect-etiquette';
-	import { summarize, filterProspects, buildEtiquetteEntries } from '$lib/etiquettes/etiquettes-page';
+	import { summarize, filterProspects, buildGroupedEtiquetteItems } from '$lib/etiquettes/etiquettes-page';
 	import {
-		buildEtiquettesPagesSvg,
-		exportEtiquettesPdf,
+		buildEtiquettesItemsPagesSvg,
+		exportEtiquettesItemsPdf,
 		etiquettesFileName,
-		pageCount
+		pageCount,
+		type EtiquetteItem
 	} from '$lib/etiquettes/pdf-etiquettes';
 	import type { PageData } from './$types';
 
@@ -55,7 +56,8 @@
 	// Aperçu
 	let previewOpen = $state(false);
 	let previewSvgs = $state<string[]>([]);
-	let previewCount = $state(0);
+	let previewCount = $state(0); // adresses imprimées (hors intercalaires)
+	let previewTransitions = $state(0); // intercalaires de groupe (1 cellule chacun)
 
 	// Jeton anti-race pour les rafraîchissements post-complétion (une réponse périmée ne doit jamais
 	// écraser un état plus récent si deux complétions reviennent dans le désordre).
@@ -88,6 +90,7 @@
 		previewOpen = false;
 		previewSvgs = [];
 		previewCount = 0;
+		previewTransitions = 0;
 		generating = false;
 		refreshSeq++;
 		seedSelection(data.prospects);
@@ -218,12 +221,22 @@
 		}
 	}
 
+	/**
+	 * Flux d'items de la planche : groupé par catégorie (intercalaires gras 15 pt) dès que la
+	 * campagne a des groupes, sortie historique sinon. Source unique aperçu + téléchargement
+	 * (l'aperçu EST le PDF).
+	 */
+	function buildItems(): EtiquetteItem[] {
+		return buildGroupedEtiquetteItems(selectedList, data.groupes, destinataires);
+	}
+
 	async function openPreview() {
 		if (selectedList.length === 0) return;
-		const entries = buildEtiquetteEntries(selectedList, destinataires);
+		const items = buildItems();
 		await ensureOutfitLoaded();
-		previewSvgs = buildEtiquettesPagesSvg(entries, { guides: true });
-		previewCount = entries.length;
+		previewSvgs = buildEtiquettesItemsPagesSvg(items, { guides: true });
+		previewCount = selectedList.length;
+		previewTransitions = items.length - selectedList.length;
 		previewOpen = true;
 	}
 	function closePreview() {
@@ -234,11 +247,10 @@
 		if (generating || selectedList.length === 0) return;
 		generating = true;
 		try {
-			const entries = buildEtiquetteEntries(selectedList, destinataires);
-			await exportEtiquettesPdf(entries, etiquettesFileName(data.campagne.nom));
-			toasts.success(
-				`${entries.length} étiquette${entries.length > 1 ? 's' : ''} générée${entries.length > 1 ? 's' : ''}`
-			);
+			const items = buildItems();
+			const n = selectedList.length;
+			await exportEtiquettesItemsPdf(items, etiquettesFileName(data.campagne.nom));
+			toasts.success(`${n} étiquette${n > 1 ? 's' : ''} générée${n > 1 ? 's' : ''}`);
 			previewOpen = false;
 		} catch {
 			toasts.error('Génération du PDF impossible');
@@ -474,7 +486,10 @@
 			<div class="prev-foot">
 				<span class="count">
 					<b>{previewCount} étiquette{previewCount > 1 ? 's' : ''}</b>
-					&middot; {pageCount(previewCount)} page{pageCount(previewCount) > 1 ? 's' : ''} A4 &middot; Avery 6122
+					{#if previewTransitions > 0}
+						&middot; {previewTransitions} intercalaire{previewTransitions > 1 ? 's' : ''} de groupe
+					{/if}
+					&middot; {pageCount(previewCount + previewTransitions)} page{pageCount(previewCount + previewTransitions) > 1 ? 's' : ''} A4 &middot; Avery 6122
 				</span>
 				<div class="actions">
 					<button type="button" class="btn-ghost" onclick={closePreview}>Fermer</button>

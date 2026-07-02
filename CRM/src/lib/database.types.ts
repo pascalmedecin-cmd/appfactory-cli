@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "14.5"
-  }
   graphql_public: {
     Tables: {
       [_ in never]: never
@@ -117,6 +112,38 @@ export type Database = {
           year_month?: string
         }
         Relationships: []
+      }
+      campagne_groupes: {
+        Row: {
+          campagne_id: string
+          created_by: string | null
+          date_creation: string
+          id: string
+          nom: string
+        }
+        Insert: {
+          campagne_id: string
+          created_by?: string | null
+          date_creation?: string
+          id?: string
+          nom: string
+        }
+        Update: {
+          campagne_id?: string
+          created_by?: string | null
+          date_creation?: string
+          id?: string
+          nom?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campagne_groupes_campagne_id_fkey"
+            columns: ["campagne_id"]
+            isOneToOne: false
+            referencedRelation: "campagnes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       campagnes: {
         Row: {
@@ -773,6 +800,7 @@ export type Database = {
           motif_perte: string | null
           notes_libres: string | null
           prescripteur_origine: string | null
+          prospect_lead_id: string | null
           responsable: string | null
           signal_affaires_id: string | null
           tags: string | null
@@ -792,6 +820,7 @@ export type Database = {
           motif_perte?: string | null
           notes_libres?: string | null
           prescripteur_origine?: string | null
+          prospect_lead_id?: string | null
           responsable?: string | null
           signal_affaires_id?: string | null
           tags?: string | null
@@ -811,6 +840,7 @@ export type Database = {
           motif_perte?: string | null
           notes_libres?: string | null
           prescripteur_origine?: string | null
+          prospect_lead_id?: string | null
           responsable?: string | null
           signal_affaires_id?: string | null
           tags?: string | null
@@ -829,6 +859,13 @@ export type Database = {
             columns: ["entreprise_id"]
             isOneToOne: false
             referencedRelation: "entreprises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunites_prospect_lead_id_fkey"
+            columns: ["prospect_lead_id"]
+            isOneToOne: false
+            referencedRelation: "prospect_leads"
             referencedColumns: ["id"]
           },
           {
@@ -891,19 +928,29 @@ export type Database = {
         Row: {
           campagne_id: string
           date_assignation: string
+          groupe_id: string | null
           lead_id: string
         }
         Insert: {
           campagne_id: string
           date_assignation?: string
+          groupe_id?: string | null
           lead_id: string
         }
         Update: {
           campagne_id?: string
           date_assignation?: string
+          groupe_id?: string | null
           lead_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "plc_groupe_campagne_fk"
+            columns: ["groupe_id", "campagne_id"]
+            isOneToOne: false
+            referencedRelation: "campagne_groupes"
+            referencedColumns: ["id", "campagne_id"]
+          },
           {
             foreignKeyName: "prospect_lead_campagnes_campagne_id_fkey"
             columns: ["campagne_id"]
@@ -980,6 +1027,7 @@ export type Database = {
           date_publication: string | null
           description: string | null
           email: string | null
+          google_types: string[] | null
           id: string
           localite: string | null
           montant: number | null
@@ -1009,6 +1057,7 @@ export type Database = {
           date_publication?: string | null
           description?: string | null
           email?: string | null
+          google_types?: string[] | null
           id?: string
           localite?: string | null
           montant?: number | null
@@ -1038,6 +1087,7 @@ export type Database = {
           date_publication?: string | null
           description?: string | null
           email?: string | null
+          google_types?: string[] | null
           id?: string
           localite?: string | null
           montant?: number | null
@@ -1386,42 +1436,6 @@ export type Database = {
         }
         Relationships: []
       }
-      veille_themes: {
-        Row: {
-          active: boolean
-          category: string
-          created_at: string
-          description: string
-          id: string
-          label: string
-          slug: string
-          sort_order: number
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean
-          category: string
-          created_at?: string
-          description: string
-          id?: string
-          label: string
-          slug: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean
-          category?: string
-          created_at?: string
-          description?: string
-          id?: string
-          label?: string
-          slug?: string
-          sort_order?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
       veille_sources: {
         Row: {
           active: boolean
@@ -1479,6 +1493,42 @@ export type Database = {
         }
         Relationships: []
       }
+      veille_themes: {
+        Row: {
+          active: boolean
+          category: string
+          created_at: string
+          description: string
+          id: string
+          label: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          category: string
+          created_at?: string
+          description: string
+          id?: string
+          label: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          category?: string
+          created_at?: string
+          description?: string
+          id?: string
+          label?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1496,6 +1546,7 @@ export type Database = {
         }[]
       }
       immutable_unaccent: { Args: { "": string }; Returns: string }
+      mark_lead_for_contact: { Args: { p_lead_id: string }; Returns: Json }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
       transfer_lead_to_crm: { Args: { p_lead_id: string }; Returns: Json }
@@ -1635,3 +1686,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+

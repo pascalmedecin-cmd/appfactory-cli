@@ -178,6 +178,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			secteur_detecte: secteur,
 			description: null,
 			date_publication: company.sogcDate ?? null,
+			google_types: null,
 		};
 		const score = scoreCandidate(core, { intelligenceSignal });
 		const status = statusFor(core.source_id, dedup);

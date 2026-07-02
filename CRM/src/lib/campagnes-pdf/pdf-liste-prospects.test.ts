@@ -4,7 +4,11 @@ import {
 	humanizeGoogleType,
 	toListeRow,
 	paginateRows,
+	paginateItems,
 	buildListePagesSvg,
+	buildListeItems,
+	buildListeItemsPagesSvg,
+	type ListeItem,
 	listeFileName,
 	LISTE_GEOMETRY,
 	LISTE_COLS,
@@ -12,6 +16,7 @@ import {
 	PAGE_H,
 	type ListeProspectRow
 } from './pdf-liste-prospects';
+import { SANS_GROUPE_LABEL } from '$lib/campagne-groupes';
 import type { ProspectCampagne } from '$lib/campagnes';
 
 /** Prospect de campagne minimal (les champs non pertinents pour le PDF sont figés). */
@@ -27,6 +32,8 @@ function lead(over: Partial<ProspectCampagne> = {}): ProspectCampagne {
 		source: 'google_places',
 		source_url: 'https://maps.google.com/?cid=123',
 		description: 'Quai des Fleurs 12, 1006 Lausanne, Suisse — real_estate_agency / point_of_interest / establishment',
+		google_types: null,
+		groupe_id: null,
 		...over
 	};
 }
@@ -209,5 +216,109 @@ describe('listeFileName (convention explicite, décision Pascal 02/07)', () => {
 	it('caractères interdits par les systèmes de fichiers remplacés, fallback si vide', () => {
 		expect(listeFileName('Vernis / Films : "test"', d)).toBe('Prospects - Vernis Films test - 02.07.2026.pdf');
 		expect(listeFileName('///', d)).toBe('Prospects - Campagne - 02.07.2026.pdf');
+	});
+});
+
+// ===== Sections par groupe (2026-07-02) ==========================================================
+
+describe('toListeRow - priorité à la colonne structurée google_types', () => {
+	it('google_types prime sur le parsing de description', () => {
+		const row = toListeRow(lead({ google_types: ['architect', 'establishment'] }));
+		expect(row.typePrincipal).toBe('Architect'); // pas « Real estate agency » de la description
+	});
+	it('repli sur description quand google_types est null (leads pré-backfill)', () => {
+		expect(toListeRow(lead({ google_types: null })).typePrincipal).toBe('Real estate agency');
+	});
+});
+
+describe('buildListeItems (flux sectionné par groupe)', () => {
+	const g = (id: string, nom: string) => ({ id, nom });
+
+	it('aucun groupe -> lignes seules, ordre d’entrée (sortie historique)', () => {
+		const items = buildListeItems([lead({ id: 'a' }), lead({ id: 'b' })], []);
+		expect(items.map((i) => i.kind)).toEqual(['row', 'row']);
+	});
+
+	it('sections en ordre alphabétique fr + compteurs, sans-groupe en fin, sections vides omises', () => {
+		const items = buildListeItems(
+			[
+				lead({ id: 'a', raison_sociale: 'Zurich SA', groupe_id: 'g2' }),
+				lead({ id: 'b', raison_sociale: 'Aarau SA', groupe_id: 'g1' }),
+				lead({ id: 'c', raison_sociale: 'Berne SA', groupe_id: null }),
+				lead({ id: 'd', raison_sociale: 'Delémont SA', groupe_id: 'g2' })
+			],
+			[g('g2', 'Régies'), g('g1', 'Architectes'), g('g3', 'Vide')]
+		);
+		const flat = items.map((i) => (i.kind === 'section' ? `[${i.nom}:${i.count}]` : i.row.nom));
+		expect(flat).toEqual([
+			'[Architectes:1]',
+			'Aarau SA',
+			'[Régies:2]',
+			'Zurich SA',
+			'Delémont SA',
+			`[${SANS_GROUPE_LABEL}:1]`,
+			'Berne SA'
+		]);
+	});
+
+	it('groupe_id orphelin -> rangé sans groupe (jamais perdu)', () => {
+		const items = buildListeItems([lead({ id: 'a', groupe_id: 'g-disparu' })], [g('g1', 'Régies')]);
+		expect(items[0]).toMatchObject({ kind: 'section', nom: SANS_GROUPE_LABEL, count: 1 });
+	});
+});
+
+describe('buildListeItemsPagesSvg (rendu des sections)', () => {
+	it('bandeau de section : nom en gras + compteur ; le titre page 1 compte les PROSPECTS, pas les items', () => {
+		const items = buildListeItems(
+			[lead({ id: 'a', groupe_id: 'g1' }), lead({ id: 'b', groupe_id: 'g1' })],
+			[{ id: 'g1', nom: 'Régies' }]
+		);
+		const { svgs } = buildListeItemsPagesSvg('Camp', '2 juillet 2026', items, '');
+		expect(svgs[0]).toContain('>Régies</text>');
+		expect(svgs[0]).toContain('2 prospects</text>'); // compteur de section
+		expect(svgs[0]).toContain('2 prospects · liste téléchargée le 2 juillet 2026'); // titre = 2, pas 3 items
+	});
+
+	it('un en-tête de section n’est JAMAIS en dernière ligne d’une page (anti-orphelin, bug M2)', () => {
+		// Capacité réelle de la page 1 (même calcul que le moteur).
+		const cap1 = Math.max(
+			1,
+			Math.floor(
+				(LISTE_GEOMETRY.CONTENT_BOTTOM - (LISTE_GEOMETRY.TABLE_TOP_P1 + LISTE_GEOMETRY.HEAD_H)) / LISTE_GEOMETRY.ROW_H
+			)
+		);
+		const row = (): ListeItem => ({ kind: 'row', row: toListeRow(lead({ google_types: null })) });
+		// Groupe A remplit exactement cap1 - 1 slots (section + rows) -> la section B tomberait
+		// sur le DERNIER slot de la page 1 : elle doit être reportée en tête de page 2.
+		const items: ListeItem[] = [
+			{ kind: 'section', nom: 'A', count: cap1 - 2 },
+			...Array.from({ length: cap1 - 2 }, row),
+			{ kind: 'section', nom: 'B', count: 3 },
+			...Array.from({ length: 3 }, row)
+		];
+		const pages = paginateItems(items);
+		expect(pages.length).toBe(2);
+		expect(pages[0].length).toBe(cap1 - 1); // slot laissé vide plutôt qu'une section orpheline
+		expect(pages[0][pages[0].length - 1].kind).toBe('row');
+		expect(pages[1][0]).toMatchObject({ kind: 'section', nom: 'B' });
+		// Invariant général : aucune page ne se termine par une section quand du contenu suit.
+		for (let p = 0; p < pages.length; p++) {
+			const last = pages[p][pages[p].length - 1];
+			if (p < pages.length - 1) expect(last.kind).toBe('row');
+		}
+	});
+
+	it('paginateItems sans sections = découpe paginateRows (compat liste plate)', () => {
+		const row = (): ListeItem => ({ kind: 'row', row: toListeRow(lead({ google_types: null })) });
+		const items = Array.from({ length: 45 }, row);
+		expect(paginateItems(items).map((p) => p.length)).toEqual(paginateRows(45));
+	});
+
+	it('buildListePagesSvg (API historique) = items « row » seuls, liens préservés', () => {
+		const rws = [toListeRow(lead({ id: 'a' }))];
+		const viaRows = buildListePagesSvg('C', 'd', rws, '');
+		const viaItems = buildListeItemsPagesSvg('C', 'd', rws.map((row) => ({ kind: 'row' as const, row })), '');
+		expect(viaRows).toEqual(viaItems);
+		expect(viaRows.links).toHaveLength(1);
 	});
 });

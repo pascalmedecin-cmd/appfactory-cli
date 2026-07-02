@@ -80,6 +80,10 @@ export interface ProspectCampagne {
 	source_url: string | null;
 	/** Description d'import (pour `google_places` : adresse formatée + types Google). Alimente le PDF de liste. */
 	description: string | null;
+	/** Types Google Places structurés (1er = principal). null hors google_places. */
+	google_types: string[] | null;
+	/** Groupe du prospect DANS cette campagne (null = sans groupe). Porté par le lien N-N. */
+	groupe_id: string | null;
 }
 
 /** Normalisation de recherche : minuscules + sans diacritiques (« regie » matche « Régie »). */

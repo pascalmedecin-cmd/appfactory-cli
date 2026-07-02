@@ -8,13 +8,18 @@ import {
 	GEOMETRY,
 	pageCount,
 	layoutEtiquettes,
+	layoutEtiquettesItems,
+	transitionFontSize,
 	labelLines,
 	buildEtiquettesPagesSvg,
+	buildEtiquettesItemsPagesSvg,
 	estWidth,
 	ellipsize,
 	wrapToWidth,
-	etiquettesFileName
+	etiquettesFileName,
+	type EtiquetteItem
 } from './pdf-etiquettes';
+import { measureOutfitBold } from './outfit-metrics';
 import type { EtiquetteEntry } from './prospect-etiquette';
 
 function entry(p: Partial<EtiquetteEntry> = {}): EtiquetteEntry {
@@ -259,5 +264,114 @@ describe('etiquettesFileName (convention explicite, décision Pascal 02/07)', ()
 		expect(etiquettesFileName('Salon Habitat 2026', d)).toBe('Étiquettes - Salon Habitat 2026 - 02.07.2026.pdf');
 		expect(etiquettesFileName('Régies — Genève', d)).toBe('Étiquettes - Régies - Genève - 02.07.2026.pdf');
 		expect(etiquettesFileName('   ', d)).toBe('Étiquettes - Campagne - 02.07.2026.pdf');
+	});
+});
+
+// ===== Étiquettes de TRANSITION (intercalaires de groupe, 2026-07-02) ===========================
+
+/** Noms réalistes ≤ 24 chars (borne CRM stress-testée) : tous doivent rester à 15 pt pleins. */
+const NOMS_REALISTES = [
+	'Régies immobilières',
+	'Facility management',
+	'Entreprises générales',
+	'Architectes & designers',
+	'Administration publique',
+	'Bureaux d’études',
+	'Sécurité bâtiment',
+	'Commerces',
+	'CVC / HVAC'
+];
+
+describe('transitionFontSize (fit-to-width par avances réelles Outfit Bold)', () => {
+	it('15 pt plein pour tous les noms réalistes ≤ 24 caractères (stress test 2026-07-02)', () => {
+		for (const nom of NOMS_REALISTES) {
+			expect(nom.length).toBeLessThanOrEqual(24);
+			expect(transitionFontSize(nom), nom).toBe(15);
+		}
+	});
+
+	it('un nom dégénéré (24 lettres larges) est RÉTRÉCI, jamais tronqué ni débordant', () => {
+		const degenere = 'M'.repeat(24);
+		const size = transitionFontSize(degenere);
+		expect(size).toBeLessThan(15);
+		expect(size).toBeGreaterThan(8); // plancher théorique ~8.5 pt (24 « M » à 0.858 em)
+		expect(measureOutfitBold(degenere, size)).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
+	});
+
+	it('stress : AUCUNE chaîne ≤ 24 chars ne déborde la cellule (y compris caractères inconnus)', () => {
+		const alphabets = ['W', 'M', '@', '€', 'Æ', 'm', 'É', ' ', '-'];
+		for (let len = 1; len <= 24; len++) {
+			for (const ch of alphabets) {
+				const nom = ch.repeat(len);
+				const size = transitionFontSize(nom);
+				expect(measureOutfitBold(nom, size), `« ${ch} » × ${len}`).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
+			}
+		}
+	});
+});
+
+describe('layoutEtiquettesItems (flux continu adresses + intercalaires)', () => {
+	const mixed = (nAvant: number, nApres: number): EtiquetteItem[] => [
+		{ kind: 'transition', nom: 'Régies' },
+		...entries(nAvant).map((entry) => ({ kind: 'adresse', entry }) as EtiquetteItem),
+		{ kind: 'transition', nom: 'Sans groupe' },
+		...entries(nApres).map((entry) => ({ kind: 'adresse', entry }) as EtiquetteItem)
+	];
+
+	it('un intercalaire occupe EXACTEMENT 1 cellule : aucune cellule perdue, indexes continus', () => {
+		const items = mixed(12, 14); // 2 transitions + 26 adresses = 28 cellules
+		const { pages } = layoutEtiquettesItems(items);
+		expect(pages.length).toBe(2);
+		expect(pages[0].length).toBe(24);
+		expect(pages[1].length).toBe(4);
+		const indexes = pages.flat().map((p) => p.index);
+		expect(indexes).toEqual(Array.from({ length: 28 }, (_, i) => i)); // flux continu, zéro trou
+	});
+
+	it('l’intercalaire = 1 ligne grasse, marquée kind:transition, dans les bornes de sa cellule', () => {
+		const { pages } = layoutEtiquettesItems(mixed(2, 0));
+		const t = pages[0][0];
+		expect(t.kind).toBe('transition');
+		expect(t.lines).toHaveLength(1);
+		expect(t.lines[0].bold).toBe(true);
+		expect(t.lines[0].size).toBe(15);
+		expect(t.lines[0].estWidth).toBeLessThanOrEqual(GEOMETRY.USABLE_W);
+		// La ligne vit dans sa cellule (baseline entre bord haut et bord bas).
+		expect(t.lines[0].baseline).toBeGreaterThan(t.cellY);
+		expect(t.lines[0].baseline).toBeLessThan(t.cellY + GEOMETRY.LABEL_H);
+	});
+
+	it('layoutEtiquettes (API historique) = layoutEtiquettesItems en adresses seules', () => {
+		const es = entries(30);
+		const viaItems = layoutEtiquettesItems(es.map((entry) => ({ kind: 'adresse', entry })));
+		expect(layoutEtiquettes(es)).toEqual(viaItems);
+	});
+});
+
+describe('buildEtiquettesItemsPagesSvg (rendu intercalaires)', () => {
+	it('rend le nom du groupe en gras 15 pt centré, fond blanc (ni sombre ni inversé)', () => {
+		const svgs = buildEtiquettesItemsPagesSvg([
+			{ kind: 'transition', nom: 'Régies immobilières' },
+			{ kind: 'adresse', entry: entry() }
+		]);
+		expect(svgs).toHaveLength(1);
+		expect(svgs[0]).toContain('Régies immobilières');
+		expect(svgs[0]).toContain('font-size="15"');
+		expect(svgs[0]).toContain('font-weight="700"');
+		// Un seul rect = le fond de page blanc : l'intercalaire n'ajoute AUCUN aplat (pas d'inversé).
+		expect(svgs[0].match(/<rect/g)?.length).toBe(1);
+		expect(svgs[0]).toContain('fill="#ffffff"');
+	});
+
+	it('échappe le XML du nom de groupe (saisie utilisateur)', () => {
+		const svgs = buildEtiquettesItemsPagesSvg([{ kind: 'transition', nom: 'R&D <Vitrages>' }]);
+		expect(svgs[0]).toContain('R&amp;D &lt;Vitrages&gt;');
+	});
+
+	it('retire les caractères de contrôle illégaux XML (audit sécu 2026-07-02 : un C0 cassait le DOMParser)', () => {
+		const svgs = buildEtiquettesItemsPagesSvg([{ kind: 'transition', nom: 'AB\u0001CD\u009FEF' }]);
+		expect(svgs[0]).toContain('>ABCDEF</text>');
+		// Le SVG reste parseable en XML strict (c'est ce que l'export fait avant svg2pdf).
+		expect(svgs[0]).not.toMatch(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/);
 	});
 });

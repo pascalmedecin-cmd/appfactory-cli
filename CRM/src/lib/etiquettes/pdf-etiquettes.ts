@@ -21,6 +21,7 @@
  */
 import type { EtiquetteEntry } from './prospect-etiquette';
 import { campagnePdfFileName } from '$lib/pdf/pdf-filename';
+import { measureOutfitBold } from './outfit-metrics';
 
 // --- Géométrie A4 + grille Avery 6122 (points PDF : 1 mm = 2.834645 pt) ------------------------
 const MM = 2.834645;
@@ -46,15 +47,30 @@ const LINE_H = 13; // interligne uniforme (bloc centré)
 const NOM_MAX_LINES = 2; // un nom long passe sur 2 lignes max, puis ellipse
 const TEXT_COLOR = '#111111'; // quasi-noir, lisibilité d'impression maximale
 
+/**
+ * Étiquette de TRANSITION (intercalaire de groupe, 2026-07-02) : le nom de la catégorie seul,
+ * en GRAS et GRANDE taille (15 pt vs 10.5 du nom), centré, fond blanc comme les autres
+ * (demande Pascal : ni fond sombre ni inversé). 15 pt = plus grande taille où tous les noms
+ * réalistes ≤ 24 chars tiennent sur 1 ligne (stress test avances réelles Outfit Bold,
+ * 2026-07-02). Un nom dégénéré (tout en capitales larges) est RÉTRÉCI pour tenir
+ * (fit-to-width par avances réelles, plancher ~8.5 pt pour 24 « M ») - jamais d'ellipse :
+ * un intercalaire tronqué est un intercalaire illisible dans la pile.
+ */
+const TRANSITION_SIZE = 15;
+
 // --- Helpers SVG (attributs inline, doctrine svg2pdf) ------------------------------------------
 function f(n: number): string {
 	return Number(n.toFixed(2)).toString();
 }
 function esc(s: string): string {
-	// Normalise les tirets longs (cadratin/demi-cadratin) en tiret court (règle typo FR), puis
-	// échappe les entités XML : défense en profondeur contre une donnée saisie « — ».
+	// Normalise les tirets longs (cadratin/demi-cadratin) en tiret court (règle typo FR), retire
+	// les caractères de contrôle C0/C1 illégaux en XML 1.0 (un seul suffirait à faire échouer le
+	// DOMParser -> aucun PDF ; audit sécu 2026-07-02, Low), puis échappe les entités XML :
+	// défense en profondeur contre toute donnée saisie ou importée.
 	return s
 		.replace(/[—–]/g, '-')
+		// eslint-disable-next-line no-control-regex
+		.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/g, '')
 		.replace(/&/g, '&amp;')
 		.replace(/</g, '&lt;')
 		.replace(/>/g, '&gt;')
@@ -110,13 +126,57 @@ export interface LabelLine {
 	estWidth: number; // largeur estimée (assertion : ≤ USABLE_W)
 }
 export interface PlacedLabel {
-	index: number; // index global de l'adresse (page * 24 + cellule)
+	index: number; // index global de l'item (page * 24 + cellule)
 	col: number;
 	row: number;
 	cellX: number; // bord gauche de la cellule
 	cellY: number; // bord haut de la cellule
 	centerX: number; // axe central horizontal (text-anchor middle)
 	lines: LabelLine[];
+	/** 'transition' = intercalaire de groupe (1 ligne, gras 15 pt). Absent = adresse (défaut). */
+	kind?: 'adresse' | 'transition';
+}
+
+/**
+ * Item du flux d'étiquettes (2026-07-02) : une adresse OU un intercalaire de groupe. Le flux
+ * est CONTINU sur la planche (l'intercalaire occupe exactement 1 cellule, aucune cellule
+ * laissée vide entre les groupes -> critère « ne pas perdre d'étiquettes »).
+ */
+export type EtiquetteItem =
+	| { kind: 'adresse'; entry: EtiquetteEntry }
+	| { kind: 'transition'; nom: string };
+
+/** Taille de rendu d'un intercalaire : 15 pt, rétrécie si le nom déborde (avances réelles). */
+export function transitionFontSize(nom: string): number {
+	const w1 = measureOutfitBold(nom, 1); // largeur à 1 pt (linéaire en la taille)
+	if (w1 <= 0) return TRANSITION_SIZE;
+	return Math.min(TRANSITION_SIZE, USABLE_W / w1);
+}
+
+/** Place un intercalaire : 1 ligne, gras, centrée H + V dans la cellule. */
+function placeTransition(nom: string, index: number, col: number, row: number): PlacedLabel {
+	const cellX = col * LABEL_W;
+	const cellY = MARGIN_TOP + row * LABEL_H;
+	const size = transitionFontSize(nom);
+	return {
+		index,
+		col,
+		row,
+		cellX,
+		cellY,
+		centerX: cellX + LABEL_W / 2,
+		kind: 'transition',
+		lines: [
+			{
+				text: nom,
+				size,
+				bold: true,
+				// Même construction de baseline que le bloc adresse (1 ligne centrée).
+				baseline: cellY + (LABEL_H - LINE_H) / 2 + 0.5 * LINE_H + size * 0.34,
+				estWidth: measureOutfitBold(nom, size),
+			},
+		],
+	};
 }
 
 /**
@@ -163,20 +223,38 @@ function placeLabel(entry: EtiquetteEntry, index: number, col: number, row: numb
 	return { index, col, row, cellX, cellY, centerX, lines };
 }
 
-/** Pagination PURE : adresses -> pages de PlacedLabel (cellules vides simplement absentes). */
-export function layoutEtiquettes(entries: EtiquetteEntry[]): { pages: PlacedLabel[][] } {
+/**
+ * Pagination PURE du flux d'items (adresses + intercalaires) : flux CONTINU, un item = une
+ * cellule, cellules au-delà du flux simplement absentes. C'est le moteur ; `layoutEtiquettes`
+ * (adresses seules) reste l'API historique par-dessus.
+ *
+ * Trade-off ASSUMÉ (bug-hunter 2026-07-02, L1) : un intercalaire peut tomber sur la DERNIÈRE
+ * cellule d'une planche (ses adresses commencent sur la suivante). Le reporter gaspillerait
+ * une étiquette physique - exactement ce que Pascal a refusé (« pas perdre des étiquettes »).
+ * L'intercalaire garde son rôle de séparateur de pile même en fin de planche.
+ */
+export function layoutEtiquettesItems(items: EtiquetteItem[]): { pages: PlacedLabel[][] } {
 	const pages: PlacedLabel[][] = [];
-	for (let start = 0; start < entries.length; start += PER_PAGE) {
+	for (let start = 0; start < items.length; start += PER_PAGE) {
 		const page: PlacedLabel[] = [];
-		const slice = entries.slice(start, start + PER_PAGE);
-		slice.forEach((entry, k) => {
+		const slice = items.slice(start, start + PER_PAGE);
+		slice.forEach((item, k) => {
 			const col = k % COLS;
 			const row = Math.floor(k / COLS);
-			page.push(placeLabel(entry, start + k, col, row));
+			page.push(
+				item.kind === 'transition'
+					? placeTransition(item.nom, start + k, col, row)
+					: placeLabel(item.entry, start + k, col, row)
+			);
 		});
 		pages.push(page);
 	}
 	return { pages };
+}
+
+/** Pagination PURE : adresses -> pages de PlacedLabel (cellules vides simplement absentes). */
+export function layoutEtiquettes(entries: EtiquetteEntry[]): { pages: PlacedLabel[][] } {
+	return layoutEtiquettesItems(entries.map((entry) => ({ kind: 'adresse', entry })));
 }
 
 /** Nombre de pages A4 pour `n` adresses (0 -> 0). */
@@ -200,9 +278,9 @@ export interface EtiquettesRenderOpts {
 	guides?: boolean;
 }
 
-/** SVG (chaîne) de chaque page A4 = exactement ce que svg2pdf convertira. */
-export function buildEtiquettesPagesSvg(entries: EtiquetteEntry[], opts: EtiquettesRenderOpts = {}): string[] {
-	const { pages } = layoutEtiquettes(entries);
+/** SVG (chaîne) de chaque page A4 pour un flux d'ITEMS (adresses + intercalaires). */
+export function buildEtiquettesItemsPagesSvg(items: EtiquetteItem[], opts: EtiquettesRenderOpts = {}): string[] {
+	const { pages } = layoutEtiquettesItems(items);
 	return pages.map((labels) => {
 		const body = labels.map((p) => labelSvg(p, opts.guides === true)).join('');
 		return (
@@ -212,6 +290,11 @@ export function buildEtiquettesPagesSvg(entries: EtiquetteEntry[], opts: Etiquet
 			`</svg>`
 		);
 	});
+}
+
+/** SVG (chaîne) de chaque page A4 = exactement ce que svg2pdf convertira (adresses seules). */
+export function buildEtiquettesPagesSvg(entries: EtiquetteEntry[], opts: EtiquettesRenderOpts = {}): string[] {
+	return buildEtiquettesItemsPagesSvg(entries.map((entry) => ({ kind: 'adresse', entry })), opts);
 }
 
 // --- Export effectif (impur : dynamic import jsPDF + svg2pdf + polices, hors bundle initial) ----
@@ -224,11 +307,11 @@ export function etiquettesFileName(label: string, date: Date = new Date()): stri
 }
 
 /**
- * Génère et télécharge la planche d'étiquettes (appelé depuis le panneau, côté navigateur).
- * No-op si aucune adresse (l'appelant désactive déjà le bouton à 0 sélection).
+ * Génère et télécharge la planche d'étiquettes pour un flux d'ITEMS (adresses + intercalaires
+ * de groupe). No-op si le flux est vide (l'appelant désactive déjà le bouton à 0 sélection).
  */
-export async function exportEtiquettesPdf(entries: EtiquetteEntry[], fileName: string): Promise<void> {
-	if (entries.length === 0) return;
+export async function exportEtiquettesItemsPdf(items: EtiquetteItem[], fileName: string): Promise<void> {
+	if (items.length === 0) return;
 	const [{ jsPDF }, svg2pdfMod, fonts] = await Promise.all([
 		import('jspdf'),
 		import('svg2pdf.js'),
@@ -242,13 +325,18 @@ export async function exportEtiquettesPdf(entries: EtiquetteEntry[], fileName: s
 	doc.addFileToVFS('Outfit-Bold.ttf', fonts.OUTFIT_700);
 	doc.addFont('Outfit-Bold.ttf', 'Outfit', 'bold');
 
-	const svgs = buildEtiquettesPagesSvg(entries);
+	const svgs = buildEtiquettesItemsPagesSvg(items);
 	for (let i = 0; i < svgs.length; i++) {
 		if (i > 0) doc.addPage('a4', 'portrait');
 		const el = new DOMParser().parseFromString(svgs[i], 'image/svg+xml').documentElement;
 		await svg2pdf(el, doc, { x: 0, y: 0, width: PAGE_W, height: PAGE_H });
 	}
 	doc.save(fileName);
+}
+
+/** Génère et télécharge la planche (adresses seules - API historique, mêmes garanties). */
+export async function exportEtiquettesPdf(entries: EtiquetteEntry[], fileName: string): Promise<void> {
+	return exportEtiquettesItemsPdf(entries.map((entry) => ({ kind: 'adresse', entry })), fileName);
 }
 
 // Exposé pour les tests géométriques (bornes de cellule, marge utile).
