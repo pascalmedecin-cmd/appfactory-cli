@@ -368,8 +368,8 @@ describe('fetchProspectsForCampagne (panneau étiquettes)', () => {
 
 	it('résout les lead_ids puis lit prospect_leads, trié par raison sociale', async () => {
 		const prospects = [
-			{ id: 'L2', raison_sociale: 'Régie du Lac', adresse: 'Quai 1', npa: '1006', localite: 'Lausanne' },
-			{ id: 'L1', raison_sociale: 'Boutique Léman', adresse: 'Rue Basse 7', npa: '1201', localite: 'Genève' }
+			{ id: 'L2', raison_sociale: 'Régie du Lac', adresse: 'Quai 1', npa: '1006', localite: 'Lausanne', statut: 'vide', score_pertinence: null, source: 'search_ch' },
+			{ id: 'L1', raison_sociale: 'Boutique Léman', adresse: 'Rue Basse 7', npa: '1201', localite: 'Genève', statut: 'a_contacter', score_pertinence: 7, source: 'zefix' }
 		];
 		const m = multiTableMock({
 			prospect_lead_campagnes: { data: [{ lead_id: 'L1' }, { lead_id: 'L2' }] },

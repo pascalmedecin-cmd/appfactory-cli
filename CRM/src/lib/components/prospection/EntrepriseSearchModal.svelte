@@ -65,13 +65,19 @@
 
 	const activeMeta = $derived(SOURCE_CARDS[active]);
 
-	// Lot 3 : noms des campagnes pré-cochées (ouverture « depuis une campagne »), pour un rappel
-	// visible dès l'ouverture — le combo d'étiquetage n'apparaît, lui, qu'après une recherche.
-	const presetNames = $derived(
+	// Lot 3 : bannière d'étiquetage alignée sur la sélection RÉELLE (`campagneIds`), pas sur le
+	// preset figé - si l'opérateur retire un chip, la bannière ne promet plus un étiquetage qui
+	// n'aura pas lieu (une promesse fausse = lot importé « non attaché » sans aucune trace UI).
+	// Une campagne créée à la volée dans le combo n'est pas encore dans `campagnes` (invalidateAll
+	// suit l'import) : son nom est irrésolvable, on compte alors en « N campagnes ».
+	const selectedNames = $derived(
 		premium
-			? presetCampagneIds.map((id) => campagnes.find((c) => c.id === id)?.nom).filter((n): n is string => !!n)
+			? campagneIds.map((id) => campagnes.find((c) => c.id === id)?.nom).filter((n): n is string => !!n)
 			: [],
 	);
+	const selectedTagCount = $derived(premium ? campagneIds.length : 0);
+	// Preset fourni mais sélection vidée -> avertir (l'opérateur a peut-être retiré le chip sans le vouloir).
+	const presetCleared = $derived(premium && presetCampagneIds.length > 0 && campagneIds.length === 0);
 
 	// Changement de source = on repart de l'écran de recherche : les résultats d'une source ne
 	// s'appliquent pas à une autre. (Comparaison à la valeur précédente car `bind:active` met à
@@ -179,7 +185,11 @@
 			});
 			const data = await resp.json();
 			if (resp.ok) {
-				importResult = { message: data.message, type: 'success' };
+				// L'étiquetage campagne a échoué côté serveur (leads importés quand même) -> toast
+				// d'ERREUR explicite, jamais un succès qui masque un lot « non attaché ».
+				importResult = data.campagneWarning
+					? { message: `${data.message} ${data.campagneWarning}`, type: 'error' }
+					: { message: data.message, type: 'success' };
 				await invalidateAll();
 				open = false;
 			} else {
@@ -200,10 +210,16 @@
 			Une seule source à la fois - zéro doublon.
 		</p>
 
-		{#if presetNames.length > 0}
+		{#if selectedTagCount > 0}
 			<div class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg bg-primary/5 border border-primary/15 text-[13px] text-text-body">
 				<Icon name="sell" size={16} class="shrink-0 text-primary" />
-				<span>Les entreprises importées seront étiquetées à la campagne <b class="font-semibold">{presetNames.join(', ')}</b>.</span>
+				<span>Les entreprises importées seront étiquetées à la campagne
+					<b class="font-semibold">{selectedNames.length === selectedTagCount ? selectedNames.join(', ') : `${selectedTagCount} campagne${selectedTagCount > 1 ? 's' : ''}`}</b>.</span>
+			</div>
+		{:else if presetCleared}
+			<div class="flex items-center gap-2.5 px-3.5 py-2.5 rounded-lg bg-warning-light border border-warning/25 text-[13px] text-warning-deep" role="status">
+				<Icon name="warning" size={16} class="shrink-0" />
+				<span>Plus aucune campagne sélectionnée : le lot sera importé <b class="font-semibold">sans étiquette</b>. Re-cochez la campagne dans « Campagnes » ci-dessous si c'est involontaire.</span>
 			</div>
 		{/if}
 

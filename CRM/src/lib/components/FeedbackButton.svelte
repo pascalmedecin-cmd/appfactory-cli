@@ -81,7 +81,9 @@
 		box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
 		cursor: pointer;
 		transition: background 0.15s ease, transform 0.15s ease;
-		z-index: 90;
+		/* Sous les overlays (SlideOut backdrop 40 / dialogs 50) mais au-dessus de la sidebar (30) :
+		   un FAB qui flotte PAR-DESSUS un panneau ouvert masque son pied (vu : panneau Campagnes). */
+		z-index: 35;
 		border: none;
 	}
 	.feedback-fab:hover {

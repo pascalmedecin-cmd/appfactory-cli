@@ -43,8 +43,8 @@ function event(
 			prospect_lead_campagnes: { data: [{ lead_id: 'L1' }, { lead_id: 'L2' }] },
 			prospect_leads: {
 				data: [
-					{ id: 'L1', raison_sociale: 'Boutique Léman', adresse: 'Rue Basse 7', npa: '1201', localite: 'Genève' },
-					{ id: 'L2', raison_sociale: 'Régie du Lac', adresse: null, npa: null, localite: null }
+					{ id: 'L1', raison_sociale: 'Boutique Léman', adresse: 'Rue Basse 7', npa: '1201', localite: 'Genève', statut: 'a_contacter', score_pertinence: 7, source: 'zefix' },
+					{ id: 'L2', raison_sociale: 'Régie du Lac', adresse: null, npa: null, localite: null, statut: 'vide', score_pertinence: null, source: 'search_ch' }
 				]
 			}
 		});
@@ -71,13 +71,20 @@ describe('GET /api/campagnes/[id]/prospects', () => {
 		expect((await GET(event({ id: 'pas-un-uuid' }))).status).toBe(400);
 	});
 
-	it('200 + liste de prospects (happy path)', async () => {
+	it('200 + liste de prospects (happy path) : adresse + statut/score/source (panneau prospects)', async () => {
 		const res = await GET(event());
 		expect(res.status).toBe(200);
 		const body = (await res.json()) as { prospects: Array<{ id: string; raison_sociale: string }> };
 		expect(body.prospects).toHaveLength(2);
-		expect(body.prospects[0]).toMatchObject({ id: 'L1', raison_sociale: 'Boutique Léman', adresse: 'Rue Basse 7' });
-		expect(body.prospects[1]).toMatchObject({ id: 'L2', adresse: null });
+		expect(body.prospects[0]).toMatchObject({
+			id: 'L1',
+			raison_sociale: 'Boutique Léman',
+			adresse: 'Rue Basse 7',
+			statut: 'a_contacter',
+			score_pertinence: 7,
+			source: 'zefix'
+		});
+		expect(body.prospects[1]).toMatchObject({ id: 'L2', adresse: null, statut: 'vide', score_pertinence: null, source: 'search_ch' });
 	});
 
 	it('200 + liste vide quand la campagne n’a aucun prospect', async () => {

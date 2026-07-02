@@ -22,7 +22,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/database.types';
-import type { ProspectAdresse } from '$lib/etiquettes/prospect-etiquette';
+import type { ProspectCampagne } from '$lib/campagnes';
 import {
 	COULEUR_SLUGS,
 	DEFAULT_COULEUR,
@@ -368,20 +368,20 @@ async function leadIdsForCampagnePaginated(
 export async function fetchProspectsForCampagne(
 	supabase: SupabaseClient<Database>,
 	campagneId: string
-): Promise<{ data: ProspectAdresse[]; error: { message: string } | null }> {
+): Promise<{ data: ProspectCampagne[]; error: { message: string } | null }> {
 	const { ids: leadIds, error: linkError } = await leadIdsForCampagnePaginated(supabase, campagneId);
 	if (linkError) return { data: [], error: linkError };
 	if (leadIds.length === 0) return { data: [], error: null };
 
-	const rows: ProspectAdresse[] = [];
+	const rows: ProspectCampagne[] = [];
 	for (let i = 0; i < leadIds.length; i += IN_CHUNK) {
 		const chunk = leadIds.slice(i, i + IN_CHUNK);
 		const { data, error } = await supabase
 			.from('prospect_leads')
-			.select('id, raison_sociale, adresse, npa, localite')
+			.select('id, raison_sociale, adresse, npa, localite, statut, score_pertinence, source')
 			.in('id', chunk);
 		if (error) return { data: [], error };
-		rows.push(...((data ?? []) as ProspectAdresse[]));
+		rows.push(...((data ?? []) as ProspectCampagne[]));
 	}
 	// Tri stable par raison sociale (l'ordre inter-lots n'est pas garanti par la DB).
 	rows.sort((a, b) => a.raison_sociale.localeCompare(b.raison_sociale, 'fr'));

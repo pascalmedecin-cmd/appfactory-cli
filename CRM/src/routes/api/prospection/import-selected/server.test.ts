@@ -4,9 +4,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 vi.mock('$lib/server/intelligence/signal-lookup', () => ({ fetchIntelligenceSignalLookup: vi.fn(async () => null) }));
 vi.mock('$lib/server/intelligence/link-import-signal', () => ({ linkImportSignals: vi.fn(async () => undefined) }));
 vi.mock('$lib/prospection-flags', () => ({ isProspectionSourceEnabled: vi.fn(() => true) }));
+// Assignation campagne mockée (sa logique DB est testée dans lib/server/campagnes.test.ts) : ici on
+// teste le CONTRAT de l'endpoint (retry, warning remonté, message enrichi, gate premium).
+vi.mock('$lib/server/campagnes', () => ({ assignCampagnesToLeads: vi.fn(async () => ({ error: null })) }));
 
 import { POST } from './+server';
 import { isProspectionSourceEnabled } from '$lib/prospection-flags';
+import { assignCampagnesToLeads } from '$lib/server/campagnes';
 
 type Behavior = {
 	existing?: Array<{ source_id: string }>;
@@ -38,14 +42,15 @@ function createMockSupabase(b: Behavior) {
 	};
 }
 
-function makeEvent(body: unknown, opts: { session?: boolean; behavior?: Behavior } = {}): { event: never; captured: { current: unknown } } {
+function makeEvent(body: unknown, opts: { session?: boolean; premium?: boolean; behavior?: Behavior } = {}): { event: never; captured: { current: unknown } } {
 	const captured = { current: null as unknown };
 	const supabase = createMockSupabase({ ...(opts.behavior ?? {}), capturedInsert: captured });
+	const user = { email: 'a@filmpro.ch', app_metadata: opts.premium ? { ff_crm_listes_v2: true } : {} };
 	const event = {
 		request: { json: async () => body },
 		locals: {
 			supabase,
-			safeGetSession: async () => ({ session: opts.session === false ? null : { user: { email: 'a@filmpro.ch' } }, user: { email: 'a@filmpro.ch' } }),
+			safeGetSession: async () => ({ session: opts.session === false ? null : { user }, user }),
 		},
 	} as never;
 	return { event, captured };
@@ -56,7 +61,12 @@ const CAND = (source_id: string, raison_sociale: string, extra: Record<string, u
 });
 
 describe('POST /api/prospection/import-selected', () => {
-	beforeEach(() => { vi.restoreAllMocks(); vi.mocked(isProspectionSourceEnabled).mockReturnValue(true); });
+	beforeEach(() => {
+		vi.restoreAllMocks();
+		vi.clearAllMocks(); // les mocks de module (vi.fn du factory) gardent leur historique sinon
+		vi.mocked(isProspectionSourceEnabled).mockReturnValue(true);
+		vi.mocked(assignCampagnesToLeads).mockResolvedValue({ error: null });
+	});
 
 	it('401 si pas de session', async () => {
 		const res = await POST(makeEvent({ source: 'zefix', candidates: [CAND('u1', 'Alpha')] }, { session: false }).event);
@@ -187,5 +197,96 @@ describe('POST /api/prospection/import-selected', () => {
 		expect(res.status).toBe(500);
 		const data = await res.json();
 		expect(data.imported).toBe(0);
+	});
+
+	// --- Étiquetage campagne du lot (jamais silencieux - incident « importé mais non attaché » 2026-07-02) ---
+	const CAMP_ID = '7e7ada22-e939-40f7-959f-cf7eb14789d2';
+
+	it('campagneIds + premium : assignation appelée avec les ids insérés, message « et étiquetées »', async () => {
+		const ev = makeEvent(
+			{ source: 'google_places', candidates: [CAND('p1', 'Resto Un'), CAND('p2', 'Resto Deux')], campagneIds: [CAMP_ID] },
+			{ premium: true },
+		);
+		const res = await POST(ev.event);
+		expect(res.status).toBe(200);
+		const data = await res.json();
+		expect(data.imported).toBe(2);
+		expect(data.campagneWarning).toBeNull();
+		expect(data.message).toContain('étiquetées à la campagne');
+		expect(vi.mocked(assignCampagnesToLeads)).toHaveBeenCalledTimes(1);
+		const [, leadIds, campIds] = vi.mocked(assignCampagnesToLeads).mock.calls[0];
+		expect(leadIds).toHaveLength(2);
+		expect(campIds).toEqual([CAMP_ID]);
+	});
+
+	it('assignation en échec transitoire : 1 retry puis succès, message « et étiquetées », pas de warning', async () => {
+		vi.mocked(assignCampagnesToLeads)
+			.mockResolvedValueOnce({ error: { code: 'db', message: 'transitoire' } })
+			.mockResolvedValueOnce({ error: null });
+		const ev = makeEvent(
+			{ source: 'google_places', candidates: [CAND('p1', 'Resto Un')], campagneIds: [CAMP_ID] },
+			{ premium: true },
+		);
+		const res = await POST(ev.event);
+		const data = await res.json();
+		expect(vi.mocked(assignCampagnesToLeads)).toHaveBeenCalledTimes(2);
+		expect(data.campagneWarning).toBeNull();
+		expect(data.message).toContain('étiquetée à la campagne');
+	});
+
+	it('assignation en échec persistant : warning explicite remonté, import quand même compté', async () => {
+		vi.mocked(assignCampagnesToLeads).mockResolvedValue({ error: { code: 'db', message: 'down' } });
+		const ev = makeEvent(
+			{ source: 'google_places', candidates: [CAND('p1', 'Resto Un')], campagneIds: [CAMP_ID] },
+			{ premium: true },
+		);
+		const res = await POST(ev.event);
+		expect(res.status).toBe(200);
+		const data = await res.json();
+		expect(data.imported).toBe(1);
+		expect(vi.mocked(assignCampagnesToLeads)).toHaveBeenCalledTimes(2); // tentative + retry
+		expect(data.campagneWarning).toContain('étiquetage à la campagne a échoué');
+		expect(data.message).not.toContain('étiquetée'); // pas de fausse promesse dans le message
+	});
+
+	it('gate premium : campagneIds fournis SANS flag serveur → assignation jamais appelée MAIS warning explicite (jamais muet)', async () => {
+		const ev = makeEvent({ source: 'google_places', candidates: [CAND('p1', 'Resto Un')], campagneIds: [CAMP_ID] });
+		const res = await POST(ev.event);
+		const data = await res.json();
+		expect(data.imported).toBe(1);
+		expect(vi.mocked(assignCampagnesToLeads)).not.toHaveBeenCalled();
+		expect(data.campagneWarning).toContain('Étiquetage non appliqué');
+	});
+
+	it('ré-import sous une campagne : les leads DÉJÀ PRÉSENTS sont rattachés (recovery de l’incident, jamais un no-op)', async () => {
+		// p1 existe déjà (dédup) : il n'est pas réinséré, mais son id résolu est étiqueté quand même.
+		const ev = makeEvent(
+			{ source: 'google_places', candidates: [CAND('p1', 'Resto Un'), CAND('p2', 'Resto Deux')], campagneIds: [CAMP_ID] },
+			{ premium: true, behavior: { existing: [{ source_id: 'p1', id: 'L-p1' } as never] } },
+		);
+		const res = await POST(ev.event);
+		expect(res.status).toBe(200);
+		const data = await res.json();
+		expect(data.imported).toBe(1); // p2 seul inséré
+		expect(data.skipped).toBe(1); // p1 déjà présent
+		const [, leadIds, campIds] = vi.mocked(assignCampagnesToLeads).mock.calls[0];
+		expect(leadIds).toContain('L-p1'); // l'existant est étiqueté aussi
+		expect((leadIds as string[]).length).toBe(2);
+		expect(campIds).toEqual([CAMP_ID]);
+		expect(data.campagneWarning).toBeNull();
+		expect(data.message).toContain('rattachée à la campagne'); // le regroupement est DIT
+	});
+
+	it('ré-import où TOUT existe déjà : imported 0 mais étiquetage quand même (le bloc ne dépend plus des inserts)', async () => {
+		const ev = makeEvent(
+			{ source: 'google_places', candidates: [CAND('p1', 'Resto Un')], campagneIds: [CAMP_ID] },
+			{ premium: true, behavior: { existing: [{ source_id: 'p1', id: 'L-p1' } as never] } },
+		);
+		const res = await POST(ev.event);
+		const data = await res.json();
+		expect(data.imported).toBe(0);
+		expect(vi.mocked(assignCampagnesToLeads)).toHaveBeenCalledTimes(1);
+		expect(vi.mocked(assignCampagnesToLeads).mock.calls[0][1]).toEqual(['L-p1']);
+		expect(data.message).toContain('rattachée à la campagne');
 	});
 });

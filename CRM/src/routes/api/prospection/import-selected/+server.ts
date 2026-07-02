@@ -74,12 +74,19 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const now = new Date().toISOString();
 	const inserts: Array<Record<string, unknown>> = [];
 	let skipped = 0;
+	// Candidats déjà présents (statut serveur `exists`) : jamais réinsérés, mais si un étiquetage
+	// campagne est demandé ils sont RATTACHÉS à la campagne (c'est la promesse UI « réimporter
+	// sous la même campagne regroupe sans créer de doublon », et le chemin de récupération après
+	// un étiquetage échoué). Les écartés/transférés (`dismissed`) ne sont jamais ré-étiquetés :
+	// l'opérateur les a explicitement sortis du flux.
+	const existingSourceIds: string[] = [];
 
 	for (const c of unique) {
 		// Statut serveur (ignore tout status_hint client). exists/dismissed → jamais inséré.
 		const status = statusFor(c.source_id, dedup);
 		if (!isImportable(status)) {
 			skipped++;
+			if (status === 'exists') existingSourceIds.push(c.source_id);
 			continue;
 		}
 		// Reconstruction serveur de la ligne (id/dates/statut serveur) + RE-score serveur.
@@ -111,19 +118,57 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			return json({ error: 'Erreur lors de l’enregistrement des leads. Réessayez.', imported: 0, skipped, rejected }, { status: 500 });
 		}
 		imported = inserts.length;
+	}
 
-		// Vague 3.2 : étiquetage campagne du lot (best-effort, après l'insert des leads). Un échec
-		// d'assignation n'annule pas l'import : les leads sont la sortie primaire. Les ids sont
-		// re-validés par la FK serveur (un id inexistant -> 23503 traduit, jamais une 500 opaque).
-		// Gate premium : hors ffCrmListesV2, on ignore silencieusement campagneIds (l'import lui-même
-		// reste autorisé ; l'assignation suit le même gate que le reste de la surface Campagnes).
-		if (campagneIds && campagneIds.length > 0 && isCampagnesEnabled(user)) {
-			const { error: campErr } = await assignCampagnesToLeads(
-				locals.supabase,
-				inserts.map((i) => i.id as string),
-				campagneIds,
-			);
-			if (campErr) console.warn(`[import-selected] assignation campagnes échouée: ${campErr.message}`);
+	// Vague 3.2 : étiquetage campagne du LOT ENTIER (nouveaux insérés + déjà présents `exists`).
+	// Un échec d'assignation n'annule pas l'import (les leads sont la sortie primaire) mais n'est
+	// JAMAIS silencieux : chaque chemin de sortie sans étiquetage est tracé et REMONTÉ au client
+	// (`campagneWarning` -> le toast passe en erreur). 1 retry (upsert idempotent, un échec
+	// transitoire PostgREST ne doit pas coûter le tag). Incident de référence : import 16 leads
+	// « non attachés » sans aucune trace UI (2026-07-02). Les ids sont re-validés par la FK
+	// serveur (id inexistant -> 23503 traduit).
+	let campagnesTagged = false;
+	let regrouped = 0; // leads déjà présents rattachés à la campagne (ré-import = regroupement)
+	let campagneWarning: string | null = null;
+	if (campagneIds && campagneIds.length > 0) {
+		if (!isCampagnesEnabled(user)) {
+			// Gate serveur OFF alors que le client a demandé un étiquetage (flag JWT désynchronisé) :
+			// l'import reste autorisé, mais le non-étiquetage est dit - jamais un succès muet.
+			console.warn('[import-selected] campagneIds demandés mais gate ffCrmListesV2 OFF côté serveur');
+			campagneWarning =
+				'Étiquetage non appliqué : la fonctionnalité Campagnes n’est pas activée pour ce compte. Les entreprises sont importées sans campagne.';
+		} else {
+			const leadIdsToTag = inserts.map((i) => i.id as string);
+			if (existingSourceIds.length > 0) {
+				const { data: existingRows, error: exErr } = await locals.supabase
+					.from('prospect_leads')
+					.select('id, source_id')
+					.eq('source', source)
+					.in('source_id', existingSourceIds);
+				if (exErr) {
+					console.warn(`[import-selected] résolution des leads existants échouée: ${exErr.message}`);
+					campagneWarning =
+						'Les entreprises déjà présentes n’ont pas pu être rattachées à la campagne. Réimportez le lot sous la même campagne pour les regrouper.';
+				} else {
+					const rows = (existingRows ?? []) as Array<{ id: string; source_id: string }>;
+					leadIdsToTag.push(...rows.map((r) => r.id));
+					regrouped = rows.length;
+				}
+			}
+			if (leadIdsToTag.length > 0) {
+				let { error: campErr } = await assignCampagnesToLeads(locals.supabase, leadIdsToTag, campagneIds);
+				if (campErr) {
+					({ error: campErr } = await assignCampagnesToLeads(locals.supabase, leadIdsToTag, campagneIds));
+				}
+				if (campErr) {
+					console.warn(`[import-selected] assignation campagnes échouée (après retry): ${campErr.message}`);
+					campagneWarning =
+						'L’étiquetage à la campagne a échoué : les entreprises sont importées mais SANS campagne. Réimportez le lot sous la même campagne (regroupe sans doublon) ou ré-étiquetez depuis la fiche en Prospection.';
+					regrouped = 0;
+				} else {
+					campagnesTagged = true;
+				}
+			}
 		}
 	}
 
@@ -141,9 +186,25 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	}
 
 	const bits: string[] = [];
-	bits.push(imported > 0 ? `${imported} entreprise${imported > 1 ? 's' : ''} importée${imported > 1 ? 's' : ''}` : 'Aucune entreprise importée');
-	if (skipped > 0) bits.push(`${skipped} déjà présente${skipped > 1 ? 's' : ''} ignorée${skipped > 1 ? 's' : ''}`);
+	// L'étiquetage réussi est DIT dans le message de succès : son absence devient immédiatement
+	// visible pour l'opérateur (l'incident « importé mais non attaché » ne peut plus passer inaperçu).
+	const campLabel = campagneIds && campagneIds.length > 1 ? `${campagneIds.length} campagnes` : 'la campagne';
+	const tagSuffix = campagnesTagged && imported > 0 ? ` et étiquetée${imported > 1 ? 's' : ''} à ${campLabel}` : '';
+	bits.push(
+		imported > 0
+			? `${imported} entreprise${imported > 1 ? 's' : ''} importée${imported > 1 ? 's' : ''}${tagSuffix}`
+			: 'Aucune entreprise importée',
+	);
+	if (skipped > 0) {
+		if (campagnesTagged && regrouped > 0) {
+			bits.push(`${regrouped} déjà présente${regrouped > 1 ? 's' : ''} rattachée${regrouped > 1 ? 's' : ''} à ${campLabel}`);
+			const rest = skipped - regrouped;
+			if (rest > 0) bits.push(`${rest} ignorée${rest > 1 ? 's' : ''}`);
+		} else {
+			bits.push(`${skipped} déjà présente${skipped > 1 ? 's' : ''} ignorée${skipped > 1 ? 's' : ''}`);
+		}
+	}
 	if (rejected > 0) bits.push(`${rejected} entrée${rejected > 1 ? 's' : ''} ignorée${rejected > 1 ? 's' : ''} (données incomplètes)`);
 
-	return json({ imported, skipped, rejected, message: bits.join(', ') + '.' });
+	return json({ imported, skipped, rejected, campagneWarning, message: bits.join(', ') + '.' });
 };

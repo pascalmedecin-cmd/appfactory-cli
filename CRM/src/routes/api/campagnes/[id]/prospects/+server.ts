@@ -4,8 +4,9 @@ import { fetchProspectsForCampagne } from '$lib/server/campagnes';
 import { isCampagnesEnabled } from '$lib/server/feature-gate';
 
 /**
- * GET /api/campagnes/[id]/prospects - prospects étiquetés d'une campagne, réduits aux champs
- * d'adresse postale (alimente le panneau « Étiquettes d'adresses » de l'écran Campagnes).
+ * GET /api/campagnes/[id]/prospects - prospects étiquetés d'une campagne : adresse postale +
+ * statut de tri, score et source (alimente le panneau « Prospects de la campagne » de l'écran
+ * Campagnes ; la page Étiquettes n'utilise que le sous-ensemble adresse).
  *
  * Lecture seule. Auth obligatoire + gate `ffCrmListesV2` re-vérifié côté serveur (defense-in-depth :
  * l'UI masque la surface, l'endpoint ne fait jamais confiance à ça). Param id validé uuid. Erreur DB

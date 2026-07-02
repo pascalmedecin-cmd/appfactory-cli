@@ -60,3 +60,38 @@ const CAMPAGNE_STATUT_LABELS: Record<CampagneStatut, string> = {
 export function campagneStatutLabel(statut: string | null | undefined): string {
 	return CAMPAGNE_STATUT_LABELS[isCampagneStatut(statut) ? statut : DEFAULT_CAMPAGNE_STATUT];
 }
+
+/**
+ * Prospect d'une campagne tel qu'exposé par GET /api/campagnes/[id]/prospects.
+ * Sur-ensemble de `ProspectAdresse` (étiquettes) : le panneau « Prospects de la campagne »
+ * affiche en plus le statut de tri, le score et la source. Un consommateur qui n'attend que
+ * l'adresse (page Étiquettes) ignore simplement les champs additionnels.
+ */
+export interface ProspectCampagne {
+	id: string;
+	raison_sociale: string;
+	adresse: string | null;
+	npa: string | null;
+	localite: string | null;
+	statut: string;
+	score_pertinence: number | null;
+	source: string;
+}
+
+/** Normalisation de recherche : minuscules + sans diacritiques (« regie » matche « Régie »). */
+function normSearch(s: string): string {
+	return s
+		.toLowerCase()
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.trim();
+}
+
+/** Filtre local du panneau prospects (nom OU localité, insensible à la casse ET aux accents). Pur, testé. */
+export function filterProspectsCampagne(list: readonly ProspectCampagne[], search: string): ProspectCampagne[] {
+	const q = normSearch(search);
+	if (!q) return [...list];
+	return list.filter(
+		(p) => normSearch(p.raison_sociale).includes(q) || normSearch(p.localite ?? '').includes(q),
+	);
+}

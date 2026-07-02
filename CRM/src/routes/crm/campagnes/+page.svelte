@@ -1,15 +1,18 @@
 <script lang="ts">
 	/**
 	 * Écran dédié « Campagnes » (Vague 3.2, flag ffCrmListesV2). Le centre de gestion :
-	 * créer / renommer / recolorer / archiver / supprimer, compter les prospects (lien vers
-	 * Prospection filtrée). Suppression = confirmation rassurante (retire l'étiquette, ne
-	 * supprime jamais les prospects). Mêmes tokens/primitives que les goldens Vague 2/3.
+	 * créer / renommer / recolorer / archiver / supprimer, consulter les prospects étiquetés
+	 * SANS quitter la page (panneau latéral ; la Prospection filtrée reste accessible depuis le
+	 * pied du panneau, en choix explicite). Suppression = confirmation rassurante (retire
+	 * l'étiquette, ne supprime jamais les prospects). Mêmes tokens/primitives que les goldens
+	 * Vague 2/3.
 	 */
 	import Icon from '$lib/components/Icon.svelte';
 	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import EntrepriseSearchModal from '$lib/components/prospection/EntrepriseSearchModal.svelte';
+	import CampagneProspectsPanel from '$lib/components/campagnes/CampagneProspectsPanel.svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { toasts } from '$lib/stores/toast';
@@ -73,8 +76,19 @@
 		return new Date(iso).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' });
 	}
 
-	function goToProspection(id: string) {
-		goto(`${CRM_BASE}/prospection?campagne=${id}`);
+	// --- Panneau « Prospects de la campagne » : consultation in-page, zéro navigation ---
+	// La ligne fraîche est re-dérivée de `data` (invalidateAll après retrait/import) pour que le
+	// chip statut/archivée du panneau ne devienne jamais périmé.
+	let prospectsPanelOpen = $state(false);
+	let prospectsPanelId = $state<string | null>(null);
+	const prospectsPanelCampagne = $derived(
+		prospectsPanelId ? (data.campagnes.find((c) => c.id === prospectsPanelId) ?? null) : null,
+	);
+
+	function openProspects(c: CampagneWithCount) {
+		menuOpenId = null;
+		prospectsPanelId = c.id;
+		prospectsPanelOpen = true;
 	}
 
 	// --- Étiquettes d'adresses (publipostage) : page dédiée ---
@@ -221,12 +235,15 @@
 		searchOpen = true;
 	}
 
-	// Retour d'import (message serveur) -> toast, puis on consomme le résultat (pas de re-toast).
+	// Retour d'import (message serveur) : succès -> toast ; ÉCHEC (dont étiquetage campagne
+	// échoué) -> bannière PERSISTANTE avec bouton Fermer (même traitement que la Prospection) -
+	// une consigne de récupération de ~200 caractères ne doit pas s'effacer en 6 secondes.
+	let importAlert = $state<string | null>(null);
 	$effect(() => {
 		if (!searchImportResult) return;
 		const { message, type } = searchImportResult;
 		if (type === 'success') toasts.success(message);
-		else toasts.error(message);
+		else importAlert = message;
 		searchImportResult = null;
 	});
 
@@ -286,6 +303,16 @@
 
 	<KpiStrip items={kpiItems} ariaLabel="Indicateurs campagnes" />
 
+	{#if importAlert}
+		<div class="import-alert" role="alert">
+			<Icon name="warning" size={17} />
+			<p>{importAlert}</p>
+			<button type="button" class="ia-close" aria-label="Fermer l'alerte" onclick={() => (importAlert = null)}>
+				<Icon name="close" size={15} />
+			</button>
+		</div>
+	{/if}
+
 	<div class="toolbar">
 		<div class="segtabs" role="tablist" aria-label="Filtrer les campagnes">
 			<button type="button" id="camptab-actives" class="segtab" class:active={activeTab === 'actives'} role="tab" aria-selected={activeTab === 'actives'} aria-controls="campagnes-panel" onclick={() => (activeTab = 'actives')}>
@@ -331,7 +358,7 @@
 				<div class="lc-row">
 					<span class="camp-swatch {swatchClass(c.couleur)}"></span>
 					<div class="lc-id">
-						<div class="lc-name">{c.nom}</div>
+						<button type="button" class="lc-name" onclick={() => openProspects(c)} title={`Voir les prospects de « ${c.nom} »`}>{c.nom}</button>
 						{#if c.description}<div class="lc-desc">{c.description}</div>{/if}
 						<div class="lc-meta">Créée le {dateLong(c.date_creation)}</div>
 					</div>
@@ -346,8 +373,8 @@
 						</div>
 					{/if}
 
-					<button type="button" class="leadcount hide-sm" class:zero={c.lead_count === 0} onclick={() => goToProspection(c.id)} title="Voir ces prospects dans la Prospection">
-						<Icon name="arrow_forward" size={13} />
+					<button type="button" class="leadcount hide-sm" class:zero={c.lead_count === 0} onclick={() => openProspects(c)} title="Voir les prospects de cette campagne (sans quitter la page)">
+						<Icon name="group" size={13} />
 						{c.lead_count} prospect{c.lead_count > 1 ? 's' : ''}
 					</button>
 
@@ -391,7 +418,7 @@
 								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); openRename(c); }}>
 									<Icon name="edit" size={15} /> Renommer
 								</button>
-								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); menuOpenId = null; goToProspection(c.id); }}>
+								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); openProspects(c); }}>
 									<Icon name="visibility" size={15} /> Voir les prospects
 								</button>
 								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); goToEtiquettes(c); }}>
@@ -469,6 +496,11 @@
 	presetCampagneIds={searchPresetIds}
 />
 
+<!-- Panneau « Prospects de la campagne » : consultation in-page (compteur, nom de campagne et
+     menu « Voir les prospects » l'ouvrent). La Prospection filtrée reste accessible depuis son
+     pied de panneau - un choix, plus une obligation. -->
+<CampagneProspectsPanel bind:open={prospectsPanelOpen} campagne={prospectsPanelCampagne} onTrouver={openSearch} />
+
 <style>
 	.ws-bound {
 		/* Marges resserrées / alignées sur la page Étiquettes et les autres surfaces (gouttière 32px). */
@@ -496,6 +528,49 @@
 		color: var(--color-text-muted);
 		max-width: 60ch;
 	}
+	/* Bannière persistante d'échec d'import/étiquetage (jamais un toast auto-fermé). */
+	.import-alert {
+		display: flex;
+		align-items: flex-start;
+		gap: 10px;
+		margin: 0 32px 14px;
+		padding: 12px 14px;
+		background: var(--color-danger-light);
+		border: 1px solid color-mix(in srgb, var(--color-danger) 25%, transparent);
+		border-radius: var(--radius-lg);
+		color: var(--color-danger-deep);
+	}
+	.import-alert :global(svg) {
+		flex-shrink: 0;
+		margin-top: 1px;
+	}
+	.import-alert p {
+		margin: 0;
+		font-size: 13px;
+		font-weight: 500;
+		line-height: 1.45;
+	}
+	.ia-close {
+		margin-left: auto;
+		width: 28px;
+		height: 28px;
+		display: grid;
+		place-items: center;
+		border: none;
+		background: transparent;
+		border-radius: var(--radius-md);
+		color: inherit;
+		cursor: pointer;
+		flex-shrink: 0;
+	}
+	.ia-close:hover {
+		background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+	}
+	.ia-close:focus-visible {
+		outline: 2px solid var(--color-danger);
+		outline-offset: 1px;
+	}
+
 	.toolbar {
 		display: flex;
 		align-items: center;
@@ -610,14 +685,30 @@
 	.lc-id {
 		min-width: 0;
 	}
+	/* Nom = bouton texte : ouvre le panneau prospects (affordance principale de la ligne). */
 	.lc-name {
-		font-size: 14.5px;
-		font-weight: 600;
+		display: block;
+		max-width: 100%;
+		padding: 0;
+		border: none;
+		background: transparent;
+		text-align: left;
+		cursor: pointer;
+		font: 600 14.5px var(--font-sans, inherit);
 		color: var(--color-text);
 		letter-spacing: -0.01em;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		transition: color 160ms ease;
+	}
+	.lc-name:hover {
+		color: var(--color-primary);
+	}
+	.lc-name:focus-visible {
+		outline: 2px solid var(--color-primary);
+		outline-offset: 2px;
+		border-radius: var(--radius-sm);
 	}
 	.lc-desc {
 		font-size: 12.5px;
@@ -910,7 +1001,8 @@
 			padding-right: 16px;
 		}
 		.listcard,
-		.empty {
+		.empty,
+		.import-alert {
 			margin-left: 16px;
 			margin-right: 16px;
 		}
