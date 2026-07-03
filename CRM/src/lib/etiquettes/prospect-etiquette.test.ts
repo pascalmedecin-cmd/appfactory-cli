@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { adresseStatut, toEtiquetteEntry, type ProspectAdresse } from './prospect-etiquette';
+import { adresseStatut, toEtiquetteEntry, capitalizeNomEtiquette, type ProspectAdresse } from './prospect-etiquette';
 
 function lead(p: Partial<ProspectAdresse>): ProspectAdresse {
 	return {
@@ -83,5 +83,57 @@ describe('toEtiquetteEntry', () => {
 	it('destinataire vide ou blanc = pas de clé destinataire', () => {
 		expect(toEtiquetteEntry(lead({}), '').destinataire).toBeUndefined();
 		expect(toEtiquetteEntry(lead({}), '   ').destinataire).toBeUndefined();
+	});
+});
+
+describe('capitalizeNomEtiquette (noms Google Places tout-minuscules, Pascal 2026-07-03)', () => {
+	it('exemple verbatim Pascal : « pharmacieplus du rond-point » -> « Pharmacieplus du Rond-Point »', () => {
+		expect(capitalizeNomEtiquette('pharmacieplus du rond-point')).toBe('Pharmacieplus du Rond-Point');
+	});
+
+	it('majuscule par mot, particules laissées en minuscule au milieu', () => {
+		expect(capitalizeNomEtiquette('café de la place')).toBe('Café de la Place');
+		expect(capitalizeNomEtiquette('au pied de cochon')).toBe('Au Pied de Cochon');
+	});
+
+	it('particule en TÊTE de nom : majuscule quand même', () => {
+		expect(capitalizeNomEtiquette('la finestra')).toBe('La Finestra');
+		expect(capitalizeNomEtiquette('le 23')).toBe('Le 23');
+	});
+
+	it('élision « l’ »/« d’ » hors tête : conservée en minuscule, suite capitalisée', () => {
+		expect(capitalizeNomEtiquette("fouchault l'opticien")).toBe("Fouchault l'Opticien");
+		expect(capitalizeNomEtiquette('caves d’or')).toBe('Caves d’Or');
+	});
+
+	it('ne dégrade JAMAIS un nom déjà casé (aucune minusculisation)', () => {
+		for (const nom of [
+			'ACUITIS Opticien & Audioprothésiste Genève',
+			'Demi Lune Café',
+			'La PHARMACIE Rive Gauche',
+			'VIU - Optiker & Brillengeschäft',
+			'Optic 2000 Choitel Corraterie - Opticien Genève'
+		]) {
+			expect(capitalizeNomEtiquette(nom)).toBe(nom);
+		}
+	});
+
+	it('appliquée au nom par toEtiquetteEntry, ADRESSE 100 % verbatim Google', () => {
+		const e = toEtiquetteEntry(
+			lead({
+				raison_sociale: 'pharmacieplus du rond-point',
+				adresse: 'rond-point de plainpalais 6',
+				npa: '1205',
+				localite: 'genève'
+			})
+		);
+		expect(e.nom).toBe('Pharmacieplus du Rond-Point');
+		expect(e.rue).toBe('rond-point de plainpalais 6'); // rue intacte (décision Pascal)
+		expect(e.cpVille).toBe('1205 genève'); // localité intacte aussi
+	});
+
+	it('le destinataire saisi par Pascal reste verbatim', () => {
+		const e = toEtiquetteEntry(lead({ raison_sociale: 'x' }), 'service technique, m. roth');
+		expect(e.destinataire).toBe('service technique, m. roth');
 	});
 });

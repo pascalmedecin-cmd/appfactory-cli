@@ -48,6 +48,54 @@ function clean(v: string | null | undefined): string {
 	return (v ?? '').trim();
 }
 
+/**
+ * Particules françaises (et usuelles) laissées en minuscule au milieu d'un nom : « pharmacieplus
+ * du rond-point » -> « Pharmacieplus du Rond-Point » (exemple verbatim Pascal 2026-07-03), pas
+ * « Pharmacieplus Du Rond-Point ». En tête de nom, la particule prend sa majuscule (« La Finestra »).
+ */
+const PARTICULES = new Set([
+	'du', 'de', 'la', 'le', 'les', 'des', 'au', 'aux', 'et', 'en',
+	'sur', 'sous', 'chez', 'von', 'van', 'der', 'di', 'da', 'del', 'della'
+]);
+
+function upFirst(s: string): string {
+	return s ? s.charAt(0).toLocaleUpperCase('fr') + s.slice(1) : s;
+}
+
+/**
+ * Capitalisation du NOM d'étiquette (demande Pascal 2026-07-03) : les raisons sociales issues de
+ * Google Places arrivent parfois tout en minuscules (« pharmacieplus du rond-point ») - moche sur
+ * une enveloppe. Règle : initiale en MAJUSCULE pour chaque mot et chaque segment de mot composé
+ * (tiret), particules françaises laissées en minuscule (sauf en tête), élisions « l' »/« d' »
+ * conservées en minuscule hors tête (« Fouchault l'Opticien »). On ne minusculise JAMAIS rien :
+ * un nom déjà correctement casé (« ACUITIS », « Demi Lune Café ») ressort STRICTEMENT identique.
+ * S'applique au nom seulement - l'adresse reste 100 % verbatim Google (décision Pascal).
+ */
+export function capitalizeNomEtiquette(nom: string): string {
+	let wordIndex = 0;
+	return nom
+		.split(/(\s+)/)
+		.map((token) => {
+			if (token === '' || /^\s+$/.test(token)) return token;
+			const isFirst = wordIndex === 0;
+			wordIndex++;
+			const lower = token.toLocaleLowerCase('fr');
+			// Particule isolée déjà en minuscule, hors tête -> intacte (« du », « de »...).
+			if (!isFirst && token === lower && PARTICULES.has(lower)) return token;
+			// Élision minuscule hors tête (« l'Opticien », « d'Or ») : garder « l' »/« d' »,
+			// capitaliser la suite.
+			if (!isFirst && /^[ld]['’]/.test(token)) {
+				return token.slice(0, 2) + upFirst(token.slice(2));
+			}
+			// Mot (composé) : initiale majuscule par segment de tiret, reste du mot intact.
+			return token
+				.split(/(-)/)
+				.map((seg) => (seg === '-' ? seg : upFirst(seg)))
+				.join('');
+		})
+		.join('');
+}
+
 /** Verdict de complétude : rue + localité requises ; NPA optionnel. */
 export function adresseStatut(p: ProspectAdresse): AdresseStatut {
 	const manque: string[] = [];
@@ -62,7 +110,9 @@ export function adresseStatut(p: ProspectAdresse): AdresseStatut {
  * une entrée sans destinataire reste `{ nom, rue, cpVille }` (rétro-compatible, aucune ligne en trop).
  */
 export function toEtiquetteEntry(p: ProspectAdresse, destinataire?: string): EtiquetteEntry {
-	const nom = clean(p.raison_sociale);
+	// Nom capitalisé pour l'enveloppe (source Google Places parfois tout-minuscules) ;
+	// rue et cp/ville VERBATIM (l'adresse doit rester 100 % Google - Pascal 2026-07-03).
+	const nom = capitalizeNomEtiquette(clean(p.raison_sociale));
 	const rue = clean(p.adresse);
 	const cpVille = `${clean(p.npa)} ${clean(p.localite)}`.replace(/\s+/g, ' ').trim();
 	const dest = clean(destinataire);
