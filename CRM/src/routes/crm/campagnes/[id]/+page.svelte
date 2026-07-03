@@ -102,10 +102,13 @@
 		formMode === 'create' ? suggestions.filter((s) => formChecked.has(s.key)).flatMap((s) => s.leadIds) : []
 	);
 
-	// --- Validation externe : progression + lien actif ---
+	// --- Validation externe : progression + lien actif + confirmation reçue ---
 	const progress = $derived(validationProgress(prospects));
 	const lienActif = $derived(data.validationLien);
 	const lienDate = $derived(lienActif ? dateHeure(lienActif.expires_at) : null);
+	// « Validation reçue » : la personne externe a cliqué « Envoyer la validation » (round courant).
+	// Signal informatif - ne bloque ni les étiquettes ni la suite de la campagne.
+	const validationRecueAt = $derived(data.validationConfirmedAt);
 
 	// --- Étapes du fil (indicateur, pas un wizard bloquant) ---
 	type StepState = 'fait' | 'encours' | 'afaire';
@@ -415,7 +418,8 @@ Merci de vérifier les prospects de la campagne « ${campagne.nom} » avant l'en
 
 1. Ouvre ce lien : ${shareUrl}
 2. Pour chaque prospect, clique sur « Ouvrir sur Google Maps » et vérifie que l'adresse et l'activité correspondent.
-3. Choisis « Garder » ou « Retirer ». Tes choix s'enregistrent automatiquement.
+3. Choisis « Garder » ou « Retirer ». Tes choix s'enregistrent automatiquement et restent modifiables.
+4. Quand tu as terminé, clique « Envoyer la validation » en bas de la page.
 
 Le lien est valable jusqu'au ${shareExpiresAt ? dateHeure(shareExpiresAt) : 'sa date d’expiration'}.
 Il peut être ouvert à plusieurs en même temps : sur un même prospect, le dernier choix enregistré remplace le précédent.
@@ -809,6 +813,12 @@ Merci !`
 					</div>
 				{/if}
 
+				{#if validationRecueAt}
+					<p class="vrecue" role="status">
+						<Icon name="check" size={14} strokeWidth={3} /> Validation reçue le {dateHeure(validationRecueAt)}.
+					</p>
+				{/if}
+
 				{#if lienActif}
 					<p class="vlien">
 						<Icon name="link" size={14} /> Lien actif jusqu'au {lienDate}.
@@ -848,7 +858,7 @@ Merci !`
 							<span class="diff-ic"><Icon name="mail" size={17} /></span>
 							<span class="diff-txt">
 								<span class="diff-t">Étiquettes d'adresses</span>
-								<span class="diff-d">Planche Avery pour le publipostage{progress.retirer > 0 ? ' - option « validés seulement »' : ''}</span>
+								<span class="diff-d">Planche Avery pour le publipostage{progress.retirer > 0 ? ' - option « ignorer les Retirer »' : ''}</span>
 							</span>
 							<Icon name="chevron_right" size={16} />
 						</button>
@@ -1248,6 +1258,25 @@ Merci !`
 		background: var(--color-primary);
 		transition: width 260ms ease;
 	}
+	/* Badge « Validation reçue » : confirmation finale de la personne externe (informatif,
+	   ne conditionne AUCUNE action - étiquettes et campagne avancent avec ou sans lui). */
+	.vrecue {
+		margin: 12px 0 0;
+		display: flex;
+		align-items: center;
+		gap: 7px;
+		padding: 8px 12px;
+		border: 1px solid color-mix(in srgb, var(--color-prosp-convert) 40%, var(--color-border));
+		background: var(--color-success-light);
+		border-radius: var(--radius-lg);
+		font-size: 12.5px;
+		font-weight: 600;
+		color: var(--color-prosp-convert);
+	}
+	.vrecue :global(svg) {
+		flex-shrink: 0;
+	}
+
 	.vlien {
 		margin: 0;
 		display: flex;

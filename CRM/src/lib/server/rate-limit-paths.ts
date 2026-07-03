@@ -23,19 +23,26 @@ export function isRateLimitedPath(pathname: string, method: string): boolean {
 
 /**
  * Routes PUBLIQUES de validation externe d'une campagne (2026-07-02) : page /validation/<token>
- * + API de décision. Exemptées du gate auth (hooks.server.ts) - l'autorisation est le token -
- * et soumises à un rate limiting DÉDIÉ plus permissif (60 req/min/IP) : la personne externe
- * enchaîne les décisions plus vite que 10/min, mais un scan de tokens reste borné.
+ * + API de décision + API de confirmation finale (« Envoyer la validation », 2026-07-03).
+ * Exemptées du gate auth (hooks.server.ts) - l'autorisation est le token - et soumises à un
+ * rate limiting DÉDIÉ plus permissif (60 req/min/IP) : la personne externe enchaîne les
+ * décisions plus vite que 10/min, mais un scan de tokens reste borné.
  *
  * Matching par motifs EXACTS (et NON `startsWith`) : l'exemption d'auth est une surface sensible.
  * Un `startsWith('/api/validation/')` ferait hériter automatiquement de l'exemption toute future
- * sous-route (ex. `/api/validation/<token>/admin`). On liste donc précisément les 2 seules routes
- * publiques : la page (1 segment token) et l'API decision. Le token est un base64url sans `/`,
- * donc `[^/]+` capture exactement un segment. Slash final toléré (normalisation SvelteKit).
+ * sous-route (ex. `/api/validation/<token>/admin`). On liste donc précisément les 3 seules routes
+ * publiques : la page (1 segment token), l'API decision et l'API confirmer. Le token est un
+ * base64url sans `/`, donc `[^/]+` capture exactement un segment. Slash final toléré
+ * (normalisation SvelteKit).
  */
 const VALIDATION_PAGE_RE = /^\/validation\/[^/]+\/?$/;
 const VALIDATION_API_DECISION_RE = /^\/api\/validation\/[^/]+\/decision\/?$/;
+const VALIDATION_API_CONFIRMER_RE = /^\/api\/validation\/[^/]+\/confirmer\/?$/;
 
 export function isValidationPublicRoute(pathname: string): boolean {
-	return VALIDATION_PAGE_RE.test(pathname) || VALIDATION_API_DECISION_RE.test(pathname);
+	return (
+		VALIDATION_PAGE_RE.test(pathname) ||
+		VALIDATION_API_DECISION_RE.test(pathname) ||
+		VALIDATION_API_CONFIRMER_RE.test(pathname)
+	);
 }

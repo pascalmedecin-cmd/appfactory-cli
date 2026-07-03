@@ -136,7 +136,7 @@ export async function createValidationLien(
 }
 
 export type TokenResolution =
-	| { status: 'ok'; campagneId: string; expiresAt: string }
+	| { status: 'ok'; lienId: string; campagneId: string; expiresAt: string; confirmedAt: string | null }
 	| { status: 'introuvable' }
 	| { status: 'expire' }
 	| { status: 'db'; message: string };
@@ -156,7 +156,7 @@ export async function resolveValidationToken(
 
 	const { data, error } = await supabase
 		.from('campagne_validation_liens')
-		.select('campagne_id, expires_at, revoked_at')
+		.select('id, campagne_id, expires_at, revoked_at, confirmed_at')
 		.eq('token_hash', hashValidationToken(rawToken))
 		.maybeSingle();
 	if (error) return { status: 'db', message: error.message };
@@ -164,7 +164,53 @@ export async function resolveValidationToken(
 	if (data.revoked_at !== null || new Date(data.expires_at).getTime() <= Date.now()) {
 		return { status: 'expire' };
 	}
-	return { status: 'ok', campagneId: data.campagne_id, expiresAt: data.expires_at };
+	return {
+		status: 'ok',
+		lienId: data.id,
+		campagneId: data.campagne_id,
+		expiresAt: data.expires_at,
+		confirmedAt: data.confirmed_at,
+	};
+}
+
+/**
+ * Confirmation finale de la personne externe (« Envoyer la validation », 2026-07-03) : horodate
+ * le lien résolu. Renvoyer après un changement d'avis met simplement l'horodatage à jour (le
+ * dernier envoi prime). Signal INFORMATIF côté CRM (« Validation reçue ») : ne bloque jamais
+ * l'avancement de la campagne ni l'impression des étiquettes.
+ */
+export async function confirmValidationLien(
+	supabase: SupabaseClient<Database>,
+	lienId: string
+): Promise<{ confirmedAt: string | null; error: DbError }> {
+	const confirmedAt = new Date().toISOString();
+	const { error } = await supabase
+		.from('campagne_validation_liens')
+		.update({ confirmed_at: confirmedAt })
+		.eq('id', lienId);
+	if (error) return { confirmedAt: null, error };
+	return { confirmedAt, error: null };
+}
+
+/**
+ * Confirmation du ROUND COURANT d'une campagne = `confirmed_at` du lien le plus récent (actif,
+ * expiré ou révoqué - la confirmation survit à l'expiration du lien). Générer un nouveau lien
+ * ouvre un nouveau round non confirmé : le badge « Validation reçue » disparaît jusqu'à la
+ * prochaine confirmation.
+ */
+export async function getValidationConfirmation(
+	supabase: SupabaseClient<Database>,
+	campagneId: string
+): Promise<{ confirmedAt: string | null; error: DbError }> {
+	const { data, error } = await supabase
+		.from('campagne_validation_liens')
+		.select('confirmed_at')
+		.eq('campagne_id', campagneId)
+		.order('date_creation', { ascending: false })
+		.limit(1)
+		.maybeSingle();
+	if (error) return { confirmedAt: null, error };
+	return { confirmedAt: data?.confirmed_at ?? null, error: null };
 }
 
 /**

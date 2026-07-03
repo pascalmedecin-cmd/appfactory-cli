@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	// la page (état « service désactivé ») SANS aucune requête DB - le seul levier qui ne dépend ni
 	// d'une migration ni d'une révocation individuelle (le flag JWT ffCrmListesV2 ne s'y applique pas).
 	if (!validationExterneEnabled(env.VALIDATION_EXTERNE_ENABLED)) {
-		return { state: 'disabled' as const, campagneNom: null, expiresAt: null, truncated: false, prospects: [] as ProspectValidation[] };
+		return { state: 'disabled' as const, campagneNom: null, expiresAt: null, confirmedAt: null, truncated: false, prospects: [] as ProspectValidation[] };
 	}
 
 	const supabase = createSupabaseServiceClient();
@@ -41,7 +41,7 @@ export const load: PageServerLoad = async ({ params }) => {
 	}
 	if (resolution.status === 'introuvable') throw error(404, 'Lien invalide');
 	if (resolution.status === 'expire') {
-		return { state: 'expire' as const, campagneNom: null, expiresAt: null, truncated: false, prospects: [] as ProspectValidation[] };
+		return { state: 'expire' as const, campagneNom: null, expiresAt: null, confirmedAt: null, truncated: false, prospects: [] as ProspectValidation[] };
 	}
 
 	const [{ data: campagne, error: campErr }, { data: prospects, error: prospErr, truncated }] = await Promise.all([
@@ -61,6 +61,8 @@ export const load: PageServerLoad = async ({ params }) => {
 		state: 'ok' as const,
 		campagneNom: campagne.nom,
 		expiresAt: resolution.expiresAt,
+		// Confirmation déjà envoyée sur CE lien (la page rouvre en état « validation envoyée »).
+		confirmedAt: resolution.confirmedAt,
 		truncated,
 		prospects: prospects.map(toPublicProspect),
 	};

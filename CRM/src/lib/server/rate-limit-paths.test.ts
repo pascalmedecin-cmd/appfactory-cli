@@ -32,17 +32,20 @@ describe('isRateLimitedPath', () => {
 });
 
 describe('isValidationPublicRoute (exemption d’auth = surface sensible, motifs EXACTS)', () => {
-	it('reconnaît les 2 seules routes publiques : page (1 segment token) + API decision', () => {
+	it('reconnaît les 3 seules routes publiques : page (1 segment token) + API decision + API confirmer', () => {
 		expect(isValidationPublicRoute('/validation/Kx3abc')).toBe(true);
 		expect(isValidationPublicRoute('/validation/Kx3abc/')).toBe(true); // slash final toléré
 		expect(isValidationPublicRoute('/api/validation/Kx3abc/decision')).toBe(true);
 		expect(isValidationPublicRoute('/api/validation/Kx3abc/decision/')).toBe(true);
+		expect(isValidationPublicRoute('/api/validation/Kx3abc/confirmer')).toBe(true);
+		expect(isValidationPublicRoute('/api/validation/Kx3abc/confirmer/')).toBe(true);
 	});
 
 	it('NE reconnaît PAS une sous-route inventée (pas d’héritage d’exemption via startsWith)', () => {
 		// C'est le durcissement clé : /admin ne doit jamais hériter de l'exemption d'auth.
 		expect(isValidationPublicRoute('/api/validation/Kx3abc/admin')).toBe(false);
 		expect(isValidationPublicRoute('/api/validation/Kx3abc/decision/extra')).toBe(false);
+		expect(isValidationPublicRoute('/api/validation/Kx3abc/confirmer/extra')).toBe(false);
 		expect(isValidationPublicRoute('/validation/Kx3abc/edit')).toBe(false);
 		expect(isValidationPublicRoute('/validation')).toBe(false);
 		expect(isValidationPublicRoute('/api/validation/')).toBe(false);

@@ -51,8 +51,10 @@
 	const patches = new SvelteMap<string, ProspectAdresse>();
 	let search = $state('');
 	let includeIncomplete = $state(false);
-	// Validation externe : n'imprimer que les « garder ». Coché par défaut quand l'option apparaît.
-	let validesSeulement = $state(true);
+	// Validation externe : ignorer les prospects marqués « retirer » (revu 03/07 : la validation
+	// n'est JAMAIS bloquante - les non-vérifiés restent imprimables). Coché par défaut quand
+	// l'option apparaît (= dès qu'un « retirer » existe).
+	let exclureRetires = $state(true);
 	let bulkValue = $state('');
 	let generating = $state(false);
 
@@ -87,7 +89,7 @@
 		patches.clear();
 		search = '';
 		includeIncomplete = false;
-		validesSeulement = true;
+		exclureRetires = true;
 		bulkValue = '';
 		// Aperçu + génération + jeton anti-race : réinitialisés aussi, sinon un aperçu ouvert (ou une
 		// réponse de complétion en vol) de l'ancienne campagne « fuiterait » sur la nouvelle.
@@ -112,19 +114,21 @@
 	const incompleteCount = $derived(summary.total - summary.completes);
 	const selectedList = $derived(prospects.filter((p) => selected.has(p.id)));
 	// Validation externe : décision par prospect, lue de `data.prospects` (les patches d'adresse
-	// search.ch ne portent pas la décision). L'option « validés seulement » n'apparaît que si une
-	// validation existe sur la campagne ; active, elle restreint l'IMPRESSION aux « garder ».
+	// search.ch ne portent pas la décision). L'option « ignorer les Retirer » n'apparaît que si
+	// au moins un « retirer » existe ; active, elle EXCLUT uniquement les « retirer » de
+	// l'impression - les « garder » ET les non-vérifiés restent imprimés (revu 03/07 : la
+	// validation n'est jamais bloquante, une vérification partielle ne vide pas la planche).
 	const validationById = $derived(new Map(data.prospects.map((p) => [p.id, p.validation_statut])));
 	const vGarder = $derived(data.prospects.filter((p) => p.validation_statut === 'garder').length);
 	const vRetirer = $derived(data.prospects.filter((p) => p.validation_statut === 'retirer').length);
-	const hasValidation = $derived(vGarder + vRetirer > 0);
+	const hasRetraits = $derived(vRetirer > 0);
 	const vNonVerifies = $derived(data.prospects.length - vGarder - vRetirer);
-	// Liste réellement imprimée : la sélection, restreinte aux « garder » quand l'option est active.
+	// Liste réellement imprimée : la sélection, moins les « retirer » quand l'option est active.
 	// Le filtre agit AVANT le flux d'intercalaires -> un groupe entièrement exclu ne produit AUCUN
 	// intercalaire orphelin (buildGroupedEtiquetteItems ne voit que les prospects imprimés).
 	const printList = $derived(
-		hasValidation && validesSeulement
-			? selectedList.filter((p) => validationById.get(p.id) === 'garder')
+		hasRetraits && exclureRetires
+			? selectedList.filter((p) => validationById.get(p.id) !== 'retirer')
 			: selectedList
 	);
 	// « Tout sélectionner » n'agit QUE sur les lignes complètes visibles (les sélectionnables).
@@ -360,18 +364,19 @@
 		{/if}
 	</div>
 
-	<!-- Option validation externe : n'apparaît que si une décision existe sur la campagne. -->
-	{#if hasValidation}
+	<!-- Option validation externe : n'apparaît que si au moins un « retirer » existe. Jamais
+	     bloquante : les non-vérifiés restent imprimés, seuls les « Retirer » sont écartés. -->
+	{#if hasRetraits}
 		<button
 			type="button"
 			class="et-opt"
-			aria-pressed={validesSeulement}
-			onclick={() => (validesSeulement = !validesSeulement)}
+			aria-pressed={exclureRetires}
+			onclick={() => (exclureRetires = !exclureRetires)}
 		>
-			<span class="et-chk" class:on={validesSeulement} aria-hidden="true"></span>
+			<span class="et-chk" class:on={exclureRetires} aria-hidden="true"></span>
 			<span class="et-txt">
-				<span class="et-t">N’imprimer que les prospects validés « Garder » ({vGarder} sur {data.prospects.length})</span>
-				<span class="et-d">{vRetirer} prospect{vRetirer > 1 ? 's' : ''} marqué{vRetirer > 1 ? 's' : ''} « Retirer » et {vNonVerifies} non vérifié{vNonVerifies > 1 ? 's' : ''} seront exclus de la planche. Décochez pour imprimer toute la campagne.</span>
+				<span class="et-t">Ignorer les {vRetirer} prospect{vRetirer > 1 ? 's' : ''} marqué{vRetirer > 1 ? 's' : ''} « Retirer » par la validation</span>
+				<span class="et-d">Les « Garder » ({vGarder}){vNonVerifies > 0 ? ` et les non vérifiés (${vNonVerifies})` : ''} restent sur la planche. Décochez pour imprimer toute la campagne, « Retirer » compris.</span>
 			</span>
 		</button>
 	{/if}

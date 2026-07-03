@@ -11,6 +11,8 @@ import {
 	revokeValidationLiens,
 	getValidationLienActif,
 	createValidationLien,
+	confirmValidationLien,
+	getValidationConfirmation,
 	VALIDATION_LIEN_TTL_MS,
 } from './validation-campagne';
 
@@ -87,7 +89,13 @@ describe('validationExterneEnabled (kill-switch porte publique, PUR)', () => {
 });
 
 describe('resolveValidationToken', () => {
-	const HASH_ROW = { campagne_id: 'cmp-1', expires_at: new Date(Date.now() + 3600_000).toISOString(), revoked_at: null };
+	const HASH_ROW = {
+		id: 'lien-1',
+		campagne_id: 'cmp-1',
+		expires_at: new Date(Date.now() + 3600_000).toISOString(),
+		revoked_at: null,
+		confirmed_at: null,
+	};
 
 	it('token malformé -> introuvable SANS toucher la DB (short-circuit)', async () => {
 		const m = tableMock({ data: HASH_ROW });
@@ -114,10 +122,17 @@ describe('resolveValidationToken', () => {
 		expect(r.status).toBe('expire');
 	});
 
-	it('lien valide -> ok + campagneId', async () => {
+	it('lien valide -> ok + lienId + campagneId + confirmedAt (null si jamais confirmé)', async () => {
 		const m = tableMock({ data: HASH_ROW });
 		const r = await resolveValidationToken(m.supabase, 'A'.repeat(43));
-		expect(r).toMatchObject({ status: 'ok', campagneId: 'cmp-1' });
+		expect(r).toMatchObject({ status: 'ok', lienId: 'lien-1', campagneId: 'cmp-1', confirmedAt: null });
+	});
+
+	it('lien valide déjà confirmé -> confirmedAt porté (la page rouvre en état « envoyé »)', async () => {
+		const confirmed = new Date().toISOString();
+		const m = tableMock({ data: { ...HASH_ROW, confirmed_at: confirmed } });
+		const r = await resolveValidationToken(m.supabase, 'A'.repeat(43));
+		expect(r).toMatchObject({ status: 'ok', confirmedAt: confirmed });
 	});
 
 	it('erreur DB -> db (jamais présenté comme lien invalide)', async () => {
@@ -156,6 +171,44 @@ describe('applyValidationRetraits', () => {
 		const m = tableMock({ error: { message: 'boom' } });
 		const r = await applyValidationRetraits(m.supabase, 'cmp-1');
 		expect(r).toEqual({ removed: 0, error: { message: 'boom' } });
+	});
+});
+
+describe('confirmValidationLien / getValidationConfirmation', () => {
+	it('confirmation -> horodatage ISO retourné, écriture ciblée par id de lien', async () => {
+		const m = tableMock({});
+		const before = Date.now();
+		const r = await confirmValidationLien(m.supabase, 'lien-1');
+		expect(r.error).toBeNull();
+		expect(r.confirmedAt).not.toBeNull();
+		expect(new Date(r.confirmedAt as string).getTime()).toBeGreaterThanOrEqual(before);
+		expect(m.calls).toContain('eq("id","lien-1")');
+	});
+
+	it('confirmation en erreur DB -> confirmedAt null + error', async () => {
+		const m = tableMock({ error: { message: 'boom' } });
+		const r = await confirmValidationLien(m.supabase, 'lien-1');
+		expect(r.confirmedAt).toBeNull();
+		expect(r.error).toMatchObject({ message: 'boom' });
+	});
+
+	it('getValidationConfirmation -> confirmed_at du lien le plus récent (round courant)', async () => {
+		const confirmed = new Date().toISOString();
+		const m = tableMock({ data: { confirmed_at: confirmed } });
+		const r = await getValidationConfirmation(m.supabase, 'cmp-1');
+		expect(r).toEqual({ confirmedAt: confirmed, error: null });
+		expect(m.calls).toContain('order("date_creation",{"ascending":false})');
+	});
+
+	it('getValidationConfirmation -> null quand aucun lien ou round non confirmé (nouveau lien = nouveau round)', async () => {
+		expect(await getValidationConfirmation(tableMock({ data: null }).supabase, 'cmp-1')).toEqual({ confirmedAt: null, error: null });
+		expect(await getValidationConfirmation(tableMock({ data: { confirmed_at: null } }).supabase, 'cmp-1')).toEqual({ confirmedAt: null, error: null });
+	});
+
+	it('getValidationConfirmation en erreur DB -> null + error (badge simplement absent, jamais 500)', async () => {
+		const r = await getValidationConfirmation(tableMock({ error: { message: 'boom' } }).supabase, 'cmp-1');
+		expect(r.confirmedAt).toBeNull();
+		expect(r.error).toMatchObject({ message: 'boom' });
 	});
 });
 

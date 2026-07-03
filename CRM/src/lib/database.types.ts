@@ -148,6 +148,7 @@ export type Database = {
       campagne_validation_liens: {
         Row: {
           campagne_id: string
+          confirmed_at: string | null
           created_by: string | null
           date_creation: string
           expires_at: string
@@ -157,6 +158,7 @@ export type Database = {
         }
         Insert: {
           campagne_id: string
+          confirmed_at?: string | null
           created_by?: string | null
           date_creation?: string
           expires_at: string
@@ -166,6 +168,7 @@ export type Database = {
         }
         Update: {
           campagne_id?: string
+          confirmed_at?: string | null
           created_by?: string | null
           date_creation?: string
           expires_at?: string

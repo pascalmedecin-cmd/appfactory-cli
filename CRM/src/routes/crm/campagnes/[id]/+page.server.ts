@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { CRM_BASE } from '$lib/config';
 import { getCampagne, fetchProspectsForCampagne } from '$lib/server/campagnes';
 import { listGroupes } from '$lib/server/campagne-groupes';
-import { getValidationLienActif } from '$lib/server/validation-campagne';
+import { getValidationLienActif, getValidationConfirmation } from '$lib/server/validation-campagne';
 
 /**
  * Page dédiée d'UNE campagne : le « poste de pilotage » du processus complet
@@ -32,10 +32,11 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 	}
 	if (!campagne) throw error(404, 'Campagne introuvable');
 
-	const [prospectsRes, groupesRes, lienRes] = await Promise.all([
+	const [prospectsRes, groupesRes, lienRes, confirmationRes] = await Promise.all([
 		fetchProspectsForCampagne(locals.supabase, id.data),
 		listGroupes(locals.supabase, id.data),
 		getValidationLienActif(locals.supabase, id.data),
+		getValidationConfirmation(locals.supabase, id.data),
 	]);
 	if (prospectsRes.error) {
 		console.error('Erreur chargement prospects (page campagne):', prospectsRes.error.message);
@@ -45,10 +46,14 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 		console.error('Erreur chargement groupes (page campagne):', groupesRes.error.message);
 		throw error(500, 'Chargement impossible');
 	}
-	// Le lien de validation est un état SECONDAIRE : un échec de lecture ne doit pas rendre la
-	// page inaccessible (dégradé : « état inconnu », la génération reste possible). Loggé fort.
+	// Le lien de validation et la confirmation sont des états SECONDAIRES : un échec de lecture ne
+	// doit pas rendre la page inaccessible (dégradé : « état inconnu », la génération reste
+	// possible ; badge « reçue » simplement absent). Loggé fort.
 	if (lienRes.error) {
 		console.error('Erreur lecture lien validation (page campagne):', lienRes.error.message);
+	}
+	if (confirmationRes.error) {
+		console.error('Erreur lecture confirmation validation (page campagne):', confirmationRes.error.message);
 	}
 
 	return {
@@ -56,5 +61,7 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 		prospects: prospectsRes.data,
 		groupes: groupesRes.data,
 		validationLien: lienRes.data,
+		// « Validation reçue » du round courant (confirmed_at du lien le plus récent, même expiré).
+		validationConfirmedAt: confirmationRes.confirmedAt,
 	};
 };

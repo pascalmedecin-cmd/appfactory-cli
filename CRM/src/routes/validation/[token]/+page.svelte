@@ -5,11 +5,14 @@
 	 * boutons Garder = sauge / Retirer = ardoise (jamais de rouge en aplat), lignes séparées par
 	 * un filet (pas de carte par ligne).
 	 *
-	 * Parcours : la personne ouvre chaque fiche Google Maps, vérifie l'adresse et l'activité,
-	 * puis « Garder » ou « Retirer ». Un clic sur la décision déjà active l'annule (correction
-	 * facile, aucune action destructrice possible ici : le retrait effectif reste un geste
-	 * fondateur dans le CRM). Filtre « À vérifier / Tous » : par défaut, une carte décidée sort
-	 * de la vue -> flux rapide de haut en bas, reprise possible après pause.
+	 * Parcours (revu 03/07, demande Pascal) : la personne ouvre chaque fiche Google Maps, vérifie
+	 * l'adresse et l'activité, puis « Garder » ou « Retirer ». Les prospects décidés RESTENT
+	 * affichés (vue « Tous » par défaut) : on peut revenir sur chaque décision à tout moment
+	 * (re-clic = annuler, clic sur l'autre bouton = changer d'avis). Le filtre « À vérifier »
+	 * reste disponible en option pour retrouver le reste d'une longue liste. Le parcours se
+	 * termine par un geste explicite « Envoyer la validation » (POST /confirmer) : le CRM affiche
+	 * alors « Validation reçue ». Ce signal est informatif - il ne bloque jamais la campagne ni
+	 * les étiquettes - et reste ré-émettable après un changement d'avis (le dernier envoi prime).
 	 *
 	 * Écritures : POST /api/validation/<token>/decision, optimiste avec rollback ; 410 (lien
 	 * expiré/révoqué OU service désactivé pendant la session) bascule la page en état « lien
@@ -30,8 +33,16 @@
 	let expired = $state(data.state === 'expire');
 	// svelte-ignore state_referenced_locally
 	let prospects = $state<ProspectValidation[]>([...data.prospects]);
-	let filtre = $state<'restants' | 'tous'>('restants');
+	// « Tous » par défaut : une carte décidée ne disparaît JAMAIS de l'écran (retour en arrière
+	// toujours possible d'un coup d'œil). « À vérifier » = filtre opt-in pour les longues listes.
+	let filtre = $state<'restants' | 'tous'>('tous');
 	let notice = $state<string | null>(null);
+	// Confirmation finale : horodatage serveur du dernier « Envoyer la validation » sur ce lien.
+	// svelte-ignore state_referenced_locally
+	let confirmedAt = $state<string | null>(data.confirmedAt ?? null);
+	let confirmBusy = $state(false);
+	// Décision modifiée APRÈS un envoi -> proposer « Renvoyer la validation » (le dernier envoi prime).
+	let editedSinceConfirm = $state(false);
 	const busy = new SvelteSet<string>();
 
 	const disabled = $derived(data.state === 'disabled');
@@ -43,16 +54,16 @@
 	const done = $derived(total > 0 && restants === 0);
 	const shown = $derived(filtre === 'restants' ? prospects.filter((p) => p.decision === null) : prospects);
 
-	const dateValidite = $derived(
-		data.expiresAt
-			? new Date(data.expiresAt).toLocaleString('fr-CH', {
-					day: 'numeric',
-					month: 'long',
-					hour: '2-digit',
-					minute: '2-digit',
-				})
-			: null
-	);
+	function dateHeure(iso: string): string {
+		return new Date(iso).toLocaleString('fr-CH', {
+			day: 'numeric',
+			month: 'long',
+			hour: '2-digit',
+			minute: '2-digit',
+		});
+	}
+	const dateValidite = $derived(data.expiresAt ? dateHeure(data.expiresAt) : null);
+	const dateConfirmation = $derived(confirmedAt ? dateHeure(confirmedAt) : null);
 
 	async function decide(p: ProspectValidation, statut: 'garder' | 'retirer') {
 		if (busy.has(p.id) || expired) return;
@@ -68,7 +79,10 @@
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ leadId: p.id, statut: next }),
 			});
-			if (resp.ok) return;
+			if (resp.ok) {
+				if (confirmedAt) editedSinceConfirm = true;
+				return;
+			}
 			if (resp.status === 410) {
 				expired = true;
 				return;
@@ -85,6 +99,38 @@
 			notice = 'Erreur réseau. Vérifiez votre connexion puis réessayez.';
 		} finally {
 			busy.delete(p.id);
+		}
+	}
+
+	// Confirmation finale : « Envoyer la validation » -> le CRM affiche « Validation reçue ».
+	// Possible même s'il reste des prospects non vérifiés (jamais bloquant), ré-émettable après
+	// un changement d'avis. Le serveur fait foi pour l'horodatage.
+	async function envoyerValidation() {
+		if (confirmBusy || expired || total === 0) return;
+		confirmBusy = true;
+		notice = null;
+		try {
+			const resp = await fetch(`/api/validation/${page.params.token}/confirmer`, { method: 'POST' });
+			if (resp.ok) {
+				const d = await resp.json().catch(() => null);
+				// Pas de fallback d'horodatage local : une réponse OK sans confirmedAt n'est PAS une
+				// confirmation (ex. redirection avalée) - afficher « envoyé » sans écriture serait un
+				// mensonge. Le serveur fait foi, sinon on retombe sur le message d'erreur.
+				if (d?.confirmedAt) {
+					confirmedAt = d.confirmedAt;
+					editedSinceConfirm = false;
+					return;
+				}
+			}
+			if (resp.status === 410) {
+				expired = true;
+				return;
+			}
+			notice = 'Envoi impossible. Réessayez.';
+		} catch {
+			notice = 'Erreur réseau. Vérifiez votre connexion puis réessayez.';
+		} finally {
+			confirmBusy = false;
 		}
 	}
 </script>
@@ -120,8 +166,9 @@
 					<li>Ouvrez la fiche <b>Google Maps</b> du prospect.</li>
 					<li>Vérifiez que l'adresse et l'activité correspondent.</li>
 					<li>Choisissez <b>Garder</b> ou <b>Retirer</b> - c'est enregistré aussitôt.</li>
+					<li>À la fin, cliquez <b>Envoyer la validation</b> en bas de page.</li>
 				</ol>
-				<p>Un clic de trop ? Re-cliquez sur votre choix pour l'annuler.</p>
+				<p>Vous pouvez changer d'avis à tout moment : re-cliquez sur votre choix pour l'annuler, ou cliquez sur l'autre bouton.</p>
 			</div>
 
 			<div class="val-prog" role="status" aria-live="polite">
@@ -133,11 +180,11 @@
 					<span class="val-bar-fill" style="width: {total ? (verifies / total) * 100 : 0}%"></span>
 				</div>
 				<div class="val-filtres" role="group" aria-label="Filtrer les prospects">
-					<button type="button" class="vf" class:on={filtre === 'restants'} onclick={() => (filtre = 'restants')}>
-						À vérifier <span class="vf-n tabular">{restants}</span>
-					</button>
 					<button type="button" class="vf" class:on={filtre === 'tous'} onclick={() => (filtre = 'tous')}>
 						Tous <span class="vf-n tabular">{total}</span>
+					</button>
+					<button type="button" class="vf" class:on={filtre === 'restants'} onclick={() => (filtre = 'restants')}>
+						À vérifier <span class="vf-n tabular">{restants}</span>
 					</button>
 				</div>
 			</div>
@@ -150,8 +197,8 @@
 				<p class="val-notice" role="alert">{notice}</p>
 			{/if}
 
-			{#if done}
-				<p class="val-done">Tout est vérifié - merci. Vos choix sont enregistrés, vous pouvez fermer cette page.</p>
+			{#if done && (!confirmedAt || editedSinceConfirm)}
+				<p class="val-done">Tout est vérifié - terminez en cliquant « Envoyer la validation » en bas de page.</p>
 			{/if}
 
 			{#if shown.length === 0 && !done}
@@ -203,6 +250,31 @@
 						</div>
 					</div>
 				{/each}
+			</div>
+
+			<!-- Confirmation finale : geste explicite, jamais bloquant, ré-émettable après correction. -->
+			<div class="val-send">
+				{#if confirmedAt && !editedSinceConfirm}
+					<p class="val-sent" role="status">
+						<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+						Validation envoyée le {dateConfirmation} - merci, l'équipe FilmPro est prévenue.
+					</p>
+					<p class="val-send-hint">Un changement d'avis ? Modifiez vos choix ci-dessus puis renvoyez la validation : le dernier envoi remplace le précédent.</p>
+				{:else}
+					{#if editedSinceConfirm}
+						<p class="val-send-hint">Vous avez modifié des choix depuis votre dernier envoi : renvoyez la validation pour les transmettre.</p>
+					{:else if restants > 0}
+						<p class="val-send-hint">
+							Il reste {restants} prospect{restants > 1 ? 's' : ''} à vérifier. Vous pouvez déjà envoyer : vos choix restent modifiables tant que le lien est actif.
+						</p>
+					{:else if total > 0}
+						<p class="val-send-hint">Tout est vérifié : envoyez votre validation pour prévenir l'équipe FilmPro.</p>
+					{/if}
+					<button type="button" class="val-confirm" disabled={confirmBusy || total === 0} onclick={envoyerValidation}>
+						<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
+						{confirmBusy ? 'Envoi…' : confirmedAt ? 'Renvoyer la validation' : 'Envoyer la validation'}
+					</button>
+				{/if}
 			</div>
 
 			<p class="val-foot">FilmPro · page de vérification sécurisée</p>
@@ -370,7 +442,8 @@
 	}
 	.vf:focus-visible,
 	.val-btn:focus-visible,
-	.val-maps:focus-visible {
+	.val-maps:focus-visible,
+	.val-confirm:focus-visible {
 		outline: 2px solid var(--color-primary);
 		outline-offset: 2px;
 	}
@@ -516,6 +589,61 @@
 		background: var(--color-info);
 		border-color: var(--color-info);
 		color: #fff;
+	}
+
+	/* ===== Confirmation finale : filet au-dessus, bouton primaire plein, état « envoyé » vert. ===== */
+	.val-send {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		padding-top: 20px;
+		border-top: 1px solid var(--color-hairline);
+	}
+	.val-sent {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin: 0;
+		padding: 12px 14px;
+		border: 1px solid color-mix(in srgb, var(--color-prosp-convert) 40%, var(--color-border));
+		background: var(--color-success-light);
+		border-radius: var(--radius-lg, 10px);
+		font-size: 13.5px;
+		font-weight: 600;
+		color: var(--color-prosp-convert);
+	}
+	.val-sent svg {
+		flex-shrink: 0;
+	}
+	.val-send-hint {
+		margin: 0;
+		font-size: 13px;
+		color: var(--color-text-muted);
+	}
+	.val-confirm {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: 8px;
+		min-height: 48px;
+		border: none;
+		border-radius: var(--radius-lg, 10px);
+		background: var(--color-primary);
+		font-size: 15px;
+		font-weight: 600;
+		color: #fff;
+		cursor: pointer;
+		transition: filter 140ms ease, transform 90ms ease;
+	}
+	.val-confirm:hover:not(:disabled) {
+		filter: brightness(1.06);
+	}
+	.val-confirm:active:not(:disabled) {
+		transform: scale(0.99);
+	}
+	.val-confirm:disabled {
+		opacity: 0.55;
+		cursor: default;
 	}
 
 	.val-foot {
