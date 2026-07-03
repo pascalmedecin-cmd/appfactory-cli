@@ -58,9 +58,9 @@ Container prêt à accueillir d'autres apps métier FilmPro (le repo embarque d�
 
 ## DOCUMENTATION (cross-projets)
 
-- `CRM/docs/SPECS_PROSPECTION.md` : specs complètes module prospection CRM
-- `CRM/docs/SPECS_CRM_MOBILE*.md` : specs CRM mobile V1 + V2
-- `CRM/docs/GOLDEN_STANDARDS*.md` : standards visuels CRM
+- `docs/SPECS_PROSPECTION.md` : specs complètes module prospection CRM (niveau container)
+- `docs/SPECS_CRM_MOBILE*.md` : specs CRM mobile V1 + V2 (V3 terrain : `CRM/docs/SPECS_CRM_MOBILE_V3_TERRAIN.md`)
+- `docs/GOLDEN_STANDARDS*.md` : standards visuels CRM
 - `archive/` : journaux décisions historiques cross-sessions
 
 ---
