@@ -42,3 +42,5 @@ Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude **sans dépendanc
 
 - **[WATCH] Vercel auto-deploy git intermittent** : a **raté** le push `db6182e` (01/07, déploiement manuel requis) mais a **fiché** `28b4848` (Lot 2, build Ready). Comportement variable → vérifier `vercel ls`/`vercel inspect` après un push et déployer manuel (`vercel --prod`) au besoin. Un `vercel rollback` passé peut épingler l'alias.
 
+
+- [x] ~~**Lot 3 - Campagnes : cycle de vie + recherche embarquée + refonte page**~~ - 2026-07-01 (LIVRÉ PROD `6c0dc71`, migration `campagnes.statut` prod OK). Statut En cours/Active, « Trouver des prospects » par campagne, badge prospection. 6 agents 0 C/H/M. → [[project_refonte_signaux_prospects_campagnes_2026-07-01]] + [[audit_secu_2026-07-01_lot3_campagnes]].
