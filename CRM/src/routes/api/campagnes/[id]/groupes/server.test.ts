@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { GET, POST } from './+server';
+import { POST } from './+server';
 
 /**
- * GET/POST /api/campagnes/[id]/groupes. Couvre les chemins SÉCU/validation (401, 403 flag OFF,
- * 400 id/payload) + happy paths (liste, création + assignation initiale, 409 doublon, warning
+ * POST /api/campagnes/[id]/groupes. Couvre les chemins SÉCU/validation (401, 403 flag OFF,
+ * 400 id/payload) + happy paths (création + assignation initiale, 409 doublon, warning
  * d'assignation non silencieux). La logique repo est testée dans server/campagne-groupes.test.ts.
+ * (Le handler GET, consommé uniquement par l'ex-panneau latéral, a été retiré avec lui.)
  *
  * Mock Supabase PAR TABLE (même doctrine que les tests d'endpoints campagnes) : la création
  * touche `campagne_groupes` (insert + check d'appartenance) puis `prospect_lead_campagnes`
@@ -57,26 +58,6 @@ function event(opts: { authed?: boolean; premium?: boolean; id?: string; body?: 
 		}
 	} as unknown as Parameters<typeof POST>[0];
 }
-
-describe('GET /api/campagnes/[id]/groupes', () => {
-	it('401 / 403 / 400 (sécu + validation)', async () => {
-		expect((await GET(event({ authed: false }))).status).toBe(401);
-		expect((await GET(event({ premium: false }))).status).toBe(403);
-		expect((await GET(event({ id: 'nope' }))).status).toBe(400);
-	});
-
-	it('200 + liste des groupes', async () => {
-		const supa = multiTableMock({ campagne_groupes: { data: [{ ...G }] } });
-		const res = await GET(event({ supa }));
-		expect(res.status).toBe(200);
-		expect((await res.json()).groupes).toHaveLength(1);
-	});
-
-	it('500 si erreur DB (jamais « pas de groupes » menteur)', async () => {
-		const supa = multiTableMock({ campagne_groupes: { error: { message: 'boom' } } });
-		expect((await GET(event({ supa }))).status).toBe(500);
-	});
-});
 
 describe('POST /api/campagnes/[id]/groupes', () => {
 	it('401 / 403 / 400 id / 400 payload (nom vide, > 24, leadIds non uuid)', async () => {

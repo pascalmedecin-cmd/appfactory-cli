@@ -1,18 +1,17 @@
 <script lang="ts">
 	/**
 	 * Écran dédié « Campagnes » (Vague 3.2, flag ffCrmListesV2). Le centre de gestion :
-	 * créer / renommer / recolorer / archiver / supprimer, consulter les prospects étiquetés
-	 * SANS quitter la page (panneau latéral ; la Prospection filtrée reste accessible depuis le
-	 * pied du panneau, en choix explicite). Suppression = confirmation rassurante (retire
-	 * l'étiquette, ne supprime jamais les prospects). Mêmes tokens/primitives que les goldens
-	 * Vague 2/3.
+	 * créer / renommer / recolorer / archiver / supprimer. Cliquer une campagne (nom, compteur
+	 * ou menu) ouvre sa page dédiée /crm/campagnes/[id] (Constituer -> Organiser -> Valider ->
+	 * Diffuser) - un seul chemin, spec validation externe §2 (l'ex-panneau latéral est retiré).
+	 * Suppression = confirmation rassurante (retire l'étiquette, ne supprime jamais les
+	 * prospects). Mêmes tokens/primitives que les goldens Vague 2/3.
 	 */
 	import Icon from '$lib/components/Icon.svelte';
 	import KpiStrip, { type KpiItem } from '$lib/components/KpiStrip.svelte';
 	import ModalForm from '$lib/components/ModalForm.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import EntrepriseSearchModal from '$lib/components/prospection/EntrepriseSearchModal.svelte';
-	import CampagneProspectsPanel from '$lib/components/campagnes/CampagneProspectsPanel.svelte';
 	import StatutSegment from '$lib/components/campagnes/StatutSegment.svelte';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -77,19 +76,11 @@
 		return new Date(iso).toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' });
 	}
 
-	// --- Panneau « Prospects de la campagne » : consultation in-page, zéro navigation ---
-	// La ligne fraîche est re-dérivée de `data` (invalidateAll après retrait/import) pour que le
-	// chip statut/archivée du panneau ne devienne jamais périmé.
-	let prospectsPanelOpen = $state(false);
-	let prospectsPanelId = $state<string | null>(null);
-	const prospectsPanelCampagne = $derived(
-		prospectsPanelId ? (data.campagnes.find((c) => c.id === prospectsPanelId) ?? null) : null,
-	);
-
-	function openProspects(c: CampagneWithCount) {
+	// --- Page campagne dédiée : Constituer -> Organiser -> Valider -> Diffuser ---
+	// Un seul chemin (spec validation externe §2) : nom, compteur et menu y mènent tous.
+	function openCampagne(c: CampagneWithCount) {
 		menuOpenId = null;
-		prospectsPanelId = c.id;
-		prospectsPanelOpen = true;
+		goto(`${CRM_BASE}/campagnes/${c.id}`);
 	}
 
 	// --- Étiquettes d'adresses (publipostage) : page dédiée ---
@@ -226,7 +217,7 @@
 		}
 	}
 
-	// --- Statut (cycle de vie En cours / Active) — édition inline + menu ---
+	// --- Statut (cycle de vie En cours / Active) - édition inline + menu ---
 	// Set d'ids en cours de mise à jour : parallélisme par id, garde anti double-clic
 	// (cf. feedback_svelteset_parallel_by_id). L'update est optimiste côté serveur via PATCH.
 	const statutBusy = new SvelteSet<string>();
@@ -392,7 +383,7 @@
 				<div class="lc-row">
 					<span class="camp-swatch {swatchClass(c.couleur)}"></span>
 					<div class="lc-id">
-						<button type="button" class="lc-name" onclick={() => openProspects(c)} title={`Voir les prospects de « ${c.nom} »`}>{c.nom}</button>
+						<button type="button" class="lc-name" onclick={() => openCampagne(c)} title={`Ouvrir la campagne « ${c.nom} »`}>{c.nom}</button>
 						{#if c.description}<div class="lc-desc">{c.description}</div>{/if}
 						<div class="lc-meta">Créée le {dateLong(c.date_creation)}</div>
 					</div>
@@ -412,7 +403,7 @@
 						</div>
 					{/if}
 
-					<button type="button" class="leadcount hide-sm" class:zero={c.lead_count === 0} onclick={() => openProspects(c)} title="Voir les prospects de cette campagne (sans quitter la page)">
+					<button type="button" class="leadcount hide-sm" class:zero={c.lead_count === 0} onclick={() => openCampagne(c)} title="Ouvrir la campagne (prospects, validation, diffusion)">
 						<Icon name="group" size={13} />
 						{c.lead_count} prospect{c.lead_count > 1 ? 's' : ''}
 					</button>
@@ -457,8 +448,8 @@
 								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); openRename(c); }}>
 									<Icon name="edit" size={15} /> Renommer
 								</button>
-								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); openProspects(c); }}>
-									<Icon name="visibility" size={15} /> Voir les prospects
+								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); openCampagne(c); }}>
+									<Icon name="arrow_forward" size={15} /> Ouvrir la campagne
 								</button>
 								<button type="button" class="menu-item" role="menuitem" onclick={(e) => { e.stopPropagation(); goToEtiquettes(c); }}>
 									<Icon name="mail" size={15} /> Étiquettes d'adresses
@@ -537,11 +528,6 @@
 	campagnes={openCampagnes}
 	presetCampagneIds={searchPresetIds}
 />
-
-<!-- Panneau « Prospects de la campagne » : consultation in-page (compteur, nom de campagne et
-     menu « Voir les prospects » l'ouvrent). La Prospection filtrée reste accessible depuis son
-     pied de panneau - un choix, plus une obligation. -->
-<CampagneProspectsPanel bind:open={prospectsPanelOpen} campagne={prospectsPanelCampagne} onTrouver={openSearch} />
 
 <style>
 	.ws-bound {
@@ -727,7 +713,7 @@
 	.lc-id {
 		min-width: 0;
 	}
-	/* Nom = bouton texte : ouvre le panneau prospects (affordance principale de la ligne). */
+	/* Nom = bouton texte : ouvre la page campagne dédiée (affordance principale de la ligne). */
 	.lc-name {
 		display: block;
 		max-width: 100%;

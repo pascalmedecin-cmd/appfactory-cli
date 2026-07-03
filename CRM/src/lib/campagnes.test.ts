@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { filterProspectsCampagne, toPublicProspect, type ProspectCampagne } from './campagnes';
 
 /**
- * Filtre local du panneau « Prospects de la campagne » (pur, sans réseau).
+ * Filtre local des prospects de la page campagne dédiée (pur, sans réseau).
  * Contrat : match sur raison sociale OU localité, insensible à la casse, requête vide -> tout
  * (copie neuve, jamais la référence d'origine), localité null tolérée.
  */
@@ -16,7 +16,7 @@ const LIST: ProspectCampagne[] = [
 	p('L3', 'Vitrerie Alpina', null),
 ];
 
-describe('filterProspectsCampagne (filtre local du panneau prospects)', () => {
+describe('filterProspectsCampagne (filtre local des prospects de la page campagne)', () => {
 	it('requête vide ou blanche -> toute la liste, en copie neuve', () => {
 		const out = filterProspectsCampagne(LIST, '   ');
 		expect(out).toEqual(LIST);

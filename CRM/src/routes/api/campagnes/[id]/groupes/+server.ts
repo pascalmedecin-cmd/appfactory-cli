@@ -1,15 +1,18 @@
 import { json, type RequestEvent } from '@sveltejs/kit';
 import { z } from 'zod';
-import { listGroupes, createGroupe, assignGroupeToLeads } from '$lib/server/campagne-groupes';
+import { createGroupe, assignGroupeToLeads } from '$lib/server/campagne-groupes';
 import { GROUPE_NOM_MAX, MAX_GROUPE_LEAD_IDS } from '$lib/campagne-groupes';
 import { isCampagnesEnabled } from '$lib/server/feature-gate';
 
 /**
  * Groupes de prospects d'UNE campagne (2026-07-02).
- *  - GET  : liste des groupes de la campagne (le panneau dérive les compteurs des prospects).
  *  - POST : crée un groupe { nom, leadIds? } ; `leadIds` (optionnel) = assignation initiale
  *    (pré-remplissage par type Google côté client - le serveur ne reçoit qu'une liste d'ids,
  *    re-scopée à la campagne par l'update : un id étranger est simplement ignoré).
+ *
+ * La LECTURE des groupes est servie côté serveur par le load de la page campagne dédiée
+ * (`listGroupes`) : le handler GET, consommé uniquement par l'ex-panneau latéral, a été retiré
+ * avec lui (2026-07-03, un seul chemin - spec validation externe §2).
  *
  * Auth obligatoire + gate `ffCrmListesV2` re-vérifié serveur (defense-in-depth). Payload borné
  * (nom ≤ 24 chars = borne stress-testée de l'étiquette de transition ; lot ≤ 1000 ids).
@@ -19,22 +22,6 @@ const CreateSchema = z.object({
 	nom: z.string().trim().min(1).max(GROUPE_NOM_MAX),
 	leadIds: z.array(z.string().uuid()).max(MAX_GROUPE_LEAD_IDS).optional(),
 });
-
-export const GET = async ({ params, locals }: RequestEvent) => {
-	const { session, user } = await locals.safeGetSession();
-	if (!session) return json({ error: 'Non authentifié' }, { status: 401 });
-	if (!isCampagnesEnabled(user)) return json({ error: 'Fonctionnalité non activée' }, { status: 403 });
-
-	const id = idSchema.safeParse(params.id);
-	if (!id.success) return json({ error: 'Identifiant invalide' }, { status: 400 });
-
-	const { data, error } = await listGroupes(locals.supabase, id.data);
-	if (error) {
-		console.error('Erreur chargement groupes campagne:', error.message);
-		return json({ error: 'Chargement impossible' }, { status: 500 });
-	}
-	return json({ groupes: data });
-};
 
 export const POST = async ({ params, request, locals }: RequestEvent) => {
 	const { session, user } = await locals.safeGetSession();

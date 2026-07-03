@@ -160,7 +160,7 @@ function normSearch(s: string): string {
 		.trim();
 }
 
-/** Filtre local du panneau prospects (nom OU localité, insensible à la casse ET aux accents). Pur, testé. */
+/** Filtre local des prospects de la page campagne (nom OU localité, insensible à la casse ET aux accents). Pur, testé. */
 export function filterProspectsCampagne(list: readonly ProspectCampagne[], search: string): ProspectCampagne[] {
 	const q = normSearch(search);
 	if (!q) return [...list];

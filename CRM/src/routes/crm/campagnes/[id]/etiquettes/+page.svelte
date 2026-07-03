@@ -38,7 +38,8 @@
 
 	let { data }: { data: PageData } = $props();
 
-	const campagnesUrl = `${CRM_BASE}/campagnes`;
+	// Retour vers la page campagne dédiée (un seul chemin) - réactif si l'id change sans remount.
+	const campagneUrl = $derived(`${CRM_BASE}/campagnes/${data.campagne.id}`);
 	const dialogTitleId = $props.id();
 
 	// --- État local (aucune persistance) ---
@@ -303,7 +304,7 @@
 	<!-- Zone 1 : identité de page -->
 	<div class="head">
 		<div class="head-id">
-			<a class="back" href={campagnesUrl}>
+			<a class="back" href={campagneUrl}>
 				<Icon name="arrow_back" size={15} /> Retour à la campagne
 			</a>
 			<h1>Impression d'étiquettes</h1>

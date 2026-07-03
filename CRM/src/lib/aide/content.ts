@@ -376,7 +376,7 @@ const niveau2: AideLevel = {
 					items: [
 						'Créer une campagne : nom, couleur (huit teintes de la palette FilmPro), description optionnelle.',
 						'Étiqueter des prospects : depuis la fiche d\'un lead, ou en lot à l\'import d\'une recherche, via le sélecteur de campagnes (cocher / décocher, enregistré aussitôt).',
-						'Voir les prospects d\'une campagne : un clic ouvre la prospection filtrée sur cette campagne.',
+						'Ouvrir une campagne : un clic sur son nom (ou son compteur de prospects) ouvre sa page dédiée, qui regroupe tout le travail de campagne : prospects et groupes, validation externe, étiquettes, PDF et envoi au pipeline.',
 						'Renommer, archiver (réversible) ou supprimer une campagne depuis le menu de la ligne.'
 					]
 				},
