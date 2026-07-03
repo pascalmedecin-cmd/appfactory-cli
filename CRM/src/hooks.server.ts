@@ -172,7 +172,10 @@ export const baseHandle: Handle = async ({ event, resolve }) => {
 		// (inline <script> + styles scoped). Non fixable sans nonce/hash dynamique (refactor
 		// majeur du framework). Documenté audit 360 V3b L-02 : risque résiduel XSS limité
 		// (mono-tenant ≤ 10 admins @filmpro.ch, pas d'UGC rendu en HTML brut).
-		"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'"
+		// frame-src 'self' blob: (2026-07-03) : aperçu PDF étiquettes = blob créé par NOTRE JS
+		// (URL.createObjectURL) rendu en <iframe> (lecteur PDF natif). Sans frame-src, le repli
+		// default-src 'self' refuse blob:. Aucune origine distante ajoutée.
+		"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-src 'self' blob:; frame-ancestors 'none'"
 	);
 	// HSTS (audit 360 V3b L-01) : 2 ans, sous-domaines inclus, éligible preload list.
 	// Vercel sert exclusivement en HTTPS, donc aucun risque de lock-out HTTP.

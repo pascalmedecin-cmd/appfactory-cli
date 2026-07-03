@@ -10,12 +10,11 @@ import {
 	layoutEtiquettes,
 	layoutEtiquettesItems,
 	transitionLayout,
-	labelLines,
+	labelLayout,
 	buildEtiquettesPagesSvg,
 	buildEtiquettesItemsPagesSvg,
 	estWidth,
 	ellipsize,
-	wrapToWidth,
 	etiquettesFileName,
 	type EtiquetteItem
 } from './pdf-etiquettes';
@@ -125,17 +124,16 @@ describe('layoutEtiquettes', () => {
 		expect(lines.slice(1).every((l) => l.bold === false)).toBe(true);
 	});
 
-	it('étiquette PLEINE (nom 2 lignes + destinataire + rue + cp/ville) reste DANS la cellule', () => {
+	it('étiquette PLEINE (nom multi-lignes + destinataire + rue + cp/ville) reste DANS la cellule', () => {
 		const pleine = entry({
-			nom: 'Régie Immobilière du Grand Genève et de la Côte Lémanique Réunies SA', // force 2 lignes
+			nom: 'Régie Immobilière du Grand Genève et de la Côte Lémanique Réunies SA', // force le wrap
 			destinataire: 'Service technique, Mme Bianchi',
 			rue: 'Boulevard Georges-Favon 14',
 			cpVille: '1204 Genève'
 		});
 		const { pages } = layoutEtiquettes([pleine]);
 		const lab = pages[0][0];
-		// Au plus 5 lignes (2 nom + 1 dest + 1 rue + 1 cp/ville) et jamais de débordement vertical.
-		expect(lab.lines.length).toBeLessThanOrEqual(5);
+		// Jamais de débordement (le fitting réduit la police si le bloc est trop haut).
 		for (const ln of lab.lines) {
 			expect(ln.baseline).toBeGreaterThan(lab.cellY);
 			expect(ln.baseline).toBeLessThan(lab.cellY + GEOMETRY.LABEL_H);
@@ -144,28 +142,36 @@ describe('layoutEtiquettes', () => {
 	});
 });
 
-describe('labelLines', () => {
+describe('labelLayout (règle « jamais tronqué », Pascal 2026-07-03)', () => {
+	/** Mots de tous les champs de l'entrée, dans l'ordre (référence d'intégrité du texte). */
+	function wordsOf(e: EtiquetteEntry): string[] {
+		return [e.nom, e.destinataire ?? '', e.rue, e.cpVille]
+			.flatMap((s) => s.split(/\s+/))
+			.filter(Boolean);
+	}
+	/** Invariants durs : texte INTÉGRAL (aucune ellipse), lignes ≤ USABLE_W, bloc ≤ hauteur utile. */
+	function assertNoTruncation(e: EtiquetteEntry) {
+		const { lines, lineH } = labelLayout(e);
+		expect(lines.flatMap((l) => l.text.split(/\s+/)).filter(Boolean)).toEqual(wordsOf(e));
+		for (const l of lines) {
+			expect(l.text).not.toContain('…');
+			expect(measureOutfitBold(l.text, l.size)).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
+		}
+		expect(lines.length * lineH).toBeLessThanOrEqual(
+			GEOMETRY.LABEL_H - 2 * GEOMETRY.PAD_Y + 0.01
+		);
+	}
+
 	it('omet les lignes vides (rue/ville absentes)', () => {
-		expect(labelLines({ nom: 'Boutique X', rue: '', cpVille: '' }).map((l) => l.text)).toEqual(['Boutique X']);
-		expect(labelLines({ nom: 'Boutique X', rue: '', cpVille: '1003 Lausanne' }).map((l) => l.text)).toEqual([
+		expect(labelLayout({ nom: 'Boutique X', rue: '', cpVille: '' }).lines.map((l) => l.text)).toEqual(['Boutique X']);
+		expect(labelLayout({ nom: 'Boutique X', rue: '', cpVille: '1003 Lausanne' }).lines.map((l) => l.text)).toEqual([
 			'Boutique X',
 			'1003 Lausanne'
 		]);
 	});
 
-	it('un nom long passe sur 2 lignes max', () => {
-		const lines = labelLines({
-			nom: 'Régie Immobilière du Grand Genève et de la Côte Lémanique Réunies SA',
-			rue: 'Rue Test 1',
-			cpVille: '1200 Genève'
-		});
-		const nomLines = lines.filter((l) => l.bold);
-		expect(nomLines.length).toBeLessThanOrEqual(2);
-		expect(nomLines.length).toBeGreaterThanOrEqual(1);
-	});
-
 	it('insère le destinataire SOUS le nom, avant l’adresse (non gras)', () => {
-		const lines = labelLines({
+		const { lines } = labelLayout({
 			nom: 'Naef Immobilier SA',
 			destinataire: 'Service technique, M. Roth',
 			rue: 'Rue du Rhône 12',
@@ -182,28 +188,70 @@ describe('labelLines', () => {
 	});
 
 	it('destinataire absent ou vide -> aucune ligne destinataire', () => {
-		expect(labelLines({ nom: 'X', rue: 'Rue 1', cpVille: '1200 Genève' }).map((l) => l.text)).toEqual([
+		expect(labelLayout({ nom: 'X', rue: 'Rue 1', cpVille: '1200 Genève' }).lines.map((l) => l.text)).toEqual([
 			'X',
 			'Rue 1',
 			'1200 Genève'
 		]);
-		expect(labelLines({ nom: 'X', destinataire: '   ', rue: '', cpVille: '' }).map((l) => l.text)).toEqual(['X']);
+		expect(labelLayout({ nom: 'X', destinataire: '   ', rue: '', cpVille: '' }).lines.map((l) => l.text)).toEqual(['X']);
 	});
 
-	it('destinataire tenu sur UNE ligne (ellipse si trop long)', () => {
-		const lines = labelLines({
+	it('régression PDF 03/07 : les noms tronqués du mailing réel sont rendus INTÉGRALEMENT', () => {
+		// Cas verbatim du PDF « Mailing Commerces - Vernis solaire » livré avec « ... ».
+		assertNoTruncation(entry({ nom: 'ACUITIS Opticien & Audioprothésiste Genève Centre' }));
+		assertNoTruncation(entry({ nom: 'Fouchault l’Opticien : Montures originales et créateurs' }));
+		assertNoTruncation(entry({ nom: 'Optic 2000 Choitel Corraterie - Opticien Genève' }));
+	});
+
+	it('régression PDF 03/07 : la rue longue « Avenue de la Gare des Eaux-Vives 10 » est rendue INTÉGRALEMENT', () => {
+		assertNoTruncation(entry({ nom: 'HOOD Restaurant', rue: 'Avenue de la Gare des Eaux-Vives 10' }));
+	});
+
+	it('destinataire long : wrappé sur plusieurs lignes, jamais d’ellipse', () => {
+		assertNoTruncation({
 			nom: 'X',
 			destinataire: 'Service technique et gérance immobilière, à l’attention de Monsieur Jean-Baptiste de la Tour du Pin',
 			rue: 'Rue 1',
 			cpVille: '1200 Genève'
 		});
-		const dest = lines[1];
-		expect(dest.text.endsWith('…')).toBe(true);
-		expect(estWidth(dest.text, dest.size)).toBeLessThanOrEqual(GEOMETRY.USABLE_W + 0.01);
+	});
+
+	it('bloc trop haut aux tailles nominales -> police réduite (jamais tronqué)', () => {
+		const dense: EtiquetteEntry = {
+			nom: 'Régie Immobilière du Grand Genève et de la Côte Lémanique Réunies, succursale de Carouge SA',
+			destinataire: 'Service technique et gérance, à l’attention de Madame la Directrice générale adjointe',
+			rue: 'Avenue de la Praille et des Acacias 123bis, Bâtiment C, 4e étage, porte 12',
+			cpVille: '1227 Carouge (Genève)'
+		};
+		assertNoTruncation(dense);
+		const { lines } = labelLayout(dense);
+		// La tenue exige une réduction : au moins une ligne sous la taille nominale minimale (9,5).
+		expect(Math.min(...lines.map((l) => l.size))).toBeLessThan(9.5);
+	});
+
+	it('fuzz déterministe : invariants tenus sur 200 entrées pseudo-aléatoires (mots dégénérés inclus)', () => {
+		// LCG déterministe (pas de Math.random : reproductibilité des runs).
+		let seed = 42;
+		const rnd = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648;
+		const alphabet = 'aàbcdeéèêfghiîjklmnoôpqrstuùûvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ&-\'0123456789';
+		const word = () => {
+			const len = 1 + Math.floor(rnd() * (rnd() < 0.05 ? 60 : 14)); // 5 % de mots dégénérés
+			return Array.from({ length: len }, () => alphabet[Math.floor(rnd() * alphabet.length)]).join('');
+		};
+		const phrase = (maxWords: number) =>
+			Array.from({ length: 1 + Math.floor(rnd() * maxWords) }, word).join(' ');
+		for (let i = 0; i < 200; i++) {
+			assertNoTruncation({
+				nom: phrase(9),
+				...(rnd() < 0.5 ? { destinataire: phrase(10) } : {}),
+				rue: rnd() < 0.9 ? phrase(8) : '',
+				cpVille: rnd() < 0.9 ? phrase(3) : ''
+			});
+		}
 	});
 });
 
-describe('helpers texte', () => {
+describe('helpers texte (ellipse : réservée au PDF liste des prospects)', () => {
 	it('estWidth croît avec la longueur et la taille', () => {
 		expect(estWidth('ab', 10)).toBeLessThan(estWidth('abcd', 10));
 		expect(estWidth('abcd', 9)).toBeLessThan(estWidth('abcd', 12));
@@ -214,12 +262,6 @@ describe('helpers texte', () => {
 		const e = ellipsize('Une chaîne vraiment beaucoup trop longue pour cette étiquette', 10, 60);
 		expect(e.endsWith('…')).toBe(true);
 		expect(estWidth(e, 10)).toBeLessThanOrEqual(60);
-	});
-
-	it('wrapToWidth borne le nombre de lignes et conserve la largeur', () => {
-		const lines = wrapToWidth('mot1 mot2 mot3 mot4 mot5 mot6 mot7 mot8', 10, 50, 2);
-		expect(lines.length).toBeLessThanOrEqual(2);
-		for (const l of lines) expect(estWidth(l, 10)).toBeLessThanOrEqual(50);
 	});
 });
 
@@ -248,9 +290,8 @@ describe('buildEtiquettesPagesSvg', () => {
 		expect(svgs[0]).not.toContain('—');
 	});
 
-	it('aucune option guide par défaut, mais traçable en QA', () => {
+	it('aucun repère de cellule dans le SVG (l’aperçu = le PDF réel, plus de mode guides)', () => {
 		expect(buildEtiquettesPagesSvg([entry()])[0]).not.toContain('stroke="#E5E7EB"');
-		expect(buildEtiquettesPagesSvg([entry()], { guides: true })[0]).toContain('stroke="#E5E7EB"');
 	});
 
 	it('liste vide -> aucune page', () => {

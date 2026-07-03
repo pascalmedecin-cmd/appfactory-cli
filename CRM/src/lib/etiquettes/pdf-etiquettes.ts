@@ -16,8 +16,9 @@
  *  - jsPDF + svg2pdf + polices en DYNAMIC IMPORT (hors bundle initial), exercés en e2e.
  *
  * Contrairement au plan de découpe, la grille est FIXE (24 cellules/page) : pas de moteur de flux,
- * mais chaque étiquette garantit que son contenu reste DANS sa cellule (lignes tronquées à la
- * largeur utile, bloc centré qui tient dans la hauteur) -> invariant testable `layoutEtiquettes`.
+ * mais chaque étiquette garantit que son contenu reste DANS sa cellule SANS JAMAIS tronquer
+ * (règle dure Pascal 2026-07-03 : wrap aux avances réelles + rétrécissement homogène du bloc
+ * si besoin, cf. labelLayout) -> invariant testable `layoutEtiquettes`.
  */
 import type { EtiquetteEntry } from './prospect-etiquette';
 import { campagnePdfFileName } from '$lib/pdf/pdf-filename';
@@ -38,14 +39,23 @@ const PAD_X = 4 * MM; // marge interne gauche/droite d'une étiquette (texte cen
 const PAD_Y = 2.5 * MM; // réserve haute/basse interne (le bloc centré ne touche jamais le bord)
 
 const USABLE_W = LABEL_W - 2 * PAD_X; // largeur de texte utile dans une étiquette
+const USABLE_H = LABEL_H - 2 * PAD_Y; // hauteur de texte utile (le bloc ne touche jamais le bord)
 
 // --- Typographie (centrée, NOM gras) -----------------------------------------------------------
 const NOM_SIZE = 10.5;
 const DEST_SIZE = 9.5; // destinataire (« à l'attention de »), même corps que l'adresse, non gras
 const ADDR_SIZE = 9.5;
 const LINE_H = 13; // interligne uniforme (bloc centré)
-const NOM_MAX_LINES = 2; // un nom long passe sur 2 lignes max, puis ellipse
 const TEXT_COLOR = '#111111'; // quasi-noir, lisibilité d'impression maximale
+/**
+ * Paliers de rétrécissement homogène du bloc étiquette (règle « jamais tronqué », Pascal
+ * 2026-07-03) : on essaie la taille nominale, puis on réduit TOUT le bloc (tailles + interligne)
+ * par paliers de 5 % jusqu'à ce que chaque ligne tienne en largeur ET que le bloc tienne en
+ * hauteur. Le wrap est RECALCULÉ à chaque palier (une police plus petite wrappe moins).
+ * 0,6 = plancher lisible à l'impression (6,3 pt sur le nom) ; au-delà, rétrécissement final
+ * exact (données dégénérées seulement, cf. labelLayout).
+ */
+const FIT_SCALES = [1, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6] as const;
 
 /**
  * Étiquette de TRANSITION (intercalaire de groupe, 2026-07-02) : le nom de la catégorie seul,
@@ -77,15 +87,15 @@ function esc(s: string): string {
 		.replace(/"/g, '&quot;');
 }
 /**
- * Largeur estimée (conservatrice) d'une chaîne en Outfit à `size` pt. Facteur 0,62 em : couvre le
- * cas tout-capitales (avances Outfit majuscules ≈ 0,55-0,62 em) avec la marge de PAD_X de chaque
- * côté en plus -> aucun débordement dans la cellule voisine (gouttière 0). Le facteur sert au
- * wrap/ellipse uniquement (pas au rendu, qui utilise les vraies avances de la police).
+ * Largeur estimée (conservatrice) d'une chaîne en Outfit à `size` pt. Facteur 0,62 em.
+ * N'EST PLUS utilisée pour les étiquettes (fitting aux avances réelles depuis 2026-07-03) ;
+ * conservée pour le PDF « liste des prospects » (colonnes de tableau, où l'ellipse est
+ * légitime - cf. pdf-liste-prospects.ts).
  */
 export function estWidth(s: string, size: number): number {
 	return s.length * size * 0.62;
 }
-/** Tronque `s` (ellipse) pour tenir dans `maxW` pt à `size` pt. */
+/** Tronque `s` (ellipse) pour tenir dans `maxW` pt à `size` pt. Usage : pdf-liste-prospects. */
 export function ellipsize(s: string, size: number, maxW: number): string {
 	if (estWidth(s, size) <= maxW) return s;
 	let cut = s;
@@ -94,14 +104,20 @@ export function ellipsize(s: string, size: number, maxW: number): string {
 	}
 	return cut + '…';
 }
-/** Découpe `s` en lignes tenant dans `maxW` (wrap par mots), bornées à `maxLines` (dernière ellipsée). */
-export function wrapToWidth(s: string, size: number, maxW: number, maxLines: number): string[] {
+/**
+ * Découpe `s` en lignes tenant dans `maxW` (wrap par MOTS), aux avances RÉELLES Outfit Bold.
+ * Jamais d'ellipse : un mot unique plus large que `maxW` reste entier (le rétrécissement
+ * final de labelLayout garantit alors la tenue en largeur). Les avances Bold servent aussi
+ * pour le texte normal : légèrement plus larges, donc estimation conservatrice (un wrap un
+ * rien plus tôt, jamais de débordement).
+ */
+function wrapReal(s: string, size: number, maxW: number): string[] {
 	const words = s.split(/\s+/).filter(Boolean);
 	const lines: string[] = [];
 	let cur = '';
 	for (const w of words) {
 		const cand = cur ? `${cur} ${w}` : w;
-		if (estWidth(cand, size) <= maxW || !cur) {
+		if (measureOutfitBold(cand, size) <= maxW || !cur) {
 			cur = cand;
 		} else {
 			lines.push(cur);
@@ -109,12 +125,7 @@ export function wrapToWidth(s: string, size: number, maxW: number, maxLines: num
 		}
 	}
 	if (cur) lines.push(cur);
-	if (lines.length > maxLines) {
-		lines.length = maxLines;
-		lines[maxLines - 1] = `${lines[maxLines - 1]} …`;
-	}
-	// Garantie dure : chaque ligne tient dans la largeur utile (mot unique trop long inclus).
-	return lines.map((l) => ellipsize(l, size, maxW));
+	return lines;
 }
 
 // --- Layout PUR (testable) ---------------------------------------------------------------------
@@ -123,7 +134,7 @@ export interface LabelLine {
 	size: number;
 	bold: boolean;
 	baseline: number; // y de la baseline du texte (centré dans la cellule)
-	estWidth: number; // largeur estimée (assertion : ≤ USABLE_W)
+	estWidth: number; // largeur aux avances réelles Outfit Bold (assertion : ≤ USABLE_W)
 }
 export interface PlacedLabel {
 	index: number; // index global de l'item (page * 24 + cellule)
@@ -221,29 +232,56 @@ function placeTransition(nom: string, index: number, col: number, row: number): 
 	};
 }
 
+/** Ligne composée d'une étiquette, avant placement (taille déjà fittée). */
+export interface FittedLine {
+	text: string;
+	size: number;
+	bold: boolean;
+}
+
 /**
- * Lignes d'une étiquette, lignes vides omises, dans l'ordre postal :
- *   NOM gras (≤ 2 lignes) -> destinataire « à l'attention de » (≤ 1 ligne) -> rue -> cp/ville.
- *
- * Le destinataire est borné à UNE ligne (ellipse si trop long) : c'est ce qui garantit qu'une
- * étiquette pleine tient dans la cellule Avery (nom 2 + destinataire 1 + rue 1 + cp/ville 1 = 5
- * lignes max ≤ hauteur utile). Voir le test « préservation de la cellule ».
+ * Composition d'une étiquette, règle DURE « jamais tronqué » (Pascal 2026-07-03, remplace
+ * l'ancien couple 2-lignes-max + ellipse) : TOUT le texte est rendu, dans l'ordre postal
+ * (NOM gras -> destinataire -> rue -> cp/ville), wrap par mots aux avances réelles Outfit.
+ * Si le bloc déborde de la cellule Avery (largeur OU hauteur), on rétrécit TOUT le bloc
+ * par paliers de 5 % (tailles + interligne, wrap recalculé) jusqu'à tenue ; en dernier
+ * recours (données dégénérées, ex. mot unique interminable) rétrécissement homogène exact.
+ * Invariants garantis quel que soit l'input : texte intégral, chaque ligne ≤ USABLE_W,
+ * bloc ≤ USABLE_H. Même philosophie que transitionLayout (éprouvée sur les intercalaires).
  */
-export function labelLines(entry: EtiquetteEntry): { text: string; size: number; bold: boolean }[] {
-	const out: { text: string; size: number; bold: boolean }[] = [];
+export function labelLayout(entry: EtiquetteEntry): { lines: FittedLine[]; lineH: number } {
+	const fields: { text: string; size: number; bold: boolean }[] = [];
 	const nom = entry.nom.trim();
-	if (nom) {
-		for (const ln of wrapToWidth(nom, NOM_SIZE, USABLE_W, NOM_MAX_LINES)) {
-			out.push({ text: ln, size: NOM_SIZE, bold: true });
-		}
-	}
+	if (nom) fields.push({ text: nom, size: NOM_SIZE, bold: true });
 	const dest = (entry.destinataire ?? '').trim();
-	if (dest) out.push({ text: ellipsize(dest, DEST_SIZE, USABLE_W), size: DEST_SIZE, bold: false });
+	if (dest) fields.push({ text: dest, size: DEST_SIZE, bold: false });
 	const rue = entry.rue.trim();
-	if (rue) out.push({ text: ellipsize(rue, ADDR_SIZE, USABLE_W), size: ADDR_SIZE, bold: false });
+	if (rue) fields.push({ text: rue, size: ADDR_SIZE, bold: false });
 	const cpVille = entry.cpVille.trim();
-	if (cpVille) out.push({ text: ellipsize(cpVille, ADDR_SIZE, USABLE_W), size: ADDR_SIZE, bold: false });
-	return out;
+	if (cpVille) fields.push({ text: cpVille, size: ADDR_SIZE, bold: false });
+	if (fields.length === 0) return { lines: [], lineH: LINE_H };
+
+	let last: { lines: FittedLine[]; lineH: number } = { lines: [], lineH: LINE_H };
+	for (const scale of FIT_SCALES) {
+		const lines: FittedLine[] = [];
+		for (const field of fields) {
+			const size = field.size * scale;
+			for (const text of wrapReal(field.text, size, USABLE_W)) {
+				lines.push({ text, size, bold: field.bold });
+			}
+		}
+		last = { lines, lineH: LINE_H * scale };
+		const widest = Math.max(...lines.map((l) => measureOutfitBold(l.text, l.size)));
+		if (widest <= USABLE_W && lines.length * last.lineH <= USABLE_H) return last;
+	}
+	// Dernier recours (jamais atteint sur des données postales réelles) : rétrécissement
+	// homogène exact du bloc au palier plancher - jamais d'ellipse.
+	const widest = Math.max(...last.lines.map((l) => measureOutfitBold(l.text, l.size)));
+	const k = Math.min(1, USABLE_W / widest, USABLE_H / (last.lines.length * last.lineH));
+	return {
+		lines: last.lines.map((l) => ({ ...l, size: l.size * k })),
+		lineH: last.lineH * k
+	};
 }
 
 /** Place une étiquette dans sa cellule : bloc centré H + V, baselines calculées. */
@@ -251,16 +289,16 @@ function placeLabel(entry: EtiquetteEntry, index: number, col: number, row: numb
 	const cellX = col * LABEL_W;
 	const cellY = MARGIN_TOP + row * LABEL_H;
 	const centerX = cellX + LABEL_W / 2;
-	const raw = labelLines(entry);
-	const n = Math.max(1, raw.length);
-	// Bloc centré verticalement ; chaque ligne occupe LINE_H, baseline ≈ centre + 0,34·taille.
-	const blockTop = cellY + (LABEL_H - n * LINE_H) / 2;
-	const lines: LabelLine[] = raw.map((ln, i) => ({
+	const { lines: fitted, lineH } = labelLayout(entry);
+	const n = Math.max(1, fitted.length);
+	// Bloc centré verticalement ; chaque ligne occupe lineH, baseline ≈ centre + 0,34·taille.
+	const blockTop = cellY + (LABEL_H - n * lineH) / 2;
+	const lines: LabelLine[] = fitted.map((ln, i) => ({
 		text: ln.text,
 		size: ln.size,
 		bold: ln.bold,
-		baseline: blockTop + (i + 0.5) * LINE_H + ln.size * 0.34,
-		estWidth: estWidth(ln.text, ln.size)
+		baseline: blockTop + (i + 0.5) * lineH + ln.size * 0.34,
+		estWidth: measureOutfitBold(ln.text, ln.size)
 	}));
 	return { index, col, row, cellX, cellY, centerX, lines };
 }
@@ -308,23 +346,15 @@ export function pageCount(n: number): number {
 function lineSvg(centerX: number, ln: LabelLine): string {
 	return `<text x="${f(centerX)}" y="${f(ln.baseline)}" font-family="Outfit" font-size="${ln.size}" font-weight="${ln.bold ? 700 : 400}" fill="${TEXT_COLOR}" text-anchor="middle">${esc(ln.text)}</text>`;
 }
-function labelSvg(p: PlacedLabel, guides: boolean): string {
-	const guide = guides
-		? `<rect x="${f(p.cellX)}" y="${f(p.cellY)}" width="${f(LABEL_W)}" height="${f(LABEL_H)}" fill="none" stroke="#E5E7EB" stroke-width="0.5"/>`
-		: '';
-	return guide + p.lines.map((ln) => lineSvg(p.centerX, ln)).join('');
-}
-
-export interface EtiquettesRenderOpts {
-	/** Trace un repère fin par cellule (prévisualisation/QA uniquement ; jamais à l'impression). */
-	guides?: boolean;
+function labelSvg(p: PlacedLabel): string {
+	return p.lines.map((ln) => lineSvg(p.centerX, ln)).join('');
 }
 
 /** SVG (chaîne) de chaque page A4 pour un flux d'ITEMS (adresses + intercalaires). */
-export function buildEtiquettesItemsPagesSvg(items: EtiquetteItem[], opts: EtiquettesRenderOpts = {}): string[] {
+export function buildEtiquettesItemsPagesSvg(items: EtiquetteItem[]): string[] {
 	const { pages } = layoutEtiquettesItems(items);
 	return pages.map((labels) => {
-		const body = labels.map((p) => labelSvg(p, opts.guides === true)).join('');
+		const body = labels.map((p) => labelSvg(p)).join('');
 		return (
 			`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(PAGE_W)} ${f(PAGE_H)}" width="${f(PAGE_W)}" height="${f(PAGE_H)}">` +
 			`<rect x="0" y="0" width="${f(PAGE_W)}" height="${f(PAGE_H)}" fill="#ffffff"/>` +
@@ -335,8 +365,8 @@ export function buildEtiquettesItemsPagesSvg(items: EtiquetteItem[], opts: Etiqu
 }
 
 /** SVG (chaîne) de chaque page A4 = exactement ce que svg2pdf convertira (adresses seules). */
-export function buildEtiquettesPagesSvg(entries: EtiquetteEntry[], opts: EtiquettesRenderOpts = {}): string[] {
-	return buildEtiquettesItemsPagesSvg(entries.map((entry) => ({ kind: 'adresse', entry })), opts);
+export function buildEtiquettesPagesSvg(entries: EtiquetteEntry[]): string[] {
+	return buildEtiquettesItemsPagesSvg(entries.map((entry) => ({ kind: 'adresse', entry })));
 }
 
 // --- Export effectif (impur : dynamic import jsPDF + svg2pdf + polices, hors bundle initial) ----
@@ -349,11 +379,11 @@ export function etiquettesFileName(label: string, date: Date = new Date()): stri
 }
 
 /**
- * Génère et télécharge la planche d'étiquettes pour un flux d'ITEMS (adresses + intercalaires
- * de groupe). No-op si le flux est vide (l'appelant désactive déjà le bouton à 0 sélection).
+ * Construit le document jsPDF de la planche (pages A4 portrait, polices Outfit embarquées).
+ * Cœur PARTAGÉ de l'aperçu (blob -> iframe, lecteur PDF natif) et du téléchargement :
+ * ce que l'aperçu montre EST le PDF téléchargé, à l'octet près (même builder).
  */
-export async function exportEtiquettesItemsPdf(items: EtiquetteItem[], fileName: string): Promise<void> {
-	if (items.length === 0) return;
+async function buildEtiquettesDoc(items: EtiquetteItem[]): Promise<{ output: (type: 'blob') => Blob; save: (name: string) => unknown }> {
 	const [{ jsPDF }, svg2pdfMod, fonts] = await Promise.all([
 		import('jspdf'),
 		import('svg2pdf.js'),
@@ -373,7 +403,27 @@ export async function exportEtiquettesItemsPdf(items: EtiquetteItem[], fileName:
 		const el = new DOMParser().parseFromString(svgs[i], 'image/svg+xml').documentElement;
 		await svg2pdf(el, doc, { x: 0, y: 0, width: PAGE_W, height: PAGE_H });
 	}
+	return doc;
+}
+
+/**
+ * Génère et télécharge la planche d'étiquettes pour un flux d'ITEMS (adresses + intercalaires
+ * de groupe). No-op si le flux est vide (l'appelant désactive déjà le bouton à 0 sélection).
+ */
+export async function exportEtiquettesItemsPdf(items: EtiquetteItem[], fileName: string): Promise<void> {
+	if (items.length === 0) return;
+	const doc = await buildEtiquettesDoc(items);
 	doc.save(fileName);
+}
+
+/**
+ * Génère la planche en Blob PDF (aperçu in-app : URL.createObjectURL -> <iframe>, zoom natif
+ * du lecteur PDF du navigateur - pattern MarketingPreviewModal de Gouvernance). null si vide.
+ */
+export async function buildEtiquettesItemsPdfBlob(items: EtiquetteItem[]): Promise<Blob | null> {
+	if (items.length === 0) return null;
+	const doc = await buildEtiquettesDoc(items);
+	return doc.output('blob');
 }
 
 /** Génère et télécharge la planche (adresses seules - API historique, mêmes garanties). */

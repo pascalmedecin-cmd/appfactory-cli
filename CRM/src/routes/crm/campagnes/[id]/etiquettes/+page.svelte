@@ -4,8 +4,9 @@
 	 *
 	 * Flux : on choisit les prospects (sélection = adresses complètes par défaut), on saisit un
 	 * DESTINATAIRE directement dans la ligne (générique tout mailing, ex. « Service technique » ou
-	 * « Service technique, M. X »), on l'applique en LOT via la barre flottante, on prévisualise la
-	 * planche Avery réelle (SVG du moteur, police Outfit chargée à la volée) puis on télécharge le PDF.
+	 * « Service technique, M. X »), on l'applique en LOT via la barre flottante, on prévisualise
+	 * LE PDF RÉEL (blob jsPDF dans une <iframe>, lecteur natif du navigateur : toutes les planches,
+	 * zoom natif - pattern MarketingPreviewModal de Gouvernance) puis on le télécharge (même blob).
 	 *
 	 * Invariants repris du V1 :
 	 *  - le destinataire est NON PERSISTÉ : il vit dans l'état de la page (Map id -> texte), injecté
@@ -28,8 +29,7 @@
 	import { adresseStatut, type ProspectAdresse } from '$lib/etiquettes/prospect-etiquette';
 	import { summarize, filterProspects, buildGroupedEtiquetteItems } from '$lib/etiquettes/etiquettes-page';
 	import {
-		buildEtiquettesItemsPagesSvg,
-		exportEtiquettesItemsPdf,
+		buildEtiquettesItemsPdfBlob,
 		etiquettesFileName,
 		pageCount,
 		type EtiquetteItem
@@ -56,9 +56,9 @@
 	let bulkValue = $state('');
 	let generating = $state(false);
 
-	// Aperçu
+	// Aperçu = le PDF réel (blob) dans une iframe (lecteur natif : toutes les planches, zoom).
 	let previewOpen = $state(false);
-	let previewSvgs = $state<string[]>([]);
+	let previewUrl = $state<string | null>(null); // URL.createObjectURL du blob (révoquée à la fermeture)
 	let previewCount = $state(0); // adresses imprimées (hors intercalaires)
 	let previewTransitions = $state(0); // intercalaires de groupe (1 cellule chacun)
 
@@ -92,7 +92,7 @@
 		// Aperçu + génération + jeton anti-race : réinitialisés aussi, sinon un aperçu ouvert (ou une
 		// réponse de complétion en vol) de l'ancienne campagne « fuiterait » sur la nouvelle.
 		previewOpen = false;
-		previewSvgs = [];
+		revokePreviewUrl();
 		previewCount = 0;
 		previewTransitions = 0;
 		generating = false;
@@ -221,24 +221,12 @@
 	}
 
 	// --- Aperçu + téléchargement ---
-	// Police Outfit (celle du PDF) chargée à la volée depuis le TTF embarqué -> l'aperçu SVG est le
-	// PDF au pixel près, sans réseau (data: URL, autorisé par la CSP `font-src 'self' data:`).
-	let outfitLoaded = false;
-	async function ensureOutfitLoaded() {
-		if (outfitLoaded || typeof document === 'undefined' || !('fonts' in document)) return;
-		try {
-			const fonts = await import('$lib/etiquettes/etiquettes-fonts');
-			const mk = (data64: string, weight: string) =>
-				new FontFace('Outfit', `url(data:font/ttf;base64,${data64})`, { weight, style: 'normal' });
-			const f400 = mk(fonts.OUTFIT_400, '400');
-			const f700 = mk(fonts.OUTFIT_700, '700');
-			await Promise.all([f400.load(), f700.load()]);
-			document.fonts.add(f400);
-			document.fonts.add(f700);
-			outfitLoaded = true;
-		} catch {
-			// Repli silencieux : rendu en police système, aperçu approximatif mais fonctionnel.
-		}
+	// L'aperçu N'EST PLUS un rendu HTML approximatif : c'est le PDF lui-même (même builder,
+	// même blob que le téléchargement). Les polices Outfit sont embarquées DANS le PDF - plus
+	// aucun chargement FontFace côté page.
+	function revokePreviewUrl() {
+		if (previewUrl) URL.revokeObjectURL(previewUrl);
+		previewUrl = null;
 	}
 
 	/**
@@ -251,33 +239,48 @@
 	}
 
 	async function openPreview() {
-		if (printList.length === 0) return;
-		const items = buildItems();
-		await ensureOutfitLoaded();
-		previewSvgs = buildEtiquettesItemsPagesSvg(items, { guides: true });
-		previewCount = printList.length;
-		previewTransitions = items.length - printList.length;
-		previewOpen = true;
-	}
-	function closePreview() {
-		previewOpen = false;
-	}
-
-	async function downloadPdf() {
 		if (generating || printList.length === 0) return;
 		generating = true;
 		try {
 			const items = buildItems();
-			const n = printList.length;
-			await exportEtiquettesItemsPdf(items, etiquettesFileName(data.campagne.nom));
-			toasts.success(`${n} étiquette${n > 1 ? 's' : ''} générée${n > 1 ? 's' : ''}`);
-			previewOpen = false;
+			const blob = await buildEtiquettesItemsPdfBlob(items);
+			if (!blob) return;
+			revokePreviewUrl();
+			previewUrl = URL.createObjectURL(blob);
+			previewCount = printList.length;
+			previewTransitions = items.length - printList.length;
+			previewOpen = true;
 		} catch {
 			toasts.error('Génération du PDF impossible');
 		} finally {
 			generating = false;
 		}
 	}
+	function closePreview() {
+		previewOpen = false;
+		revokePreviewUrl();
+	}
+
+	/**
+	 * Téléchargement = le blob de l'aperçu, à l'octet près (même builder). La modale reste
+	 * ouverte (pattern Gouvernance) ; l'URL n'est révoquée qu'à la fermeture, jamais pendant
+	 * un téléchargement en cours.
+	 */
+	function downloadPdf() {
+		if (!previewUrl) return;
+		const a = document.createElement('a');
+		a.href = previewUrl;
+		a.download = etiquettesFileName(data.campagne.nom);
+		a.click();
+		const n = previewCount;
+		toasts.success(`${n} étiquette${n > 1 ? 's' : ''} générée${n > 1 ? 's' : ''}`);
+	}
+
+	// Filet de fuite mémoire : révoque l'URL blob au démontage du composant (le body de
+	// l'effet ne lit rien de réactif -> il ne tourne qu'une fois, le cleanup au destroy).
+	$effect(() => {
+		return () => revokePreviewUrl();
+	});
 
 	function adresseLigne(p: ProspectAdresse): string {
 		return [p.adresse, [p.npa, p.localite].filter(Boolean).join(' ')].filter(Boolean).join(', ');
@@ -329,7 +332,7 @@
 					: 'Aucun prospect validé « Garder » à imprimer (décochez l’option pour imprimer toute la sélection)'
 				: 'Prévisualiser puis télécharger'}
 		>
-			<Icon name="download" size={17} /> Télécharger le PDF
+			<Icon name="download" size={17} /> {generating ? 'Génération…' : 'Télécharger le PDF'}
 		</button>
 	</div>
 
@@ -517,12 +520,20 @@
 					<Icon name="close" size={18} />
 				</button>
 			</div>
-			<div class="prev-canvas">
-				{#each previewSvgs as svg, i (i)}
-					<!-- SVG généré par notre moteur (texte échappé via esc()) : contenu contrôlé, pas d'UGC brut. -->
-					<div class="sheet">{@html svg}</div>
-				{/each}
+			<div class="prev-frame">
+				{#if previewUrl}
+					<!-- Le PDF réel (blob local, même builder que le téléchargement) dans le lecteur
+					     natif du navigateur : toutes les planches, zoom natif. CSP : frame-src blob:. -->
+					<iframe src={previewUrl} title="Aperçu PDF de la planche d'étiquettes"></iframe>
+				{/if}
 			</div>
+			{#if previewUrl}
+				<!-- Plein écran : le même blob dans un onglet dédié (zoom au trackpad natif, confort
+				     mobile). Navigation top-level -> hors contrainte frame-src. -->
+				<a class="prev-open" href={previewUrl} target="_blank" rel="noopener noreferrer">
+					<Icon name="eye" size={15} /> Ouvrir en plein écran
+				</a>
+			{/if}
 			<div class="prev-foot">
 				<span class="count">
 					<b>{previewCount} étiquette{previewCount > 1 ? 's' : ''}</b>
@@ -539,8 +550,8 @@
 				</span>
 				<div class="actions">
 					<button type="button" class="btn-ghost" onclick={closePreview}>Fermer</button>
-					<button type="button" class="btn-primary" onclick={downloadPdf} disabled={generating}>
-						<Icon name="download" size={17} /> {generating ? 'Génération…' : 'Télécharger le PDF'}
+					<button type="button" class="btn-primary" onclick={downloadPdf}>
+						<Icon name="download" size={17} /> Télécharger le PDF
 					</button>
 				</div>
 			</div>
@@ -1254,9 +1265,10 @@
 	}
 	.prev {
 		pointer-events: auto;
-		width: 720px;
-		max-width: 100%;
-		max-height: 90vh;
+		width: min(960px, 96vw);
+		/* Hauteur FIXE (pas seulement max) : l'iframe n'a aucune hauteur intrinsèque, elle
+		   prend le flex:1 de .prev-frame, qui exige un parent à hauteur définie. */
+		height: 90vh;
 		display: flex;
 		flex-direction: column;
 		background: var(--color-surface);
@@ -1292,30 +1304,34 @@
 		background: var(--color-surface-alt);
 		color: var(--color-text);
 	}
-	.prev-canvas {
+	/* L'aperçu = le lecteur PDF natif dans une iframe pleine zone (toutes les planches, zoom natif). */
+	.prev-frame {
 		flex: 1;
-		overflow-y: auto;
-		padding: 40px;
-		display: flex;
-		flex-direction: column;
-		gap: 24px;
-		align-items: center;
+		min-height: 0; /* enfant flex scrollable : sans lui, l'iframe pousserait le footer hors modale */
 		background: var(--color-surface-alt);
 	}
-	.sheet {
-		width: 360px;
-		max-width: 100%;
-		background: #fff;
-		box-shadow: 0 12px 32px -12px rgba(16, 24, 40, 0.28), 0 0 0 1px rgba(17, 24, 39, 0.05);
-		border-radius: 4px;
-		overflow: hidden;
-	}
-	/* Le SVG porte lui-même le ratio A4 portrait (viewBox en points 595.28 x 841.89, ratio 210/297) : width fixe + height auto
-	   -> la hauteur de la planche se déduit du ratio intrinsèque, jamais de letterboxing. */
-	.sheet :global(svg) {
+	.prev-frame iframe {
 		display: block;
 		width: 100%;
-		height: auto;
+		height: 100%;
+		border: 0;
+	}
+	.prev-open {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		align-self: flex-end;
+		margin: 8px 24px 0;
+		font-size: 13px;
+		font-weight: 600;
+		color: var(--color-primary);
+		text-decoration: none;
+	}
+	.prev-open:hover {
+		text-decoration: underline;
+	}
+	.prev-open :global(svg) {
+		flex-shrink: 0;
 	}
 	.prev-foot {
 		display: flex;
