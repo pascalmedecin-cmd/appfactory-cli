@@ -1305,26 +1305,29 @@
 	.sheet {
 		width: 360px;
 		max-width: 100%;
-		aspect-ratio: 210 / 297;
 		background: #fff;
 		box-shadow: 0 12px 32px -12px rgba(16, 24, 40, 0.28), 0 0 0 1px rgba(17, 24, 39, 0.05);
 		border-radius: 4px;
 		overflow: hidden;
 	}
+	/* Le SVG porte lui-même le ratio A4 portrait (viewBox en points 595.28 x 841.89, ratio 210/297) : width fixe + height auto
+	   -> la hauteur de la planche se déduit du ratio intrinsèque, jamais de letterboxing. */
 	.sheet :global(svg) {
 		display: block;
 		width: 100%;
-		height: 100%;
+		height: auto;
 	}
 	.prev-foot {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
+		flex-wrap: wrap;
 		gap: 16px;
 		padding: 16px 24px;
 		border-top: 1px solid var(--color-border);
 	}
 	.prev-foot .count {
+		flex: 1 1 auto;
+		min-width: 0;
 		font-size: 13px;
 		color: var(--color-text-muted);
 	}
@@ -1349,6 +1352,8 @@
 		display: flex;
 		align-items: center;
 		gap: 12px;
+		flex-shrink: 0;
+		margin-left: auto;
 	}
 
 	/* ===== responsive : sous 820px, la ligne se réorganise en pile lisible ===== */
