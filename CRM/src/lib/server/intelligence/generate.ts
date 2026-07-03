@@ -53,6 +53,15 @@ const MAX_TOKENS_RETRY = 128000;
 // élargir le sourcing local (sources romandes nommées au-delà de RTS) + fenêtre 30j,
 // sans toucher la barre de pertinence. Le filtre aval (URL + cross-check) reste identique.
 const WEB_SEARCH_MAX_USES = 22;
+// Reprises max sur stop_reason=pause_turn (fix racine échec W27 2026-07-03).
+// L'API met le tour EN PAUSE quand la boucle server-side (web_search) atteint sa
+// limite d'itérations (~10) : « re-send the user message and assistant response...
+// the server will resume where it left off » (doc /handling-stop-reasons +
+// /web-search-tool). Ce n'est PAS une erreur : on renvoie le contenu assistant tel
+// quel (sans message user ajouté) et le tour continue. Borne dure anti-boucle :
+// avec max_uses=22 recherches, 6 reprises couvrent largement le pire cas réel
+// (W27 a pausé après ~5 min de recherches sur 238 sources).
+const MAX_PAUSE_RESUMES = 6;
 
 export interface GenerateInput {
 	weekLabel: string;
@@ -100,7 +109,12 @@ async function callModel(
 	input: GenerateInput,
 	themes: ThemeBundle,
 	sources: SourcesBundle,
-	maxTokens: number
+	maxTokens: number,
+	// Reprise pause_turn : contenu assistant des segments déjà produits, renvoyé
+	// VERBATIM (thinking signés, server_tool_use, web_search_tool_result inclus).
+	// La doc interdit d'ajouter un message user (« Do NOT add "Continue." ») : le
+	// bloc server_tool_use en fin de contenu suffit au serveur pour reprendre.
+	resumeContent?: Anthropic.ContentBlock[]
 ): Promise<Anthropic.Message> {
 	const themesSection = buildThemesPromptSection(themes);
 	const sourcesSection = buildSourcesPromptSection(sources);
@@ -183,10 +197,62 @@ async function callModel(
 					previousItems: input.previousItems,
 					windowDays: input.windowDays
 				})
-			}
+			},
+			...(resumeContent && resumeContent.length > 0
+				? [{ role: 'assistant' as const, content: resumeContent }]
+				: [])
 		]
 	});
 	return stream.finalMessage();
+}
+
+/**
+ * Appelle le modèle et REPREND le tour tant que l'API le met en pause
+ * (stop_reason=pause_turn, boucle server-side web_search) — au plus
+ * MAX_PAUSE_RESUMES reprises. Chaque appel réel est facturé et tracé.
+ *
+ * Le message retourné porte le contenu FUSIONNÉ de tous les segments : l'aval
+ * (extractSearchResultUrls) doit voir les web_search_tool_result des premiers
+ * segments, sinon la récupération d'URL (ground truth anti-hallucination W25)
+ * perdrait les recherches faites avant la pause. Exporté pour test unitaire.
+ */
+export async function callModelResumingPauses(
+	client: Anthropic,
+	input: GenerateInput,
+	themes: ThemeBundle,
+	sources: SourcesBundle,
+	maxTokens: number,
+	tracker: CostTracker,
+	label: string
+): Promise<Anthropic.Message> {
+	let accumulated: Anthropic.ContentBlock[] = [];
+	let resumes = 0;
+	for (;;) {
+		const msg = await callModel(
+			client,
+			input,
+			themes,
+			sources,
+			maxTokens,
+			accumulated.length > 0 ? accumulated : undefined
+		);
+		tracker.addClaudeCall(
+			MODEL,
+			msg.usage,
+			resumes === 0 ? label : `${label} (reprise pause_turn ${resumes})`
+		);
+		const merged: Anthropic.Message = { ...msg, content: [...accumulated, ...msg.content] };
+		if (msg.stop_reason !== 'pause_turn') return merged;
+		if (resumes >= MAX_PAUSE_RESUMES) {
+			console.warn(
+				`[generate] stop_reason=pause_turn persistant après ${MAX_PAUSE_RESUMES} reprises — abandon (borne anti-boucle).`
+			);
+			return merged;
+		}
+		resumes++;
+		console.warn(`[generate] stop_reason=pause_turn — reprise ${resumes}/${MAX_PAUSE_RESUMES}.`);
+		accumulated = merged.content;
+	}
 }
 
 /**
@@ -220,16 +286,32 @@ export async function callModelWithOverflowRetry(
 	sources: SourcesBundle,
 	tracker: CostTracker
 ): Promise<Anthropic.Message> {
-	const first = await callModel(client, input, themes, sources, MAX_TOKENS);
-	tracker.addClaudeCall(MODEL, first.usage, 'Claude veille (1-phase)');
+	// Chaque tentative gère elle-même les pauses server-side (pause_turn) : la
+	// facturation par appel réel est tracée DANS callModelResumingPauses.
+	const first = await callModelResumingPauses(
+		client,
+		input,
+		themes,
+		sources,
+		MAX_TOKENS,
+		tracker,
+		'Claude veille (1-phase)'
+	);
 	if (first.stop_reason !== 'max_tokens') return first;
 
 	console.warn(
 		`[generate] stop_reason=max_tokens à ${MAX_TOKENS} tokens ` +
 			`(thinking_tokens=${thinkingTokensOf(first.usage) ?? 'n/a'}) — relance à ${MAX_TOKENS_RETRY}.`
 	);
-	const second = await callModel(client, input, themes, sources, MAX_TOKENS_RETRY);
-	tracker.addClaudeCall(MODEL, second.usage, 'Claude veille (relance max_tokens)');
+	const second = await callModelResumingPauses(
+		client,
+		input,
+		themes,
+		sources,
+		MAX_TOKENS_RETRY,
+		tracker,
+		'Claude veille (relance max_tokens)'
+	);
 	return second;
 }
 
