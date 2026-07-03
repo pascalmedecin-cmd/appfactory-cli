@@ -11,8 +11,9 @@
  *  - 1 <svg> par page A4 (viewBox en points PDF), converti par svg2pdf à l'export ;
  *  - svg2pdf IGNORE le CSS -> attributs de présentation inline uniquement, baselines de texte
  *    calculées à la main (pas de dominant-baseline), couleurs en aplat ;
- *  - polices DM Sans 400/700 (marque FilmPro) embarquées en TTF base64, réutilisées du moteur
- *    Découpe (asset partagé) ; svg2pdf ne distingue que normal/bold -> 400 + 700 suffisent ;
+ *  - polices Outfit 400/600/700 embarquées en TTF base64 ; svg2pdf ne distingue que normal/bold
+ *    par famille -> le SemiBold 600 (destinataire, hiérarchie Pascal 2026-07-03) est une famille
+ *    séparée « Outfit-SemiBold », 400/700 restent la famille « Outfit » ;
  *  - jsPDF + svg2pdf + polices en DYNAMIC IMPORT (hors bundle initial), exercés en e2e.
  *
  * Contrairement au plan de découpe, la grille est FIXE (24 cellules/page) : pas de moteur de flux,
@@ -132,7 +133,8 @@ function wrapReal(s: string, size: number, maxW: number): string[] {
 export interface LabelLine {
 	text: string;
 	size: number;
-	bold: boolean;
+	/** 700 = NOM, 600 = destinataire (SemiBold, hiérarchie Pascal 2026-07-03), 400 = adresse. */
+	weight: 400 | 600 | 700;
 	baseline: number; // y de la baseline du texte (centré dans la cellule)
 	estWidth: number; // largeur aux avances réelles Outfit Bold (assertion : ≤ USABLE_W)
 }
@@ -225,7 +227,7 @@ function placeTransition(nom: string, index: number, col: number, row: number): 
 		lines: lines.map((text, i) => ({
 			text,
 			size,
-			bold: true,
+			weight: 700 as const,
 			baseline: blockTop + (i + 0.5) * TRANSITION_LINE_H + size * 0.34,
 			estWidth: measureOutfitBold(text, size),
 		})),
@@ -236,7 +238,8 @@ function placeTransition(nom: string, index: number, col: number, row: number): 
 export interface FittedLine {
 	text: string;
 	size: number;
-	bold: boolean;
+	/** 700 = NOM, 600 = destinataire (SemiBold), 400 = adresse. */
+	weight: 400 | 600 | 700;
 }
 
 /**
@@ -250,15 +253,16 @@ export interface FittedLine {
  * bloc ≤ USABLE_H. Même philosophie que transitionLayout (éprouvée sur les intercalaires).
  */
 export function labelLayout(entry: EtiquetteEntry): { lines: FittedLine[]; lineH: number } {
-	const fields: { text: string; size: number; bold: boolean }[] = [];
+	const fields: { text: string; size: number; weight: 400 | 600 | 700 }[] = [];
 	const nom = entry.nom.trim();
-	if (nom) fields.push({ text: nom, size: NOM_SIZE, bold: true });
+	if (nom) fields.push({ text: nom, size: NOM_SIZE, weight: 700 });
 	const dest = (entry.destinataire ?? '').trim();
-	if (dest) fields.push({ text: dest, size: DEST_SIZE, bold: false });
+	// Destinataire en SEMI-GRAS (600) : hiérarchie nom > destinataire > adresse (Pascal 2026-07-03).
+	if (dest) fields.push({ text: dest, size: DEST_SIZE, weight: 600 });
 	const rue = entry.rue.trim();
-	if (rue) fields.push({ text: rue, size: ADDR_SIZE, bold: false });
+	if (rue) fields.push({ text: rue, size: ADDR_SIZE, weight: 400 });
 	const cpVille = entry.cpVille.trim();
-	if (cpVille) fields.push({ text: cpVille, size: ADDR_SIZE, bold: false });
+	if (cpVille) fields.push({ text: cpVille, size: ADDR_SIZE, weight: 400 });
 	if (fields.length === 0) return { lines: [], lineH: LINE_H };
 
 	let last: { lines: FittedLine[]; lineH: number } = { lines: [], lineH: LINE_H };
@@ -267,7 +271,7 @@ export function labelLayout(entry: EtiquetteEntry): { lines: FittedLine[]; lineH
 		for (const field of fields) {
 			const size = field.size * scale;
 			for (const text of wrapReal(field.text, size, USABLE_W)) {
-				lines.push({ text, size, bold: field.bold });
+				lines.push({ text, size, weight: field.weight });
 			}
 		}
 		last = { lines, lineH: LINE_H * scale };
@@ -296,7 +300,7 @@ function placeLabel(entry: EtiquetteEntry, index: number, col: number, row: numb
 	const lines: LabelLine[] = fitted.map((ln, i) => ({
 		text: ln.text,
 		size: ln.size,
-		bold: ln.bold,
+		weight: ln.weight,
 		baseline: blockTop + (i + 0.5) * lineH + ln.size * 0.34,
 		estWidth: measureOutfitBold(ln.text, ln.size)
 	}));
@@ -344,7 +348,11 @@ export function pageCount(n: number): number {
 
 // --- Rendu SVG (1 chaîne par page, prévisualisable navigateur) ---------------------------------
 function lineSvg(centerX: number, ln: LabelLine): string {
-	return `<text x="${f(centerX)}" y="${f(ln.baseline)}" font-family="Outfit" font-size="${ln.size}" font-weight="${ln.bold ? 700 : 400}" fill="${TEXT_COLOR}" text-anchor="middle">${esc(ln.text)}</text>`;
+	// svg2pdf mappe famille + normal/bold : le SemiBold passe par sa famille dédiée
+	// « Outfit-SemiBold » (style normal), 400/700 par la famille « Outfit ».
+	const family = ln.weight === 600 ? 'Outfit-SemiBold' : 'Outfit';
+	const weight = ln.weight === 700 ? 700 : 400;
+	return `<text x="${f(centerX)}" y="${f(ln.baseline)}" font-family="${family}" font-size="${ln.size}" font-weight="${weight}" fill="${TEXT_COLOR}" text-anchor="middle">${esc(ln.text)}</text>`;
 }
 function labelSvg(p: PlacedLabel): string {
 	return p.lines.map((ln) => lineSvg(p.centerX, ln)).join('');
@@ -394,6 +402,8 @@ async function buildEtiquettesDoc(items: EtiquetteItem[]): Promise<{ output: (ty
 	const doc = new jsPDF({ unit: 'pt', format: 'a4', compress: true });
 	doc.addFileToVFS('Outfit-Regular.ttf', fonts.OUTFIT_400);
 	doc.addFont('Outfit-Regular.ttf', 'Outfit', 'normal');
+	doc.addFileToVFS('Outfit-SemiBold.ttf', fonts.OUTFIT_600);
+	doc.addFont('Outfit-SemiBold.ttf', 'Outfit-SemiBold', 'normal');
 	doc.addFileToVFS('Outfit-Bold.ttf', fonts.OUTFIT_700);
 	doc.addFont('Outfit-Bold.ttf', 'Outfit', 'bold');
 

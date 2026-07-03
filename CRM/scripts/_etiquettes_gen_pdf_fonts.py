@@ -6,8 +6,9 @@ woff/woff2. On convertit les .woff (sous-ensemble latin, légers) déjà install
 fonttools, puis on encode en base64 dans un module TS chargé en lazy (hors bundle initial).
 
 La planche d'étiquettes utilise Outfit (choix Pascal, Google Fonts). svg2pdf ne distingue que
-normal / bold (poids >= 700) → on embarque uniquement Outfit 400 (normal) + 700 (bold) ; la
-hiérarchie (NOM en gras vs adresse) se fait via bold/normal.
+normal / bold par FAMILLE → le SemiBold 600 (destinataire, hiérarchie Pascal 2026-07-03) est
+embarqué comme famille séparée « Outfit-SemiBold » (style normal) ; 400 + 700 restent la
+famille « Outfit » (adresse / NOM).
 
 Reproductible : `python3 scripts/_etiquettes_gen_pdf_fonts.py` (depuis CRM/).
 """
@@ -23,6 +24,7 @@ from fontTools.ttLib import TTFont
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 SRC = {
     "OUTFIT_400": ROOT / "node_modules/@fontsource/outfit/files/outfit-latin-400-normal.woff",
+    "OUTFIT_600": ROOT / "node_modules/@fontsource/outfit/files/outfit-latin-600-normal.woff",
     "OUTFIT_700": ROOT / "node_modules/@fontsource/outfit/files/outfit-latin-700-normal.woff",
 }
 OUT = ROOT / "src/lib/etiquettes/etiquettes-fonts.ts"

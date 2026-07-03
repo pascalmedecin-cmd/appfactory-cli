@@ -120,8 +120,8 @@ describe('layoutEtiquettes', () => {
 	it('NOM en gras, lignes d’adresse en normal', () => {
 		const { pages } = layoutEtiquettes([entry()]);
 		const lines = pages[0][0].lines;
-		expect(lines[0].bold).toBe(true); // nom
-		expect(lines.slice(1).every((l) => l.bold === false)).toBe(true);
+		expect(lines[0].weight).toBe(700); // nom
+		expect(lines.slice(1).every((l) => l.weight === 400)).toBe(true);
 	});
 
 	it('étiquette PLEINE (nom multi-lignes + destinataire + rue + cp/ville) reste DANS la cellule', () => {
@@ -170,7 +170,7 @@ describe('labelLayout (règle « jamais tronqué », Pascal 2026-07-03)', () => 
 		]);
 	});
 
-	it('insère le destinataire SOUS le nom, avant l’adresse (non gras)', () => {
+	it('insère le destinataire SOUS le nom, avant l’adresse (semi-gras 600)', () => {
 		const { lines } = labelLayout({
 			nom: 'Naef Immobilier SA',
 			destinataire: 'Service technique, M. Roth',
@@ -183,8 +183,9 @@ describe('labelLayout (règle « jamais tronqué », Pascal 2026-07-03)', () => 
 			'Rue du Rhône 12',
 			'1204 Genève'
 		]);
-		expect(lines[0].bold).toBe(true); // nom gras
-		expect(lines[1].bold).toBe(false); // destinataire non gras
+		expect(lines[0].weight).toBe(700); // nom gras
+		expect(lines[1].weight).toBe(600); // destinataire SEMI-GRAS (hiérarchie Pascal 2026-07-03)
+		expect(lines.at(-1)?.weight).toBe(400); // adresse normale
 	});
 
 	it('destinataire absent ou vide -> aucune ligne destinataire', () => {
@@ -282,6 +283,16 @@ describe('buildEtiquettesPagesSvg', () => {
 		expect(svgs[0]).toContain('Rue de l’Évêché 2');
 		expect(svgs[0]).toContain('font-weight="700"'); // nom gras
 		expect(svgs[0]).toContain('text-anchor="middle"'); // centré
+	});
+
+	it('destinataire rendu en famille Outfit-SemiBold dans le SVG (hiérarchie visuelle)', () => {
+		const svgs = buildEtiquettesItemsPagesSvg([
+			{ kind: 'adresse', entry: entry({ destinataire: 'Service technique' }) }
+		]);
+		expect(svgs[0]).toContain('font-family="Outfit-SemiBold"');
+		// Le nom reste en famille Outfit gras, l'adresse en Outfit normal.
+		expect(svgs[0]).toContain('font-family="Outfit" font-size="10.5" font-weight="700"');
+		expect(svgs[0]).toContain('font-family="Outfit" font-size="9.5" font-weight="400"');
 	});
 
 	it('normalise le tiret long en tiret court (typo FR)', () => {
@@ -390,7 +401,7 @@ describe('layoutEtiquettesItems (flux continu adresses + intercalaires)', () => 
 		expect(t.kind).toBe('transition');
 		expect(t.lines).toHaveLength(1); // « RÉGIES » tient sur 1 ligne
 		expect(t.lines[0].text).toBe('RÉGIES');
-		expect(t.lines[0].bold).toBe(true);
+		expect(t.lines[0].weight).toBe(700);
 		expect(t.lines[0].size).toBe(15);
 		expect(t.lines[0].estWidth).toBeLessThanOrEqual(GEOMETRY.USABLE_W);
 		// La ligne vit dans sa cellule (baseline entre bord haut et bord bas).
