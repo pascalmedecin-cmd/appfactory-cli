@@ -418,6 +418,7 @@ Merci de vérifier les prospects de la campagne « ${campagne.nom} » avant l'en
 3. Choisis « Garder » ou « Retirer ». Tes choix s'enregistrent automatiquement.
 
 Le lien est valable jusqu'au ${shareExpiresAt ? dateHeure(shareExpiresAt) : 'sa date d’expiration'}.
+Il peut être ouvert à plusieurs en même temps : sur un même prospect, le dernier choix enregistré remplace le précédent.
 
 Merci !`
 			: ''
