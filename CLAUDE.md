@@ -67,6 +67,6 @@ Container prêt à accueillir d'autres apps métier FilmPro (le repo embarque d�
 
 **Pour le contexte CRM FilmPro complet** (statut sessions, infra, tâches actives, watch list, livré) : voir `CRM/CLAUDE.md`.
 
-**Pour les autres projets** (désormais séparés) : `~/Claude/Projets/Formation/` (ex sous-projet, promu top-level), `~/Claude/Projets/LED_Studio/Consulting/` (déplacé sous LED Studio).
+**Pour les autres projets** (désormais séparés) : `~/Claude/Projets/Formation/` (ex sous-projet, promu top-level), `~/Claude/Projets/Gouvernance/` (ex-Consulting, promu projet autonome le 2026-06-03 ; le dossier LED Studio est devenu `~/Claude/Projets/ledstudio.ch` le 2026-07-03).
 
 **Pour la méthodo globale Pascal et les règles cross-projets** : voir `~/.claude/CLAUDE.md` (rules/ + commands/).
