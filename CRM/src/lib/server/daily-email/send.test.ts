@@ -8,7 +8,7 @@ const ENABLED: EmailDailyConfig = {
 	enabled: true,
 	apiKey: 're_test',
 	to: ['pascal@filmpro.ch', 'antoine@filmpro.ch'],
-	from: 'FilmPro CRM <noreply@filmpro.ch>'
+	from: 'FilmPro CRM <notifications@lamaisoncreativedirection.ch>'
 };
 
 const tache = (titre: string, date: string | null = null): TacheDue => ({
@@ -68,7 +68,7 @@ describe('sendDailyEmail - envoi Resend', () => {
 		expect(url).toBe('https://api.resend.com/emails');
 		const body = JSON.parse(opts.body);
 		expect(body.to).toEqual(['pascal@filmpro.ch', 'antoine@filmpro.ch']);
-		expect(body.from).toBe('FilmPro CRM <noreply@filmpro.ch>');
+		expect(body.from).toBe('FilmPro CRM <notifications@lamaisoncreativedirection.ch>');
 		expect(body.subject).toContain('Relances du jour');
 		expect(opts.headers.Authorization).toBe('Bearer re_test');
 	});

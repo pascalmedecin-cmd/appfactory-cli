@@ -52,7 +52,7 @@ const ENABLED_CONFIG: EmailBriefConfig = {
 	enabled: true,
 	apiKey: 're_fake_key_aaaaaaaaaaaaaaaaaaaaaa',
 	to: ['pascal@filmpro.ch', 'antoine@filmpro.ch'],
-	from: 'FilmPro Veille <noreply@filmpro.ch>'
+	from: 'FilmPro Veille <notifications@lamaisoncreativedirection.ch>'
 };
 
 describe('buildBriefPayload', () => {
@@ -191,7 +191,7 @@ describe('sendBriefEmail - gating', () => {
 		expect(fetchMock).toHaveBeenCalledTimes(1);
 		const body = JSON.parse(fetchMock.mock.calls[0][1].body);
 		expect(body.to).toEqual(['pascal@filmpro.ch', 'antoine@filmpro.ch']);
-		expect(body.from).toBe('FilmPro Veille <noreply@filmpro.ch>');
+		expect(body.from).toBe('FilmPro Veille <notifications@lamaisoncreativedirection.ch>');
 		expect(body.subject).toContain('Veille FilmPro');
 	});
 

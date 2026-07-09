@@ -17,7 +17,7 @@ export interface EmailDailyConfig {
 	apiKey?: string;
 	/** Destinataires (parses/dedupes/cappes a 20 par parseRecipients). */
 	to: string[];
-	/** Expediteur (domaine filmpro.ch verifie Resend, meme adresse que le weekly). */
+	/** Expediteur (domaine lamaisoncreativedirection.ch verifie Resend, meme adresse que le weekly). */
 	from: string;
 }
 
@@ -27,7 +27,7 @@ export type DailyEmailEnv = Partial<
 >;
 
 const DEFAULT_DAILY_TO = 'pascal@filmpro.ch,antoine@filmpro.ch';
-const DEFAULT_DAILY_FROM = 'FilmPro CRM <noreply@filmpro.ch>';
+const DEFAULT_DAILY_FROM = 'FilmPro CRM <notifications@lamaisoncreativedirection.ch>';
 
 /**
  * Construit la config daily depuis l'env. Gate case-insensitive `=== 'true'` (meme

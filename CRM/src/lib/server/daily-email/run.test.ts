@@ -8,7 +8,7 @@ const ENABLED: EmailDailyConfig = {
 	enabled: true,
 	apiKey: 're_test',
 	to: ['pascal@filmpro.ch', 'antoine@filmpro.ch'],
-	from: 'FilmPro CRM <noreply@filmpro.ch>'
+	from: 'FilmPro CRM <notifications@lamaisoncreativedirection.ch>'
 };
 
 /** Mock : un résultat par appel `.from()` (today puis late), proxy thenable. */

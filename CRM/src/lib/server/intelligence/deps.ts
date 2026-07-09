@@ -54,7 +54,7 @@ export interface VeilleDeps {
 
 const DEFAULT_TO = 'pascal@filmpro.ch';
 const DEFAULT_BRIEF_TO = 'pascal@filmpro.ch,antoine@filmpro.ch';
-const DEFAULT_FROM = 'FilmPro Veille <noreply@filmpro.ch>';
+const DEFAULT_FROM = 'FilmPro Veille <notifications@lamaisoncreativedirection.ch>';
 const DEFAULT_WINDOW_DAYS = 30;
 
 /**

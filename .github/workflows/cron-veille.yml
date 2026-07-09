@@ -95,10 +95,10 @@ jobs:
           RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
           EMAIL_RECAP_ENABLED: ${{ vars.EMAIL_RECAP_ENABLED || 'true' }}
           EMAIL_RECAP_TO: ${{ vars.EMAIL_RECAP_TO || 'pascal@filmpro.ch' }}
-          EMAIL_RECAP_FROM: ${{ vars.EMAIL_RECAP_FROM || 'FilmPro Veille <noreply@filmpro.ch>' }}
+          EMAIL_RECAP_FROM: ${{ vars.EMAIL_RECAP_FROM || 'FilmPro Veille <notifications@lamaisoncreativedirection.ch>' }}
           EMAIL_BRIEF_ENABLED: ${{ vars.EMAIL_BRIEF_ENABLED || 'true' }}
           EMAIL_BRIEF_TO: ${{ vars.EMAIL_BRIEF_TO || 'pascal@filmpro.ch,antoine@filmpro.ch' }}
-          EMAIL_BRIEF_FROM: ${{ vars.EMAIL_BRIEF_FROM || 'FilmPro Veille <noreply@filmpro.ch>' }}
+          EMAIL_BRIEF_FROM: ${{ vars.EMAIL_BRIEF_FROM || 'FilmPro Veille <notifications@lamaisoncreativedirection.ch>' }}
           VEILLE_ANTI_DOUBLONS_FROM: ${{ vars.VEILLE_ANTI_DOUBLONS_FROM || '' }}
           VEILLE_WINDOW_DAYS: ${{ vars.VEILLE_WINDOW_DAYS || '30' }}
         run: |

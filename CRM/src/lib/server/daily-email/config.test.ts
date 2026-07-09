@@ -40,8 +40,8 @@ describe('buildDailyEmailConfig - destinataires / from / clé', () => {
 		expect(c.to).toEqual(['a@x.ch', 'b@y.ch']);
 	});
 
-	it('from par défaut = noreply@filmpro.ch (domaine vérifié)', () => {
-		expect(buildDailyEmailConfig({}).from).toBe('FilmPro CRM <noreply@filmpro.ch>');
+	it('from par défaut = notifications@lamaisoncreativedirection.ch (domaine vérifié)', () => {
+		expect(buildDailyEmailConfig({}).from).toBe('FilmPro CRM <notifications@lamaisoncreativedirection.ch>');
 	});
 
 	it('from custom respecté', () => {
