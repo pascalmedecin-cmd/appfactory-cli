@@ -702,6 +702,39 @@ describe('runWeeklyGeneration - observability anti-aveugle', () => {
 		expect(sendBriefMock.mock.calls[0][0]).toMatchObject({ weekLabel: '2026-W18' });
 	});
 
+	it('régime normal (>= SPARSE_WEEK_THRESHOLD items) : le récap admin ne doublonne plus, seul le brief part', async () => {
+		const fresh = makeCapturingSupabase([
+			{ data: null, error: null }, // idempotence
+			{ data: null, error: null }, // markRunning
+			{ data: [], error: null }, // previousItems
+			{ data: { id: 'rep-2items' }, error: null } // publish
+		]);
+		const itemB = { ...itemZeroChip, rank: 2, title: 'second item de test 10 chars' };
+		generateMock.mockResolvedValue({
+			success: true,
+			report: { meta: metaOk, items: [itemZeroChip, itemB], impacts_filmpro: [] },
+			raw: {},
+			costs: { breakdown: [], total_usd: 1, total_eur: 1 }
+		});
+		(crossCheckBatch as Mock).mockResolvedValueOnce({
+			kept: [itemZeroChip, itemB],
+			rejected: [],
+			unverifiable: [],
+			apiErrorCount: 0
+		});
+
+		const result = await runWeeklyGeneration(
+			new Date('2026-05-01T06:00:00Z'),
+			makeMockDeps(fresh.client)
+		);
+
+		expect(result.ok).toBe(true);
+		// Le brief brandé (antoine@ + pascal@, logo) est le seul email de régime normal.
+		expect(sendBriefMock).toHaveBeenCalledTimes(1);
+		// Le récap admin (mode success, sans logo) NE part plus : fin du doublon hebdo.
+		expect(sendRecapMock).not.toHaveBeenCalled();
+	});
+
 	it('brief brandé NON envoyé quand l’édition est vide (0 item) : seul l’admin est alerté', async () => {
 		const fresh = makeCapturingSupabase([
 			{ data: null, error: null },

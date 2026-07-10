@@ -658,28 +658,34 @@ export async function runWeeklyGeneration(
 		console.error(`[veille→prospection] échec apply-signals (non-bloquant): ${sanitizeError(e)}`);
 	}
 
-	// Email récap (best-effort, n'influence pas le retour). Mode `sparse` si édition
-	// anormalement maigre (< SPARSE_WEEK_THRESHOLD items) → alerte distincte.
+	// Alerte « semaine creuse » (best-effort, n'influence pas le retour) : édition
+	// anormalement maigre (< SPARSE_WEEK_THRESHOLD items). Le récap hebdo « normal »
+	// (mode `success`, sans logo, admin seul) N'EST PLUS envoyé : il doublonnait le
+	// brief éditorial brandé ci-dessous (décision Pascal 2026-07-10). En régime normal,
+	// le brief (antoine@ + pascal@) est le seul email. Restent les deux alertes
+	// d'exploitation : semaine creuse (ici) et échec (markReportError, mode `failure`).
 	const isSparse = report.items.length < SPARSE_WEEK_THRESHOLD;
-	try {
-		const result = await sendRecapEmail(
-			{
-				mode: isSparse ? 'sparse' : 'success',
-				data: {
-					weekLabel: week.weekLabel,
-					report,
-					costs: gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 }
-				}
-			},
-			deps.email
-		);
-		if (!result.ok && !result.skipped) {
-			console.warn(
-				`[email-recap] ${isSparse ? 'sparse' : 'success'} recap not sent: ${sanitizeForLog(result.reason ?? '')}`
+	if (isSparse) {
+		try {
+			const result = await sendRecapEmail(
+				{
+					mode: 'sparse',
+					data: {
+						weekLabel: week.weekLabel,
+						report,
+						costs: gen.costs ?? { breakdown: [], total_usd: 0, total_eur: 0 }
+					}
+				},
+				deps.email
 			);
+			if (!result.ok && !result.skipped) {
+				console.warn(
+					`[email-recap] sparse recap not sent: ${sanitizeForLog(result.reason ?? '')}`
+				);
+			}
+		} catch (e) {
+			console.error(`[email-recap] unexpected error: ${sanitizeError(e)}`);
 		}
-	} catch (e) {
-		console.error(`[email-recap] unexpected error: ${sanitizeError(e)}`);
 	}
 
 	// Email #2 : brief éditorial brandé (résumé + signaux + liens) -> antoine@ + pascal@.
