@@ -61,7 +61,7 @@ describe('buildVeilleDepsFromEnvObject - validation env', () => {
 	it('email.to / email.from défaut si non définis (to = array)', () => {
 		const deps = buildVeilleDepsFromEnvObject(VALID_ENV);
 		expect(deps.email.to).toEqual(['pascal@filmpro.ch']);
-		expect(deps.email.from).toBe('FilmPro Veille <noreply@filmpro.ch>');
+		expect(deps.email.from).toBe('FilmPro Veille <notifications@lamaisoncreativedirection.ch>');
 	});
 
 	it('email.to / email.from override si définis', () => {
@@ -85,7 +85,7 @@ describe('buildVeilleDepsFromEnvObject - validation env', () => {
 	it('brief : config par défaut = pascal + antoine, hérite enabled du récap', () => {
 		const def = buildVeilleDepsFromEnvObject(VALID_ENV);
 		expect(def.brief.to).toEqual(['pascal@filmpro.ch', 'antoine@filmpro.ch']);
-		expect(def.brief.from).toBe('FilmPro Veille <noreply@filmpro.ch>');
+		expect(def.brief.from).toBe('FilmPro Veille <notifications@lamaisoncreativedirection.ch>');
 		// enabled hérite de EMAIL_RECAP_ENABLED quand EMAIL_BRIEF_ENABLED absent.
 		expect(def.brief.enabled).toBe(false);
 		expect(
