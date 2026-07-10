@@ -82,4 +82,34 @@ describe('selectByMix', () => {
 		const r = selectByMix([mk(1, 'monde')], 10);
 		expect(r.drift).toBe(false);
 	});
+
+	// Plancher recalibré à 0.30 le 2026-07-10 : une édition ~38 % locale (cas W28,
+	// 3 local / 8 total) est jugée de bonne qualité et NE déclenche plus le canari.
+	it('drift=false à ~38% local (>= plancher 0.30, cas W28)', () => {
+		const r = selectByMix(
+			[
+				mk(1, 'suisse_romande'),
+				mk(2, 'suisse_romande'),
+				mk(3, 'suisse'),
+				mk(4, 'monde'),
+				mk(5, 'monde'),
+				mk(6, 'monde'),
+				mk(7, 'monde'),
+				mk(8, 'monde')
+			],
+			10
+		);
+		expect(r.mix.localShare).toBeCloseTo(3 / 8);
+		expect(r.drift).toBe(false);
+	});
+
+	// Sous le plancher 0.30, la vraie dérive « trop monde » reste détectée.
+	it('drift=true à 20% local (< plancher 0.30)', () => {
+		const r = selectByMix(
+			[mk(1, 'suisse_romande'), mk(2, 'monde'), mk(3, 'monde'), mk(4, 'monde'), mk(5, 'monde')],
+			10
+		);
+		expect(r.mix.localShare).toBeCloseTo(1 / 5);
+		expect(r.drift).toBe(true);
+	});
 });

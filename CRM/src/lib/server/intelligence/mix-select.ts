@@ -33,14 +33,20 @@ export interface MixSelection {
 export interface MixOptions {
 	/** Cible de part locale (défaut 2/3). */
 	localTargetRatio?: number;
-	/** Plancher de part locale sous lequel on signale une dérive (défaut 0.5). */
+	/** Plancher de part locale sous lequel on signale une dérive (défaut 0.30). */
 	driftLocalShareFloor?: number;
 	/** Nb minimal d'items publiés pour juger d'une dérive (défaut 3). */
 	driftMinItems?: number;
 }
 
 const DEFAULT_LOCAL_TARGET_RATIO = 2 / 3;
-const DEFAULT_DRIFT_FLOOR = 0.5;
+// Plancher de dérive recalibré 0.5 → 0.30 le 2026-07-10 (décision Pascal). La cible
+// éditoriale reste 2/3 local, mais le canari ne doit se déclencher que sur une VRAIE
+// dérive « tout-monde » (0 % local des semaines W20-W24, baseline 77 % monde = 23 %
+// local qui déclenche encore < 0.30), pas sur des semaines à ~38 % jugées de bonne
+// qualité (W28 : 3/8 local, contenu monde pertinent). Le ratio géo n'est pas un proxy
+// de qualité éditoriale : sous 30 % = édition anormalement peu ancrée, à investiguer.
+const DEFAULT_DRIFT_FLOOR = 0.3;
 const DEFAULT_DRIFT_MIN_ITEMS = 3;
 
 function isLocal(it: IntelligenceItem): boolean {
