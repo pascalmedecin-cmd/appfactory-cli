@@ -1,9 +1,18 @@
 # CRM FilmPro : CLAUDE.md
 
+## Chantier « Atelier 209 » (démarré 2026-07-14)
+
+Le CRM FilmPro devient l'outil de prospection **des deux marques** (LED Studio + FilmPro), sous un **portail neutre « Atelier 209 »**, avec deux environnements **étanches**. Un seul outil, une seule base : ni fork, ni deuxième application. Livraison en **8 runs** pilotés par `/product`.
+
+- **Source de vérité de l'exécution → `docs/ATELIER-209-SUIVI.md`** : statut par run, décisions, preuves. À lire au démarrage de toute session du chantier.
+- **Le « pourquoi » (cadrage figé, archive hors-repo)** : `~/Claude/Lab/memory/atelier-209/` (contrat, état du code, découpage en runs, risques). Non maintenu - la vérité vivante est le suivi ci-dessus.
+- **Règles non négociables** : Pascal valide **chaque maquette d'écran** dans Chrome avant toute ligne de code ; **non-régression** garantie (colonne `marque`, défaut `filmpro` : le CRM se comporte exactement comme avant) ; **zéro dette** (les 4 dettes du code sont corrigées, pas contournées) ; tout **sourcé et vérifié**, jamais inventé. Hors scope : refonte du CRM existant, déménagement du module Découpe, renommage du dossier disque.
+- **Skills design (runs 1+, annoncés au plan)** : `redesign-skill`, `soft-skill`, `theme-factory`, filtre `ANTI-AI-SLOP.md`. **État : Run 0 terminé (5/7 vérifs)** ; V6 Hunter / V7 Pingen en attente comptes Pascal. **Prochaine étape : Run 1** (portail renommé, `atelier209.ch`, connexion refaite, admin réparé) - voir suivi.
+
 **Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; container racine = stub. Contexte → `memory/project_appfactory_restructure.md`.
 
 **Statut :** Portail FilmPro multi-outils en prod : CRM (`/crm`) + Découpe Films (`/decoupe`) sur `filmpro-portail.vercel.app`. Formation IA = projet autonome `Formation/` (`cc` option 5). Historique (V3 terrain, Signaux V4, golden v9, restructure S173-S174) → `archive/`.
-**Dernière mise à jour :** 2026-07-14 (**login CRM réparé : expéditeur du code de connexion basculé sur le domaine vérifié, config Supabase hors-repo** → § Livré). Trunk = `main` ; Flag `ffCrmListesV2` **ON fondateurs**. Prod = `filmpro-portail.vercel.app` (push `main` auto-déploie, intermittent - cf. Watch). **À FAIRE Pascal** : variable Daily Email (§ Chez Pascal). **Prochain bug :** #001.
+**Dernière mise à jour :** 2026-07-14 (**chantier Atelier 209 démarré - Run 0 des vérifications livré** → § Chantier en tête + `docs/ATELIER-209-SUIVI.md`). Trunk = `main` ; Flag `ffCrmListesV2` **ON fondateurs**. Prod = `filmpro-portail.vercel.app` (push `main` auto-déploie, intermittent - cf. Watch). **À FAIRE Pascal** : réserver `atelier209.ch` + comptes Hunter & Pingen + variable Daily Email (§ Chez Pascal). **Prochain bug :** #001.
 **Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175, S122-S125, S70-S107).
 
 
@@ -132,7 +141,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Emailing prospection automatisée** (à cadrer, § Backlog dev). Workflow campagne e2e **clos et prouvé prod 03/07** : câblage page dédiée livré (`640cda2`), message de partage enrichi (`6f385c0`), smoke Pascal fait (login OTP + lien de validation réel). **Geste Pascal restant** : variable Daily Email (§ Chez Pascal).
+**Prochaine attaque** : **Chantier Atelier 209 - Run 1** (« Atelier 209 existe » : portail renommé, adresse `atelier209.ch`, connexion refaite, droits admin réparés). Piloté par `/product` ; démarre par les maquettes **Portail + Connexion** à valider dans Chrome avant tout code. Suivi complet → `docs/ATELIER-209-SUIVI.md`. Backlog CRM pré-existant (Emailing, e2e validation) = secondaire.
 
 ### Règle backlog (WIP-limité, gravée 2026-06-28)
 
@@ -140,11 +149,15 @@ Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude sans dépendance 
 
 ### Backlog dev (actionnable par Claude)
 
+- [ ] **[EXÉCUTABLE]** Atelier 209 - Run 1 (« Atelier 209 existe ») : maquettes **Portail + Connexion** à valider dans Chrome, puis renommage du portail, adresse `atelier209.ch` + redirection permanente, page de connexion refaite (`soft-skill`), login `@lamaisoncreativedirection.ch` (variable d'env), correction dette D1 (**2 réglages admin typés** : email exact feedback `=` vs domaine signaux `LIKE`). Piloté par `/product`, maquettes validées avant tout code. → `docs/ATELIER-209-SUIVI.md`.
 - [ ] **[EXÉCUTABLE]** e2e Playwright validation externe (base jetable Colima) : parcours public `/validation/<token>` (sans session → Garder/Retirer → re-clic annule → « Envoyer la validation » → lien révoqué/expiré) + parcours fondateur (générer → décisions → badge « Validation reçue » → appliquer retraits) + étiquettes « ignorer les Retirer ». Ferme la dette « déployé `8b90f6d` sans Playwright feature-spécifique » (couverte pour l'instant par 2545 unit + 3 audits 0 H/C + smoke Pascal + parcours navigateur réel piloté à la main le 03/07, scripts non conservés). → [[project_validation_externe_campagne_2026-07-02]].
 - [ ] **[EXÉCUTABLE]** Emailing prospection automatisée : moteur d'envoi automatisé de séquences d'emails aux prospects (Resend, **templates pré-rédigés, zéro LLM** - règle dure). Étape 1 = cadrage court Pascal (contenu/cible/séquence/fréquence/déclencheur, **pas de réunion**), puis 1 session de code + gate ON/OFF (**OFF par défaut**). **Gate de mise en prod** (pas avant le dev) : (a) DNS `send.filmpro.ch` Resend, (b) base légale nLPD + mention, (c) contenu validé. (Ex-« Vague 4 ».)
 
 ### Chez Pascal (hors backlog dev - gestes manuels, quand tu veux)
 
+- [ ] **[BLOQUÉ - toi : réserver le domaine]** Réserver `atelier209.ch` (Infomaniak pour un `.ch`). Débloque l'adresse du Run 1 Atelier 209 (`atelier209.studio` en défensif optionnel). → `docs/ATELIER-209-SUIVI.md`.
+- [ ] **[BLOQUÉ - toi : créer le compte gratuit]** Compte Hunter (25 recherches/mois, 0 CHF, hunter.io). Débloque V6 → Run 4 (enrichissement décideur). → `docs/ATELIER-209-SUIVI.md`.
+- [ ] **[BLOQUÉ - toi : créer le compte]** Compte Pingen (sans abonnement, ~1,58 CHF/lettre, pingen.com). Débloque V7 → Run 5 (envoi postal). → `docs/ATELIER-209-SUIVI.md`.
 - [ ] **[BLOQUÉ - toi : poser 1 variable Vercel]** Allumer l'envoi du Daily Email : `EMAIL_DAILY_ENABLED=true` en env Vercel Prod (zéro redéploiement, gate OFF = 0 envoi ; le smoke OTP prérequis est fait). → [[project_daily_email_module_2026-06-25]].
 
 ### Parking (attente datée - rien à faire avant la date)
@@ -160,10 +173,9 @@ Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude sans dépendance 
 
 ### Livré cette session
 
+- [x] ~~**Atelier 209 - Run 0 (vérifications) livré**~~ - 2026-07-14 (ultracode). Chantier démarré, suivi installé (`docs/ATELIER-209-SUIVI.md` = source de vérité) + section en tête du CLAUDE.md. **5/7 vérifs** : veille FilmPro **11-13 CHF/mois** (2 veilles ~23-27) ; sources LED = **import indispensable** (aucune API ne liste les exposants d'un salon ; Places/search.ch riches, Zefix faible) ; **base prod conforme** aux migrations (feu vert sécurité) ; **base jetable OK** (48/48 migrations, dette D5 : pas de seed) ; **`atelier209.ch` libre**. Passe adversariale : dette D1 **asymétrique** (feedback = email exact, signaux = domaine) → Run 1 = 2 réglages typés. V6/V7 (Hunter/Pingen) en attente comptes Pascal. 0 code touché. → `docs/ATELIER-209-SUIVI.md`.
 - [x] ~~**Login CRM réparé : le code de connexion repart**~~ - 2026-07-14 (**FIX CONFIG PROD**, panne remontée par Pascal). Le code de connexion (OTP) ne partait plus : Resend rejetait l'envoi (« filmpro.ch non vérifié », 550, prouvé dans les logs Auth). Cause = l'expéditeur du login est réglé dans **Supabase Auth (hors repo)** et était resté sur `noreply@filmpro.ch` - seul canal email oublié le 9/07 quand le compte Resend a été réorganisé autour de `lamaisoncreativedirection.ch` (cause racine confirmée par Pascal). Fix via l'API Management Supabase : expéditeur → `notifications@lamaisoncreativedirection.ch` (sender « FilmPro » inchangé, clé Resend restaurée). **Vérifié end-to-end** : envoi OTP réel → 200, reconnexion réelle de pascal@filmpro.ch dans les logs (11h23). Aucun fichier repo modifié ; balayage des 3 canaux d'envoi de **prod** (login/veille/daily) = 0 résidu filmpro.ch (hors fixtures de test), vars GitHub veille vérifiées à jour. Régression transitoire causée en séance (bloc SMTP effacé par un PATCH partiel) reconstruite et prouvée. → [[project_login_otp_smtp_supabase_2026-07-14]].
-- [x] ~~**Veille : doublon email hebdo supprimé (garder les alertes)**~~ - 2026-07-10 (**LIVRÉ PROD** `ac744f3`, demande Pascal). Chaque vendredi le pipeline envoyait 2 emails : le récap admin (mode `success`, sans logo, pascal@ seul) ET le brief éditorial brandé (logo FilmPro, antoine@ + pascal@). Le récap `success` **ne part plus** ; en régime normal le brief est le seul email. Les 2 alertes d'exploitation du même canal sont **conservées** (décision Pascal, question posée) : semaine creuse (mode `sparse`) + échec de génération (mode `failure`). Fix chirurgical dans `run-generation.ts` (envoi conditionné à `isSparse`) ; le mode `success` reste dans `email-recap.ts`, testé via `buildRecapPayload`, non déclenché en prod. Test régime normal ≥ 2 items ajouté (récap absent, brief présent). QA 2548 verts, typecheck 0. Effectif au prochain cron veille (GitHub Actions, vendredi W29).
-- [x] ~~**Veille : plancher de dérive part locale recalibré 50 % → 30 %**~~ - 2026-07-10 (**LIVRÉ PROD** `7e280c2`, demande Pascal). Le canari `mix_drift` (`mix-select.ts`, warning de **logs** GHA, pas un email) alertait sous 50 % de part locale, ce qui frappait des semaines de bonne qualité mais à mix monde élevé (W28 ce matin : 3/8 local = 38 %). Le ratio géo n'est pas un proxy de qualité. Plancher abaissé à 30 % après **vérif sur l'historique réel W18-W28** (requête DB read-only) : ne se déclenche plus que sur une vraie dérive « tout-monde » (baseline 77 % monde = 23 % local ; semaines W20-W24 à 0 %). Cible éditoriale 2/3 local inchangée. 2 tests ajoutés (38 % ne déclenche pas, 20 % déclenche). QA 2548 verts.
-→ Antérieurs (veille fix pause_turn + rattrapage W27 `2a5207e` 03/07 → [[feedback_pause_turn_reprise_pas_echec]] ; étiquettes aperçu = PDF réel zoomable & jamais tronqué `1643435` 03/07 → [[feedback_apercu_pdf_blob_iframe_pas_rendu_parallele]] ; message partage multi-valideurs `6f385c0` 03/07 ; bouton retour panneau `2f5b5b8` + panneau prospects in-page & fix 16 leads `c7efdd4` 02/07 ; Lots 1-3 refonte `db6182e`/`aff32cd`/`6c0dc71` 01/07 ; étiquettes page dédiée `e263240` ; Aide `d402fe7` ; Découpe `0af198d` ; fix session 7j `c7545ed` ; Blocs A/B/D ; veille ; Daily Email `d1db821`) → versions longues verbatim : `archive/claude-md-crm-livre-2026-07-03.md` + `archive/claude-md-crm-livre-2026-07-02.md` + `archive/claude-md-crm-livre-2026-06-26.md` + mémoires [[project_refonte_signaux_prospects_campagnes_2026-07-01]].
+→ Antérieurs (veille doublon email `ac744f3` + plancher part locale `7e280c2` 10/07 ; pause_turn/W27 `2a5207e`, étiquettes PDF `1643435`, refonte Lots 1-3, Aide, Découpe, Daily Email, etc.) → `archive/claude-md-crm-livre-2026-07-14.md` + `-07-03.md` + `-07-02.md` + `-06-26.md`.
 
 ### Watch list active après pivot
 

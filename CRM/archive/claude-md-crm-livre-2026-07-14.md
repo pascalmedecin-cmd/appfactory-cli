@@ -1,0 +1,13 @@
+# CRM CLAUDE.md - « Livré » archivés le 2026-07-14
+
+> Sortis de la section « Livré cette session » du `CRM/CLAUDE.md` lors de la clôture du 2026-07-14
+> (condensation POIDS ; le chantier Atelier 209 a ajouté du contenu frais). Verbatim conservé ici.
+
+## Veille (10/07)
+
+- [x] ~~**Veille : doublon email hebdo supprimé (garder les alertes)**~~ - 2026-07-10 (**LIVRÉ PROD** `ac744f3`, demande Pascal). Chaque vendredi le pipeline envoyait 2 emails : le récap admin (mode `success`, sans logo, pascal@ seul) ET le brief éditorial brandé (logo FilmPro, antoine@ + pascal@). Le récap `success` **ne part plus** ; en régime normal le brief est le seul email. Les 2 alertes d'exploitation du même canal sont **conservées** (décision Pascal, question posée) : semaine creuse (mode `sparse`) + échec de génération (mode `failure`). Fix chirurgical dans `run-generation.ts` (envoi conditionné à `isSparse`) ; le mode `success` reste dans `email-recap.ts`, testé via `buildRecapPayload`, non déclenché en prod. Test régime normal ≥ 2 items ajouté (récap absent, brief présent). QA 2548 verts, typecheck 0. Effectif au prochain cron veille (GitHub Actions, vendredi W29).
+- [x] ~~**Veille : plancher de dérive part locale recalibré 50 % → 30 %**~~ - 2026-07-10 (**LIVRÉ PROD** `7e280c2`, demande Pascal). Le canari `mix_drift` (`mix-select.ts`, warning de **logs** GHA, pas un email) alertait sous 50 % de part locale, ce qui frappait des semaines de bonne qualité mais à mix monde élevé (W28 ce matin : 3/8 local = 38 %). Le ratio géo n'est pas un proxy de qualité. Plancher abaissé à 30 % après **vérif sur l'historique réel W18-W28** (requête DB read-only) : ne se déclenche plus que sur une vraie dérive « tout-monde » (baseline 77 % monde = 23 % local ; semaines W20-W24 à 0 %). Cible éditoriale 2/3 local inchangée. 2 tests ajoutés (38 % ne déclenche pas, 20 % déclenche). QA 2548 verts.
+
+## Antérieurs (pointeur d'origine)
+
+→ Antérieurs (veille fix pause_turn + rattrapage W27 `2a5207e` 03/07 → [[feedback_pause_turn_reprise_pas_echec]] ; étiquettes aperçu = PDF réel zoomable & jamais tronqué `1643435` 03/07 → [[feedback_apercu_pdf_blob_iframe_pas_rendu_parallele]] ; message partage multi-valideurs `6f385c0` 03/07 ; bouton retour panneau `2f5b5b8` + panneau prospects in-page & fix 16 leads `c7efdd4` 02/07 ; Lots 1-3 refonte `db6182e`/`aff32cd`/`6c0dc71` 01/07 ; étiquettes page dédiée `e263240` ; Aide `d402fe7` ; Découpe `0af198d` ; fix session 7j `c7545ed` ; Blocs A/B/D ; veille ; Daily Email `d1db821`) → versions longues verbatim : `archive/claude-md-crm-livre-2026-07-03.md` + `archive/claude-md-crm-livre-2026-07-02.md` + `archive/claude-md-crm-livre-2026-06-26.md` + mémoires [[project_refonte_signaux_prospects_campagnes_2026-07-01]].
