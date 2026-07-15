@@ -28,7 +28,7 @@ base : ni fork, ni deuxième application. Livraison par **runs** pilotés par `/
 |---|---|---|---|
 | **0** | Les 7 vérifications | **Terminé (5/7)** le 2026-07-14 ; V6/V7 en attente comptes Pascal | - |
 | 1 | Atelier 209 existe (nom, connexion refaite, droits admin réparés) | **DÉPLOYÉ prod le 2026-07-15** (identité + rôles/RLS + connexion 4 adresses). Seul le renommage d'URL `atelier209.vercel.app` est **différé** (config domaine Vercel à faire proprement) - app à `filmpro-portail.vercel.app` | Portail · Connexion **(validés)** |
-| 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) + **golden CRM revu (couleurs + Inter partout, pas de refonte) + chrome (sidemenu/header/footer) décliné par marque LED/FilmPro pour distinguer** (note Pascal 15/07) | **CÂBLAGE COMPLET + testé (leak 10/10, Vitest 2562, audit 0 C/H) sur `run2-marque` 2026-07-15**. Reste 2 gestes Pascal : validation visuelle Chrome + go migration/déploiement prod | Sélecteur · Menu teinté · Golden CRM **(validés)** |
+| 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) + **golden CRM revu (couleurs + Inter partout, pas de refonte) + chrome (sidemenu/header/footer) décliné par marque LED/FilmPro pour distinguer** (note Pascal 15/07) | **DÉPLOYÉ prod le 2026-07-15** (migration marque appliquée + vérifiée, **non-régression prouvée**, smoke prod vert ; logo LED corrigé HD). Live `filmpro-portail.vercel.app`. LED reste vide jusqu'au Run 3. | Sélecteur · Menu teinté · Golden CRM **(validés)** |
 | 3 | Les prospects LED entrent (import de liste, sources par marque, source unique secteurs) | À venir | Import |
 | 4 | On trouve le décideur (connecteur Hunter) | Bloqué par V6 | Enrichissement |
 | 5 | On envoie et on mesure (Pingen, relance, provenance, rendement) | Bloqué par V7 | Envoi postal · Provenance |
@@ -176,11 +176,13 @@ Le renommage du projet Vercel (`filmpro-portail` -> `atelier209`) a été testé
 
 ---
 
-# Run 2 - CÂBLAGE COMPLET, prêt pour gate prod (2026-07-15)
+# Run 2 - DÉPLOYÉ EN PROD (2026-07-15)
 
-**Statut : câblage applicatif terminé et testé sur la branche `run2-marque`. NON déployé.**
-**Reste 2 gestes Pascal** : (1) **validation visuelle Chrome** du chrome teinté (les 2 marques + Inter
-sur les tables denses = ton DevTools, `§E2`), (2) **go migration prod (`pg`) + déploiement**.
+**Statut : Run 2 EN PROD.** Gate visuel franchi (Pascal a validé les 2 marques dans Chrome ; le logo LED
+du sidemenu, signalé « flou », a été régénéré HD et validé), migration `marque` appliquée + vérifiée en
+prod, code mergé sur `main` (`48d0e66`), déploiement Vercel Ready, smoke prod vert. Live à
+`filmpro-portail.vercel.app` sous l'identité Atelier 209. L'environnement LED existe mais est **vide**
+(les prospects LED entrent au Run 3).
 
 ## Ce qui a été livré (branche `run2-marque`)
 
@@ -226,14 +228,19 @@ que @led est un **miroir exact** teinté. Résultat : **0 régression FilmPro co
   2. Message d'état vide de l'écran Signaux en LED cite « radar SIMAP (marchés publics construction) »
      (texte FilmPro, **Q2 veille FilmPro-only**) : trompeur pour LED. → adapter au Run 7 (veille LED).
 
-## Gate prod (à faire, avec le go de Pascal)
+## Gate prod - FAIT le 2026-07-15 (go explicite de Pascal)
 
-1. **Toi (Pascal)** : ouvrir le CRM local (ou une preview) et valider le chrome LED/FilmPro dans Chrome
-   (bascule via le sélecteur ; regarder les tables denses en Inter, DevTools).
-2. **Go migration** : appliquer `20260715120000_marque_cloisonnement.sql` en prod via lib `pg`
-   (`DATABASE_URL_ADMIN` ; le MCP Supabase est read-only, comme les migrations rôles/campagnes).
-   La migration est idempotente + backfill DEFAULT 'filmpro' = non-régression (le CRM prod reste FilmPro).
-3. **Déploiement** : merge `run2-marque` → `main` (auto-deploy) OU `vercel deploy --prod`.
+1. **Validation visuelle Pascal** : les 2 marques regardées dans Chrome (preview locale premium, base
+   jetable Colima seed 2 marques). Seul défaut : logo LED sidemenu « flou » → régénéré HD (Poppins
+   Bold/SemiBold, studio agrandi), validé. Reste « ok ».
+2. **Migration prod appliquée + vérifiée** via `node scripts/apply-marque-migration.mjs`
+   (`DATABASE_URL_ADMIN`, transaction unique). Contrôles : 12 colonnes `marque` + 12 CHECK + 2 clés
+   composites + 3 FK de cohérence + FK simples redondantes supprimées + fonctions réécrites. **Preuve de
+   non-régression** : 100 % des lignes existantes en `filmpro` (prospect_leads 312, contacts 1, campagnes
+   2, opportunités 1 ; entreprises vide), zéro ligne non-filmpro.
+3. **Déploiement** : merge `run2-marque` → `main` (`48d0e66`), push, Vercel auto-deploy **Ready**.
+4. **Smoke prod vert** : `/login` 200 + titre « Atelier 209 », logo LED HD servi (viewBox 895),
+   `/api/marque` 303 (route déployée, gate auth actif).
 
 ## Correctif pendant le gate visuel (2026-07-15)
 
