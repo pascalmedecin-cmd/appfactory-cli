@@ -99,7 +99,7 @@
 	</div>
 
 	<footer class="portal-footer reveal" style="--d:.34s">
-		Atelier 209 · La Maison Creative Direction
+		Atelier 209 · La Maison Creative Direction SA
 	</footer>
 </AtelierShell>
 
