@@ -1,9 +1,10 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import BrandSwitcher from '$lib/components/BrandSwitcher.svelte';
 	import { config, CRM_BASE } from '$lib/config';
 	import { createSupabaseBrowserClient } from '$lib/supabase';
 
-	let { collapsed = $bindable(false), currentPath = '', unreadIntelligence = 0, premium = false, onNavigate }: { collapsed?: boolean; currentPath?: string; unreadIntelligence?: number; premium?: boolean; onNavigate?: () => void } = $props();
+	let { collapsed = $bindable(false), currentPath = '', unreadIntelligence = 0, premium = false, marque = 'filmpro', onNavigate }: { collapsed?: boolean; currentPath?: string; unreadIntelligence?: number; premium?: boolean; marque?: 'filmpro' | 'led'; onNavigate?: () => void } = $props();
 
 	// Vague 3.2 : les entrées `premiumOnly` (Campagnes) n'apparaissent qu'avec le flag ffCrmListesV2.
 	const navItems = $derived(config.navigation.primary.filter((item) => !('premiumOnly' in item && item.premiumOnly) || premium));
@@ -28,25 +29,9 @@
 	style="width: {collapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)'}"
 	aria-label="Navigation principale"
 >
-	<!-- Logo cliquable = retour portail FilmPro (home /). -->
-	<a
-		href="/"
-		class="brand-link flex items-center px-4 py-5 shrink-0 overflow-hidden"
-		aria-label="Retour au portail FilmPro"
-		onclick={() => onNavigate?.()}
-	>
-		{#if !collapsed}
-			{#if config.branding.logoWhite}
-				<img src="/{config.branding.logoWhite}" alt={config.app.name} class="h-7 w-auto" />
-			{:else if config.branding.logo}
-				<img src="/{config.branding.logo}" alt={config.app.name} class="h-7 w-auto" />
-			{:else}
-				<span class="font-bold text-lg tracking-tight truncate">{config.app.name}</span>
-			{/if}
-		{:else}
-			<span class="font-bold text-lg">{config.app.name[0]}</span>
-		{/if}
-	</a>
+	<!-- Sélecteur d'environnement (FilmPro / LED Studio) = en-tête du menu. Le retour
+	     portail vit désormais dans le menu déroulant du sélecteur. -->
+	<BrandSwitcher {marque} {collapsed} />
 
 	<div class="flex-1 px-3 py-1 overflow-y-auto space-y-0.5 md:space-y-1.5">
 		{#each navItems as item}

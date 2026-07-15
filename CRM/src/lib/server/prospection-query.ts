@@ -23,6 +23,7 @@ import { PROSPECTION_TABS, TAB_SOURCE_MAP, VALID_SORT_KEYS, type ProspectionTabK
 import { isProspectionTabVisible, defaultProspectionTab } from '$lib/prospection-flags';
 import { escapeIlike } from '$lib/server/db-helpers';
 import { leadIdsForCampagnes } from '$lib/server/campagnes';
+import type { Marque } from '$lib/marque';
 
 /** Champs balayés par la recherche texte (les 3, partout — corrige la divergence all-ids). */
 export const PROSPECTION_SEARCH_FIELDS = ['raison_sociale', 'localite', 'canton'] as const;
@@ -42,6 +43,9 @@ const MAX_SEARCH_LEN = 200;
 const LEGACY_STATUT_REMAP: Record<string, string> = { nouveau: 'vide', interesse: 'a_contacter' };
 
 export type ProspectionFilter = {
+	/** Atelier 209 Run 2 : marque active (cloisonnement). Portée par le filtre → appliquée
+	 *  une fois dans applyProspectionScopeFilters, couvre liste + export + all-ids. */
+	marque: Marque;
 	tab: ProspectionTabKey;
 	tabSources: readonly string[];
 	/** Sources demandées intersectées avec celles de l'onglet (ou toutes celles de l'onglet si vide). */
@@ -74,8 +78,9 @@ export function resolveProspectionTab(rawTab: string | null): ProspectionTabKey 
 		: fallback;
 }
 
-/** Parse les paramètres d'URL en un filtre normalisé, identique pour les 3 appelants. */
-export function parseProspectionFilter(url: URL): ProspectionFilter {
+/** Parse les paramètres d'URL en un filtre normalisé, identique pour les 3 appelants.
+ *  `marque` = marque active (locals.marque) : elle n'est jamais dans l'URL, l'appelant la passe. */
+export function parseProspectionFilter(url: URL, marque: Marque): ProspectionFilter {
 	const tab = resolveProspectionTab(url.searchParams.get('tab'));
 	const tabSources = TAB_SOURCE_MAP[tab];
 
@@ -98,6 +103,7 @@ export function parseProspectionFilter(url: URL): ProspectionFilter {
 	const sourceFilterIncompatible = filterSources.length > 0 && effectiveSources.length === 0;
 
 	return {
+		marque,
 		tab, tabSources, effectiveSources, sourceFilterIncompatible,
 		filterSources, filterCantons, filterStatuts, filterCampagnes,
 		showDismissed, search, sortKey, sortAsc,
@@ -114,6 +120,9 @@ export function parseProspectionFilter(url: URL): ProspectionFilter {
  */
 export function applyProspectionScopeFilters<T>(query: T, f: ProspectionFilter): T {
 	let q = query as any;
+	// Atelier 209 Run 2 : cloisonnement bi-marque. Appliqué ici (portée) = couvre la vue
+	// principale, l'export CSV et la sélection globale d'ids (tous passent par ce helper).
+	q = q.eq('marque', f.marque);
 	if (f.filterCantons.length > 0) q = q.in('canton', f.filterCantons);
 	// Lot 2 : portée par statut. Défaut = file de tri (statut='vide'). La vue « Écartés »
 	// (showDismissed) montre les 'ecarte'. Un filtre statut explicite (?statut=) prime.
@@ -152,7 +161,7 @@ export async function resolveCampagneLeadIds(
 	filter: ProspectionFilter,
 ): Promise<string[] | null> {
 	if (filter.filterCampagnes.length === 0) return null;
-	return leadIdsForCampagnes(supabase as never, filter.filterCampagnes);
+	return leadIdsForCampagnes(supabase as never, filter.marque, filter.filterCampagnes);
 }
 
 /**

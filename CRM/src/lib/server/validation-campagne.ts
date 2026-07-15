@@ -20,6 +20,7 @@
 import { createHash, randomBytes } from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/database.types';
+import type { Marque } from '$lib/marque';
 
 /** Durée de vie d'un lien de validation : 2 jours (décision Pascal 02/07). */
 export const VALIDATION_LIEN_TTL_MS = 2 * 24 * 60 * 60 * 1000;
@@ -107,6 +108,7 @@ export async function revokeValidationLiens(
  */
 export async function createValidationLien(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	campagneId: string,
 	userId: string | null
 ): Promise<{ data: { token: string; expiresAt: string } | null; error: DbError }> {
@@ -127,6 +129,7 @@ export async function createValidationLien(
 			token_hash: hashValidationToken(token),
 			expires_at: expiresAt,
 			created_by: userId,
+			marque,
 		});
 		if (!error) return { data: { token, expiresAt }, error: null };
 		// Seul le conflit d'unicité (lien actif concurrent) est réessayable ; toute autre erreur remonte.

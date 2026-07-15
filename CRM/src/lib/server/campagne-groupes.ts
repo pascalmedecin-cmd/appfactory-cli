@@ -18,6 +18,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/database.types';
+import type { Marque } from '$lib/marque';
 import type { CampagneError } from '$lib/server/campagnes';
 import { GROUPE_NOM_MAX, MAX_GROUPE_LEAD_IDS, type CampagneGroupe } from '$lib/campagne-groupes';
 
@@ -43,11 +44,13 @@ function nomInvalide(nom: string): boolean {
 /** Liste les groupes d'une campagne (le tri d'affichage - alphabétique fr - est fait côté pur). */
 export async function listGroupes(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	campagneId: string
 ): Promise<{ data: CampagneGroupe[]; error: { message: string } | null }> {
 	const { data, error } = await supabase
 		.from('campagne_groupes')
 		.select('*')
+		.eq('marque', marque)
 		.eq('campagne_id', campagneId)
 		.order('date_creation', { ascending: true });
 	if (error) return { data: [], error };
@@ -57,15 +60,19 @@ export async function listGroupes(
 /** Crée un groupe dans une campagne. Conflit de nom (insensible à la casse) -> `duplicate`. */
 export async function createGroupe(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	input: { campagneId: string; nom: string; userId: string | null }
 ): Promise<{ data: CampagneGroupe | null; error: CampagneError | null }> {
 	const nom = sanitizeNom(input.nom);
 	if (nomInvalide(nom)) {
 		return { data: null, error: { code: 'invalid', message: 'Nom de groupe invalide.' } };
 	}
+	// marque du groupe = marque active (== marque de la campagne parente) : la FK composite
+	// (campagne_id, marque) → campagnes(id, marque) rejette (23503) sinon. La poser est
+	// OBLIGATOIRE : sans elle, le DEFAULT 'filmpro' casse la création d'un groupe LED.
 	const { data, error } = await supabase
 		.from('campagne_groupes')
-		.insert({ campagne_id: input.campagneId, nom, created_by: input.userId })
+		.insert({ campagne_id: input.campagneId, nom, created_by: input.userId, marque })
 		.select('*')
 		.single();
 	if (error) {

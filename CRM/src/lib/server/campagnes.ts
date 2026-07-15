@@ -22,6 +22,7 @@
  */
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/database.types';
+import type { Marque } from '$lib/marque';
 import { isValidationDecision, type ProspectCampagne } from '$lib/campagnes';
 import {
 	COULEUR_SLUGS,
@@ -64,12 +65,14 @@ const UNIQUE_VIOLATION = '23505';
  */
 export async function listCampagnes(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	opts: { includeArchived?: boolean } = {}
 ): Promise<{ data: CampagneWithCount[]; error: { message: string } | null }> {
 	const { includeArchived = true } = opts;
 	let q = supabase
 		.from('campagnes')
 		.select('*, prospect_lead_campagnes(count)')
+		.eq('marque', marque)
 		.order('date_creation', { ascending: false });
 	if (!includeArchived) q = q.eq('archived', false);
 
@@ -95,9 +98,17 @@ export async function listCampagnes(
  */
 export async function getCampagne(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	id: string
 ): Promise<{ data: Campagne | null; error: { message: string } | null }> {
-	const { data, error } = await supabase.from('campagnes').select('*').eq('id', id).maybeSingle();
+	// Gate marque : une campagne d'une autre marque renvoie `null` (= 404 côté page),
+	// jamais ses données ni ses prospects (cloisonnement, y compris sur id deviné dans l'URL).
+	const { data, error } = await supabase
+		.from('campagnes')
+		.select('*')
+		.eq('id', id)
+		.eq('marque', marque)
+		.maybeSingle();
 	if (error) return { data: null, error };
 	return { data: (data as Campagne) ?? null, error: null };
 }
@@ -113,6 +124,7 @@ function sanitizeDescription(description: string | null | undefined): string | n
 /** Crée une campagne. Conflit de nom (insensible à la casse) -> erreur `duplicate`. */
 export async function createCampagne(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	input: { nom: string; couleur?: string; description?: string | null; userId: string | null }
 ): Promise<{ data: Campagne | null; error: CampagneError | null }> {
 	const nom = sanitizeNom(input.nom);
@@ -124,7 +136,7 @@ export async function createCampagne(
 
 	const { data, error } = await supabase
 		.from('campagnes')
-		.insert({ nom, couleur, description, created_by: input.userId })
+		.insert({ nom, couleur, description, created_by: input.userId, marque })
 		.select('*')
 		.single();
 
@@ -223,12 +235,15 @@ function normalizeCampagneIds(ids: readonly string[]): string[] {
  */
 export async function assignCampagnesToLead(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	leadId: string,
 	campagneIds: readonly string[]
 ): Promise<{ error: CampagneError | null }> {
 	const ids = normalizeCampagneIds(campagneIds);
 	if (ids.length === 0) return { error: null };
-	const rows = ids.map((campagne_id) => ({ lead_id: leadId, campagne_id }));
+	// La marque du lien = marque active (== marque du lead == marque de la campagne). La FK
+	// composite (lead_id, marque) / (campagne_id, marque) rejette (23503) tout croisement.
+	const rows = ids.map((campagne_id) => ({ lead_id: leadId, campagne_id, marque }));
 	const { error } = await supabase
 		.from('prospect_lead_campagnes')
 		.upsert(rows, { onConflict: 'lead_id,campagne_id', ignoreDuplicates: true });
@@ -249,13 +264,14 @@ export async function assignCampagnesToLead(
  */
 export async function assignCampagnesToLeads(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	leadIds: readonly string[],
 	campagneIds: readonly string[]
 ): Promise<{ error: CampagneError | null }> {
 	const cids = normalizeCampagneIds(campagneIds);
 	const lids = [...new Set(leadIds.filter(Boolean))];
 	if (cids.length === 0 || lids.length === 0) return { error: null };
-	const rows = lids.flatMap((lead_id) => cids.map((campagne_id) => ({ lead_id, campagne_id })));
+	const rows = lids.flatMap((lead_id) => cids.map((campagne_id) => ({ lead_id, campagne_id, marque })));
 	const { error } = await supabase
 		.from('prospect_lead_campagnes')
 		.upsert(rows, { onConflict: 'lead_id,campagne_id', ignoreDuplicates: true });
@@ -287,6 +303,7 @@ export async function removeCampagneFromLead(
  */
 export async function fetchCampagnesByLead(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	leadIds: readonly string[]
 ): Promise<Map<string, Campagne[]>> {
 	const map = new Map<string, Campagne[]>();
@@ -296,6 +313,7 @@ export async function fetchCampagnesByLead(
 	const { data, error } = await supabase
 		.from('prospect_lead_campagnes')
 		.select('lead_id, campagnes(*)')
+		.eq('marque', marque)
 		.in('lead_id', ids);
 	if (error || !data) return map;
 
@@ -318,6 +336,7 @@ export async function fetchCampagnesByLead(
  */
 export async function leadIdsForCampagnes(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	campagneIds: readonly string[]
 ): Promise<string[]> {
 	const ids = normalizeCampagneIds(campagneIds);
@@ -325,6 +344,7 @@ export async function leadIdsForCampagnes(
 	const { data, error } = await supabase
 		.from('prospect_lead_campagnes')
 		.select('lead_id')
+		.eq('marque', marque)
 		.in('campagne_id', ids);
 	if (error || !data) return [];
 	return [...new Set((data as Array<{ lead_id: string }>).map((r) => r.lead_id))];
@@ -350,6 +370,7 @@ type LienInfo = { groupe_id: string | null; validation_statut: string | null };
 
 async function leadIdsForCampagnePaginated(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	campagneId: string,
 	maxRows?: number
 ): Promise<{ ids: string[]; lienByLead: Map<string, LienInfo>; truncated: boolean; error: { message: string } | null }> {
@@ -362,6 +383,7 @@ async function leadIdsForCampagnePaginated(
 		const { data, error } = await supabase
 			.from('prospect_lead_campagnes')
 			.select('lead_id, groupe_id, validation_statut')
+			.eq('marque', marque)
 			.eq('campagne_id', campagneId)
 			.range(from, from + PG_PAGE - 1);
 		if (error) return { ids: [], lienByLead, truncated: false, error };
@@ -389,11 +411,15 @@ async function leadIdsForCampagnePaginated(
  */
 export async function fetchProspectsForCampagne(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	campagneId: string,
 	opts?: { maxRows?: number }
 ): Promise<{ data: ProspectCampagne[]; error: { message: string } | null; truncated: boolean }> {
+	// `marque` = marque de la campagne (fondateur : locals.marque après gate getCampagne ;
+	// public : marque de la campagne résolue par token). Scope les liens ET les prospects.
 	const { ids: leadIds, lienByLead, truncated, error: linkError } = await leadIdsForCampagnePaginated(
 		supabase,
+		marque,
 		campagneId,
 		opts?.maxRows
 	);
@@ -406,6 +432,7 @@ export async function fetchProspectsForCampagne(
 		const { data, error } = await supabase
 			.from('prospect_leads')
 			.select('id, raison_sociale, adresse, npa, localite, statut, score_pertinence, source, source_url, description, google_types')
+			.eq('marque', marque)
 			.in('id', chunk);
 		if (error) return { data: [], error, truncated: false };
 		for (const r of (data ?? []) as Array<Omit<ProspectCampagne, 'groupe_id' | 'validation_statut'>>) {

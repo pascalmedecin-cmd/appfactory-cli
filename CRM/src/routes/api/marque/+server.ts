@@ -1,5 +1,6 @@
 import { json, error } from '@sveltejs/kit';
 import { SESSION_MAX_AGE_MS } from '$lib/utils/time-constants';
+import { isMarque } from '$lib/marque';
 import type { RequestHandler } from './$types';
 
 /**
@@ -17,7 +18,7 @@ export const POST: RequestHandler = async ({ request, cookies, url }) => {
 	}
 
 	const marque = (body as { marque?: unknown } | null)?.marque;
-	if (marque !== 'filmpro' && marque !== 'led') {
+	if (!isMarque(marque)) {
 		throw error(400, 'marque invalide (attendu: filmpro | led).');
 	}
 

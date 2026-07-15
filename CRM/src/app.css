@@ -157,6 +157,30 @@
 	--ease-smooth: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/* ============================================================================
+ * Atelier 209 Run 2 : teinte du chrome par marque active (cloisonnement bi-marque).
+ * Le wrapper .crm-shell[data-marque] (display:contents, +layout.svelte) surcharge les
+ * tokens --color-primary* ; les utilitaires Tailwind (bg-primary-dark, bg-primary,
+ * text-primary, focus ring…) les consomment via var(), donc TOUT le chrome + les accents
+ * du contenu se re-teintent par simple héritage de custom properties.
+ * FilmPro = AUCUN override (valeurs @theme d'origine) = non-régression stricte.
+ * LED Studio (Option B, validée par Pascal) : chrome bleu nuit #01003B + accents magenta
+ * #C6007E (accordé AA sur fond clair). Palette source : brand LED (#01003B / #FF05A8).
+ * ========================================================================== */
+.crm-shell[data-marque='led'] {
+	--color-primary: #c6007e;
+	--color-primary-hover: #a80069;
+	--color-primary-light: #fde9f4;
+	--color-primary-dark: #01003b;
+}
+
+/* Item de menu actif côté LED : teinte magenta + filet d'accent à gauche (le navy
+   FilmPro garde son surlignage blanc d'origine = non-régression). */
+.crm-shell[data-marque='led'] .sidebar-root a[aria-current='page'] {
+	background: rgba(255, 5, 168, 0.16);
+	box-shadow: inset 3px 0 0 0 var(--color-primary);
+}
+
 /* Mobile : masquer le bloc titre de page (affiché dans le header sticky) */
 @media (max-width: 1023px) {
 	.page-header-block {

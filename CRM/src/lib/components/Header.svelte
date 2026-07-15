@@ -4,7 +4,9 @@
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import type { User } from '@supabase/supabase-js';
 
-	let { user, sidebarCollapsed = false, onMenuToggle, pageTitle = '' }: { user: User | null; sidebarCollapsed?: boolean; onMenuToggle?: () => void; pageTitle?: string } = $props();
+	let { user, sidebarCollapsed = false, onMenuToggle, pageTitle = '', marque = 'filmpro' }: { user: User | null; sidebarCollapsed?: boolean; onMenuToggle?: () => void; pageTitle?: string; marque?: 'filmpro' | 'led' } = $props();
+
+	const marqueLabel = $derived(marque === 'led' ? 'LED Studio' : 'FilmPro');
 
 	const supabase = createSupabaseBrowserClient();
 
@@ -38,6 +40,10 @@
 	</div>
 
 	<div class="header-right">
+		<!-- Atelier 209 Run 2 : pastille d'environnement actif (teintée par la marque). -->
+		<span class="marque-pill" aria-label="Environnement actif : {marqueLabel}">
+			<span class="marque-dot" aria-hidden="true"></span>{marqueLabel}
+		</span>
 		<span class="header-email text-text-muted hidden sm:inline">{user?.email}</span>
 	</div>
 
@@ -52,7 +58,41 @@
 
 	.header-right {
 		display: flex;
-		align-items: baseline;
+		align-items: center;
+		gap: 12px;
+	}
+
+	/* Atelier 209 Run 2 : filet d'accent en tête du header, teinté par la marque active
+	   (bleu FilmPro / magenta LED via --color-primary). Repère d'environnement discret. */
+	header::after {
+		content: '';
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		height: 2px;
+		background: var(--color-primary);
+		opacity: 0.9;
+	}
+
+	.marque-pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		padding: 4px 11px 4px 9px;
+		border-radius: var(--radius-full);
+		background: var(--color-primary-light);
+		color: var(--color-primary-hover);
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: -0.005em;
+		white-space: nowrap;
+	}
+	.marque-dot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: var(--color-primary);
 	}
 
 	.burger-btn {
