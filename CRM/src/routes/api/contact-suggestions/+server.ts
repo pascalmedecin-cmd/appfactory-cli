@@ -81,18 +81,24 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 	const statutParam = url.searchParams.get('statut');
 	const statut = ['en_attente', 'valide', 'rejete'].includes(statutParam ?? '') ? statutParam! : 'en_attente';
 
+	// Atelier 209 Run 2 : contact_suggestions n'a pas de colonne marque (héritage par jointure,
+	// spec RUN2 §A1) -> on la scope via l'entreprise parente. `entreprises!inner` (INNER JOIN) +
+	// filtre .eq('entreprises.marque', ...) exclut de la file les brouillons de l'autre marque.
 	const { data: rows, error } = await locals.supabase
 		.from('contact_suggestions')
-		.select(`${SUGGESTION_COLS}, entreprises(raison_sociale)`)
+		.select(`${SUGGESTION_COLS}, entreprises!inner(raison_sociale)`)
 		.eq('statut', statut)
+		.eq('entreprises.marque', locals.marque)
 		.order('created_at', { ascending: false });
 	if (error) return genericError(error, 'Erreur lecture suggestions');
 
-	// Badge desktop = file active uniquement (toujours en_attente, indépendant du filtre).
+	// Badge desktop = file active uniquement (toujours en_attente, indépendant du filtre) - même
+	// scope marque (via l'entreprise parente) que la liste ci-dessus.
 	const { count, error: cErr } = await locals.supabase
 		.from('contact_suggestions')
-		.select('id', { count: 'exact', head: true })
-		.eq('statut', 'en_attente');
+		.select('id, entreprises!inner(marque)', { count: 'exact', head: true })
+		.eq('statut', 'en_attente')
+		.eq('entreprises.marque', locals.marque);
 	if (cErr) return genericError(cErr, 'Erreur comptage suggestions');
 
 	return json({ suggestions: rows ?? [], count_en_attente: count ?? 0 });

@@ -122,6 +122,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		const { data: existing } = await locals.supabase
 			.from('prospect_leads')
 			.select('source_id')
+			.eq('marque', locals.marque)
 			.eq('source', 'regbl')
 			.in('source_id', egids);
 		if (existing) {
@@ -134,6 +135,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const { data: dismissed } = await locals.supabase
 		.from('prospect_leads')
 		.select('source_id, statut')
+		.eq('marque', locals.marque)
 		.eq('source', 'regbl')
 		.in('statut', ['ecarte', 'transfere']);
 	const dismissedIds = new Set<string>();
@@ -185,6 +187,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 		inserts.push({
 			id: randomUUID(),
+			marque: locals.marque,
 			source: 'regbl' as const,
 			source_id: egid,
 			source_url: `https://www.housing-stat.ch/fr/query/egid.html?egid=${egid}`,

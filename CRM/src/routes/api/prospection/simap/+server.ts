@@ -103,6 +103,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		const { data: existing } = await locals.supabase
 			.from('prospect_leads')
 			.select('source_id')
+			.eq('marque', locals.marque)
 			.eq('source', 'simap')
 			.in('source_id', projectIds);
 		if (existing) {
@@ -116,6 +117,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const { data: dismissed } = await locals.supabase
 		.from('prospect_leads')
 		.select('source_id, statut')
+		.eq('marque', locals.marque)
 		.eq('source', 'simap')
 		.in('statut', ['ecarte', 'transfere']);
 	const dismissedIds = new Set<string>();
@@ -167,6 +169,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 		inserts.push({
 			id: randomUUID(),
+			marque: locals.marque,
 			source: 'simap' as const,
 			source_id: project.id,
 			// Lot 2 : l'ancien /publications/{projectNumber} est périmé (404). Format

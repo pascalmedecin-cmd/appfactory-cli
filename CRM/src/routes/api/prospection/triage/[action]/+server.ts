@@ -53,6 +53,7 @@ export const POST = async ({ request, params, locals }: RequestEvent) => {
 		.from('prospect_leads')
 		.select('id, statut, triage_snoozed_until')
 		.eq('id', leadId)
+		.eq('marque', locals.marque)
 		.maybeSingle();
 
 	if (readErr) {
@@ -124,6 +125,7 @@ export const POST = async ({ request, params, locals }: RequestEvent) => {
 		.from('prospect_leads')
 		.update(update, { count: 'exact' })
 		.eq('id', leadId)
+		.eq('marque', locals.marque)
 		.eq('statut', 'vide');
 
 	if (updErr) {

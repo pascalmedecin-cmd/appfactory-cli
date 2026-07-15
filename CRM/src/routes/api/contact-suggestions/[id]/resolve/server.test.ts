@@ -38,6 +38,9 @@ function createMock(opts: MockOpts) {
 								return Promise.resolve({ data: opts.updateRace ? null : { id: SID }, error: null });
 							}
 							if (table === 'contacts') return Promise.resolve({ data: opts.contact === undefined ? null : opts.contact, error: null });
+							// Atelier 209 Run 2 : resolve charge la marque de l'entreprise parente (heritage)
+							// avant de creer le contact. Parent present = marque 'filmpro' par defaut.
+							if (table === 'entreprises') return Promise.resolve({ data: { marque: 'filmpro' }, error: null });
 							return Promise.resolve({ data: null, error: null });
 						};
 						if (prop === 'then') return (resolve: (v: unknown) => void) => resolve({ data: null, error: opts.insertError ?? null });

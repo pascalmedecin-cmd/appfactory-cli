@@ -117,6 +117,22 @@ describe.skipIf(!RUN)('Atelier 209 Run 2 - cloisonnement bi-marque (base jetable
 		expect(error?.code).toBe('23503'); // (campagne_id, marque) -> campagnes(id, marque) : pas de campagne (LED_CAMP, 'filmpro')
 	});
 
+	it('contact_suggestions : la file de validation est scopée via l\'entreprise parente', async () => {
+		// Pas de colonne marque -> heritage par jointure entreprises!inner (comme l'endpoint GET).
+		const fp = await sb
+			.from('contact_suggestions')
+			.select('nom, entreprises!inner(raison_sociale)')
+			.eq('statut', 'en_attente')
+			.eq('entreprises.marque', 'filmpro');
+		const led = await sb
+			.from('contact_suggestions')
+			.select('nom, entreprises!inner(raison_sociale)')
+			.eq('statut', 'en_attente')
+			.eq('entreprises.marque', 'led');
+		expect((fp.data ?? []).map((r) => r.nom)).toEqual(['Brouillon FP']);
+		expect((led.data ?? []).map((r) => r.nom)).toEqual(['Brouillon LED']);
+	});
+
 	it('RPC transfer_lead_to_crm propage la marque (jamais de fusion cross-marque)', async () => {
 		const { data, error } = await sb.rpc('transfer_lead_to_crm', { p_lead_id: LED_LEAD_VIDE });
 		expect(error).toBeNull();

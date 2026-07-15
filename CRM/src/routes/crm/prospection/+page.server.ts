@@ -59,7 +59,8 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 	// .or() interpolé, cf. memory/feedback_postgrest_or_filter_injection.md).
 	const buildBaseQuery = () =>
 		applyCampagneLeadFilter(
-			applyProspectionFilters(locals.supabase.from('prospect_leads').select('*', { count: 'exact' }).eq('marque', locals.marque), filter),
+			// marque appliquée par applyProspectionScopeFilters (via filter.marque) - couvre aussi export/all-ids.
+			applyProspectionFilters(locals.supabase.from('prospect_leads').select('*', { count: 'exact' }), filter),
 			campagneRestrictIds,
 		);
 
@@ -124,7 +125,8 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 	const buildTabCountBase = (sources: readonly string[]) =>
 		applyCampagneLeadFilter(
 			applyProspectionScopeFilters(
-				locals.supabase.from('prospect_leads').select('*', { count: 'exact', head: true }).eq('marque', locals.marque).in('source', [...sources]),
+				// marque appliquée par applyProspectionScopeFilters (via filter.marque).
+				locals.supabase.from('prospect_leads').select('*', { count: 'exact', head: true }).in('source', [...sources]),
 				filter,
 			),
 			campagneRestrictIds,

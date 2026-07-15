@@ -13,6 +13,7 @@
 BEGIN;
 
 -- Nettoyage idempotent (ordre FK-safe : enfants d'abord).
+DELETE FROM contact_suggestions    WHERE id::text LIKE '44444444-%';
 DELETE FROM prospect_lead_campagnes WHERE lead_id::text LIKE '11111111-%';
 DELETE FROM campagne_groupes        WHERE id::text LIKE '33333333-%';
 DELETE FROM opportunites            WHERE id LIKE 'seed-%';
@@ -55,6 +56,14 @@ INSERT INTO contacts (id, nom, entreprise_id, telephone, email_professionnel, ca
   ('seed-ct-led-01', 'Julien Fontaine', 'seed-ent-led-01', '+41 22 555 13 01', 'julien@pulse-events.example',       'GE', 'zefix',     'qualifie', 'led'),
   ('seed-ct-led-02', 'Elodie Vasquez',  'seed-ent-led-02', '+41 21 555 13 02', 'elodie@lumino.example',             'VD', 'search_ch', 'nouveau',  'led'),
   ('seed-ct-led-03', 'Rui Almeida',     'seed-ent-led-03', '+41 22 555 13 03', 'rui@stand-deco.example',            'GE', 'search_ch', 'qualifie', 'led');
+
+-- ============================================================================
+-- CONTACT_SUGGESTIONS (brouillons terrain ; PAS de colonne marque -> heritage par
+-- l'entreprise parente. Couvre le cloisonnement de la file de validation par jointure.)
+-- ============================================================================
+INSERT INTO contact_suggestions (id, entreprise_id, nom, prenom, telephone, statut) VALUES
+  ('44444444-0000-0000-0000-0000000000f1', 'seed-ent-fp-01',  'Brouillon FP',  'Terrain', '+41 22 555 40 01', 'en_attente'),
+  ('44444444-0000-0000-0000-0000000000e1', 'seed-ent-led-01', 'Brouillon LED', 'Terrain', '+41 22 555 40 02', 'en_attente');
 
 -- ============================================================================
 -- PROSPECT_LEADS (statuts varies ; ids 11111111-... par marque)
