@@ -89,6 +89,12 @@ export const baseHandle: Handle = async ({ event, resolve }) => {
 
 	event.locals.supabase = createSupabaseServerClient(event.cookies);
 
+	// Atelier 209 Run 2 : marque active (cloisonnement bi-marque), lue du cookie `marque`
+	// (par-appareil, decision Pascal). Posee AVANT tous les load/endpoints pour filtrer les
+	// requetes. Defaut 'filmpro' pour toute valeur absente/inconnue = non-regression stricte.
+	const rawMarque = event.cookies.get('marque');
+	event.locals.marque = rawMarque === 'led' ? 'led' : 'filmpro';
+
 	event.locals.safeGetSession = async () => {
 		const { data: { session } } = await event.locals.supabase.auth.getSession();
 		if (!session) return { session: null, user: null };
