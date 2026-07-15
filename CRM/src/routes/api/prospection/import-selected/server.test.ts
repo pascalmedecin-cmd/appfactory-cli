@@ -50,6 +50,7 @@ function makeEvent(body: unknown, opts: { session?: boolean; premium?: boolean; 
 		request: { json: async () => body },
 		locals: {
 			supabase,
+			marque: 'filmpro',
 			safeGetSession: async () => ({ session: opts.session === false ? null : { user }, user }),
 		},
 	} as never;
@@ -214,7 +215,8 @@ describe('POST /api/prospection/import-selected', () => {
 		expect(data.campagneWarning).toBeNull();
 		expect(data.message).toContain('étiquetées à la campagne');
 		expect(vi.mocked(assignCampagnesToLeads)).toHaveBeenCalledTimes(1);
-		const [, leadIds, campIds] = vi.mocked(assignCampagnesToLeads).mock.calls[0];
+		const [, marque, leadIds, campIds] = vi.mocked(assignCampagnesToLeads).mock.calls[0];
+		expect(marque).toBe('filmpro');
 		expect(leadIds).toHaveLength(2);
 		expect(campIds).toEqual([CAMP_ID]);
 	});
@@ -269,7 +271,7 @@ describe('POST /api/prospection/import-selected', () => {
 		const data = await res.json();
 		expect(data.imported).toBe(1); // p2 seul inséré
 		expect(data.skipped).toBe(1); // p1 déjà présent
-		const [, leadIds, campIds] = vi.mocked(assignCampagnesToLeads).mock.calls[0];
+		const [, , leadIds, campIds] = vi.mocked(assignCampagnesToLeads).mock.calls[0];
 		expect(leadIds).toContain('L-p1'); // l'existant est étiqueté aussi
 		expect((leadIds as string[]).length).toBe(2);
 		expect(campIds).toEqual([CAMP_ID]);
@@ -286,7 +288,7 @@ describe('POST /api/prospection/import-selected', () => {
 		const data = await res.json();
 		expect(data.imported).toBe(0);
 		expect(vi.mocked(assignCampagnesToLeads)).toHaveBeenCalledTimes(1);
-		expect(vi.mocked(assignCampagnesToLeads).mock.calls[0][1]).toEqual(['L-p1']);
+		expect(vi.mocked(assignCampagnesToLeads).mock.calls[0][2]).toEqual(['L-p1']);
 		expect(data.message).toContain('rattachée à la campagne');
 	});
 });

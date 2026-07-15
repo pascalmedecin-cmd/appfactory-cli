@@ -1,10 +1,12 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/dm-sans';
-@import '@fontsource-variable/dm-sans/wght-italic.css';
 @import '@fontsource/dm-mono/400.css';
 @import '@fontsource/dm-mono/500.css';
-/* Atelier 209 : Inter (portail + connexion « Heure bleue »). Self-hosted, CSP font-src 'self'. */
+/* Atelier 209 Run 2 : Inter partout (golden aligné sur le portail « Heure bleue » du Run 1).
+   Self-hosted, CSP font-src 'self'. L'axe italique est importé séparément : le paquet variable
+   n'a que l'axe roman -> sans lui les rares italiques deviendraient de faux-obliques. DM Sans
+   retiré (remplacé par Inter comme voix typographique unique de l'outil). */
 @import '@fontsource-variable/inter';
+@import '@fontsource-variable/inter/wght-italic.css';
 
 @theme {
 	/* Primary (Bleu FilmPro) */
@@ -114,7 +116,7 @@
 	--color-logo: #00003B;
 
 	/* Typography */
-	--font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+	--font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, sans-serif;
 	--font-mono: 'DM Mono', 'Consolas', 'Courier New', monospace;
 
 	/* Border Radius : Untitled UI: 8px base, 12px cards/modals */

@@ -25,14 +25,14 @@ export const POST = async ({ params, locals, url }: RequestEvent) => {
 	if (!id.success) return json({ error: 'Identifiant invalide' }, { status: 400 });
 
 	// Existence vérifiée AVANT de créer le lien : 404 propre plutôt qu'une violation FK opaque.
-	const { data: campagne, error: campErr } = await getCampagne(locals.supabase, id.data);
+	const { data: campagne, error: campErr } = await getCampagne(locals.supabase, locals.marque, id.data);
 	if (campErr) {
 		console.error('Erreur lecture campagne (validation):', campErr.message);
 		return json({ error: 'Chargement impossible' }, { status: 500 });
 	}
 	if (!campagne) return json({ error: 'Campagne introuvable' }, { status: 404 });
 
-	const { data, error } = await createValidationLien(locals.supabase, id.data, user?.id ?? null);
+	const { data, error } = await createValidationLien(locals.supabase, locals.marque, id.data, user?.id ?? null);
 	if (error || !data) {
 		console.error('Erreur création lien validation:', error?.message);
 		return json({ error: 'Création du lien impossible' }, { status: 500 });

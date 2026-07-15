@@ -64,7 +64,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	}
 
 	// RE-dédup serveur au moment de l'insert (TOCTOU) : leads déjà présents + écartés/transférés.
-	const dedup = await fetchDedupSets(locals.supabase, source as LeadPreviewSource, unique.map((c) => c.source_id));
+	const dedup = await fetchDedupSets(locals.supabase, source as LeadPreviewSource, unique.map((c) => c.source_id), locals.marque);
 
 	// Signal Veille source (optionnel) pour le RE-score serveur + la liaison post-insert.
 	const signalLookup = from_intelligence
@@ -111,7 +111,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			google_types: sanitizeGoogleTypes(c.google_types, source as LeadPreviewSource),
 		};
 		const score = scoreCandidate(core, { intelligenceSignal });
-		inserts.push(candidateToInsertRow(core, score, { now, fromIntelligence: from_intelligence ?? null, fromTerm: from_term ?? null }));
+		inserts.push(candidateToInsertRow(core, score, { now, fromIntelligence: from_intelligence ?? null, fromTerm: from_term ?? null, marque: locals.marque }));
 	}
 
 	let imported = 0;
@@ -148,6 +148,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 					.from('prospect_leads')
 					.select('id, source_id')
 					.eq('source', source)
+					.eq('marque', locals.marque)
 					.in('source_id', existingSourceIds);
 				if (exErr) {
 					console.warn(`[import-selected] résolution des leads existants échouée: ${exErr.message}`);
@@ -160,9 +161,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 				}
 			}
 			if (leadIdsToTag.length > 0) {
-				let { error: campErr } = await assignCampagnesToLeads(locals.supabase, leadIdsToTag, campagneIds);
+				let { error: campErr } = await assignCampagnesToLeads(locals.supabase, locals.marque, leadIdsToTag, campagneIds);
 				if (campErr) {
-					({ error: campErr } = await assignCampagnesToLeads(locals.supabase, leadIdsToTag, campagneIds));
+					({ error: campErr } = await assignCampagnesToLeads(locals.supabase, locals.marque, leadIdsToTag, campagneIds));
 				}
 				if (campErr) {
 					console.warn(`[import-selected] assignation campagnes échouée (après retry): ${campErr.message}`);

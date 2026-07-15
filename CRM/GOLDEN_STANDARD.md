@@ -122,9 +122,9 @@ Disponible pour pages métier spécifiques (signaux, marchés). Ne pas utiliser 
 
 ---
 
-## 3. Hiérarchie typographique - DM Sans
+## 3. Hiérarchie typographique - Inter
 
-**Polices** : `DM Sans` pour heading et body, `Menlo / Consolas` pour mono (rare, code interne uniquement). Self-hosted via Tailwind v4 + Google Fonts. Pas de fallback décoratif.
+**Polices** : `Inter` pour heading et body (Atelier 209 Run 2 : voix typographique unique de l'outil, alignée sur le portail « Heure bleue » ; remplace DM Sans), `DM Mono` pour mono (rare, code interne uniquement). Self-hosted (`@fontsource-variable/inter`, axe roman + italique), CSP `font-src 'self'`. Pas de fallback décoratif.
 
 ### 3.1 Échelle universelle
 
@@ -141,7 +141,7 @@ Disponible pour pages métier spécifiques (signaux, marchés). Ne pas utiliser 
 | `label` | `12px` | 600 | 1.33 | Label de formulaire, header table |
 | `micro` | `10px` | 500 | 1.5 | Micro-label, footer technique |
 
-Poids DM Sans utilisés : 400 (regular), 500 (medium), 600 (semibold), 700 (bold). Ne pas charger d'autres poids.
+Poids Inter utilisés : 400 (regular), 500 (medium), 600 (semibold), 700 (bold). Ne pas charger d'autres poids.
 
 ### 3.2bis Échelle éditoriale dashboard (S178 V2c)
 
@@ -321,7 +321,7 @@ Indicateur statut 8×8px, radius `9999px`, sans texte. Variantes par couleur sé
 | **Ombre lourde** (box-shadow > 4px blur) | Esthétique « card material design » datée | Token shadow `xs / sm / md / lg`. Cards = `xs`. Modal = `md`. Slide-out = `-8px 0 16px` (latéral). |
 | **Emoji Unicode** dans le rendu | Casse la posture pro, dépendance OS | Icônes Lucide en SVG inline via wrapper `<Icon name="..." />` + `icon-map.ts` (92 mappings) |
 | **Material Symbols** | Migration LIVRÉE S115 (-207 occurrences, 28 fichiers) | Lucide uniquement, interdit hors fichiers legacy non migrés |
-| **Police décorative** (autre que DM Sans / mag-* DM Sans) | Cohérence visuelle | DM Sans pour tout, sans exception |
+| **Police décorative** (autre que Inter / mag-* Inter) | Cohérence visuelle | Inter pour tout, sans exception |
 | **Couleur hardcodée** dans un composant | Empêche maintenance + conflit tokens | Toujours via tokens `tokens.json` ou Tailwind v4 `@theme` |
 | **Opacités custom statiques primary** (`bg-primary/X`, `border-primary/X`) | Décision S118, divergence palette | Tokens sémantiques (`bg-primary-light`, `bg-info-light`, `border-primary`). Hover/focus/ring transients tolérés (pattern UA). |
 | **Charts génériques** (Chart.js, ApexCharts, ECharts) | Defaults trop génériques, palette saturée par défaut | Pas de chart générique dans le CRM V1. Si besoin de viz, custom D3 minimal aligné tokens. |

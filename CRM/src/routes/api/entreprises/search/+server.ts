@@ -49,6 +49,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 		.from('entreprises')
 		.select('id, raison_sociale, site_web, canton')
 		.eq('statut_archive', false)
+		.eq('marque', locals.marque)
 		.ilike('raison_sociale', pattern)
 		.order('raison_sociale')
 		.limit(RESULT_LIMIT);

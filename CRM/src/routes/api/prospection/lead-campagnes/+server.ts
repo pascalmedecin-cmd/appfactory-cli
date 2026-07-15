@@ -29,7 +29,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const parsed = AssignSchema.safeParse(raw);
 	if (!parsed.success) return json({ error: 'Données invalides' }, { status: 400 });
 
-	const { error } = await assignCampagnesToLead(locals.supabase, parsed.data.leadId, parsed.data.campagneIds);
+	const { error } = await assignCampagnesToLead(locals.supabase, locals.marque, parsed.data.leadId, parsed.data.campagneIds);
 	if (error) {
 		const status = error.code === 'invalid' ? 400 : 500;
 		return json({ error: error.message }, { status });

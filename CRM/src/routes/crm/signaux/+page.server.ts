@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { SignalUpdateStatutSchema, SignalDeleteSchema, SignalBatchDeleteSchema, extractForm, validate } from '$lib/schemas';
 import { dbFail } from '$lib/server/db-helpers';
 import { isEditor } from '$lib/server/roles';
+import type { Marque } from '$lib/marque';
 import { POIDS_PAR_CATEGORIE, type KeywordRow } from '$lib/scoring/keywords';
 import { calculerScore } from '$lib/scoring';
 import { normalizeNFDTrim } from '$lib/utils/text-normalize';
@@ -21,10 +22,11 @@ const KeywordRemoveSchema = z.object({
 // active (`nouveau` = à trier, `a_suivre` = retenus) avec la liste de mots-clés
 // courante. Ne touche pas les `archive` (rangés). Bulk UPDATE en parallèle
 // (~430 entrées actives en BDD, plafond opérationnel ~500 avant bascule async).
-async function rescoreActiveSignaux(supabase: App.Locals['supabase'], keywords: KeywordRow[]): Promise<void> {
+async function rescoreActiveSignaux(supabase: App.Locals['supabase'], marque: Marque, keywords: KeywordRow[]): Promise<void> {
 	const { data: rows, error } = await supabase
 		.from('signaux_affaires')
 		.select('id, canton, description_projet, maitre_ouvrage, source_officielle, date_publication, statut_traitement')
+		.eq('marque', marque)
 		.in('statut_traitement', ['nouveau', 'a_suivre']);
 	if (error || !rows) return;
 
@@ -60,8 +62,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const showArchived = url.searchParams.get('vue') === 'archivees';
 	const SELECT = '*, contacts:contact_maitre_ouvrage_id(id, nom, prenom)';
 	const signauxQuery = showArchived
-		? locals.supabase.from('signaux_affaires').select(SELECT).eq('statut_traitement', 'archive').order('date_detection', { ascending: false })
-		: locals.supabase.from('signaux_affaires').select(SELECT).neq('statut_traitement', 'archive').order('date_detection', { ascending: false });
+		? locals.supabase.from('signaux_affaires').select(SELECT).eq('marque', locals.marque).eq('statut_traitement', 'archive').order('date_detection', { ascending: false })
+		: locals.supabase.from('signaux_affaires').select(SELECT).eq('marque', locals.marque).neq('statut_traitement', 'archive').order('date_detection', { ascending: false });
 
 	const [signauxRes, keywordsRes, sessionRes, archivedCountRes] = await Promise.all([
 		signauxQuery,
@@ -73,6 +75,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		locals.supabase
 			.from('signaux_affaires')
 			.select('*', { count: 'exact', head: true })
+			.eq('marque', locals.marque)
 			.eq('statut_traitement', 'archive'),
 	]);
 
@@ -145,7 +148,7 @@ export const actions: Actions = {
 		const { data: kwData } = await locals.supabase
 			.from('signaux_mots_cles' as never)
 			.select('id, terme, terme_norm, categorie, poids');
-		await rescoreActiveSignaux(locals.supabase, (kwData ?? []) as KeywordRow[]);
+		await rescoreActiveSignaux(locals.supabase, locals.marque, (kwData ?? []) as KeywordRow[]);
 
 		return { success: true };
 	},
@@ -172,7 +175,7 @@ export const actions: Actions = {
 		const { data: kwData } = await locals.supabase
 			.from('signaux_mots_cles' as never)
 			.select('id, terme, terme_norm, categorie, poids');
-		await rescoreActiveSignaux(locals.supabase, (kwData ?? []) as KeywordRow[]);
+		await rescoreActiveSignaux(locals.supabase, locals.marque, (kwData ?? []) as KeywordRow[]);
 
 		return { success: true };
 	},

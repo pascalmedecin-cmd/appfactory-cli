@@ -56,13 +56,15 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		locals.supabase
 			.from('contacts')
 			.select('id, nom, prenom, role_fonction, entreprise_id, email_professionnel, telephone')
-			.eq('statut_archive', false),
+			.eq('statut_archive', false)
+			.eq('marque', locals.marque),
 		// On ne charge que les opportunités non terminées : F4 PipelineQuickAdvance opère
 		// uniquement sur les pipelines actifs. Borne de sécurité contre la croissance linéaire
 		// du payload côté SlideOut entreprise.
 		locals.supabase
 			.from('opportunites')
 			.select('id, titre, entreprise_id, etape_pipeline, montant_estime, date_relance_prevue, notes_libres, date_derniere_modification')
+			.eq('marque', locals.marque)
 			.not('etape_pipeline', 'in', '(gagne,perdu)')
 			.order('date_derniere_modification', { ascending: false })
 			.limit(500),
@@ -80,7 +82,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	// Query principale : non archivées + filtre d'onglet + recherche + tri + pagination.
 	const buildBase = () =>
 		applyEntreprisesTabFilter(
-			applyEntreprisesBaseFilter(locals.supabase.from('entreprises').select('*', { count: 'exact' })),
+			applyEntreprisesBaseFilter(locals.supabase.from('entreprises').select('*', { count: 'exact' }).eq('marque', locals.marque)),
 			q.tab,
 			idsWithContact,
 		);
@@ -131,7 +133,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	// comptes globaux par catégorie (indépendants de la recherche en cours — parité avec l'ancien
 	// `entreprisesCountsByTab`, qui comptait sur la liste complète, pas sur la vue filtrée/cherchée).
 	const tabCountBase = () =>
-		applyEntreprisesBaseFilter(locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }));
+		applyEntreprisesBaseFilter(locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }).eq('marque', locals.marque));
 	const runTabCount = async (tab: EntreprisesTabKey): Promise<number> => {
 		const r = await applyEntreprisesTabFilter(tabCountBase(), tab, idsWithContact);
 		return r.count ?? 0;
@@ -147,7 +149,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		applyEntreprisesSansCantonFilter(tabCountBase()),
 		affairesIds.length > 0
 			? applyEntreprisesBaseFilter(
-					locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }),
+					locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }).eq('marque', locals.marque),
 			  ).in('id', affairesIds)
 			: Promise.resolve({ count: 0, error: null }),
 	]);
@@ -186,7 +188,7 @@ export const actions: Actions = {
 
 		const { error } = await locals.supabase
 			.from('entreprises')
-			.insert(buildEntrepriseInsert(parsed.data));
+			.insert(buildEntrepriseInsert(parsed.data, locals.marque));
 
 		return dbFail(error) ?? { success: true };
 	},
@@ -231,12 +233,14 @@ export const actions: Actions = {
 				.from('contacts')
 				.select('id, nom, prenom')
 				.eq('entreprise_id', parsed.data.id)
-				.eq('statut_archive', false),
+				.eq('statut_archive', false)
+				.eq('marque', locals.marque),
 			locals.supabase
 				.from('opportunites')
 				.select('id, titre')
 				.eq('entreprise_id', parsed.data.id)
-				.not('etape_pipeline', 'in', '(gagne,perdu)'),
+				.not('etape_pipeline', 'in', '(gagne,perdu)')
+				.eq('marque', locals.marque),
 		]);
 
 		// I-1 (fail-secure) : une erreur de lecture des dépendances ne doit JAMAIS
@@ -264,8 +268,8 @@ export const actions: Actions = {
 		// chiffre la perte (zéro effacement silencieux). Tant que l'utilisateur n'a
 		// pas confirmé (`force`), on ne supprime rien et on renvoie le décompte.
 		const [photosRes, visitsRes, suggestionsRes] = await Promise.all([
-			locals.supabase.from('prospect_photos').select('id', { count: 'exact', head: true }).eq('entreprise_id', parsed.data.id),
-			locals.supabase.from('prospect_visits').select('id', { count: 'exact', head: true }).eq('entreprise_id', parsed.data.id),
+			locals.supabase.from('prospect_photos').select('id', { count: 'exact', head: true }).eq('entreprise_id', parsed.data.id).eq('marque', locals.marque),
+			locals.supabase.from('prospect_visits').select('id', { count: 'exact', head: true }).eq('entreprise_id', parsed.data.id).eq('marque', locals.marque),
 			locals.supabase.from('contact_suggestions').select('id', { count: 'exact', head: true }).eq('entreprise_id', parsed.data.id),
 		]);
 		// I-1 (fail-secure) : un échec de comptage cascade bloque aussi le DELETE.
@@ -320,6 +324,7 @@ export const actions: Actions = {
 			.from('entreprises')
 			.select('notes_libres')
 			.eq('id', id)
+			.eq('marque', locals.marque)
 			.single();
 		if (existingErr || !existing) return fail(400, { error: 'Entreprise introuvable' });
 

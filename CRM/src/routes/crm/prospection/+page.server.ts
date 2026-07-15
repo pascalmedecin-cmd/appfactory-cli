@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 
 	// Filtre normalisé partagé avec l'export CSV et la sélection globale (source unique
 	// `$lib/server/prospection-query` — la dette des 3 filtres dupliqués est résorbée).
-	const filter = parseProspectionFilter(url);
+	const filter = parseProspectionFilter(url, locals.marque);
 
 	// Vague 3.2 (flag ffCrmListesV2, hérité du layout racine) : le module Campagnes ne charge
 	// rien quand le flag est OFF -> payload byte-identique à l'existant. Le filtre relationnel
@@ -59,7 +59,7 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 	// .or() interpolé, cf. memory/feedback_postgrest_or_filter_injection.md).
 	const buildBaseQuery = () =>
 		applyCampagneLeadFilter(
-			applyProspectionFilters(locals.supabase.from('prospect_leads').select('*', { count: 'exact' }), filter),
+			applyProspectionFilters(locals.supabase.from('prospect_leads').select('*', { count: 'exact' }).eq('marque', locals.marque), filter),
 			campagneRestrictIds,
 		);
 
@@ -124,7 +124,7 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 	const buildTabCountBase = (sources: readonly string[]) =>
 		applyCampagneLeadFilter(
 			applyProspectionScopeFilters(
-				locals.supabase.from('prospect_leads').select('*', { count: 'exact', head: true }).in('source', [...sources]),
+				locals.supabase.from('prospect_leads').select('*', { count: 'exact', head: true }).eq('marque', locals.marque).in('source', [...sources]),
 				filter,
 			),
 			campagneRestrictIds,
@@ -165,23 +165,28 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 		locals.supabase
 			.from('entreprises')
 			.select('id, raison_sociale')
+			.eq('marque', locals.marque)
 			.order('raison_sociale'),
 		locals.supabase
 			.from('recherches_sauvegardees')
 			.select('*')
+			.eq('marque', locals.marque)
 			.order('date_creation', { ascending: false }),
 		locals.supabase
 			.from('prospect_leads')
 			.select('*', { count: 'exact', head: true })
+			.eq('marque', locals.marque)
 			.in('statut', ['vide', 'a_contacter']),
 		locals.supabase
 			.from('prospect_leads')
 			.select('*', { count: 'exact', head: true })
+			.eq('marque', locals.marque)
 			.eq('source', 'simap')
 			.neq('statut', 'ecarte'),
 		locals.supabase
 			.from('prospect_leads')
 			.select('*', { count: 'exact', head: true })
+			.eq('marque', locals.marque)
 			.eq('statut', 'transfere')
 			.gte('date_modification', monthStart.toISOString()),
 		runTabCount(TAB_SOURCE_MAP.simap),
@@ -194,7 +199,7 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 			: Promise.resolve(null),
 		// Vague 3.2 : campagnes actives (filtre + combos), uniquement en premium (sinon vide).
 		premium
-			? listCampagnes(locals.supabase, { includeArchived: false })
+			? listCampagnes(locals.supabase, locals.marque, { includeArchived: false })
 			: Promise.resolve({ data: [] as CampagneWithCount[], error: null }),
 	]);
 
@@ -205,7 +210,7 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 	if (premium) {
 		const leadIds = (leadsRes.data ?? []).map((l) => l.id);
 		if (leadIds.length > 0) {
-			const byLead = await fetchCampagnesByLead(locals.supabase, leadIds);
+			const byLead = await fetchCampagnesByLead(locals.supabase, locals.marque, leadIds);
 			for (const [leadId, list] of byLead) campagnesByLead[leadId] = list;
 		}
 	}
@@ -280,6 +285,7 @@ export const actions: Actions = {
 			const { data: existing } = await locals.supabase
 				.from('prospect_leads')
 				.select('id, statut')
+				.eq('marque', locals.marque)
 				.eq('source', d.source)
 				.eq('source_id', d.source_id)
 				.maybeSingle();
@@ -305,6 +311,7 @@ export const actions: Actions = {
 
 		const { error } = await locals.supabase.from('prospect_leads').insert({
 			id: newId(),
+			marque: locals.marque,
 			source: d.source,
 			source_id: d.source_id || null,
 			source_url: d.source_url || null,
@@ -396,6 +403,7 @@ export const actions: Actions = {
 				statut: parsed.data.statut,
 				date_modification: now(),
 			})
+			.eq('marque', locals.marque)
 			.in('id', parsed.data.ids);
 
 		return dbFail(error) ?? { success: true };
@@ -441,6 +449,7 @@ export const actions: Actions = {
 		}
 		const { error } = await locals.supabase.from('recherches_sauvegardees').insert({
 			id: newId(),
+			marque: locals.marque,
 			nom: d.nom,
 			sources: d.sources || null,
 			cantons: d.cantons || null,
@@ -499,6 +508,7 @@ export const actions: Actions = {
 		const { data: candidates } = await locals.supabase
 			.from('prospect_leads')
 			.select('id, raison_sociale, localite, telephone')
+			.eq('marque', locals.marque)
 			.ilike('raison_sociale', escapeIlike(raison))
 			.limit(5);
 		const force = String(form.get('force_create') || '') === '1';
@@ -530,6 +540,7 @@ export const actions: Actions = {
 		const id = newId();
 		const { error } = await locals.supabase.from('prospect_leads').insert({
 			id,
+			marque: locals.marque,
 			source: 'lead_express',
 			raison_sociale: raison,
 			nom_contact: contact || null,

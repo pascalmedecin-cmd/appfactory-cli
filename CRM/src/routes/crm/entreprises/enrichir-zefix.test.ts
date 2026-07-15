@@ -24,17 +24,19 @@ function createMockSupabase(opts: {
 	function from() {
 		return {
 			select() {
-				return {
+				// Atelier 209 Run 2 : la prod chaîne deux `.eq()` (`id` puis `marque`) avant `.single()`.
+				// Le mock rend donc `eq()` chaînable (retourne le même objet) pour supporter les deux.
+				const chain = {
 					eq() {
-						return {
-							single: () =>
-								Promise.resolve({
-									data: opts.existing === undefined ? { notes_libres: null } : opts.existing,
-									error: opts.existingError ?? null,
-								}),
-						};
+						return chain;
 					},
+					single: () =>
+						Promise.resolve({
+							data: opts.existing === undefined ? { notes_libres: null } : opts.existing,
+							error: opts.existingError ?? null,
+						}),
 				};
+				return chain;
 			},
 			update(payload: UpdatePayload) {
 				captured = payload;
@@ -55,7 +57,7 @@ async function callEnrichir(supabase: ReturnType<typeof createMockSupabase>, fie
 	const mod = await import('./+page.server');
 	const action = mod.actions.enrichir!;
 	const request = { formData: async () => makeFormData(fields) } as unknown as Request;
-	return action({ request, locals: { supabase } } as unknown as Parameters<typeof action>[0]);
+	return action({ request, locals: { supabase, marque: 'filmpro' } } as unknown as Parameters<typeof action>[0]);
 }
 
 const ZEFIX_HIT = [

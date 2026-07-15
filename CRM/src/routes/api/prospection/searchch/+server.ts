@@ -149,7 +149,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	// 3) source_id stable (tel:id sinon synthétique) + dédup serveur.
 	const sourceIds = entries.map((e) => buildSourceId({ telId: e.telId, name: e.name, npa: e.npa }));
-	const dedup = await fetchDedupSets(locals.supabase, SOURCE_KEY, sourceIds);
+	const dedup = await fetchDedupSets(locals.supabase, SOURCE_KEY, sourceIds, locals.marque);
 
 	// 4) Lookup signal Veille source (optionnel) pour bonus scoring.
 	const signalLookup = from_intelligence
@@ -198,7 +198,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	// Mode direct (rétro-compat) : insert des importables via le builder partagé.
 	const now = new Date().toISOString();
 	const importables = candidates.filter((c) => isImportable(c.status_hint));
-	const inserts = importables.map((c) => candidateToInsertRow(c, c.score_pertinence, { now, fromIntelligence: from_intelligence, fromTerm: from_term }));
+	const inserts = importables.map((c) => candidateToInsertRow(c, c.score_pertinence, { now, fromIntelligence: from_intelligence, fromTerm: from_term, marque: locals.marque }));
 	const skipped = entries.length - importables.length;
 
 	let imported = 0;

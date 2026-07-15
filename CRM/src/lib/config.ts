@@ -24,7 +24,7 @@ export const config = {
 		accent: '#3B6CB7',
 		logo: 'FilmPro_logo.svg',
 		logoWhite: 'FilmPro_logo_white.svg',
-		font: 'DM Sans',
+		font: 'Inter',
 		loginBackground: 'login-bg.webp',
 	},
 

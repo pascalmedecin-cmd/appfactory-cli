@@ -20,6 +20,8 @@ function createMockSupabase(candidates: Candidate[]) {
 	let insertCalled = false;
 	const builder = {
 		select() { return builder; },
+		// Atelier 209 : la dedup filtre .eq('marque', marque) avant .ilike().limit().
+		eq() { return builder; },
 		ilike() { return builder; },
 		limit() { return Promise.resolve({ data: candidates, error: null }); },
 		insert() {
@@ -47,7 +49,7 @@ async function callAction(supabase: ReturnType<typeof createMockSupabase>, field
 	} as unknown as Request;
 	const result = await action({
 		request,
-		locals: { supabase },
+		locals: { supabase, marque: 'filmpro' },
 	} as unknown as Parameters<typeof action>[0]);
 	return result;
 }

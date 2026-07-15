@@ -29,6 +29,8 @@ function createMockSupabase(opts: MockSupabaseOpts = {}) {
 		const builder: Record<string, unknown> = {};
 		// SELECT chain (signaux et keywords)
 		builder.select = () => {
+			// Atelier 209 : le rescore filtre .eq('marque', marque) AVANT .in('statut_traitement', [...]).
+			builder.eq = () => builder;
 			builder.in = () => {
 				calls.push({ table, op: 'select.in' });
 				return Promise.resolve({ data: opts.signauxRows ?? [], error: null });
@@ -88,7 +90,7 @@ async function callAction(
 	const request = { formData: async () => makeFormData(fields) } as unknown as Request;
 	return action({
 		request,
-		locals: { supabase, safeGetSession },
+		locals: { supabase, safeGetSession, marque: 'filmpro' },
 	} as unknown as Parameters<typeof action>[0]);
 }
 

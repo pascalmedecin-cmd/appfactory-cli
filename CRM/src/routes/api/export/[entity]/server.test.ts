@@ -42,6 +42,7 @@ async function callGet(entity: string, supabase: ReturnType<typeof createMockSup
 		params: { entity },
 		locals: {
 			supabase,
+			marque: 'filmpro',
 			safeGetSession: async () => ({
 				session: { user: { id: 'u1' } },
 				user: { id: 'u1', app_metadata: premium ? { ff_crm_listes_v2: true } : {} }
@@ -78,7 +79,11 @@ describe('GET /api/export/[entity]', () => {
 		expect(body).toContain('2026-01-02'); // date raccourcie
 		// contacts : exclut les archivés
 		expect(supabase._table()).toBe('contacts');
-		expect(supabase._filters()).toEqual([{ column: 'statut_archive', value: false }]);
+		// Atelier 209 Run 2 : le filtre marque est ajouté EN PREMIER, avant statut_archive.
+		expect(supabase._filters()).toEqual([
+			{ column: 'marque', value: 'filmpro' },
+			{ column: 'statut_archive', value: false },
+		]);
 	});
 
 	it('entreprises → CSV + filtre archive', async () => {
@@ -89,7 +94,10 @@ describe('GET /api/export/[entity]', () => {
 		expect(body).toContain('Raison sociale');
 		expect(body).toContain('Bâtir SA');
 		expect(supabase._table()).toBe('entreprises');
-		expect(supabase._filters()).toEqual([{ column: 'statut_archive', value: false }]);
+		expect(supabase._filters()).toEqual([
+			{ column: 'marque', value: 'filmpro' },
+			{ column: 'statut_archive', value: false },
+		]);
 	});
 
 	it('leads → CSV, table prospect_leads, AUCUN filtre archive', async () => {
@@ -100,7 +108,8 @@ describe('GET /api/export/[entity]', () => {
 		expect(body).toContain('Raison sociale');
 		expect(body).toContain('Lead X');
 		expect(supabase._table()).toBe('prospect_leads');
-		expect(supabase._filters()).toEqual([]);
+		// Leads : pas de filtre statut_archive, mais le cloisonnement marque s'applique quand même.
+		expect(supabase._filters()).toEqual([{ column: 'marque', value: 'filmpro' }]);
 	});
 
 	it('leads : colonne Campagnes présente en premium, absente sinon (Vague 3.2, OFF byte-identique)', async () => {

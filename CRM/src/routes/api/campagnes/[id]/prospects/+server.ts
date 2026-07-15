@@ -22,7 +22,7 @@ export const GET = async ({ params, locals }: RequestEvent) => {
 	const id = idSchema.safeParse(params.id);
 	if (!id.success) return json({ error: 'Identifiant invalide' }, { status: 400 });
 
-	const { data, error } = await fetchProspectsForCampagne(locals.supabase, id.data);
+	const { data, error } = await fetchProspectsForCampagne(locals.supabase, locals.marque, id.data);
 	if (error) {
 		console.error('Erreur chargement prospects campagne:', error.message);
 		return json({ error: 'Chargement impossible' }, { status: 500 });

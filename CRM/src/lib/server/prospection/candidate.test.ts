@@ -84,9 +84,10 @@ describe('candidate — scoreCandidate', () => {
 
 describe('candidate — candidateToInsertRow', () => {
 	it('construit une ligne serveur (id/dates/statut serveur, score injecté)', () => {
-		const row = candidateToInsertRow(baseCore(), 7, { now: '2026-06-18T00:00:00.000Z', fromIntelligence: null, fromTerm: null });
+		const row = candidateToInsertRow(baseCore(), 7, { now: '2026-06-18T00:00:00.000Z', fromIntelligence: null, fromTerm: null, marque: 'filmpro' });
 		expect(row.statut).toBe('vide');
 		expect(row.score_pertinence).toBe(7);
+		expect(row.marque).toBe('filmpro');
 		expect(row.source).toBe('search_ch');
 		expect(row.date_import).toBe('2026-06-18T00:00:00.000Z');
 		expect(typeof row.id).toBe('string');
@@ -94,7 +95,7 @@ describe('candidate — candidateToInsertRow', () => {
 		expect(row.raison_sociale).toBe('Régie Test SA');
 	});
 	it('propage la traçabilité Veille quand fournie', () => {
-		const row = candidateToInsertRow(baseCore(), 3, { now: 'x', fromIntelligence: 'rep-1', fromTerm: 'régie' });
+		const row = candidateToInsertRow(baseCore(), 3, { now: 'x', fromIntelligence: 'rep-1', fromTerm: 'régie', marque: 'filmpro' });
 		expect(row.source_intelligence_id).toBe('rep-1');
 		expect(row.source_intelligence_term).toBe('régie');
 	});

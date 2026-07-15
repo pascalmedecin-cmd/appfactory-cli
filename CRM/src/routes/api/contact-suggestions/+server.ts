@@ -41,6 +41,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		.from('entreprises')
 		.select('id')
 		.eq('id', d.entreprise_id)
+		.eq('marque', locals.marque)
 		.maybeSingle();
 	if (entErr) return genericError(entErr, 'Erreur recherche entreprise');
 	if (!ent) return json({ error: 'Entreprise introuvable' }, { status: 404 });

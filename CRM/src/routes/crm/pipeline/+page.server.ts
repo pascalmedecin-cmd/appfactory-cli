@@ -15,15 +15,18 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.select(
 				'*, contacts(id, nom, prenom), entreprises(id, raison_sociale), signaux_affaires!opportunites_signal_affaires_id_fkey(id, type_signal, description_projet, source_officielle)'
 			)
+			.eq('marque', locals.marque)
 			.order('date_derniere_modification', { ascending: false }),
 		locals.supabase
 			.from('contacts')
 			.select('id, nom, prenom')
+			.eq('marque', locals.marque)
 			.eq('statut_archive', false)
 			.order('nom'),
 		locals.supabase
 			.from('entreprises')
 			.select('id, raison_sociale')
+			.eq('marque', locals.marque)
 			.order('raison_sociale'),
 	]);
 
@@ -68,6 +71,7 @@ export const actions: Actions = {
 		const ts = now();
 		const { error } = await locals.supabase.from('opportunites').insert({
 			id: newId(),
+			marque: locals.marque,
 			titre: parsed.data.titre,
 			contact_id: parsed.data.contact_id || null,
 			entreprise_id: parsed.data.entreprise_id || null,
@@ -99,6 +103,7 @@ export const actions: Actions = {
 		const { data: oppData, error: readErr } = await locals.supabase
 			.from('opportunites')
 			.select('*')
+			.eq('marque', locals.marque)
 			.eq('id', parsed.data.id)
 			.maybeSingle();
 		if (readErr) {
@@ -130,6 +135,7 @@ export const actions: Actions = {
 		const { data: leadRow } = await locals.supabase
 			.from('prospect_leads')
 			.select('statut, transfere_vers_entreprise_id, transfere_vers_contact_id')
+			.eq('marque', locals.marque)
 			.eq('id', opp.prospect_lead_id)
 			.maybeSingle();
 		if (leadRow?.statut === 'transfere' && leadRow.transfere_vers_entreprise_id) {

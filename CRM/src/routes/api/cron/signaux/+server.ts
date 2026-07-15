@@ -176,6 +176,7 @@ async function importZefix(
 	const { data: existing } = await supabase
 		.from('signaux_affaires')
 		.select('source_id')
+		.eq('marque', 'filmpro')
 		.eq('source_officielle', 'zefix')
 		.in('source_id', uids);
 	const existingIds = new Set(existing?.map((e) => e.source_id) ?? []);
@@ -213,6 +214,9 @@ async function importZefix(
 
 		inserts.push({
 			id: randomUUID(),
+			// Atelier 209 Run 2 : la veille/signaux reste FilmPro-only ce run (décision Pascal Q2).
+			// Cron sans session -> marque 'filmpro' FIXE (jamais locals.marque).
+			marque: 'filmpro',
 			type_signal: 'creation_entreprise',
 			source_officielle: 'zefix',
 			source_id: c.uid,
@@ -285,6 +289,7 @@ async function importSimap(
 		const { data: existing } = await supabase
 			.from('signaux_affaires')
 			.select('source_id')
+			.eq('marque', 'filmpro')
 			.eq('source_officielle', 'simap')
 			.in('source_id', projectIds);
 		const existingIds = new Set(existing?.map((e) => e.source_id) ?? []);
@@ -325,6 +330,8 @@ async function importSimap(
 
 			inserts.push({
 				id: randomUUID(),
+				// Veille/signaux FilmPro-only ce run (Q2) : cron sans session -> marque 'filmpro' FIXE.
+				marque: 'filmpro',
 				type_signal: 'appel_offres',
 				source_officielle: 'simap',
 				source_id: project.id,

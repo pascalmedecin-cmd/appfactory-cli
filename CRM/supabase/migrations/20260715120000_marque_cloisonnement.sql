@@ -106,6 +106,15 @@ BEGIN
   END IF;
 END $$;
 
+-- Les FK composites ci-dessus SUPERSEDENT les FK simples (campagne_id)/(lead_id) creees par les
+-- migrations campagnes : garder les deux = DEUX relations entre les memes tables -> les embeds
+-- PostgREST deviennent AMBIGUS (PGRST201 au runtime : listCampagnes/fetchCampagnesByLead cassent).
+-- On DROP donc les FK simples redondantes : la composite garde la meme garantie (ON DELETE CASCADE
+-- + rejet cross-marque) ET rend l'embed non ambigu (1 seule relation). cf. feedback_postgrest_embed_ambigu_2fk.
+ALTER TABLE public.prospect_lead_campagnes DROP CONSTRAINT IF EXISTS prospect_lead_campagnes_campagne_id_fkey;
+ALTER TABLE public.prospect_lead_campagnes DROP CONSTRAINT IF EXISTS prospect_lead_campagnes_lead_id_fkey;
+ALTER TABLE public.campagne_groupes DROP CONSTRAINT IF EXISTS campagne_groupes_campagne_id_fkey;
+
 -- ============================================================================
 -- 5. RPC reecrites : propager la marque du lead (sinon fuite silencieuse par le DEFAULT)
 -- ============================================================================

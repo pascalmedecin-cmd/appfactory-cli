@@ -70,6 +70,7 @@ export const POST = async ({ params, request, locals }: RequestEvent) => {
 			.from('contacts')
 			.select('id, entreprise_id, statut_archive')
 			.eq('id', merged_contact_id)
+			.eq('marque', locals.marque)
 			.maybeSingle();
 		if (cErr) return genericError(cErr, 'Erreur recherche contact');
 		// Un contact archivé (soft-delete) est invisible dans le CRM : le traiter
@@ -91,7 +92,7 @@ export const POST = async ({ params, request, locals }: RequestEvent) => {
 		// passe par le module (id + ts conservés ici pour le nettoyage anti-race ci-dessous).
 		const { error: insErr } = await locals.supabase
 			.from('contacts')
-			.insert(buildContactInsertFromSuggestion(sug, contactId, ts));
+			.insert(buildContactInsertFromSuggestion(sug, contactId, ts, locals.marque));
 		if (insErr) return genericError(insErr, 'Erreur création contact');
 	}
 
