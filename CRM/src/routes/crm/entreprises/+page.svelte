@@ -356,24 +356,22 @@
 	}
 
 	const columns = [
-		{ key: 'logo', label: '', srLabel: 'Logo', class: 'w-14' },
-		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true, class: 'w-[24%]' },
-		{ key: 'secteur_activite', label: 'Secteur', sortable: true, class: 'w-[22%] hidden md:table-cell' },
-		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[8%] hidden md:table-cell' },
-		{ key: 'contacts', label: 'Contacts', class: 'w-[10%] hidden lg:table-cell' },
-		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-[12%]' },
+		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true, class: 'w-[30%]' },
+		{ key: 'secteur_activite', label: 'Secteur', sortable: true, class: 'w-[24%] hidden md:table-cell' },
+		{ key: 'canton', label: 'Canton', sortable: true, class: 'w-[10%] hidden md:table-cell' },
+		{ key: 'contacts', label: 'Contacts', class: 'w-[12%] hidden lg:table-cell' },
+		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-[14%]' },
 	];
 
 	// Vague 2 : colonnes de la ligne riche (logo + identité + signaux). Le nb de colonnes
 	// DOIT égaler le nb de <td> du snippet premium (sticky/alignement DataTable).
 	const premiumColumns = [
-		{ key: 'logo', label: '', srLabel: 'Logo', class: 'w-14' },
-		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true, class: 'w-[22%]' },
-		{ key: 'localisation', label: 'Localisation', class: 'w-[12%] hidden md:table-cell' },
-		{ key: 'contacts', label: 'Contacts', class: 'w-[9%] hidden lg:table-cell' },
-		{ key: 'pipeline', label: 'Pipeline', class: 'w-[14%] hidden md:table-cell' },
-		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-[12%]' },
-		{ key: 'source', label: 'Source · activité', srLabel: 'Source et activité', class: 'w-[15%] hidden lg:table-cell' },
+		{ key: 'raison_sociale', label: 'Raison sociale', sortable: true, class: 'w-[30%]' },
+		{ key: 'localisation', label: 'Localisation', class: 'w-[13%] hidden md:table-cell' },
+		{ key: 'contacts', label: 'Contacts', class: 'w-[10%] hidden lg:table-cell' },
+		{ key: 'pipeline', label: 'Pipeline', class: 'w-[15%] hidden md:table-cell' },
+		{ key: 'statut_qualification', label: 'Statut', sortable: true, class: 'w-[13%]' },
+		{ key: 'source', label: 'Source · activité', srLabel: 'Source et activité', class: 'w-[16%] hidden lg:table-cell' },
 		{ key: 'chevron', label: '', srLabel: 'Ouvrir', class: 'w-10' },
 	];
 </script>
@@ -444,18 +442,20 @@
 			>
 				{#snippet row(entreprise, _i)}
 					{@const cc = contactCountForEntreprise(entreprise.id, data.contacts)}
-					<td class="px-4 py-3">
-						<span class="logo-cell {premium ? 'logo-cell--lg' : ''} logo-cell--placeholder">
-							{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}
-						</span>
-					</td>
 					{#if premium}
 						{@const stage = stageByEntreprise.get(entreprise.id)}
 						{@const src = sourceMetaFor(entreprise.source)}
 						{@const activite = relativeTimeFr(entreprise.date_derniere_modification)}
 						<td class="px-4 py-3">
-							<div class="crm-name">{entreprise.raison_sociale}</div>
-							{#if entreprise.secteur_activite}<div class="crm-sec">{entreprise.secteur_activite}</div>{/if}
+							<!-- Avatar + nom dans la MÊME cellule (gap 8px stable), au lieu d'une colonne
+							     logo séparée dont l'espacement dépendait de la distribution table-fixed. -->
+							<div class="crm-id">
+								<span class="logo-cell logo-cell--lg logo-cell--placeholder">{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}</span>
+								<div style="min-width:0">
+									<div class="crm-name">{entreprise.raison_sociale}</div>
+									{#if entreprise.secteur_activite}<div class="crm-sec">{entreprise.secteur_activite}</div>{/if}
+								</div>
+							</div>
 						</td>
 						<td class="px-4 py-3 hidden md:table-cell">
 							{#if entreprise.canton}
@@ -485,7 +485,12 @@
 						</td>
 						<td class="px-4 py-3 crm-chev-cell"><Icon name="chevron_right" size={18} /></td>
 					{:else}
-						<td class="px-4 py-3 font-semibold text-text">{entreprise.raison_sociale}</td>
+						<td class="px-4 py-3">
+							<div class="crm-id">
+								<span class="logo-cell logo-cell--placeholder">{entreprise.raison_sociale[0]?.toUpperCase() ?? '?'}</span>
+								<span class="font-semibold text-text">{entreprise.raison_sociale}</span>
+							</div>
+						</td>
 						<td class="px-4 py-3 text-text-muted hidden md:table-cell">{entreprise.secteur_activite ?? '–'}</td>
 						<td class="px-4 py-3 text-text hidden md:table-cell">{entreprise.canton ?? '–'}</td>
 						<td class="px-4 py-3 text-text tabular-nums hidden lg:table-cell">{cc}</td>
