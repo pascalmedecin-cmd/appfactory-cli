@@ -28,7 +28,7 @@ base : ni fork, ni deuxième application. Livraison par **runs** pilotés par `/
 |---|---|---|---|
 | **0** | Les 7 vérifications | **Terminé (5/7)** le 2026-07-14 ; V6/V7 en attente comptes Pascal | - |
 | 1 | Atelier 209 existe (nom, connexion refaite, droits admin réparés) | **DÉPLOYÉ prod le 2026-07-15** (identité + rôles/RLS + connexion 4 adresses). Seul le renommage d'URL `atelier209.vercel.app` est **différé** (config domaine Vercel à faire proprement) - app à `filmpro-portail.vercel.app` | Portail · Connexion **(validés)** |
-| 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) + **golden CRM revu (couleurs + Inter partout, pas de refonte) + chrome (sidemenu/header/footer) décliné par marque LED/FilmPro pour distinguer** (note Pascal 15/07) | **Gate design VALIDÉ 2026-07-15** ; logo LED horizontal produit ; **code en cours** | Sélecteur · Menu teinté · Golden CRM **(validés)** |
+| 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) + **golden CRM revu (couleurs + Inter partout, pas de refonte) + chrome (sidemenu/header/footer) décliné par marque LED/FilmPro pour distinguer** (note Pascal 15/07) | **CÂBLAGE COMPLET + testé (leak 10/10, Vitest 2562, audit 0 C/H) sur `run2-marque` 2026-07-15**. Reste 2 gestes Pascal : validation visuelle Chrome + go migration/déploiement prod | Sélecteur · Menu teinté · Golden CRM **(validés)** |
 | 3 | Les prospects LED entrent (import de liste, sources par marque, source unique secteurs) | À venir | Import |
 | 4 | On trouve le décideur (connecteur Hunter) | Bloqué par V6 | Enrichissement |
 | 5 | On envoie et on mesure (Pingen, relance, provenance, rendement) | Bloqué par V7 | Envoi postal · Provenance |
@@ -176,12 +176,40 @@ Le renommage du projet Vercel (`filmpro-portail` -> `atelier209`) a été testé
 
 ---
 
-# Run 2 - En cours (gate design, 2026-07-15)
+# Run 2 - CÂBLAGE COMPLET, prêt pour gate prod (2026-07-15)
 
-**Livrable** : deux marques cloisonnées (sélecteur, chrome teinté par marque, étanchéité en base) +
-golden CRM revu (Inter partout + couleurs, pas de refonte) + seed jetable (dette D5).
+**Statut : câblage applicatif terminé et testé sur la branche `run2-marque`. NON déployé.**
+**Reste 2 gestes Pascal** : (1) **validation visuelle Chrome** du chrome teinté (les 2 marques + Inter
+sur les tables denses = ton DevTools, `§E2`), (2) **go migration prod (`pg`) + déploiement**.
 
-## Gate design VALIDÉ par Pascal le 2026-07-15 (« ok validé »)
+## Ce qui a été livré (branche `run2-marque`)
+
+- **Cloisonnement DB de bout en bout** : `locals.marque` (cookie httpOnly) threadé partout ; 7 hubs +
+  ~50 fichiers de prod (pages, endpoints, exports, terrain, cron) filtrés (`.eq('marque', ...)`) et
+  inserts marqués. Export CSV dynamique verrouillé (fuite PII fermée). Flux public validation scopé via
+  la marque portée par le token. `contact_suggestions` scopée par héritage (entreprise parente).
+- **Chrome teinté** : sélecteur d'environnement (`BrandSwitcher`), pastille + filet header, teinte LED
+  bleu nuit `#01003B` + magenta sous `[data-marque="led"]`. FilmPro strictement inchangé (aucun override).
+  Logo LED dans `static/atelier209/`.
+- **Golden Lot B** : Inter partout (`--font-sans`, imports, config, golden doc). Chrome FilmPro `#0A1628` intact.
+- **Correctif d'archi (compilateur)** : FK composites créaient un embed PostgREST ambigu → DROP des FK
+  simples redondantes (cohérence + embed OK). Types régénérés (diff 0 dérive).
+- **Preuve DoD** : `src/lib/server/marque-leak.test.ts` **10/10** sur base réelle (à travers les vrais
+  hubs). Vitest **2562 verts**, svelte-check **0**, build OK.
+- **Revue adversariale 4 dimensions + vérif** (18 agents) : 6 findings confirmés (2 MEDIUM
+  `contact_suggestions` + 4 LOW simap/regbl) **tous corrigés**, 8 réfutés (décisions assumées).
+  Audit sécu daté : `audit_secu_2026-07-15_atelier209_run2_marque.md` (0 Critical/High).
+
+## Gate prod (à faire, avec le go de Pascal)
+
+1. **Toi (Pascal)** : ouvrir le CRM local (ou une preview) et valider le chrome LED/FilmPro dans Chrome
+   (bascule via le sélecteur ; regarder les tables denses en Inter, DevTools).
+2. **Go migration** : appliquer `20260715120000_marque_cloisonnement.sql` en prod via lib `pg`
+   (`DATABASE_URL_ADMIN` ; le MCP Supabase est read-only, comme les migrations rôles/campagnes).
+   La migration est idempotente + backfill DEFAULT 'filmpro' = non-régression (le CRM prod reste FilmPro).
+3. **Déploiement** : merge `run2-marque` → `main` (auto-deploy) OU `vercel deploy --prod`.
+
+## Rappel - Gate design VALIDÉ par Pascal le 2026-07-15 (« ok validé »)
 
 Maquette des 3 écrans : `.atelier-209/run2-maquettes/atelier209-run2.html`. Skills design engagés :
 `redesign-skill` + `soft-skill` + `theme-factory` + filtre `ANTI-AI-SLOP.md`. Reproduction fidèle du
