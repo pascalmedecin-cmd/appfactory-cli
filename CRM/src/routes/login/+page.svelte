@@ -1,208 +1,369 @@
+<!--
+  Connexion Atelier 209 - direction « Heure bleue » (validée Pascal 2026-07-15).
+  Bandeau photo (néon + Jet d'Eau) via AtelierShell, contenu centré sans cadre.
+  Flux OTP réel en 2 étapes : email -> code. L'étape 2 reste « pending » (désactivée)
+  tant que le code n'a pas été envoyé, puis prend le focus. Copy de domaine neutralisée
+  (le domaine autorisé est piloté par ALLOWED_DOMAINS, pas codé en dur ici).
+-->
 <script lang="ts">
-	import Icon from '$lib/components/Icon.svelte';
 	import { enhance } from '$app/forms';
 	import { goto } from '$app/navigation';
-	import { config } from '$lib/config';
+	import { browser } from '$app/environment';
+	import AtelierShell from '$lib/components/atelier209/AtelierShell.svelte';
 	import type { ActionData } from './$types';
 
 	let { form }: { form: ActionData } = $props();
 
-	const bgImage = 'loginBackground' in config.branding ? (config.branding as Record<string, unknown>).loginBackground as string : null;
-
 	let email = $state('');
 	let code = $state('');
-	let loginError = $state('');
-	let loading = $state(false);
+	let sending = $state(false);
+	let verifying = $state(false);
 	let codeSent = $state(false);
 	let sentEmail = $state('');
+	let codeInput = $state<HTMLInputElement | null>(null);
+	// Masque l'erreur périmée quand on revient à l'étape 1 (resetToEmail ne peut pas effacer `form`).
+	let errorDismissed = $state(false);
 
-	// Detecter erreur d'acces non autorise via query param
-	if (typeof window !== 'undefined') {
-		const params = new URLSearchParams(window.location.search);
-		if (params.get('error') === 'unauthorized') {
-			loginError = 'Accès réservé aux comptes @filmpro.ch. Contactez l\'administrateur.';
-		} else if (params.get('error') === 'expired') {
-			loginError = 'Session expirée. Veuillez vous reconnecter.';
-		} else if (params.get('error') === 'callback') {
-			loginError = `Erreur de connexion : ${params.get('detail') || 'inconnue'}`;
-		}
-	}
+	// Erreur portée par la query (redirections du hook) - copy neutre.
+	let queryError = $state('');
+	$effect(() => {
+		if (!browser) return;
+		const p = new URLSearchParams(window.location.search);
+		const e = p.get('error');
+		if (e === 'unauthorized')
+			queryError = 'Accès réservé aux comptes autorisés. Contactez l’administrateur.';
+		else if (e === 'expired') queryError = 'Session expirée. Veuillez vous reconnecter.';
+		else if (e === 'callback') queryError = `Erreur de connexion : ${p.get('detail') || 'inconnue'}`;
+	});
 
-	// Réagir aux retours serveur
+	// Retours serveur : code envoyé (étape 2) ou vérifié (accès au portail).
 	$effect(() => {
 		if (form?.codeSent && !form?.verified) {
 			codeSent = true;
 			sentEmail = form.email ?? '';
+			queryError = '';
 		}
 		if (form?.verified) {
-			// Post-login : home portail (choix outil CRM / Découpe Films). Decision Pascal 2026-06-01 (AC-015 revisee).
 			goto('/');
 		}
 	});
+
+	// Focus le champ code dès qu'il devient actif.
+	$effect(() => {
+		if (codeSent && codeInput) codeInput.focus();
+	});
+
+	const displayedError = $derived(
+		form?.verified || errorDismissed ? '' : (form?.error ?? queryError ?? ''),
+	);
 
 	function resetToEmail() {
 		codeSent = false;
 		sentEmail = '';
 		code = '';
-		loginError = '';
+		queryError = '';
+		errorDismissed = true; // efface la bannière de l'étape 2 en revenant à l'étape 1
 	}
 </script>
 
-<div class="login-page" class:has-bg={bgImage}>
-	{#if bgImage}
-		<img src="/{bgImage}" alt="" class="login-bg" aria-hidden="true" />
-		<!-- Voile décoratif (assombrit l'image de fond pour le contraste du texte) — audit 360 V3b L-26 -->
-		<div class="login-overlay" aria-hidden="true"></div>
-	{/if}
-	<div class="login-card">
-		<div class="text-center">
-			{#if bgImage && config.branding.logoWhite}
-				<img src="/{config.branding.logoWhite}" alt="{config.app.name}" class="login-logo" fetchpriority="high" width="246" height="46" />
-			{:else if config.branding.logo}
-				<img src="/{config.branding.logo}" alt="{config.app.name}" class="login-logo" fetchpriority="high" width="246" height="46" />
-			{/if}
-			<p class="login-subtitle" class:text-white={bgImage} class:text-text={!bgImage}>Espace professionnel</p>
-		</div>
+<svelte:head>
+	<title>Connexion - Atelier 209</title>
+</svelte:head>
 
-		{#if (loginError || form?.error) && !form?.verified}
-			<div class="px-4 py-3 rounded-lg bg-danger/15 border border-danger/30 text-danger-light text-sm text-center">
-				{loginError || form?.error}
-			</div>
-		{/if}
-
-		{#if codeSent}
-			<!-- Étape 2 : saisir le code -->
-			<form method="POST" action="?/verifycode" use:enhance={() => { loading = true; loginError = ''; return async ({ update }) => { loading = false; await update(); }; }} class="flex flex-col gap-4">
-				<input type="hidden" name="email" value={sentEmail} />
-
-				<div class="text-center {bgImage ? 'text-white/80' : 'text-text-light'}">
-					<p class="text-sm">Code envoyé à <strong class="{bgImage ? 'text-white' : 'text-text'}">{sentEmail}</strong></p>
-				</div>
-
-				<div>
-					<label for="code" class="block text-sm font-medium mb-1.5 {bgImage ? 'text-white/80' : 'text-text-light'}">Code à 6 chiffres</label>
-					<input
-						id="code"
-						name="code"
-						type="text"
-						inputmode="numeric"
-						autocomplete="one-time-code"
-						maxlength="6"
-						placeholder="000000"
-						bind:value={code}
-						required
-						class="w-full px-4 py-3 rounded-lg text-lg text-center tracking-[0.3em] font-mono {bgImage
-							? 'bg-white/10 border border-white/20 text-white placeholder-white/40 backdrop-blur-sm'
-							: 'bg-white border border-border text-text placeholder-text-light/50'}"
-					/>
-				</div>
-
-				<button
-					type="submit"
-					disabled={loading || code.length !== 6}
-					class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg shadow-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
-						{bgImage
-							? 'border border-white/20 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20'
-							: 'border border-primary bg-primary text-white hover:bg-primary-hover'}"
-				>
-					<Icon name="lock_open" />
-					{loading ? 'Vérification...' : 'Se connecter'}
-				</button>
-
-				<button
-					type="button"
-					onclick={resetToEmail}
-					class="text-sm underline opacity-70 hover:opacity-100 cursor-pointer {bgImage ? 'text-white' : 'text-text'}"
-				>
-					Changer d'adresse email
-				</button>
-			</form>
-		{:else}
-			<!-- Étape 1 : entrer l'email -->
-			<form method="POST" action="?/sendcode" use:enhance={() => { loading = true; loginError = ''; return async ({ update }) => { loading = false; await update(); }; }} class="flex flex-col gap-4">
-				<div>
-					<label for="email" class="block text-sm font-medium mb-1.5 {bgImage ? 'text-white/80' : 'text-text-light'}">Adresse email professionnelle</label>
-					<input
-						id="email"
-						name="email"
-						type="email"
-						placeholder="prenom@filmpro.ch"
-						bind:value={email}
-						required
-						class="w-full px-4 py-3 rounded-lg text-sm {bgImage
-							? 'bg-white/10 border border-white/20 text-white placeholder-white/40 backdrop-blur-sm'
-							: 'bg-white border border-border text-text placeholder-text-light/50'}"
-					/>
-				</div>
-				<button
-					type="submit"
-					disabled={loading || !email}
-					class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg shadow-lg transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed
-						{bgImage
-							? 'border border-white/20 bg-white/10 backdrop-blur-sm text-white hover:bg-white/20'
-							: 'border border-primary bg-primary text-white hover:bg-primary-hover'}"
-				>
-					<Icon name="mail" size={20} strokeWidth={1.75} />
-					{loading ? 'Envoi en cours...' : 'Recevoir le code'}
-				</button>
-			</form>
-		{/if}
+<AtelierShell>
+	<span class="eyebrow reveal" style="--d:.02s">Connexion</span>
+	<div class="head">
+		<h1 class="display login-title reveal" style="--d:.08s">Bienvenue</h1>
+		<p class="subtitle reveal" style="--d:.14s">Espace professionnel</p>
 	</div>
-</div>
+
+	{#if displayedError}
+		<div class="login-error reveal" role="alert" style="--d:.16s">{displayedError}</div>
+	{/if}
+
+	<div class="login-form">
+		<!-- Étape 1 : identifiant -->
+		<form
+			class="step reveal"
+			style="--d:.20s"
+			method="POST"
+			action="?/sendcode"
+			use:enhance={() => {
+				sending = true;
+				errorDismissed = false;
+				return async ({ update }) => {
+					sending = false;
+					await update({ reset: false });
+				};
+			}}
+		>
+			<span class="step-label"><span class="n">Étape 1</span> · Identifiant</span>
+			<label class="field-label" for="email">Adresse professionnelle</label>
+			<input
+				class="field"
+				id="email"
+				name="email"
+				type="email"
+				placeholder="prenom@lamaisoncreativedirection.ch"
+				autocomplete="email"
+				bind:value={email}
+				required
+			/>
+			<div class="btn-row">
+				<button class="btn" type="submit" disabled={sending || !email}>
+					{sending ? 'Envoi…' : codeSent ? 'Renvoyer le code' : 'Recevoir le code'}
+					<span class="icon-pill" aria-hidden="true">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2.6" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>
+					</span>
+				</button>
+			</div>
+			<p class="step-hint">
+				{#if codeSent}
+					Code envoyé à <strong>{sentEmail}</strong>.
+					<button type="button" class="link-reset" onclick={resetToEmail}>Changer d’adresse</button>
+				{:else}
+					Un code à 6 chiffres vous est envoyé par courriel.
+				{/if}
+			</p>
+		</form>
+
+		<!-- Étape 2 : vérification. Pas de `reveal` ici : elle reste « pending » (0.5) au
+		     chargement puis se dé-dimme via la transition de `.step` quand le code est envoyé. -->
+		<form
+			class="step"
+			class:pending={!codeSent}
+			method="POST"
+			action="?/verifycode"
+			use:enhance={() => {
+				verifying = true;
+				errorDismissed = false;
+				return async ({ update }) => {
+					verifying = false;
+					await update({ reset: false });
+				};
+			}}
+		>
+			<input type="hidden" name="email" value={sentEmail} />
+			<span class="step-label"><span class="n">Étape 2</span> · Vérification</span>
+			<label class="field-label" for="code">Code de connexion</label>
+			<input
+				class="field code-field"
+				id="code"
+				name="code"
+				type="text"
+				inputmode="numeric"
+				autocomplete="one-time-code"
+				maxlength="6"
+				placeholder="••••••"
+				bind:value={code}
+				bind:this={codeInput}
+				disabled={!codeSent}
+				required
+			/>
+			<div class="btn-row">
+				<button class="btn" type="submit" disabled={!codeSent || verifying || code.length !== 6}>
+					{verifying ? 'Vérification…' : 'Se connecter'}
+					<span class="icon-pill" aria-hidden="true">
+						<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14" /><path d="m12 5 7 7-7 7" /></svg>
+					</span>
+				</button>
+			</div>
+			<p class="step-hint">Le code expire après 10 minutes.</p>
+		</form>
+	</div>
+</AtelierShell>
 
 <style>
-	.login-page {
-		position: relative;
-		min-height: 100vh;
+	.login-title {
+		font-size: clamp(44px, 5.8vw, 74px);
+	}
+
+	.login-error {
+		max-width: 44ch;
+		padding: 11px 18px;
+		border-radius: 12px;
+		background: rgba(178, 88, 84, 0.14);
+		box-shadow: inset 0 0 0 1px rgba(220, 130, 120, 0.24);
+		color: #f0c9c2;
+		font-size: 13.5px;
+		line-height: 1.5;
+	}
+
+	/* Les 2 étapes côte à côte (desktop), empilées en mobile. */
+	.login-form {
+		width: min(720px, 100%);
 		display: flex;
-		align-items: center;
+		flex-direction: row;
+		align-items: flex-start;
 		justify-content: center;
-		background: var(--color-surface-alt);
+		gap: clamp(28px, 5vw, 60px);
 	}
-
-	.login-page.has-bg {
-		background: var(--color-primary-dark);
-	}
-
-	.login-bg {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
-		object-fit: cover;
-		z-index: 0;
-	}
-
-	.login-overlay {
-		position: absolute;
-		inset: 0;
-		background: color-mix(in srgb, var(--color-primary-dark) 45%, transparent);
-		z-index: 1;
-	}
-
-	.login-card {
-		position: relative;
-		z-index: 2;
-		max-width: 24rem;
-		width: 100%;
+	.step {
+		flex: 1 1 0;
+		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		/* Audit 360 V2c H-29 : gap aligné échelle (2rem = 32px), cf. GOLDEN § 4. */
-		gap: 2rem;
-		padding: 2rem;
+		align-items: center;
+		transition: opacity 0.4s var(--a209-ease);
+	}
+	.step.pending {
+		opacity: 0.5;
 	}
 
-	.login-logo {
-		height: 3.5rem;
-		margin: 0 auto 1rem;
-	}
-
-	.login-subtitle {
-		/* Audit 360 V2c H-29 : DM Sans (héritée), pas de police décorative (cf. GOLDEN § 6). */
-		font-size: 1rem;
-		font-weight: 700;
-		letter-spacing: 0.15em;
+	.step-label {
+		font-size: 10.5px;
+		font-weight: 600;
+		letter-spacing: 0.24em;
 		text-transform: uppercase;
-		color: white;
+		color: var(--ink-muted);
+	}
+	.step-label .n {
+		color: var(--cream);
+	}
+	.field-label {
+		margin-top: 10px;
+		font-size: 13px;
+		font-weight: 500;
+		color: var(--ink);
+	}
+
+	.field {
+		margin-top: 10px;
+		width: 100%;
+		font-family: inherit;
+		font-size: 16px;
+		font-weight: 400;
+		color: var(--ink);
+		text-align: center;
+		background: transparent;
+		border: none;
+		outline: none;
+		padding: 12px 6px 13px;
+		border-radius: 2px;
+		box-shadow: inset 0 -1.5px 0 rgba(236, 231, 220, 0.18);
+		transition:
+			box-shadow 0.4s var(--a209-ease),
+			color 0.4s var(--a209-ease);
+	}
+	.field::placeholder {
+		color: var(--ink-faint);
+	}
+	.field:focus {
+		box-shadow:
+			inset 0 -2px 0 rgba(240, 228, 194, 0.85),
+			0 14px 26px -22px rgba(240, 228, 194, 0.55);
+	}
+	.field:disabled {
+		cursor: not-allowed;
+	}
+	.code-field {
+		font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+		font-size: 26px;
+		letter-spacing: 0.5em;
+		padding-left: 0.5em; /* recentre le texte interlettré */
+	}
+
+	.btn-row {
+		display: flex;
+		justify-content: center;
+		margin-top: clamp(14px, 2vw, 20px);
+	}
+	.btn {
+		font-family: inherit;
+		font-size: 14.5px;
+		font-weight: 500;
+		letter-spacing: -0.005em;
+		border: none;
+		cursor: pointer;
+		display: inline-flex;
+		align-items: center;
+		gap: 14px;
+		padding: 14px 15px 14px 26px;
+		border-radius: 999px;
+		color: var(--concrete-950);
+		background: linear-gradient(180deg, var(--cream-bright), var(--cream));
+		box-shadow:
+			0 18px 44px -22px rgba(240, 228, 194, 0.7),
+			0 2px 10px -4px rgba(240, 228, 194, 0.4);
+		transition:
+			transform 0.55s var(--a209-ease-soft),
+			box-shadow 0.55s var(--a209-ease-soft),
+			filter 0.4s var(--a209-ease),
+			opacity 0.3s var(--a209-ease);
+	}
+	.btn:hover:not(:disabled) {
+		filter: brightness(1.04);
+		box-shadow:
+			0 26px 58px -20px rgba(240, 228, 194, 0.82),
+			0 3px 14px -4px rgba(240, 228, 194, 0.5);
+	}
+	.btn:active:not(:disabled) {
+		transform: scale(0.985);
+	}
+	.btn:disabled {
+		opacity: 0.45;
+		cursor: not-allowed;
+	}
+	.btn:focus-visible {
+		outline: 2px solid rgba(240, 228, 194, 0.7);
+		outline-offset: 3px;
+	}
+	.icon-pill {
+		width: 32px;
+		height: 32px;
+		border-radius: 50%;
+		background: rgba(18, 19, 21, 0.1);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		transition: transform 0.55s var(--a209-ease-soft);
+	}
+	.btn:hover:not(:disabled) .icon-pill {
+		transform: translateX(3px);
+	}
+	.icon-pill svg {
+		display: block;
+	}
+
+	.step-hint {
+		margin-top: 9px;
+		font-size: 12px;
+		color: var(--ink-faint);
+		line-height: 1.5;
+		max-width: 34ch;
+	}
+	.link-reset {
+		display: inline;
+		background: none;
+		border: none;
+		padding: 0;
+		font: inherit;
+		color: var(--cream);
+		cursor: pointer;
+		text-decoration: underline;
+		text-underline-offset: 2px;
+	}
+	.link-reset:hover {
+		color: var(--cream-bright);
+	}
+
+	@media (max-width: 760px) {
+		.login-form {
+			flex-direction: column;
+			align-items: center;
+			gap: 20px;
+			width: min(360px, 100%);
+		}
+		.step {
+			flex: none;
+			width: 100%;
+		}
+		.btn {
+			width: 100%;
+			justify-content: space-between;
+		}
+		.btn-row {
+			width: 100%;
+		}
 	}
 </style>

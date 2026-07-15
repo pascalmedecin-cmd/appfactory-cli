@@ -3,7 +3,7 @@ import { fail } from '@sveltejs/kit';
 import { z } from 'zod';
 import { SignalUpdateStatutSchema, SignalDeleteSchema, SignalBatchDeleteSchema, extractForm, validate } from '$lib/schemas';
 import { dbFail } from '$lib/server/db-helpers';
-import { isAdminEmail } from '$lib/feedback/admin';
+import { isEditor } from '$lib/server/roles';
 import { POIDS_PAR_CATEGORIE, type KeywordRow } from '$lib/scoring/keywords';
 import { calculerScore } from '$lib/scoring';
 import { normalizeNFDTrim } from '$lib/utils/text-normalize';
@@ -84,7 +84,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	}
 
 	const keywords = (keywordsRes.data ?? []) as KeywordRow[];
-	const canEditKeywords = isAdminEmail(sessionRes.user?.email ?? null);
+	// Édition des mots-clés : admin OU superuser (Atelier 209, src/lib/server/roles.ts).
+	const canEditKeywords = isEditor(sessionRes.user?.email ?? null);
 
 	return {
 		signaux: signauxRes.data ?? [],
@@ -102,8 +103,8 @@ export const actions: Actions = {
 
 	addKeyword: async ({ request, locals }) => {
 		const session = await locals.safeGetSession();
-		if (!isAdminEmail(session.user?.email ?? null)) {
-			return fail(403, { error: 'Réservé aux admins FilmPro' });
+		if (!isEditor(session.user?.email ?? null)) {
+			return fail(403, { error: 'Réservé aux administrateurs et superusers' });
 		}
 		const form = await request.formData();
 		const parsed = KeywordAddSchema.safeParse({
@@ -151,8 +152,8 @@ export const actions: Actions = {
 
 	removeKeyword: async ({ request, locals }) => {
 		const session = await locals.safeGetSession();
-		if (!isAdminEmail(session.user?.email ?? null)) {
-			return fail(403, { error: 'Réservé aux admins FilmPro' });
+		if (!isEditor(session.user?.email ?? null)) {
+			return fail(403, { error: 'Réservé aux administrateurs et superusers' });
 		}
 		const form = await request.formData();
 		const parsed = KeywordRemoveSchema.safeParse({ id: form.get('id') });

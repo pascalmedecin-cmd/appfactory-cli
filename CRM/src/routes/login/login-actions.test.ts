@@ -80,6 +80,40 @@ describe('login sendcode (H-16)', () => {
 		expect(seen).toEqual(['pascal@filmpro.ch']);
 	});
 
+	// Atelier 209 : coexistence par 4 ADRESSES NOMMÉES, aucun domaine ouvert (décision Pascal 15/07).
+	const ATELIER_ALLOWED_EMAILS =
+		'pascal@filmpro.ch,antoine@filmpro.ch,pascal@lamaisoncreativedirection.ch,antoine@lamaisoncreativedirection.ch';
+
+	it('accepte une adresse lamaisoncreativedirection.ch nommée (coexistence, sans domaine ouvert)', async () => {
+		mockEnv.ALLOWED_DOMAINS = '';
+		mockEnv.ALLOWED_EMAILS = ATELIER_ALLOWED_EMAILS;
+		const cookies = makeCookies();
+		const seen: string[] = [];
+		mockSignInImpl = async ({ email }) => {
+			seen.push(email);
+			return { error: null };
+		};
+		const r = await callAction(
+			'sendcode',
+			makeFormData({ email: 'pascal@lamaisoncreativedirection.ch' }),
+			cookies
+		);
+		expect(r).toEqual({ codeSent: true, email: 'pascal@lamaisoncreativedirection.ch' });
+		expect(seen).toEqual(['pascal@lamaisoncreativedirection.ch']);
+	});
+
+	it('refuse une adresse NON listée au même domaine (403) - aucun domaine ouvert', async () => {
+		mockEnv.ALLOWED_DOMAINS = '';
+		mockEnv.ALLOWED_EMAILS = ATELIER_ALLOWED_EMAILS;
+		const cookies = makeCookies();
+		const r = (await callAction(
+			'sendcode',
+			makeFormData({ email: 'stagiaire@lamaisoncreativedirection.ch' }),
+			cookies
+		)) as { status: number; data: { error: string } };
+		expect(r.status).toBe(403);
+	});
+
 	it('refuse une adresse hors domaine (403)', async () => {
 		const cookies = makeCookies();
 		const r = (await callAction(
@@ -88,7 +122,8 @@ describe('login sendcode (H-16)', () => {
 			cookies
 		)) as { status: number; data: { error: string } };
 		expect(r.status).toBe(403);
-		expect(r.data.error).toMatch(/filmpro\.ch/i);
+		// Copy neutralisee (Atelier 209) : plus de domaine code en dur dans le message.
+		expect(r.data.error).toMatch(/autoris/i);
 	});
 
 	it('refuse une adresse vide (400)', async () => {

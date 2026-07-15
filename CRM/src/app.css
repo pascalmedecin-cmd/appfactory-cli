@@ -3,6 +3,8 @@
 @import '@fontsource-variable/dm-sans/wght-italic.css';
 @import '@fontsource/dm-mono/400.css';
 @import '@fontsource/dm-mono/500.css';
+/* Atelier 209 : Inter (portail + connexion « Heure bleue »). Self-hosted, CSP font-src 'self'. */
+@import '@fontsource-variable/inter';
 
 @theme {
 	/* Primary (Bleu FilmPro) */
@@ -578,4 +580,18 @@ textarea:focus-visible,
 .chip-add:hover {
 	background: var(--color-primary-light);
 	box-shadow: inset 0 0 0 1px rgba(47, 90, 158, 0.30);
+}
+
+/* Atelier 209 : fade-up d'entrée du portail + connexion (référencé par AtelierShell.svelte
+   via un sélecteur :global, donc le keyframe doit vivre ici en global, pas dans le <style>
+   scopé du composant où il serait hashé). */
+@keyframes a209-reveal {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: none;
+	}
 }

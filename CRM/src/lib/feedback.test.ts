@@ -10,7 +10,6 @@ import {
 	FeedbackUpdateNotesSchema,
 	validate,
 } from './schemas';
-import { isAdminEmail, ADMIN_EMAIL } from '$lib/feedback/admin';
 import { buildPageOptions, pagesForUrl, FALLBACK_PAGE } from '$lib/feedback/pages';
 import { toExportPayload, toExportJson, exportFilename } from '$lib/feedback/export';
 import { errorCapture, ERROR_CAPTURE_MAX, ERROR_CAPTURE_WINDOW_MS } from '$lib/feedback/error-capture';
@@ -175,37 +174,11 @@ describe('FeedbackUpdateNotesSchema', () => {
 	});
 });
 
-// -- isAdminEmail ------------------------------------------------------------
+// -- rôles (déplacé) ---------------------------------------------------------
 
-describe('isAdminEmail (spec § 8.3)', () => {
-	it('retourne true pour pascal@filmpro.ch en minuscules', () => {
-		expect(isAdminEmail('pascal@filmpro.ch')).toBe(true);
-	});
-
-	it('est insensible à la casse (PASCAL@FILMPRO.CH)', () => {
-		expect(isAdminEmail('PASCAL@FILMPRO.CH')).toBe(true);
-		expect(isAdminEmail('Pascal@FilmPro.ch')).toBe(true);
-	});
-
-	it('trim les espaces autour', () => {
-		expect(isAdminEmail('  pascal@filmpro.ch  ')).toBe(true);
-	});
-
-	it('retourne false pour les autres emails', () => {
-		expect(isAdminEmail('antoine@filmpro.ch')).toBe(false);
-		expect(isAdminEmail('pascal@gmail.com')).toBe(false);
-	});
-
-	it('retourne false pour null / undefined / chaîne vide', () => {
-		expect(isAdminEmail(undefined)).toBe(false);
-		expect(isAdminEmail(null)).toBe(false);
-		expect(isAdminEmail('')).toBe(false);
-	});
-
-	it('expose la constante ADMIN_EMAIL en minuscules', () => {
-		expect(ADMIN_EMAIL).toBe('pascal@filmpro.ch');
-	});
-});
+// Les rôles (admin / superuser / user) sont testés dans src/lib/server/roles.test.ts
+// depuis la refonte Atelier 209 (Run 1). L'ancien helper isAdminEmail / la constante
+// ADMIN_EMAIL de $lib/feedback/admin ont été remplacés par $lib/server/roles.
 
 // -- pages -------------------------------------------------------------------
 

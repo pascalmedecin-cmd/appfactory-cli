@@ -62,10 +62,11 @@ function makeEvent(
 	opts: { ip?: string; cookies?: ReturnType<typeof makeCookies>; method?: string } = {}
 ) {
 	return {
-		// Host courant (portail). NE PAS utiliser un ancien host (filmpro-crm / template-rho-three) :
-		// ce sont des legacy hosts 308-rediriges par baseHandle (legacy-redirects.ts), ce qui
-		// court-circuiterait la logique auth/rate-limit/headers exercee ici.
-		url: new URL(`https://filmpro-portail.vercel.app${pathname}`),
+		// Host courant (Atelier 209). NE PAS utiliser un ancien host (filmpro-crm /
+		// template-rho-three / filmpro-portail) : ce sont des legacy hosts 308-rediriges par
+		// baseHandle (legacy-redirects.ts), ce qui court-circuiterait la logique auth/rate-limit
+		// /headers exercee ici.
+		url: new URL(`https://atelier209.vercel.app${pathname}`),
 		request: { method: opts.method ?? 'GET' },
 		getClientAddress: () => opts.ip ?? '10.0.0.1',
 		cookies: opts.cookies ?? makeCookies(),

@@ -27,8 +27,8 @@ base : ni fork, ni deuxième application. Livraison par **runs** pilotés par `/
 | Run | Livrable | Statut | Écrans à valider (Pascal) |
 |---|---|---|---|
 | **0** | Les 7 vérifications | **Terminé (5/7)** le 2026-07-14 ; V6/V7 en attente comptes Pascal | - |
-| 1 | Atelier 209 existe (nom, adresse, connexion refaite, droits admin réparés) | **Maquettes Portail + Connexion VALIDÉES (Pascal, 15/07)** ; image hero verrouillée ; code à venir | Portail · Connexion **(validés)** |
-| 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) | À venir | Sélecteur · Menu teinté |
+| 1 | Atelier 209 existe (nom, connexion refaite, droits admin réparés) | **DÉPLOYÉ prod le 2026-07-15** (identité + rôles/RLS + connexion 4 adresses). Seul le renommage d'URL `atelier209.vercel.app` est **différé** (config domaine Vercel à faire proprement) - app à `filmpro-portail.vercel.app` | Portail · Connexion **(validés)** |
+| 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) + **golden CRM revu (couleurs + Inter partout, pas de refonte) + chrome (sidemenu/header/footer) décliné par marque LED/FilmPro pour distinguer** (note Pascal 15/07) | À venir | Sélecteur · Menu teinté · Golden CRM |
 | 3 | Les prospects LED entrent (import de liste, sources par marque, source unique secteurs) | À venir | Import |
 | 4 | On trouve le décideur (connecteur Hunter) | Bloqué par V6 | Enrichissement |
 | 5 | On envoie et on mesure (Pingen, relance, provenance, rendement) | Bloqué par V7 | Envoi postal · Provenance |
@@ -136,11 +136,51 @@ Ces deux vérifications ne bloquent **que** les runs 4 et 5. Les runs 1, 2 et 3 
 
 ---
 
+# Run 1 - Réalisation (2026-07-15)
+
+**Statut : DÉPLOYÉ en prod le 2026-07-15** (identité + rôles/RLS + connexion 4 adresses). **Seul le renommage d'URL `atelier209.vercel.app` est différé** (voir plus bas) : l'app tourne à `filmpro-portail.vercel.app`, sous l'identité « Atelier 209 ».
+
+## Modèle de rôles (validé par Pascal le 15/07)
+
+| Rôle | Adresses | Connexion | Éditer mots-clés Signaux | Traiter retours (/log) |
+|---|---|---|---|---|
+| **Admin** | pascal@filmpro.ch + pascal@lamaisoncreativedirection.ch | oui | oui | oui |
+| **Superuser** | antoine@filmpro.ch + antoine@lamaisoncreativedirection.ch | oui | oui | non |
+| **User** | (à recruter) | oui | non | non |
+
+Connexion autorisée : **4 adresses nommées** (pascal + antoine, sur filmpro.ch et lamaisoncreativedirection.ch), **aucun domaine ouvert** (décision Pascal 15/07 ; la RLS mono-tenant plate impose des adresses nommées plutôt qu'un domaine entier - sinon toute boîte du domaine accéderait à tout le fichier client). Chaque personne garde ses deux adresses (transition non verrouillante). Décision Pascal : @filmpro.ch et @ledstudio.ch serviront d'**expéditeurs** au futur module d'emailing (hors Run 1).
+
+## Ce qui a été codé
+
+- **Rôles + D1** : `src/lib/server/roles.ts` (source unique admin/superuser/user, lecture env `ADMIN_EMAILS`/`SUPERUSER_EMAILS` avec défauts versionnés) remplace `src/lib/feedback/admin.ts` (supprimé). Gate `/log` -> `isAdmin`, gate `/signaux` -> `isEditor`. Migration `20260715000000_roles_admin_superuser.sql` réécrit les policies RLS (feedback = admin `IN`, signaux = éditeurs `IN` ; l'ancien `LIKE '%@filmpro.ch'` de signaux est **resserré** à des personnes nommées). Garde-fou anti-dérive : `roles.test.ts` compare les emails SQL de la migration aux constantes TS.
+- **Connexion** : coexistence 2 domaines via `ALLOWED_DOMAINS` (env) ; copy de domaine neutralisée (plus de « @filmpro.ch » codé en dur). Logique auth (`auth.ts`, `hooks.server.ts`) **inchangée**.
+- **Refonte visuelle** (direction « Heure bleue », maquette validée) : `AtelierShell.svelte` (coquille bandeau + béton, tokens, Inter, reveal) partagée par `/login` (flux OTP 2 étapes) et `/` (portail « Par où commencer ? », header transparent, 2 outils sans cadre). Image `bar-off-1.png` -> `static/atelier209/hero-{480,768,1184}.webp` (1,27 Mo -> 30 Ko). Inter self-hosté (`@fontsource-variable/inter`, CSP-safe). Titre/manifest/theme-color -> « Atelier 209 ». `ToolCard`/`ToolCardGrid` supprimés (code mort après refonte) ; `PortailHeader` conservé (utilisé par Découpe).
+- **URL Vercel** : `legacy-redirects.ts` redirige `filmpro-portail.vercel.app` -> `atelier209.vercel.app` (308, `/api/*` exempté).
+
+## Vérifications (preuves)
+
+- **Vitest 2559 verts** (176 fichiers ; baseline 2548 + rôles/coexistence/superuser, - tests admin obsolètes). **Build prod OK**. **svelte-check 0 erreur / 0 warning**.
+- **4 écrans capturés en navigateur réel** (Playwright headless, dev local) et **conformes à la maquette** : login desktop + mobile, portail desktop + mobile (session mintée sans OTP ; le portail ne fait aucune requête DB). Bug reveal (référence keyframe) trouvé et corrigé à la capture, re-vérifié.
+- **Revue adversariale** (sécurité rôles/RLS/D1 + bugs + contrats + non-régression, avec vérification indépendante des findings) : voir statut ci-dessous / audit sécu daté.
+
+## Déploiement prod (fait le 2026-07-15)
+
+- **Matrice de rôles confirmée par Pascal** (admin = Pascal ×2, superuser = Antoine ×2, connexion = les 4 adresses).
+- **Migration RLS appliquée en prod** (via `pg` / `DATABASE_URL_ADMIN`, transaction commitée, policies re-vérifiées : feedback = 2 admin, signaux = 4 éditeurs). Le MCP Supabase étant read-only, `apply_migration`/`execute_sql` refusent le DDL - passer par `pg`.
+- **Variables Vercel Production** posées : `ALLOWED_EMAILS` = les 4 adresses, `ALLOWED_DOMAINS` **retiré** (vérifié par `vercel env pull`). Aucun compte actif coupé (seuls `pascal@`/`antoine@filmpro.ch` existent ; un vieux `pascal.medecin@gmail.com` était déjà hors périmètre).
+- **Code poussé sur `main`** (auto-déploie). L'app tourne à `filmpro-portail.vercel.app` sous l'identité « Atelier 209 » (titre, PWA, écrans).
+
+### Différé (à faire proprement, hors risque) : renommage d'URL `atelier209.vercel.app`
+
+Le renommage du projet Vercel (`filmpro-portail` -> `atelier209`) a été testé puis **annulé** : renommer ne rattache pas automatiquement `atelier209.vercel.app` comme **domaine de production public** (il reste protégé par le SSO Vercel de déploiement, 302 vers `vercel.com/sso-api`), alors qu'un alias manuel pointe vers l'URL de déploiement protégée. Le pousser en l'état aurait cassé le redirect `filmpro-portail -> atelier209` (cible 404/protégée). **Décision : garder `filmpro-portail.vercel.app` comme URL canonique** ; le cutover vers `atelier209.vercel.app` se fera dans une étape dédiée (configurer `atelier209.vercel.app` comme **domaine de production** du projet dans les réglages Vercel, vérifier qu'il sert en 200 public, PUIS activer le redirect 308 de `filmpro-portail`). Le code du redirect (`legacy-redirects.ts`) a été remis à son état d'origine pour ce déploiement. `atelier209.ch` reste libre si Pascal préfère un vrai domaine.
+
+---
+
 # Dettes du code (à corriger dans le chantier)
 
 | # | Dette | Preuve | Run |
 |---|---|---|---|
-| **D1** | Droits admin `pascal@filmpro.ch` **en dur**, à passer en config - **et les deux tables sont asymétriques** (voir V3) : email exact (feedback) vs domaine (signaux) | `src/lib/feedback/admin.ts:5` + policies `20260513000001:52-55` (`=`) et `20260513000003:35-48` (`~~`) | **Run 1** |
+| **D1** | ~~Droits admin `pascal@filmpro.ch` **en dur**~~ **CORRIGÉ (code) 2026-07-15** : modèle de rôles `src/lib/server/roles.ts` + migration RLS `20260715000000`. Déploiement prod : en attente. | ~~`src/lib/feedback/admin.ts:5`~~ (supprimé) | **Run 1 (code fait)** |
 | **D2** | Import CSV développeur cassé (mapping périmé sur 3 entités, zéro dédup) | `scripts/import-csv.ts` vs migrations ; `csv-import.ts` (157 lignes) sans consommateur | **Run 3** (remplacé par le vrai écran d'import) |
 | **D3** | Mots-clés de secteur en **5 copies, dont 3 ont divergé** ; la copie « officielle » n'est lue par personne | `zefix/+server.ts:43-52` · `searchch/helpers.ts:363-372` · `google-places/helpers.ts:269-279` · `ImportModal.svelte` · `config.ts` (morte) | **Run 3** (source unique) |
 | **D4** | Aucune valeur de source « manuel » (supprimée de la base en 2026, jamais remise) - **confirmé en prod** : `prospect_leads.source` = `[zefix,simap,sitg,search_ch,fosc,regbl,minergie,lead_express,google_places]`, pas de `manuel` | `20260403000001:8` (origine) retiré par `20260510000002` | **Run 3** |

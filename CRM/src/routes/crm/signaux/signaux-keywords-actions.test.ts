@@ -93,6 +93,7 @@ async function callAction(
 }
 
 const ADMIN_EMAIL = 'pascal@filmpro.ch';
+const SUPERUSER_EMAIL = 'antoine@filmpro.ch'; // Atelier 209 : superuser = éditeur des mots-clés
 const NON_ADMIN_EMAIL = 'evil@external.com';
 const VALID_UUID = '11111111-1111-4111-8111-111111111111';
 
@@ -107,7 +108,7 @@ describe('signaux form actions - addKeyword', () => {
 		expect(supabase._calls()).toHaveLength(0);
 	});
 
-	it('refuse 403 sur email non-@filmpro.ch', async () => {
+	it('refuse 403 sur email non-éditeur', async () => {
 		const supabase = createMockSupabase();
 		const result = (await callAction('addKeyword', supabase, makeSession(NON_ADMIN_EMAIL), {
 			terme: 'vitrage',
@@ -115,6 +116,17 @@ describe('signaux form actions - addKeyword', () => {
 		})) as { status: number; data: { error: string } };
 		expect(result.status).toBe(403);
 		expect(supabase._calls()).toHaveLength(0);
+	});
+
+	it('autorise un superuser (Antoine) à ajouter un mot-clé', async () => {
+		const supabase = createMockSupabase({ signauxRows: [] });
+		const result = (await callAction('addKeyword', supabase, makeSession(SUPERUSER_EMAIL), {
+			terme: 'vitrage',
+			categorie: 'coeur',
+		})) as { success?: boolean; status?: number };
+		expect(result.status).toBeUndefined();
+		expect(result.success).toBe(true);
+		expect(supabase._calls().some((c) => c.table === 'signaux_mots_cles' && c.op === 'insert')).toBe(true);
 	});
 
 	it('refuse 400 si terme trop court (< 2 chars)', async () => {
@@ -200,12 +212,21 @@ describe('signaux form actions - removeKeyword', () => {
 		expect(supabase._calls()).toHaveLength(0);
 	});
 
-	it('refuse 403 sur email non-@filmpro.ch', async () => {
+	it('refuse 403 sur email non-éditeur', async () => {
 		const supabase = createMockSupabase();
 		const result = (await callAction('removeKeyword', supabase, makeSession(NON_ADMIN_EMAIL), {
 			id: VALID_UUID,
 		})) as { status: number };
 		expect(result.status).toBe(403);
+	});
+
+	it('autorise un superuser (Antoine) à supprimer un mot-clé', async () => {
+		const supabase = createMockSupabase({ signauxRows: [] });
+		const result = (await callAction('removeKeyword', supabase, makeSession(SUPERUSER_EMAIL), {
+			id: VALID_UUID,
+		})) as { success?: boolean; status?: number };
+		expect(result.status).toBeUndefined();
+		expect(result.success).toBe(true);
 	});
 
 	it('refuse 400 si id invalide (pas UUID)', async () => {

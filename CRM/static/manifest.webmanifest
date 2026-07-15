@@ -1,10 +1,10 @@
 {
-  "name": "FilmPro",
-  "short_name": "FilmPro",
+  "name": "Atelier 209",
+  "short_name": "Atelier 209",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#00003B",
+  "background_color": "#17181A",
+  "theme_color": "#17181A",
   "icons": [
     {
       "src": "/favicon-192.png",

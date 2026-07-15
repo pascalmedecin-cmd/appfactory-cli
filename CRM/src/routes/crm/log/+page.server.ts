@@ -12,17 +12,17 @@ import {
 	validate,
 } from '$lib/schemas';
 import { dbFail } from '$lib/server/db-helpers';
-import { isAdminEmail } from '$lib/feedback/admin';
+import { isAdmin } from '$lib/server/roles';
 import type { FeedbackEntry, FeedbackContext } from '$lib/feedback/types';
 
 // Defense in depth (spec § 11) : la RLS UPDATE via `auth.jwt() ->> 'email'` peut
 // échouer silencieusement si Supabase ne propage pas l'email dans le JWT. On checke
-// donc isAdminEmail(user.email) côté serveur AVANT chaque mutation admin, et la RLS
-// agit comme second filet.
+// donc isAdmin(user.email) côté serveur AVANT chaque mutation admin, et la RLS
+// agit comme second filet. Rôles : src/lib/server/roles.ts (retours = ADMIN seul).
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const { user } = await locals.safeGetSession();
-	const isAdmin = isAdminEmail(user?.email);
+	const admin = isAdmin(user?.email);
 
 	const { data, error } = await locals.supabase
 		.from('feedback_entries')
@@ -31,7 +31,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	if (error) {
 		console.error('Erreur chargement feedback_entries:', error.message);
-		return { entries: [] as FeedbackEntry[], isAdmin, userEmail: user?.email ?? '' };
+		return { entries: [] as FeedbackEntry[], isAdmin: admin, userEmail: user?.email ?? '' };
 	}
 
 	// Normalise context au load : les rows legacy (jsonb '{}' par défaut, ou héritées
@@ -48,7 +48,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		entries,
-		isAdmin,
+		isAdmin: admin,
 		userEmail: user?.email ?? '',
 	};
 };
@@ -65,7 +65,7 @@ export const actions: Actions = {
 		const parsed = validate(FeedbackCreateSchema, raw);
 		if (!parsed.success) return fail(400, { error: parsed.error });
 
-		// Normalise email : trim + lower-case pour aligner sur isAdminEmail (qui lower-case
+		// Normalise email : trim + lower-case pour aligner sur isAdmin (qui lower-case
 		// avant compare). Un email à casse mixte (rare avec OTP @filmpro.ch mais possible)
 		// casserait une requête SQL ad hoc `created_by_email = ADMIN_EMAIL` (audit L-2).
 		const { error } = await locals.supabase.from('feedback_entries').insert({
@@ -84,7 +84,7 @@ export const actions: Actions = {
 
 	updateStatus: async ({ request, locals }) => {
 		const { user } = await locals.safeGetSession();
-		if (!isAdminEmail(user?.email)) {
+		if (!isAdmin(user?.email)) {
 			return fail(403, { error: 'Action réservée à l\'administrateur.' });
 		}
 
@@ -105,7 +105,7 @@ export const actions: Actions = {
 
 	updateAdminNotes: async ({ request, locals }) => {
 		const { user } = await locals.safeGetSession();
-		if (!isAdminEmail(user?.email)) {
+		if (!isAdmin(user?.email)) {
 			return fail(403, { error: 'Action réservée à l\'administrateur.' });
 		}
 

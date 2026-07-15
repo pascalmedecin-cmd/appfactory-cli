@@ -15,7 +15,7 @@ export const actions: Actions = {
 		}
 
 		if (!isEmailAllowed(email, parseEnvList(env.ALLOWED_DOMAINS), parseEnvList(env.ALLOWED_EMAILS))) {
-			return fail(403, { error: 'Seules les adresses @filmpro.ch sont acceptées.' });
+			return fail(403, { error: 'Cette adresse n’est pas autorisée à se connecter.' });
 		}
 
 		const supabase = createSupabaseServerClient(cookies);
