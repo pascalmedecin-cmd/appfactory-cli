@@ -315,7 +315,7 @@ au Run 2 (reco oui) ; Q3 sélecteur par-appareil ou cross-appareil (reco par-app
 
 # Gestes Pascal en attente
 
-- [ ] **Réserver le domaine `atelier209.ch`** (registrar, Infomaniak recommandé). Débloque l'adresse du run 1. (`atelier209.studio` en défensif optionnel.)
+- ~~Réserver le domaine `atelier209.ch`~~ - **DÉCIDÉ : pas d'achat de domaine** (Pascal 2026-07-14). L'adresse = renommage de l'URL Vercel (`atelier209.vercel.app`, différé, cf. Run 1). `atelier209.ch` reste libre si Pascal change d'avis.
 - [ ] **Créer le compte Hunter gratuit** (25 recherches/mois, 0 CHF). Débloque V6 -> run 4.
 - [ ] **Créer le compte Pingen** (sans abonnement, ~1,58 CHF/lettre). Débloque V7 -> run 5.
 
@@ -323,28 +323,21 @@ au Run 2 (reco oui) ; Q3 sélecteur par-appareil ou cross-appareil (reco par-app
 
 # Prochaine étape
 
-**Run 1 - Atelier 209 existe.** **Gate design franchi le 2026-07-15 : les maquettes Portail + Connexion
-sont VALIDÉES par Pascal dans Chrome.** Reste à écrire le code (prochaine session, PAS dans la session
-de validation).
+**Run 3 - Les prospects LED entrent.** Run 1 **et** Run 2 sont **déployés en prod** (cf. sections
+ci-dessus). Le Run 3 fait entrer les prospects LED et rembourse 3 dettes du code (D2/D3/D4).
 
-**Direction visuelle retenue et verrouillée (« Heure bleue »)** - fichier de référence :
-`.atelier-209/run1-maquettes/heure-bleue-B-bandeau-dessous.html`. Principes : chaque écran tient sur
-**une page** (100vh, zéro scroll) ; **photo hero en bandeau haut** (croppée), **contenu centré, sans
-cadre, transparent** sur béton sombre dessous ; **Connexion d'abord, Portail ensuite** ; police
-**Inter** ; accents crème + bleu heure-bleue doux ; wordmark retiré du header (le néon de la photo dit
-déjà « Atelier 209 »). Skills design engagés : `soft-skill` (Inter imposé en override) + `theme-factory`
-+ filtre `ANTI-AI-SLOP.md`.
+**Contenu du Run 3** :
+- **Écran d'import de liste** (remplace la dette **D2**, import CSV développeur cassé) - c'est le **seul**
+  moyen de faire entrer les exposants d'un salon (cf. V2 : ni Zefix, ni Google Places, ni search.ch ne
+  savent énumérer « qui expose au Salon X » ; c'est une liste, pas une catégorie d'activité).
+- **Sources re-paramétrées par marque** : mêmes mécaniques, termes LED (agences événementielles, monteurs
+  de stands, signalétique/enseigne - cf. V2).
+- **Source unique des mots-clés secteur** (dette **D3** : aujourd'hui 5 copies dont 3 ont divergé).
+- **Valeur de source `manuel`** (dette **D4** : supprimée de la base en 2026, jamais remise).
 
-**Image d'accueil verrouillée** : `.atelier-209/run1-maquettes/bar-off-1.png` (choix Pascal).
-Atelier moderne, mur béton, **enseigne néon crème « ATELIER 209 » (lettres seules, sans barre)**,
-cloison vitrée, **Jet d'Eau de Genève au bout de sa jetée**, heure bleue. Générée via fal.ai
-(Nano Banana pour le texte + éditions image-à-image). Déclinaisons responsive à produire au build
-(16:9 maître qui couvre 21:9 en rognant haut/bas + bandeau mobile). Scripts de génération réutilisables
-dans `.atelier-209/*.py` (clé fal **vive** = `~/Claude/Projets/Enseignement/.env`, PAS celle du CRM qui
-est périmée).
+**Gate design d'abord (règle non négociable)** : la maquette de l'écran d'import est **validée par Pascal
+dans Chrome AVANT toute ligne de code**. Skills design : `redesign-skill` + `ANTI-AI-SLOP.md`. Non-régression
++ zéro dette + QA 360 (base jetable Colima + seed).
 
-**Contenu du code Run 1** (prochaine session) : renommage du portail (`src/routes/(portail)/`) en
-identité « Atelier 209 » selon la maquette ; **URL Vercel `atelier209.vercel.app`** (pas d'achat de
-domaine) + redirection 308 de l'ancienne ; page de connexion refaite selon la maquette ; login
-`@lamaisoncreativedirection.ch` (variable d'env) ; dette D1 = **deux réglages admin typés** (email
-exact feedback `=` vs domaine signaux `LIKE`, voir V3). Non-régression + zéro dette + QA 360.
+**Bloqués par un geste Pascal** (n'empêchent PAS le Run 3) : V6 Hunter (→ Run 4) et V7 Pingen (→ Run 5),
+comptes à créer.
