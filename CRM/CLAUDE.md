@@ -7,12 +7,12 @@ Le CRM FilmPro devient l'outil de prospection **des deux marques** (LED Studio +
 - **Source de vérité de l'exécution → `docs/ATELIER-209-SUIVI.md`** : statut par run, décisions, preuves. À lire au démarrage de toute session du chantier.
 - **Le « pourquoi » (cadrage figé, archive hors-repo)** : `~/Claude/Lab/memory/atelier-209/` (contrat, état du code, découpage en runs, risques). Non maintenu - la vérité vivante est le suivi ci-dessus.
 - **Règles non négociables** : Pascal valide **chaque maquette d'écran** dans Chrome avant toute ligne de code ; **non-régression** garantie (colonne `marque`, défaut `filmpro` : le CRM se comporte exactement comme avant) ; **zéro dette** (les 4 dettes du code sont corrigées, pas contournées) ; tout **sourcé et vérifié**, jamais inventé. Hors scope : refonte du CRM existant, déménagement du module Découpe, renommage du dossier disque.
-- **Skills design (runs 1+, annoncés au plan)** : `redesign-skill`, `soft-skill`, `theme-factory`, filtre `ANTI-AI-SLOP.md`. **État : Run 0 terminé (5/7 vérifs)** ; V6 Hunter / V7 Pingen en attente comptes Pascal. **Prochaine étape : Run 1** (portail renommé, `atelier209.ch`, connexion refaite, admin réparé) - voir suivi.
+- **Skills design (runs 1+, annoncés au plan)** : `redesign-skill`, `soft-skill`, `theme-factory`, filtre `ANTI-AI-SLOP.md`. **État : Run 1 déployé prod ; Run 2 gate validé + logo LED + fondation cloisonnement testée (branche `run2-marque`)** ; V6 Hunter / V7 Pingen en attente comptes Pascal. **Prochaine étape : Run 2 câblage** (filtrage applicatif + chrome teinté LED + golden Inter) - voir suivi.
 
 **Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; container racine = stub. Contexte → `memory/project_appfactory_restructure.md`.
 
 **Statut :** Portail FilmPro multi-outils en prod : CRM (`/crm`) + Découpe Films (`/decoupe`) sur `filmpro-portail.vercel.app`. Formation IA = projet autonome `Formation/` (`cc` option 5). Historique (V3 terrain, Signaux V4, golden v9, restructure S173-S174) → `archive/`.
-**Dernière mise à jour :** 2026-07-14 (**chantier Atelier 209 démarré - Run 0 des vérifications livré** → § Chantier en tête + `docs/ATELIER-209-SUIVI.md`). Trunk = `main` ; Flag `ffCrmListesV2` **ON fondateurs**. Prod = `filmpro-portail.vercel.app` (push `main` auto-déploie, intermittent - cf. Watch). **À FAIRE Pascal** : réserver `atelier209.ch` + comptes Hunter & Pingen + variable Daily Email (§ Chez Pascal). **Prochain bug :** #001.
+**Dernière mise à jour :** 2026-07-15 (**Run 2 : gate design validé + logo LED + fondation cloisonnement testée 9/9, branche `run2-marque`** → § Chantier en tête + `docs/ATELIER-209-SUIVI.md`). Trunk = `main` ; Flag `ffCrmListesV2` **ON fondateurs**. Prod = `filmpro-portail.vercel.app` (push `main` auto-déploie, intermittent - cf. Watch). **À FAIRE Pascal** : réserver `atelier209.ch` + comptes Hunter & Pingen + variable Daily Email (§ Chez Pascal). **Prochain bug :** #001.
 **Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175, S122-S125, S70-S107).
 
 
@@ -141,7 +141,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Atelier 209 - Run 2** (les deux marques cloisonnées). Sélecteur de marque + **chrome (sidemenu/header/footer) teinté par marque LED/FilmPro** pour distinguer + étanchéité en base + seed jetable (dette D5) ; en même temps, revoir le **golden CRM** (ajustements couleurs + **Inter partout**, PAS de refonte). Le **Run 1 est déployé en prod** (identité + rôles/RLS + connexion 4 adresses ; URL `atelier209.vercel.app` différée). Suivi → `docs/ATELIER-209-SUIVI.md`.
+**Prochaine attaque** : **Atelier 209 - Run 2, le câblage applicatif** (branche `run2-marque`). Gate design **validé** + fondation base construite/prouvée (migration `marque` 12 tables + FK de cohérence + seed, 9/9 tests). Reste : filtrage par marque active (hubs lecture + inserts + agrégats dashboard/reporting) ; chrome teinté LED (Option B) + sélecteur + logo → `static/` ; golden Inter ; puis tests + audit sécu + **migration prod (lib `pg`) + déploiement (redemander le go à Pascal)**. Feuille de route file:line → `docs/ATELIER-209-RUN2-SPEC.md` + [[project_atelier_209_run2_fondation_2026-07-15]].
 
 ### Règle backlog (WIP-limité, gravée 2026-06-28)
 
@@ -149,7 +149,7 @@ Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude sans dépendance 
 
 ### Backlog dev (actionnable par Claude)
 
-- [ ] **[EXÉCUTABLE]** Atelier 209 - Run 2 (marques cloisonnées) : sélecteur de marque + chrome (sidemenu/header/footer) teinté par marque LED/FilmPro pour distinguer + étanchéité en base + seed jetable (dette D5) ; en même temps revoir le golden CRM (couleurs + Inter partout, pas de refonte). → `docs/ATELIER-209-SUIVI.md` + [[project_atelier_209_run1_deploiement_2026-07-15]].
+- [ ] **[EXÉCUTABLE]** Atelier 209 - Run 2 câblage (branche `run2-marque`) : filtrage par marque, chrome teinté LED + sélecteur + logo, golden Inter, tests + audit + migration prod. Fondation faite/testée 9/9. → `docs/ATELIER-209-RUN2-SPEC.md` + [[project_atelier_209_run2_fondation_2026-07-15]].
 - [ ] **[EXÉCUTABLE]** URL Atelier 209 : configurer `atelier209.vercel.app` comme domaine de production **public** du projet Vercel (réglages), vérifier 200 public, PUIS activer le redirect 308 de `filmpro-portail` (code remis à l'origine pour le Run 1). Renommer le projet ne suffit pas (reste protégé SSO). → [[project_atelier_209_run1_deploiement_2026-07-15]].
 - [ ] **[EXÉCUTABLE]** e2e Playwright validation externe (base jetable Colima) : parcours public `/validation/<token>` + parcours fondateur + étiquettes « ignorer les Retirer ». Ferme la dette « déployé `8b90f6d` sans Playwright feature-spécifique ». → [[project_validation_externe_campagne_2026-07-02]].
 - [ ] **[EXÉCUTABLE]** Emailing prospection automatisée : moteur d'envoi automatisé de séquences d'emails aux prospects (Resend, **templates pré-rédigés, zéro LLM** - règle dure). Étape 1 = cadrage court Pascal (contenu/cible/séquence/fréquence/déclencheur, **pas de réunion**), puis 1 session de code + gate ON/OFF (**OFF par défaut**). **Gate de mise en prod** (pas avant le dev) : (a) DNS `send.filmpro.ch` Resend, (b) base légale nLPD + mention, (c) contenu validé. (Ex-« Vague 4 ».)
@@ -169,11 +169,11 @@ Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude sans dépendance 
 
 ### Livré cette session
 
+- [x] ~~**Atelier 209 - Run 2 : gate design + fondation cloisonnement (branche `run2-marque`)**~~ - 2026-07-15 (ultracode, SUPERVISÉ). Gate validé (sélecteur, chrome LED Option B, golden) + logo LED horizontal vectoriel ; migration `marque` 12 tables + FK cohérence + 3 RPC + seed (D5), **9/9 tests base jetable** ; threading cookie `/api/marque`. Reste le câblage. + fix prod hero net + footer « SA » (`93e13a0`). → [[project_atelier_209_run2_fondation_2026-07-15]].
 - [x] ~~**Atelier 209 - Run 1 DÉPLOYÉ EN PROD**~~ - 2026-07-15 (ultracode, SUPERVISÉ). Identité « Atelier 209 » (portail + connexion « Heure bleue », Inter, PWA) + **rôles 3 niveaux + RLS** (D1 : admin Pascal ×2, superuser Antoine ×2, user) + **connexion = 4 adresses nommées** (aucun domaine ouvert - RLS mono-tenant plate). Migration RLS en prod via `pg` (MCP read-only), env Vercel posée, code déployé (`a564d64`, `vercel deploy --prod` depuis la racine, auto-deploy git non fired). 4 écrans vérifiés navigateur + **anti-verrouillage prouvé** (session prod pascal → 200). Revue 11 agents (3 findings corrigés). **URL `atelier209.vercel.app` différée** (config domaine Vercel). → [[project_atelier_209_run1_deploiement_2026-07-15]] + [[audit_secu_2026-07-15_atelier209_run1_roles_rls]].
 - [x] ~~Atelier 209 - Run 1 maquettes validées (gate design)~~ - 2026-07-15. « Heure bleue » verrouillée, `bar-off-1.png`. → [[project_atelier_209_run1_maquettes_2026-07-15]].
-- [x] ~~Atelier 209 - Run 0 (vérifications, 5/7)~~ - 2026-07-14. Veille coût, sources LED (import indispensable), base prod conforme, base jetable, domaine. → `docs/ATELIER-209-SUIVI.md`.
-- [x] ~~Login CRM réparé (code OTP)~~ - 2026-07-14. Expéditeur Supabase Auth hors-repo resté sur filmpro.ch mort ; fix Management API. → [[project_login_otp_smtp_supabase_2026-07-14]].
-→ Antérieurs (veille doublon email `ac744f3` + plancher part locale `7e280c2` 10/07 ; pause_turn/W27 `2a5207e`, étiquettes PDF `1643435`, refonte Lots 1-3, Aide, Découpe, Daily Email, etc.) → `archive/claude-md-crm-livre-2026-07-14.md` + `-07-03.md` + `-07-02.md` + `-06-26.md`.
+- [x] ~~Atelier 209 - Run 0 (vérifications, 5/7)~~ - 2026-07-14. Veille coût, sources LED, base prod conforme, base jetable, domaine. → `docs/ATELIER-209-SUIVI.md`.
+→ Antérieurs (login OTP réparé 14/07 [[project_login_otp_smtp_supabase_2026-07-14]] ; veille doublon email `ac744f3` + plancher part locale `7e280c2` 10/07 ; pause_turn/W27 `2a5207e`, étiquettes PDF `1643435`, refonte Lots 1-3, Aide, Découpe, Daily Email, etc.) → `archive/claude-md-crm-livre-2026-07-14.md` + `-07-03.md` + `-07-02.md` + `-06-26.md`.
 
 ### Watch list active après pivot
 
