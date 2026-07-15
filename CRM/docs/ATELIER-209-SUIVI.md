@@ -235,6 +235,18 @@ que @led est un **miroir exact** teinté. Résultat : **0 régression FilmPro co
    La migration est idempotente + backfill DEFAULT 'filmpro' = non-régression (le CRM prod reste FilmPro).
 3. **Déploiement** : merge `run2-marque` → `main` (auto-deploy) OU `vercel deploy --prod`.
 
+## Correctif pendant le gate visuel (2026-07-15)
+
+- **Logo LED du sidemenu régénéré (rendu HD net à 22px).** Défaut signalé par Pascal au gate : « studio »
+  trop petit/fin lisait « flou ». **Cause racine** (diagnostiquée, pas devinée) : la reconstruction horizontale
+  V1 sous-dimensionnait « studio » (scale 0,097 vs 0,136 pour « LED ») - **pas** un raster basse-déf (le SVG
+  était déjà vectoriel). **Fix** : régénéré depuis la vraie police Poppins de la marque (`Poppins-Bold` pour
+  « LED », `Poppins-SemiBold` pour « studio », agrandi et rééquilibré), fidèle au logo officiel LED Studio
+  (`~/Claude/shared/led-studio/logos/`). Asset : `static/atelier209/ledstudio-magenta.svg` (viewBox 895×191,
+  studio cap=104). Générateur reproductible + paramétrable : `.atelier-209/gen-led-logo.py`. **Validé
+  visuellement** (rendu réel du sidemenu en capture retina 2x à 22px + zoom 96px, tracés impeccables). Consommateur
+  unique : `BrandSwitcher.svelte`. Rendu HD confirmé côté Claude ; Pascal a délégué la validation visuelle.
+
 ## Rappel - Gate design VALIDÉ par Pascal le 2026-07-15 (« ok validé »)
 
 Maquette des 3 écrans : `.atelier-209/run2-maquettes/atelier209-run2.html`. Skills design engagés :
