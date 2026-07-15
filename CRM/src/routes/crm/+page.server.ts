@@ -28,6 +28,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const triageQuery = locals.supabase
 		.from('prospect_leads')
 		.select('id, raison_sociale, score_pertinence, statut, source, source_id, source_url, canton, localite, adresse, npa, telephone, email, nom_contact, site_web, secteur_detecte, description, date_publication, montant', { count: 'exact' })
+		.eq('marque', locals.marque)
 		.eq('statut', 'vide')
 		.gte('score_pertinence', config.scoring.triage.scoreMin)
 		.or(`triage_snoozed_until.is.null,triage_snoozed_until.lte.${nowIso}`)
@@ -43,6 +44,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 				.select(
 					'id, titre, etape_pipeline, date_relance_prevue, entreprise:entreprises!opportunites_entreprise_id_fkey(raison_sociale)'
 				)
+				.eq('marque', locals.marque)
 				.lt('date_relance_prevue', nextDayIso(weekEnd))
 				.or(`etape_pipeline.is.null,etape_pipeline.not.in.(${ETAPES_PIPELINE_CLOSED.join(',')})`)
 				.order('date_relance_prevue', { ascending: true })
@@ -59,19 +61,20 @@ export const load: PageServerLoad = async ({ locals }) => {
 		? null
 		: locals.supabase.from('opportunites')
 				.select('id, titre, etape_pipeline, date_relance_prevue, entreprise_id')
+				.eq('marque', locals.marque)
 				.lte('date_relance_prevue', today)
 				.or(`etape_pipeline.is.null,etape_pipeline.not.in.(${ETAPES_PIPELINE_CLOSED.join(',')})`)
 				.order('date_relance_prevue', { ascending: true })
 				.limit(10);
 
 	const [contactsRes, entreprisesRes, opportunitesRes, relancesRes, activitesRes, signauxRes, alertesRes, triageRes, tachesRes] = await Promise.all([
-		locals.supabase.from('contacts').select('*', { count: 'exact', head: true }).eq('statut_archive', false),
+		locals.supabase.from('contacts').select('*', { count: 'exact', head: true }).eq('marque', locals.marque).eq('statut_archive', false),
 		// Aligné sur l'invariant « les accès métier excluent les archivés » (comme
 		// le compteur contacts ci-dessus) : le cron nettoyage-crm archive les
 		// entreprises radiées/dissoutes → elles ne doivent pas gonfler le KPI.
 		// NB : opportunites/signaux n'ont PAS de colonne statut_archive (ne pas filtrer).
-		locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }).eq('statut_archive', false),
-		locals.supabase.from('opportunites').select('*', { count: 'exact', head: true }),
+		locals.supabase.from('entreprises').select('*', { count: 'exact', head: true }).eq('marque', locals.marque).eq('statut_archive', false),
+		locals.supabase.from('opportunites').select('*', { count: 'exact', head: true }).eq('marque', locals.marque),
 		relancesQuery ?? Promise.resolve({ data: [], error: null }),
 		locals.supabase.from('activites')
 			.select('id, type_activite, resume_contenu, date_heure, contact_id')
@@ -79,9 +82,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 			.limit(5),
 		locals.supabase.from('signaux_affaires')
 			.select('*', { count: 'exact', head: true })
+			.eq('marque', locals.marque)
 			.eq('statut_traitement', 'nouveau'),
 		locals.supabase.from('recherches_sauvegardees')
 			.select('nom, nb_nouveaux, frequence_alerte')
+			.eq('marque', locals.marque)
 			.eq('alerte_active', true)
 			.gt('nb_nouveaux', 0),
 		triageQuery,

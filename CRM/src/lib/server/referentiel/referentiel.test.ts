@@ -42,10 +42,11 @@ describe('buildEntrepriseInsert', () => {
 	};
 
 	it('mappe les champs et génère id + timestamps + statut initial', () => {
-		const row = buildEntrepriseInsert(base);
+		const row = buildEntrepriseInsert(base, 'filmpro');
 		expect(row.raison_sociale).toBe('Vitrages Léman SA');
 		expect(row.secteur_activite).toBe('construction');
 		expect(row.canton).toBe('GE');
+		expect(row.marque).toBe('filmpro');
 		expect(row.statut_qualification).toBe('nouveau');
 		expect(typeof row.id).toBe('string');
 		expect(UUID_RE.test(row.id as string)).toBe(true);
@@ -53,7 +54,7 @@ describe('buildEntrepriseInsert', () => {
 	});
 
 	it('convertit les chaînes vides en null (jamais de "" en DB)', () => {
-		const row = buildEntrepriseInsert(base);
+		const row = buildEntrepriseInsert(base, 'filmpro');
 		expect(row.taille_estimee).toBeNull();
 		expect(row.site_web).toBeNull();
 		expect(row.numero_ide).toBeNull();
@@ -100,9 +101,10 @@ describe('buildContactInsert / buildContactUpdate', () => {
 	};
 
 	it('insert : flags initiaux + id + timestamps + chaînes vides → null', () => {
-		const row = buildContactInsert(base);
+		const row = buildContactInsert(base, 'filmpro');
 		expect(row.nom).toBe('Dupont');
 		expect(row.prenom).toBe('Jean');
+		expect(row.marque).toBe('filmpro');
 		expect(row.email_professionnel).toBeNull();
 		expect(row.entreprise_id).toBeNull();
 		expect(row.statut_qualification).toBe('nouveau');
@@ -136,15 +138,16 @@ describe('buildContactInsertFromSuggestion (resolve brouillon terrain, ADR-0003)
 	const TS = '2026-06-05T10:00:00.000Z';
 
 	it('utilise l’id et le timestamp fournis par l’appelant (anti-orphelin resolve)', () => {
-		const row = buildContactInsertFromSuggestion(sug, CID, TS);
+		const row = buildContactInsertFromSuggestion(sug, CID, TS, 'filmpro');
 		expect(row.id).toBe(CID);
 		expect(row.date_ajout).toBe(TS);
 		expect(row.date_derniere_modification).toBe(TS);
 	});
 
 	it('source terrain_mobile + mapping email → email_professionnel + flags initiaux', () => {
-		const row = buildContactInsertFromSuggestion(sug, CID, TS);
+		const row = buildContactInsertFromSuggestion(sug, CID, TS, 'filmpro');
 		expect(row.source).toBe('terrain_mobile');
+		expect(row.marque).toBe('filmpro');
 		expect(row.email_professionnel).toBe('jean@dupont.ch');
 		expect(row.entreprise_id).toBe(sug.entreprise_id);
 		expect(row.statut_qualification).toBe('nouveau');
@@ -156,7 +159,8 @@ describe('buildContactInsertFromSuggestion (resolve brouillon terrain, ADR-0003)
 		const row = buildContactInsertFromSuggestion(
 			{ ...sug, prenom: null, role_fonction: null, telephone: null, email: null },
 			CID,
-			TS
+			TS,
+			'filmpro'
 		);
 		expect(row.prenom).toBeNull();
 		expect(row.role_fonction).toBeNull();

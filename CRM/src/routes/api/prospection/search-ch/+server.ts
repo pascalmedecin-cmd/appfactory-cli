@@ -32,6 +32,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		.from('prospect_leads')
 		.select('*')
 		.eq('id', leadId)
+		.eq('marque', locals.marque)
 		.single();
 
 	if (leadErr || !lead) {
@@ -129,7 +130,8 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		const { error: upErr } = await locals.supabase
 			.from('prospect_leads')
 			.update(updates)
-			.eq('id', leadId);
+			.eq('id', leadId)
+			.eq('marque', locals.marque);
 
 		if (upErr) {
 			return json({ error: `Erreur mise à jour: ${upErr.message}` }, { status: 500 });

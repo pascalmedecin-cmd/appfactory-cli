@@ -19,6 +19,7 @@ import { randomUUID } from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { calculerScore, type IntelligenceSignalInput } from '$lib/scoring';
 import type { LeadPreviewSource } from '$lib/schemas';
+import type { Marque } from '$lib/marque';
 
 export type CandidateStatus = 'new' | 'exists' | 'dismissed' | 'known_zefix';
 
@@ -68,12 +69,17 @@ export async function fetchDedupSets(
 	supabase: ReadClient,
 	source: LeadPreviewSource,
 	sourceIds: string[],
+	marque: Marque,
 ): Promise<DedupSets> {
+	// Dédup PAR MARQUE (index UNIQUE (marque, source, source_id)) : un même source_id peut
+	// exister en filmpro ET en led ; sans ce filtre, un import LED verrait un lead filmpro
+	// homonyme comme un doublon (blocage / non-régression) et inversement.
 	const existing = new Set<string>();
 	if (sourceIds.length > 0) {
 		const { data } = await supabase
 			.from('prospect_leads')
 			.select('source_id')
+			.eq('marque', marque)
 			.eq('source', source)
 			.in('source_id', sourceIds);
 		if (data) for (const r of data as Array<{ source_id: string | null }>) if (r.source_id) existing.add(r.source_id);
@@ -86,6 +92,7 @@ export async function fetchDedupSets(
 		const { data } = await supabase
 			.from('prospect_leads')
 			.select('source_id, statut')
+			.eq('marque', marque)
 			.eq('source', source)
 			.in('source_id', sourceIds)
 			.in('statut', ['ecarte', 'transfere']);
@@ -164,10 +171,11 @@ export function scoreCandidate(
 export function candidateToInsertRow(
 	core: CandidateCore,
 	score: number,
-	opts: { now: string; fromIntelligence: string | null; fromTerm: string | null },
+	opts: { now: string; fromIntelligence: string | null; fromTerm: string | null; marque: Marque },
 ): Record<string, unknown> {
 	return {
 		id: randomUUID(),
+		marque: opts.marque,
 		source: core.source,
 		source_id: core.source_id,
 		source_url: core.source_url,

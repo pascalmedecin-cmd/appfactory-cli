@@ -119,6 +119,7 @@ export type Database = {
           created_by: string | null
           date_creation: string
           id: string
+          marque: string
           nom: string
         }
         Insert: {
@@ -126,6 +127,7 @@ export type Database = {
           created_by?: string | null
           date_creation?: string
           id?: string
+          marque?: string
           nom: string
         }
         Update: {
@@ -133,15 +135,16 @@ export type Database = {
           created_by?: string | null
           date_creation?: string
           id?: string
+          marque?: string
           nom?: string
         }
         Relationships: [
           {
-            foreignKeyName: "campagne_groupes_campagne_id_fkey"
-            columns: ["campagne_id"]
+            foreignKeyName: "campagne_groupes_campagne_marque_fk"
+            columns: ["campagne_id", "marque"]
             isOneToOne: false
             referencedRelation: "campagnes"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "marque"]
           },
         ]
       }
@@ -153,6 +156,7 @@ export type Database = {
           date_creation: string
           expires_at: string
           id: string
+          marque: string
           revoked_at: string | null
           token_hash: string
         }
@@ -163,6 +167,7 @@ export type Database = {
           date_creation?: string
           expires_at: string
           id?: string
+          marque?: string
           revoked_at?: string | null
           token_hash: string
         }
@@ -173,6 +178,7 @@ export type Database = {
           date_creation?: string
           expires_at?: string
           id?: string
+          marque?: string
           revoked_at?: string | null
           token_hash?: string
         }
@@ -194,6 +200,7 @@ export type Database = {
           date_creation: string
           description: string | null
           id: string
+          marque: string
           nom: string
           statut: string
         }
@@ -204,6 +211,7 @@ export type Database = {
           date_creation?: string
           description?: string | null
           id?: string
+          marque?: string
           nom: string
           statut?: string
         }
@@ -214,6 +222,7 @@ export type Database = {
           date_creation?: string
           description?: string | null
           id?: string
+          marque?: string
           nom?: string
           statut?: string
         }
@@ -308,6 +317,7 @@ export type Database = {
           est_prescripteur: boolean | null
           fiche_fusionnee_avec: string | null
           id: string
+          marque: string
           nom: string | null
           notes_libres: string | null
           prenom: string | null
@@ -334,6 +344,7 @@ export type Database = {
           est_prescripteur?: boolean | null
           fiche_fusionnee_avec?: string | null
           id: string
+          marque?: string
           nom?: string | null
           notes_libres?: string | null
           prenom?: string | null
@@ -360,6 +371,7 @@ export type Database = {
           est_prescripteur?: boolean | null
           fiche_fusionnee_avec?: string | null
           id?: string
+          marque?: string
           nom?: string | null
           notes_libres?: string | null
           prenom?: string | null
@@ -594,6 +606,7 @@ export type Database = {
           date_derniere_verification_zefix: string | null
           date_import_ajout: string | null
           id: string
+          marque: string
           motif_archivage: string | null
           notes_libres: string | null
           numero_ide: string | null
@@ -617,6 +630,7 @@ export type Database = {
           date_derniere_verification_zefix?: string | null
           date_import_ajout?: string | null
           id: string
+          marque?: string
           motif_archivage?: string | null
           notes_libres?: string | null
           numero_ide?: string | null
@@ -640,6 +654,7 @@ export type Database = {
           date_derniere_verification_zefix?: string | null
           date_import_ajout?: string | null
           id?: string
+          marque?: string
           motif_archivage?: string | null
           notes_libres?: string | null
           numero_ide?: string | null
@@ -837,6 +852,7 @@ export type Database = {
           etape_pipeline: string | null
           id: string
           lie_signal_affaires: boolean | null
+          marque: string
           montant_estime: number | null
           motif_perte: string | null
           notes_libres: string | null
@@ -857,6 +873,7 @@ export type Database = {
           etape_pipeline?: string | null
           id: string
           lie_signal_affaires?: boolean | null
+          marque?: string
           montant_estime?: number | null
           motif_perte?: string | null
           notes_libres?: string | null
@@ -877,6 +894,7 @@ export type Database = {
           etape_pipeline?: string | null
           id?: string
           lie_signal_affaires?: boolean | null
+          marque?: string
           montant_estime?: number | null
           motif_perte?: string | null
           notes_libres?: string | null
@@ -971,6 +989,7 @@ export type Database = {
           date_assignation: string
           groupe_id: string | null
           lead_id: string
+          marque: string
           validation_at: string | null
           validation_statut: string | null
         }
@@ -979,6 +998,7 @@ export type Database = {
           date_assignation?: string
           groupe_id?: string | null
           lead_id: string
+          marque?: string
           validation_at?: string | null
           validation_statut?: string | null
         }
@@ -987,6 +1007,7 @@ export type Database = {
           date_assignation?: string
           groupe_id?: string | null
           lead_id?: string
+          marque?: string
           validation_at?: string | null
           validation_statut?: string | null
         }
@@ -999,18 +1020,18 @@ export type Database = {
             referencedColumns: ["id", "campagne_id"]
           },
           {
-            foreignKeyName: "prospect_lead_campagnes_campagne_id_fkey"
-            columns: ["campagne_id"]
+            foreignKeyName: "prospect_lead_campagnes_campagne_marque_fk"
+            columns: ["campagne_id", "marque"]
             isOneToOne: false
             referencedRelation: "campagnes"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "marque"]
           },
           {
-            foreignKeyName: "prospect_lead_campagnes_lead_id_fkey"
-            columns: ["lead_id"]
+            foreignKeyName: "prospect_lead_campagnes_lead_marque_fk"
+            columns: ["lead_id", "marque"]
             isOneToOne: false
             referencedRelation: "prospect_leads"
-            referencedColumns: ["id"]
+            referencedColumns: ["id", "marque"]
           },
         ]
       }
@@ -1077,6 +1098,7 @@ export type Database = {
           google_types: string[] | null
           id: string
           localite: string | null
+          marque: string
           montant: number | null
           mots_cles_match: string[] | null
           nom_contact: string | null
@@ -1107,6 +1129,7 @@ export type Database = {
           google_types?: string[] | null
           id?: string
           localite?: string | null
+          marque?: string
           montant?: number | null
           mots_cles_match?: string[] | null
           nom_contact?: string | null
@@ -1137,6 +1160,7 @@ export type Database = {
           google_types?: string[] | null
           id?: string
           localite?: string | null
+          marque?: string
           montant?: number | null
           mots_cles_match?: string[] | null
           nom_contact?: string | null
@@ -1185,6 +1209,7 @@ export type Database = {
           caption: string | null
           entreprise_id: string | null
           id: string
+          marque: string
           mime_type: string | null
           prospect_lead_id: string | null
           size_bytes: number | null
@@ -1196,6 +1221,7 @@ export type Database = {
           caption?: string | null
           entreprise_id?: string | null
           id?: string
+          marque?: string
           mime_type?: string | null
           prospect_lead_id?: string | null
           size_bytes?: number | null
@@ -1207,6 +1233,7 @@ export type Database = {
           caption?: string | null
           entreprise_id?: string | null
           id?: string
+          marque?: string
           mime_type?: string | null
           prospect_lead_id?: string | null
           size_bytes?: number | null
@@ -1240,6 +1267,7 @@ export type Database = {
           id: string
           lat: number | null
           lng: number | null
+          marque: string
           note: string | null
           prospect_lead_id: string | null
           resultat: string | null
@@ -1254,6 +1282,7 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          marque?: string
           note?: string | null
           prospect_lead_id?: string | null
           resultat?: string | null
@@ -1268,6 +1297,7 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          marque?: string
           note?: string | null
           prospect_lead_id?: string | null
           resultat?: string | null
@@ -1299,6 +1329,7 @@ export type Database = {
           dernier_check: string | null
           frequence_alerte: string | null
           id: string
+          marque: string
           mots_cles: string[] | null
           nb_nouveaux: number | null
           nom: string
@@ -1314,6 +1345,7 @@ export type Database = {
           dernier_check?: string | null
           frequence_alerte?: string | null
           id?: string
+          marque?: string
           mots_cles?: string[] | null
           nb_nouveaux?: number | null
           nom: string
@@ -1329,6 +1361,7 @@ export type Database = {
           dernier_check?: string | null
           frequence_alerte?: string | null
           id?: string
+          marque?: string
           mots_cles?: string[] | null
           nb_nouveaux?: number | null
           nom?: string
@@ -1350,6 +1383,7 @@ export type Database = {
           description_projet: string | null
           id: string
           maitre_ouvrage: string | null
+          marque: string
           notes_libres: string | null
           opportunite_associee_id: string | null
           responsable_filmpro: string | null
@@ -1369,6 +1403,7 @@ export type Database = {
           description_projet?: string | null
           id: string
           maitre_ouvrage?: string | null
+          marque?: string
           notes_libres?: string | null
           opportunite_associee_id?: string | null
           responsable_filmpro?: string | null
@@ -1388,6 +1423,7 @@ export type Database = {
           description_projet?: string | null
           id?: string
           maitre_ouvrage?: string | null
+          marque?: string
           notes_libres?: string | null
           opportunite_associee_id?: string | null
           responsable_filmpro?: string | null
@@ -1586,7 +1622,7 @@ export type Database = {
         Returns: number
       }
       entreprises_lookup_by_name: {
-        Args: { p_query: string }
+        Args: { p_marque?: string; p_query: string }
         Returns: {
           id: string
           raison_sociale: string

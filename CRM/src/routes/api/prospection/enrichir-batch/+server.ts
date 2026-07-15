@@ -130,6 +130,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const { data: leads, error: loadErr } = await locals.supabase
 		.from('prospect_leads')
 		.select('*')
+		.eq('marque', locals.marque)
 		.in('id', leadIds);
 
 	if (loadErr || !leads) {

@@ -57,7 +57,7 @@ describe('createGroupe', () => {
 		// (audit sécu 2026-07-02, Low) : rejeté à la source.
 		for (const nom of ['   ', 'x'.repeat(GROUPE_NOM_MAX + 1), 'AB\u0001CD', 'AB\u009FCD']) {
 			const m = createSupabaseMock();
-			const { error } = await createGroupe(m.supabase, { campagneId: 'cmp-1', nom, userId: null });
+			const { error } = await createGroupe(m.supabase, 'filmpro', { campagneId: 'cmp-1', nom, userId: null });
 			expect(error?.code).toBe('invalid');
 			expect(m.calls.length).toBe(0);
 		}
@@ -65,10 +65,10 @@ describe('createGroupe', () => {
 
 	it('trim + insert scopé campagne', async () => {
 		const m = createSupabaseMock({ data: { ...G } });
-		const { data, error } = await createGroupe(m.supabase, { campagneId: 'cmp-1', nom: '  Régies  ', userId: 'u1' });
+		const { data, error } = await createGroupe(m.supabase, 'filmpro', { campagneId: 'cmp-1', nom: '  Régies  ', userId: 'u1' });
 		expect(error).toBe(null);
 		expect(data?.nom).toBe('Régies');
-		expect(callsOf(m.calls, 'insert')[0]?.[0]).toEqual({ campagne_id: 'cmp-1', nom: 'Régies', created_by: 'u1' });
+		expect(callsOf(m.calls, 'insert')[0]?.[0]).toEqual({ campagne_id: 'cmp-1', nom: 'Régies', created_by: 'u1', marque: 'filmpro' });
 	});
 
 	it('traduit 23505 -> duplicate, 23514 -> invalid, 23503 -> invalid (campagne)', async () => {
@@ -78,7 +78,7 @@ describe('createGroupe', () => {
 			['23503', 'invalid']
 		] as const) {
 			const m = createSupabaseMock({ error: { code, message: 'x' } });
-			const { error } = await createGroupe(m.supabase, { campagneId: 'cmp-1', nom: 'Régies', userId: null });
+			const { error } = await createGroupe(m.supabase, 'filmpro', { campagneId: 'cmp-1', nom: 'Régies', userId: null });
 			expect(error?.code).toBe(expected);
 		}
 	});
@@ -162,7 +162,7 @@ describe('assignGroupeToLeads', () => {
 describe('listGroupes', () => {
 	it('propage l’erreur DB (jamais « pas de groupes » menteur)', async () => {
 		const m = createSupabaseMock({ error: { message: 'boom' } });
-		const { data, error } = await listGroupes(m.supabase, 'cmp-1');
+		const { data, error } = await listGroupes(m.supabase, 'filmpro', 'cmp-1');
 		expect(data).toEqual([]);
 		expect(error?.message).toBe('boom');
 	});

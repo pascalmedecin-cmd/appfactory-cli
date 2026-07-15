@@ -28,7 +28,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		return json({ error: `Données invalides : ${msg}` }, { status: 400 });
 	}
 
-	const { data, error } = await createCampagne(locals.supabase, {
+	const { data, error } = await createCampagne(locals.supabase, locals.marque, {
 		nom: parsed.data.nom,
 		couleur: parsed.data.couleur,
 		description: parsed.data.description ?? null,

@@ -25,14 +25,14 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 	const id = idSchema.safeParse(params.id);
 	if (!id.success) throw error(404, 'Campagne introuvable');
 
-	const { data: campagne, error: campErr } = await getCampagne(locals.supabase, id.data);
+	const { data: campagne, error: campErr } = await getCampagne(locals.supabase, locals.marque, id.data);
 	if (campErr) {
 		console.error('Erreur chargement campagne (étiquettes):', campErr.message);
 		throw error(500, 'Chargement impossible');
 	}
 	if (!campagne) throw error(404, 'Campagne introuvable');
 
-	const { data: prospects, error: prospErr } = await fetchProspectsForCampagne(locals.supabase, id.data);
+	const { data: prospects, error: prospErr } = await fetchProspectsForCampagne(locals.supabase, locals.marque, id.data);
 	if (prospErr) {
 		console.error('Erreur chargement prospects (étiquettes):', prospErr.message);
 		throw error(500, 'Chargement impossible');
@@ -40,7 +40,7 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 
 	// Groupes de la campagne (2026-07-02) : la planche sort groupe par groupe avec intercalaires.
 	// Même doctrine que les prospects : un échec DB remonte (jamais « pas de groupes » menteur).
-	const { data: groupes, error: grpErr } = await listGroupes(locals.supabase, id.data);
+	const { data: groupes, error: grpErr } = await listGroupes(locals.supabase, locals.marque, id.data);
 	if (grpErr) {
 		console.error('Erreur chargement groupes (étiquettes):', grpErr.message);
 		throw error(500, 'Chargement impossible');

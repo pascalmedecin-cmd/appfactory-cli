@@ -229,7 +229,7 @@ describe('createValidationLien', () => {
 	it('émet un token de bonne forme (43 chars) + expiration ~2 jours', async () => {
 		const m = tableMock({});
 		const before = Date.now();
-		const { data, error } = await createValidationLien(m.supabase, 'cmp-1', 'user-1');
+		const { data, error } = await createValidationLien(m.supabase, 'filmpro', 'cmp-1', 'user-1');
 		expect(error).toBe(null);
 		expect(data && isValidationTokenShape(data.token)).toBe(true);
 		const exp = new Date(data!.expiresAt).getTime();
@@ -263,7 +263,7 @@ describe('createValidationLien', () => {
 
 	it('génération concurrente : 23505 au 1er insert -> retry (révoque le concurrent) -> succès', async () => {
 		const m = revokeInsertMock([{ error: { code: '23505', message: 'dup' } }, { error: null }]);
-		const { data, error } = await createValidationLien(m.supabase, 'cmp-1', 'user-1');
+		const { data, error } = await createValidationLien(m.supabase, 'filmpro', 'cmp-1', 'user-1');
 		expect(error).toBe(null);
 		expect(data && isValidationTokenShape(data.token)).toBe(true);
 		expect(m.insertCalls).toBe(2); // a bien retenté une fois
@@ -274,14 +274,14 @@ describe('createValidationLien', () => {
 			{ error: { code: '23505', message: 'dup' } },
 			{ error: { code: '23505', message: 'dup' } },
 		]);
-		const { data, error } = await createValidationLien(m.supabase, 'cmp-1', 'user-1');
+		const { data, error } = await createValidationLien(m.supabase, 'filmpro', 'cmp-1', 'user-1');
 		expect(data).toBe(null);
 		expect(error?.message).toContain('conflit');
 	});
 
 	it('erreur DB d’insert non-23505 -> remontée immédiate (pas de retry)', async () => {
 		const m = revokeInsertMock([{ error: { code: '23503', message: 'fk' } }]);
-		const { error } = await createValidationLien(m.supabase, 'cmp-1', 'user-1');
+		const { error } = await createValidationLien(m.supabase, 'filmpro', 'cmp-1', 'user-1');
 		expect((error as { code?: string })?.code).toBe('23503');
 		expect(m.insertCalls).toBe(1); // pas de retry sur une erreur non réessayable
 	});

@@ -35,7 +35,7 @@ export const POST = async ({ params, request, locals }: RequestEvent) => {
 	const parsed = CreateSchema.safeParse(raw);
 	if (!parsed.success) return json({ error: 'Données invalides' }, { status: 400 });
 
-	const { data: groupe, error } = await createGroupe(locals.supabase, {
+	const { data: groupe, error } = await createGroupe(locals.supabase, locals.marque, {
 		campagneId: id.data,
 		nom: parsed.data.nom,
 		userId: user?.id ?? null,

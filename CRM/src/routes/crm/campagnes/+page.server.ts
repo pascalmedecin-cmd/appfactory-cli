@@ -13,10 +13,13 @@ export const load: PageServerLoad = async ({ locals, parent }) => {
 	if (featureFlags?.ffCrmListesV2 !== true) throw redirect(307, CRM_BASE);
 
 	const [campagnesRes, taggedRes, totalRes] = await Promise.all([
-		listCampagnes(locals.supabase, { includeArchived: true }),
+		listCampagnes(locals.supabase, locals.marque, { includeArchived: true }),
 		// Leads distincts portant ≥1 campagne : dédup en mémoire (volume mono-tenant borné).
-		locals.supabase.from('prospect_lead_campagnes').select('lead_id'),
-		locals.supabase.from('prospect_leads').select('*', { count: 'exact', head: true })
+		locals.supabase.from('prospect_lead_campagnes').select('lead_id').eq('marque', locals.marque),
+		locals.supabase
+			.from('prospect_leads')
+			.select('*', { count: 'exact', head: true })
+			.eq('marque', locals.marque)
 	]);
 
 	// Bloc D : journaliser un échec DB (sinon il est masqué en faux « état vide » côté écran,

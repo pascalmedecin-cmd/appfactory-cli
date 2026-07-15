@@ -39,6 +39,7 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 		.from(parentTable)
 		.select('id')
 		.eq('id', owner.id)
+		.eq('marque', locals.marque)
 		.maybeSingle();
 	if (parentErr) return genericError(parentErr, 'Erreur recherche parent');
 	if (!parent) return json({ error: 'Parent introuvable' }, { status: 404 });
@@ -48,6 +49,7 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 		.from('prospect_photos')
 		.select('id, storage_path, caption, uploaded_at, size_bytes, mime_type')
 		.eq(col, owner.id)
+		.eq('marque', locals.marque)
 		.order('uploaded_at', { ascending: false });
 
 	if (error) return genericError(error, 'Erreur lecture photos');
@@ -82,6 +84,7 @@ export const POST = async ({ request, url, locals }: RequestEvent) => {
 		.from(parentTable)
 		.select('id')
 		.eq('id', owner.id)
+		.eq('marque', locals.marque)
 		.maybeSingle();
 	if (parentErr) return genericError(parentErr, 'Erreur recherche parent');
 	if (!parent) return json({ error: 'Parent introuvable' }, { status: 404 });
@@ -119,7 +122,8 @@ export const POST = async ({ request, url, locals }: RequestEvent) => {
 	const { count, error: countErr } = await locals.supabase
 		.from('prospect_photos')
 		.select('id', { count: 'exact', head: true })
-		.eq(col, owner.id);
+		.eq(col, owner.id)
+		.eq('marque', locals.marque);
 	if (countErr) return genericError(countErr, 'Erreur compte photos');
 	if ((count ?? 0) >= 10) {
 		return json({ error: 'Limite de 10 photos atteinte pour cet élément' }, { status: 409 });
@@ -135,6 +139,7 @@ export const POST = async ({ request, url, locals }: RequestEvent) => {
 
 	const insertRow = {
 		[col]: owner.id,
+		marque: locals.marque,
 		storage_path: path,
 		caption,
 		uploaded_by: user.id,

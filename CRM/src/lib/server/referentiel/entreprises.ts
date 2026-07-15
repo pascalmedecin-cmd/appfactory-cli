@@ -28,6 +28,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { z } from 'zod';
 import type { Database, TablesInsert, TablesUpdate } from '$lib/database.types';
+import type { Marque } from '$lib/marque';
 import { EntrepriseCreateSchema } from '$lib/schemas';
 import { newId, now } from '$lib/server/db-helpers';
 import { normalizeCompanyName } from '$lib/utils/contactsFormat';
@@ -51,11 +52,14 @@ export function escapeLikePattern(s: string): string {
 export async function lookupEntrepriseByName(
 	supabase: SupabaseClient<Database>,
 	trimmed: string,
-	normalized: string
+	normalized: string,
+	marque: Marque
 ): Promise<string | null> {
-	// RPC `entreprises_lookup_by_name` (migration 010) typée dans database.types.ts.
+	// RPC `entreprises_lookup_by_name` (migration 010, re-signée Run 2 avec p_marque) : la dédup
+	// est PAR MARQUE (une « Foncia » LED ne fusionne jamais dans la fiche FilmPro homonyme).
 	const { data: candidates } = await supabase.rpc('entreprises_lookup_by_name', {
-		p_query: escapeLikePattern(trimmed)
+		p_query: escapeLikePattern(trimmed),
+		p_marque: marque
 	});
 
 	const rows = candidates ?? [];
@@ -72,15 +76,16 @@ export async function lookupEntrepriseByName(
  */
 export async function getOrCreateEntreprise(
 	supabase: SupabaseClient<Database>,
-	rawName: string
+	rawName: string,
+	marque: Marque
 ): Promise<string | null> {
 	const trimmed = rawName.trim();
 	if (!trimmed) return null;
 
 	const normalized = normalizeCompanyName(trimmed);
 
-	// 1. Lookup optimiste (cas commun : entreprise déjà connue).
-	const matchedId = await lookupEntrepriseByName(supabase, trimmed, normalized);
+	// 1. Lookup optimiste (cas commun : entreprise déjà connue) — scopé à la marque active.
+	const matchedId = await lookupEntrepriseByName(supabase, trimmed, normalized, marque);
 	if (matchedId) return matchedId;
 
 	// 2. Tentative INSERT.
@@ -92,14 +97,15 @@ export async function getOrCreateEntreprise(
 		statut_qualification: 'nouveau',
 		source: 'auto-contact',
 		date_import_ajout: ts,
-		date_derniere_modification: ts
+		date_derniere_modification: ts,
+		marque
 	});
 	if (!insertErr) return entId;
 
 	// 3. 23505 = unique_violation : une autre transaction a créé l'entreprise entre le
-	//    lookup et l'INSERT. Re-lookup pour récupérer son id.
+	//    lookup et l'INSERT. Re-lookup pour récupérer son id (même marque).
 	if (insertErr.code === '23505') {
-		const matchedId2 = await lookupEntrepriseByName(supabase, trimmed, normalized);
+		const matchedId2 = await lookupEntrepriseByName(supabase, trimmed, normalized, marque);
 		if (matchedId2) return matchedId2;
 	}
 
@@ -108,7 +114,7 @@ export async function getOrCreateEntreprise(
 }
 
 /** Construit la row d'INSERT entreprise (id + timestamps + statut initial gérés ici). */
-export function buildEntrepriseInsert(input: EntrepriseUpsertInput): TablesInsert<'entreprises'> {
+export function buildEntrepriseInsert(input: EntrepriseUpsertInput, marque: Marque): TablesInsert<'entreprises'> {
 	const ts = now();
 	return {
 		id: newId(),
@@ -125,7 +131,8 @@ export function buildEntrepriseInsert(input: EntrepriseUpsertInput): TablesInser
 		tags: input.tags || null,
 		statut_qualification: 'nouveau',
 		date_import_ajout: ts,
-		date_derniere_modification: ts
+		date_derniere_modification: ts,
+		marque
 	};
 }
 

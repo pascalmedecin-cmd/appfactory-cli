@@ -40,38 +40,52 @@
 	});
 </script>
 
-<!-- Mobile overlay -->
-{#if mobileMenuOpen}
-	<button
-		class="mobile-overlay"
-		onclick={() => mobileMenuOpen = false}
-		onkeydown={(e) => e.key === 'Escape' && (mobileMenuOpen = false)}
-		tabindex="-1"
-		aria-label="Fermer le menu"
-	></button>
-{/if}
+<!-- Atelier 209 Run 2 : coquille CRM teintée par la marque active (data-marque). Le wrapper
+     est en `display: contents` (zéro impact sur le layout : sidebar/header restent `fixed`
+     relatifs au viewport) mais porte l'attribut + les overrides de tokens `--color-primary*`
+     qui cascadent par héritage vers tout le chrome et le contenu. FilmPro = valeurs par défaut
+     (non-régression stricte) ; LED = bleu nuit + magenta. -->
+<div class="crm-shell" data-marque={data.marqueActive}>
+	<!-- Mobile overlay -->
+	{#if mobileMenuOpen}
+		<button
+			class="mobile-overlay"
+			onclick={() => mobileMenuOpen = false}
+			onkeydown={(e) => e.key === 'Escape' && (mobileMenuOpen = false)}
+			tabindex="-1"
+			aria-label="Fermer le menu"
+		></button>
+	{/if}
 
-<!-- Sidebar unique : desktop = static, mobile = slide-in -->
-<div class="sidebar-wrapper" class:open={mobileMenuOpen}>
-	<Sidebar bind:collapsed={sidebarCollapsed} currentPath={page.url.pathname} unreadIntelligence={data.unreadIntelligence} premium={data.featureFlags?.ffCrmListesV2 === true} onNavigate={() => mobileMenuOpen = false} />
+	<!-- Sidebar unique : desktop = static, mobile = slide-in -->
+	<div class="sidebar-wrapper" class:open={mobileMenuOpen}>
+		<Sidebar bind:collapsed={sidebarCollapsed} currentPath={page.url.pathname} unreadIntelligence={data.unreadIntelligence} premium={data.featureFlags?.ffCrmListesV2 === true} marque={data.marqueActive} onNavigate={() => mobileMenuOpen = false} />
+	</div>
+
+	<Header user={data.user} {sidebarCollapsed} onMenuToggle={() => mobileMenuOpen = !mobileMenuOpen} pageTitle={pageTitle()} marque={data.marqueActive} />
+
+	<main
+		class="pt-(--header-height) min-h-screen bg-surface transition-all duration-200"
+		style="padding-left: {sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)'}"
+	>
+		<div class="p-4 md:p-6">
+			{@render children()}
+		</div>
+	</main>
+
+	<Toast />
+
+	<FeedbackButton />
 </div>
 
-<Header user={data.user} {sidebarCollapsed} onMenuToggle={() => mobileMenuOpen = !mobileMenuOpen} pageTitle={pageTitle()} />
-
-<main
-	class="pt-(--header-height) min-h-screen bg-surface transition-all duration-200"
-	style="padding-left: {sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)'}"
->
-	<div class="p-4 md:p-6">
-		{@render children()}
-	</div>
-</main>
-
-<Toast />
-
-<FeedbackButton />
-
 <style>
+	/* Coquille de marque : porte data-marque + overrides de tokens, sans créer de boîte
+	   (les enfants se disposent comme si le wrapper n'existait pas ; les custom properties
+	   héritent quand même à travers display:contents). Zéro impact layout = non-régression. */
+	.crm-shell {
+		display: contents;
+	}
+
 	/* Desktop : sidebar visible en place */
 	.sidebar-wrapper {
 		display: contents;

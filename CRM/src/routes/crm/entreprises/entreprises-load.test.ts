@@ -82,12 +82,18 @@ function makeSupabase(fx: { entreprises: Row[]; contacts: Row[]; opportunites: R
 				return { select: (_cols: string, opts: { count?: string; head?: boolean } = {}) => entreprisesBuilder(fx.entreprises, opts ?? {}) };
 			}
 			if (table === 'contacts') {
-				return { select: () => ({ eq: () => Promise.resolve({ data: fx.contacts, error: null }) }) };
+				// Prod chaîne deux `.eq()` (statut_archive puis marque) → chaîne self-thenable.
+				const res = Promise.resolve({ data: fx.contacts, error: null });
+				const chain = { eq: () => chain, then: res.then.bind(res) };
+				return { select: () => chain };
 			}
 			if (table === 'opportunites') {
+				// Prod : select → eq('marque') → not → order → limit.
 				return {
 					select: () => ({
-						not: () => ({ order: () => ({ limit: () => Promise.resolve({ data: fx.opportunites, error: null }) }) }),
+						eq: () => ({
+							not: () => ({ order: () => ({ limit: () => Promise.resolve({ data: fx.opportunites, error: null }) }) }),
+						}),
 					}),
 				};
 			}
@@ -108,12 +114,12 @@ const E = 'eeeeeeee-0000-4000-8000-000000000005';
 const F = 'ffffffff-0000-4000-8000-000000000006';
 // Non archivées : A,B,C,D,E. Archivée : F (doit être exclue PARTOUT).
 const ENTREPRISES: Row[] = [
-	{ id: A, statut_qualification: 'qualifie', canton: 'GE', statut_archive: false, date_derniere_modification: '2026-06-05' },
-	{ id: B, statut_qualification: 'qualifie', canton: null, statut_archive: false, date_derniere_modification: '2026-06-04' },
-	{ id: C, statut_qualification: 'nouveau', canton: 'VD', statut_archive: false, date_derniere_modification: '2026-06-03' },
-	{ id: D, statut_qualification: null, canton: '', statut_archive: false, date_derniere_modification: '2026-06-02' },
-	{ id: E, statut_qualification: 'en_cours', canton: 'NE', statut_archive: false, date_derniere_modification: '2026-06-01' },
-	{ id: F, statut_qualification: 'qualifie', canton: 'VS', statut_archive: true, date_derniere_modification: '2026-06-06' },
+	{ id: A, statut_qualification: 'qualifie', canton: 'GE', statut_archive: false, marque: 'filmpro', date_derniere_modification: '2026-06-05' },
+	{ id: B, statut_qualification: 'qualifie', canton: null, statut_archive: false, marque: 'filmpro', date_derniere_modification: '2026-06-04' },
+	{ id: C, statut_qualification: 'nouveau', canton: 'VD', statut_archive: false, marque: 'filmpro', date_derniere_modification: '2026-06-03' },
+	{ id: D, statut_qualification: null, canton: '', statut_archive: false, marque: 'filmpro', date_derniere_modification: '2026-06-02' },
+	{ id: E, statut_qualification: 'en_cours', canton: 'NE', statut_archive: false, marque: 'filmpro', date_derniere_modification: '2026-06-01' },
+	{ id: F, statut_qualification: 'qualifie', canton: 'VS', statut_archive: true, marque: 'filmpro', date_derniere_modification: '2026-06-06' },
 ];
 const CONTACTS: Row[] = [
 	{ entreprise_id: A }, { entreprise_id: A }, { entreprise_id: C }, { entreprise_id: null },
@@ -129,7 +135,7 @@ async function runLoad(qs = '', fx: { entreprises: Row[]; contacts: Row[]; oppor
 	const supabase = makeSupabase(fx);
 	const url = new URL(`https://x.test/crm/entreprises${qs}`);
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	return (await (load as any)({ locals: { supabase }, url })) as any;
+	return (await (load as any)({ locals: { supabase, marque: 'filmpro' }, url })) as any;
 }
 
 describe('load /crm/entreprises (refonte serveur)', () => {
@@ -213,6 +219,7 @@ describe('recherche serveur : union exacte + pagination stable (fix régression 
 		statut_qualification: 'nouveau',
 		canton: 'GE',
 		statut_archive: false,
+		marque: 'filmpro',
 		date_derniere_modification: `2026-06-${String((n % 28) + 1).padStart(2, '0')}T00:00:${String(n % 60).padStart(2, '0')}Z`,
 	});
 	const FX = { entreprises: Array.from({ length: 60 }, (_, i) => mk(i + 1)), contacts: [], opportunites: [] };

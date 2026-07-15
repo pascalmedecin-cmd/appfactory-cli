@@ -572,7 +572,7 @@ const niveau3: AideLevel = {
 						['Code', 'GitHub', 'Versionnement, un dépôt pour le portail.']
 					]
 				},
-				{ type: 'callout', tone: 'note', title: 'Design system', text: 'L\'apparence est régie par le golden standard (tokens couleurs, typographie DM Sans, échelle d\'espacement 8px, primitives partagées). Toute page rendue dans le CRM s\'y conforme. Accent unique : le bleu FilmPro #2F5A9E.' }
+				{ type: 'callout', tone: 'note', title: 'Design system', text: 'L\'apparence est régie par le golden standard (tokens couleurs, typographie Inter, échelle d\'espacement 8px, primitives partagées). Toute page rendue dans le CRM s\'y conforme. Accent unique : le bleu FilmPro #2F5A9E.' }
 			]
 		},
 		{

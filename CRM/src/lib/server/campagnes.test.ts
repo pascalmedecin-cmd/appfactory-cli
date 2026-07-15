@@ -68,7 +68,8 @@ const baseCampagne: Campagne = {
 	archived: false,
 	date_creation: '2026-06-23T00:00:00Z',
 	created_by: null,
-	statut: 'en_cours'
+	statut: 'en_cours',
+	marque: 'filmpro'
 };
 
 describe('isCouleurSlug', () => {
@@ -81,7 +82,7 @@ describe('isCouleurSlug', () => {
 describe('createCampagne - validation', () => {
 	it('rejette un nom vide (invalid, aucune requête)', async () => {
 		const m = createSupabaseMock();
-		const { data, error } = await createCampagne(m.supabase, { nom: '   ', userId: null });
+		const { data, error } = await createCampagne(m.supabase, 'filmpro', { nom: '   ', userId: null });
 		expect(data).toBe(null);
 		expect(error?.code).toBe('invalid');
 		expect(m.calls.find((c) => c[0] === 'from')).toBeUndefined();
@@ -89,24 +90,25 @@ describe('createCampagne - validation', () => {
 
 	it('rejette un nom trop long (>80)', async () => {
 		const m = createSupabaseMock();
-		const { error } = await createCampagne(m.supabase, { nom: 'x'.repeat(81), userId: null });
+		const { error } = await createCampagne(m.supabase, 'filmpro', { nom: 'x'.repeat(81), userId: null });
 		expect(error?.code).toBe('invalid');
 	});
 
 	it('trim le nom + couleur invalide retombe sur le défaut c1', async () => {
 		const m = createSupabaseMock({ data: { ...baseCampagne } });
-		await createCampagne(m.supabase, { nom: '  Régies  ', couleur: 'rouge', description: '  ', userId: 'u1' });
+		await createCampagne(m.supabase, 'filmpro', { nom: '  Régies  ', couleur: 'rouge', description: '  ', userId: 'u1' });
 		expect(arg(m.calls, 'insert')?.[0]).toEqual({
 			nom: 'Régies',
 			couleur: DEFAULT_COULEUR,
 			description: null,
-			created_by: 'u1'
+			created_by: 'u1',
+			marque: 'filmpro'
 		});
 	});
 
 	it('couleur valide conservée + description bornée', async () => {
 		const m = createSupabaseMock({ data: { ...baseCampagne } });
-		await createCampagne(m.supabase, {
+		await createCampagne(m.supabase, 'filmpro', {
 			nom: 'Architectes',
 			couleur: 'c4',
 			description: 'd'.repeat(400),
@@ -119,7 +121,7 @@ describe('createCampagne - validation', () => {
 
 	it('conflit de nom (23505) -> erreur duplicate typée', async () => {
 		const m = createSupabaseMock({ error: { code: '23505', message: 'dup key' } });
-		const { data, error } = await createCampagne(m.supabase, { nom: 'Régies', userId: null });
+		const { data, error } = await createCampagne(m.supabase, 'filmpro', { nom: 'Régies', userId: null });
 		expect(data).toBe(null);
 		expect(error?.code).toBe('duplicate');
 		expect(error?.message).toContain('Régies');
@@ -205,7 +207,7 @@ describe('listCampagnes - extraction du compte embarqué', () => {
 				{ ...baseCampagne, id: 'b', prospect_lead_campagnes: [] }
 			]
 		});
-		const { data } = await listCampagnes(m.supabase);
+		const { data } = await listCampagnes(m.supabase, 'filmpro');
 		expect(data[0]).toMatchObject({ id: 'a', lead_count: 7 });
 		expect(data[1]).toMatchObject({ id: 'b', lead_count: 0 });
 		expect('prospect_lead_campagnes' in data[0]).toBe(false);
@@ -213,38 +215,40 @@ describe('listCampagnes - extraction du compte embarqué', () => {
 
 	it('includeArchived:false ajoute eq(archived,false)', async () => {
 		const m = createSupabaseMock({ data: [] });
-		await listCampagnes(m.supabase, { includeArchived: false });
-		expect(arg(m.calls, 'eq')).toEqual(['archived', false]);
+		await listCampagnes(m.supabase, 'filmpro', { includeArchived: false });
+		const eqs = m.calls.filter((c) => c[0] === 'eq').map((c) => c.slice(1));
+		expect(eqs).toContainEqual(['marque', 'filmpro']);
+		expect(eqs).toContainEqual(['archived', false]);
 	});
 
 	it('includeArchived par défaut -> pas de filtre archived', async () => {
 		const m = createSupabaseMock({ data: [] });
-		await listCampagnes(m.supabase);
-		expect(m.calls.some((c) => c[0] === 'eq')).toBe(false);
+		await listCampagnes(m.supabase, 'filmpro');
+		expect(m.calls.some((c) => c[0] === 'eq' && c[1] === 'archived')).toBe(false);
 	});
 });
 
 describe('assignCampagnesToLead', () => {
 	it('ids vides -> aucune requête, pas d’erreur', async () => {
 		const m = createSupabaseMock();
-		const { error } = await assignCampagnesToLead(m.supabase, 'lead-1', []);
+		const { error } = await assignCampagnesToLead(m.supabase, 'filmpro', 'lead-1', []);
 		expect(error).toBe(null);
 		expect(m.calls.length).toBe(0);
 	});
 
 	it('dédoublonne les ids avant upsert', async () => {
 		const m = createSupabaseMock({});
-		await assignCampagnesToLead(m.supabase, 'lead-1', ['x', 'x', 'y']);
-		const rows = arg(m.calls, 'upsert')?.[0] as Array<{ lead_id: string; campagne_id: string }>;
+		await assignCampagnesToLead(m.supabase, 'filmpro', 'lead-1', ['x', 'x', 'y']);
+		const rows = arg(m.calls, 'upsert')?.[0] as Array<{ lead_id: string; campagne_id: string; marque: string }>;
 		expect(rows).toEqual([
-			{ lead_id: 'lead-1', campagne_id: 'x' },
-			{ lead_id: 'lead-1', campagne_id: 'y' }
+			{ lead_id: 'lead-1', campagne_id: 'x', marque: 'filmpro' },
+			{ lead_id: 'lead-1', campagne_id: 'y', marque: 'filmpro' }
 		]);
 	});
 
 	it('campagne inexistante (FK 23503) -> erreur invalid', async () => {
 		const m = createSupabaseMock({ error: { code: '23503', message: 'fk' } });
-		const { error } = await assignCampagnesToLead(m.supabase, 'lead-1', ['ghost']);
+		const { error } = await assignCampagnesToLead(m.supabase, 'filmpro', 'lead-1', ['ghost']);
 		expect(error?.code).toBe('invalid');
 	});
 });
@@ -264,7 +268,7 @@ describe('removeCampagneFromLead', () => {
 describe('fetchCampagnesByLead', () => {
 	it('leadIds vides -> Map vide, aucune requête', async () => {
 		const m = createSupabaseMock();
-		const map = await fetchCampagnesByLead(m.supabase, []);
+		const map = await fetchCampagnesByLead(m.supabase, 'filmpro', []);
 		expect(map.size).toBe(0);
 		expect(m.calls.length).toBe(0);
 	});
@@ -278,7 +282,7 @@ describe('fetchCampagnesByLead', () => {
 				{ lead_id: 'l1', campagnes: null }
 			]
 		});
-		const map = await fetchCampagnesByLead(m.supabase, ['l1', 'l2']);
+		const map = await fetchCampagnesByLead(m.supabase, 'filmpro', ['l1', 'l2']);
 		expect(map.get('l1')?.map((c) => c.nom)).toEqual(['Alpha', 'Zèbre']);
 		expect(map.get('l2')?.map((c) => c.id)).toEqual(['m']);
 	});
@@ -287,7 +291,7 @@ describe('fetchCampagnesByLead', () => {
 describe('leadIdsForCampagnes', () => {
 	it('ids vides -> [] sans requête', async () => {
 		const m = createSupabaseMock();
-		expect(await leadIdsForCampagnes(m.supabase, [])).toEqual([]);
+		expect(await leadIdsForCampagnes(m.supabase, 'filmpro', [])).toEqual([]);
 		expect(m.calls.length).toBe(0);
 	});
 
@@ -295,13 +299,13 @@ describe('leadIdsForCampagnes', () => {
 		const m = createSupabaseMock({
 			data: [{ lead_id: 'l1' }, { lead_id: 'l2' }, { lead_id: 'l1' }]
 		});
-		expect(await leadIdsForCampagnes(m.supabase, ['c1'])).toEqual(['l1', 'l2']);
+		expect(await leadIdsForCampagnes(m.supabase, 'filmpro', ['c1'])).toEqual(['l1', 'l2']);
 	});
 
 	it('borne le nombre de campagnes du filtre à MAX_CAMPAGNE_IDS', async () => {
 		const m = createSupabaseMock({ data: [] });
 		const many = Array.from({ length: MAX_CAMPAGNE_IDS + 20 }, (_, i) => `c${i}`);
-		await leadIdsForCampagnes(m.supabase, many);
+		await leadIdsForCampagnes(m.supabase, 'filmpro', many);
 		const inArg = arg(m.calls, 'in') as [string, string[]];
 		expect(inArg[0]).toBe('campagne_id');
 		expect(inArg[1].length).toBe(MAX_CAMPAGNE_IDS);
@@ -311,25 +315,25 @@ describe('leadIdsForCampagnes', () => {
 describe('assignCampagnesToLeads (étiquetage d’un lot importé)', () => {
 	it('no-op si aucun lead OU aucune campagne (aucune requête)', async () => {
 		const m = createSupabaseMock();
-		expect((await assignCampagnesToLeads(m.supabase, [], ['c1'])).error).toBe(null);
-		expect((await assignCampagnesToLeads(m.supabase, ['l1'], [])).error).toBe(null);
+		expect((await assignCampagnesToLeads(m.supabase, 'filmpro', [], ['c1'])).error).toBe(null);
+		expect((await assignCampagnesToLeads(m.supabase, 'filmpro', ['l1'], [])).error).toBe(null);
 		expect(m.calls.find((c) => c[0] === 'from')).toBeUndefined();
 	});
 
 	it('produit le cross-product leads × campagnes (dédupé) en un seul upsert idempotent', async () => {
 		const m = createSupabaseMock();
-		await assignCampagnesToLeads(m.supabase, ['l1', 'l1', 'l2'], ['c1', 'c2', 'c1']);
+		await assignCampagnesToLeads(m.supabase, 'filmpro', ['l1', 'l1', 'l2'], ['c1', 'c2', 'c1']);
 		const upsertArgs = arg(m.calls, 'upsert');
-		const rows = upsertArgs?.[0] as Array<{ lead_id: string; campagne_id: string }>;
+		const rows = upsertArgs?.[0] as Array<{ lead_id: string; campagne_id: string; marque: string }>;
 		expect(rows).toHaveLength(4); // 2 leads distincts × 2 campagnes distinctes
-		expect(rows).toContainEqual({ lead_id: 'l1', campagne_id: 'c1' });
-		expect(rows).toContainEqual({ lead_id: 'l2', campagne_id: 'c2' });
+		expect(rows).toContainEqual({ lead_id: 'l1', campagne_id: 'c1', marque: 'filmpro' });
+		expect(rows).toContainEqual({ lead_id: 'l2', campagne_id: 'c2', marque: 'filmpro' });
 		expect(upsertArgs?.[1]).toMatchObject({ onConflict: 'lead_id,campagne_id', ignoreDuplicates: true });
 	});
 
 	it('FK 23503 -> erreur typée invalid (campagne inexistante), jamais une 500 opaque', async () => {
 		const m = createSupabaseMock({ error: { code: '23503', message: 'fk' } });
-		const { error } = await assignCampagnesToLeads(m.supabase, ['l1'], ['ghost']);
+		const { error } = await assignCampagnesToLeads(m.supabase, 'filmpro', ['l1'], ['ghost']);
 		expect(error?.code).toBe('invalid');
 	});
 });
@@ -360,7 +364,7 @@ function multiTableMock(byTable: Record<string, SbResult>) {
 describe('fetchProspectsForCampagne (panneau étiquettes)', () => {
 	it('renvoie [] sans interroger prospect_leads quand la campagne n’a aucun lead', async () => {
 		const m = multiTableMock({ prospect_lead_campagnes: { data: [] } });
-		const { data, error } = await fetchProspectsForCampagne(m.supabase, 'cmp-1');
+		const { data, error } = await fetchProspectsForCampagne(m.supabase, 'filmpro', 'cmp-1');
 		expect(error).toBe(null);
 		expect(data).toEqual([]);
 		expect(m.seen).not.toContain('prospect_leads'); // court-circuit, pas de 2e requête
@@ -375,7 +379,7 @@ describe('fetchProspectsForCampagne (panneau étiquettes)', () => {
 			prospect_lead_campagnes: { data: [{ lead_id: 'L1' }, { lead_id: 'L2' }] },
 			prospect_leads: { data: prospects }
 		});
-		const { data, error } = await fetchProspectsForCampagne(m.supabase, 'cmp-1');
+		const { data, error } = await fetchProspectsForCampagne(m.supabase, 'filmpro', 'cmp-1');
 		expect(error).toBe(null);
 		expect(data.map((p) => p.raison_sociale)).toEqual(['Boutique Léman', 'Régie du Lac']); // tri FR
 		expect(m.seen).toContain('prospect_leads');
@@ -383,7 +387,7 @@ describe('fetchProspectsForCampagne (panneau étiquettes)', () => {
 
 	it('erreur DB sur la lecture du LIEN (1re requête) -> error propagée (jamais « campagne vide » silencieuse)', async () => {
 		const m = multiTableMock({ prospect_lead_campagnes: { error: { message: 'lien-boom' } } });
-		const { data, error } = await fetchProspectsForCampagne(m.supabase, 'cmp-1');
+		const { data, error } = await fetchProspectsForCampagne(m.supabase, 'filmpro', 'cmp-1');
 		expect(data).toEqual([]);
 		expect(error?.message).toBe('lien-boom'); // ne PAS masquer en {data:[], error:null}
 		expect(m.seen).not.toContain('prospect_leads'); // on n'enchaîne pas sur une erreur de lien
@@ -394,7 +398,7 @@ describe('fetchProspectsForCampagne (panneau étiquettes)', () => {
 			prospect_lead_campagnes: { data: [{ lead_id: 'L1' }] },
 			prospect_leads: { error: { message: 'boom' } }
 		});
-		const { data, error } = await fetchProspectsForCampagne(m.supabase, 'cmp-1');
+		const { data, error } = await fetchProspectsForCampagne(m.supabase, 'filmpro', 'cmp-1');
 		expect(data).toEqual([]);
 		expect(error?.message).toBe('boom');
 	});
@@ -414,7 +418,7 @@ describe('fetchProspectsForCampagne (panneau étiquettes)', () => {
 				],
 			},
 		});
-		const { data } = await fetchProspectsForCampagne(m.supabase, 'cmp-1');
+		const { data } = await fetchProspectsForCampagne(m.supabase, 'filmpro', 'cmp-1');
 		const byId = new Map(data.map((p) => [p.id, p]));
 		expect(byId.get('L1')?.validation_statut).toBe('garder');
 		expect(byId.get('L2')?.validation_statut).toBe(null); // dérive de schéma neutralisée
@@ -430,7 +434,7 @@ describe('fetchProspectsForCampagne (panneau étiquettes)', () => {
 				],
 			},
 		});
-		const { data, truncated } = await fetchProspectsForCampagne(m.supabase, 'cmp-1', { maxRows: 2 });
+		const { data, truncated } = await fetchProspectsForCampagne(m.supabase, 'filmpro', 'cmp-1', { maxRows: 2 });
 		expect(truncated).toBe(true);
 		expect(data).toHaveLength(2); // borné avant la lecture des prospects
 	});
@@ -440,7 +444,7 @@ describe('fetchProspectsForCampagne (panneau étiquettes)', () => {
 			prospect_lead_campagnes: { data: [{ lead_id: 'L1' }] },
 			prospect_leads: { data: [{ id: 'L1', raison_sociale: 'Alpha', adresse: null, npa: null, localite: null, statut: 'vide', score_pertinence: null, source: 'zefix' }] },
 		});
-		const { truncated } = await fetchProspectsForCampagne(m.supabase, 'cmp-1');
+		const { truncated } = await fetchProspectsForCampagne(m.supabase, 'filmpro', 'cmp-1');
 		expect(truncated).toBe(false);
 	});
 });

@@ -20,6 +20,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		.from('entreprises')
 		.select('id, raison_sociale, secteur_activite, adresse_siege, canton, site_web')
 		.eq('id', id)
+		.eq('marque', locals.marque)
 		.maybeSingle();
 	if (entErr) {
 		console.error('[terrain/fiche] entreprise', entErr.message);
@@ -33,12 +34,14 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			.select('id, prenom, nom, role_fonction, telephone, email_professionnel')
 			.eq('entreprise_id', id)
 			.eq('statut_archive', false)
+			.eq('marque', locals.marque)
 			.order('score_priorite', { ascending: false })
 			.limit(10),
 		locals.supabase
 			.from('opportunites')
 			.select('id, titre, etape_pipeline')
 			.eq('entreprise_id', id)
+			.eq('marque', locals.marque)
 			.or(`etape_pipeline.is.null,etape_pipeline.not.in.(${ETAPES_PIPELINE_CLOSED.join(',')})`)
 			.order('date_creation', { ascending: false })
 			.limit(10),
@@ -46,6 +49,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			.from('prospect_visits')
 			.select('id, visited_at, resultat, note, user_id')
 			.eq('entreprise_id', id)
+			.eq('marque', locals.marque)
 			.order('visited_at', { ascending: false })
 			.limit(20),
 	]);

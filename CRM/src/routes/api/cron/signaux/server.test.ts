@@ -14,10 +14,16 @@ vi.mock('$env/dynamic/private', () => ({ env: mockEnv }));
 vi.mock('$app/environment', () => ({ browser: false, dev: true, building: false }));
 vi.mock('$lib/server/supabase', () => ({
 	createSupabaseServiceClient: () => ({
-		from: () => ({
-			select: () => ({ eq: () => ({ in: () => Promise.resolve({ data: [] }) }) }),
-			insert: () => Promise.resolve({ error: null }),
-		}),
+		// Chaîne auto-référente : la dédup prod enchaîne désormais deux `.eq()`
+		// (`.eq('marque', 'filmpro').eq('source_officielle', ...)`) avant `.in()`.
+		from: () => {
+			const chain: Record<string, unknown> = {};
+			chain.select = () => chain;
+			chain.eq = () => chain;
+			chain.in = () => Promise.resolve({ data: [] });
+			chain.insert = () => Promise.resolve({ error: null });
+			return chain;
+		},
 	}),
 }));
 

@@ -5,11 +5,12 @@ vi.mock('$app/environment', () => ({ browser: false, dev: true, building: false 
 type Entreprise = { id: string; raison_sociale: string; site_web: string | null; canton?: string | null };
 
 function createMockSupabase(rows: Entreprise[], opts: { error?: { message: string } } = {}) {
-	const calls: { ilikePattern?: string; limit?: number; statut_archive?: boolean; selectCols?: string } = {};
+	const calls: { ilikePattern?: string; limit?: number; statut_archive?: boolean; marque?: string; selectCols?: string } = {};
 	const builder = {
 		select(cols: string) { calls.selectCols = cols; return builder; },
-		eq(_col: string, val: boolean) {
-			calls.statut_archive = val;
+		eq(col: string, val: boolean | string) {
+			if (col === 'marque') calls.marque = val as string;
+			else calls.statut_archive = val as boolean;
 			return builder;
 		},
 		ilike(_col: string, pattern: string) {
@@ -36,7 +37,7 @@ async function callGET(
 	const url = new URL(`http://localhost/api/entreprises/search${q !== null ? `?q=${encodeURIComponent(q)}` : ''}`);
 	const event = {
 		url,
-		locals: { supabase },
+		locals: { supabase, marque: 'filmpro' },
 	} as unknown as Parameters<typeof mod.GET>[0];
 	const resp = await mod.GET(event);
 	const body = await resp.json();
@@ -61,6 +62,7 @@ describe('GET /api/entreprises/search (V2b H-06)', () => {
 		expect(supabase._calls.ilikePattern).toBe('Acm%');
 		expect(supabase._calls.limit).toBe(20);
 		expect(supabase._calls.statut_archive).toBe(false);
+		expect(supabase._calls.marque).toBe('filmpro');
 	});
 
 	it('escapes ILIKE wildcards in user input (% _ \\)', async () => {

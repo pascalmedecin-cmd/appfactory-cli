@@ -35,6 +35,7 @@ export const POST = async ({ params, request, locals }: RequestEvent) => {
 	const { data: liens, error: liensErr } = await locals.supabase
 		.from('prospect_lead_campagnes')
 		.select('lead_id')
+		.eq('marque', locals.marque)
 		.eq('campagne_id', id.data)
 		.in('lead_id', [...new Set(parsed.data.leadIds)]);
 	if (liensErr) {

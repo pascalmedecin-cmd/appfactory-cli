@@ -2,18 +2,15 @@
 
 ## Chantier « Atelier 209 » (démarré 2026-07-14)
 
-Le CRM FilmPro devient l'outil de prospection **des deux marques** (LED Studio + FilmPro), sous un **portail neutre « Atelier 209 »**, avec deux environnements **étanches**. Un seul outil, une seule base : ni fork, ni deuxième application. Livraison en **8 runs** pilotés par `/product`.
+Le CRM FilmPro devient l'outil de prospection **des deux marques** (LED Studio + FilmPro), sous un **portail neutre « Atelier 209 »**, deux environnements **étanches** (une base, ni fork ni 2e app). Livraison en **8 runs** (`/product`).
 
-- **Source de vérité de l'exécution → `docs/ATELIER-209-SUIVI.md`** : statut par run, décisions, preuves. À lire au démarrage de toute session du chantier.
-- **Le « pourquoi » (cadrage figé, archive hors-repo)** : `~/Claude/Lab/memory/atelier-209/` (contrat, état du code, découpage en runs, risques). Non maintenu - la vérité vivante est le suivi ci-dessus.
-- **Règles non négociables** : Pascal valide **chaque maquette d'écran** dans Chrome avant toute ligne de code ; **non-régression** garantie (colonne `marque`, défaut `filmpro` : le CRM se comporte exactement comme avant) ; **zéro dette** (les 4 dettes du code sont corrigées, pas contournées) ; tout **sourcé et vérifié**, jamais inventé. Hors scope : refonte du CRM existant, déménagement du module Découpe, renommage du dossier disque.
-- **Skills design (runs 1+, annoncés au plan)** : `redesign-skill`, `soft-skill`, `theme-factory`, filtre `ANTI-AI-SLOP.md`. **État : Run 0 terminé (5/7 vérifs)** ; V6 Hunter / V7 Pingen en attente comptes Pascal. **Prochaine étape : Run 1** (portail renommé, `atelier209.ch`, connexion refaite, admin réparé) - voir suivi.
+- **Source de vérité de l'exécution → `docs/ATELIER-209-SUIVI.md`** (statut par run, décisions, preuves, gate prod ; « pourquoi » figé `~/Claude/Lab/memory/atelier-209/`). Règles non négociables : Pascal valide chaque maquette dans Chrome avant tout code ; non-régression garantie (défaut `marque='filmpro'`) ; zéro dette ; tout sourcé. Skills design : `redesign-skill`, `soft-skill`, `theme-factory`, `ANTI-AI-SLOP.md`.
+- **État : Run 1 déployé prod ; Run 2 câblé + testé + QA non-régression PROUVÉE (0 régression FilmPro, LED miroir exact) sur `run2-marque` — NON déployé.** Reste 2 gestes Pascal (gate prod) : validation Chrome des 2 marques + go migration/déploiement. V6 Hunter / V7 Pingen en attente comptes Pascal.
 
-**Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (path Vercel `rootDirectory: CRM`) ; container racine = stub. Contexte → `memory/project_appfactory_restructure.md`.
+**Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (Vercel `rootDirectory: CRM`) ; container racine = stub. → `memory/project_appfactory_restructure.md`.
 
-**Statut :** Portail FilmPro multi-outils en prod : CRM (`/crm`) + Découpe Films (`/decoupe`) sur `filmpro-portail.vercel.app`. Formation IA = projet autonome `Formation/` (`cc` option 5). Historique (V3 terrain, Signaux V4, golden v9, restructure S173-S174) → `archive/`.
-**Dernière mise à jour :** 2026-07-14 (**chantier Atelier 209 démarré - Run 0 des vérifications livré** → § Chantier en tête + `docs/ATELIER-209-SUIVI.md`). Trunk = `main` ; Flag `ffCrmListesV2` **ON fondateurs**. Prod = `filmpro-portail.vercel.app` (push `main` auto-déploie, intermittent - cf. Watch). **À FAIRE Pascal** : réserver `atelier209.ch` + comptes Hunter & Pingen + variable Daily Email (§ Chez Pascal). **Prochain bug :** #001.
-**Sessions précédentes (condensé)** - détails dans `archive/` (S165-S175, S122-S125, S70-S107).
+**Statut :** Portail multi-outils en prod : CRM (`/crm`) + Découpe (`/decoupe`) sur `filmpro-portail.vercel.app`. Trunk = `main` (push auto-déploie, intermittent - cf. Watch) ; Flag `ffCrmListesV2` **ON fondateurs**. **À FAIRE Pascal** : comptes Hunter & Pingen + variable Daily Email (§ Chez Pascal). Historique (V3 terrain, Signaux V4, restructure S173-S174) → `archive/`.
+**Dernière mise à jour :** 2026-07-15 (Run 2 QA non-régression + fix login micro ; NON déployé). **Prochain bug :** #001.
 
 
 ---
@@ -141,7 +138,17 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Atelier 209 - Run 2** (les deux marques cloisonnées). Sélecteur de marque + **chrome (sidemenu/header/footer) teinté par marque LED/FilmPro** pour distinguer + étanchéité en base + seed jetable (dette D5) ; en même temps, revoir le **golden CRM** (ajustements couleurs + **Inter partout**, PAS de refonte). Le **Run 1 est déployé en prod** (identité + rôles/RLS + connexion 4 adresses ; URL `atelier209.vercel.app` différée). Suivi → `docs/ATELIER-209-SUIVI.md`.
+**Prochaine attaque** : **Atelier 209 - Run 2, le GATE PROD** (branche `run2-marque`). Le câblage applicatif est **COMPLET et testé** (cloisonnement de bout en bout, leak-test 10/10 base réelle, Vitest 2562, svelte-check 0, build OK, audit sécu 0 C/H, revue adversariale 18 agents - 6 findings corrigés). **NON déployé.** Reste 2 gestes Pascal : (1) **validation visuelle Chrome** des 2 marques (Inter sur tables denses = son DevTools, §E2) ; (2) **go migration prod** (`20260715120000_marque_cloisonnement.sql` via lib `pg`/`DATABASE_URL_ADMIN`) **+ déploiement** (merge `main` ou `vercel deploy --prod`). Détail → `docs/ATELIER-209-SUIVI.md` § « Gate prod » + [[project_atelier_209_run2_cablage_2026-07-15]].
+
+### Directive permanente (Pascal 2026-07-15) : zéro régression + miroir exact + QA avant/après
+
+**Toute intervention sur le CRM FilmPro doit préserver 100 % de l'existant** (miroir exact, PAS une
+réinterprétation) et garantir **zéro régression**. Avant/après toute modification touchant l'UI ou un
+comportement, faire un **check QA avant/après** (capture ou mesure de l'état avant, puis après, sur la
+vraie vue - premium pour un fondateur). Ne jamais « redessiner » ce qui marche ; corriger le défaut nommé,
+rien de plus. **Piège vécu** : la preview locale par défaut est **non-premium** (l'utilisateur local n'a
+pas le flag `ff_crm_listes_v2`) → elle ne montre PAS la vue prod de Pascal (premium). Pour une preview
+miroir : poser `app_metadata.ff_crm_listes_v2 = true` sur l'utilisateur local avant de minter la session.
 
 ### Règle backlog (WIP-limité, gravée 2026-06-28)
 
@@ -149,9 +156,10 @@ Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude sans dépendance 
 
 ### Backlog dev (actionnable par Claude)
 
-- [ ] **[EXÉCUTABLE]** Atelier 209 - Run 2 (marques cloisonnées) : sélecteur de marque + chrome (sidemenu/header/footer) teinté par marque LED/FilmPro pour distinguer + étanchéité en base + seed jetable (dette D5) ; en même temps revoir le golden CRM (couleurs + Inter partout, pas de refonte). → `docs/ATELIER-209-SUIVI.md` + [[project_atelier_209_run1_deploiement_2026-07-15]].
+- [ ] **[BLOQUÉ - toi : validation Chrome + go migration/deploy]** Atelier 209 - Run 2 gate prod (branche `run2-marque`) : câblage COMPLET + testé (leak 10/10, Vitest 2562, audit 0 C/H). Reste (a) ta validation visuelle Chrome des 2 marques, (b) go migration prod (`pg`) + déploiement. → `docs/ATELIER-209-SUIVI.md` § Gate prod + [[project_atelier_209_run2_cablage_2026-07-15]].
 - [ ] **[EXÉCUTABLE]** URL Atelier 209 : configurer `atelier209.vercel.app` comme domaine de production **public** du projet Vercel (réglages), vérifier 200 public, PUIS activer le redirect 308 de `filmpro-portail` (code remis à l'origine pour le Run 1). Renommer le projet ne suffit pas (reste protégé SSO). → [[project_atelier_209_run1_deploiement_2026-07-15]].
 - [ ] **[EXÉCUTABLE]** e2e Playwright validation externe (base jetable Colima) : parcours public `/validation/<token>` + parcours fondateur + étiquettes « ignorer les Retirer ». Ferme la dette « déployé `8b90f6d` sans Playwright feature-spécifique ». → [[project_validation_externe_campagne_2026-07-02]].
+- [ ] **[EXÉCUTABLE]** Cohérence redimensionnement de colonnes (qualité pro, Pascal 2026-07-15) : `resizable={true}` + `storageKey` sont branchés sur **Prospection** et **Veille/thèmes** mais PAS sur **Entreprises ni Contacts** (incohérence confirmée). Brancher le resize sur les tables manquantes (au moins Entreprises + Contacts), avec **QA avant/après** sur chaque table (directive Pascal). La fonctionnalité existe déjà dans `DataTable.svelte` (poignées `col-resizer`, persistance localStorage).
 - [ ] **[EXÉCUTABLE]** Emailing prospection automatisée : moteur d'envoi automatisé de séquences d'emails aux prospects (Resend, **templates pré-rédigés, zéro LLM** - règle dure). Étape 1 = cadrage court Pascal (contenu/cible/séquence/fréquence/déclencheur, **pas de réunion**), puis 1 session de code + gate ON/OFF (**OFF par défaut**). **Gate de mise en prod** (pas avant le dev) : (a) DNS `send.filmpro.ch` Resend, (b) base légale nLPD + mention, (c) contenu validé. (Ex-« Vague 4 ».)
 
 ### Chez Pascal (hors backlog dev - gestes manuels, quand tu veux)
@@ -169,11 +177,11 @@ Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude sans dépendance 
 
 ### Livré cette session
 
-- [x] ~~**Atelier 209 - Run 1 DÉPLOYÉ EN PROD**~~ - 2026-07-15 (ultracode, SUPERVISÉ). Identité « Atelier 209 » (portail + connexion « Heure bleue », Inter, PWA) + **rôles 3 niveaux + RLS** (D1 : admin Pascal ×2, superuser Antoine ×2, user) + **connexion = 4 adresses nommées** (aucun domaine ouvert - RLS mono-tenant plate). Migration RLS en prod via `pg` (MCP read-only), env Vercel posée, code déployé (`a564d64`, `vercel deploy --prod` depuis la racine, auto-deploy git non fired). 4 écrans vérifiés navigateur + **anti-verrouillage prouvé** (session prod pascal → 200). Revue 11 agents (3 findings corrigés). **URL `atelier209.vercel.app` différée** (config domaine Vercel). → [[project_atelier_209_run1_deploiement_2026-07-15]] + [[audit_secu_2026-07-15_atelier209_run1_roles_rls]].
-- [x] ~~Atelier 209 - Run 1 maquettes validées (gate design)~~ - 2026-07-15. « Heure bleue » verrouillée, `bar-off-1.png`. → [[project_atelier_209_run1_maquettes_2026-07-15]].
-- [x] ~~Atelier 209 - Run 0 (vérifications, 5/7)~~ - 2026-07-14. Veille coût, sources LED (import indispensable), base prod conforme, base jetable, domaine. → `docs/ATELIER-209-SUIVI.md`.
-- [x] ~~Login CRM réparé (code OTP)~~ - 2026-07-14. Expéditeur Supabase Auth hors-repo resté sur filmpro.ch mort ; fix Management API. → [[project_login_otp_smtp_supabase_2026-07-14]].
-→ Antérieurs (veille doublon email `ac744f3` + plancher part locale `7e280c2` 10/07 ; pause_turn/W27 `2a5207e`, étiquettes PDF `1643435`, refonte Lots 1-3, Aide, Découpe, Daily Email, etc.) → `archive/claude-md-crm-livre-2026-07-14.md` + `-07-03.md` + `-07-02.md` + `-06-26.md`.
+- [x] ~~**Login Atelier 209 : 6 défauts design micro corrigés + process QA design micro établi**~~ - 2026-07-15 (`run2-marque`, redesign-skill). Pascal a rattrapé 2 défauts sur la preview → **feedback de posture gravé** : le micro (grille/états/feedback) est mon ressort, pas ses checks ([[feedback_qa_micro_mon_ressort_gate_pas_excuse]]). Fixes déterministes mesurés (boutons alignés delta **0px**, bannière « code envoyé », layout-shift réglé, feedback renvoi, placeholder `123456`, contraste AA). Revue par agents : 6 réels / 8 réfutés. svelte-check 0/0, build OK. NON déployé.
+- [x] ~~**Atelier 209 - Run 2 : QA de non-régression avant/après (« strictement identique »)**~~ - 2026-07-15 (ultracode, 22 agents). Prouvé : `run2-marque`@filmpro **≡ `main`** (**0 régression FilmPro**, 78 iso-confirmations) + @led miroir teinté exact. 81 fichiers analysés (findings réfutés), Vitest **2562**, **16/16 écrans QA visuel** (2 marques premium), 0 code modifié. 2 points LED dormants (activités §A1, Signaux Q2) → Run 3/7. → [[project_atelier_209_run2_qa_non_regression_2026-07-15]].
+- [x] ~~**Fix gap avatar→raison sociale sur Entreprises**~~ - 2026-07-15 (`run2-marque`). Cause racine pré-existante (colonnes fixes absorbant l'excédent `table-fixed`) : avatar + nom fusionnés dans une cellule (`crm-id`, gap 8px), colonne logo retirée. QA avant/après, svelte-check 0, 31/31. Isolé à Entreprises.
+- [x] ~~**Atelier 209 - Run 2 : CÂBLAGE cloisonnement bi-marque COMPLET + testé (NON déployé)**~~ - 2026-07-15 (ultracode). Cloisonnement bout en bout : `locals.marque` threadé, 7 hubs + ~50 fichiers, export CSV verrouillé, validation scopée par token, chrome teinté (`BrandSwitcher`), golden Inter. **DoD : leak-test 10/10 base réelle**, Vitest 2562. Fix archi FK composite (DROP FK simples). Revue 18 agents. **Reste gate prod (Pascal)**. → [[project_atelier_209_run2_cablage_2026-07-15]] + [[audit_secu_2026-07-15_atelier209_run2_marque]].
+→ Antérieurs (Run 2 fondation + Run 1 déployé du 15/07 → `archive/claude-md-crm-livre-2026-07-15.md` ; login OTP réparé 14/07 [[project_login_otp_smtp_supabase_2026-07-14]] ; veille 10/07, pause_turn/W27, étiquettes PDF, refonte Lots 1-3, Aide, Découpe, Daily Email) → `archive/claude-md-crm-livre-2026-07-14.md` + `-07-03.md` + `-07-02.md` + `-06-26.md`.
 
 ### Watch list active après pivot
 

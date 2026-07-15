@@ -15,6 +15,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		.from('contacts')
 		.select('*, entreprises(id, raison_sociale, site_web)')
 		.eq('statut_archive', false)
+		.eq('marque', locals.marque)
 		.order('date_derniere_modification', { ascending: false });
 
 	if (error) {
@@ -33,7 +34,7 @@ export const actions: Actions = {
 
 		// Auto-création entreprise si nom fourni sans ID (anti-race C-05).
 		if (entrepriseNom && !raw.entreprise_id) {
-			const entId = await getOrCreateEntreprise(locals.supabase, entrepriseNom);
+			const entId = await getOrCreateEntreprise(locals.supabase, entrepriseNom, locals.marque);
 			if (entId) raw.entreprise_id = entId;
 		}
 
@@ -42,7 +43,7 @@ export const actions: Actions = {
 
 		const { error } = await locals.supabase
 			.from('contacts')
-			.insert(buildContactInsert(parsed.data));
+			.insert(buildContactInsert(parsed.data, locals.marque));
 
 		return dbFail(error) ?? { success: true };
 	},
@@ -53,7 +54,7 @@ export const actions: Actions = {
 		const entrepriseNom = raw.entreprise_nom ?? '';
 
 		if (entrepriseNom && !raw.entreprise_id) {
-			const entId = await getOrCreateEntreprise(locals.supabase, entrepriseNom);
+			const entId = await getOrCreateEntreprise(locals.supabase, entrepriseNom, locals.marque);
 			if (entId) raw.entreprise_id = entId;
 		}
 

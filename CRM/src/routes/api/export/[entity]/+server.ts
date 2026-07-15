@@ -110,7 +110,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	const { user } = await locals.safeGetSession();
 	const premium = entity === 'leads' && isCampagnesEnabled(user);
 
-	let query = locals.supabase.from(config.table).select(config.select);
+	// Atelier 209 Run 2 : cloisonnement bi-marque. Les 3 tables exportables (contacts,
+	// entreprises, prospect_leads) portent toutes la colonne `marque` -> l'export CSV ne
+	// laisse JAMAIS filtrer les données de l'autre marque (fuite PII à l'export, sinon).
+	let query = locals.supabase.from(config.table).select(config.select).eq('marque', locals.marque);
 	if (config.filter) {
 		query = query.eq(config.filter.column, config.filter.value);
 	}
@@ -126,7 +129,7 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	// Vague 3.2 : pour l'export leads (/reporting) EN PREMIUM, pré-attache les campagnes jointes
 	// par lead (même colonne partagée que l'export prospection filtré).
 	if (premium && rows.length > 0) {
-		const byLead = await fetchCampagnesByLead(locals.supabase, rows.map((r) => r.id as string));
+		const byLead = await fetchCampagnesByLead(locals.supabase, locals.marque, rows.map((r) => r.id as string));
 		for (const r of rows) r.campagnes = (byLead.get(r.id as string) ?? []).map((c) => c.nom).join('; ');
 	}
 	const columns = premium ? config.columns : config.columns.filter((c) => c.key !== 'campagnes');

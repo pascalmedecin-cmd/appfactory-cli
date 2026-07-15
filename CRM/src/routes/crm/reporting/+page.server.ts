@@ -20,10 +20,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 		await Promise.all([
 			locals.supabase
 				.from('opportunites')
-				.select('etape_pipeline, montant_estime, date_creation, date_cloture_effective'),
-			locals.supabase.from('contacts').select('date_creation:date_ajout'),
-			locals.supabase.from('entreprises').select('date_creation:date_import_ajout'),
-			locals.supabase.from('prospect_leads').select('statut')
+				.select('etape_pipeline, montant_estime, date_creation, date_cloture_effective')
+				.eq('marque', locals.marque),
+			locals.supabase.from('contacts').select('date_creation:date_ajout').eq('marque', locals.marque),
+			locals.supabase.from('entreprises').select('date_creation:date_import_ajout').eq('marque', locals.marque),
+			locals.supabase.from('prospect_leads').select('statut').eq('marque', locals.marque)
 		]);
 
 	const opportunites = (opps ?? []) as PipelineRow[];

@@ -2,6 +2,7 @@ import { json, type RequestEvent } from '@sveltejs/kit';
 import { validate, ResolveContactSuggestionSchema } from '$lib/schemas';
 import { newId, now } from '$lib/server/db-helpers';
 import { buildContactInsertFromSuggestion } from '$lib/server/referentiel/contacts';
+import { parseMarque } from '$lib/marque';
 
 /**
  * V3 — résolution desktop d'un brouillon de contact terrain (ADR-0003).
@@ -70,6 +71,7 @@ export const POST = async ({ params, request, locals }: RequestEvent) => {
 			.from('contacts')
 			.select('id, entreprise_id, statut_archive')
 			.eq('id', merged_contact_id)
+			.eq('marque', locals.marque)
 			.maybeSingle();
 		if (cErr) return genericError(cErr, 'Erreur recherche contact');
 		// Un contact archivé (soft-delete) est invisible dans le CRM : le traiter
@@ -87,11 +89,22 @@ export const POST = async ({ params, request, locals }: RequestEvent) => {
 		contactId = newId();
 		merged = false;
 		createdNew = true;
+		// Atelier 209 Run 2 : la marque du contact créé HÉRITE de l'entreprise parente (la file
+		// de validation est partagée entre marques ; résoudre en vue active un brouillon d'une
+		// entreprise de l'AUTRE marque ne doit jamais mis-attribuer le contact). On dérive donc
+		// la marque du parent, pas de locals.marque. Entreprise absente -> 404 (jamais d'orphelin).
+		const { data: parentEnt } = await locals.supabase
+			.from('entreprises')
+			.select('marque')
+			.eq('id', sug.entreprise_id)
+			.maybeSingle();
+		if (!parentEnt) return json({ error: 'Entreprise du brouillon introuvable' }, { status: 404 });
+		const contactMarque = parseMarque(parentEnt.marque);
 		// Référentiel partagé : la matérialisation d'un contact depuis un brouillon terrain
 		// passe par le module (id + ts conservés ici pour le nettoyage anti-race ci-dessous).
 		const { error: insErr } = await locals.supabase
 			.from('contacts')
-			.insert(buildContactInsertFromSuggestion(sug, contactId, ts));
+			.insert(buildContactInsertFromSuggestion(sug, contactId, ts, contactMarque));
 		if (insErr) return genericError(insErr, 'Erreur création contact');
 	}
 

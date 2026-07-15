@@ -14,6 +14,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const { data, error } = await locals.supabase
 		.from('opportunites')
 		.select('id, titre, etape_pipeline, date_relance_prevue, entreprise_id, entreprises(raison_sociale)')
+		.eq('marque', locals.marque)
 		.lte('date_relance_prevue', today)
 		.or(`etape_pipeline.is.null,etape_pipeline.not.in.(${ETAPES_PIPELINE_CLOSED.join(',')})`)
 		.order('date_relance_prevue', { ascending: true })

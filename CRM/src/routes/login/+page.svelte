@@ -20,6 +20,9 @@
 	let verifying = $state(false);
 	let codeSent = $state(false);
 	let sentEmail = $state('');
+	// Incrémenté à chaque code (r)envoyé : re-keye la bannière pour rejouer l'animation = feedback
+	// visible même sur un RENVOI (sinon le clic « Renvoyer » ne bouge rien à l'écran).
+	let sendCount = $state(0);
 	let codeInput = $state<HTMLInputElement | null>(null);
 	// Masque l'erreur périmée quand on revient à l'étape 1 (resetToEmail ne peut pas effacer `form`).
 	let errorDismissed = $state(false);
@@ -77,9 +80,22 @@
 		<p class="subtitle reveal" style="--d:.14s">Espace professionnel</p>
 	</div>
 
-	{#if displayedError}
-		<div class="login-error reveal" role="alert" style="--d:.16s">{displayedError}</div>
-	{/if}
+	<!-- Slot de message TOUJOURS présent (anime sa hauteur au lieu d'apparaître d'un coup) :
+	     le formulaire glisse en douceur, sans saut brutal ni « Se connecter » rogné. -->
+	<div class="msg-slot" class:open={displayedError || codeSent}>
+		<div class="msg-slot-inner">
+			{#if displayedError}
+				<div class="login-error reveal" role="alert" style="--d:.05s">{displayedError}</div>
+			{:else if codeSent}
+				{#key sendCount}
+					<div class="login-notice reveal" role="status" style="--d:.05s">
+						Un {sendCount > 1 ? 'nouveau ' : ''}code à 6 chiffres a été envoyé à
+						<strong>{sentEmail}</strong>. Saisissez-le ci-dessous.
+					</div>
+				{/key}
+			{/if}
+		</div>
+	</div>
 
 	<div class="login-form">
 		<!-- Étape 1 : identifiant -->
@@ -91,8 +107,10 @@
 			use:enhance={() => {
 				sending = true;
 				errorDismissed = false;
-				return async ({ update }) => {
+				return async ({ result, update }) => {
 					sending = false;
+					if (result.type === 'success' && (result.data as { codeSent?: boolean } | undefined)?.codeSent)
+						sendCount += 1;
 					await update({ reset: false });
 				};
 			}}
@@ -119,8 +137,8 @@
 			</div>
 			<p class="step-hint">
 				{#if codeSent}
-					Code envoyé à <strong>{sentEmail}</strong>.
-					<button type="button" class="link-reset" onclick={resetToEmail}>Changer d’adresse</button>
+					Pas reçu&nbsp;? Vérifiez les indésirables, ou
+					<button type="button" class="link-reset" onclick={resetToEmail}>changez d’adresse</button>.
 				{:else}
 					Un code à 6 chiffres vous est envoyé par courriel.
 				{/if}
@@ -154,7 +172,7 @@
 				inputmode="numeric"
 				autocomplete="one-time-code"
 				maxlength="6"
-				placeholder="••••••"
+				placeholder="123456"
 				bind:value={code}
 				bind:this={codeInput}
 				disabled={!codeSent}
@@ -187,6 +205,43 @@
 		color: #f0c9c2;
 		font-size: 13.5px;
 		line-height: 1.5;
+	}
+
+	/* Confirmation « code envoyé » (état success) : même gabarit que .login-error, ton crème
+	   positif de la direction « Heure bleue ». role="status" = annonce polie au lecteur d'écran. */
+	.login-notice {
+		max-width: 46ch;
+		padding: 11px 18px;
+		border-radius: 12px;
+		background: rgba(240, 228, 194, 0.1);
+		box-shadow: inset 0 0 0 1px rgba(240, 228, 194, 0.26);
+		color: var(--cream);
+		font-size: 13.5px;
+		line-height: 1.5;
+		text-align: center;
+	}
+	.login-notice strong {
+		color: var(--cream-bright);
+		font-weight: 600;
+	}
+
+	/* Le slot de message anime sa HAUTEUR (grid-template-rows 0fr -> 1fr) au lieu d'être
+	   inséré/retiré du flux : quand le code est envoyé, le bloc formulaire glisse doucement
+	   vers le bas au lieu de sauter d'un coup (~83px) qui rognait « Se connecter ». */
+	.msg-slot {
+		display: grid;
+		grid-template-rows: 0fr;
+		width: min(720px, 100%);
+		transition: grid-template-rows 0.45s var(--a209-ease);
+	}
+	.msg-slot.open {
+		grid-template-rows: 1fr;
+	}
+	.msg-slot-inner {
+		overflow: hidden;
+		min-height: 0;
+		display: flex;
+		justify-content: center;
 	}
 
 	/* Les 2 étapes côte à côte (desktop), empilées en mobile. */
@@ -230,6 +285,11 @@
 	.field {
 		margin-top: 10px;
 		width: 100%;
+		/* Hauteur FIXE identique aux deux étapes : le champ code (26px) est plus grand que le
+		   champ email (16px) ; sans hauteur commune, l'étape 2 pousse son bouton plus bas et les
+		   deux boutons se désalignent. Hauteur explicite = grille verticale partagée (déterministe). */
+		height: 56px;
+		box-sizing: border-box;
 		font-family: inherit;
 		font-size: 16px;
 		font-weight: 400;
@@ -238,7 +298,7 @@
 		background: transparent;
 		border: none;
 		outline: none;
-		padding: 12px 6px 13px;
+		padding: 0 6px;
 		border-radius: 2px;
 		box-shadow: inset 0 -1.5px 0 rgba(236, 231, 220, 0.18);
 		transition:
@@ -327,6 +387,9 @@
 
 	.step-hint {
 		margin-top: 9px;
+		/* Réserve 2 lignes (2 × 1.5 × 12px) : le hint étape 1 s'enroule sur 2 lignes, celui de
+		   l'étape 2 sur 1 ; sans hauteur commune le bas des 2 colonnes se désaligne (grille rompue). */
+		min-height: 36px;
 		font-size: 12px;
 		color: var(--ink-faint);
 		line-height: 1.5;

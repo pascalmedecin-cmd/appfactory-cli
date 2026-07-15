@@ -173,7 +173,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		return json({ imported: 0, skipped: 0, total_results: 0, quota_remaining: quotaRemaining, message: 'Aucun résultat Google Places pour cette recherche.' });
 	}
 	const sourceIds = entries.map((e) => buildSourceId(e.placeId));
-	const dedup = await fetchDedupSets(locals.supabase, SOURCE_KEY, sourceIds);
+	const dedup = await fetchDedupSets(locals.supabase, SOURCE_KEY, sourceIds, locals.marque);
 
 	// 3) Dédup cross-source : raison sociale déjà connue dans la table entreprises (Zefix & co).
 	//    On ne supprime pas le lead, on le marque pour éviter une re-prospection inutile.
@@ -181,7 +181,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	for (const e of entries) {
 		const normalized = normalizeCompanyName(e.name);
 		if (normalized.length < 3 || knownCompanyNames.has(normalized)) continue;
-		const matchedId = await lookupEntrepriseByName(locals.supabase, e.name.trim(), normalized);
+		const matchedId = await lookupEntrepriseByName(locals.supabase, e.name.trim(), normalized, locals.marque);
 		if (matchedId) knownCompanyNames.add(normalized);
 	}
 
@@ -255,7 +255,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	// 6) Mode direct (rétro-compat) : insert des importables via le builder partagé.
 	const now = new Date().toISOString();
 	const importables = candidates.filter((c) => isImportable(c.status_hint));
-	const inserts = importables.map((c) => candidateToInsertRow(c, c.score_pertinence, { now, fromIntelligence: from_intelligence, fromTerm: from_term }));
+	const inserts = importables.map((c) => candidateToInsertRow(c, c.score_pertinence, { now, fromIntelligence: from_intelligence, fromTerm: from_term, marque: locals.marque }));
 	const skipped = entries.length - importables.length;
 
 	let imported = 0;

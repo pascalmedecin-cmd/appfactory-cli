@@ -21,39 +21,39 @@ const u = (qs: string) => new URL('http://localhost/x' + qs);
 
 describe('parseProspectionFilter', () => {
 	it('onglet inconnu/masqué → retombe sur le défaut visible (entreprises en V5)', () => {
-		expect(parseProspectionFilter(u('?tab=zzz')).tab).toBe('entreprises');
-		expect(parseProspectionFilter(u('?tab=simap')).tab).toBe('entreprises'); // SIMAP masqué V5
+		expect(parseProspectionFilter(u('?tab=zzz'), 'filmpro').tab).toBe('entreprises');
+		expect(parseProspectionFilter(u('?tab=simap'), 'filmpro').tab).toBe('entreprises'); // SIMAP masqué V5
 	});
 
 	it('sources intersectées avec l’onglet (source hors onglet ignorée)', () => {
-		const f = parseProspectionFilter(u('?tab=entreprises&source=zefix&source=lead_express'));
+		const f = parseProspectionFilter(u('?tab=entreprises&source=zefix&source=lead_express'), 'filmpro');
 		expect(f.effectiveSources).toEqual(['zefix']);
 		expect(f.sourceFilterIncompatible).toBe(false);
 	});
 
 	it('source entièrement incompatible avec l’onglet → sourceFilterIncompatible', () => {
-		const f = parseProspectionFilter(u('?tab=entreprises&source=lead_express'));
+		const f = parseProspectionFilter(u('?tab=entreprises&source=lead_express'), 'filmpro');
 		expect(f.effectiveSources).toEqual([]);
 		expect(f.sourceFilterIncompatible).toBe(true);
 	});
 
 	it('recherche bornée à 200 + tri whitelisté (défaut date_import)', () => {
-		const f = parseProspectionFilter(u('?q=' + 'a'.repeat(300) + '&sort=evil'));
+		const f = parseProspectionFilter(u('?q=' + 'a'.repeat(300) + '&sort=evil'), 'filmpro');
 		expect(f.search.length).toBe(200);
 		expect(f.sortKey).toBe('date_import');
-		expect(parseProspectionFilter(u('?sort=raison_sociale')).sortKey).toBe('raison_sociale');
-		expect(parseProspectionFilter(u('?dir=asc')).sortAsc).toBe(true);
+		expect(parseProspectionFilter(u('?sort=raison_sociale'), 'filmpro').sortKey).toBe('raison_sociale');
+		expect(parseProspectionFilter(u('?dir=asc'), 'filmpro').sortAsc).toBe(true);
 	});
 
 	it('MAX_FILTER_VALUES borne les tableaux de filtres (anti-DoS)', () => {
 		const many = Array.from({ length: 60 }, (_, i) => 'canton=C' + i).join('&');
-		expect(parseProspectionFilter(u('?' + many)).filterCantons.length).toBe(MAX_FILTER_VALUES);
+		expect(parseProspectionFilter(u('?' + many), 'filmpro').filterCantons.length).toBe(MAX_FILTER_VALUES);
 	});
 
 	it('ecartes=1 reconnu → showDismissed (vue « Écartés »)', () => {
-		expect(parseProspectionFilter(u('?ecartes=1')).showDismissed).toBe(true);
-		expect(parseProspectionFilter(u('?ecartes=0')).showDismissed).toBe(false);
-		expect(parseProspectionFilter(u('')).showDismissed).toBe(false);
+		expect(parseProspectionFilter(u('?ecartes=1'), 'filmpro').showDismissed).toBe(true);
+		expect(parseProspectionFilter(u('?ecartes=0'), 'filmpro').showDismissed).toBe(false);
+		expect(parseProspectionFilter(u(''), 'filmpro').showDismissed).toBe(false);
 	});
 });
 
@@ -70,7 +70,7 @@ function spyBuilder() {
 describe('applyProspectionFilters / applyProspectionScopeFilters', () => {
 	it('filtre complet = source de l’onglet + canton + eq statut=vide par défaut (file de tri)', () => {
 		const { b, calls } = spyBuilder();
-		applyProspectionFilters(b, parseProspectionFilter(u('?tab=entreprises&canton=GE')));
+		applyProspectionFilters(b, parseProspectionFilter(u('?tab=entreprises&canton=GE'), 'filmpro'));
 		expect(calls.find((c) => c[0] === 'in' && c[1] === 'source')?.[2]).toEqual(['zefix', 'search_ch', 'google_places']);
 		expect(calls.find((c) => c[0] === 'in' && c[1] === 'canton')?.[2]).toEqual(['GE']);
 		// Lot 2 : défaut = file de tri (statut='vide'), plus de neq transfere.
@@ -79,20 +79,20 @@ describe('applyProspectionFilters / applyProspectionScopeFilters', () => {
 
 	it('scope-only n’applique PAS le filtre source (utilisé pour les compteurs par onglet)', () => {
 		const { b, calls } = spyBuilder();
-		applyProspectionScopeFilters(b, parseProspectionFilter(u('?tab=entreprises&canton=GE')));
+		applyProspectionScopeFilters(b, parseProspectionFilter(u('?tab=entreprises&canton=GE'), 'filmpro'));
 		expect(calls.some((c) => c[0] === 'in' && c[1] === 'source')).toBe(false);
 		expect(calls.some((c) => c[0] === 'in' && c[1] === 'canton')).toBe(true);
 	});
 
 	it('showDismissed (?ecartes=1) → eq statut=ecarte au lieu de vide', () => {
 		const { b, calls } = spyBuilder();
-		applyProspectionScopeFilters(b, parseProspectionFilter(u('?tab=entreprises&ecartes=1')));
+		applyProspectionScopeFilters(b, parseProspectionFilter(u('?tab=entreprises&ecartes=1'), 'filmpro'));
 		expect(calls.find((c) => c[0] === 'eq' && c[1] === 'statut')?.[2]).toBe('ecarte');
 	});
 
 	it('statut explicite (?statut=) → in(statut) et aucun eq statut par défaut', () => {
 		const { b, calls } = spyBuilder();
-		applyProspectionFilters(b, parseProspectionFilter(u('?tab=entreprises&statut=ecarte')));
+		applyProspectionFilters(b, parseProspectionFilter(u('?tab=entreprises&statut=ecarte'), 'filmpro'));
 		expect(calls.find((c) => c[0] === 'in' && c[1] === 'statut')?.[2]).toEqual(['ecarte']);
 		// Un filtre statut explicite prime : pas de eq('statut','vide'/'ecarte') implicite.
 		expect(calls.some((c) => c[0] === 'eq' && c[1] === 'statut')).toBe(false);
@@ -110,18 +110,18 @@ describe('filtre campagne (Vague 3.2, relation N-N)', () => {
 
 	it('parse ?campagne (multi, uuid) et borne à MAX_FILTER_VALUES', () => {
 		const a = cid(1), b = cid(2);
-		expect(parseProspectionFilter(u(`?campagne=${a}&campagne=${b}`)).filterCampagnes).toEqual([a, b]);
+		expect(parseProspectionFilter(u(`?campagne=${a}&campagne=${b}`), 'filmpro').filterCampagnes).toEqual([a, b]);
 		const many = Array.from({ length: MAX_FILTER_VALUES + 5 }, (_, i) => `campagne=${cid(i)}`).join('&');
-		expect(parseProspectionFilter(u('?' + many)).filterCampagnes.length).toBe(MAX_FILTER_VALUES);
+		expect(parseProspectionFilter(u('?' + many), 'filmpro').filterCampagnes.length).toBe(MAX_FILTER_VALUES);
 	});
 
 	it('ignore les ?campagne hors format uuid (defense-in-depth)', () => {
-		expect(parseProspectionFilter(u('?campagne=abc&campagne=foobar')).filterCampagnes).toEqual([]);
-		expect(parseProspectionFilter(u(`?campagne=${cid(1)}&campagne=pas-un-uuid`)).filterCampagnes).toEqual([cid(1)]);
+		expect(parseProspectionFilter(u('?campagne=abc&campagne=foobar'), 'filmpro').filterCampagnes).toEqual([]);
+		expect(parseProspectionFilter(u(`?campagne=${cid(1)}&campagne=pas-un-uuid`), 'filmpro').filterCampagnes).toEqual([cid(1)]);
 	});
 
 	it('filterCampagnes vide par défaut', () => {
-		expect(parseProspectionFilter(u('')).filterCampagnes).toEqual([]);
+		expect(parseProspectionFilter(u(''), 'filmpro').filterCampagnes).toEqual([]);
 	});
 
 	it('applyCampagneLeadFilter(null) = no-op (aucun .in appliqué)', () => {
@@ -139,7 +139,7 @@ describe('filtre campagne (Vague 3.2, relation N-N)', () => {
 	});
 
 	it('resolveCampagneLeadIds = null quand aucun filtre campagne (aucune requête DB)', async () => {
-		const f = parseProspectionFilter(u(''));
+		const f = parseProspectionFilter(u(''), 'filmpro');
 		const sb = { from: () => { throw new Error('ne doit pas requêter la jonction'); } };
 		expect(await resolveCampagneLeadIds(sb as never, f)).toBe(null);
 	});

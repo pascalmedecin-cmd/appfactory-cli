@@ -1,10 +1,12 @@
 @import 'tailwindcss';
-@import '@fontsource-variable/dm-sans';
-@import '@fontsource-variable/dm-sans/wght-italic.css';
 @import '@fontsource/dm-mono/400.css';
 @import '@fontsource/dm-mono/500.css';
-/* Atelier 209 : Inter (portail + connexion « Heure bleue »). Self-hosted, CSP font-src 'self'. */
+/* Atelier 209 Run 2 : Inter partout (golden aligné sur le portail « Heure bleue » du Run 1).
+   Self-hosted, CSP font-src 'self'. L'axe italique est importé séparément : le paquet variable
+   n'a que l'axe roman -> sans lui les rares italiques deviendraient de faux-obliques. DM Sans
+   retiré (remplacé par Inter comme voix typographique unique de l'outil). */
 @import '@fontsource-variable/inter';
+@import '@fontsource-variable/inter/wght-italic.css';
 
 @theme {
 	/* Primary (Bleu FilmPro) */
@@ -114,7 +116,7 @@
 	--color-logo: #00003B;
 
 	/* Typography */
-	--font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+	--font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, sans-serif;
 	--font-mono: 'DM Mono', 'Consolas', 'Courier New', monospace;
 
 	/* Border Radius : Untitled UI: 8px base, 12px cards/modals */
@@ -155,6 +157,30 @@
 	/* Courbe « spring » iOS/drawer (Bloc D V5), distincte de --ease-out-expo.
 	   Consommée par les transitions Prospection (ResultsChecklist, SourceSelector, SourceSearchFields). */
 	--ease-smooth: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* ============================================================================
+ * Atelier 209 Run 2 : teinte du chrome par marque active (cloisonnement bi-marque).
+ * Le wrapper .crm-shell[data-marque] (display:contents, +layout.svelte) surcharge les
+ * tokens --color-primary* ; les utilitaires Tailwind (bg-primary-dark, bg-primary,
+ * text-primary, focus ring…) les consomment via var(), donc TOUT le chrome + les accents
+ * du contenu se re-teintent par simple héritage de custom properties.
+ * FilmPro = AUCUN override (valeurs @theme d'origine) = non-régression stricte.
+ * LED Studio (Option B, validée par Pascal) : chrome bleu nuit #01003B + accents magenta
+ * #C6007E (accordé AA sur fond clair). Palette source : brand LED (#01003B / #FF05A8).
+ * ========================================================================== */
+.crm-shell[data-marque='led'] {
+	--color-primary: #c6007e;
+	--color-primary-hover: #a80069;
+	--color-primary-light: #fde9f4;
+	--color-primary-dark: #01003b;
+}
+
+/* Item de menu actif côté LED : teinte magenta + filet d'accent à gauche (le navy
+   FilmPro garde son surlignage blanc d'origine = non-régression). */
+.crm-shell[data-marque='led'] .sidebar-root a[aria-current='page'] {
+	background: rgba(255, 5, 168, 0.16);
+	box-shadow: inset 3px 0 0 0 var(--color-primary);
 }
 
 /* Mobile : masquer le bloc titre de page (affiché dans le header sticky) */

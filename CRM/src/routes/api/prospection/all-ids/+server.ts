@@ -9,7 +9,7 @@ const MAX_IDS = 5_000;
 // divergence historique : la sélection mappe désormais l'onglet, exclut les transférés par
 // défaut et cherche sur 3 champs, donc elle reflète EXACTEMENT la vue affichée.
 export async function GET({ locals, url }: RequestEvent) {
-	const filter = parseProspectionFilter(url);
+	const filter = parseProspectionFilter(url, locals.marque);
 
 	const { rows, truncated, error } = await fetchProspectionRows<{ id: string }>(locals.supabase, filter, {
 		select: 'id',

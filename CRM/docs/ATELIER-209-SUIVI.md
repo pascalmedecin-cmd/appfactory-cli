@@ -28,7 +28,7 @@ base : ni fork, ni deuxième application. Livraison par **runs** pilotés par `/
 |---|---|---|---|
 | **0** | Les 7 vérifications | **Terminé (5/7)** le 2026-07-14 ; V6/V7 en attente comptes Pascal | - |
 | 1 | Atelier 209 existe (nom, connexion refaite, droits admin réparés) | **DÉPLOYÉ prod le 2026-07-15** (identité + rôles/RLS + connexion 4 adresses). Seul le renommage d'URL `atelier209.vercel.app` est **différé** (config domaine Vercel à faire proprement) - app à `filmpro-portail.vercel.app` | Portail · Connexion **(validés)** |
-| 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) + **golden CRM revu (couleurs + Inter partout, pas de refonte) + chrome (sidemenu/header/footer) décliné par marque LED/FilmPro pour distinguer** (note Pascal 15/07) | À venir | Sélecteur · Menu teinté · Golden CRM |
+| 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) + **golden CRM revu (couleurs + Inter partout, pas de refonte) + chrome (sidemenu/header/footer) décliné par marque LED/FilmPro pour distinguer** (note Pascal 15/07) | **CÂBLAGE COMPLET + testé (leak 10/10, Vitest 2562, audit 0 C/H) sur `run2-marque` 2026-07-15**. Reste 2 gestes Pascal : validation visuelle Chrome + go migration/déploiement prod | Sélecteur · Menu teinté · Golden CRM **(validés)** |
 | 3 | Les prospects LED entrent (import de liste, sources par marque, source unique secteurs) | À venir | Import |
 | 4 | On trouve le décideur (connecteur Hunter) | Bloqué par V6 | Enrichissement |
 | 5 | On envoie et on mesure (Pingen, relance, provenance, rendement) | Bloqué par V7 | Envoi postal · Provenance |
@@ -173,6 +173,120 @@ Connexion autorisée : **4 adresses nommées** (pascal + antoine, sur filmpro.ch
 ### Différé (à faire proprement, hors risque) : renommage d'URL `atelier209.vercel.app`
 
 Le renommage du projet Vercel (`filmpro-portail` -> `atelier209`) a été testé puis **annulé** : renommer ne rattache pas automatiquement `atelier209.vercel.app` comme **domaine de production public** (il reste protégé par le SSO Vercel de déploiement, 302 vers `vercel.com/sso-api`), alors qu'un alias manuel pointe vers l'URL de déploiement protégée. Le pousser en l'état aurait cassé le redirect `filmpro-portail -> atelier209` (cible 404/protégée). **Décision : garder `filmpro-portail.vercel.app` comme URL canonique** ; le cutover vers `atelier209.vercel.app` se fera dans une étape dédiée (configurer `atelier209.vercel.app` comme **domaine de production** du projet dans les réglages Vercel, vérifier qu'il sert en 200 public, PUIS activer le redirect 308 de `filmpro-portail`). Le code du redirect (`legacy-redirects.ts`) a été remis à son état d'origine pour ce déploiement. `atelier209.ch` reste libre si Pascal préfère un vrai domaine.
+
+---
+
+# Run 2 - CÂBLAGE COMPLET, prêt pour gate prod (2026-07-15)
+
+**Statut : câblage applicatif terminé et testé sur la branche `run2-marque`. NON déployé.**
+**Reste 2 gestes Pascal** : (1) **validation visuelle Chrome** du chrome teinté (les 2 marques + Inter
+sur les tables denses = ton DevTools, `§E2`), (2) **go migration prod (`pg`) + déploiement**.
+
+## Ce qui a été livré (branche `run2-marque`)
+
+- **Cloisonnement DB de bout en bout** : `locals.marque` (cookie httpOnly) threadé partout ; 7 hubs +
+  ~50 fichiers de prod (pages, endpoints, exports, terrain, cron) filtrés (`.eq('marque', ...)`) et
+  inserts marqués. Export CSV dynamique verrouillé (fuite PII fermée). Flux public validation scopé via
+  la marque portée par le token. `contact_suggestions` scopée par héritage (entreprise parente).
+- **Chrome teinté** : sélecteur d'environnement (`BrandSwitcher`), pastille + filet header, teinte LED
+  bleu nuit `#01003B` + magenta sous `[data-marque="led"]`. FilmPro strictement inchangé (aucun override).
+  Logo LED dans `static/atelier209/`.
+- **Golden Lot B** : Inter partout (`--font-sans`, imports, config, golden doc). Chrome FilmPro `#0A1628` intact.
+- **Correctif d'archi (compilateur)** : FK composites créaient un embed PostgREST ambigu → DROP des FK
+  simples redondantes (cohérence + embed OK). Types régénérés (diff 0 dérive).
+- **Preuve DoD** : `src/lib/server/marque-leak.test.ts` **10/10** sur base réelle (à travers les vrais
+  hubs). Vitest **2562 verts**, svelte-check **0**, build OK.
+- **Revue adversariale 4 dimensions + vérif** (18 agents) : 6 findings confirmés (2 MEDIUM
+  `contact_suggestions` + 4 LOW simap/regbl) **tous corrigés**, 8 réfutés (décisions assumées).
+  Audit sécu daté : `audit_secu_2026-07-15_atelier209_run2_marque.md` (0 Critical/High).
+
+## QA de non-régression avant/après (2026-07-15, directive Pascal « strictement identique »)
+
+Objectif : **prouver** que `run2-marque` @filmpro est **strictement identique** à `main` (0 régression) et
+que @led est un **miroir exact** teinté. Résultat : **0 régression FilmPro confirmée.**
+
+- **Analyse différentielle adversariale** (workflow, 22 agents Opus, 7 partitions × analyse + vérif +
+  critique de complétude) sur les 81 fichiers du diff `main...run2-marque` : **0 régression confirmée**,
+  78 iso-confirmations positives. Tous les findings candidats (asymétrie mutations campagnes par id,
+  `activites` non cloisonné, FK composites, DELETE photo/visit par id) **réfutés** à la vérification :
+  soit byte-identiques à `main` (invariant 1 intact), soit décisions assumées tracées (SPEC §A1, Q2, RLS
+  mono-tenant plate). Les 3 seuls changements FilmPro sont ceux **validés au gate design** : Inter (police),
+  BrandSwitcher (tête de sidebar), pastille/filet de marque au header.
+- **Baseline mécanique verte** : svelte-check **0/0**, build prod **OK**, `supabase db reset` from-scratch
+  **OK** (migration `marque` reproductible, 49 migrations), Vitest **2562** passed / 10 skipped.
+- **QA visuel avant/après** (base jetable Colima, seed 2 marques, session premium locale `ff_crm_listes_v2`) :
+  **16/16 écrans HTTP 200** en FilmPro **et** LED (dashboard, entreprises, contacts, prospection, campagnes,
+  pipeline, signaux, reporting), **0 erreur objective** (seul bruit = scripts Vercel Analytics externes bloqués
+  par CSP locale). Cloisonnement **visuellement confirmé** : FilmPro ne voit que FilmPro, LED que LED ; KPI
+  cloisonnés (Signaux FilmPro=1 / LED=0) ; miroir teinté exact (même layout/colonnes, chrome magenta LED).
+- **2 points de cohérence LED DORMANTS** (pas des régressions FilmPro ; à traiter quand LED sera peuplé) :
+  1. Widget « Activités récentes » du dashboard lit `activites` (journal global, hors 12, **SPEC §A1 assumé**) :
+     en LED il montrerait les activités globales. Dormant (« Rien de récent » au seed). → arbitrer au Run 3+
+     (cloisonner par héritage `contact.marque` vs garder global).
+  2. Message d'état vide de l'écran Signaux en LED cite « radar SIMAP (marchés publics construction) »
+     (texte FilmPro, **Q2 veille FilmPro-only**) : trompeur pour LED. → adapter au Run 7 (veille LED).
+
+## Gate prod (à faire, avec le go de Pascal)
+
+1. **Toi (Pascal)** : ouvrir le CRM local (ou une preview) et valider le chrome LED/FilmPro dans Chrome
+   (bascule via le sélecteur ; regarder les tables denses en Inter, DevTools).
+2. **Go migration** : appliquer `20260715120000_marque_cloisonnement.sql` en prod via lib `pg`
+   (`DATABASE_URL_ADMIN` ; le MCP Supabase est read-only, comme les migrations rôles/campagnes).
+   La migration est idempotente + backfill DEFAULT 'filmpro' = non-régression (le CRM prod reste FilmPro).
+3. **Déploiement** : merge `run2-marque` → `main` (auto-deploy) OU `vercel deploy --prod`.
+
+## Correctif pendant le gate visuel (2026-07-15)
+
+- **Logo LED du sidemenu régénéré (rendu HD net à 22px).** Défaut signalé par Pascal au gate : « studio »
+  trop petit/fin lisait « flou ». **Cause racine** (diagnostiquée, pas devinée) : la reconstruction horizontale
+  V1 sous-dimensionnait « studio » (scale 0,097 vs 0,136 pour « LED ») - **pas** un raster basse-déf (le SVG
+  était déjà vectoriel). **Fix** : régénéré depuis la vraie police Poppins de la marque (`Poppins-Bold` pour
+  « LED », `Poppins-SemiBold` pour « studio », agrandi et rééquilibré), fidèle au logo officiel LED Studio
+  (`~/Claude/shared/led-studio/logos/`). Asset : `static/atelier209/ledstudio-magenta.svg` (viewBox 895×191,
+  studio cap=104). Générateur reproductible + paramétrable : `.atelier-209/gen-led-logo.py`. **Validé
+  visuellement** (rendu réel du sidemenu en capture retina 2x à 22px + zoom 96px, tracés impeccables). Consommateur
+  unique : `BrandSwitcher.svelte`. Rendu HD confirmé côté Claude ; Pascal a délégué la validation visuelle.
+
+## Rappel - Gate design VALIDÉ par Pascal le 2026-07-15 (« ok validé »)
+
+Maquette des 3 écrans : `.atelier-209/run2-maquettes/atelier209-run2.html`. Skills design engagés :
+`redesign-skill` + `soft-skill` + `theme-factory` + filtre `ANTI-AI-SLOP.md`. Reproduction fidèle du
+chrome CRM réel (Sidebar/Header), teinté par marque, contenu clair en Inter, données factices FilmPro vs LED.
+
+Décisions design validées :
+1. **Sélecteur** = bascule d'environnement en tête du menu (logo seul + chevron), menu : pastilles couleur de marque (bleu FilmPro / magenta LED), sans description. Mention « environnements étanches ». **Validé.**
+2. **Chrome LED = Option B** (bleu nuit `#01003B` + accents magenta ; en-tête = filet magenta + pastille). **Validé.**
+3. **Golden revu** = Inter partout + ajout palette LED, FilmPro inchangé (non-régression). **Validé.**
+
+**Logo LED Studio horizontal produit (vectoriel, fidèle)** : le vrai logo est un mark carré (cadre
+lumineux + « LED » + « studio »), sans version horizontale ni SVG existants. Reconstruit en SVG à partir
+de Poppins (police de marque) converti en tracés : magenta exact `#FF05A8`, cadre lumineux, « LED »
+encadré + « studio » à côté (variante V1, retenue), horizontal, calé à la taille du logo FilmPro.
+Asset définitif : `.atelier-209/logo-led/ledstudio-horizontal-magenta.svg` (à déplacer dans `static/`
+au moment du code). fal.ai écarté (ne reproduit pas fidèlement les lettres d'une marque). Sources de
+marque : FilmPro `branding/filmpro.yaml` ; LED Studio (brochure officielle) `~/Claude/shared/led-studio/brand/brand.md`.
+
+## Décisions techniques (arbitrées par Pascal le 2026-07-15, toutes la reco)
+
+- **Q1 - un même client dans les 2 marques** : **OUI, indépendamment** → `UNIQUE(marque, source, source_id)` sur `prospect_leads` + `(marque, lower(unaccent(raison_sociale)))` sur `entreprises`.
+- **Q2 - veille/signaux** : **FilmPro-only pour le Run 2** → pas de colonne `marque` sur les tables veille ; cron signaux insère `marque='filmpro'` fixe.
+- **Q3 - sélecteur de marque** : **par-appareil (cookie httpOnly)**.
+
+## Fix prod livré en marge (Run 1) le 2026-07-15
+
+- Hero d'accueil du portail ré-encodé haute qualité (flou corrigé) + footer « La Maison Creative Direction **SA** ». Commit `93e13a0`, poussé/déployé.
+
+## Spec technique du code (prête, read-only, vérifiée file:line)
+
+Feuille de route complète : **`docs/ATELIER-209-RUN2-SPEC.md`** (modèle de données `marque`, threading
+par cookie httpOnly, filtrage centralisé dans les hubs, golden Inter, seed D5, ordre d'implémentation,
+critères d'acceptation, points chauds de non-régression). Décision transverse tranchée : `marque` =
+filtre de vue applicatif + FK composites de cohérence en base ; le GUC+RLS infalsifiable est reporté
+et couplé au durcissement RLS « avant un 4e user ».
+
+**3 arbitrages Pascal pour la session de code** (détail + reco dans la spec §F) : Q1 un même tiers
+peut-il exister dans les 2 marques (reco oui, indépendamment) ; Q2 veille/signaux restent FilmPro-only
+au Run 2 (reco oui) ; Q3 sélecteur par-appareil ou cross-appareil (reco par-appareil, cookie).
 
 ---
 

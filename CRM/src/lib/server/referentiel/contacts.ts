@@ -13,6 +13,7 @@
  */
 import type { z } from 'zod';
 import type { TablesInsert, TablesUpdate } from '$lib/database.types';
+import type { Marque } from '$lib/marque';
 import { ContactCreateSchema } from '$lib/schemas';
 import { newId, now } from '$lib/server/db-helpers';
 
@@ -22,7 +23,7 @@ export { getOrCreateEntreprise } from './entreprises';
 export type ContactUpsertInput = z.infer<typeof ContactCreateSchema>;
 
 /** Construit la row d'INSERT contact (id + timestamps + flags initiaux gérés ici). */
-export function buildContactInsert(input: ContactUpsertInput): TablesInsert<'contacts'> {
+export function buildContactInsert(input: ContactUpsertInput, marque: Marque): TablesInsert<'contacts'> {
 	const ts = now();
 	return {
 		id: newId(),
@@ -43,7 +44,8 @@ export function buildContactInsert(input: ContactUpsertInput): TablesInsert<'con
 		est_prescripteur: false,
 		doublon_detecte: false,
 		date_ajout: ts,
-		date_derniere_modification: ts
+		date_derniere_modification: ts,
+		marque
 	};
 }
 
@@ -85,7 +87,8 @@ export type ContactSuggestionRow = {
 export function buildContactInsertFromSuggestion(
 	sug: ContactSuggestionRow,
 	contactId: string,
-	ts: string
+	ts: string,
+	marque: Marque
 ): TablesInsert<'contacts'> {
 	return {
 		id: contactId,
@@ -100,6 +103,7 @@ export function buildContactInsertFromSuggestion(
 		statut_archive: false,
 		est_prescripteur: false,
 		date_ajout: ts,
-		date_derniere_modification: ts
+		date_derniere_modification: ts,
+		marque
 	};
 }

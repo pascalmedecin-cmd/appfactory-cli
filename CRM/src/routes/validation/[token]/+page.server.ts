@@ -44,9 +44,11 @@ export const load: PageServerLoad = async ({ params }) => {
 		return { state: 'expire' as const, campagneNom: null, expiresAt: null, confirmedAt: null, truncated: false, prospects: [] as ProspectValidation[] };
 	}
 
+	// Flux PUBLIC : aucune session, donc la marque vient de la campagne portée par le token
+	// (resolution.marque) - elle scope le chargement campagne + prospects (cloisonnement).
 	const [{ data: campagne, error: campErr }, { data: prospects, error: prospErr, truncated }] = await Promise.all([
-		getCampagne(supabase, resolution.campagneId),
-		fetchProspectsForCampagne(supabase, resolution.campagneId, { maxRows: PUBLIC_MAX_PROSPECTS }),
+		getCampagne(supabase, resolution.marque, resolution.campagneId),
+		fetchProspectsForCampagne(supabase, resolution.marque, resolution.campagneId, { maxRows: PUBLIC_MAX_PROSPECTS }),
 	]);
 	if (campErr || prospErr || !campagne) {
 		console.error('[validation] chargement campagne/prospects en erreur:', campErr?.message ?? prospErr?.message);

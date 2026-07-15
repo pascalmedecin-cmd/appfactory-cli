@@ -28,7 +28,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 	// l'export reste byte-identique a l'existant, meme sur appel direct par un admin non-premium).
 	const { user } = await locals.safeGetSession();
 	const premium = isCampagnesEnabled(user);
-	const filter = parseProspectionFilter(url);
+	const filter = parseProspectionFilter(url, locals.marque);
 
 	const { rows, totalMatching, truncated, error: dbError } = await fetchProspectionRows<Record<string, unknown> & { id: string }>(
 		locals.supabase,
@@ -42,7 +42,7 @@ export const GET: RequestHandler = async ({ locals, url }) => {
 
 	// Vague 3.2 : colonne Campagnes = noms joints par lead (1 requête), uniquement en premium.
 	if (premium && rows.length > 0) {
-		const byLead = await fetchCampagnesByLead(locals.supabase, rows.map((r) => r.id));
+		const byLead = await fetchCampagnesByLead(locals.supabase, locals.marque, rows.map((r) => r.id));
 		for (const r of rows) r.campagnes = (byLead.get(r.id) ?? []).map((c) => c.nom).join('; ');
 	}
 

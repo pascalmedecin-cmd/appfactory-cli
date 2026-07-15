@@ -20,6 +20,7 @@
 import { createHash, randomBytes } from 'crypto';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/database.types';
+import { parseMarque, type Marque } from '$lib/marque';
 
 /** Durée de vie d'un lien de validation : 2 jours (décision Pascal 02/07). */
 export const VALIDATION_LIEN_TTL_MS = 2 * 24 * 60 * 60 * 1000;
@@ -107,6 +108,7 @@ export async function revokeValidationLiens(
  */
 export async function createValidationLien(
 	supabase: SupabaseClient<Database>,
+	marque: Marque,
 	campagneId: string,
 	userId: string | null
 ): Promise<{ data: { token: string; expiresAt: string } | null; error: DbError }> {
@@ -127,6 +129,7 @@ export async function createValidationLien(
 			token_hash: hashValidationToken(token),
 			expires_at: expiresAt,
 			created_by: userId,
+			marque,
 		});
 		if (!error) return { data: { token, expiresAt }, error: null };
 		// Seul le conflit d'unicité (lien actif concurrent) est réessayable ; toute autre erreur remonte.
@@ -136,7 +139,7 @@ export async function createValidationLien(
 }
 
 export type TokenResolution =
-	| { status: 'ok'; lienId: string; campagneId: string; expiresAt: string; confirmedAt: string | null }
+	| { status: 'ok'; lienId: string; campagneId: string; marque: Marque; expiresAt: string; confirmedAt: string | null }
 	| { status: 'introuvable' }
 	| { status: 'expire' }
 	| { status: 'db'; message: string };
@@ -156,7 +159,7 @@ export async function resolveValidationToken(
 
 	const { data, error } = await supabase
 		.from('campagne_validation_liens')
-		.select('id, campagne_id, expires_at, revoked_at, confirmed_at')
+		.select('id, campagne_id, marque, expires_at, revoked_at, confirmed_at')
 		.eq('token_hash', hashValidationToken(rawToken))
 		.maybeSingle();
 	if (error) return { status: 'db', message: error.message };
@@ -168,6 +171,9 @@ export async function resolveValidationToken(
 		status: 'ok',
 		lienId: data.id,
 		campagneId: data.campagne_id,
+		// Marque portée par le lien (= marque de la campagne) : le flux PUBLIC n'a pas de session,
+		// c'est cette marque qui scope getCampagne / fetchProspectsForCampagne côté page.
+		marque: parseMarque(data.marque),
 		expiresAt: data.expires_at,
 		confirmedAt: data.confirmed_at,
 	};

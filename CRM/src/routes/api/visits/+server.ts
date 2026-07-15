@@ -33,6 +33,7 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 			.from('prospect_leads')
 			.select('id, adresse, npa, localite, canton')
 			.eq('id', owner.id)
+			.eq('marque', locals.marque)
 			.maybeSingle();
 		if (parentErr) return genericError(parentErr, 'Erreur recherche parent');
 		if (!data) return json({ error: 'Parent introuvable' }, { status: 404 });
@@ -44,6 +45,7 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 			.from('entreprises')
 			.select('id, adresse_siege, canton')
 			.eq('id', owner.id)
+			.eq('marque', locals.marque)
 			.maybeSingle();
 		if (parentErr) return genericError(parentErr, 'Erreur recherche parent');
 		if (!data) return json({ error: 'Parent introuvable' }, { status: 404 });
@@ -57,6 +59,7 @@ export const GET = async ({ url, locals }: RequestEvent) => {
 		.from('prospect_visits')
 		.select(VISIT_COLS)
 		.eq(col, owner.id)
+		.eq('marque', locals.marque)
 		.order('visited_at', { ascending: false });
 
 	if (error) return genericError(error, 'Erreur lecture visites');
@@ -104,6 +107,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			.from('prospect_leads')
 			.select('id, adresse, npa, localite, canton')
 			.eq('id', owner.id)
+			.eq('marque', locals.marque)
 			.maybeSingle();
 		if (error) return genericError(error, 'Erreur recherche lead');
 		if (data) parent = { id: data.id, adresse: data.adresse, npa: data.npa, localite: data.localite, canton: data.canton };
@@ -112,6 +116,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			.from('entreprises')
 			.select('id, adresse_siege, canton')
 			.eq('id', owner.id)
+			.eq('marque', locals.marque)
 			.maybeSingle();
 		if (error) return genericError(error, 'Erreur recherche entreprise');
 		if (data) {
@@ -144,8 +149,10 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	}
 
 	const col = owner.kind === 'lead' ? 'prospect_lead_id' : 'entreprise_id';
+	// marque = celle du parent (déjà vérifié marque-scopé ci-dessus) == locals.marque.
 	const insertRow = {
 		[col]: owner.id,
+		marque: locals.marque,
 		user_id: user.id,
 		lat,
 		lng,

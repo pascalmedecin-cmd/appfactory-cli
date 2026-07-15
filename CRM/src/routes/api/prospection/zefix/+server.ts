@@ -144,7 +144,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 	// Dédup serveur (leads existants même UID + leads écartés/transférés).
 	const uids = companies.map((c) => c.uid).filter(Boolean);
-	const dedup = await fetchDedupSets(locals.supabase, SOURCE_KEY, uids);
+	const dedup = await fetchDedupSets(locals.supabase, SOURCE_KEY, uids, locals.marque);
 
 	// The Zefix search endpoint only returns identity fields : canton/address/purpose/capital
 	// come from the detail endpoint. Since we filter by canton in the search request, all results
@@ -193,7 +193,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	// Mode direct (rétro-compat) : insert des importables via le builder partagé.
 	const now = new Date().toISOString();
 	const importables = candidates.filter((c) => isImportable(c.status_hint));
-	const inserts = importables.map((c) => candidateToInsertRow(c, c.score_pertinence, { now, fromIntelligence, fromTerm }));
+	const inserts = importables.map((c) => candidateToInsertRow(c, c.score_pertinence, { now, fromIntelligence, fromTerm, marque: locals.marque }));
 
 	let imported = 0;
 	if (inserts.length > 0) {

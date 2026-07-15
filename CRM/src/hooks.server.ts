@@ -3,6 +3,7 @@ import { isEmailAllowed, parseEnvList } from '$lib/server/auth';
 import { createRateLimiter } from '$lib/server/rate-limiter';
 import { isRateLimitedPath, isValidationPublicRoute } from '$lib/server/rate-limit-paths';
 import { legacyHostRedirect } from '$lib/server/legacy-redirects';
+import { parseMarque } from '$lib/marque';
 import { CRM_BASE } from '$lib/config';
 import { json, redirect, type Handle } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
@@ -88,6 +89,11 @@ export const baseHandle: Handle = async ({ event, resolve }) => {
 	}
 
 	event.locals.supabase = createSupabaseServerClient(event.cookies);
+
+	// Atelier 209 Run 2 : marque active (cloisonnement bi-marque), lue du cookie `marque`
+	// (par-appareil, decision Pascal). Posee AVANT tous les load/endpoints pour filtrer les
+	// requetes. Defaut 'filmpro' pour toute valeur absente/inconnue = non-regression stricte.
+	event.locals.marque = parseMarque(event.cookies.get('marque'));
 
 	event.locals.safeGetSession = async () => {
 		const { data: { session } } = await event.locals.supabase.auth.getSession();
