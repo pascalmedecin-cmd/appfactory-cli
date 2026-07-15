@@ -51,7 +51,7 @@
 		--shade-0: 8, 9, 10;
 		--ink: #ece7dc;
 		--ink-muted: #b4aea2;
-		--ink-faint: #837e76;
+		--ink-faint: #928d82;
 		--cream: #f0e4c2;
 		--cream-bright: #fbf4df;
 		--blue-hour: #2a3a52;

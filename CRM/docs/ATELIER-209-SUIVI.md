@@ -200,6 +200,32 @@ sur les tables denses = ton DevTools, `§E2`), (2) **go migration prod (`pg`) + 
   `contact_suggestions` + 4 LOW simap/regbl) **tous corrigés**, 8 réfutés (décisions assumées).
   Audit sécu daté : `audit_secu_2026-07-15_atelier209_run2_marque.md` (0 Critical/High).
 
+## QA de non-régression avant/après (2026-07-15, directive Pascal « strictement identique »)
+
+Objectif : **prouver** que `run2-marque` @filmpro est **strictement identique** à `main` (0 régression) et
+que @led est un **miroir exact** teinté. Résultat : **0 régression FilmPro confirmée.**
+
+- **Analyse différentielle adversariale** (workflow, 22 agents Opus, 7 partitions × analyse + vérif +
+  critique de complétude) sur les 81 fichiers du diff `main...run2-marque` : **0 régression confirmée**,
+  78 iso-confirmations positives. Tous les findings candidats (asymétrie mutations campagnes par id,
+  `activites` non cloisonné, FK composites, DELETE photo/visit par id) **réfutés** à la vérification :
+  soit byte-identiques à `main` (invariant 1 intact), soit décisions assumées tracées (SPEC §A1, Q2, RLS
+  mono-tenant plate). Les 3 seuls changements FilmPro sont ceux **validés au gate design** : Inter (police),
+  BrandSwitcher (tête de sidebar), pastille/filet de marque au header.
+- **Baseline mécanique verte** : svelte-check **0/0**, build prod **OK**, `supabase db reset` from-scratch
+  **OK** (migration `marque` reproductible, 49 migrations), Vitest **2562** passed / 10 skipped.
+- **QA visuel avant/après** (base jetable Colima, seed 2 marques, session premium locale `ff_crm_listes_v2`) :
+  **16/16 écrans HTTP 200** en FilmPro **et** LED (dashboard, entreprises, contacts, prospection, campagnes,
+  pipeline, signaux, reporting), **0 erreur objective** (seul bruit = scripts Vercel Analytics externes bloqués
+  par CSP locale). Cloisonnement **visuellement confirmé** : FilmPro ne voit que FilmPro, LED que LED ; KPI
+  cloisonnés (Signaux FilmPro=1 / LED=0) ; miroir teinté exact (même layout/colonnes, chrome magenta LED).
+- **2 points de cohérence LED DORMANTS** (pas des régressions FilmPro ; à traiter quand LED sera peuplé) :
+  1. Widget « Activités récentes » du dashboard lit `activites` (journal global, hors 12, **SPEC §A1 assumé**) :
+     en LED il montrerait les activités globales. Dormant (« Rien de récent » au seed). → arbitrer au Run 3+
+     (cloisonner par héritage `contact.marque` vs garder global).
+  2. Message d'état vide de l'écran Signaux en LED cite « radar SIMAP (marchés publics construction) »
+     (texte FilmPro, **Q2 veille FilmPro-only**) : trompeur pour LED. → adapter au Run 7 (veille LED).
+
 ## Gate prod (à faire, avec le go de Pascal)
 
 1. **Toi (Pascal)** : ouvrir le CRM local (ou une preview) et valider le chrome LED/FilmPro dans Chrome
