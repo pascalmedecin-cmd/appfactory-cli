@@ -27,7 +27,7 @@ base : ni fork, ni deuxième application. Livraison par **runs** pilotés par `/
 | Run | Livrable | Statut | Écrans à valider (Pascal) |
 |---|---|---|---|
 | **0** | Les 7 vérifications | **Terminé (5/7)** le 2026-07-14 ; V6/V7 en attente comptes Pascal | - |
-| 1 | Atelier 209 existe (nom, adresse, connexion refaite, droits admin réparés) | À venir | Portail · Connexion |
+| 1 | Atelier 209 existe (nom, adresse, connexion refaite, droits admin réparés) | **Maquettes Portail + Connexion VALIDÉES (Pascal, 15/07)** ; image hero verrouillée ; code à venir | Portail · Connexion **(validés)** |
 | 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) | À venir | Sélecteur · Menu teinté |
 | 3 | Les prospects LED entrent (import de liste, sources par marque, source unique secteurs) | À venir | Import |
 | 4 | On trouve le décideur (connecteur Hunter) | Bloqué par V6 | Enrichissement |
@@ -50,7 +50,7 @@ locale exclusive).
 | 2 | Sources actuelles + termes LED | **Import = nécessité** (pas confort) ; API = bon complément | Run 3 : import de liste indispensable |
 | 3 | Base de prod vs migrations | **Conforme** (schéma en phase ; ledger seul obsolète) | Feu vert sécurité pour le run 1, **sous 5 conditions** |
 | 4 | Base jetable en local | **Fonctionne** (48/48 migrations rejouées, ports 127.0.0.1) | QA 360 possible ; **dette : seed absent** |
-| 5 | Domaine « Atelier 209 » | **`atelier209.ch` LIBRE** | Adresse web du run 1 |
+| 5 | Domaine « Atelier 209 » | `atelier209.ch` libre, mais **pas d'achat** (Pascal 14/07) | Adresse = **renommage de l'URL Vercel** |
 | 6 | Couverture Hunter | En attente (compte Pascal) | Forme du run 4 |
 | 7 | Format et coût Pingen | En attente (compte Pascal) | Feu vert run 5 |
 
@@ -125,7 +125,7 @@ Une **seule** variable de configuration ne peut pas préserver les deux : si ell
 | atelier209.studio | libre | Colle au concept « Studio », TLD moderne, défensif |
 | atelier209.io | libre | Connoté tech, peu adapté PME locale |
 
-**Décide** : adresse web du run 1 = **`atelier209.ch`**, avec redirection permanente de l'ancienne (`filmpro-portail.vercel.app`). `atelier209.studio` en réservation défensive optionnelle. **Geste Pascal** : réserver le domaine chez le registrar (Infomaniak recommandé pour un `.ch`).
+**Décide** : adresse web du run 1 = **renommage de l'URL Vercel** (décision Pascal 2026-07-14 : **pas d'achat de domaine**, ni `atelier209.ch` ni autre). Cible : `atelier209.vercel.app` (repli `atelier-209.vercel.app` si le sous-domaine est pris), avec redirection permanente de l'ancienne (`filmpro-portail.vercel.app`). **Geste Claude** au build du run 1 (ce n'est plus un geste Pascal) : renommer le projet/alias Vercel + poser la redirection 308. `atelier209.ch` reste **libre** si Pascal change d'avis plus tard - aucun blocage.
 
 ## V6 / V7 - En attente d'un geste de Pascal
 
@@ -146,6 +146,10 @@ Ces deux vérifications ne bloquent **que** les runs 4 et 5. Les runs 1, 2 et 3 
 | **D4** | Aucune valeur de source « manuel » (supprimée de la base en 2026, jamais remise) - **confirmé en prod** : `prospect_leads.source` = `[zefix,simap,sitg,search_ch,fosc,regbl,minergie,lead_express,google_places]`, pas de `manuel` | `20260403000001:8` (origine) retiré par `20260510000002` | **Run 3** |
 | **D5** | **Aucun seed** de base jetable (`supabase/seed.sql` attendu par `config.toml`, jamais commité) | `config.toml:65` `sql_paths=["./seed.sql"]` ; fichier absent (`git ls-files` vide) | **Run 2** (avant la QA 360 avec données) |
 
+## Hygiène du code existant (directive Pascal, 2026-07-14)
+
+**Profiter du chantier pour nettoyer / corriger le code mort du CRM actuel** - au fil des runs, jamais en passe dédiée. Chaque run qui touche un fichier en profite pour retirer le code mort **avéré** qu'il rencontre (imports/variables/fonctions sans consommateur, fichiers orphelins), **sans** élargir en refonte UX/UI (hors scope contrat). Garde-fous obligatoires : `knip` **+ grep de confirmation** avant toute suppression (faux positifs connus `MINUTE_MS`/`RATE_LIMIT_WINDOW_MS`, cf. `feedback_knip_verify_grep_before_delete`) ; toute suppression passe par « Opération destructive » (lire le contenu avant de retirer). Le code mort **préexistant hors du diff d'un run** se **signale et s'inscrit ici**, il ne se supprime pas hors contexte. Objectif chantier : zéro code mort net à la fin des 7 runs.
+
 ---
 
 # Gestes Pascal en attente
@@ -158,8 +162,28 @@ Ces deux vérifications ne bloquent **que** les runs 4 et 5. Les runs 1, 2 et 3 
 
 # Prochaine étape
 
-**Run 1 - Atelier 209 existe.** Piloté par `/product` (5 phases à portes). Contenu : renommage du
-portail existant (`src/routes/(portail)/`), nouvelle adresse `atelier209.ch` + redirection permanente,
-page de connexion refaite (`soft-skill`), login `@lamaisoncreativedirection.ch` (variable
-d'environnement), correction de la dette D1 (**deux réglages admin typés**, voir V3). Maquettes à
-valider par Pascal dans Chrome : **Portail** et **Connexion**, avant toute ligne de code.
+**Run 1 - Atelier 209 existe.** **Gate design franchi le 2026-07-15 : les maquettes Portail + Connexion
+sont VALIDÉES par Pascal dans Chrome.** Reste à écrire le code (prochaine session, PAS dans la session
+de validation).
+
+**Direction visuelle retenue et verrouillée (« Heure bleue »)** - fichier de référence :
+`.atelier-209/run1-maquettes/heure-bleue-B-bandeau-dessous.html`. Principes : chaque écran tient sur
+**une page** (100vh, zéro scroll) ; **photo hero en bandeau haut** (croppée), **contenu centré, sans
+cadre, transparent** sur béton sombre dessous ; **Connexion d'abord, Portail ensuite** ; police
+**Inter** ; accents crème + bleu heure-bleue doux ; wordmark retiré du header (le néon de la photo dit
+déjà « Atelier 209 »). Skills design engagés : `soft-skill` (Inter imposé en override) + `theme-factory`
++ filtre `ANTI-AI-SLOP.md`.
+
+**Image d'accueil verrouillée** : `.atelier-209/run1-maquettes/bar-off-1.png` (choix Pascal).
+Atelier moderne, mur béton, **enseigne néon crème « ATELIER 209 » (lettres seules, sans barre)**,
+cloison vitrée, **Jet d'Eau de Genève au bout de sa jetée**, heure bleue. Générée via fal.ai
+(Nano Banana pour le texte + éditions image-à-image). Déclinaisons responsive à produire au build
+(16:9 maître qui couvre 21:9 en rognant haut/bas + bandeau mobile). Scripts de génération réutilisables
+dans `.atelier-209/*.py` (clé fal **vive** = `~/Claude/Projets/Enseignement/.env`, PAS celle du CRM qui
+est périmée).
+
+**Contenu du code Run 1** (prochaine session) : renommage du portail (`src/routes/(portail)/`) en
+identité « Atelier 209 » selon la maquette ; **URL Vercel `atelier209.vercel.app`** (pas d'achat de
+domaine) + redirection 308 de l'ancienne ; page de connexion refaite selon la maquette ; login
+`@lamaisoncreativedirection.ch` (variable d'env) ; dette D1 = **deux réglages admin typés** (email
+exact feedback `=` vs domaine signaux `LIKE`, voir V3). Non-régression + zéro dette + QA 360.
