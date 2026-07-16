@@ -17,6 +17,25 @@ export function stripBom(s: string): string {
 	return s.charCodeAt(0) === 0xfeff ? s.slice(1) : s;
 }
 
+/**
+ * Décode les octets d'un fichier CSV en chaîne en respectant l'encodage réel. `File.text()` force
+ * UTF-8 (spec File API) : un CSV exporté par Excel FR/CH (« Enregistrer sous → CSV », encodage
+ * Windows-1252/Latin-1 par défaut) verrait « Genève » devenir « Gen�ve » (octets 0xE8 isolés), ce
+ * qui corromprait le nom stocké ET ferait rater la dédup (faux « nouveau » au ré-import UTF-8).
+ * Stratégie : BOM d'abord (UTF-8 / UTF-16), sinon UTF-8 strict, et repli windows-1252 s'il échoue.
+ */
+export function decodeCsvBytes(buf: ArrayBuffer): string {
+	const b = new Uint8Array(buf);
+	if (b.length >= 2 && b[0] === 0xff && b[1] === 0xfe) return new TextDecoder('utf-16le').decode(buf);
+	if (b.length >= 2 && b[0] === 0xfe && b[1] === 0xff) return new TextDecoder('utf-16be').decode(buf);
+	if (b.length >= 3 && b[0] === 0xef && b[1] === 0xbb && b[2] === 0xbf) return new TextDecoder('utf-8').decode(buf);
+	try {
+		return new TextDecoder('utf-8', { fatal: true }).decode(buf);
+	} catch {
+		return new TextDecoder('windows-1252').decode(buf);
+	}
+}
+
 const DELIMITERS = [',', ';', '\t'] as const;
 export type CsvDelimiter = (typeof DELIMITERS)[number];
 

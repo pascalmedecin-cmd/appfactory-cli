@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseCsv, csvToObjects, detectDelimiter, stripBom } from './csv';
+import { parseCsv, csvToObjects, detectDelimiter, stripBom, decodeCsvBytes } from './csv';
 
 describe('detectDelimiter', () => {
 	it('détecte la virgule (défaut)', () => {
@@ -77,5 +77,21 @@ describe('csvToObjects', () => {
 	});
 	it('renvoie [] si < 2 lignes', () => {
 		expect(csvToObjects([['a', 'b']])).toEqual([]);
+	});
+});
+
+describe('decodeCsvBytes (encodage réel du fichier)', () => {
+	const bytes = (arr: number[]) => new Uint8Array(arr).buffer;
+	it('décode un CSV UTF-8 (accents corrects)', () => {
+		// « Genève » en UTF-8 : è = C3 A8
+		expect(decodeCsvBytes(bytes([0x47, 0x65, 0x6e, 0xc3, 0xa8, 0x76, 0x65]))).toBe('Genève');
+	});
+	it('décode un CSV Windows-1252/Latin-1 (Excel FR) sans casser les accents', () => {
+		// « Genève » en Windows-1252 : è = E8 (octet isolé invalide en UTF-8 → repli 1252, pas de �)
+		expect(decodeCsvBytes(bytes([0x47, 0x65, 0x6e, 0xe8, 0x76, 0x65]))).toBe('Genève');
+	});
+	it('gère é (E9), ç (E7) en Latin-1', () => {
+		expect(decodeCsvBytes(bytes([0x52, 0xe9, 0x67, 0x69, 0x65]))).toBe('Régie');
+		expect(decodeCsvBytes(bytes([0x46, 0x61, 0xe7, 0x6f, 0x6e]))).toBe('Façon');
 	});
 });

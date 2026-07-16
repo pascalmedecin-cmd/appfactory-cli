@@ -51,9 +51,11 @@ export function isImportFieldKey(k: unknown): k is ImportFieldKey {
 
 /** Synonymes d'en-têtes (déjà normalisés) → champ CRM. Match exact sur en-tête normalisé. */
 const HEADER_SYNONYMS: Record<ImportFieldKey, readonly string[]> = {
+	// Termes explicitement « société » AVANT les ambigus « nom »/« name » (personne OU société) :
+	// sur une liste de contacts (« Prénom, Nom, Entreprise »), la colonne société doit l'emporter.
 	raison_sociale: [
-		'nom', 'raison sociale', 'entreprise', 'societe', 'company', 'company name', 'name',
-		'denomination', 'raison', 'nom entreprise', 'nom de l entreprise', 'etablissement',
+		'raison sociale', 'entreprise', 'societe', 'company', 'company name', 'denomination',
+		'raison', 'nom entreprise', 'nom de l entreprise', 'etablissement', 'nom', 'name',
 	],
 	adresse: [
 		'adresse', 'adresse complete', 'adresse postale', 'rue', 'address', 'street', 'street address',
@@ -73,10 +75,20 @@ const HEADER_SYNONYMS: Record<ImportFieldKey, readonly string[]> = {
 	email: ['email', 'emails', 'e mail', 'courriel', 'mail', 'adresse email', 'adresse e mail', 'e mails'],
 };
 
-/** Index inverse en-tête normalisé → champ (construit une fois). */
+/**
+ * Index inverse en-tête normalisé → champ + priorité (position du synonyme dans la liste de son
+ * champ ; plus petit = plus prioritaire). Sur collision de champ entre 2 colonnes, la colonne au
+ * synonyme le plus prioritaire l'emporte (cf. `autoMapColumns`).
+ */
 const SYNONYM_TO_FIELD = new Map<string, ImportFieldKey>();
+const SYNONYM_PRIORITY = new Map<string, number>();
 for (const [field, syns] of Object.entries(HEADER_SYNONYMS) as [ImportFieldKey, readonly string[]][]) {
-	for (const s of syns) if (!SYNONYM_TO_FIELD.has(s)) SYNONYM_TO_FIELD.set(s, field);
+	syns.forEach((s, i) => {
+		if (!SYNONYM_TO_FIELD.has(s)) {
+			SYNONYM_TO_FIELD.set(s, field);
+			SYNONYM_PRIORITY.set(s, i);
+		}
+	});
 }
 
 /**
@@ -93,19 +105,22 @@ export function normalizeHeader(h: string): string {
 /**
  * Auto-mappe des en-têtes de fichier → champs CRM. Renvoie un tableau ALIGNÉ sur `headers`
  * (index i = champ suggéré pour la colonne i, ou `null` = « ne pas importer »). Un même champ
- * n'est attribué qu'à UNE colonne (la première qui matche ; les colonnes suivantes du même champ
- * → null), pour ne jamais écraser silencieusement une donnée par une colonne homonyme en double.
+ * n'est attribué qu'à UNE colonne : celle dont le synonyme est le PLUS PRIORITAIRE (et non la
+ * première du fichier) - ainsi « Entreprise » l'emporte sur « Nom » même si « Nom » est plus à
+ * gauche. Les autres colonnes du même champ → null (jamais d'écrasement silencieux).
  */
 export function autoMapColumns(headers: readonly string[]): (ImportFieldKey | null)[] {
-	const used = new Set<ImportFieldKey>();
-	return headers.map((h) => {
+	const best = new Map<ImportFieldKey, { col: number; prio: number }>();
+	headers.forEach((h, col) => {
 		const field = SYNONYM_TO_FIELD.get(normalizeHeader(h));
-		if (field && !used.has(field)) {
-			used.add(field);
-			return field;
-		}
-		return null;
+		if (!field) return;
+		const prio = SYNONYM_PRIORITY.get(normalizeHeader(h)) ?? Number.MAX_SAFE_INTEGER;
+		const cur = best.get(field);
+		if (!cur || prio < cur.prio) best.set(field, { col, prio });
 	});
+	const chosen = new Map<number, ImportFieldKey>();
+	for (const [field, { col }] of best) chosen.set(col, field);
+	return headers.map((_, col) => chosen.get(col) ?? null);
 }
 
 /** Reconstruit un objet-ligne {champ CRM → valeur} depuis une ligne brute + le mapping colonnes. */

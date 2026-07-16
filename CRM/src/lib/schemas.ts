@@ -320,22 +320,23 @@ export const ImportSelectedSchema = z.object({
 });
 
 // -- Run 3 Atelier 209 : import de liste (source 'manuel') --
-// Le client parse le fichier (CSV/TSV) dans le navigateur puis POSTe les en-têtes, le mapping
-// colonne→champ (aligné sur `columns`) et les lignes brutes. Le serveur re-mappe, dé-duplique
-// (multi-axes, marque-scopé), re-score et insère - JAMAIS confiance au client. Bornes anti-DoS :
-// 5 000 lignes max (= PROSPECTION_EXPORT_CAP), 60 colonnes, cellule ≤ 500 chars. Le `mapping` est
-// validé lâche ici (nullable string) puis assaini serveur via `isImportFieldKey` (clé inconnue →
-// colonne ignorée) : une valeur inattendue ne fait jamais échouer tout l'import.
+// Le client parse le fichier (CSV/TSV) dans le navigateur puis POSTe UNIQUEMENT les colonnes
+// mappées (en-têtes retenus, mapping colonne→champ aligné, cellules correspondantes) : une colonne
+// non importée - trop longue, ou au-delà de 60 - ne peut donc pas faire échouer l'import. Le serveur
+// re-mappe, dé-duplique (multi-axes, marque-scopé), re-score et insère - JAMAIS confiance au client.
+// Bornes anti-DoS (garde serveur) : 5 000 lignes, 60 colonnes, cellule ≤ 500 chars. `preview` par
+// DÉFAUT true (mode lecture sûr si un appelant omet le flag). `mapping` validé lâche puis assaini
+// serveur via `isImportFieldKey` (clé inconnue → colonne ignorée).
 export const IMPORT_LISTE_MAX_ROWS = 5000;
 const IMPORT_LISTE_MAX_COLS = 60;
 const IMPORT_LISTE_CELL_MAX = 500;
 export const ImportListeSchema = z
 	.object({
-		preview: z.boolean().optional().default(false),
-		columns: z.array(z.string().max(200)).min(1, 'Aucune colonne').max(IMPORT_LISTE_MAX_COLS, 'Trop de colonnes'),
+		preview: z.boolean().optional().default(true),
+		columns: z.array(z.string().max(200, 'En-tête trop long')).min(1, 'Aucune colonne').max(IMPORT_LISTE_MAX_COLS, 'Trop de colonnes (max 60)'),
 		mapping: z.array(z.string().max(60).nullable()).min(1).max(IMPORT_LISTE_MAX_COLS),
 		rows: z
-			.array(z.array(z.string().max(IMPORT_LISTE_CELL_MAX)).max(IMPORT_LISTE_MAX_COLS))
+			.array(z.array(z.string().max(IMPORT_LISTE_CELL_MAX, 'Une cellule dépasse 500 caractères')).max(IMPORT_LISTE_MAX_COLS, 'Trop de colonnes (max 60)'))
 			.min(1, 'Aucune ligne à importer')
 			.max(IMPORT_LISTE_MAX_ROWS, `Fichier trop volumineux (max ${IMPORT_LISTE_MAX_ROWS} lignes)`),
 	})

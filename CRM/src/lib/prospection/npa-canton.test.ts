@@ -39,6 +39,9 @@ describe('npaToCanton - hors périmètre / dégénéré → null (défaut sûr)'
 	it('null → null', () => expect(npaToCanton(null)).toBeNull());
 	it('non numérique → null', () => expect(npaToCanton('abc')).toBeNull());
 	it('3 chiffres → null', () => expect(npaToCanton('120')).toBeNull());
+	it('NPA étranger à 5 chiffres (39220 = Les Rousses/F) → null, pas tronqué en faux VS', () =>
+		expect(npaToCanton('39220')).toBeNull());
+	it('5 chiffres accolés (12345) → null', () => expect(npaToCanton('12345')).toBeNull());
 });
 
 describe('npaToCanton - tolérant au format', () => {
@@ -47,5 +50,8 @@ describe('npaToCanton - tolérant au format', () => {
 	});
 	it('accepte un nombre', () => {
 		expect(npaToCanton(1700)).toBe('FR');
+	});
+	it('extrait un NPA isolé même noyé dans une adresse', () => {
+		expect(npaToCanton('Route de Genève 12, 1201 Genève')).toBe('GE');
 	});
 });

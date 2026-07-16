@@ -95,6 +95,12 @@ describe('normalizePhoneCH', () => {
 		expect(normalizePhoneCH(null)).toBeNull();
 		expect(normalizePhoneCH('None')).toBeNull();
 	});
+	it('numéro de service mutualisé (0800 / 084x) → null (pas une identité de dédup)', () => {
+		expect(normalizePhoneCH('0848 800 800')).toBeNull();
+		expect(normalizePhoneCH('0800 123 456')).toBeNull();
+		expect(normalizePhoneCH('+41 848 00 00 00')).toBeNull();
+		expect(normalizePhoneCH('022 839 39 39')).toBe('228393939'); // géographique inchangé
+	});
 });
 
 describe('normalizeEmail', () => {
@@ -127,6 +133,15 @@ describe('normalizeDomain', () => {
 		expect(normalizeDomain('None')).toBeNull();
 		expect(normalizeDomain('')).toBeNull();
 		expect(normalizeDomain('juste-du-texte')).toBeNull();
+	});
+	it('hôte de plateforme mutualisé → null (pas une identité de dédup)', () => {
+		expect(normalizeDomain('https://facebook.com/studioalpha')).toBeNull();
+		expect(normalizeDomain('instagram.com/boutiquebeta')).toBeNull();
+		expect(normalizeDomain('https://sites.google.com/view/x')).toBeNull();
+		expect(normalizeDomain('https://fr-fr.facebook.com/x')).toBeNull();
+		expect(normalizeDomain('www.local.ch/fr/d/x')).toBeNull();
+		expect(normalizeDomain('naef.ch')).toBe('naef.ch'); // vrai domaine inchangé
+		expect(normalizeDomain('notfacebook.com')).toBe('notfacebook.com'); // pas de faux positif
 	});
 });
 
@@ -241,6 +256,25 @@ describe('dedupCandidates', () => {
 			lead({ raison_sociale: 'Garage Muller', localite: 'Genève', email: 'b@muller.ch' }),
 		], emptyDedupSets());
 		expect(r.stats.toImport).toBe(4);
+		expect(r.stats.duplicates).toBe(0);
+	});
+
+	// Correctif stress : identifiants MUTUALISÉS (lien réseau social, numéro de service) ≠ identité
+	it('2 sociétés distinctes partageant un lien réseau social ne fusionnent pas', () => {
+		const r = dedupCandidates([
+			lead({ raison_sociale: 'Studio Alpha', localite: 'Genève', site_web: 'https://facebook.com/studioalpha' }),
+			lead({ raison_sociale: 'Boutique Beta', localite: 'Lausanne', site_web: 'https://facebook.com/boutiquebeta' }),
+		], emptyDedupSets());
+		expect(r.stats.toImport).toBe(2);
+		expect(r.stats.duplicates).toBe(0);
+	});
+	it('succursales d’une enseigne partageant un numéro 0848 ne fusionnent pas', () => {
+		const r = dedupCandidates([
+			lead({ raison_sociale: 'Enseigne X', localite: 'Genève', telephone: '0848 800 800' }),
+			lead({ raison_sociale: 'Enseigne X', localite: 'Lausanne', telephone: '0848 800 800' }),
+			lead({ raison_sociale: 'Enseigne X', localite: 'Sion', telephone: '0848 800 800' }),
+		], emptyDedupSets());
+		expect(r.stats.toImport).toBe(3);
 		expect(r.stats.duplicates).toBe(0);
 	});
 

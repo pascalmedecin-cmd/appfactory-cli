@@ -37,9 +37,13 @@ const NPA_RANGES: ReadonlyArray<readonly [number, number, Canton]> = [
  * canonique du NPA à l'import : la MÊME valeur alimente le stockage (`npa`) ET la clé de dédup
  * (localité de repli) → la clé nom+localité est stable au formatage et ronde-trip via la base
  * (sinon un ré-import du même fichier serait vu « nouveau » à l'aperçu mais bloqué à l'insert).
+ *
+ * Le run de 4 chiffres doit être ISOLÉ (pas accolé à un autre chiffre) : un NPA étranger à 5
+ * chiffres (« 39220 » Les Rousses/F, frontière VD) ou une valeur mal placée dans la colonne NPA
+ * → `null`, et non un faux NPA suisse tronqué (« 3922 ») qui fabriquerait un mauvais canton.
  */
 export function extractNpa4(npa: string | number | null | undefined): string | null {
-	return String(npa ?? '').trim().match(/\d{4}/)?.[0] ?? null;
+	return String(npa ?? '').trim().match(/(?<!\d)\d{4}(?!\d)/)?.[0] ?? null;
 }
 
 /**

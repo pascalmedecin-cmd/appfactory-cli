@@ -11,7 +11,7 @@
 	import { fade, scale } from 'svelte/transition';
 	import { trapFocus } from '$lib/actions/trapFocus';
 	import { invalidateAll } from '$app/navigation';
-	import { parseCsv } from '$lib/utils/csv';
+	import { parseCsv, decodeCsvBytes } from '$lib/utils/csv';
 	import {
 		autoMapColumns,
 		CRM_IMPORT_FIELDS,
@@ -149,7 +149,9 @@
 		}
 		let text: string;
 		try {
-			text = await file.text();
+			// `File.text()` force UTF-8 ; on décode via `decodeCsvBytes` pour gérer les CSV Excel
+			// FR/CH en Windows-1252 (accents), sinon « Genève » → « Gen�ve » + dédup faussée.
+			text = decodeCsvBytes(await file.arrayBuffer());
 		} catch {
 			parseError = 'Impossible de lire le fichier. Réessayez.';
 			return;
@@ -206,6 +208,18 @@
 		autoMapped = autoMapped.map((a, i) => (i === colIdx ? false : a)); // choix manuel = plus « auto »
 	}
 
+	// N'envoie au serveur QUE les colonnes mappées (le serveur ignore le reste de toute façon) :
+	// une colonne non importée - trop longue ou au-delà de 60 - ne peut plus faire échouer l'import.
+	function buildImportPayload(previewMode: boolean) {
+		const kept = mapping.map((m, i) => (m !== null ? i : -1)).filter((i) => i >= 0);
+		return {
+			preview: previewMode,
+			columns: kept.map((i) => columns[i]),
+			mapping: kept.map((i) => mapping[i]),
+			rows: dataRows.map((row) => kept.map((i) => row[i] ?? '')),
+		};
+	}
+
 	async function loadPreview() {
 		if (!raisonSocialeMapped) return;
 		previewLoading = true;
@@ -214,7 +228,7 @@
 			const resp = await fetch('/api/prospection/import-liste', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ preview: true, columns, mapping, rows: dataRows }),
+				body: JSON.stringify(buildImportPayload(true)),
 			});
 			const data = await resp.json();
 			if (resp.ok) {
@@ -238,7 +252,7 @@
 			const resp = await fetch('/api/prospection/import-liste', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ preview: false, columns, mapping, rows: dataRows }),
+				body: JSON.stringify(buildImportPayload(false)),
 			});
 			const data = await resp.json();
 			if (resp.ok) {

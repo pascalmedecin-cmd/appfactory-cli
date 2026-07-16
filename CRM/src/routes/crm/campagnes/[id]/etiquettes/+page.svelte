@@ -567,9 +567,8 @@
 <style>
 	/* Conteneur : gouttière 32px, aligné sur le golden v2 (marges resserrées / cohérentes app). */
 	.etq {
+		/* Pleine largeur (retour Pascal 16/07) : aligné sur les autres pages CRM (plus de bridage 1160). */
 		position: relative;
-		max-width: 1160px;
-		margin: 0 auto;
 		padding: 8px 0 96px;
 	}
 
