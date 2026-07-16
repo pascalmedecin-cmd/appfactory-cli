@@ -177,7 +177,7 @@ export const SignalBatchDeleteSchema = z.object({
 // -- Prospect Leads --
 
 export const SOURCES_LEAD = [
-	'zefix', 'simap', 'search_ch', 'regbl', 'lead_express', 'google_places',
+	'zefix', 'simap', 'search_ch', 'regbl', 'lead_express', 'google_places', 'manuel',
 ] as const;
 
 // Lot 2 : modèle simplifié VIDE (à trier) / a_contacter (entre au pipeline) /

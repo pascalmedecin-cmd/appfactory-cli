@@ -91,7 +91,7 @@ describe('sourceMetaFor', () => {
 		expect(sourceMetaFor('veille')).toEqual({ label: 'Veille', variant: 'veille' });
 		expect(sourceMetaFor('search_ch')).toEqual({ label: 'search.ch', variant: 'neutral' });
 		expect(sourceMetaFor('simap')).toEqual({ label: 'SIMAP', variant: 'neutral' });
-		expect(sourceMetaFor('manuel')).toEqual({ label: 'Manuel', variant: 'neutral' });
+		expect(sourceMetaFor('manuel')).toEqual({ label: 'Import manuel', variant: 'neutral' });
 	});
 
 	it('null / vide / espaces / non-string → null (pas de pill)', () => {

@@ -29,7 +29,7 @@ base : ni fork, ni deuxième application. Livraison par **runs** pilotés par `/
 | **0** | Les 7 vérifications | **Terminé (5/7)** le 2026-07-14 ; V6/V7 en attente comptes Pascal | - |
 | 1 | Atelier 209 existe (nom, connexion refaite, droits admin réparés) | **DÉPLOYÉ prod le 2026-07-15** (identité + rôles/RLS + connexion 4 adresses). Seul le renommage d'URL `atelier209.vercel.app` est **différé** (config domaine Vercel à faire proprement) - app à `filmpro-portail.vercel.app` | Portail · Connexion **(validés)** |
 | 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) + **golden CRM revu (couleurs + Inter partout, pas de refonte) + chrome (sidemenu/header/footer) décliné par marque LED/FilmPro pour distinguer** (note Pascal 15/07) | **DÉPLOYÉ prod le 2026-07-15** (migration marque appliquée + vérifiée, **non-régression prouvée**, smoke prod vert ; logo LED corrigé HD). Live `filmpro-portail.vercel.app`. LED reste vide jusqu'au Run 3. | Sélecteur · Menu teinté · Golden CRM **(validés)** |
-| 3 | Les prospects LED entrent (import de liste, sources par marque, source unique secteurs) | À venir | Import |
+| 3 | Les prospects LED entrent (import de liste, sources par marque, source unique secteurs) | **Gate design VALIDÉ (2026-07-15)** - code en cours. Spec : `docs/ATELIER-209-RUN3-SPEC.md` | Import **(validé)** |
 | 4 | On trouve le décideur (connecteur Hunter) | Bloqué par V6 | Enrichissement |
 | 5 | On envoie et on mesure (Pingen, relance, provenance, rendement) | Bloqué par V7 | Envoi postal · Provenance |
 | 6 | L'email personnalisé (moteur, plafond, expéditeurs de marque) | À venir | Email + plafond |
@@ -174,6 +174,10 @@ Connexion autorisée : **4 adresses nommées** (pascal + antoine, sur filmpro.ch
 
 Le renommage du projet Vercel (`filmpro-portail` -> `atelier209`) a été testé puis **annulé** : renommer ne rattache pas automatiquement `atelier209.vercel.app` comme **domaine de production public** (il reste protégé par le SSO Vercel de déploiement, 302 vers `vercel.com/sso-api`), alors qu'un alias manuel pointe vers l'URL de déploiement protégée. Le pousser en l'état aurait cassé le redirect `filmpro-portail -> atelier209` (cible 404/protégée). **Décision : garder `filmpro-portail.vercel.app` comme URL canonique** ; le cutover vers `atelier209.vercel.app` se fera dans une étape dédiée (configurer `atelier209.vercel.app` comme **domaine de production** du projet dans les réglages Vercel, vérifier qu'il sert en 200 public, PUIS activer le redirect 308 de `filmpro-portail`). Le code du redirect (`legacy-redirects.ts`) a été remis à son état d'origine pour ce déploiement. `atelier209.ch` reste libre si Pascal préfère un vrai domaine.
 
+### Retouches page d'accueil (backlog, pas urgent - gate mockup, ajouté 2026-07-15)
+
+Demande Pascal (à valider ensemble via maquette dans Chrome **avant** tout code ; `AtelierShell.svelte` partagé `/login` + `/`). Détail actionnable canonique : `CRM/CLAUDE.md` § Backlog dev. Quatre points : **(1)** hero plus grand **sans l'étirer** + **HD** (source native 1184×864 = cause du flou persistant → régénérer une source 2x), proportion cible **2/3 image / 1/3 bandeau noir** (aujourd'hui `banner` = `flex: 0 0 42vh`, l'inverse) ; **(2)** blocs du bandeau noir **aérés, 100 % alignés grille** ; **(3)** boutons OTP `« recevoir le code »` / `« Se connecter »` = **même largeur ET hauteur**, grille ; **(4)** **fondu premium et subtil** image↔bandeau béton (raffiner `.banner-fade`).
+
 ---
 
 # Run 2 - DÉPLOYÉ EN PROD (2026-07-15)
@@ -304,7 +308,7 @@ au Run 2 (reco oui) ; Q3 sélecteur par-appareil ou cross-appareil (reco par-app
 | **D1** | ~~Droits admin `pascal@filmpro.ch` **en dur**~~ **CORRIGÉ (code) 2026-07-15** : modèle de rôles `src/lib/server/roles.ts` + migration RLS `20260715000000`. Déploiement prod : en attente. | ~~`src/lib/feedback/admin.ts:5`~~ (supprimé) | **Run 1 (code fait)** |
 | **D2** | Import CSV développeur cassé (mapping périmé sur 3 entités, zéro dédup) | `scripts/import-csv.ts` vs migrations ; `csv-import.ts` (157 lignes) sans consommateur | **Run 3** (remplacé par le vrai écran d'import) |
 | **D3** | Mots-clés de secteur en **5 copies, dont 3 ont divergé** ; la copie « officielle » n'est lue par personne | `zefix/+server.ts:43-52` · `searchch/helpers.ts:363-372` · `google-places/helpers.ts:269-279` · `ImportModal.svelte` · `config.ts` (morte) | **Run 3** (source unique) |
-| **D4** | Aucune valeur de source « manuel » (supprimée de la base en 2026, jamais remise) - **confirmé en prod** : `prospect_leads.source` = `[zefix,simap,sitg,search_ch,fosc,regbl,minergie,lead_express,google_places]`, pas de `manuel` | `20260403000001:8` (origine) retiré par `20260510000002` | **Run 3** |
+| **D4** | Aucune valeur de source « manuel » (supprimée de la base en 2026, jamais remise) - **confirmé en prod** : `prospect_leads.source` = `[zefix,simap,sitg,search_ch,fosc,regbl,minergie,lead_express,google_places]` (9 valeurs, dernière migration qui fait foi `20260512000003`), pas de `manuel` | `20260403000001:8` (origine) retiré par `20260411000001` (⚠️ corrigé 2026-07-15 : le SUIVI citait `20260510000002` par erreur - cette migration n'a fait qu'**ajouter** `lead_express`). Migration D4 = repartir des 9 valeurs de `20260512000003` **+ `manuel`** | **Run 3** |
 | **D5** | **Aucun seed** de base jetable (`supabase/seed.sql` attendu par `config.toml`, jamais commité) | `config.toml:65` `sql_paths=["./seed.sql"]` ; fichier absent (`git ls-files` vide) | **Run 2** (avant la QA 360 avec données) |
 
 ## Hygiène du code existant (directive Pascal, 2026-07-14)
@@ -338,6 +342,50 @@ ci-dessus). Le Run 3 fait entrer les prospects LED et rembourse 3 dettes du code
 **Gate design d'abord (règle non négociable)** : la maquette de l'écran d'import est **validée par Pascal
 dans Chrome AVANT toute ligne de code**. Skills design : `redesign-skill` + `ANTI-AI-SLOP.md`. Non-régression
 + zéro dette + QA 360 (base jetable Colima + seed).
+
+## Run 3 - Gate design VALIDÉ (2026-07-15)
+
+Maquette `.atelier-209/run3-maquettes/atelier209-run3.html` (4 vues : point d'entrée FilmPro + les 3
+étapes déposer/associer-colonnes/aperçu + version LED magenta pour l'étanchéité), ouverte dans Chrome.
+Skills : `redesign-skill` + `ANTI-AI-SLOP.md`. Chrome reproduit fidèlement (corrigé vs Run 2 :
+header 48px, filet header = var(--brand) prod). Format d'aperçu calé sur les **vraies listes** de Pascal
+(scrapes Google Maps `Marketing/projets/FilmPro/` : NOM/ADRESSE/NPA/VILLE/TELEPHONE/CATEGORIE/SITE WEB/EMAILS)
+- ce qui justifie le mapping assisté (en-têtes hétérogènes, pas de colonne canton).
+
+**Décisions validées par Pascal** :
+1. **Flux 3 étapes** (déposer → associer les colonnes → aperçu & import). Validé.
+2. **Upload fichier + mapping de colonnes assisté** + modèle CSV. Validé.
+3. **Tout compte connecté** (l'import n'est pas premium). Validé.
+4. **Ignorer les doublons** à l'aperçu (n'entrent pas), MAIS avec un **mécanisme de dédup ROBUSTE,
+   MULTI-AXES, STRESS-TESTÉ** (exigence Pascal explicite). → conçu dans la spec §2 : 4 axes
+   (nom+localité, téléphone, e-mail, domaine), marque-scopé, `source_id` synthétique déterministe
+   (idempotence), 15 familles de stress tests.
+
+**Spec de code complète** : `docs/ATELIER-209-RUN3-SPEC.md` (D4 source manuel, module dédup multi-axes
++ matrice de stress, endpoint import-liste, UI, D3 source unique secteurs marque-aware, sources par marque,
+QA Colima, critères d'acceptation binaires). Ordre : D4 → dédup (TDD) → endpoint → UI → D3 → QA.
+
+**Point faible visé par l'exigence dédup** (diagnostiqué, cartographie) : la dédup actuelle
+(`candidate.ts fetchDedupSets`) ne mord que sur `source_id` d'API (NULL pour un import → aucune dédup),
+et `normalizeCompanyName` garde les accents (« Régie » ≠ « Regie »). Le multi-axes comble exactement ça.
+
+### Avancement du code (2026-07-15)
+
+- [x] **Module de dédup multi-axes** `src/lib/server/prospection/import-dedup.ts` (fonctions pures :
+  `normalizeLeadName` NFD+formes juridiques, `normalizeLocalityKey`, `normalizePhoneCH`, `normalizeEmail`,
+  `normalizeDomain`, `syntheticSourceId`, `buildLeadDedupKeys`, `dedupCandidates`). 4 axes, marque-scopé,
+  cross-source, idempotent. **`import-dedup.test.ts` : 31 tests / 15 familles de stress, tous verts** (accents,
+  casse, formes juridiques, tél tous formats, e-mail, domaine, homonyme cross-localité NON fusionné, match
+  cross-axe, champs manquants, cross-marque, idempotence, intra-payload, anti sur-fusion, fuzzing, ligne invalide).
+- [x] **D4 - source `manuel`** : migration `20260716000001_prospect_leads_source_manuel.sql` (DROP/ADD CHECK
+  = 9 valeurs + `manuel`, élargissement pur), `SOURCES_LEAD` (schemas.ts), `sourceLabel`/`sourceOptions`
+  (prospection-utils.ts), pastille `sourceMetaFor` → « Import manuel » (entreprisesFormat.ts), test anti-drift
+  (schemas.test.ts). **130 tests verts**, svelte-check 0/0. Reste : `db reset` de vérif + application prod `pg`.
+- [ ] **Endpoint** `POST /api/prospection/import-liste` (aperçu + import, `fetchLeadDedupSets` I/O, réutilise
+  `candidateToInsertRow` avec `source:'manuel'` + `source_id` synthétique, schéma Zod d'import canton-optionnel).
+- [ ] **UI** modale 3 étapes (maquette validée) + bouton d'entrée Prospection.
+- [ ] **D3** source unique secteurs marque-aware (+ golden non-régression FilmPro) ; sources par marque (termes).
+- [ ] **QA** Colima (`db reset` + seed) + `marque-leak.test.ts` étendu (import LED → 0 fuite) + revue adversariale + audit sécu daté.
 
 **Bloqués par un geste Pascal** (n'empêchent PAS le Run 3) : V6 Hunter (→ Run 4) et V7 Pingen (→ Run 5),
 comptes à créer.

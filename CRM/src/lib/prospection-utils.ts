@@ -116,6 +116,7 @@ export function sourceLabel(s: string): string {
 		search_ch: 'Annuaire',
 		google_places: 'Google Places',
 		lead_express: 'Saisie terrain',
+		manuel: 'Import manuel',
 	};
 	return labels[s] ?? s;
 }
@@ -129,6 +130,7 @@ export const sourceOptions = [
 	{ value: 'search_ch', label: 'search.ch (annuaire)' },
 	{ value: 'google_places', label: 'Google Places (entreprises locales)' },
 	{ value: 'lead_express', label: 'Saisie terrain (mobile)' },
+	{ value: 'manuel', label: 'Import manuel (liste)' },
 ];
 
 const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];

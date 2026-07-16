@@ -105,6 +105,13 @@ describe('LeadCreateSchema', () => {
 		expect(r.success).toBe(false);
 	});
 
+	// Run 3 D4 : la source 'manuel' (import de liste) doit être acceptée (Zod + CHECK DB alignés,
+	// sinon drift 23514 silencieux). Miroir du test de rejet ci-dessus.
+	it('accepte la source manuel (import de liste)', () => {
+		const r = validate(LeadCreateSchema, { source: 'manuel', raison_sociale: 'Import SA', canton: 'GE' });
+		expect(r.success).toBe(true);
+	});
+
 	it('rejette sans raison sociale', () => {
 		const r = validate(LeadCreateSchema, { source: 'zefix', raison_sociale: '' });
 		expect(r.success).toBe(false);
