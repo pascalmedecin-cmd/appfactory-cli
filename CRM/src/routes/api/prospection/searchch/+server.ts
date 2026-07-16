@@ -160,7 +160,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	// 5) Construction des candidats (cœur + statut + score serveur).
 	const candidates: PublicCandidate[] = entries.map((entry, idx) => {
 		const sourceId = sourceIds[idx];
-		const secteur = detectSecteurFromEntry(entry);
+		const secteur = detectSecteurFromEntry(entry, locals.marque);
 		// Description riche : occupation + catégories (souvent vides individuellement, complémentaires).
 		const description = [entry.occupation, entry.categories.join(' / ')]
 			.filter((s) => s && s.length > 0)

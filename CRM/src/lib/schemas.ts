@@ -177,7 +177,7 @@ export const SignalBatchDeleteSchema = z.object({
 // -- Prospect Leads --
 
 export const SOURCES_LEAD = [
-	'zefix', 'simap', 'search_ch', 'regbl', 'lead_express', 'google_places',
+	'zefix', 'simap', 'search_ch', 'regbl', 'lead_express', 'google_places', 'manuel',
 ] as const;
 
 // Lot 2 : modèle simplifié VIDE (à trier) / a_contacter (entre au pipeline) /
@@ -197,6 +197,7 @@ export const STATUTS_LEAD_MANUELS = ['vide', 'ecarte'] as const;
 export const CANTONS_LEAD = [
 	'GE', 'VD', 'VS', 'NE', 'FR', 'JU',
 ] as const;
+export type Canton = (typeof CANTONS_LEAD)[number];
 
 export const LeadCreateSchema = z.object({
 	source: z.enum(SOURCES_LEAD),
@@ -317,6 +318,32 @@ export const ImportSelectedSchema = z.object({
 	// par la FK serveur au moment de l'assignation (un id inexistant -> 23503 traduit, best-effort).
 	campagneIds: z.array(z.string().uuid()).max(MAX_CAMPAGNE_IDS).optional(),
 });
+
+// -- Run 3 Atelier 209 : import de liste (source 'manuel') --
+// Le client parse le fichier (CSV/TSV) dans le navigateur puis POSTe les en-têtes, le mapping
+// colonne→champ (aligné sur `columns`) et les lignes brutes. Le serveur re-mappe, dé-duplique
+// (multi-axes, marque-scopé), re-score et insère - JAMAIS confiance au client. Bornes anti-DoS :
+// 5 000 lignes max (= PROSPECTION_EXPORT_CAP), 60 colonnes, cellule ≤ 500 chars. Le `mapping` est
+// validé lâche ici (nullable string) puis assaini serveur via `isImportFieldKey` (clé inconnue →
+// colonne ignorée) : une valeur inattendue ne fait jamais échouer tout l'import.
+export const IMPORT_LISTE_MAX_ROWS = 5000;
+const IMPORT_LISTE_MAX_COLS = 60;
+const IMPORT_LISTE_CELL_MAX = 500;
+export const ImportListeSchema = z
+	.object({
+		preview: z.boolean().optional().default(false),
+		columns: z.array(z.string().max(200)).min(1, 'Aucune colonne').max(IMPORT_LISTE_MAX_COLS, 'Trop de colonnes'),
+		mapping: z.array(z.string().max(60).nullable()).min(1).max(IMPORT_LISTE_MAX_COLS),
+		rows: z
+			.array(z.array(z.string().max(IMPORT_LISTE_CELL_MAX)).max(IMPORT_LISTE_MAX_COLS))
+			.min(1, 'Aucune ligne à importer')
+			.max(IMPORT_LISTE_MAX_ROWS, `Fichier trop volumineux (max ${IMPORT_LISTE_MAX_ROWS} lignes)`),
+	})
+	.refine((d) => d.mapping.length === d.columns.length, {
+		message: 'Le mapping ne correspond pas aux colonnes',
+		path: ['mapping'],
+	});
+export type ImportListePayload = z.infer<typeof ImportListeSchema>;
 
 // -- Feedback entries (page /log) --
 // Spec : notes/page-log-2026-05-13/spec.md § 4 + § 8.

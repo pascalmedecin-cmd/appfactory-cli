@@ -429,11 +429,11 @@ describe('sanitizeApiKeyInLogs', () => {
 // --- detectSecteurFromEntry ---
 describe('detectSecteurFromEntry', () => {
 	it('détecte vitrerie via name', () => {
-		expect(detectSecteurFromEntry({ name: 'Vitrerie Dupont', occupation: null })).toBe('menuiserie');
+		expect(detectSecteurFromEntry({ name: 'Vitrerie Dupont', occupation: null }, 'filmpro')).toBe('menuiserie');
 	});
 
 	it('détecte vitrerie via occupation', () => {
-		expect(detectSecteurFromEntry({ name: 'X', occupation: 'Vitrerie - Miroiterie' })).toBe('menuiserie');
+		expect(detectSecteurFromEntry({ name: 'X', occupation: 'Vitrerie - Miroiterie' }, 'filmpro')).toBe('menuiserie');
 	});
 
 	it('détecte vitrerie via tel:category multiple', () => {
@@ -442,29 +442,29 @@ describe('detectSecteurFromEntry', () => {
 				name: 'AA Artisans',
 				occupation: null,
 				categories: ['Dépannage', 'Vitrerie', 'Serrurerie'],
-			}),
+			}, 'filmpro'),
 		).toBe('menuiserie');
 	});
 
 	it('détecte construction', () => {
-		expect(detectSecteurFromEntry({ name: 'Bau AG', occupation: null })).toBe('construction');
+		expect(detectSecteurFromEntry({ name: 'Bau AG', occupation: null }, 'filmpro')).toBe('construction');
 	});
 
 	it('détecte architecte', () => {
-		expect(detectSecteurFromEntry({ name: 'Bureau d\'architectes Smith', occupation: null })).toBe('architecture');
+		expect(detectSecteurFromEntry({ name: 'Bureau d\'architectes Smith', occupation: null }, 'filmpro')).toBe('architecture');
 	});
 
 	it('insensible aux accents', () => {
-		expect(detectSecteurFromEntry({ name: 'RÉNOVATION SA', occupation: null })).toBe('renovation');
+		expect(detectSecteurFromEntry({ name: 'RÉNOVATION SA', occupation: null }, 'filmpro')).toBe('renovation');
 	});
 
 	it('catégories vides → fallback name/occupation', () => {
 		expect(
-			detectSecteurFromEntry({ name: 'Vitrerie X', occupation: null, categories: [] }),
+			detectSecteurFromEntry({ name: 'Vitrerie X', occupation: null, categories: [] }, 'filmpro'),
 		).toBe('menuiserie');
 	});
 
 	it('inconnu → null', () => {
-		expect(detectSecteurFromEntry({ name: 'Coiffure Léa', occupation: null, categories: [] })).toBeNull();
+		expect(detectSecteurFromEntry({ name: 'Coiffure Léa', occupation: null, categories: [] }, 'filmpro')).toBeNull();
 	});
 });

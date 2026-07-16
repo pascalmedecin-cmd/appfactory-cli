@@ -174,7 +174,7 @@ export function sourceMetaFor(source: string | null | undefined): SourceMeta | n
 	if (s === 'veille') return { label: 'Veille', variant: 'veille' };
 	if (s === 'search_ch' || s === 'search.ch') return { label: 'search.ch', variant: 'neutral' };
 	if (s === 'simap') return { label: 'SIMAP', variant: 'neutral' };
-	if (s === 'manuel' || s === 'manual' || s === 'import') return { label: 'Manuel', variant: 'neutral' };
+	if (s === 'manuel' || s === 'manual' || s === 'import') return { label: 'Import manuel', variant: 'neutral' };
 	return { label: raw.length > 18 ? `${raw.slice(0, 17)}…` : raw, variant: 'neutral' };
 }
 

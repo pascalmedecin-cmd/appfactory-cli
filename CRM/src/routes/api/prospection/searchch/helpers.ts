@@ -13,6 +13,8 @@
 
 // Audit 360 H-22 : normalisation NFD centralisée dans `src/lib/utils/text-normalize.ts`.
 import { normalizeNFDTrim } from '$lib/utils/text-normalize';
+import { detectSecteur } from '$lib/prospection/secteurs';
+import type { Marque } from '$lib/marque';
 
 const ALLOWED_CANTONS = new Set(['GE', 'VD', 'VS', 'NE', 'FR', 'JU']);
 
@@ -357,29 +359,14 @@ export function buildSourceId(entry: { telId?: string | null; name: string; npa:
 }
 
 /**
- * Détecte un secteur métier depuis le nom + occupation search.ch.
- * Réutilise les keywords d'enrichissement Zefix (cf. zefix endpoint).
+ * Détecte un secteur métier depuis le nom + occupation + catégories search.ch, pour la marque
+ * active. Mots-clés = SOURCE UNIQUE marque-aware (`$lib/prospection/secteurs`, dette D3).
  */
-const SECTEURS_KEYWORDS: Record<string, string[]> = {
-	construction: ['construction', 'batiment', 'bau', 'genie civil'],
-	architecture: ['architecte', 'architecture', 'architektur'],
-	hvac: ['chauffage', 'ventilation', 'climatisation', 'hvac', 'heizung'],
-	electricite: ['electricite', 'elektro', 'electricien'],
-	renovation: ['renovation', 'transformation', 'umbau'],
-	menuiserie: ['menuiserie', 'charpente', 'schreinerei', 'zimmerei', 'vitrerie', 'vitre'],
-	ingenieur: ['ingenieur', 'bureau technique', 'ingenieurbüro'],
-	regie: ['regie', 'facility', 'immobilier', 'verwaltung'],
-};
-
 export function detectSecteurFromEntry(entry: {
 	name: string;
 	occupation: string | null;
 	categories?: string[];
-}): string | null {
+}, marque: Marque): string | null {
 	const parts = [entry.name, entry.occupation ?? '', ...(entry.categories ?? [])];
-	const haystack = normalizeTerm(parts.join(' '));
-	for (const [secteur, kws] of Object.entries(SECTEURS_KEYWORDS)) {
-		if (kws.some((kw) => haystack.includes(kw))) return secteur;
-	}
-	return null;
+	return detectSecteur(parts.join(' '), marque);
 }

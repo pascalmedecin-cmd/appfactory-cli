@@ -194,15 +194,15 @@ describe('buildSourceId / placeMapsUrl', () => {
 
 describe('detectSecteurFromPlace', () => {
 	it('détecte depuis le nom', () => {
-		expect(detectSecteurFromPlace({ name: 'Vitrerie Lausanne' })).toBe('menuiserie');
-		expect(detectSecteurFromPlace({ name: 'Régie du Lac' })).toBe('regie');
+		expect(detectSecteurFromPlace({ name: 'Vitrerie Lausanne' }, 'filmpro')).toBe('menuiserie');
+		expect(detectSecteurFromPlace({ name: 'Régie du Lac' }, 'filmpro')).toBe('regie');
 	});
 	it('détecte depuis les types Google', () => {
-		expect(detectSecteurFromPlace({ name: 'XYZ', types: ['electrician'] })).toBe('electricite');
-		expect(detectSecteurFromPlace({ name: 'XYZ', types: ['roofing_contractor'] })).toBe('menuiserie');
-		expect(detectSecteurFromPlace({ name: 'XYZ', types: ['real_estate_agency'] })).toBe('regie');
+		expect(detectSecteurFromPlace({ name: 'XYZ', types: ['electrician'] }, 'filmpro')).toBe('electricite');
+		expect(detectSecteurFromPlace({ name: 'XYZ', types: ['roofing_contractor'] }, 'filmpro')).toBe('menuiserie');
+		expect(detectSecteurFromPlace({ name: 'XYZ', types: ['real_estate_agency'] }, 'filmpro')).toBe('regie');
 	});
 	it('rien → null', () => {
-		expect(detectSecteurFromPlace({ name: 'Boulangerie du coin', types: ['bakery'] })).toBeNull();
+		expect(detectSecteurFromPlace({ name: 'Boulangerie du coin', types: ['bakery'] }, 'filmpro')).toBeNull();
 	});
 });

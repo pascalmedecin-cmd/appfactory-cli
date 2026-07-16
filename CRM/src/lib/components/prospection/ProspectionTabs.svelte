@@ -174,6 +174,7 @@
 	.tab[data-color='regbl'] .tab-icon { color: var(--color-tab-regbl); }
 	.tab[data-color='entreprises'] .tab-icon { color: var(--color-tab-entreprises); }
 	.tab[data-color='terrain'] .tab-icon { color: var(--color-tab-terrain); }
+	.tab[data-color='maliste'] .tab-icon { color: var(--color-tab-maliste); }
 
 	/* ACTIF : underline 2px source-color + label primary-dark. Pas de fond cellule. */
 	.tab--active {
@@ -184,6 +185,7 @@
 	.tab--active[data-color='regbl'] { border-bottom-color: var(--color-tab-regbl); }
 	.tab--active[data-color='entreprises'] { border-bottom-color: var(--color-tab-entreprises); }
 	.tab--active[data-color='terrain'] { border-bottom-color: var(--color-tab-terrain); }
+	.tab--active[data-color='maliste'] { border-bottom-color: var(--color-tab-maliste); }
 	.tab--active .tab-label { color: var(--color-primary-dark); }
 
 	/* Empty tab : icône en gris muted (signal "rien à voir ici"). */

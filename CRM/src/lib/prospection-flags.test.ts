@@ -64,13 +64,15 @@ describe('visibilité des onglets Prospection (P1)', () => {
 		expect(isProspectionTabVisible('regbl')).toBe(false);
 	});
 
-	it('garde un onglet avec ≥1 source active (entreprises via zefix/search.ch, terrain via lead_express/veille)', () => {
+	it('garde un onglet avec ≥1 source active (entreprises via zefix/search.ch, terrain via lead_express/veille, maliste via manuel)', () => {
 		expect(isProspectionTabVisible('entreprises')).toBe(true);
 		expect(isProspectionTabVisible('terrain')).toBe(true);
+		expect(isProspectionTabVisible('maliste')).toBe(true);
 	});
 
 	it('visibleProspectionTabs ne renvoie que les onglets actifs, ordre canonique préservé', () => {
-		expect(visibleProspectionTabs()).toEqual(['entreprises', 'terrain']);
+		// Run 3 : « maliste » (source manuel active) rejoint entreprises + terrain.
+		expect(visibleProspectionTabs()).toEqual(['entreprises', 'terrain', 'maliste']);
 	});
 
 	it('defaultProspectionTab = premier onglet visible (entreprises, plus simap)', () => {

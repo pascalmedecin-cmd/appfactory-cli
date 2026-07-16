@@ -5,6 +5,7 @@
 	import { normalizeNFDTrim } from '$lib/utils/text-normalize';
 	import { API_LIMITS } from '$lib/api-limits';
 	import { SOURCE_CARDS, type EntrepriseSource } from './source-meta';
+	import { GP_ACTIVITY_OPTIONS } from '$lib/prospection/activity-types';
 
 	type GoogleQuotaStatus = { used: number; cap: number; remaining: number; exhausted: boolean; warning: string | null };
 
@@ -35,17 +36,7 @@
 	let zefixName = $state('');
 
 	// Miroir des denylists serveur pour un feedback immédiat (cohérent ImportModal).
-	const GP_ACTIVITY_OPTIONS = [
-		{ key: 'regies_syndics', label: 'Régies immobilières et syndics de copropriété' },
-		{ key: 'facility_management', label: 'Facility management et gestion de bâtiments' },
-		{ key: 'bureaux_etudes', label: 'Bureaux d’études énergie et thermique' },
-		{ key: 'architectes_designers', label: 'Architectes et architectes d’intérieur' },
-		{ key: 'cvc_hvac', label: 'Climatisation, ventilation, CVC / HVAC' },
-		{ key: 'entreprises_generales', label: 'Entreprises générales du bâtiment' },
-		{ key: 'securite_batiment', label: 'Sécurité du bâtiment (alarme, accès, vidéo)' },
-		{ key: 'commerce', label: 'Commerce (magasins, boutiques, vitrines)' },
-		{ key: 'other', label: 'Mot-clé libre' },
-	] as const;
+	// D3 (Run 3) : source UNIQUE des types d'activité Google (plus de miroir inline).
 	const GENERIC_TERMS = new Set([
 		'sa', 'sarl', 'sa rl', 'sasu', 'sàrl', 'srl', 'gmbh', 'ag', 'kg', 'ohg',
 		'ltd', 'llc', 'inc', 'societe', 'societé', 'company', 'compagnie', 'entreprise', 'firma',

@@ -151,6 +151,11 @@ export const config = {
 				label: 'Veille sectorielle',
 				enabled: true,
 			},
+			// Run 3 Atelier 209 : import de liste (source 'manuel'). Alimente l'onglet « Ma liste ».
+			manuel: {
+				label: 'Import manuel (liste)',
+				enabled: true,
+			},
 		},
 		// V5 : machinerie d'acquisition de masse coupée (réversible par flag).
 		// savedSearches/alerts = moteur de prospection de masse ; batchEnrichment = enrichissement
@@ -159,16 +164,6 @@ export const config = {
 			savedSearches: false,
 			alerts: false,
 			batchEnrichment: false,
-		},
-		secteurKeywords: {
-			construction: ['construction', 'batiment', 'bau', 'genie civil'],
-			architecture: ['architecte', 'architecture', 'architektur'],
-			hvac: ['chauffage', 'ventilation', 'climatisation', 'hvac', 'heizung'],
-			electricite: ['electricite', 'elektro', 'electricien'],
-			renovation: ['renovation', 'transformation', 'umbau'],
-			menuiserie: ['menuiserie', 'charpente', 'schreinerei', 'zimmerei'],
-			ingenieur: ['ingenieur', 'bureau technique', 'ingenieurbuero'],
-			regie: ['regie', 'facility', 'immobilier', 'verwaltung'],
 		},
 	},
 

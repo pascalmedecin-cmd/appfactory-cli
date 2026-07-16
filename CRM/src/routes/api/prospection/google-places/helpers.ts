@@ -10,6 +10,8 @@
  */
 
 import { normalizeNFDTrim } from '$lib/utils/text-normalize';
+import { detectSecteur } from '$lib/prospection/secteurs';
+import type { Marque } from '$lib/marque';
 
 /** Cantons romands cibles (mêmes que les autres sources prospection). */
 const ALLOWED_CANTONS = ['GE', 'VD', 'VS', 'NE', 'FR', 'JU'] as const;
@@ -25,27 +27,10 @@ const CANTON_NAMES: Record<AllowedCanton, string> = {
 	JU: 'Jura',
 };
 
-/**
- * Types d'activité proposés à l'utilisateur. Le `key` est ce que le client envoie ;
- * il est validé contre cette liste (enum fermée). `keyword` est injecté dans `textQuery`.
- */
-// Cibles du réseau de partenaires FilmPro (validées 2026-05-12 par tests live sur Places API,
-// cf. scripts/probe-google-places-queries.mjs). Tout passe par mot-clé : aucun `includedType`
-// natif (Text Search New n'accepte qu'une liste restreinte de types — ex: `general_contractor`
-// renvoie 400 — et le filtre par type est souvent trop restrictif). Le mot-clé + le nom du
-// canton + « Suisse » sont concaténés dans `textQuery`.
-export const ACTIVITY_TYPES = [
-	{ key: 'regies_syndics', label: 'Régies immobilières et syndics de copropriété', includedType: null, keyword: 'régie immobilière syndic de copropriété' },
-	{ key: 'facility_management', label: 'Facility management et gestion de bâtiments', includedType: null, keyword: 'facility management gestion technique de bâtiment property management' },
-	{ key: 'bureaux_etudes', label: 'Bureaux d’études énergie et thermique', includedType: null, keyword: 'bureau d’études thermique énergie bâtiment CECB' },
-	{ key: 'architectes_designers', label: 'Architectes et architectes d’intérieur', includedType: null, keyword: 'architecte architecte d’intérieur agence d’architecture' },
-	{ key: 'cvc_hvac', label: 'Climatisation, ventilation, CVC / HVAC', includedType: null, keyword: 'climatisation ventilation CVC chauffage entreprise HVAC' },
-	{ key: 'entreprises_generales', label: 'Entreprises générales du bâtiment', includedType: null, keyword: 'entreprise générale du bâtiment rénovation' },
-	{ key: 'securite_batiment', label: 'Sécurité du bâtiment (alarme, accès, vidéo)', includedType: null, keyword: 'sécurité bâtiment alarme contrôle d’accès vidéosurveillance' },
-	{ key: 'commerce', label: 'Commerce (magasins, boutiques, vitrines)', includedType: null, keyword: 'magasin boutique commerce de détail vitrine' },
-	{ key: 'other', label: 'Mot-clé libre', includedType: null, keyword: null },
-] as const;
-export type ActivityTypeKey = (typeof ACTIVITY_TYPES)[number]['key'];
+// Types d'activité : SOURCE UNIQUE dans `$lib/prospection/activity-types` (Run 3, dette D3 -
+// mirror ImportModal supprimé). Ré-exportés ici pour ne pas casser les consommateurs existants.
+import { ACTIVITY_TYPES, type ActivityTypeKey } from '$lib/prospection/activity-types';
+export { ACTIVITY_TYPES, type ActivityTypeKey };
 const ACTIVITY_TYPE_MAP = new Map(ACTIVITY_TYPES.map((a) => [a.key, a]));
 
 /** Mots-vides légaux refusés comme mot-clé libre (mêmes que search.ch). */
@@ -266,23 +251,10 @@ export function placeMapsUrl(placeId: string): string {
 	return `https://www.google.com/maps/place/?q=place_id:${encodeURIComponent(placeId)}`;
 }
 
-const SECTEURS_KEYWORDS: Record<string, string[]> = {
-	construction: ['construction', 'batiment', 'bau', 'genie civil', 'general contractor', 'entreprise generale'],
-	architecture: ['architecte', 'architecture', 'architekt', 'bureau d etudes'],
-	hvac: ['chauffage', 'ventilation', 'climatisation', 'hvac', 'heizung', 'sanitaire', 'plumber', 'plumbing'],
-	electricite: ['electricite', 'elektro', 'electricien', 'electrician', 'electrical'],
-	peinture: ['peinture', 'platrerie', 'painter', 'painting', 'maler'],
-	renovation: ['renovation', 'transformation', 'umbau'],
-	menuiserie: ['menuiserie', 'charpente', 'schreinerei', 'zimmerei', 'vitrerie', 'vitre', 'roofing', 'roofing contractor', 'toiture', 'etancheite', 'couvreur'],
-	ingenieur: ['ingenieur', 'bureau technique'],
-	regie: ['regie', 'facility', 'immobilier', 'verwaltung', 'real estate', 'real estate agency'],
-};
-
-/** Détecte un secteur métier depuis le nom + les `types` Google d'un place. */
-export function detectSecteurFromPlace(entry: { name: string; types?: string[] }): string | null {
-	const haystack = normalizeNFDTrim([entry.name, ...(entry.types ?? []).map((t) => t.replace(/_/g, ' '))].join(' '));
-	for (const [secteur, kws] of Object.entries(SECTEURS_KEYWORDS)) {
-		if (kws.some((kw) => haystack.includes(kw))) return secteur;
-	}
-	return null;
+/**
+ * Détecte un secteur métier depuis le nom + les `types` Google d'un place, pour la marque active.
+ * Mots-clés = SOURCE UNIQUE marque-aware (`$lib/prospection/secteurs`, dette D3).
+ */
+export function detectSecteurFromPlace(entry: { name: string; types?: string[] }, marque: Marque): string | null {
+	return detectSecteur([entry.name, ...(entry.types ?? []).map((t) => t.replace(/_/g, ' '))].join(' '), marque);
 }

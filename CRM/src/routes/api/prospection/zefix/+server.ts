@@ -15,6 +15,7 @@ import {
 	candidateToInsertRow,
 	toPublicCandidate,
 } from '$lib/server/prospection/candidate';
+import { detectSecteur } from '$lib/prospection/secteurs';
 
 const ZEFIX_BASE = 'https://www.zefix.admin.ch/ZefixPublicREST/api/v1';
 const SOURCE_KEY = 'zefix' as const;
@@ -37,26 +38,6 @@ const CANTON_MAP: Record<string, string> = {
 
 function cantonToLead(abbr: string): string | null {
 	return CANTON_MAP[abbr] ?? null;
-}
-
-// Detect sector from purpose text
-const SECTEURS_KEYWORDS: Record<string, string[]> = {
-	construction: ['construction', 'batiment', 'bau', 'genie civil'],
-	architecture: ['architecte', 'architecture', 'architektur'],
-	hvac: ['chauffage', 'ventilation', 'climatisation', 'hvac', 'heizung'],
-	electricite: ['electricite', 'elektro', 'electricien'],
-	renovation: ['renovation', 'transformation', 'umbau'],
-	menuiserie: ['menuiserie', 'charpente', 'schreinerei', 'zimmerei'],
-	ingenieur: ['ingenieur', 'bureau technique', 'ingenieurbüro'],
-	regie: ['regie', 'facility', 'immobilier', 'verwaltung'],
-};
-
-function detectSecteur(desc: string): string | null {
-	const lower = desc.toLowerCase();
-	for (const [secteur, kws] of Object.entries(SECTEURS_KEYWORDS)) {
-		if (kws.some((kw) => lower.includes(kw))) return secteur;
-	}
-	return null;
 }
 
 export const POST = async ({ request, locals }: RequestEvent) => {
@@ -162,7 +143,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const candidates: PublicCandidate[] = [];
 	for (const company of companies) {
 		if (!company.name || !company.uid || !cantonCode) continue;
-		const secteur = detectSecteur(company.name);
+		const secteur = detectSecteur(company.name, locals.marque);
 		const core: CandidateCore = {
 			source: SOURCE_KEY,
 			source_id: company.uid,

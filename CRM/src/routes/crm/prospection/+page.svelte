@@ -8,6 +8,7 @@
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import Badge from '$lib/components/Badge.svelte';
 	import ImportModal from '$lib/components/prospection/ImportModal.svelte';
+	import ImportListeModal from '$lib/components/prospection/ImportListeModal.svelte';
 	import EntrepriseSearchModal from '$lib/components/prospection/EntrepriseSearchModal.svelte';
 	import type { EntrepriseSource } from '$lib/components/prospection/source-meta';
 	import LeadSlideOut from '$lib/components/prospection/LeadSlideOut.svelte';
@@ -92,6 +93,8 @@
 	let slideOutOpen = $state(false);
 	let selectedLead = $state<Lead | null>(null);
 	let importModalOpen = $state(false);
+	// Run 3 Atelier 209 : import de liste (source manuel → onglet « Ma liste »).
+	let importListeOpen = $state(false);
 	// P3 : nouvelle modale de recherche entreprises (aperçu → cocher → import sélectif). Remplace
 	// le flux import-direct de ImportModal sur l'onglet Entreprises. ImportModal reste pour
 	// SIMAP/RegBL (dormant tant que leurs flags sont coupés).
@@ -277,6 +280,15 @@
 			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 160, minWidth: 130 },
 			{ key: 'date_import', label: 'Ajouté', sortable: true, defaultWidth: 100, minWidth: 90, class: 'hidden lg:table-cell' },
 		],
+		// Run 3 : « Ma liste » (source manuel). Même colonnes que Terrain, sans note (l'import n'en a pas).
+		maliste: [
+			...baseColumns,
+			{ key: 'localite', label: 'Localité', sortable: true, defaultWidth: 160, minWidth: 120, class: 'hidden md:table-cell' },
+			{ key: 'canton', label: 'Canton', sortable: true, defaultWidth: 80, minWidth: 70 },
+			{ key: 'telephone', label: 'Téléphone', sortable: false, defaultWidth: 140, minWidth: 110, class: 'hidden lg:table-cell' },
+			{ key: 'statut', label: 'Statut', sortable: true, defaultWidth: 160, minWidth: 130 },
+			{ key: 'date_import', label: 'Ajouté', sortable: true, defaultWidth: 100, minWidth: 90, class: 'hidden lg:table-cell' },
+		],
 	};
 
 	// Vague 3.2 : colonne « Campagnes » injectée après le nom quand premium (OFF -> base inchangée).
@@ -322,6 +334,13 @@
 			count: data.tabCounts.terrain,
 			colorVar: 'terrain',
 		},
+		{
+			key: 'maliste' as ProspectionTabKey,
+			label: 'Ma liste',
+			icon: 'checklist',
+			count: data.tabCounts.maliste,
+			colorVar: 'maliste',
+		},
 	// V5/P1 : ne rend que les onglets dont ≥1 source est active (simap/regbl masqués, réversible).
 	].filter((t) => isProspectionTabVisible(t.key)));
 
@@ -350,6 +369,14 @@
 					icon: 'search',
 					ariaLabel: 'Rechercher des entreprises (annuaire, Google, registre du commerce)',
 					action: () => (entrepriseSearchOpen = true),
+				};
+			case 'maliste':
+				return {
+					label: 'Importer une liste',
+					labelMobile: 'Importer',
+					icon: 'cloud_upload',
+					ariaLabel: 'Importer une liste de prospects depuis un fichier CSV',
+					action: () => (importListeOpen = true),
 				};
 			case 'regbl':
 				return {
@@ -412,7 +439,7 @@
 
 	// V5 : le CTA d'import n'est montré que si l'onglet a au moins une source active. L'onglet
 	// terrain garde son CTA propre (lead express, pas un import). simap/regbl → CTA masqué.
-	const showImportCta = $derived(data.tab === 'terrain' || (importScope.allowedSources?.length ?? 0) > 0);
+	const showImportCta = $derived(data.tab === 'terrain' || data.tab === 'maliste' || (importScope.allowedSources?.length ?? 0) > 0);
 
 	// P3 : sources « entreprises » du flux aperçu → import (Annuaire / Google / Registre), filtrées
 	// par flag. Pilotent la nouvelle EntrepriseSearchModal (ordre canonique appliqué dans la modale).
@@ -441,6 +468,15 @@
 					ctaLabel: 'Rechercher une entreprise',
 					ctaIcon: 'search',
 					ctaAction: () => (entrepriseSearchOpen = true),
+				};
+			case 'maliste':
+				return {
+					icon: 'checklist',
+					title: 'Aucune liste importée',
+					body: 'Vous avez la liste des exposants d\'un salon ou un export d\'annuaire ? Importez-la ici : une ligne = un prospect, dédoublonné automatiquement.',
+					ctaLabel: 'Importer une liste',
+					ctaIcon: 'cloud_upload',
+					ctaAction: () => (importListeOpen = true),
 				};
 			case 'regbl':
 				return {
@@ -1000,6 +1036,19 @@
 						<span>Exporter CSV</span>
 					</a>
 				{/if}
+				<!-- Run 3 : import de liste en action SECONDAIRE sur l'onglet Entreprises (maquette Écran 1),
+				     à côté de « Rechercher une entreprise ». Sur l'onglet « Ma liste », c'est le CTA principal. -->
+				{#if data.tab === 'entreprises'}
+				<button
+					type="button"
+					onclick={() => (importListeOpen = true)}
+					aria-label="Importer une liste de prospects depuis un fichier CSV"
+					class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors"
+				>
+					<Icon name="cloud_upload" size={16} />
+					<span>Importer une liste</span>
+				</button>
+				{/if}
 				<!-- V4 audit S163 (F-V4-01) + F-V4-07 verbes : CTA principal contextuel par onglet. -->
 				{#if showImportCta}
 				<button
@@ -1279,6 +1328,14 @@
 	defaultSource={importScope.defaultSource}
 	title={importScope.title}
 	googleQuota={data.googlePlacesQuota}
+/>
+
+<!-- Run 3 Atelier 209 : import de liste (source manuel → onglet « Ma liste »). -->
+<ImportListeModal
+	bind:open={importListeOpen}
+	bind:importResult
+	marque={data.marqueActive}
+	onImported={() => goto('/crm/prospection?tab=maliste')}
 />
 
 <!-- Modal enrichissement batch -->

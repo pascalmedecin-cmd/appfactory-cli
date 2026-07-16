@@ -160,6 +160,7 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 		tabRegblRes,
 		tabEntreprisesRes,
 		tabTerrainRes,
+		tabMalisteRes,
 		gpUsedRaw,
 		campagnesListRes,
 	] = await Promise.all([
@@ -195,6 +196,7 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 		runTabCount(TAB_SOURCE_MAP.regbl),
 		runTabCount(TAB_SOURCE_MAP.entreprises),
 		runTabCount(TAB_SOURCE_MAP.terrain),
+		runTabCount(TAB_SOURCE_MAP.maliste),
 		// P2 : usage quota Google du mois (lecture seule), uniquement si la source est active.
 		isProspectionSourceEnabled('google_places')
 			? getMonthlyUsage(locals.supabase, 'google_places')
@@ -230,6 +232,7 @@ export const load: PageServerLoad = async ({ locals, url, parent }) => {
 			regbl: tabRegblRes.count ?? 0,
 			entreprises: tabEntreprisesRes.count ?? 0,
 			terrain: tabTerrainRes.count ?? 0,
+			maliste: tabMalisteRes.count ?? 0,
 		},
 		tab: filter.tab,
 		// P2 (2026-06-18) : statut quota Google Places exposé à la page (compteur « X/900 restantes
