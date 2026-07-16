@@ -473,7 +473,7 @@
 				return {
 					icon: 'checklist',
 					title: 'Aucune liste importée',
-					body: 'Vous avez la liste des exposants d\'un salon ou un export d\'annuaire ? Importez-la ici : une ligne = un prospect, dédoublonné automatiquement.',
+					body: 'Vous avez la liste des exposants d’un salon ou un export d’annuaire ? Importez-la ici : une ligne = un prospect, dédoublonné automatiquement.',
 					ctaLabel: 'Importer une liste',
 					ctaIcon: 'cloud_upload',
 					ctaAction: () => (importListeOpen = true),

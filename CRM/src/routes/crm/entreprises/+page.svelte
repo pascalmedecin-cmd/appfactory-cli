@@ -427,6 +427,8 @@
 				onRowClick={openDetail}
 				searchable={false}
 				stickyLeftCols={2}
+				resizable
+				storageKey="entreprises"
 				rowAriaLabel={rowAriaLabelFor}
 				emptyMessage={data.search ? `Aucun résultat pour « ${data.search} »` : emptyMessageForTab(activeTab)}
 				serverMode={true}
