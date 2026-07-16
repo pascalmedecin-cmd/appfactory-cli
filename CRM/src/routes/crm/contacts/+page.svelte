@@ -382,6 +382,8 @@
 					onRowClick={openDetail}
 					searchPlaceholder="Rechercher un contact…"
 					stickyLeftCols={2}
+					resizable
+					storageKey="contacts"
 					rowAriaLabel={rowAriaLabelFor}
 					emptyMessage={emptyMessageFor(activeTab)}
 				>

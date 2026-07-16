@@ -73,6 +73,21 @@
 	const recognizedCount = $derived(mapping.filter((m) => m !== null).length);
 	const raisonSocialeMapped = $derived(mapping.includes('raison_sociale'));
 
+	// Pied de l'étape 3 : n'énumère QUE les catégories non vides, avec accord nombre/genre correct
+	// (masculin l'emporte si doublons + lignes ; féminin si des lignes seules). Évite « Les 0 doublon ».
+	const excludedNote = $derived.by(() => {
+		if (!preview) return '';
+		const d = preview.stats.duplicates;
+		const i = preview.stats.invalid;
+		const parts: string[] = [];
+		if (d > 0) parts.push(`${d} doublon${d > 1 ? 's' : ''}`);
+		if (i > 0) parts.push(`${i} ligne${i > 1 ? 's' : ''} en erreur`);
+		if (parts.length === 0) return '';
+		const plural = parts.length > 1 || d > 1 || i > 1;
+		const feminine = parts.length === 1 && i > 0; // seules des « lignes » → accord féminin
+		return `${parts.join(' et ')} ${plural ? 'seront' : 'sera'} ignoré${feminine ? 'e' : ''}${plural ? 's' : ''}.`;
+	});
+
 	function resetAll() {
 		step = 1;
 		fileName = '';
@@ -322,7 +337,7 @@
 						</span>
 						<p class="text-[15px] font-semibold text-text">Glissez votre fichier ici</p>
 						<p class="text-[13px] text-text-muted mt-1">ou <span class="text-primary-dark font-semibold underline underline-offset-2">parcourez vos fichiers</span></p>
-						<p class="text-xs text-text-muted mt-3">CSV ou TSV - une ligne = un prospect - {IMPORT_LISTE_MAX_ROWS.toLocaleString('fr-CH')} lignes maximum</p>
+						<p class="text-xs text-text-muted mt-3">CSV - une ligne = un prospect - {IMPORT_LISTE_MAX_ROWS.toLocaleString('fr-CH')} lignes maximum</p>
 					</div>
 					<input
 						bind:this={fileInput}
@@ -406,21 +421,22 @@
 					<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
 						<div class="px-3.5 py-3 rounded-lg bg-surface-alt ring-1 ring-inset ring-border">
 							<div class="text-[22px] font-bold tabular-nums text-text leading-none">{preview.stats.total}</div>
-							<div class="text-[11.5px] text-text-muted mt-1.5">lignes lues</div>
+							<div class="text-[11.5px] text-text-muted mt-1.5">ligne{preview.stats.total > 1 ? 's' : ''} lue{preview.stats.total > 1 ? 's' : ''}</div>
 						</div>
 						<div class="px-3.5 py-3 rounded-lg bg-success-light ring-1 ring-inset ring-success/20">
 							<div class="text-[22px] font-bold tabular-nums text-success-deep leading-none">{preview.stats.toImport}</div>
-							<div class="text-[11.5px] text-text-muted mt-1.5">nouveaux prospects</div>
+							<div class="text-[11.5px] text-text-muted mt-1.5">nouveau{preview.stats.toImport > 1 ? 'x' : ''} prospect{preview.stats.toImport > 1 ? 's' : ''}</div>
 						</div>
 						<div class="px-3.5 py-3 rounded-lg bg-surface-alt ring-1 ring-inset ring-border">
 							<div class="text-[22px] font-bold tabular-nums text-text leading-none">{preview.stats.duplicates}</div>
-							<div class="text-[11.5px] text-text-muted mt-1.5">doublons ignorés</div>
+							<div class="text-[11.5px] text-text-muted mt-1.5">doublon{preview.stats.duplicates > 1 ? 's' : ''} ignoré{preview.stats.duplicates > 1 ? 's' : ''}</div>
 						</div>
 						<div class="px-3.5 py-3 rounded-lg bg-warning-light ring-1 ring-inset ring-warning/25">
 							<div class="text-[22px] font-bold tabular-nums text-warning-deep leading-none">{preview.stats.invalid}</div>
 							<div class="text-[11.5px] text-text-muted mt-1.5">à corriger</div>
 						</div>
 					</div>
+					{#if excludedNote}<p class="text-[11.5px] text-text-muted mb-3">{excludedNote}</p>{/if}
 					<div class="rounded-xl ring-1 ring-inset ring-border overflow-hidden">
 						<table class="w-full border-collapse table-fixed">
 							<colgroup><col style="width:42%" /><col style="width:18%" /><col style="width:18%" /><col style="width:22%" /></colgroup>
@@ -439,7 +455,7 @@
 											<div class="text-[13px] font-semibold truncate {r.state === 'duplicate' ? 'text-text-muted' : r.state === 'invalid' ? 'text-warning-deep' : 'text-text'}">
 												{r.state === 'invalid' ? `Ligne ${r.line}` : r.raison_sociale}
 											</div>
-											{#if r.secteur}<div class="text-[11.5px] text-text-muted truncate">{r.secteur}</div>{:else if r.state === 'invalid'}<div class="text-[11.5px] text-text-muted">Raison sociale vide</div>{/if}
+											{#if r.state === 'invalid'}<div class="text-[11.5px] text-text-muted">Raison sociale vide</div>{:else if r.secteur}<div class="text-[11.5px] text-text-muted truncate">{r.secteur}</div>{/if}
 										</td>
 										<td class="px-3.5 py-2.5 border-b border-hairline align-middle">
 											{#if r.localite}<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11.5px] font-semibold bg-info-light text-info-deep truncate max-w-full">{r.localite}</span>{:else}<span class="text-text-muted text-xs">-</span>{/if}
@@ -495,21 +511,16 @@
 						{#if !previewLoading}<Icon name="arrow_forward" size={16} />{/if}
 					</button>
 				{:else}
-					<div class="flex items-center gap-3.5 min-w-0">
-						<button type="button" onclick={() => { step = 2; }} class="inline-flex items-center gap-1.5 px-3.5 py-2.5 text-[13px] font-semibold text-text-muted hover:text-text cursor-pointer shrink-0">
-							<Icon name="chevron_left" size={15} />Retour
-						</button>
-						{#if preview && preview.stats.duplicates + preview.stats.invalid > 0}
-							<span class="text-[11.5px] text-text-muted truncate hidden sm:inline">Les {preview.stats.duplicates} doublon{preview.stats.duplicates > 1 ? 's' : ''} et {preview.stats.invalid} ligne{preview.stats.invalid > 1 ? 's' : ''} en erreur ne seront pas importés.</span>
-						{/if}
-					</div>
+					<button type="button" onclick={() => { step = 2; }} class="inline-flex items-center gap-1.5 px-3.5 py-2.5 text-[13px] font-semibold text-text-muted hover:text-text cursor-pointer shrink-0">
+						<Icon name="chevron_left" size={15} />Retour
+					</button>
 					<button
 						type="button"
 						onclick={runImport}
 						disabled={importing || !preview || preview.stats.toImport === 0}
 						class="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-[13.5px] font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg shadow-sm disabled:opacity-45 disabled:cursor-not-allowed cursor-pointer transition-colors shrink-0"
 					>
-						{importing ? 'Import en cours…' : `Importer ${preview?.stats.toImport ?? 0} prospect${(preview?.stats.toImport ?? 0) > 1 ? 's' : ''} dans ${marqueName}`}
+						{importing ? 'Import en cours…' : (preview?.stats.toImport ?? 0) === 0 ? 'Aucun prospect à importer' : `Importer ${preview?.stats.toImport ?? 0} prospect${(preview?.stats.toImport ?? 0) > 1 ? 's' : ''} dans ${marqueName}`}
 					</button>
 				{/if}
 			</div>
