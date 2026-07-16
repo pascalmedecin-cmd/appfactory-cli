@@ -17,6 +17,13 @@ export interface FeatureFlags {
 	 * Activation : `... raw_app_meta_data || '{"ff_crm_listes_v2": true}'::jsonb`.
 	 */
 	ffCrmListesV2: boolean;
+	/**
+	 * Cohérence UI - bandeau de page in-page (icône + sur-titre + titre + description) façon
+	 * Gouvernance, avec Header fixe allégé (le titre migre du Header vers le bandeau).
+	 * ON → bandeau PageBand + titre masqué dans le Header sur les pages adoptées. OFF → rendu actuel.
+	 * Spec : `docs/COHERENCE-UI-BANDEAU.md`. Activation : `... || '{"ff_page_bandeau": true}'::jsonb`.
+	 */
+	ffPageBandeau: boolean;
 }
 
 export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
@@ -24,6 +31,7 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
 	ffCrmMobileV3: false,
 	ffDecoupe: false,
 	ffCrmListesV2: false,
+	ffPageBandeau: false,
 };
 
 /**
@@ -37,5 +45,6 @@ export function readFeatureFlags(appMetadata: Record<string, unknown> | null | u
 		ffCrmMobileV3: appMetadata['ff_crm_mobile_v3'] === true,
 		ffDecoupe: appMetadata['ff_decoupe'] === true,
 		ffCrmListesV2: appMetadata['ff_crm_listes_v2'] === true,
+		ffPageBandeau: appMetadata['ff_page_bandeau'] === true,
 	};
 }

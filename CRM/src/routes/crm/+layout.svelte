@@ -6,6 +6,7 @@
 	import Toast from '$lib/components/Toast.svelte';
 	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
 	import { config, CRM_BASE } from '$lib/config';
+	import { isBandeauActive } from '$lib/pageBandeau';
 	import { page } from '$app/state';
 	// Audit 360 V2c H-21 : coquille workspace partagée (factorisation CSS cross-pages).
 	import '$lib/styles/workspace.css';
@@ -21,6 +22,11 @@
 		const match = all.find(item => item.href === CRM_BASE ? path === CRM_BASE : path.startsWith(item.href));
 		return match?.label ?? '';
 	});
+
+	// Cohérence UI : le Header masque son titre + sous-titre sur les routes ayant adopté le bandeau
+	// in-page (source unique isBandeauActive, partagée avec les pages → titre et bandeau ne peuvent
+	// jamais diverger). Calcul serveur-safe via page.url.pathname (pas de flash de titre à l'hydratation).
+	const bandeauHere = $derived(isBandeauActive(data.featureFlags, page.url.pathname));
 
 	// Fermer le menu mobile sur navigation (filet de sécurité pour les navigations
 	// programmatiques : un clic dans la page qui change de route alors que le drawer
@@ -62,7 +68,7 @@
 		<Sidebar bind:collapsed={sidebarCollapsed} currentPath={page.url.pathname} unreadIntelligence={data.unreadIntelligence} premium={data.featureFlags?.ffCrmListesV2 === true} marque={data.marqueActive} onNavigate={() => mobileMenuOpen = false} />
 	</div>
 
-	<Header user={data.user} {sidebarCollapsed} onMenuToggle={() => mobileMenuOpen = !mobileMenuOpen} pageTitle={pageTitle()} marque={data.marqueActive} />
+	<Header user={data.user} {sidebarCollapsed} onMenuToggle={() => mobileMenuOpen = !mobileMenuOpen} pageTitle={pageTitle()} hideTitle={bandeauHere} marque={data.marqueActive} />
 
 	<main
 		class="pt-(--header-height) min-h-screen bg-surface transition-all duration-200"

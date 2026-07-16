@@ -31,6 +31,30 @@ describe('readFeatureFlags - ffCrmListesV2 (Vague 2)', () => {
 			ffCrmMobileV3: false,
 			ffDecoupe: true,
 			ffCrmListesV2: true,
+			ffPageBandeau: false,
 		});
+	});
+});
+
+describe('readFeatureFlags - ffPageBandeau (Cohérence UI)', () => {
+	it('défaut false (metadata absent ou vide)', () => {
+		expect(readFeatureFlags(null).ffPageBandeau).toBe(false);
+		expect(readFeatureFlags(undefined).ffPageBandeau).toBe(false);
+		expect(readFeatureFlags({}).ffPageBandeau).toBe(false);
+		expect(DEFAULT_FEATURE_FLAGS.ffPageBandeau).toBe(false);
+	});
+
+	it('true seulement si strictement === true', () => {
+		expect(readFeatureFlags({ ff_page_bandeau: true }).ffPageBandeau).toBe(true);
+		expect(readFeatureFlags({ ff_page_bandeau: 'true' }).ffPageBandeau).toBe(false);
+		expect(readFeatureFlags({ ff_page_bandeau: 1 }).ffPageBandeau).toBe(false);
+		expect(readFeatureFlags({ ff_page_bandeau: false }).ffPageBandeau).toBe(false);
+	});
+
+	it('isolation : activer le bandeau ne touche pas les autres flags', () => {
+		const f = readFeatureFlags({ ff_page_bandeau: true });
+		expect(f.ffCrmMobileV2).toBe(false);
+		expect(f.ffCrmListesV2).toBe(false);
+		expect(f.ffDecoupe).toBe(false);
 	});
 });

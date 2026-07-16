@@ -18,6 +18,8 @@
 	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import PageBand from '$lib/components/PageBand.svelte';
+	import { isBandeauActive } from '$lib/pageBandeau';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { toasts } from '$lib/stores/toast';
 	import {
@@ -193,6 +195,15 @@
 
 	// Vague 2 « listes premium » (réversible par flag JWT). OFF → rendu actuel, zéro régression.
 	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+	// Cohérence UI : bandeau de page in-page. OFF (flag ou route non adoptée) → rendu actuel strict.
+	// Même source unique que le Header (isBandeauActive) → le titre ne peut jamais être en double ni
+	// absent. Le compteur (ex-sous-titre du Header) migre dans la pastille du bandeau.
+	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
+	const bandeauCount = $derived(
+		data.tabCounts.toutes === 0
+			? 'Aucune entreprise'
+			: `${data.tabCounts.toutes} entreprise${data.tabCounts.toutes > 1 ? 's' : ''}`,
+	);
 	// Map entreprise_id -> étape active la plus avancée (helper pur, O(n) sur les opportunités).
 	const stageByEntreprise = $derived(buildActiveStageByEntreprise(data.opportunites));
 
@@ -377,12 +388,30 @@
 </script>
 
 <div class="ws-page">
-	<div class="ws-page-actions">
-		<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
-			<Icon name="add" size={18} />
-			Ajouter
-		</button>
-	</div>
+	{#if bandeau}
+		<PageBand
+			icon="business"
+			eyebrow="Le répertoire"
+			title="Entreprises"
+			desc="Toutes les sociétés repérées, qualifiées ou à qualifier."
+			descMobile="Repérées, qualifiées, à qualifier."
+			count={bandeauCount}
+		>
+			{#snippet actions()}
+				<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
+					<Icon name="add" size={18} />
+					Ajouter
+				</button>
+			{/snippet}
+		</PageBand>
+	{:else}
+		<div class="ws-page-actions">
+			<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
+				<Icon name="add" size={18} />
+				Ajouter
+			</button>
+		</div>
+	{/if}
 
 	{#if premium}
 		<EntreprisesKpiStrip values={data.kpi} />
@@ -557,14 +586,16 @@
 	</div>
 </div>
 
-<button
-	type="button"
-	class="ws-fab"
-	aria-label="Ajouter une entreprise"
-	onclick={openCreate}
->
-	<Icon name="add" size={20} />
-</button>
+{#if !bandeau}
+	<button
+		type="button"
+		class="ws-fab"
+		aria-label="Ajouter une entreprise"
+		onclick={openCreate}
+	>
+		<Icon name="add" size={20} />
+	</button>
+{/if}
 
 <!-- SlideOut détail entreprise -->
 <SlideOut bind:open={slideOutOpen} title={selectedEntreprise?.raison_sociale ?? ''}>

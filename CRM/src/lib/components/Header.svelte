@@ -4,7 +4,9 @@
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import type { User } from '@supabase/supabase-js';
 
-	let { user, sidebarCollapsed = false, onMenuToggle, pageTitle = '', marque = 'filmpro' }: { user: User | null; sidebarCollapsed?: boolean; onMenuToggle?: () => void; pageTitle?: string; marque?: 'filmpro' | 'led' } = $props();
+	// hideTitle : sur les pages dotées du bandeau in-page (flag ff_page_bandeau), le titre + le
+	// sous-titre migrent dans le bandeau ; le Header ne les affiche plus (fin du double-titre).
+	let { user, sidebarCollapsed = false, onMenuToggle, pageTitle = '', marque = 'filmpro', hideTitle = false }: { user: User | null; sidebarCollapsed?: boolean; onMenuToggle?: () => void; pageTitle?: string; marque?: 'filmpro' | 'led'; hideTitle?: boolean } = $props();
 
 	const marqueLabel = $derived(marque === 'led' ? 'LED Studio' : 'FilmPro');
 
@@ -31,10 +33,10 @@
 				<Icon name="menu" size={22} class="text-text" />
 			</button>
 		{/if}
-		{#if pageTitle}
+		{#if pageTitle && !hideTitle}
 			<h1 class="header-title font-semibold text-text">{pageTitle}</h1>
 		{/if}
-		{#if $pageSubtitle}
+		{#if $pageSubtitle && !hideTitle}
 			<span class="header-subtitle text-text-muted">{$pageSubtitle}</span>
 		{/if}
 	</div>
