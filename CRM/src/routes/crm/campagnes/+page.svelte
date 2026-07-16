@@ -317,10 +317,6 @@
 
 <div class="ws-bound">
 	<header class="head">
-		<div>
-			<h2>Campagnes</h2>
-			<p>Regrouper les prospects par action commerciale. Une entreprise peut porter plusieurs campagnes.</p>
-		</div>
 		<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
 			<Icon name="add" size={17} /> Nouvelle campagne
 		</button>
@@ -535,25 +531,13 @@
 		   (portées par .head/.toolbar/.listcard) ; plus de bridage 1160 qui « resserrait » la page. */
 		padding: 8px 0 64px;
 	}
+	/* Barre d'action de la page : bouton primaire seul, aligné à droite au-dessus du KPI strip
+	   (convention refonte, cf. .ws-page-actions des pages Entreprises/Contacts). Le titre + le
+	   compteur vivent dans le bandeau du haut (Header + $pageSubtitle) : plus de doublon interne. */
 	.head {
 		display: flex;
-		align-items: flex-end;
-		justify-content: space-between;
-		gap: 24px;
+		justify-content: flex-end;
 		padding: 4px 32px 18px;
-	}
-	.head h2 {
-		margin: 0;
-		font-size: 22px;
-		font-weight: 700;
-		letter-spacing: -0.02em;
-		color: var(--color-text);
-	}
-	.head p {
-		margin: 4px 0 0;
-		font-size: 13px;
-		color: var(--color-text-muted);
-		max-width: 60ch;
 	}
 	/* Bannière persistante d'échec d'import/étiquetage (jamais un toast auto-fermé). */
 	.import-alert {
