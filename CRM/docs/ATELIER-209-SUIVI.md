@@ -29,7 +29,7 @@ base : ni fork, ni deuxième application. Livraison par **runs** pilotés par `/
 | **0** | Les 7 vérifications | **Terminé (5/7)** le 2026-07-14 ; V6/V7 en attente comptes Pascal | - |
 | 1 | Atelier 209 existe (nom, connexion refaite, droits admin réparés) | **DÉPLOYÉ prod le 2026-07-15** (identité + rôles/RLS + connexion 4 adresses). Seul le renommage d'URL `atelier209.vercel.app` est **différé** (config domaine Vercel à faire proprement) - app à `filmpro-portail.vercel.app` | Portail · Connexion **(validés)** |
 | 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) + **golden CRM revu (couleurs + Inter partout, pas de refonte) + chrome (sidemenu/header/footer) décliné par marque LED/FilmPro pour distinguer** (note Pascal 15/07) | **DÉPLOYÉ prod le 2026-07-15** (migration marque appliquée + vérifiée, **non-régression prouvée**, smoke prod vert ; logo LED corrigé HD). Live `filmpro-portail.vercel.app`. LED reste vide jusqu'au Run 3. | Sélecteur · Menu teinté · Golden CRM **(validés)** |
-| 3 | Les prospects LED entrent (import de liste, sources par marque, source unique secteurs) | **Gate design VALIDÉ (2026-07-15)** - code en cours. Spec : `docs/ATELIER-209-RUN3-SPEC.md` | Import **(validé)** |
+| 3 | Les prospects LED entrent (import de liste, sources par marque, source unique secteurs) | **DÉPLOYÉ prod le 2026-07-16** (D4 appliquée, merge `4e3f149`, smoke vert). Reste : sign-off visuel Pascal sur la prod. | Import **(validé)** |
 | 4 | On trouve le décideur (connecteur Hunter) | Bloqué par V6 | Enrichissement |
 | 5 | On envoie et on mesure (Pingen, relance, provenance, rendement) | Bloqué par V7 | Envoi postal · Provenance |
 | 6 | L'email personnalisé (moteur, plafond, expéditeurs de marque) | À venir | Email + plafond |
@@ -405,9 +405,14 @@ et `normalizeCompanyName` garde les accents (« Régie » ≠ « Regie »). Le m
   écriture, oracle non-régression). Correctifs clés : NPA canonique unique (round-trip dédup réparé), pagination
   `fetchLeadDedupSets` (>1000 leads), focus trap re-corralé, 3e miroir D3 (`SourceSearchFields`) dédupliqué.
   **0 Critical/High.** → [[audit_secu_2026-07-16_atelier209_run3_import_liste]].
-- [ ] **Application prod D4 + déploiement** (gate Pascal) : migration `20260716000001` à appliquer en prod via `pg`
-  (comme Run 2), merge `run3-import` → `main`, smoke prod. **Sign-off visuel Pascal du flux d'import live** (chantier :
-  Pascal valide dans le navigateur, comme Run 1/2).
+- [x] **Application prod D4 + déploiement — FAIT le 2026-07-16.** Migration `20260716000001` appliquée en prod via `pg`
+  (`scripts/apply-run3-d4-migration.mjs`) : CHECK `prospect_leads_source_check` élargi à 10 valeurs (`manuel` inclus),
+  **312 leads existants préservés, 0 invalidée**. Merge `run3-import` → `main` (`4e3f149`), push, Vercel **Ready** (build 40s).
+  **Smoke prod vert** : `/login` 200 + « Atelier 209 » ; `POST /api/prospection/import-liste` sans session → 303 (route
+  déployée + gate auth actif). Live à `filmpro-portail.vercel.app`.
+- [ ] **Sign-off visuel Pascal du flux d'import** : à faire **sur la prod directement** (décision Pascal 16/07 : personne
+  ne l'utilise encore). Prochaine session commence par là : ouvrir Prospection → onglet « Ma liste » (ou bouton « Importer
+  une liste » sur Entreprises) → déposer un CSV → colonnes → aperçu → import.
 
 **Bloqués par un geste Pascal** (n'empêchent PAS le Run 3) : V6 Hunter (→ Run 4) et V7 Pingen (→ Run 5),
 comptes à créer.
