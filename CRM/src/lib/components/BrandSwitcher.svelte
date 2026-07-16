@@ -16,7 +16,9 @@
 	// toujours les 2 marques, indépendamment de l'environnement actif).
 	const ENVS: Env[] = [
 		{ key: 'filmpro', name: 'FilmPro', initials: 'FP', color: '#2F5A9E', logo: '/FilmPro_logo_white.svg' },
-		{ key: 'led', name: 'LED Studio', initials: 'LS', color: '#FF05A8', logo: '/atelier209/ledstudio-magenta.svg' }
+		// Lettrage BLANC sur le sidebar sombre (comme FilmPro) : le magenta saturé y « vibre »
+		// (frange chromatique → paraît flou). La pastille « LS » du menu reste magenta (`color`).
+		{ key: 'led', name: 'LED Studio', initials: 'LS', color: '#FF05A8', logo: '/atelier209/ledstudio-white.svg' }
 	];
 
 	const active = $derived(ENVS.find((e) => e.key === marque) ?? ENVS[0]);

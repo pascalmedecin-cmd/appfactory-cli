@@ -99,7 +99,9 @@ export function normalizeLocalityKey(localite: string | null | undefined, npa?: 
 /**
  * Téléphone → numéro national suisse canonique (chiffres seuls, préfixes pays/0 retirés).
  * « +41 22 839 39 39 » / « 022 839 39 39 » / « 0228393939 » / « 0041 22 ... » → « 228393939 ».
- * null si < 7 chiffres (trop court pour identifier).
+ * null si < 7 chiffres (trop court pour identifier) OU si c'est un numéro de service mutualisé
+ * (0800 gratuit, 084x tarif partagé) : ces numéros sont souvent partagés entre succursales /
+ * points de vente d'une même enseigne → pas une identité de dédup (sinon fusion de sites distincts).
  */
 export function normalizePhoneCH(telephone: string | null | undefined): string | null {
 	let d = String(telephone ?? '').replace(/\D/g, '');
@@ -107,7 +109,9 @@ export function normalizePhoneCH(telephone: string | null | undefined): string |
 	else if (d.startsWith('41') && d.length > 9) d = d.slice(2);
 	else if (d.startsWith('0')) d = d.slice(1);
 	if (d.length < 7) return null;
-	return d.slice(-9);
+	const nat = d.slice(-9);
+	if (/^8(00|4\d)/.test(nat)) return null;
+	return nat;
 }
 
 /**
@@ -125,9 +129,22 @@ export function normalizeEmail(email: string | null | undefined): string | null 
 }
 
 /**
+ * Domaines de plateforme / réseau social / annuaire mutualisés : un même hôte est partagé par des
+ * milliers d'entreprises (page Facebook, site `sites.google.com`, fiche `local.ch`...). Il ne DOIT
+ * PAS servir de signal d'identité de dédup, sinon 2 sociétés distinctes fusionnent en faux doublon
+ * (et l'une est perdue en silence). Comparaison sur l'hôte exact ou un sous-domaine (`x.facebook.com`).
+ */
+const SHARED_HOST_DOMAINS: readonly string[] = [
+	'facebook.com', 'instagram.com', 'linkedin.com', 'twitter.com', 'x.com', 'youtube.com',
+	'tiktok.com', 'pinterest.com', 'linktr.ee', 'sites.google.com', 'business.site',
+	'wixsite.com', 'wixstudio.com', 'jimdosite.com', 'blogspot.com', 'wordpress.com',
+	'google.com', 'goo.gl', 'yelp.com', 'tripadvisor.com', 'local.ch', 'search.ch',
+];
+
+/**
  * Site web → domaine hôte canonique (sans protocole, www, chemin, requête, port). Minuscule.
  * « https://www.naef.ch/contact » / « naef.ch » / « http://naef.ch/ » → « naef.ch ».
- * null si pas de point (pas un domaine).
+ * null si pas de point (pas un domaine) OU si l'hôte est une plateforme mutualisée (cf. denylist).
  */
 export function normalizeDomain(site_web: string | null | undefined): string | null {
 	let s = normalizeNFDTrim(String(site_web ?? ''));
@@ -135,6 +152,7 @@ export function normalizeDomain(site_web: string | null | undefined): string | n
 	s = s.replace(/^[a-z]+:\/\//, '').replace(/^www\./, '');
 	s = s.split('/')[0].split('?')[0].split('#')[0].split(':')[0];
 	if (!s.includes('.') || s.startsWith('.') || s.endsWith('.')) return null;
+	if (SHARED_HOST_DOMAINS.some((p) => s === p || s.endsWith('.' + p))) return null;
 	return s;
 }
 

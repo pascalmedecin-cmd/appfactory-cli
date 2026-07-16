@@ -531,9 +531,8 @@
 
 <style>
 	.ws-bound {
-		/* Marges resserrées / alignées sur la page Étiquettes et les autres surfaces (gouttière 32px). */
-		max-width: 1160px;
-		margin: 0 auto;
+		/* Pleine largeur (retour Pascal 16/07) : mêmes gouttières 32px que les autres pages CRM
+		   (portées par .head/.toolbar/.listcard) ; plus de bridage 1160 qui « resserrait » la page. */
 		padding: 8px 0 64px;
 	}
 	.head {

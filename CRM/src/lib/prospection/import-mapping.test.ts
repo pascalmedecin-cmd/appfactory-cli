@@ -27,8 +27,19 @@ describe('autoMapColumns - vraies listes Pascal (scrape Google Maps)', () => {
 		expect(autoMapColumns(['CANTON', 'NOM'])).toEqual([null, 'raison_sociale']);
 	});
 
-	it('un même champ n’est attribué qu’à UNE colonne (première gagne)', () => {
-		expect(autoMapColumns(['NOM', 'ENTREPRISE'])).toEqual(['raison_sociale', null]);
+	it('un même champ n’est attribué qu’à UNE colonne : la société prioritaire gagne (pas la 1re du fichier)', () => {
+		// Correctif stress : « Entreprise » l'emporte sur « Nom » même placé plus à gauche.
+		expect(autoMapColumns(['NOM', 'ENTREPRISE'])).toEqual([null, 'raison_sociale']);
+	});
+
+	it('liste de contacts : « Entreprise » gagne sur « Nom » (personne), « Prénom » ignoré', () => {
+		expect(autoMapColumns(['Prénom', 'Nom', 'Entreprise', 'Email'])).toEqual([
+			null, null, 'raison_sociale', 'email',
+		]);
+	});
+
+	it('sans colonne société explicite, « Nom » reste mappé en raison_sociale (seul candidat)', () => {
+		expect(autoMapColumns(['NOM', 'VILLE'])).toEqual(['raison_sociale', 'localite']);
 	});
 
 	it('colonnes inconnues → null (pas de faux positif)', () => {

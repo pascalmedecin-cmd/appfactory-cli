@@ -187,4 +187,40 @@ describe('POST /api/prospection/import-liste', () => {
 		const res = await POST(makeEvent({ preview: false, columns: COLS, mapping: MAP, rows: [['Nouvelle X', '1201', 'Genève', '', '']] }, { insertError: 'boom' }).event);
 		expect(res.status).toBe(500);
 	});
+
+	it('assainit les caractères de contrôle (octet NUL) avant insert (pas de 500 Postgres)', async () => {
+		const ev = makeEvent({
+			preview: false,
+			columns: ['NOM', 'NPA', 'VILLE'],
+			mapping: ['raison_sociale', 'npa', 'localite'],
+			rows: [['Regie\u0000 Naef', '1204', 'Genève']],
+		});
+		const res = await POST(ev.event);
+		expect(res.status).toBe(200);
+		const inserted = ev.captured.current as Array<Record<string, unknown>>;
+		expect(inserted).toHaveLength(1);
+		expect(String(inserted[0].raison_sociale)).not.toContain('\u0000');
+		expect(inserted[0].raison_sociale).toBe('Regie Naef');
+	});
+
+	it('aperçu et import calculent le MÊME secteur (Vitrier → menuiserie, pas d’aperçu trompeur)', async () => {
+		const cols = ['NOM', 'CATEGORIE', 'NPA', 'VILLE'];
+		const map = ['raison_sociale', 'secteur_detecte', 'npa', 'localite'];
+		const rows = [['Dupont SA', 'Vitrier', '1204', 'Genève']];
+		const prev = await POST(makeEvent({ preview: true, columns: cols, mapping: map, rows }).event);
+		expect((await prev.json()).sample[0].secteur).toBe('menuiserie');
+		const ev = makeEvent({ preview: false, columns: cols, mapping: map, rows });
+		await POST(ev.event);
+		const inserted = ev.captured.current as Array<Record<string, unknown>>;
+		expect(inserted[0].secteur_detecte).toBe('menuiserie');
+	});
+
+	it('message d’erreur en français, sans amplification (un seul message)', async () => {
+		const bigCell = [['x'.repeat(501), '1201', 'Genève', '', '']];
+		const res = await POST(makeEvent({ columns: COLS, mapping: MAP, rows: bigCell }).event);
+		expect(res.status).toBe(400);
+		const data = await res.json();
+		expect(data.error).toContain('Fichier non conforme');
+		expect(data.error).toContain('500 caractères');
+	});
 });

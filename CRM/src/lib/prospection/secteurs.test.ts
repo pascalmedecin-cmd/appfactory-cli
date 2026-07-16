@@ -60,6 +60,12 @@ describe('detectSecteur filmpro - robustesse', () => {
 	it('toiture/étanchéité classées menuiserie', () => {
 		expect(detectSecteur('Toiture & Étanchéité Sàrl', 'filmpro')).toBe('menuiserie');
 	});
+	it('« Vitrier » (catégorie Google Maps du cœur de cible FilmPro) classé menuiserie', () => {
+		// Correctif stress : « vitrier » ne contient pas la sous-chaîne « vitre » → n'était pas détecté.
+		expect(detectSecteur('Vitrier', 'filmpro')).toBe('menuiserie');
+		expect(detectSecteur('M. Vitrier Sàrl', 'filmpro')).toBe('menuiserie');
+		expect(detectSecteur('Dupont SA', 'filmpro')).toBeNull(); // témoin : pas de faux positif
+	});
 	it('déterministe (ordre des clés)', () => {
 		const r1 = detectSecteur('Bureau technique et architecte', 'filmpro');
 		const r2 = detectSecteur('Bureau technique et architecte', 'filmpro');

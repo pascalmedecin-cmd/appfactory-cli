@@ -960,11 +960,8 @@ Merci !`
 
 <style>
 	.cp-bound {
-		/* Bornage identique aux pages soeurs (liste Campagnes + Étiquettes) : largeur max 1160,
-		   centré, 0 padding horizontal (les marges latérales viennent de la gouttière du layout
-		   /crm, commune à toutes les pages). Padding vertical aligné sur la liste. */
-		max-width: 1160px;
-		margin: 0 auto;
+		/* Pleine largeur (retour Pascal 16/07) : aligné sur la liste Campagnes et les autres pages
+		   CRM (plus de bridage 1160 centré). Gouttières latérales portées par les blocs internes. */
 		padding: 8px 0 64px;
 	}
 

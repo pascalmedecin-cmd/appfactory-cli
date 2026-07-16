@@ -9,6 +9,7 @@ import { calculerScore } from '$lib/scoring';
 import { fetchLeadDedupSets } from '$lib/server/prospection/import-dedup-server';
 import { dedupCandidates, type LeadDedupInput, type DedupAxis } from '$lib/server/prospection/import-dedup';
 import type { Canton } from '$lib/schemas';
+import type { Marque } from '$lib/marque';
 
 /**
  * POST /api/prospection/import-liste — import d'une liste (source 'manuel', Run 3 Atelier 209).
@@ -45,9 +46,26 @@ interface PreviewRow {
 
 const SAMPLE_CAP = 200;
 
+/** Retire les caractères de contrôle (dont l'octet NUL 0x00, rejeté par Postgres `text`) puis trim.
+ *  Implémenté par code de caractère (pas de regex de contrôle) pour rester lisible et sûr. */
+function clean(v: string | undefined): string {
+	const s = String(v ?? '');
+	let out = '';
+	for (let i = 0; i < s.length; i++) {
+		const c = s.charCodeAt(i);
+		if (c > 31 && c !== 127) out += s[i];
+	}
+	return out.trim();
+}
+
 function nn(v: string | undefined): string | null {
-	const s = (v ?? '').trim();
+	const s = clean(v);
 	return s.length > 0 ? s : null;
+}
+
+/** Secteur détecté = ce qui sera STOCKÉ (nom + catégorie brute du fichier). Aperçu = import. */
+function computeSecteur(raison_sociale: string, rawSecteur: string | null, marque: Marque): string | null {
+	return detectSecteur([raison_sociale, rawSecteur ?? ''].join(' '), marque);
 }
 
 export const POST = async ({ request, locals }: RequestEvent) => {
@@ -62,8 +80,9 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const raw = await request.json().catch(() => null);
 	const parsed = ImportListeSchema.safeParse(raw);
 	if (!parsed.success) {
-		const msg = parsed.error.issues.map((i) => i.message).join(', ');
-		return json({ error: `Import invalide : ${msg}` }, { status: 400 });
+		// Un seul message FR (le 1er) : pas d'amplification (Zod émet 1 issue par cellule fautive).
+		const msg = parsed.error.issues[0]?.message ?? 'format non reconnu';
+		return json({ error: `Fichier non conforme : ${msg}.` }, { status: 400 });
 	}
 	const { preview, columns, mapping, rows: rawRows } = parsed.data;
 
@@ -83,7 +102,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		const npa4 = extractNpa4(f.npa);
 		return {
 			line: idx + 1,
-			raison_sociale: (f.raison_sociale ?? '').trim(),
+			raison_sociale: clean(f.raison_sociale),
 			localite: nn(f.localite),
 			npa: npa4, // canonique (4 chiffres ou null) : dédup ET stockage partagent cette valeur
 			telephone: nn(f.telephone),
@@ -95,8 +114,10 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		};
 	});
 
-	// Dédup multi-axes vs les leads EXISTANTS de la marque (chargés au moment réel = TOCTOU-safe)
-	// + intra-payload. Fonctions pures stress-testées ; l'I/O est marque-scopée.
+	// Dédup multi-axes vs les leads EXISTANTS de la marque + intra-payload. L'axe 1 (nom+localité)
+	// est verrouillé en base par l'index unique (marque,'manuel',source_id) = idempotent même sous
+	// course. Les axes 2-4 (tél/e-mail/domaine) sont une couche APPLICATIVE (sets chargés ici) :
+	// robustes en séquentiel, best-effort sous deux imports strictement concurrents.
 	const existing = await fetchLeadDedupSets(locals.supabase, locals.marque);
 	const result = dedupCandidates(rows, existing);
 
@@ -112,7 +133,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			return {
 				line: r.line,
 				raison_sociale: r.raison_sociale || `Ligne ${r.line}`,
-				secteur: r.rawSecteur ?? detectSecteur(r.raison_sociale, locals.marque),
+				secteur: computeSecteur(r.raison_sociale, r.rawSecteur, locals.marque),
 				localite: r.localite ?? r.npa,
 				npa: r.npa,
 				state: st.state,
@@ -130,7 +151,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	// -- Mode import : insère les nouveaux (re-dédup déjà faite ci-dessus au moment réel). --
 	const now = new Date().toISOString();
 	const inserts = result.toImport.map(({ row, sourceId }) => {
-		const secteur = detectSecteur([row.raison_sociale, row.rawSecteur ?? ''].join(' '), locals.marque);
+		const secteur = computeSecteur(row.raison_sociale, row.rawSecteur, locals.marque);
 		const score = calculerScore({
 			canton: row.canton,
 			description: null,

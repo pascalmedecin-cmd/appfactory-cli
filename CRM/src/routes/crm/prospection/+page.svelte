@@ -784,6 +784,16 @@
 							<span class="flex-1">Créer une alerte</span>
 						</button>
 						{/if}
+						{#if data.tab !== 'maliste'}
+						<button
+							role="menuitem"
+							onclick={() => { importListeOpen = true; mobileMenuOpen = false; }}
+							class="w-full flex items-center gap-3 px-4 py-3 text-sm text-text hover:bg-surface-alt cursor-pointer text-left"
+						>
+							<Icon name="cloud_upload" size={18} class="text-primary" />
+							<span class="flex-1">Importer une liste</span>
+						</button>
+						{/if}
 					</div>
 				{/if}
 			</div>
@@ -1036,14 +1046,15 @@
 						<span>Exporter CSV</span>
 					</a>
 				{/if}
-				<!-- Run 3 : import de liste en action SECONDAIRE sur l'onglet Entreprises (maquette Écran 1),
-				     à côté de « Rechercher une entreprise ». Sur l'onglet « Ma liste », c'est le CTA principal. -->
-				{#if data.tab === 'entreprises'}
+				<!-- Retour Pascal 16/07 : import PERSISTANT et proéminent (visible dès l'arrivée, sur tous
+				     les onglets sauf « Ma liste » où c'est déjà le CTA principal). Style outlined-primary
+				     pour être découvrable sans dupliquer le bouton bleu contextuel « Rechercher ». -->
+				{#if data.tab !== 'maliste'}
 				<button
 					type="button"
 					onclick={() => (importListeOpen = true)}
 					aria-label="Importer une liste de prospects depuis un fichier CSV"
-					class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors"
+					class="hidden md:inline-flex items-center gap-2 h-10 px-3.5 box-border text-sm font-semibold text-primary border border-primary rounded-lg bg-white hover:bg-primary-light cursor-pointer transition-colors"
 				>
 					<Icon name="cloud_upload" size={16} />
 					<span>Importer une liste</span>

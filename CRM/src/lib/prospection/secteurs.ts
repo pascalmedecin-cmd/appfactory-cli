@@ -27,7 +27,7 @@ const FILMPRO_SECTEURS: Record<string, readonly string[]> = {
 	electricite: ['electricite', 'elektro', 'electricien', 'electrician', 'electrical'],
 	peinture: ['peinture', 'platrerie', 'painter', 'painting', 'maler'],
 	renovation: ['renovation', 'transformation', 'umbau'],
-	menuiserie: ['menuiserie', 'charpente', 'schreinerei', 'zimmerei', 'vitrerie', 'vitre', 'roofing', 'roofing contractor', 'toiture', 'etancheite', 'couvreur'],
+	menuiserie: ['menuiserie', 'charpente', 'schreinerei', 'zimmerei', 'vitrerie', 'vitre', 'vitrier', 'roofing', 'roofing contractor', 'toiture', 'etancheite', 'couvreur'],
 	ingenieur: ['ingenieur', 'bureau technique', 'ingenieurbuero'],
 	regie: ['regie', 'facility', 'immobilier', 'verwaltung', 'real estate', 'real estate agency'],
 };
