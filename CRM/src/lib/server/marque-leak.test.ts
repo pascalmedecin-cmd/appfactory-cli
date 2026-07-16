@@ -32,11 +32,11 @@ const KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RUN = process.env.RUN_INTEGRATION === '1' && !!URL && !!KEY;
 
 // Fixtures du seed (supabase/seed.sql).
-const FP_CAMP = '22222222-0000-0000-0000-0000000000f1'; // « Regies Geneve T4 » (filmpro)
-const LED_CAMP = '22222222-0000-0000-0000-0000000000e1'; // « Enseignes Geneve 2026 » (led)
-const FP_LEAD = '11111111-0000-0000-0000-0000000000f1'; // Regie du Molard (filmpro)
-const LED_LEAD = '11111111-0000-0000-0000-0000000000e1'; // Palexpo Concept (led)
-const LED_LEAD_VIDE = '11111111-0000-0000-0000-0000000000e3'; // Neon Craft (led, statut vide)
+const FP_CAMP = '22222222-0000-4000-8000-0000000000f1'; // « Regies Geneve T4 » (filmpro)
+const LED_CAMP = '22222222-0000-4000-8000-0000000000e1'; // « Enseignes Geneve 2026 » (led)
+const FP_LEAD = '11111111-0000-4000-8000-0000000000f1'; // Regie du Molard (filmpro)
+const LED_LEAD = '11111111-0000-4000-8000-0000000000e1'; // Palexpo Concept (led)
+const LED_LEAD_VIDE = '11111111-0000-4000-8000-0000000000e3'; // Neon Craft (led, statut vide)
 
 describe.skipIf(!RUN)('Atelier 209 Run 2 - cloisonnement bi-marque (base jetable réelle)', () => {
 	let sb: SupabaseClient<Database>;
