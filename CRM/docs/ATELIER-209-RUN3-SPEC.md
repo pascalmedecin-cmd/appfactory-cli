@@ -8,6 +8,10 @@
 
 ## Objectif (une phrase)
 
+> **Décision finale Pascal (2026-07-16) : CSV/TSV uniquement** (pas d'Excel .xlsx direct - SheetJS écarté
+> pour ses CVE ; Excel → « Enregistrer sous CSV »). Les mentions « CSV/Excel » ci-dessous sont le cadrage
+> initial ; le livré n'accepte que CSV/TSV (`.xlsx` déposé → message d'aide, pas de crash).
+
 Un écran d'import de liste (Prospection) qui transforme un fichier CSV/Excel d'exposants de salon ou
 de commerces en `prospect_leads` de la marque active, **sans jamais créer de doublon** ni fuir entre
 marques - et qui rembourse au passage 3 dettes du code (D2 import cassé, D3 mots-clés en 5 copies,

@@ -29,7 +29,7 @@ base : ni fork, ni deuxième application. Livraison par **runs** pilotés par `/
 | **0** | Les 7 vérifications | **Terminé (5/7)** le 2026-07-14 ; V6/V7 en attente comptes Pascal | - |
 | 1 | Atelier 209 existe (nom, connexion refaite, droits admin réparés) | **DÉPLOYÉ prod le 2026-07-15** (identité + rôles/RLS + connexion 4 adresses). Seul le renommage d'URL `atelier209.vercel.app` est **différé** (config domaine Vercel à faire proprement) - app à `filmpro-portail.vercel.app` | Portail · Connexion **(validés)** |
 | 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) + **golden CRM revu (couleurs + Inter partout, pas de refonte) + chrome (sidemenu/header/footer) décliné par marque LED/FilmPro pour distinguer** (note Pascal 15/07) | **DÉPLOYÉ prod le 2026-07-15** (migration marque appliquée + vérifiée, **non-régression prouvée**, smoke prod vert ; logo LED corrigé HD). Live `filmpro-portail.vercel.app`. LED reste vide jusqu'au Run 3. | Sélecteur · Menu teinté · Golden CRM **(validés)** |
-| 3 | Les prospects LED entrent (import de liste, sources par marque, source unique secteurs) | **DÉPLOYÉ prod le 2026-07-16** (D4 appliquée, merge `4e3f149`, smoke vert). Reste : sign-off visuel Pascal sur la prod. | Import **(validé)** |
+| 3 | Les prospects LED entrent (import de liste, sources par marque, source unique secteurs) | **DÉPLOYÉ prod le 2026-07-16** (D4 appliquée, merge `4e3f149`, smoke vert). Reste : sign-off visuel Pascal sur la prod. | Import **(maquette validée ; sign-off prod à faire)** |
 | 4 | On trouve le décideur (connecteur Hunter) | Bloqué par V6 | Enrichissement |
 | 5 | On envoie et on mesure (Pingen, relance, provenance, rendement) | Bloqué par V7 | Envoi postal · Provenance |
 | 6 | L'email personnalisé (moteur, plafond, expéditeurs de marque) | À venir | Email + plafond |
@@ -398,7 +398,7 @@ et `normalizeCompanyName` garde les accents (« Régie » ≠ « Regie »). Le m
 - [x] **QA base réelle Colima** : `supabase db reset` rejoue les **51 migrations (dont D4)** + seed ; `marque-leak.test.ts`
   **étendu — 15/15 verts en base réelle** (import LED → 0 fuite, idempotence, dédup marque-scopée, **CSV réel
   format G7 de bout en bout** parse→mapping→endpoint→DB avec canton GE + « Vitrerie »→menuiserie). Baseline :
-  **Vitest 2730 verts** + 15 intégration, **svelte-check 0/0**, **build prod OK**.
+  **Vitest 2801 verts** (2730 avant revue → +71 après les 6 trous de test comblés) + 15 intégration, **svelte-check 0/0**, **build prod OK**.
 - [x] **Revue adversariale** (workflow 15 agents Opus : 5 dimensions review + verify indépendant par finding +
   critique de complétude). **8 findings confirmés (2 medium correctness/regression, 1 medium a11y, 5 low) TOUS
   corrigés** + 6 trous de test comblés (scoping dédup, course TOCTOU, bornes anti-DoS, invariant scoring, aperçu sans
