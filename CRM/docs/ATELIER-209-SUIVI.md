@@ -381,11 +381,33 @@ et `normalizeCompanyName` garde les accents (« Régie » ≠ « Regie »). Le m
   = 9 valeurs + `manuel`, élargissement pur), `SOURCES_LEAD` (schemas.ts), `sourceLabel`/`sourceOptions`
   (prospection-utils.ts), pastille `sourceMetaFor` → « Import manuel » (entreprisesFormat.ts), test anti-drift
   (schemas.test.ts). **130 tests verts**, svelte-check 0/0. Reste : `db reset` de vérif + application prod `pg`.
-- [ ] **Endpoint** `POST /api/prospection/import-liste` (aperçu + import, `fetchLeadDedupSets` I/O, réutilise
-  `candidateToInsertRow` avec `source:'manuel'` + `source_id` synthétique, schéma Zod d'import canton-optionnel).
-- [ ] **UI** modale 3 étapes (maquette validée) + bouton d'entrée Prospection.
-- [ ] **D3** source unique secteurs marque-aware (+ golden non-régression FilmPro) ; sources par marque (termes).
-- [ ] **QA** Colima (`db reset` + seed) + `marque-leak.test.ts` étendu (import LED → 0 fuite) + revue adversariale + audit sécu daté.
+- [x] **Endpoint** `POST /api/prospection/import-liste` (aperçu + import). Auth + gate source `manuel` ;
+  `fetchLeadDedupSets` (I/O marque-scopé, nouveau `import-dedup-server.ts`) ; mapping assaini serveur ;
+  `npaToCanton` (déduction canton, nouveau `npa-canton.ts` + 30 tests d'ancres) ; `detectSecteur` marque-aware ;
+  re-score ; **upsert idempotent** sur l'index unique `(marque,'manuel',source_id)` ; `ImportListeSchema` Zod (bornes
+  5000 lignes/60 cols/500 chars). 9 tests d'endpoint (mock supabase) verts.
+- [x] **UI** modale 3 étapes `ImportListeModal.svelte` (miroir de la maquette validée : dropzone CSV/TSV + modèle,
+  mapping assisté auto-reconnu, aperçu statbar + table états). Parse client (`$lib/utils/csv` extrait, +TSV/`;`),
+  auto-mapping (`import-mapping.ts` + 14 tests). Onglet **« Ma liste »** (source manuel) + bouton « Importer une liste »
+  sur l'onglet Entreprises (fidèle maquette Écran 1) + CTA/empty-state sur Ma liste. `.xlsx` refusé proprement
+  (message « Enregistrer sous CSV »).
+- [x] **D3** source unique secteurs **marque-aware** (`$lib/prospection/secteurs.ts` : filmpro = super-ensemble
+  google-places byte-identique + vitrerie/toiture partout ; led [à valider Pascal] enseigne/stand/signalétique/
+  événementiel/retail). 3 détecteurs recâblés (`locals.marque`), copie morte `config.ts` + mirror `ImportModal`
+  supprimés, mirror activités → source unique `activity-types.ts`. **Golden non-régression** (oracle) vert.
+- [x] **QA base réelle Colima** : `supabase db reset` rejoue les **51 migrations (dont D4)** + seed ; `marque-leak.test.ts`
+  **étendu — 15/15 verts en base réelle** (import LED → 0 fuite, idempotence, dédup marque-scopée, **CSV réel
+  format G7 de bout en bout** parse→mapping→endpoint→DB avec canton GE + « Vitrerie »→menuiserie). Baseline :
+  **Vitest 2730 verts** + 15 intégration, **svelte-check 0/0**, **build prod OK**.
+- [x] **Revue adversariale** (workflow 15 agents Opus : 5 dimensions review + verify indépendant par finding +
+  critique de complétude). **8 findings confirmés (2 medium correctness/regression, 1 medium a11y, 5 low) TOUS
+  corrigés** + 6 trous de test comblés (scoping dédup, course TOCTOU, bornes anti-DoS, invariant scoring, aperçu sans
+  écriture, oracle non-régression). Correctifs clés : NPA canonique unique (round-trip dédup réparé), pagination
+  `fetchLeadDedupSets` (>1000 leads), focus trap re-corralé, 3e miroir D3 (`SourceSearchFields`) dédupliqué.
+  **0 Critical/High.** → [[audit_secu_2026-07-16_atelier209_run3_import_liste]].
+- [ ] **Application prod D4 + déploiement** (gate Pascal) : migration `20260716000001` à appliquer en prod via `pg`
+  (comme Run 2), merge `run3-import` → `main`, smoke prod. **Sign-off visuel Pascal du flux d'import live** (chantier :
+  Pascal valide dans le navigateur, comme Run 1/2).
 
 **Bloqués par un geste Pascal** (n'empêchent PAS le Run 3) : V6 Hunter (→ Run 4) et V7 Pingen (→ Run 5),
 comptes à créer.

@@ -105,6 +105,9 @@
 	/* Terrain lead express + veille : prune sourde (humain, mobile) */
 	--color-tab-terrain: #6F4F6E;
 	--color-tab-terrain-bg: #F2ECF1;
+	/* Ma liste (import manuel, Run 3) : ardoise neutre (fichier, dépôt) */
+	--color-tab-maliste: #5A6A7A;
+	--color-tab-maliste-bg: #EEF1F4;
 
 	/* Surlignage recherche (Bloc D V5) : jaune doux, aucun token équivalent existant */
 	--color-highlight: #FEF9C3;

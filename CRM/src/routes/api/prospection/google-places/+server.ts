@@ -198,7 +198,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	let cantonMissing = 0;
 	const candidates: PublicCandidate[] = entries.map((entry, idx) => {
 		const sourceId = sourceIds[idx];
-		const secteur = detectSecteurFromPlace(entry);
+		const secteur = detectSecteurFromPlace(entry, locals.marque);
 		const knownEntreprise = knownCompanyNames.has(normalizeCompanyName(entry.name));
 		if (knownEntreprise) alreadyKnown++;
 		if (!entry.canton) cantonMissing++;

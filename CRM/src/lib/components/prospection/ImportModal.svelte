@@ -8,6 +8,7 @@
 	import { cantonNoms } from '$lib/prospection-utils';
 	// Audit 360 H-22 : normalisation NFD centralisée dans `src/lib/utils/text-normalize.ts`.
 	import { normalizeNFDTrim as searchchTermNormalize } from '$lib/utils/text-normalize';
+	import { GP_ACTIVITY_OPTIONS } from '$lib/prospection/activity-types';
 
 	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
 
@@ -76,18 +77,6 @@
 	// svelte-ignore state_referenced_locally
 	let gpQuota = $state<GoogleQuotaStatus | null>(googleQuota);
 
-	// Types d'activite proposes (miroir de helpers.ts ACTIVITY_TYPES, libelles uniquement).
-	const GP_ACTIVITY_OPTIONS = [
-		{ key: 'regies_syndics', label: 'Régies immobilières et syndics de copropriété' },
-		{ key: 'facility_management', label: 'Facility management et gestion de bâtiments' },
-		{ key: 'bureaux_etudes', label: 'Bureaux d\u2019études énergie et thermique' },
-		{ key: 'architectes_designers', label: 'Architectes et architectes d\u2019intérieur' },
-		{ key: 'cvc_hvac', label: 'Climatisation, ventilation, CVC / HVAC' },
-		{ key: 'entreprises_generales', label: 'Entreprises générales du bâtiment' },
-		{ key: 'securite_batiment', label: 'Sécurité du bâtiment (alarme, accès, vidéo)' },
-		{ key: 'commerce', label: 'Commerce (magasins, boutiques, vitrines)' },
-		{ key: 'other', label: 'Mot-clé libre' },
-	] as const;
 	const GP_GENERIC_TERMS = new Set([
 		'sa', 'sarl', 'sa rl', 'sasu', 'srl', 'gmbh', 'ag', 'kg', 'ohg',
 		'ltd', 'llc', 'inc', 'societe', 'company', 'compagnie', 'entreprise', 'firma',

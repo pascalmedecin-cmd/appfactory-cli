@@ -206,12 +206,13 @@ recherche pré-remplis proposés à l'UI (FilmPro : vitrerie/façade/thermique ;
 5. **D3** source unique secteurs marque-aware (+ golden non-régression).
 6. **QA** Colima + seed + `marque-leak` étendu + revue adversariale.
 
-## Critères de succès (binaires, tous verts pour livrer)
+## Critères de succès (binaires, tous verts pour livrer) — ÉTAT 2026-07-16
 
-- [ ] D4 : insert `source='manuel'` accepté (DB reset + Zod) ; 9 valeurs existantes préservées.
-- [ ] Dédup : 15 familles de stress tests vertes ; déterministe ; 0 exception sur entrée dégénérée.
-- [ ] Import : CSV réel → N leads `manuel`/marque active, 0 fuite ; ré-import → 0 nouveau ; ligne invalide non importée.
-- [ ] Étanchéité : import LED ne matche/ne crée jamais côté FilmPro (test intégration base réelle).
-- [ ] D3 : golden FilmPro inchangé (secteur ET score) ; « vitrerie » classée partout ; 0 copie divergente restante (config.ts mort + mirror supprimés).
-- [ ] Non-régression : `svelte-check` 0/0, build OK, Vitest vert (baseline 2562 + nouveaux), `db reset` OK.
-- [ ] Zéro dette : orphelins/liens morts/code mort du diff = 0 (garde) ; maquette non-régression FilmPro prouvée.
+- [x] D4 : insert `source='manuel'` accepté (DB reset + Zod) ; 9 valeurs existantes préservées. (migration `20260716000001` rejouée par `db reset` ; test anti-drift Zod)
+- [x] Dédup : 15 familles de stress tests vertes ; déterministe ; 0 exception sur entrée dégénérée. (31 tests)
+- [x] Import : CSV réel → N leads `manuel`/marque active, 0 fuite ; ré-import → 0 nouveau ; ligne invalide non importée. (test intégration « CSV réel format G7 bout en bout » en base réelle : parse→mapping→endpoint→DB)
+- [x] Étanchéité : import LED ne matche/ne crée jamais côté FilmPro (test intégration base réelle). (15/15 verts)
+- [x] D3 : golden FilmPro inchangé (google-places byte-identique via oracle ; zefix/searchch gagnent vitrerie/toiture = criterion intended, jamais de perte prouvée par oracle) ; « vitrerie » classée partout ; **3 copies divergentes + 1 morte supprimées** (config.ts + mirror ImportModal + mirror SourceSearchFields).
+- [x] Non-régression : `svelte-check` **0/0**, build OK, Vitest **2801 verts** (baseline 2562 + 239), `db reset` OK.
+- [x] Zéro dette : diff CRM cohérent (29 fichiers, 0 orphelin/artefact parasite) ; non-régression FilmPro prouvée (analyse + oracle + revue adversariale).
+- [ ] **Reste (gate Pascal)** : application prod D4 + déploiement + sign-off visuel du flux live.

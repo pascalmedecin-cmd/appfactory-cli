@@ -23,3 +23,13 @@ export function isMarque(value: unknown): value is Marque {
 export function parseMarque(value: unknown): Marque {
 	return value === 'led' ? 'led' : 'filmpro';
 }
+
+/** Libellé humain d'une marque (source unique : BrandSwitcher, modale d'import, en-têtes). */
+export const MARQUE_LABEL: Record<Marque, string> = {
+	filmpro: 'FilmPro',
+	led: 'LED Studio',
+};
+
+export function marqueLabel(marque: Marque): string {
+	return MARQUE_LABEL[marque] ?? MARQUE_LABEL.filmpro;
+}

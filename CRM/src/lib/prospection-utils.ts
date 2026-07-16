@@ -7,17 +7,19 @@ import { DAY_MS } from '$lib/utils/time-constants';
 
 // === Phase 2 2026-05-01 : 4 onglets par nature de signal — source unique ===
 
-export const PROSPECTION_TABS = ['simap', 'regbl', 'entreprises', 'terrain'] as const;
+export const PROSPECTION_TABS = ['simap', 'regbl', 'entreprises', 'terrain', 'maliste'] as const;
 export type ProspectionTabKey = typeof PROSPECTION_TABS[number];
 
 // Sources DB (prospect_leads.source) appartenant à chaque onglet.
 // `lead_express` = saisie terrain (cf. createExpress action).
 // `veille` = leads créés via integration Veille→Prospection (cf. project_veille_prospection_integration_s120).
+// `manuel` = import de liste (Run 3 Atelier 209), onglet « Ma liste ».
 export const TAB_SOURCE_MAP: Record<ProspectionTabKey, readonly string[]> = {
 	simap: ['simap'],
 	regbl: ['regbl'],
 	entreprises: ['zefix', 'search_ch', 'google_places'],
 	terrain: ['lead_express', 'veille'],
+	maliste: ['manuel'],
 } as const;
 
 // Champs de tri exposés à l'utilisateur (cohérent avec VALID_SORT_KEYS côté serveur).
