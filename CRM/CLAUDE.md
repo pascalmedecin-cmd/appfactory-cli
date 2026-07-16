@@ -138,7 +138,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : la **revue macro de Pascal est faite (16/07)** et ses **8 retours sont livrés en prod** (`a987f6d` : logo LED blanc, bouton import proéminent sur Prospection, Campagnes pleine largeur, **12 bugs de robustesse import corrigés + testés**, cf. « Livré cette session »). **Ensuite** : Run 4 (Hunter, bloqué compte Pascal) / Run 7 (veille LED, **cadrage en session**) ; backlog dev = tracker « Coûts des outils » (maquette validée) + items existants ; **[à valider Pascal] mots-clés secteur LED** de `secteurs.ts` (dont le token « led » trop court, cf. WATCH). Micro sous ma responsabilité, validé AVANT Pascal (→ [[feedback_qa_micro_mon_ressort_gate_pas_excuse]]). Détail → [[project_atelier_209_run3_import_liste_2026-07-16]].
+**Prochaine attaque** : **e2e validation externe livré** (dette Playwright fermée, `31ff965`) ; revue macro Pascal faite (retours en prod `a987f6d`). **Ensuite**, au choix selon dispo : **Campagnes** (nettoyage texte, quick-win actionable) → chantier **Cohérence UI** benchmark Gouvernance (mockup à valider) ; ou **Run 7** veille LED (cadrage en session). Run 4/5 bloqués (comptes Hunter/Pingen chez Pascal). **[à valider Pascal] mots-clés secteur LED** `secteurs.ts` (token « led » trop court, cf. WATCH). Micro sous ma responsabilité validé AVANT Pascal (→ [[feedback_qa_micro_mon_ressort_gate_pas_excuse]]). Détail → [[project_atelier_209_run3_import_liste_2026-07-16]].
 
 ### Directive permanente (Pascal 2026-07-15) : zéro régression + miroir exact + QA avant/après
 
