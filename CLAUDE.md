@@ -51,7 +51,7 @@ Container prêt à accueillir d'autres apps métier FilmPro (le repo embarque d�
 ## TOUJOURS FAIRE
 
 - Chaque étape produit un livrable concret et mesurable
-- Review humaine visible dans le terminal avant tout deploy
+- Review humaine avant tout push main (le push auto-déploie la prod ; un vercel --prod manuel de rattrapage redéploie ce même code déjà reviewé)
 - Tests automatisés avant mise en preview
 
 ---

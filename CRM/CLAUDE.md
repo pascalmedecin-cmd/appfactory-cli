@@ -123,7 +123,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 ## TOUJOURS FAIRE
 
 - Chaque etape produit un livrable concret et mesurable
-- Review humaine visible dans le terminal avant tout deploy
+- Review humaine avant tout push main (le push auto-déploie la prod ; un vercel --prod manuel de rattrapage redéploie ce même code déjà reviewé)
 - Tests automatises avant mise en preview
 - **Inscription cockpit mid-session** : ne JAMAIS éditer `entries.jsonl` directement ; voies sûres = drag UI cockpit ou `POST /api/entries/appfactory` puis `/api/queue/appfactory`. → `feedback_cockpit_watcher_purge_cli_entries_S177.md` (verbatim : `archive/claude-md-crm-livre-2026-07-02.md`).
 
