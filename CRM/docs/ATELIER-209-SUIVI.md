@@ -410,6 +410,15 @@ et `normalizeCompanyName` garde les accents (« Régie » ≠ « Regie »). Le m
   **312 leads existants préservés, 0 invalidée**. Merge `run3-import` → `main` (`4e3f149`), push, Vercel **Ready** (build 40s).
   **Smoke prod vert** : `/login` 200 + « Atelier 209 » ; `POST /api/prospection/import-liste` sans session → 303 (route
   déployée + gate auth actif). Live à `filmpro-portail.vercel.app`.
+- [x] **QA visuelle + e2e Playwright + resize colonnes — DÉPLOYÉ le 2026-07-16** (`c106a67`). Flux d'import piloté en vrai
+  navigateur (base jetable Colima) → **e2e Playwright** `tests/prospection-import-liste.test.ts` (dette Run 3 comblée :
+  dépôt→mapping→aperçu→import→« Ma liste », oracle dédup) + **audit adversarial** (workflow 20 agents, 12 findings) →
+  **7 défauts corrigés** et vérifiés à l'œil sur captures réelles : bloquant FR « 1 doublons ignorés » (cartes stats accordées
+  sur la valeur), pied étape 3 (accord + sorti de la zone tronquée), bouton « Aucun prospect à importer » (plus de « 0 X »),
+  dropzone « CSV » (jargon TSV retiré), apostrophes typographiques de l'empty-state « Ma liste », raison « Raison sociale vide »
+  toujours visible. En marge : **resize de colonnes câblé sur Entreprises + Contacts** (parité Prospection/Veille, **zéro
+  régression** prouvée avant/après) + helper `tests/mint-session-local.mjs` (session premium locale). Vitest **2801**, build OK,
+  svelte-check **0/0**, smoke prod vert. Détail → [[project_atelier_209_run3_import_liste_2026-07-16]].
 - [ ] **Sign-off visuel Pascal du flux d'import** : à faire **sur la prod directement** (décision Pascal 16/07 : personne
   ne l'utilise encore). Prochaine session commence par là : ouvrir Prospection → onglet « Ma liste » (ou bouton « Importer
   une liste » sur Entreprises) → déposer un CSV → colonnes → aperçu → import.

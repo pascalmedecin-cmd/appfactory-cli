@@ -10,7 +10,7 @@ Le CRM FilmPro devient l'outil de prospection **des deux marques** (LED Studio +
 **Note migration** : ce fichier vit dans `CRM/CLAUDE.md` (Vercel `rootDirectory: CRM`) ; container racine = stub. → `memory/project_appfactory_restructure.md`.
 
 **Statut :** Portail multi-outils en prod : CRM (`/crm`) + Découpe (`/decoupe`) sur `filmpro-portail.vercel.app`. Trunk = `main` (push auto-déploie, intermittent - cf. Watch) ; Flag `ffCrmListesV2` **ON fondateurs**. **À FAIRE Pascal** : comptes Hunter & Pingen + variable Daily Email (§ Chez Pascal). Historique (V3 terrain, Signaux V4, restructure S173-S174) → `archive/`.
-**Dernière mise à jour :** 2026-07-16 (Run 3 DÉPLOYÉ prod : import de liste + onglet « Ma liste » + D3/D4, D4 appliquée prod, merge `4e3f149`, smoke vert ; reste sign-off visuel Pascal sur prod). **Prochain bug :** #001.
+**Dernière mise à jour :** 2026-07-16 (Run 3 : import + « Ma liste » + D3/D4 déployés ; **QA visuelle + e2e + resize colonnes déployés** `c106a67`, 7 défauts corrigés, smoke prod vert ; reste sign-off visuel Pascal sur la version nettoyée). **Prochain bug :** #001.
 
 
 ---
@@ -138,7 +138,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : **Sign-off visuel Pascal du flux d'import Run 3, SUR LA PROD** (`filmpro-portail.vercel.app` ; personne ne l'utilise encore). Prospection → « Importer une liste » (onglet Entreprises) ou onglet « Ma liste » → déposer un CSV → colonnes auto → aperçu → import → prospects dans « Ma liste ». Défaut visuel/UX repéré = à corriger (déployé mais pas validé à l'œil). **Ensuite** : Run 4 (Hunter, bloqué compte Pascal) / Run 7 (veille LED, cadrage) ; **[à valider Pascal] mots-clés secteur LED** de `secteurs.ts`. Détail → [[project_atelier_209_run3_import_liste_2026-07-16]].
+**Prochaine attaque** : **Sign-off visuel Pascal du flux d'import Run 3, SUR LA PROD** (`filmpro-portail.vercel.app`). Le flux a été **piloté + audité (QA visuelle) et 7 défauts corrigés + déployés le 16/07** (`c106a67`) : tu signes off sur la version **nettoyée**. Prospection → « Importer une liste » (onglet Entreprises) ou onglet « Ma liste » → CSV → colonnes auto → aperçu → import → « Ma liste ». **Ensuite** : Run 4 (Hunter, bloqué compte Pascal) / Run 7 (veille LED, cadrage) ; **[à valider Pascal] mots-clés secteur LED** de `secteurs.ts`. Détail → [[project_atelier_209_run3_import_liste_2026-07-16]].
 
 ### Directive permanente (Pascal 2026-07-15) : zéro régression + miroir exact + QA avant/après
 
@@ -155,8 +155,6 @@ Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude sans dépendance 
 
 - [ ] **[EXÉCUTABLE]** URL Atelier 209 : configurer `atelier209.vercel.app` comme domaine de prod **public** (réglages Vercel), vérifier 200 public, PUIS activer le redirect 308 de `filmpro-portail`. Renommer ne suffit pas (SSO). → [[project_atelier_209_run1_deploiement_2026-07-15]].
 - [ ] **[EXÉCUTABLE]** e2e Playwright validation externe (base jetable Colima) : parcours public `/validation/<token>` + parcours fondateur + étiquettes « ignorer les Retirer ». Ferme la dette « déployé `8b90f6d` sans Playwright feature-spécifique ». → [[project_validation_externe_campagne_2026-07-02]].
-- [ ] **[EXÉCUTABLE]** e2e Playwright import de liste (base Colima) : piloter la modale 3 étapes en vrai navigateur avec `tests/fixtures/import-liste-g7.csv` (dépôt → mapping → aperçu → import → onglet « Ma liste »). Couvre le DOM (file input + rendu) que unit+intégration ne touchent pas. → [[project_atelier_209_run3_import_liste_2026-07-16]].
-- [ ] **[EXÉCUTABLE]** Cohérence resize de colonnes : `resizable`+`storageKey` branchés sur Prospection/Veille mais PAS Entreprises ni Contacts. Brancher (au moins Entreprises + Contacts), QA avant/après. La feature existe déjà dans `DataTable.svelte`.
 - [ ] **[EXÉCUTABLE]** Emailing prospection automatisée : moteur de séquences d'emails aux prospects (Resend, **templates pré-rédigés, zéro LLM**). Étape 1 = cadrage court Pascal (pas de réunion), puis code + gate OFF par défaut. Gate prod : DNS `send.filmpro.ch`, base légale nLPD, contenu validé. (Ex-« Vague 4 ».)
 - [ ] **[EXÉCUTABLE - pas urgent, GATE mockup d'abord]** Retouches page d'accueil (`AtelierShell.svelte`, Run 1) : hero plus grand HD (2/3 image / 1/3 bandeau), blocs bandeau aérés grille, boutons OTP même largeur+hauteur, fondu premium image↔bandeau. `redesign-skill`, maquette Chrome d'abord. → `docs/ATELIER-209-SUIVI.md` § Retouches accueil.
 
@@ -175,6 +173,7 @@ Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude sans dépendance 
 
 ### Livré cette session
 
+- [x] ~~**Atelier 209 - Run 3 : QA visuelle du flux import + e2e + resize colonnes (DÉPLOYÉ PROD)**~~ - 2026-07-16 (ultracode). Dé-risque le sign-off : pilotage réel du flux d'import (base jetable Colima) → **e2e Playwright** (dette Run 3 comblée : dépôt→mapping→aperçu→import→« Ma liste », oracle dédup 2 nouveaux / 1 doublon / 1 à corriger) + **audit adversarial 20 agents** → **7 défauts corrigés** (bloquant FR « 1 doublons ignorés » sur les cartes stats ; pied étape 3 accord + hors zone tronquée ; bouton « Aucun prospect à importer » ; dropzone « CSV » sans jargon TSV ; apostrophes typographiques empty-state ; raison d'invalidité toujours visible) tous vérifiés à l'œil sur captures réelles + **resize colonnes Entreprises + Contacts** (parité Prospection/Veille, **zéro régression** prouvée avant/après). Vitest 2801, build OK, svelte-check 0/0 ; merge `c106a67`, smoke prod vert. Reste : sign-off visuel Pascal sur la version nettoyée. → [[project_atelier_209_run3_import_liste_2026-07-16]].
 - [x] ~~**Atelier 209 - Run 3 : import de liste DÉPLOYÉ EN PROD**~~ - 2026-07-16 (ultracode). Écran d'import CSV/TSV → `prospect_leads` marque-scopé (endpoint aperçu+import, dédup multi-axes idempotente, NPA→canton, secteur marque-aware) + modale wizard 3 étapes + onglet « Ma liste » + D3 (secteurs source unique, 3 miroirs + 1 copie morte supprimés) + D4 (source `manuel`). Vitest 2801 + 15 intégration base réelle (CSV réel bout en bout, étanchéité, idempotence), svelte-check 0/0, build OK ; revue adversariale 8 findings corrigés (0 C/H) ; D4 appliquée prod, merge `4e3f149`, smoke vert. Reste : sign-off visuel Pascal sur prod. → [[project_atelier_209_run3_import_liste_2026-07-16]] + [[audit_secu_2026-07-16_atelier209_run3_import_liste]].
 - [x] ~~**Atelier 209 - Run 2 DÉPLOYÉ EN PROD + logo LED HD**~~ - 2026-07-15. Cloisonnement bi-marque + migration `marque` vérifiée prod (0 fuite), logo LED régénéré HD, mergé `main` `48d0e66`, smoke prod vert. → [[project_atelier_209_run2_cablage_2026-07-15]] + SUIVI.
 - [x] ~~**Login Atelier 209 : 6 défauts design micro + QA micro**~~ - 2026-07-15. Le micro (grille/états/feedback) = mon ressort ([[feedback_qa_micro_mon_ressort_gate_pas_excuse]]). Boutons delta 0px, contraste AA, svelte-check 0/0.
