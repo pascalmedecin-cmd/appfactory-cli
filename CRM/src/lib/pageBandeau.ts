@@ -22,7 +22,7 @@ export const BANDEAU_ROUTES: readonly string[] = [
 	'/crm/prospection',
 	'/crm/reporting',
 	'/crm/aide',
-	// Veille NON migrée ici : identité magazine, traitement particulier (maquette à valider).
+	'/crm/veille', // bandeau flush + peau magazine conservée (mockup validé Pascal 2026-07-17).
 ];
 
 /**

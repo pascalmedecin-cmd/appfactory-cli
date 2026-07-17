@@ -1,6 +1,9 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
+	import PageBand from '$lib/components/PageBand.svelte';
+	import { page } from '$app/stores';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import { isBandeauActive } from '$lib/pageBandeau';
 	import type { PageData } from './$types';
 	import {
 		actionabilityLabel,
@@ -10,6 +13,16 @@
 	} from '$lib/utils/veilleFormat';
 
 	let { data }: { data: PageData } = $props();
+
+	// Cohérence UI : bandeau de page in-page (flag ff_page_bandeau). Mockup validé Pascal 2026-07-17 :
+	// le bandeau standard (flush, la page porte déjà ses marges px-10) remplace le masthead magazine ;
+	// la peau magazine (couvertures, synthèse, archives) est conservée dessous. OFF → masthead d'origine.
+	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
+	const bandeauCount = $derived(
+		data.editions.length === 0
+			? 'Aucune édition'
+			: `${data.editions.length} édition${data.editions.length > 1 ? 's' : ''}`,
+	);
 
 	$effect(() => {
 		const n = data.editions.length;
@@ -37,39 +50,65 @@
 </script>
 
 <div class="max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12">
-	<!-- Masthead éditorial -->
-	<header class="pb-6 md:pb-8 mb-10 md:mb-14 border-b-2 border-primary-dark">
-		<!-- Bandeau : label de section (gauche) + dernière édition / action (droite),
-		     kickers alignés sur la même ligne. Le grand titre court vit en dessous. -->
-		<div class="flex items-start justify-between gap-6 mb-4 md:mb-6">
-			<div class="mag-kicker text-primary">Veille sectorielle FilmPro</div>
-			<div class="flex items-start gap-4 shrink-0">
-				{#if featured}
-					<div class="text-right hidden md:block">
-						<div class="mag-kicker text-text-muted">Dernière édition</div>
-						<div class="text-sm font-semibold text-text mt-1">
-							{formatDateLong(featured.generated_at)}
-						</div>
-					</div>
-				{/if}
-				<a
-					href="/crm/veille/editeur"
-					class="h-10 px-4 inline-flex items-center gap-2 rounded-lg border border-border-input text-sm font-medium text-text hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-				>
-					Éditeur
-				</a>
-			</div>
+	{#if bandeau}
+		<!-- Bandeau standard (flush : la page porte déjà px-10) + peau magazine conservée dessous.
+		     Mockup validé Pascal 2026-07-17 ; wrapper mb-10/14 = espace d'origine avant « À la une ». -->
+		<div class="mb-10 md:mb-14">
+			<PageBand
+				flush
+				icon="radar"
+				eyebrow="L'hebdo"
+				title="Veille"
+				desc="La revue de la semaine sur le marché du vitrage."
+				descMobile="La revue de la semaine."
+				count={bandeauCount}
+			>
+				{#snippet actions()}
+					<a
+						href="/crm/veille/editeur"
+						class="h-10 px-4 inline-flex items-center gap-2 rounded-lg border border-border-input text-sm font-medium text-text hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+					>
+						<Icon name="edit" size={18} />
+						Éditeur
+					</a>
+				{/snippet}
+			</PageBand>
 		</div>
-		<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
-		<h2 class="mag-display text-[40px] md:text-7xl text-primary-dark text-balance">
-			Filtrer l'essentiel
-		</h2>
-		<p class="mag-body text-text-body mt-4 max-w-2xl text-base md:text-[17px]">
-			Le panorama hebdomadaire des marchés bâtiment, films solaires, vitrages et
-			réglementation, lu et synthétisé chaque vendredi pour servir vos décisions
-			commerciales.
-		</p>
-	</header>
+	{:else}
+		<!-- Masthead éditorial -->
+		<header class="pb-6 md:pb-8 mb-10 md:mb-14 border-b-2 border-primary-dark">
+			<!-- Bandeau : label de section (gauche) + dernière édition / action (droite),
+			     kickers alignés sur la même ligne. Le grand titre court vit en dessous. -->
+			<div class="flex items-start justify-between gap-6 mb-4 md:mb-6">
+				<div class="mag-kicker text-primary">Veille sectorielle FilmPro</div>
+				<div class="flex items-start gap-4 shrink-0">
+					{#if featured}
+						<div class="text-right hidden md:block">
+							<div class="mag-kicker text-text-muted">Dernière édition</div>
+							<div class="text-sm font-semibold text-text mt-1">
+								{formatDateLong(featured.generated_at)}
+							</div>
+						</div>
+					{/if}
+					<a
+						href="/crm/veille/editeur"
+						class="h-10 px-4 inline-flex items-center gap-2 rounded-lg border border-border-input text-sm font-medium text-text hover:bg-surface-alt focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+					>
+						Éditeur
+					</a>
+				</div>
+			</div>
+			<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
+			<h2 class="mag-display text-[40px] md:text-7xl text-primary-dark text-balance">
+				Filtrer l'essentiel
+			</h2>
+			<p class="mag-body text-text-body mt-4 max-w-2xl text-base md:text-[17px]">
+				Le panorama hebdomadaire des marchés bâtiment, films solaires, vitrages et
+				réglementation, lu et synthétisé chaque vendredi pour servir vos décisions
+				commerciales.
+			</p>
+		</header>
+	{/if}
 
 	{#if data.editions.length === 0}
 		<div class="bg-white rounded-xl border border-border p-12 text-center">

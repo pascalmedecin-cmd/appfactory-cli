@@ -23,6 +23,7 @@
 		descMobile,
 		count,
 		actions,
+		flush = false,
 	}: {
 		/** Nom d'icône ICON_MAP (réutiliser l'icône de nav de la page). */
 		icon: string;
@@ -38,10 +39,13 @@
 		count?: string;
 		/** Actions primaires (boutons), rendues à droite. */
 		actions?: Snippet;
+		/** Gouttière horizontale à 0 : pour un conteneur qui porte déjà ses marges (ex. Veille,
+		 *  `max-w-[1280px] px-10`). Défaut = gouttière 32px (contexte `ws-page`). */
+		flush?: boolean;
 	} = $props();
 </script>
 
-<header class="pband" class:pband--icon={true}>
+<header class="pband" class:pband--icon={true} class:pband--flush={flush}>
 	<div class="pband__bar">
 		<div class="pband__heading">
 			<span class="pband__icon" aria-hidden="true"><Icon name={icon} size={44} strokeWidth={1.75} /></span>
@@ -72,6 +76,11 @@
 		padding: 4px 32px 16px;
 		margin-bottom: 12px;
 		border-bottom: 1px solid var(--color-border);
+	}
+	/* Conteneur qui porte déjà ses marges (Veille) : le bandeau s'aligne sur son contenu. */
+	.pband--flush {
+		padding-left: 0;
+		padding-right: 0;
 	}
 	.pband__bar {
 		display: flex;
@@ -162,6 +171,12 @@
 			--pb-icon: 38px;
 			--pb-gap: 12px;
 			padding: 4px 16px 14px;
+		}
+		/* Réaffirmé après le `.pband` mobile (même spécificité, source postérieure) pour que flush
+		   reste sans gouttière quand le conteneur porte déjà ses marges (Veille px-4). */
+		.pband--flush {
+			padding-left: 0;
+			padding-right: 0;
 		}
 		.pband__title {
 			font-size: 24px;

@@ -23,17 +23,17 @@ describe('isBandeauActive - source unique du bandeau de page', () => {
 			'/crm/prospection',
 			'/crm/reporting',
 			'/crm/aide',
+			'/crm/veille',
 		]) {
 			expect(isBandeauActive(ON, route)).toBe(true);
 		}
 	});
 
 	it('faux si flag ON mais route non adoptée', () => {
-		// Veille : identité magazine, traitement particulier (maquette à valider).
-		expect(isBandeauActive(ON, '/crm/veille')).toBe(false);
-		// Sous-routes détail : hors copy validée.
+		// Sous-routes détail : hors copy validée (match exact, pas de startsWith).
 		expect(isBandeauActive(ON, '/crm/veille/123')).toBe(false);
 		expect(isBandeauActive(ON, '/crm/campagnes/123')).toBe(false);
+		expect(isBandeauActive(ON, '/crm/veille/editeur')).toBe(false);
 	});
 
 	it('match exact : ni slash final ni sous-route ne matchent', () => {
