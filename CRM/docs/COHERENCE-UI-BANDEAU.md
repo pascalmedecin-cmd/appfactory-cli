@@ -155,11 +155,17 @@ collage (labels inline → block, gouttières cohérentes) sont un critère d'ac
 - **INC-8 (partiel)** : classe `.eyebrow` (gated `.coherence-ui`, pas globale - collision `class="eyebrow"` portail/login) ; 1 call-site (entreprises).
 - Revue adversariale 5 lentilles → 7 findings confirmés corrigés (dont 2 régressions OFF : Badge `.badge` global + `.eyebrow` global). svelte-check 0/0, Vitest 2827.
 
-**Reste (part 2) :**
-- **Prospection CTAs desktop** (`hidden md:inline-flex`) : NON routés. Piège cascade : `.ws-btn` est **non-layered**, les utilities Tailwind v4 sont **layered** → `.ws-btn{display:inline-flex}` écraserait `hidden` (bouton visible en mobile). Fix part-2 : soit passer `workspace.css` en `@layer components`, soit approche sans utility de display.
-- **INC-5** recherches recodées (campagnes, aide, campagnes/[id], veille/editeur) → `SearchInput`.
-- **INC-7** états vides (~14 réimplémentations) → `EmptyState`.
-- **INC-6** surfaces (2 niveaux) ; **INC-9** poids de titres ; **INC-8** sur-titres inline restants ; **INC-10** hauteurs `Select`/`FormField` ; **INC-4** rayon modale (faible valeur).
-- **Veille** (peau magazine) + reporting/aide/campagnes (≈0 bouton inline) : à traiter avec soin part-2.
+**Livré (part 2 - lot 1, 2026-07-17)** - QA OFF/ON prouvée au DOM + revue adversariale 4 dimensions (2 findings réels : 1 corrigé, 1 différé) :
+- **INC-7 états vides (7 page-level)** → `<EmptyState>` : campagnes (dynamique 3 branches + action conditionnelle), campagnes/[id] (action conditionnelle !archived), etiquettes (statique + dynamique 2 branches), veille (carte→plain), signaux (`<p>` unique scindé titre/desc), contacts (mobile, titre dynamique). Pattern component-swap `{#if coherence}<EmptyState/>{:else}<legacy VERBATIM>{/if}`.
+- **INC-5 recherches recodées (5)** → `<SearchInput>` : campagnes, campagnes/[id], etiquettes, veille/editeur (thèmes + sources). `value + oninput={(v)=>x=v}` ≡ `bind:value` legacy.
+- **Fix placement (finding medium confirmé)** : le `.search` legacy de campagnes portait `margin-left:auto; width:280px` (ancré à droite) que le swap `SearchInput` perdait → wrapper `.coh-search` (ON only, absent du DOM OFF) restaure l'ancrage. Vérifié DOM (280px right-anchored, h 40px) + visuel. Les autres pages (etiquettes 300px, veille/editeur min-240px) : delta de largeur mineur **vérifié acceptable** (layout préservé), laissé tel quel.
+- QA : svelte-check 0/0, Vitest 2827, DOM OFF/ON (veille carte→EmptyState icône 48px ; campagnes search 40px ancré + empty). 7 fichiers, tous OFF `{:else}` byte-verbatim (ré-indentation seule).
+
+**Reste (part 2 + c + d) :**
+- **[a11y différé - non flag-gated]** `SearchInput` : le bouton clear perd le focus (→ `<body>`) au clavier (se démonte sans refocaliser l'input). **Préexistant, déjà en prod** (Prospection/Signaux/Entreprises) → change séparé, non réversible par flag, à QA à part. Fix 1 ligne : `bind:this={inputEl}` + `inputEl?.focus()` dans `handleClear`.
+- **États vides différés** (plumbing prop ou micro-états) : SignauxCards / EntreprisesCards / FeedbackTable (flag pas dispo en composant → passer `coherence` en prop), panneaux dashboard compacts + widgets premium signés « warm » (DashboardTemporel/ActivityFeed), `PipelineEmptyState` (échelle colonne kanban), fallback charts/tables/kanban/modale, messages inline (list-empty, aide-results, VisitsPanel, ProductCascade). Cas ambigu : `log/+page:63` (device-gate qui réplique le markup EmptyState).
+- **Recherche Aide** (`bind:this` focus `/` + `<kbd>`) : `SearchInput` ne les expose pas → extension primitive ou différé.
+- **Prospection CTAs desktop** (`hidden md:inline-flex`) : NON routés. Piège cascade : `.ws-btn` **non-layered** écrase `hidden` (layered) → visible en mobile. **Écarté `@layer components`** (blast-radius app-wide, casse OFF). Approche retenue : co-localisé / wrapper responsive, + le bouton « Enrichir cette page » (teinte sémantique propre) n'a pas de variante `.ws-btn` standard.
+- **INC-6** surfaces (2 niveaux) ; **INC-9** poids de titres ; **INC-8** sur-titres inline restants ; **INC-10** hauteurs `Select`/`FormField` ; **INC-4** rayon modale (faible valeur). Puis **c** (compteurs) et **d** (grille 8px).
 
 **Gotchas gravés** (voir mémoires) : (a) `.ws-btn` non-layered vs Tailwind layered ; (b) QA locale : `updateUserById` **fusionne** `app_metadata` → pour désactiver un flag en test, mettre la clé à `null` (pas `delete`), sinon le « OFF » reste ON en silence.

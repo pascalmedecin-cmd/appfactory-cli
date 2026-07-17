@@ -23,6 +23,9 @@
 	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
 	import StatutSegment from '$lib/components/campagnes/StatutSegment.svelte';
 	import EntrepriseSearchModal from '$lib/components/prospection/EntrepriseSearchModal.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import SearchInput from '$lib/components/SearchInput.svelte';
+	import { isCoherenceActive } from '$lib/ui/coherence';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { toasts } from '$lib/stores/toast';
@@ -51,6 +54,8 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	const coherence = $derived(isCoherenceActive(data.featureFlags));
 
 	const campagne = $derived(data.campagne);
 	// Valeur brute passée au composant StatutSegment (qui la LABELLISE en interne). Intermédiaire
@@ -613,24 +618,40 @@ Merci !`
 			</div>
 
 			{#if prospects.length === 0}
-				<div class="empty">
-					<span class="empty-ic"><Icon name="group" size={22} /></span>
-					<p class="empty-t">Aucun prospect étiqueté</p>
-					<p class="empty-p">
-						Cette campagne n'a pas encore de prospects.
-						{#if !campagne.archived}Lancez une recherche : le lot importé sera étiqueté automatiquement.{/if}
-					</p>
-					{#if !campagne.archived}
-						<button type="button" class="ws-btn ws-btn-primary" onclick={() => (searchOpen = true)}>
-							<Icon name="radar" size={15} /> Trouver des prospects
-						</button>
-					{/if}
-				</div>
+				{#if coherence}
+					<EmptyState
+						icon="group"
+						title="Aucun prospect étiqueté"
+						description={campagne.archived
+							? "Cette campagne n'a pas encore de prospects."
+							: "Cette campagne n'a pas encore de prospects. Lancez une recherche : le lot importé sera étiqueté automatiquement."}
+						actionLabel={campagne.archived ? "" : "Trouver des prospects"}
+						onAction={() => (searchOpen = true)}
+					/>
+				{:else}
+					<div class="empty">
+						<span class="empty-ic"><Icon name="group" size={22} /></span>
+						<p class="empty-t">Aucun prospect étiqueté</p>
+						<p class="empty-p">
+							Cette campagne n'a pas encore de prospects.
+							{#if !campagne.archived}Lancez une recherche : le lot importé sera étiqueté automatiquement.{/if}
+						</p>
+						{#if !campagne.archived}
+							<button type="button" class="ws-btn ws-btn-primary" onclick={() => (searchOpen = true)}>
+								<Icon name="radar" size={15} /> Trouver des prospects
+							</button>
+						{/if}
+					</div>
+				{/if}
 			{:else}
-				<div class="psearch">
-					<Icon name="search" size={16} />
-					<input type="search" bind:value={search} placeholder="Filtrer par nom ou localité…" aria-label="Filtrer les prospects de la campagne" />
-				</div>
+				{#if coherence}
+					<SearchInput value={search} oninput={(v) => (search = v)} placeholder="Filtrer par nom ou localité…" ariaLabel="Filtrer les prospects de la campagne" />
+				{:else}
+					<div class="psearch">
+						<Icon name="search" size={16} />
+						<input type="search" bind:value={search} placeholder="Filtrer par nom ou localité…" aria-label="Filtrer les prospects de la campagne" />
+					</div>
+				{/if}
 
 				<div class="grp-row" role="group" aria-label="Groupes de prospects de la campagne">
 					{#if groupes.length > 0}

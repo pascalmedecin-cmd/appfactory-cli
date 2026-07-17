@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Icon from '$lib/components/Icon.svelte';
 	import PageBand from '$lib/components/PageBand.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import { isCoherenceActive } from '$lib/ui/coherence';
 	import { page } from '$app/stores';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { isBandeauActive } from '$lib/pageBandeau';
@@ -13,6 +15,8 @@
 	} from '$lib/utils/veilleFormat';
 
 	let { data }: { data: PageData } = $props();
+
+	const coherence = $derived(isCoherenceActive(data.featureFlags));
 
 	// Cohérence UI : bandeau de page in-page (flag ff_page_bandeau). Mockup validé Pascal 2026-07-17 :
 	// le bandeau standard (flush, la page porte déjà ses marges px-10) remplace le masthead magazine ;
@@ -111,13 +115,21 @@
 	{/if}
 
 	{#if data.editions.length === 0}
-		<div class="bg-white rounded-xl border border-border p-12 text-center">
-			<Icon name="radar" class="text-5xl text-text-muted" />
-			<h2 class="mt-4 text-lg font-semibold text-text">Aucune édition publiée</h2>
-			<p class="mt-2 text-sm text-text-muted">
-				La veille sectorielle est générée automatiquement chaque vendredi matin.
-			</p>
-		</div>
+		{#if coherence}
+			<EmptyState
+				icon="radar"
+				title="Aucune édition publiée"
+				description="La veille sectorielle est générée automatiquement chaque vendredi matin."
+			/>
+		{:else}
+			<div class="bg-white rounded-xl border border-border p-12 text-center">
+				<Icon name="radar" class="text-5xl text-text-muted" />
+				<h2 class="mt-4 text-lg font-semibold text-text">Aucune édition publiée</h2>
+				<p class="mt-2 text-sm text-text-muted">
+					La veille sectorielle est générée automatiquement chaque vendredi matin.
+				</p>
+			</div>
+		{/if}
 	{:else if featured}
 		<!-- ÉDITION À LA UNE -->
 		<section class="mb-14 md:mb-20">

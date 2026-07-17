@@ -6,6 +6,7 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import PageBand from '$lib/components/PageBand.svelte';
 	import { page } from '$app/stores';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
@@ -496,10 +497,14 @@
 		aria-labelledby={data.showArchived ? undefined : `tab-${activeTab}`}
 	>
 		{#if data.signaux.length === 0}
-			<div class="empty-simple">
-				<Icon name="schedule" size={32} class="empty-simple-icon" />
-				<p>Pas encore de signaux. Le radar SIMAP (marchés publics construction Romandie) remplit cette page chaque matin à 6 h.</p>
-			</div>
+			{#if coherence}
+				<EmptyState icon="schedule" title="Pas encore de signaux" description="Le radar SIMAP (marchés publics construction Romandie) remplit cette page chaque matin à 6 h." />
+			{:else}
+				<div class="empty-simple">
+					<Icon name="schedule" size={32} class="empty-simple-icon" />
+					<p>Pas encore de signaux. Le radar SIMAP (marchés publics construction Romandie) remplit cette page chaque matin à 6 h.</p>
+				</div>
+			{/if}
 		{:else}
 			{#if selectMode}
 				<div class="batch-bar">

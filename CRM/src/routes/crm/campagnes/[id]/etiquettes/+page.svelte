@@ -19,6 +19,9 @@
 	 * Logique pure (filtre, résumé, construction des entrées) testée en Vitest : `etiquettes-page.ts`.
 	 */
 	import Icon from '$lib/components/Icon.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import SearchInput from '$lib/components/SearchInput.svelte';
+	import { isCoherenceActive } from '$lib/ui/coherence';
 	import { untrack } from 'svelte';
 	import { SvelteSet, SvelteMap } from 'svelte/reactivity';
 	import { toasts } from '$lib/stores/toast';
@@ -37,6 +40,7 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	const coherence = $derived(isCoherenceActive(data.featureFlags));
 
 	// Retour vers la page campagne dédiée (un seul chemin) - réactif si l'id change sans remount.
 	const campagneUrl = $derived(`${CRM_BASE}/campagnes/${data.campagne.id}`);
@@ -342,10 +346,14 @@
 
 	<!-- Zone 3 : outils -->
 	<div class="tools">
-		<div class="search">
-			<Icon name="search" size={17} />
-			<input type="search" bind:value={search} placeholder="Rechercher un prospect…" aria-label="Rechercher un prospect" />
-		</div>
+		{#if coherence}
+			<SearchInput value={search} oninput={(v) => (search = v)} placeholder="Rechercher un prospect…" ariaLabel="Rechercher un prospect" />
+		{:else}
+			<div class="search">
+				<Icon name="search" size={17} />
+				<input type="search" bind:value={search} placeholder="Rechercher un prospect…" aria-label="Rechercher un prospect" />
+			</div>
+		{/if}
 		<button type="button" class="link" onclick={toggleAll} disabled={selectableFiltered.length === 0}>
 			<Icon name={allSelectableSelected ? 'deselect' : 'select_all'} size={16} />
 			{allSelectableSelected ? 'Tout désélectionner' : 'Tout sélectionner'}
@@ -384,11 +392,15 @@
 	<!-- Zone 4 : contenu -->
 	<div class="card">
 		{#if prospects.length === 0}
-			<div class="state">
-				<span class="state-ic"><Icon name="mail" size={24} /></span>
-				<h3>Aucun prospect dans cette campagne</h3>
-				<p>Ajoutez des prospects en les étiquetant depuis la Prospection, puis revenez générer leurs étiquettes.</p>
-			</div>
+			{#if coherence}
+				<EmptyState icon="mail" title="Aucun prospect dans cette campagne" description="Ajoutez des prospects en les étiquetant depuis la Prospection, puis revenez générer leurs étiquettes." />
+			{:else}
+				<div class="state">
+					<span class="state-ic"><Icon name="mail" size={24} /></span>
+					<h3>Aucun prospect dans cette campagne</h3>
+					<p>Ajoutez des prospects en les étiquetant depuis la Prospection, puis revenez générer leurs étiquettes.</p>
+				</div>
+			{/if}
 		{:else}
 			<div class="thead">
 				<span></span>
@@ -398,16 +410,26 @@
 			</div>
 
 			{#if filtered.length === 0}
-				<div class="state">
-					<span class="state-ic"><Icon name={search.trim() ? 'search_off' : 'do_not_disturb'} size={24} /></span>
-					{#if search.trim()}
-						<h3>Aucun prospect ne correspond</h3>
-						<p>Aucun prospect ne correspond à « {search.trim()} »{includeIncomplete ? '' : ' parmi les adresses complètes'}.</p>
-					{:else}
-						<h3>Aucune adresse complète</h3>
-						<p>Activez « Inclure les adresses incomplètes » ci-dessus pour compléter les adresses manquantes.</p>
-					{/if}
-				</div>
+				{#if coherence}
+					<EmptyState
+						icon={search.trim() ? 'search_off' : 'do_not_disturb'}
+						title={search.trim() ? "Aucun prospect ne correspond" : "Aucune adresse complète"}
+						description={search.trim()
+							? `Aucun prospect ne correspond à « ${search.trim()} »${includeIncomplete ? '' : ' parmi les adresses complètes'}.`
+							: "Activez « Inclure les adresses incomplètes » ci-dessus pour compléter les adresses manquantes."}
+					/>
+				{:else}
+					<div class="state">
+						<span class="state-ic"><Icon name={search.trim() ? 'search_off' : 'do_not_disturb'} size={24} /></span>
+						{#if search.trim()}
+							<h3>Aucun prospect ne correspond</h3>
+							<p>Aucun prospect ne correspond à « {search.trim()} »{includeIncomplete ? '' : ' parmi les adresses complètes'}.</p>
+						{:else}
+							<h3>Aucune adresse complète</h3>
+							<p>Activez « Inclure les adresses incomplètes » ci-dessus pour compléter les adresses manquantes.</p>
+						{/if}
+					</div>
+				{/if}
 			{:else}
 				{#each filtered as p (p.id)}
 					{@const st = statutById.get(p.id)}

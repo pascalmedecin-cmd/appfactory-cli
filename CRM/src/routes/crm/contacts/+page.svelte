@@ -386,10 +386,14 @@
 				<!-- Mobile cards (visible uniquement viewport < 1024px via CSS) -->
 				<div class="contacts-mobile-cards">
 					{#if filteredContacts.length === 0}
-						<div class="contacts-mobile-empty">
-							<Icon name="filter_alt_off" size={28} />
-							<p>{emptyMessageFor(activeTab)}</p>
-						</div>
+						{#if coherence}
+							<EmptyState icon="filter_alt_off" title={emptyMessageFor(activeTab)} />
+						{:else}
+							<div class="contacts-mobile-empty">
+								<Icon name="filter_alt_off" size={28} />
+								<p>{emptyMessageFor(activeTab)}</p>
+							</div>
+						{/if}
 					{:else}
 						{#each filteredContacts as contact (contact.id)}
 							<MobileEntityCard

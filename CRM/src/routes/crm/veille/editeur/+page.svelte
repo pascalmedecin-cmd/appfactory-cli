@@ -7,12 +7,15 @@
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import SearchInput from '$lib/components/SearchInput.svelte';
+	import { isCoherenceActive } from '$lib/ui/coherence';
 	import { toasts } from '$lib/stores/toast';
 	import type { PageData } from './$types';
 	import type { VeilleTheme } from '$lib/server/intelligence/themes-repository';
 	import type { VeilleSource } from '$lib/server/intelligence/sources-repository';
 
 	let { data }: { data: PageData } = $props();
+	const coherence = $derived(isCoherenceActive(data.featureFlags));
 
 	type TabKey = 'themes' | 'sources';
 	let activeTab = $state<TabKey>('themes');
@@ -489,10 +492,14 @@
 			</div>
 
 			<div class="flex items-center justify-between gap-4 flex-wrap mb-4">
-				<label class="search">
-					<Icon name="search" size={16} class="text-text-muted" />
-					<input type="search" bind:value={themeSearch} placeholder="Rechercher un thème…" aria-label="Rechercher un thème" />
-				</label>
+				{#if coherence}
+					<SearchInput value={themeSearch} oninput={(v) => (themeSearch = v)} placeholder="Rechercher un thème…" ariaLabel="Rechercher un thème" />
+				{:else}
+					<label class="search">
+						<Icon name="search" size={16} class="text-text-muted" />
+						<input type="search" bind:value={themeSearch} placeholder="Rechercher un thème…" aria-label="Rechercher un thème" />
+					</label>
+				{/if}
 				<button type="button" onclick={openCreateTheme} class="ws-btn ws-btn-primary">
 					<Icon name="add" size={17} />
 					Nouveau thème
@@ -576,10 +583,14 @@
 
 			<div class="flex items-center justify-between gap-3 flex-wrap mb-6">
 				<div class="flex items-center gap-2 flex-wrap">
-					<label class="search">
-						<Icon name="search" size={16} class="text-text-muted" />
-						<input type="search" bind:value={srcSearch} placeholder="Rechercher une source…" aria-label="Rechercher une source" />
-					</label>
+					{#if coherence}
+						<SearchInput value={srcSearch} oninput={(v) => (srcSearch = v)} placeholder="Rechercher une source…" ariaLabel="Rechercher une source" />
+					{:else}
+						<label class="search">
+							<Icon name="search" size={16} class="text-text-muted" />
+							<input type="search" bind:value={srcSearch} placeholder="Rechercher une source…" aria-label="Rechercher une source" />
+						</label>
+					{/if}
 					<select class="famsel" bind:value={famFilter} aria-label="Filtrer par famille">
 						<option value="">Toutes les familles</option>
 						{#each FAMILIES as f (f.key)}

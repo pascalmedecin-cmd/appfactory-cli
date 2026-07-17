@@ -14,6 +14,9 @@
 	import EntrepriseSearchModal from '$lib/components/prospection/EntrepriseSearchModal.svelte';
 	import StatutSegment from '$lib/components/campagnes/StatutSegment.svelte';
 	import PageBand from '$lib/components/PageBand.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
+	import SearchInput from '$lib/components/SearchInput.svelte';
+	import { isCoherenceActive } from '$lib/ui/coherence';
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { SvelteSet } from 'svelte/reactivity';
@@ -37,6 +40,8 @@
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+
+	const coherence = $derived(isCoherenceActive(data.featureFlags));
 
 	let activeTab = $state<'actives' | 'archived'>('actives');
 	let search = $state('');
@@ -373,28 +378,46 @@
 				Archivées <span class="ct">{data.stats.archived}</span>
 			</button>
 		</div>
-		<div class="search">
-			<Icon name="search" size={17} />
-			<input type="search" bind:value={search} placeholder="Rechercher une campagne…" aria-label="Rechercher une campagne" />
-		</div>
+		{#if coherence}
+			<div class="coh-search"><SearchInput value={search} oninput={(v) => (search = v)} placeholder="Rechercher une campagne…" ariaLabel="Rechercher une campagne" /></div>
+		{:else}
+			<div class="search">
+				<Icon name="search" size={17} />
+				<input type="search" bind:value={search} placeholder="Rechercher une campagne…" aria-label="Rechercher une campagne" />
+			</div>
+		{/if}
 	</div>
 
 	<div id="campagnes-panel" role="tabpanel" aria-labelledby={`camptab-${activeTab}`}>
 	{#if visible.length === 0}
-		<div class="empty">
-			<span class="empty-ic"><Icon name={search.trim() ? 'search_off' : 'sell'} size={26} /></span>
-			{#if search.trim()}
-				<h3>Aucune campagne ne correspond</h3>
-				<p>Aucune campagne {activeTab === 'actives' ? 'active' : 'archivée'} ne contient « {search.trim()} ».</p>
-			{:else if activeTab === 'actives'}
-				<h3>Aucune campagne active</h3>
-				<p>Créez votre première campagne pour regrouper des prospects (salon, secteur, région…).</p>
-				<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}><Icon name="add" size={16} /> Nouvelle campagne</button>
-			{:else}
-				<h3>Aucune campagne archivée</h3>
-				<p>Les campagnes que vous archivez apparaîtront ici. L'archivage est réversible.</p>
-			{/if}
-		</div>
+		{#if coherence}
+			<EmptyState
+				icon={search.trim() ? 'search_off' : 'sell'}
+				title={search.trim() ? "Aucune campagne ne correspond" : activeTab === 'actives' ? "Aucune campagne active" : "Aucune campagne archivée"}
+				description={search.trim()
+					? `Aucune campagne ${activeTab === 'actives' ? 'active' : 'archivée'} ne contient « ${search.trim()} ».`
+					: activeTab === 'actives'
+						? "Créez votre première campagne pour regrouper des prospects (salon, secteur, région…)."
+						: "Les campagnes que vous archivez apparaîtront ici. L'archivage est réversible."}
+				actionLabel={!search.trim() && activeTab === 'actives' ? "Nouvelle campagne" : ""}
+				onAction={openCreate}
+			/>
+		{:else}
+			<div class="empty">
+				<span class="empty-ic"><Icon name={search.trim() ? 'search_off' : 'sell'} size={26} /></span>
+				{#if search.trim()}
+					<h3>Aucune campagne ne correspond</h3>
+					<p>Aucune campagne {activeTab === 'actives' ? 'active' : 'archivée'} ne contient « {search.trim()} ».</p>
+				{:else if activeTab === 'actives'}
+					<h3>Aucune campagne active</h3>
+					<p>Créez votre première campagne pour regrouper des prospects (salon, secteur, région…).</p>
+					<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}><Icon name="add" size={16} /> Nouvelle campagne</button>
+				{:else}
+					<h3>Aucune campagne archivée</h3>
+					<p>Les campagnes que vous archivez apparaîtront ici. L'archivage est réversible.</p>
+				{/if}
+			</div>
+		{/if}
 	{:else}
 		<div class="listcard">
 			<div class="lc-head">
@@ -664,6 +687,17 @@
 		margin-left: auto;
 		width: 280px;
 		max-width: 100%;
+	}
+	/* Cohérence UI (b PART 2) : sous coherence, <SearchInput> remplace .search ; on lui redonne
+	   le même emplacement que la barre d'outils legacy (ancré à droite, 280px). ON uniquement
+	   (.coh-search n'existe pas dans le DOM OFF). */
+	.coh-search {
+		margin-left: auto;
+		width: 280px;
+		max-width: 100%;
+	}
+	.coh-search :global(.search-input) {
+		width: 100%;
 	}
 	.search :global(svg) {
 		position: absolute;
