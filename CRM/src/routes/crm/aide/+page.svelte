@@ -15,15 +15,24 @@
 	import { goto } from '$app/navigation';
 	import Tabs from '$lib/components/Tabs.svelte';
 	import Icon from '$lib/components/Icon.svelte';
+	import PageBand from '$lib/components/PageBand.svelte';
 	import AideBlock from '$lib/components/aide/AideBlock.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import { isBandeauActive } from '$lib/pageBandeau';
 	import { aideContent, levelByKey, type AideLevelKey, type AideSection } from '$lib/aide/content';
 	import { searchAide, type AideSearchResult } from '$lib/aide/search';
+	import type { PageData } from './$types';
+
+	let { data }: { data: PageData } = $props();
 
 	const tabSpecs = aideContent.map((l) => ({ key: l.key, label: l.label }));
 
 	let activeKey = $state<AideLevelKey>(levelByKey($page.url.searchParams.get('tab')).key);
 	const activeLevel = $derived(levelByKey(activeKey));
+	// Cohérence UI : bandeau de page in-page (flag ff_page_bandeau). Source unique isBandeauActive.
+	// OFF → en-tête `.aide-head` actuel (titre = niveau actif). ON → bandeau standard « Aide » ; le
+	// niveau actif reste porté par les onglets ci-dessous.
+	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
 
 	let query = $state('');
 	const results = $derived<AideSearchResult[]>(searchAide(query));
@@ -138,17 +147,27 @@
 <svelte:head><title>Aide · FilmPro</title></svelte:head>
 
 <div class="aide">
-	<!-- En-tête de page (le H1 « Aide » est porté par Header.svelte ; ici on ouvre en H2). -->
-	<header class="aide-head">
-		<div class="aide-head-text">
-			<p class="aide-kicker">Centre d'aide</p>
-			<h2 class="aide-title">{activeLevel.label}</h2>
-			<p class="aide-tagline">{activeLevel.tagline}</p>
-		</div>
-		<div class="aide-head-badge" aria-hidden="true">
-			<Icon name={activeLevel.icon} size={26} strokeWidth={2} />
-		</div>
-	</header>
+	{#if bandeau}
+		<PageBand
+			icon="help_outline"
+			eyebrow="Le mode d'emploi"
+			title="Aide"
+			desc="Comment l'outil marche, section par section."
+			descMobile="Section par section."
+		/>
+	{:else}
+		<!-- En-tête de page (le H1 « Aide » est porté par Header.svelte ; ici on ouvre en H2). -->
+		<header class="aide-head">
+			<div class="aide-head-text">
+				<p class="aide-kicker">Centre d'aide</p>
+				<h2 class="aide-title">{activeLevel.label}</h2>
+				<p class="aide-tagline">{activeLevel.tagline}</p>
+			</div>
+			<div class="aide-head-badge" aria-hidden="true">
+				<Icon name={activeLevel.icon} size={26} strokeWidth={2} />
+			</div>
+		</header>
+	{/if}
 
 	<!-- Onglets de niveau + recherche. -->
 	<div class="aide-bar">

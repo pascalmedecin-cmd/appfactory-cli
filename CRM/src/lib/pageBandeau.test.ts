@@ -13,25 +13,33 @@ describe('isBandeauActive - source unique du bandeau de page', () => {
 	});
 
 	it('vrai si flag ON ET route adoptée', () => {
-		expect(isBandeauActive(ON, '/crm/entreprises')).toBe(true);
-		expect(isBandeauActive(ON, '/crm/contacts')).toBe(true);
-		expect(isBandeauActive(ON, '/crm/pipeline')).toBe(true);
-		expect(isBandeauActive(ON, '/crm/signaux')).toBe(true);
-		expect(isBandeauActive(ON, '/crm/campagnes')).toBe(true);
+		for (const route of [
+			'/crm',
+			'/crm/entreprises',
+			'/crm/contacts',
+			'/crm/pipeline',
+			'/crm/signaux',
+			'/crm/campagnes',
+			'/crm/prospection',
+			'/crm/reporting',
+			'/crm/aide',
+		]) {
+			expect(isBandeauActive(ON, route)).toBe(true);
+		}
 	});
 
 	it('faux si flag ON mais route non adoptée', () => {
-		// Pages à identité éditoriale, non migrées (voir docs/COHERENCE-UI-BANDEAU.md).
-		expect(isBandeauActive(ON, '/crm/prospection')).toBe(false);
-		expect(isBandeauActive(ON, '/crm/reporting')).toBe(false);
+		// Veille : identité magazine, traitement particulier (maquette à valider).
 		expect(isBandeauActive(ON, '/crm/veille')).toBe(false);
-		expect(isBandeauActive(ON, '/crm/aide')).toBe(false);
-		expect(isBandeauActive(ON, '/crm')).toBe(false);
+		// Sous-routes détail : hors copy validée.
+		expect(isBandeauActive(ON, '/crm/veille/123')).toBe(false);
+		expect(isBandeauActive(ON, '/crm/campagnes/123')).toBe(false);
 	});
 
 	it('match exact : ni slash final ni sous-route ne matchent', () => {
 		expect(isBandeauActive(ON, '/crm/entreprises/')).toBe(false);
 		expect(isBandeauActive(ON, '/crm/entreprises/123')).toBe(false);
-		expect(isBandeauActive(ON, '/crm/campagnes/123')).toBe(false);
+		// Le dashboard '/crm' matche en exact, jamais /crm/quelquechose via startsWith.
+		expect(isBandeauActive(ON, '/crm/')).toBe(false);
 	});
 });

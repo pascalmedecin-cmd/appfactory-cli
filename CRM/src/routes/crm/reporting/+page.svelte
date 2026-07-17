@@ -1,6 +1,9 @@
 <script lang="ts">
 	import type { PageData } from './$types';
+	import PageBand from '$lib/components/PageBand.svelte';
+	import { page } from '$app/stores';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import { isBandeauActive } from '$lib/pageBandeau';
 	import {
 		reportingIndicators,
 		reportingTabs,
@@ -17,6 +20,10 @@
 	import ReportingExportCards from '$lib/components/reporting/ReportingExportCards.svelte';
 
 	let { data }: { data: PageData } = $props();
+
+	// Cohérence UI : bandeau de page in-page (flag ff_page_bandeau). Source unique isBandeauActive,
+	// partagée avec le Header → jamais de titre double ni absent. OFF → hero actuel strict.
+	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
 
 	let activeTab: ReportingTab = $state('synthese');
 
@@ -46,11 +53,20 @@
 </svelte:head>
 
 <div class="page">
-	<header class="hero">
-		<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
-		<h2>Reporting</h2>
-		<p>Synthèse opérationnelle FilmPro — pipeline, conversion, activité.</p>
-	</header>
+	{#if bandeau}
+		<PageBand
+			icon="bar_chart"
+			eyebrow="Les chiffres"
+			title="Reporting"
+			desc="Métriques d'activité et de pipeline."
+		/>
+	{:else}
+		<header class="hero">
+			<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
+			<h2>Reporting</h2>
+			<p>Synthèse opérationnelle FilmPro — pipeline, conversion, activité.</p>
+		</header>
+	{/if}
 
 	<ReportingIndicators values={indicators} />
 

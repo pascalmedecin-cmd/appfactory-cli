@@ -13,11 +13,16 @@ import type { FeatureFlags } from '$lib/types/feature-flags';
  * `isBandeauActive(...)` comme condition. Spec : docs/COHERENCE-UI-BANDEAU.md.
  */
 export const BANDEAU_ROUTES: readonly string[] = [
+	'/crm', // Tableau de bord (match exact ci-dessous → ne matche pas /crm/*)
 	'/crm/entreprises',
 	'/crm/contacts',
 	'/crm/pipeline',
 	'/crm/signaux',
 	'/crm/campagnes',
+	'/crm/prospection',
+	'/crm/reporting',
+	'/crm/aide',
+	// Veille NON migrée ici : identité magazine, traitement particulier (maquette à valider).
 ];
 
 /**

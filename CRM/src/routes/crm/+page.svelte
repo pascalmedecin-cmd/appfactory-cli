@@ -18,7 +18,10 @@
 	import QuickActionsFooter from '$lib/components/dashboard/QuickActionsFooter.svelte';
 	import DashboardTemporel from '$lib/components/dashboard/DashboardTemporel.svelte';
 	import LeadExpressButton from '$lib/components/dashboard/LeadExpressButton.svelte';
+	import PageBand from '$lib/components/PageBand.svelte';
+	import { page } from '$app/stores';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import { isBandeauActive } from '$lib/pageBandeau';
 	import type { PageData } from './$types';
 
 	$pageSubtitle = "Vue d'ensemble";
@@ -28,6 +31,9 @@
 	// Vague 3.3 : dashboard temporel « façon Capsule » derrière le flag ffCrmListesV2.
 	// OFF = rendu v9 actuel byte-identique (branche {:else}).
 	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+	// Cohérence UI : bandeau de page in-page (flag ff_page_bandeau). Source unique isBandeauActive.
+	// OFF → rendu actuel strict. ON → bandeau « Tableau de bord » en tête, au-dessus du greeting.
+	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
 
 	let leadExpressOpen = $state(false);
 
@@ -56,6 +62,14 @@
 	});
 </script>
 
+{#if bandeau}
+	<PageBand
+		icon="dashboard"
+		eyebrow="La vue d'ensemble"
+		title="Tableau de bord"
+		desc="Ce qui compte aujourd'hui, en un coup d'œil."
+	/>
+{/if}
 {#if premium}
 	<DashboardTemporel
 		firstName={data.firstName}

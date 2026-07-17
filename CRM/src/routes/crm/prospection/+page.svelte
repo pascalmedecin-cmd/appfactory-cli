@@ -5,7 +5,9 @@
 	import { page } from '$app/stores';
 	import { toasts } from '$lib/stores/toast';
 	import DataTable from '$lib/components/DataTable.svelte';
+	import PageBand from '$lib/components/PageBand.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import { isBandeauActive } from '$lib/pageBandeau';
 	import Badge from '$lib/components/Badge.svelte';
 	import ImportModal from '$lib/components/prospection/ImportModal.svelte';
 	import ImportListeModal from '$lib/components/prospection/ImportListeModal.svelte';
@@ -58,6 +60,13 @@
 	// actuel byte-identique. Chips KPI sur les agrégats GLOBAUX du load (totalLeads paginé →
 	// jamais de distribution calculée sur la page partielle ; on ne montre que des comptes exacts).
 	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+	// Cohérence UI : bandeau de page in-page (flag ff_page_bandeau). Source unique isBandeauActive.
+	// OFF → rendu actuel strict. Le bandeau s'insère en tête du conteneur pleine hauteur (il rogne la
+	// hauteur de la table, qui scrolle en interne) ; le compteur = totalLeads (ex-sous-titre du Header).
+	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
+	const bandeauCount = $derived(
+		data.totalLeads === 0 ? 'Aucun prospect' : `${data.totalLeads} prospect${data.totalLeads > 1 ? 's' : ''}`,
+	);
 	const premiumKpiItems = $derived<KpiItem[]>([
 		{ icon: 'users', value: data.leadsActifsCount, label: 'Leads actifs', tone: 'primary' },
 		{ icon: 'landmark', value: data.marchesOuvertsCount, label: 'Marchés publics ouverts', tone: 'convert' },
@@ -664,6 +673,20 @@
 </script>
 
 <div class="flex flex-col gap-3 md:gap-6 md:h-[calc(100dvh-var(--header-height)-3rem)]">
+	{#if bandeau}
+		<!-- Bandeau en tête du conteneur pleine hauteur : `shrink-0` pour qu'il garde sa hauteur
+		     naturelle (c'est la table qui absorbe le reste et scrolle en interne). -->
+		<div class="shrink-0">
+			<PageBand
+				icon="search"
+				eyebrow="Le terrain"
+				title="Prospection"
+				desc="Les entreprises à contacter, triées par potentiel."
+				descMobile="Triées par potentiel."
+				count={bandeauCount}
+			/>
+		</div>
+	{/if}
 	<!-- Phase 0 : 3 indicateurs honnêtes (remplacent le funnel décoratif 4 cartes
 	     Importer/Enrichir/Qualifier/Convertir qui mentait + suggérait un parcours linéaire qui n'existe pas). -->
 	<div class="md:hidden flex items-center gap-2 text-xs leading-tight tabular-nums" aria-label="Indicateurs prospection">
