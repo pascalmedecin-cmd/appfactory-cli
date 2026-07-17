@@ -92,3 +92,48 @@ Le petit label majuscule qui introduit une section/un bloc (« ce type de titre 
 - `npm run check` (0 erreur), Vitest complet vert, e2e des flux touchés.
 - Un seul `h1` visible par page (le titre du bandeau) ; le `Header` n'émet plus de `h1` concurrent quand le flag est ON.
 - Mobile : test manuel DevTools par Pascal (règle `feedback_crm_mobile_testing_devtools`) - vérifier la bascule desc → variante courte.
+
+---
+
+# Increments b/c/d - direction VALIDÉE (Pascal 2026-07-17)
+
+**Statut : direction validée dans Chrome le 2026-07-17 (« ok validé »).** À coder **derrière un flag,
+increment par increment (b, puis c, puis d), page par page, QA avant/après**. Rien n'est encore codé.
+
+Mockup validé + inventaires détaillés (scratch local **gitignore**, ne voyagent pas par git) :
+`.atelier-209/coherence-ui/coherence-bcd-mockup.html` + `inventory-{b-composants,c-compteurs,d-grille,gouvernance-benchmark}.md`.
+Méthode : inventaire du CRM réel (file:line) + benchmark Gouvernance (structure, pas peau) + critique
+adversariale 6 lentilles (27 corrections). Principe directeur inchangé : **discipline de structure de
+Gouvernance, peau Atelier 209** (Inter, tokens `app.css`, bleu FilmPro / magenta LED). → [[feedback_gouvernance_benchmark_layout_lisibilite]].
+
+**Q1 tranchée (Pascal 17/07)** : largeur du contenu = **bornée ET ancrée à gauche** (jamais centrée).
+Conséquence visible : la **Veille passe de centrée (max-w-1280 mx-auto) à calée à gauche** ; sa peau
+magazine dessous reste intacte.
+
+**Directive Pascal 17/07 : attention aux espaces.** Le rythme vertical 8px (increment d) et l'absence de
+collage (labels inline → block, gouttières cohérentes) sont un critère d'acceptation dur, vérifié avant/après.
+
+## Normes à coder (résumé durable ; détail file:line dans les inventaires scratch)
+
+**b - Composants transverses** (10 incohérences INC-1→10) :
+- Bouton : primitive unique, primaire/secondaire/discret **40px** (`rounded-lg`, ombre légère) ; **44px réservé au tactile mobile** pleine largeur. Extraire `Button.svelte`.
+- Pastilles : anatomie unique `radius-full`, 12px, 600, la teinte porte le sens (cible = famille `.crm-chip`). `ScorePill` `radius-sm` = exception **à confirmer** (garder ou aligner).
+- Recherche : `SearchInput` **partout** (40px), bannir les 3 recodes scopés (campagnes/aide/etc.).
+- Surfaces : **2 niveaux** documentés = panneau de contenu (`radius-xl` + `shadow-card` + hairline, pad 24) / carte entité (`radius-lg` + `shadow-card`→hover, pad 16-20).
+- État vide : **typographique** (icône 48 / titre / desc / action), 1 seule primitive `EmptyState` (≈14 réimplémentations à router) - **jamais une carte** (garde-fou peau).
+- Kicker/eyebrow 0.12em partout ; hauteurs de contrôles toolbar 40px vs champs de formulaire (tokeniser).
+
+**c - Compteurs** : 3 rôles, la forme suit la fonction.
+- A **KPI** = chip `KpiStrip` canonique (19-20px, `--color-primary-dark`, tabular), **toujours agrégat GLOBAL** (jamais `array.length` d'un slice). Bento dashboard = exception signée, jamais dupliquée.
+- B **pastille inline** = `radius-full` 12-13px/600, 2 variantes (neutre `surface-alt` / marque `primary-light`), **ambre = attention seule** (non lus, sans contact).
+- C **compte texte** = muet, tabular, sans pilule ; « X résultats » = **filtré** (le mot le dit).
+- Corrige le bug entreprises (pastille global 8 vs pied filtré 5) + les pastilles `.length` (signaux/pipeline/contacts/veille).
+
+**d - Grille 2 niveaux** :
+- Gouttière **unique tokenisée** `--page-gutter: 32px` (24 @1024, 16 @768), posée une fois (aujourd'hui 24/56/64 selon la page). Padding-bas > haut.
+- **Largeur max ancrée à gauche** (`--content-max` data ~1240 / `--reading-max` ~900 éditorial), `margin-inline:0`. Veille → gauche.
+- **4 zones** : 1 identité (bandeau) · 2 pouls (KPI discrets) · 3 filtres/outils · 4 contenu. Le titre domine.
+- **Trame de colonnes commune** (piste de carte unique `minmax(300px,1fr)` façon Gouvernance / 12-col) → bords alignés niveau 2.
+- Rythme vertical 8px tokenisé (bandeau→pouls 16, →filtres 16, →contenu 24, sections 32, identité dashboard 48).
+
+**Non-régression** : peau Atelier 209, peau magazine Veille, grande tuile bento dashboard (identité signée) - inchangées. Flag OFF = rendu actuel strict.
