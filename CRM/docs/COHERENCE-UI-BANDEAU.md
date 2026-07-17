@@ -70,10 +70,11 @@ Sur-titre imagé (MAJUSCULES, accents inclus) + description factuelle une ligne,
 
 ## Increments d'implémentation
 
-1. **Composant + flag + 1 page témoin** (Entreprises) derrière `ff_page_bandeau`. QA avant/après.
-2. **Pages liste** (Campagnes, Signaux, Prospection, Contacts, Pipeline). QA par page.
-3. **Pages restantes** (Dashboard, Reporting, Veille, Aide + pages détail). QA par page.
-4. **Bascule du `Header`** (gate `pageTitle`/`$pageSubtitle` quand le bandeau est actif) + relecture cohérence transverse + audit a11y (un seul `h1` par page).
+1. **[LIVRÉ 2026-07-16]** Composant + flag + 1 page témoin (Entreprises) derrière `ff_page_bandeau`. QA avant/après.
+2. **[LIVRÉ 2026-07-17]** Pages liste **calques exacts** du pattern Entreprises : **Contacts, Pipeline, Signaux, Campagnes**. QA par page verte (svelte-check 0/0, Vitest 2824, build OK, revue adversariale 5 dims 0 finding, avant/après vraie vue : 4 pages ON = 1 seul h1 + copy/icône/pastille corrects, mobile desc→variante OK, OFF = bandeau absent + ws-page-actions/FAB présents). Commit `5e0eea3`.
+   - **Prospection SORTIE de cet increment** : sa mise en page est dense et **ancrée à la hauteur du viewport** (`md:h-[calc(100dvh-var(--header-height)-3rem)]`) ; y insérer le bandeau mange ce calc et déplace la table. → traité à l'increment 3 (décision design), pas un drop-in mécanique.
+3. **[À DÉCIDER - maquette + validation Pascal]** Pages à **identité éditoriale forte ou layout spécifique**, où le bandeau générique n'est PAS un drop-in : **Prospection** (layout pleine hauteur), **Dashboard** (greeting « inbox du matin »), **Reporting** (hero), **Veille** (masthead magazine « Filtrer l'essentiel »), **Aide** (`.aide-head` + titre dynamique par niveau). Chacune demande un arbitrage : bandeau générique (uniformité) vs préserver l'identité signée. Maquette par page + validation avant code (règle non négociable du chantier). Pages détail (`[id]`) : hors copy validée, non couvertes.
+4. **[LIVRÉ - mécanisme générique en place]** Bascule du `Header` : le gate `pageTitle`/`$pageSubtitle` est **automatique par route** via `isBandeauActive(data.featureFlags, page.url.pathname)` dans `+layout.svelte` (`Header.hideTitle`). Ajouter une route à `BANDEAU_ROUTES` gate le Header pour cette route sans autre code. Audit a11y (un seul `h1`) : vérifié sur les 5 pages migrées (Entreprises + inc 2). La **relecture cohérence transverse finale** se fera une fois l'increment 3 tranché.
 
 ## QA (directive permanente Pascal : zéro régression + miroir exact + avant/après)
 
