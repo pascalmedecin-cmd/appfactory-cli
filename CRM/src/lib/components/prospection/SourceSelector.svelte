@@ -70,7 +70,7 @@
 			<span class="block mt-1.5 text-[12.5px] leading-snug text-text-muted flex-1">{c.desc}</span>
 
 			<span class="block mt-3">
-				<span class="block text-[10px] font-semibold uppercase tracking-wider text-text-muted mb-1.5">Ce que ça ramène</span>
+				<span class="block text-xs font-semibold uppercase tracking-wide text-text-muted mb-1.5">Ce que ça ramène</span>
 				<span class="flex flex-wrap gap-1.5">
 					{#each c.pills as p}
 						<span class="pill {p.star ? 'star' : ''}"><Icon name={p.icon} size={12} />{p.label}</span>

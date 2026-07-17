@@ -105,7 +105,9 @@
 		grid-column: 2;
 		grid-row: 1;
 		margin: 0 0 3px;
-		font-size: 11px;
+		/* Convention « kicker / sur-titre de section » (Pascal 2026-07-17) : 12px pour la lisibilité,
+		   partagée avec .mag-kicker (Veille) et les labels de section inline. */
+		font-size: 12px;
 		font-weight: 600;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;

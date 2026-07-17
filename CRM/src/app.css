@@ -195,9 +195,11 @@
 
 /* Magazine typography : module Veille (éditorial) */
 .mag-kicker {
-	letter-spacing: 0.14em;
+	/* Convention « kicker / sur-titre de section » (Pascal 2026-07-17) : 12px + tracking resserré
+	   pour la lisibilité, partagée avec .pband__eyebrow et les labels de section inline. */
+	letter-spacing: 0.12em;
 	text-transform: uppercase;
-	font-size: 11px;
+	font-size: 12px;
 	font-weight: 700;
 }
 .mag-display {
