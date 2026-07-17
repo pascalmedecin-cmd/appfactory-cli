@@ -13,10 +13,13 @@
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import EntrepriseSearchModal from '$lib/components/prospection/EntrepriseSearchModal.svelte';
 	import StatutSegment from '$lib/components/campagnes/StatutSegment.svelte';
+	import PageBand from '$lib/components/PageBand.svelte';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { SvelteSet } from 'svelte/reactivity';
 	import { toasts } from '$lib/stores/toast';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import { isBandeauActive } from '$lib/pageBandeau';
 	import { CRM_BASE } from '$lib/config';
 	import { filterEnabledSources } from '$lib/prospection-flags';
 	import type { EntrepriseSource } from '$lib/components/prospection/source-meta';
@@ -50,6 +53,16 @@
 	$effect(() => {
 		$pageSubtitle = `${data.stats.actives} campagne${data.stats.actives > 1 ? 's' : ''} ouverte${data.stats.actives > 1 ? 's' : ''}`;
 	});
+
+	// Cohérence UI : bandeau de page in-page (flag ff_page_bandeau). Source unique isBandeauActive,
+	// partagée avec le Header → jamais de titre double ni absent. OFF → rendu actuel strict (titre +
+	// compteur dans le Header, refonte 16/07) ; ON → ils migrent dans le bandeau.
+	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
+	const bandeauCount = $derived(
+		data.stats.actives === 0
+			? 'Aucune campagne ouverte'
+			: `${data.stats.actives} campagne${data.stats.actives > 1 ? 's' : ''} ouverte${data.stats.actives > 1 ? 's' : ''}`,
+	);
 
 	const visible = $derived(
 		data.campagnes
@@ -316,11 +329,28 @@
 </script>
 
 <div class="ws-bound">
-	<header class="head">
-		<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
-			<Icon name="add" size={17} /> Nouvelle campagne
-		</button>
-	</header>
+	{#if bandeau}
+		<PageBand
+			icon="sell"
+			eyebrow="Les actions"
+			title="Campagnes"
+			desc="Regrouper les prospects par action commerciale."
+			descMobile="Grouper par action commerciale."
+			count={bandeauCount}
+		>
+			{#snippet actions()}
+				<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
+					<Icon name="add" size={17} /> Nouvelle campagne
+				</button>
+			{/snippet}
+		</PageBand>
+	{:else}
+		<header class="head">
+			<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
+				<Icon name="add" size={17} /> Nouvelle campagne
+			</button>
+		</header>
+	{/if}
 
 	<KpiStrip items={kpiItems} ariaLabel="Indicateurs campagnes" />
 

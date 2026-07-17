@@ -14,15 +14,24 @@ describe('isBandeauActive - source unique du bandeau de page', () => {
 
 	it('vrai si flag ON ET route adoptée', () => {
 		expect(isBandeauActive(ON, '/crm/entreprises')).toBe(true);
+		expect(isBandeauActive(ON, '/crm/contacts')).toBe(true);
+		expect(isBandeauActive(ON, '/crm/pipeline')).toBe(true);
+		expect(isBandeauActive(ON, '/crm/signaux')).toBe(true);
+		expect(isBandeauActive(ON, '/crm/campagnes')).toBe(true);
 	});
 
 	it('faux si flag ON mais route non adoptée', () => {
-		expect(isBandeauActive(ON, '/crm/campagnes')).toBe(false);
+		// Pages à identité éditoriale, non migrées (voir docs/COHERENCE-UI-BANDEAU.md).
+		expect(isBandeauActive(ON, '/crm/prospection')).toBe(false);
+		expect(isBandeauActive(ON, '/crm/reporting')).toBe(false);
+		expect(isBandeauActive(ON, '/crm/veille')).toBe(false);
+		expect(isBandeauActive(ON, '/crm/aide')).toBe(false);
 		expect(isBandeauActive(ON, '/crm')).toBe(false);
 	});
 
 	it('match exact : ni slash final ni sous-route ne matchent', () => {
 		expect(isBandeauActive(ON, '/crm/entreprises/')).toBe(false);
 		expect(isBandeauActive(ON, '/crm/entreprises/123')).toBe(false);
+		expect(isBandeauActive(ON, '/crm/campagnes/123')).toBe(false);
 	});
 });

@@ -12,7 +12,13 @@ import type { FeatureFlags } from '$lib/types/feature-flags';
  * Migrer une page = (1) ajouter sa route ici ET (2) rendre `<PageBand>` dans la page en gardant
  * `isBandeauActive(...)` comme condition. Spec : docs/COHERENCE-UI-BANDEAU.md.
  */
-export const BANDEAU_ROUTES: readonly string[] = ['/crm/entreprises'];
+export const BANDEAU_ROUTES: readonly string[] = [
+	'/crm/entreprises',
+	'/crm/contacts',
+	'/crm/pipeline',
+	'/crm/signaux',
+	'/crm/campagnes',
+];
 
 /**
  * Vrai si le flag est actif ET si la route courante a adopté le bandeau. Match exact du pathname

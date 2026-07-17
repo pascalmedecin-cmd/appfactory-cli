@@ -9,7 +9,10 @@
 	import CantonSelect from '$lib/components/CantonSelect.svelte';
 	import Badge from '$lib/components/Badge.svelte';
 	import EmptyState from '$lib/components/EmptyState.svelte';
+	import PageBand from '$lib/components/PageBand.svelte';
+	import { page } from '$app/stores';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import { isBandeauActive } from '$lib/pageBandeau';
 	import { toasts } from '$lib/stores/toast';
 	import {
 		contactsIndicators,
@@ -87,6 +90,15 @@
 
 	// Vague 2 « listes premium » (même flag JWT que les autres pages). OFF → rendu actuel.
 	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+	// Cohérence UI : bandeau de page in-page (flag ff_page_bandeau). Même source unique que le
+	// Header (isBandeauActive) → le titre ne peut jamais être en double ni absent. OFF → rendu
+	// actuel strict (branche {:else} identique). Le compteur (ex-sous-titre) migre dans la pastille.
+	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
+	const bandeauCount = $derived(
+		data.contacts.length === 0
+			? 'Aucun contact'
+			: `${data.contacts.length} contact${data.contacts.length > 1 ? 's' : ''}`,
+	);
 	const kpiItems = $derived<KpiItem[]>([
 		{ icon: 'contacts', value: indicators.total, label: indicators.total === 1 ? 'Contact' : 'Contacts', tone: 'primary' },
 		{ icon: 'handshake', value: indicators.prescripteurs, label: 'Prescripteurs', tone: 'success' },
@@ -313,12 +325,30 @@
 </script>
 
 <div class="ws-page">
-	<div class="ws-page-actions">
-		<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
-			<Icon name="add" size={18} />
-			Ajouter
-		</button>
-	</div>
+	{#if bandeau}
+		<PageBand
+			icon="contacts"
+			eyebrow="Les interlocuteurs"
+			title="Contacts"
+			desc="Les bonnes personnes chez vos prospects : qui décide, qui rappeler."
+			descMobile="Qui décide, qui rappeler."
+			count={bandeauCount}
+		>
+			{#snippet actions()}
+				<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
+					<Icon name="add" size={18} />
+					Ajouter
+				</button>
+			{/snippet}
+		</PageBand>
+	{:else}
+		<div class="ws-page-actions">
+			<button type="button" class="ws-btn ws-btn-primary" onclick={openCreate}>
+				<Icon name="add" size={18} />
+				Ajouter
+			</button>
+		</div>
+	{/if}
 
 	{#if premium}
 		<KpiStrip items={kpiItems} ariaLabel="Indicateurs contacts" />
@@ -446,14 +476,16 @@
 	</div>
 </div>
 
-<button
-	type="button"
-	class="ws-fab"
-	aria-label="Ajouter un contact"
-	onclick={openCreate}
->
-	<Icon name="add" size={20} />
-</button>
+{#if !bandeau}
+	<button
+		type="button"
+		class="ws-fab"
+		aria-label="Ajouter un contact"
+		onclick={openCreate}
+	>
+		<Icon name="add" size={20} />
+	</button>
+{/if}
 
 <!-- SlideOut détail contact -->
 <SlideOut bind:open={slideOutOpen} title="{selectedContact?.prenom ?? ''} {selectedContact?.nom ?? ''}">

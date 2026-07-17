@@ -7,7 +7,10 @@
 	import FormField from '$lib/components/FormField.svelte';
 	import Select from '$lib/components/Select.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import PageBand from '$lib/components/PageBand.svelte';
+	import { page } from '$app/stores';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import { isBandeauActive } from '$lib/pageBandeau';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
 	import {
@@ -138,6 +141,15 @@
 	// zéro régression. Delta kanban : bande géante → strip de chips, cartes à accent d'étape
 	// + logo, hero fiche premium. Valeurs issues de `pipelineIndicators` (helper pur testé).
 	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+	// Cohérence UI : bandeau de page in-page (flag ff_page_bandeau). Source unique isBandeauActive,
+	// partagée avec le Header → jamais de titre double ni absent. OFF → rendu actuel strict. La valeur
+	// « en cours » reste sur la strip KPI ; la pastille du bandeau ne porte que le compte (compact).
+	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
+	const bandeauCount = $derived(
+		data.opportunites.length === 0
+			? 'Aucune opportunité'
+			: `${data.opportunites.length} opportunité${data.opportunites.length > 1 ? 's' : ''}`,
+	);
 	const kpiItems = $derived<KpiItem[]>([
 		{ icon: 'business', value: indicators.active, label: indicators.active === 1 ? 'Opportunité active' : 'Opportunités actives', tone: 'primary' },
 		{ icon: 'trending_up', value: formatMontantCompact(indicators.valueActive) ?? '0 CHF', label: 'Valeur pipeline', tone: 'convert' },
@@ -323,16 +335,38 @@
 </form>
 
 <div class="ws-page">
-	<div class="ws-page-actions">
-		<button
-			type="button"
-			class="ws-btn ws-btn-primary"
-			onclick={() => openCreate()}
+	{#if bandeau}
+		<PageBand
+			icon="conversion_path"
+			eyebrow="Les affaires"
+			title="Pipeline"
+			desc="De la première piste au devis signé, où en est chaque opportunité."
+			descMobile="De la piste au devis signé."
+			count={bandeauCount}
 		>
-			<Icon name="add" size={18} />
-			Nouvelle opportunité
-		</button>
-	</div>
+			{#snippet actions()}
+				<button
+					type="button"
+					class="ws-btn ws-btn-primary"
+					onclick={() => openCreate()}
+				>
+					<Icon name="add" size={18} />
+					Nouvelle opportunité
+				</button>
+			{/snippet}
+		</PageBand>
+	{:else}
+		<div class="ws-page-actions">
+			<button
+				type="button"
+				class="ws-btn ws-btn-primary"
+				onclick={() => openCreate()}
+			>
+				<Icon name="add" size={18} />
+				Nouvelle opportunité
+			</button>
+		</div>
+	{/if}
 
 	{#if premium}
 		<KpiStrip items={kpiItems} ariaLabel="Indicateurs pipeline" />
@@ -376,14 +410,16 @@
 	</div>
 </div>
 
-<button
-	type="button"
-	class="ws-fab"
-	aria-label="Nouvelle opportunité"
-	onclick={() => openCreate()}
->
-	<Icon name="add" size={20} />
-</button>
+{#if !bandeau}
+	<button
+		type="button"
+		class="ws-fab"
+		aria-label="Nouvelle opportunité"
+		onclick={() => openCreate()}
+	>
+		<Icon name="add" size={20} />
+	</button>
+{/if}
 
 <!-- SlideOut detail opportunité -->
 <SlideOut bind:open={slideOutOpen} title={selectedOpp?.titre ?? ''}>

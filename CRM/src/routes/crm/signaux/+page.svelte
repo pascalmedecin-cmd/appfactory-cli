@@ -6,7 +6,10 @@
 	import SlideOut from '$lib/components/SlideOut.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import PageBand from '$lib/components/PageBand.svelte';
+	import { page } from '$app/stores';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
+	import { isBandeauActive } from '$lib/pageBandeau';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
 	import {
@@ -149,6 +152,10 @@
 	// compacte (les cartes étaient déjà premium depuis V4 / S189). Valeurs issues du helper
 	// pur `signauxIndicators` déjà testé : aucun signal inventé.
 	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+	// Cohérence UI : bandeau de page in-page (flag ff_page_bandeau). Source unique isBandeauActive,
+	// partagée avec le Header → jamais de titre double ni absent. OFF → rendu actuel strict.
+	// `bandeauCount` est déclaré plus bas, après `filteredSignaux` dont il dépend.
+	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
 	const kpiItems = $derived<KpiItem[]>([
 		{ icon: 'radar', value: indicators.total, label: indicators.total === 1 ? 'Signal' : 'Signaux', tone: 'primary' },
 		{ icon: 'fiber_new', value: indicators.nouveaux, label: 'À trier', tone: 'warn', highlight: indicators.nouveaux > 0 },
@@ -209,6 +216,13 @@
 		// sortKey === 'date' : on garde l'ordre du load (date_detection DESC côté serveur).
 		return out;
 	});
+
+	// Compteur du bandeau (déclaré ici car il dépend de `filteredSignaux` ci-dessus).
+	const bandeauCount = $derived(
+		filteredSignaux.length === 0
+			? 'Aucun signal'
+			: `${filteredSignaux.length} ${filteredSignaux.length > 1 ? 'signaux' : 'signal'}`,
+	);
 
 	// V5 (file courte) : sur l'onglet « Nouveau » sans filtre, la page ouvre sur la tête de file
 	// triée par score (les chaudes / à décider), pas sur les centaines de fiches froides. Le bouton
@@ -320,7 +334,9 @@
 </script>
 
 <div class="ws-page">
-	<div class="ws-page-actions">
+	<!-- Actions de page (sélection + accès archives), partagées entre le bandeau (ON) et la barre
+	     d'actions historique (OFF) : le snippet rend un DOM identique dans les deux cas. -->
+	{#snippet signauxActions()}
 		{#if data.signaux.length > 0}
 			{#if selectMode}
 				<button type="button" class="ws-btn ws-btn-secondary" onclick={exitSelectMode}>
@@ -340,7 +356,24 @@
 				Archivées ({data.archivedCount})
 			</button>
 		{/if}
-	</div>
+	{/snippet}
+
+	{#if bandeau}
+		<PageBand
+			icon="notifications"
+			eyebrow="Le radar"
+			title="Signaux"
+			desc="Ce qui bouge sur le marché du vitrage : chantiers, permis, appels d'offres."
+			descMobile="Chantiers, permis, appels d'offres."
+			count={bandeauCount}
+		>
+			{#snippet actions()}{@render signauxActions()}{/snippet}
+		</PageBand>
+	{:else}
+		<div class="ws-page-actions">
+			{@render signauxActions()}
+		</div>
+	{/if}
 
 	<!-- V5 : bannière de la vue archivées (lecture/consultation, restaurables côté admin). -->
 	{#if data.showArchived}
