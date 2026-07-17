@@ -13,6 +13,7 @@
 	import { page } from '$app/stores';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { isBandeauActive } from '$lib/pageBandeau';
+	import { isCoherenceActive } from '$lib/ui/coherence';
 	import { toasts } from '$lib/stores/toast';
 	import {
 		contactsIndicators,
@@ -94,6 +95,9 @@
 	// Header (isBandeauActive) → le titre ne peut jamais être en double ni absent. OFF → rendu
 	// actuel strict (branche {:else} identique). Le compteur (ex-sous-titre) migre dans la pastille.
 	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
+	// Cohérence UI b/c/d (flag ff_ui_coherence) : class-swap des boutons inline → primitive .ws-btn.
+	// OFF ⇒ rendu actuel strict (mêmes handlers/enfants, seule la chaîne de classes bascule).
+	const coherence = $derived(isCoherenceActive(data.featureFlags));
 	const bandeauCount = $derived(
 		data.contacts.length === 0
 			? 'Aucun contact'
@@ -635,7 +639,7 @@
 			<div class="flex gap-3 pt-4 border-t border-border">
 				<button
 					onclick={openEdit}
-					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
+					class={coherence ? 'ws-btn ws-btn-primary' : 'flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer'}
 				>
 					<Icon name="edit" size={16} />
 					Modifier
@@ -661,7 +665,7 @@
 						type="button"
 						onclick={() => (confirmArchiveOpen = true)}
 						disabled={archiving}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-danger-deep rounded-lg hover:bg-danger/5 cursor-pointer disabled:opacity-50 transition-colors"
+						class={coherence ? 'ws-btn ws-btn-danger-ghost' : 'flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-danger-deep rounded-lg hover:bg-danger/5 cursor-pointer disabled:opacity-50 transition-colors'}
 					>
 						<Icon name="archive" size={16} />
 						{archiving ? 'Archivage…' : 'Archiver'}
@@ -807,14 +811,14 @@
 			<button
 				type="button"
 				onclick={() => (modalOpen = false)}
-				class="h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
+				class={coherence ? 'ws-btn ws-btn-tertiary ws-btn-tertiary-muted' : 'h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer'}
 			>
 				Annuler
 			</button>
 			<button
 				type="submit"
 				disabled={saving}
-				class="h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
+				class={coherence ? 'ws-btn ws-btn-primary' : 'h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer'}
 			>
 				{saving ? 'Enregistrement…' : 'Enregistrer'}
 			</button>

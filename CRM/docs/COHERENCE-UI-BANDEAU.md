@@ -137,3 +137,29 @@ collage (labels inline → block, gouttières cohérentes) sont un critère d'ac
 - Rythme vertical 8px tokenisé (bandeau→pouls 16, →filtres 16, →contenu 24, sections 32, identité dashboard 48).
 
 **Non-régression** : peau Atelier 209, peau magazine Veille, grande tuile bento dashboard (identité signée) - inchangées. Flag OFF = rendu actuel strict.
+
+---
+
+## État d'implémentation - increment b (flag `ff_ui_coherence`)
+
+**Mécanique (2 canaux, un seul flag par-user `ff_ui_coherence`, patron `ffCrmListesV2`) :**
+1. **class-swap dans les pages** : `class={coherence ? 'ws-btn ws-btn-VARIANT' : '<classes legacy exactes>'}`.
+   Handlers + enfants restent source unique (jamais dupliqués). `isCoherenceActive(data.featureFlags)` (`src/lib/ui/coherence.ts`).
+2. **override CSS co-localisé** : le layout pose `.coherence-ui` sur `.crm-shell` quand ON ; chaque brique
+   partagée porte `:global(.coherence-ui) .hook` dans son `<style>` scopé (spécificité 0-3-0 fiable + hook namespacé).
+
+**Livré (part 1, 2026-07-17)** - QA OFF/ON prouvée au DOM (badge 10px/src 8px/search 39px OFF → 9999px/9999px/40px ON) :
+- **INC-1/2 Boutons** : la primitive EXISTANTE `.ws-btn` (`workspace.css`) est la cible (pas de nouveau `Button.svelte` - décision : l'extraire en pur refactor APRÈS promotion du flag). 3 variantes ajoutées (`.ws-btn-soft`, `.ws-btn-outline`, `.ws-btn-danger-ghost`) + `.ws-btn-primary:disabled`. Routés : entreprises, contacts, pipeline, signaux, prospection (panneau « sauvegarder recherche »). « Annuler » = `ws-btn-tertiary ws-btn-tertiary-muted` (hover conservé).
+- **INC-3 Pastilles** : `Badge` (hook `crm-badge`, PAS `badge` nu - collision `:global(.badge)` de FeedbackTable) + `SourcePill` → `radius-full`. `StagePill`/`.crm-chip`/`.camp` déjà full. `ScorePill` garde `radius-sm` (exception documentée). `Badge` = famille bordée conservée (radius-full + 600).
+- **INC-10 (partiel)** : `SearchInput` → 40px pile.
+- **INC-8 (partiel)** : classe `.eyebrow` (gated `.coherence-ui`, pas globale - collision `class="eyebrow"` portail/login) ; 1 call-site (entreprises).
+- Revue adversariale 5 lentilles → 7 findings confirmés corrigés (dont 2 régressions OFF : Badge `.badge` global + `.eyebrow` global). svelte-check 0/0, Vitest 2827.
+
+**Reste (part 2) :**
+- **Prospection CTAs desktop** (`hidden md:inline-flex`) : NON routés. Piège cascade : `.ws-btn` est **non-layered**, les utilities Tailwind v4 sont **layered** → `.ws-btn{display:inline-flex}` écraserait `hidden` (bouton visible en mobile). Fix part-2 : soit passer `workspace.css` en `@layer components`, soit approche sans utility de display.
+- **INC-5** recherches recodées (campagnes, aide, campagnes/[id], veille/editeur) → `SearchInput`.
+- **INC-7** états vides (~14 réimplémentations) → `EmptyState`.
+- **INC-6** surfaces (2 niveaux) ; **INC-9** poids de titres ; **INC-8** sur-titres inline restants ; **INC-10** hauteurs `Select`/`FormField` ; **INC-4** rayon modale (faible valeur).
+- **Veille** (peau magazine) + reporting/aide/campagnes (≈0 bouton inline) : à traiter avec soin part-2.
+
+**Gotchas gravés** (voir mémoires) : (a) `.ws-btn` non-layered vs Tailwind layered ; (b) QA locale : `updateUserById` **fusionne** `app_metadata` → pour désactiver un flag en test, mettre la clé à `null` (pas `delete`), sinon le « OFF » reste ON en silence.

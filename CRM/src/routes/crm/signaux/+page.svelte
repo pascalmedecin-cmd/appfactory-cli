@@ -10,6 +10,7 @@
 	import { page } from '$app/stores';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { isBandeauActive } from '$lib/pageBandeau';
+	import { isCoherenceActive } from '$lib/ui/coherence';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
 	import {
@@ -156,6 +157,9 @@
 	// partagée avec le Header → jamais de titre double ni absent. OFF → rendu actuel strict.
 	// `bandeauCount` est déclaré plus bas, après `filteredSignaux` dont il dépend.
 	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
+	// Cohérence UI b/c/d (flag ff_ui_coherence) : class-swap des boutons inline → primitive .ws-btn.
+	// OFF ⇒ rendu actuel strict (mêmes handlers/enfants, seule la chaîne de class bascule).
+	const coherence = $derived(isCoherenceActive(data.featureFlags));
 	const kpiItems = $derived<KpiItem[]>([
 		{ icon: 'radar', value: indicators.total, label: indicators.total === 1 ? 'Signal' : 'Signaux', tone: 'primary' },
 		{ icon: 'fiber_new', value: indicators.nouveaux, label: 'À trier', tone: 'warn', highlight: indicators.nouveaux > 0 },
@@ -704,7 +708,7 @@
 						aria-haspopup="true"
 						aria-controls="signal-statut-menu"
 						aria-expanded={statutMenuOpen}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
+						class={coherence ? 'ws-btn ws-btn-primary' : 'flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer'}
 					>
 						<Icon name="flag" size={16} />
 						Statut : {statutLabel(st)}
@@ -756,7 +760,7 @@
 					type="button"
 					onclick={() => (confirmDeleteOpen = true)}
 					disabled={deleting}
-					class="ml-auto flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
+					class={coherence ? 'ws-btn ws-btn-danger-ghost ml-auto' : 'ml-auto flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50'}
 				>
 					<Icon name="delete" size={16} />
 					{deleting ? 'Suppression…' : 'Supprimer'}

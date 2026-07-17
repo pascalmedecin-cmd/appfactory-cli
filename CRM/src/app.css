@@ -202,6 +202,18 @@
 	font-size: 12px;
 	font-weight: 700;
 }
+/* Cohérence UI (b, flag ff_ui_coherence, INC-8) : sur-titre de section inline unifié. Mêmes métriques
+   que .mag-kicker (convention gravée) + couleur muette. GATED sous .coherence-ui : la classe `eyebrow`
+   existe déjà sur les pages portail/login (habillées par AtelierShell `.a209 :global(.eyebrow)`) — une
+   règle globale `.eyebrow` les restylerait hors flag. Ancrée au shell CRM, elle ne matche que le call-site
+   gaté (class-swap des pages CRM). OFF ⇒ aucune de ces pages n'est touchée. */
+.coherence-ui .eyebrow {
+	font-size: 12px;
+	font-weight: 700;
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: var(--color-text-muted);
+}
 .mag-display {
 	font-weight: 800;
 	letter-spacing: -0.03em;

@@ -24,6 +24,14 @@ export interface FeatureFlags {
 	 * Spec : `docs/COHERENCE-UI-BANDEAU.md`. Activation : `... || '{"ff_page_bandeau": true}'::jsonb`.
 	 */
 	ffPageBandeau: boolean;
+	/**
+	 * Cohérence UI - increments b/c/d (briques transverses, compteurs, grille). Normalise boutons,
+	 * pastilles, recherche, surfaces, états vides, sur-titres et hauteurs de contrôles sur les tokens
+	 * existants (peau Atelier 209 inchangée). ON → briques cohérentes façon mockup validé. OFF → rendu
+	 * actuel strict (zéro régression). Spec : `docs/COHERENCE-UI-BANDEAU.md` § « Increments b/c/d ».
+	 * Activation : `... || '{"ff_ui_coherence": true}'::jsonb`.
+	 */
+	ffUiCoherence: boolean;
 }
 
 export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
@@ -32,6 +40,7 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
 	ffDecoupe: false,
 	ffCrmListesV2: false,
 	ffPageBandeau: false,
+	ffUiCoherence: false,
 };
 
 /**
@@ -46,5 +55,6 @@ export function readFeatureFlags(appMetadata: Record<string, unknown> | null | u
 		ffDecoupe: appMetadata['ff_decoupe'] === true,
 		ffCrmListesV2: appMetadata['ff_crm_listes_v2'] === true,
 		ffPageBandeau: appMetadata['ff_page_bandeau'] === true,
+		ffUiCoherence: appMetadata['ff_ui_coherence'] === true,
 	};
 }

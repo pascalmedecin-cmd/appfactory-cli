@@ -49,4 +49,10 @@
 		color: var(--color-text-muted);
 		box-shadow: inset 0 0 0 1px var(--color-border);
 	}
+	/* Cohérence UI (b, INC-3, flag ff_ui_coherence) : la pastille source rejoint la famille pill
+	   radius-full (StagePill / .camp / .crm-chip). Gated par l'ancêtre .coherence-ui (posé sur .crm-shell) ;
+	   spécificité (0-3-0) > .src scopé (0-2-0). OFF ⇒ radius-md d'origine (non-régression). */
+	:global(.coherence-ui) .src {
+		border-radius: var(--radius-full);
+	}
 </style>

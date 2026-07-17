@@ -59,6 +59,13 @@
 .ws-btn-primary:hover {
 	background: var(--color-primary-hover);
 }
+/* Cohérence UI (b) : grisage disabled au niveau de la primitive, pour que TOUS les submits primaires
+   (Enregistrer/Convertir…) attenuent uniformément à l'état désactivé. Les boutons « Ajouter » existants
+   ne sont jamais disabled → aucun effet OFF. Aligne primary sur danger/soft/danger-ghost/tertiary. */
+.ws-btn-primary:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
 .ws-btn-secondary {
 	background: transparent;
 	color: var(--color-text-muted);
@@ -107,6 +114,43 @@
 /* Modificateur « btn-ter-muted » : même tertiaire, teinte atténuée (ex. Révoquer). */
 .ws-btn-tertiary-muted {
 	color: var(--color-text-muted);
+}
+/* Cohérence UI (b, INC-1/2) : variants ajoutés pour absorber les boutons inline divergents des pages
+   (slideouts/modales) dans la primitive unique .ws-btn, sans nouveau standard. Additifs : inutilisés
+   tant qu'une page ne les route pas (via class-swap gated par ff_ui_coherence) → zéro régression. */
+/* Tonal marque : action secondaire « pleine » douce (ex. Enrichir via Zefix). */
+.ws-btn-soft {
+	background: var(--color-primary-light);
+	color: var(--color-primary);
+}
+.ws-btn-soft:hover {
+	background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+.ws-btn-soft:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+/* Outline marque : bordure + texte couleur de marque (ex. Créer une opportunité). */
+.ws-btn-outline {
+	background: transparent;
+	color: var(--color-primary);
+	border: 1px solid var(--color-primary);
+}
+.ws-btn-outline:hover {
+	background: var(--color-primary-light);
+}
+/* Danger discret : action destructive en texte seul (ex. Supprimer dans un slideout). Le rouge plein
+   reste réservé à la ConfirmModal (.ws-btn-danger). */
+.ws-btn-danger-ghost {
+	background: transparent;
+	color: var(--color-danger-deep);
+}
+.ws-btn-danger-ghost:hover {
+	background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+}
+.ws-btn-danger-ghost:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
 }
 
 /* Selects de filtre inline. */

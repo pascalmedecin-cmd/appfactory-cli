@@ -32,7 +32,32 @@ describe('readFeatureFlags - ffCrmListesV2 (Vague 2)', () => {
 			ffDecoupe: true,
 			ffCrmListesV2: true,
 			ffPageBandeau: false,
+			ffUiCoherence: false,
 		});
+	});
+});
+
+describe('readFeatureFlags - ffUiCoherence (Cohérence UI b/c/d)', () => {
+	it('défaut false (metadata absent ou vide)', () => {
+		expect(readFeatureFlags(null).ffUiCoherence).toBe(false);
+		expect(readFeatureFlags(undefined).ffUiCoherence).toBe(false);
+		expect(readFeatureFlags({}).ffUiCoherence).toBe(false);
+		expect(DEFAULT_FEATURE_FLAGS.ffUiCoherence).toBe(false);
+	});
+
+	it('true seulement si strictement === true', () => {
+		expect(readFeatureFlags({ ff_ui_coherence: true }).ffUiCoherence).toBe(true);
+		expect(readFeatureFlags({ ff_ui_coherence: 'true' }).ffUiCoherence).toBe(false);
+		expect(readFeatureFlags({ ff_ui_coherence: 1 }).ffUiCoherence).toBe(false);
+		expect(readFeatureFlags({ ff_ui_coherence: false }).ffUiCoherence).toBe(false);
+	});
+
+	it('isolation : activer la cohérence UI ne touche pas les autres flags', () => {
+		const f = readFeatureFlags({ ff_ui_coherence: true });
+		expect(f.ffCrmMobileV2).toBe(false);
+		expect(f.ffCrmListesV2).toBe(false);
+		expect(f.ffPageBandeau).toBe(false);
+		expect(f.ffDecoupe).toBe(false);
 	});
 });
 

@@ -81,6 +81,15 @@
 		border-color: var(--color-primary);
 		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 12%, transparent);
 	}
+	/* Cohérence UI (b, INC-10, flag ff_ui_coherence) : hauteur du champ de recherche fixée à 40px PILE
+	   pour s'aligner sur les contrôles de barre d'outils (.ws-btn 40px, MultiSelect h-10). Hauteur
+	   explicite + padding vertical 0 (le flex align-items:center recentre le contenu) → 40px déterministe,
+	   pas de dérive selon la line-height. Gated par l'ancêtre .coherence-ui. OFF ⇒ padding 8px d'origine. */
+	:global(.coherence-ui) .search-input {
+		height: 40px;
+		padding-top: 0;
+		padding-bottom: 0;
+	}
 	.search-input.filled {
 		border-color: var(--color-border-strong);
 	}

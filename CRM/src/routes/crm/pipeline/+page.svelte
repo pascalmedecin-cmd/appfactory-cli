@@ -11,6 +11,7 @@
 	import { page } from '$app/stores';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { isBandeauActive } from '$lib/pageBandeau';
+	import { isCoherenceActive } from '$lib/ui/coherence';
 	import { toasts } from '$lib/stores/toast';
 	import { config } from '$lib/config';
 	import {
@@ -145,6 +146,9 @@
 	// partagée avec le Header → jamais de titre double ni absent. OFF → rendu actuel strict. La valeur
 	// « en cours » reste sur la strip KPI ; la pastille du bandeau ne porte que le compte (compact).
 	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
+	// Cohérence UI b/c/d (flag ff_ui_coherence) : class-swap des boutons inline → primitive .ws-btn.
+	// OFF ⇒ rendu actuel strict (mêmes handlers/enfants, class seule bascule).
+	const coherence = $derived(isCoherenceActive(data.featureFlags));
 	const bandeauCount = $derived(
 		data.opportunites.length === 0
 			? 'Aucune opportunité'
@@ -519,7 +523,7 @@
 			<div class="flex gap-3">
 				<button
 					onclick={openEdit}
-					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
+					class={coherence ? 'ws-btn ws-btn-primary' : 'flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer'}
 				>
 					<Icon name="edit" size={16} />
 					Modifier
@@ -547,7 +551,7 @@
 						<button
 							type="submit"
 							disabled={converting}
-							class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer disabled:opacity-50"
+							class={coherence ? 'ws-btn ws-btn-primary' : 'flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer disabled:opacity-50'}
 						>
 							<Icon name="handshake" size={16} />
 							{converting ? 'Conversion…' : 'Convertir en client'}
@@ -562,7 +566,7 @@
 							lostModalOpen = true;
 						}}
 						disabled={archiving}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
+						class={coherence ? 'ws-btn ws-btn-danger-ghost' : 'flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50'}
 					>
 						<Icon name="block" size={16} />
 						{archiving ? 'En cours…' : 'Marquer perdu'}
@@ -628,14 +632,14 @@
 			<button
 				type="button"
 				onclick={() => (modalOpen = false)}
-				class="h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
+				class={coherence ? 'ws-btn ws-btn-tertiary ws-btn-tertiary-muted' : 'h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer'}
 			>
 				Annuler
 			</button>
 			<button
 				type="submit"
 				disabled={saving}
-				class="h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
+				class={coherence ? 'ws-btn ws-btn-primary' : 'h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer'}
 			>
 				{saving ? 'Enregistrement...' : 'Enregistrer'}
 			</button>
@@ -689,14 +693,14 @@
 					lostModalOpen = false;
 					resetMotifPerte();
 				}}
-				class="h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
+				class={coherence ? 'ws-btn ws-btn-tertiary ws-btn-tertiary-muted' : 'h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer'}
 			>
 				Annuler
 			</button>
 			<button
 				type="submit"
 				disabled={archiving}
-				class="h-11 px-4 box-border text-sm font-semibold text-white bg-danger hover:bg-danger/90 rounded-lg disabled:opacity-50 cursor-pointer"
+				class={coherence ? 'ws-btn ws-btn-danger' : 'h-11 px-4 box-border text-sm font-semibold text-white bg-danger hover:bg-danger/90 rounded-lg disabled:opacity-50 cursor-pointer'}
 			>
 				{archiving ? 'En cours…' : 'Marquer perdu'}
 			</button>

@@ -8,6 +8,7 @@
 	import PageBand from '$lib/components/PageBand.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { isBandeauActive } from '$lib/pageBandeau';
+	import { isCoherenceActive } from '$lib/ui/coherence';
 	import Badge from '$lib/components/Badge.svelte';
 	import ImportModal from '$lib/components/prospection/ImportModal.svelte';
 	import ImportListeModal from '$lib/components/prospection/ImportListeModal.svelte';
@@ -60,6 +61,9 @@
 	// actuel byte-identique. Chips KPI sur les agrégats GLOBAUX du load (totalLeads paginé →
 	// jamais de distribution calculée sur la page partielle ; on ne montre que des comptes exacts).
 	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
+	// Cohérence UI b/c/d (flag ff_ui_coherence) : class-swap des boutons inline → primitive .ws-btn.
+	// OFF ⇒ rendu actuel strict (mêmes handlers/enfants, seule la chaîne de classes bascule).
+	const coherence = $derived(isCoherenceActive(data.featureFlags));
 	// Cohérence UI : bandeau de page in-page (flag ff_page_bandeau). Source unique isBandeauActive.
 	// OFF → rendu actuel strict. Le bandeau s'insère en tête du conteneur pleine hauteur (il rogne la
 	// hauteur de la table, qui scrolle en interne) ; le compteur = totalLeads (ex-sous-titre du Header).
@@ -899,7 +903,7 @@
 					{#if savedSearchesEnabled}
 					<button
 						onclick={() => savePanelOpen = !savePanelOpen}
-						class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-text border border-border rounded-lg box-border bg-white hover:bg-surface-alt cursor-pointer transition-colors"
+						class={coherence ? 'ws-btn ws-btn-secondary' : 'flex items-center gap-2 h-10 px-3 text-sm font-medium text-text border border-border rounded-lg box-border bg-white hover:bg-surface-alt cursor-pointer transition-colors'}
 					>
 						<Icon name="bookmark_add" size={16} />
 						Sauvegarder cette recherche
@@ -909,7 +913,7 @@
 				{#if alertsEnabled}
 				<button
 					onclick={() => alerteModalOpen = true}
-					class="flex items-center gap-2 h-10 px-3 text-sm font-medium text-primary border border-primary rounded-lg box-border hover:bg-primary/5 cursor-pointer transition-colors"
+					class={coherence ? 'ws-btn ws-btn-outline' : 'flex items-center gap-2 h-10 px-3 text-sm font-medium text-primary border border-primary rounded-lg box-border hover:bg-primary/5 cursor-pointer transition-colors'}
 				>
 					<Icon name="notifications_active" size={16} />
 					Créer une alerte
@@ -937,14 +941,14 @@
 				type="button"
 				onclick={handleSaveRecherche}
 				disabled={!saveRechercheNom.trim() || saveRechercheLoading}
-				class="h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors"
+				class={coherence ? 'ws-btn ws-btn-primary' : 'h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-colors'}
 			>
 				{saveRechercheLoading ? 'Enregistrement…' : 'Enregistrer'}
 			</button>
 			<button
 				type="button"
 				onclick={() => { savePanelOpen = false; saveRechercheNom = ''; }}
-				class="h-10 px-3 text-sm text-text-muted hover:text-text cursor-pointer"
+				class={coherence ? 'ws-btn ws-btn-tertiary ws-btn-tertiary-muted' : 'h-10 px-3 text-sm text-text-muted hover:text-text cursor-pointer'}
 			>
 				Annuler
 			</button>

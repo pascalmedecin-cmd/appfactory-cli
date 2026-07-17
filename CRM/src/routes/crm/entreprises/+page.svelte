@@ -20,6 +20,7 @@
 	import EmptyState from '$lib/components/EmptyState.svelte';
 	import PageBand from '$lib/components/PageBand.svelte';
 	import { isBandeauActive } from '$lib/pageBandeau';
+	import { isCoherenceActive } from '$lib/ui/coherence';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { toasts } from '$lib/stores/toast';
 	import {
@@ -199,6 +200,9 @@
 	// Même source unique que le Header (isBandeauActive) → le titre ne peut jamais être en double ni
 	// absent. Le compteur (ex-sous-titre du Header) migre dans la pastille du bandeau.
 	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
+	// Cohérence UI b/c/d (flag ff_ui_coherence) : class-swap des boutons inline → primitive .ws-btn,
+	// du sur-titre inline → .eyebrow. OFF ⇒ rendu actuel strict (mêmes handlers/enfants, class seule bascule).
+	const coherence = $derived(isCoherenceActive(data.featureFlags));
 	const bandeauCount = $derived(
 		data.tabCounts.toutes === 0
 			? 'Aucune entreprise'
@@ -722,12 +726,12 @@
 				{:else}
 					<div class="rounded-xl border border-border bg-white p-4 flex items-center justify-between gap-3">
 						<div>
-							<p class="text-xs uppercase tracking-wide text-text-muted font-semibold">Pipeline</p>
+							<p class={coherence ? 'eyebrow' : 'text-xs uppercase tracking-wide text-text-muted font-semibold'}>Pipeline</p>
 							<p class="text-sm text-text-muted mt-0.5">Aucune opportunité pour cette entreprise.</p>
 						</div>
 						<a
 							href="/crm/pipeline"
-							class="h-10 inline-flex items-center gap-2 px-3 box-border text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary-light transition-colors whitespace-nowrap"
+							class={coherence ? 'ws-btn ws-btn-outline whitespace-nowrap' : 'h-10 inline-flex items-center gap-2 px-3 box-border text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary-light transition-colors whitespace-nowrap'}
 						>
 							<Icon name="add_circle" size={16} />
 							<span>Créer</span>
@@ -773,7 +777,7 @@
 			<div class="flex flex-wrap gap-3 pt-4 border-t border-border">
 				<button
 					onclick={openEdit}
-					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer"
+					class={coherence ? 'ws-btn ws-btn-primary' : 'flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer'}
 				>
 					<Icon name="edit" size={16} />
 					Modifier
@@ -800,7 +804,7 @@
 					<button
 						type="submit"
 						disabled={enriching}
-						class="flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-primary bg-primary-light hover:bg-primary/20 rounded-lg cursor-pointer disabled:opacity-50"
+						class={coherence ? 'ws-btn ws-btn-soft' : 'flex items-center gap-2 h-10 px-4 box-border text-sm font-medium text-primary bg-primary-light hover:bg-primary/20 rounded-lg cursor-pointer disabled:opacity-50'}
 					>
 						<Icon name="auto_awesome" size={16} />
 						{enriching ? 'Enrichissement…' : 'Enrichir via Zefix'}
@@ -811,7 +815,7 @@
 					type="button"
 					onclick={() => submitDelete(false)}
 					disabled={deleting}
-					class="flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50"
+					class={coherence ? 'ws-btn ws-btn-danger-ghost' : 'flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-danger-deep hover:bg-danger/5 rounded-lg cursor-pointer disabled:opacity-50'}
 				>
 					<Icon name="delete" size={16} />
 					{deleting ? 'Suppression…' : 'Supprimer'}
@@ -875,14 +879,14 @@
 			<button
 				type="button"
 				onclick={() => modalOpen = false}
-				class="h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer"
+				class={coherence ? 'ws-btn ws-btn-tertiary ws-btn-tertiary-muted' : 'h-11 px-4 box-border text-sm text-text-muted hover:text-text rounded-lg cursor-pointer'}
 			>
 				Annuler
 			</button>
 			<button
 				type="submit"
 				disabled={saving}
-				class="h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer"
+				class={coherence ? 'ws-btn ws-btn-primary' : 'h-11 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg disabled:opacity-50 cursor-pointer'}
 			>
 				{saving ? 'Enregistrement…' : 'Enregistrer'}
 			</button>

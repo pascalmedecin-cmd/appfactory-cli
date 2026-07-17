@@ -7,6 +7,7 @@
 	import FeedbackButton from '$lib/components/FeedbackButton.svelte';
 	import { config, CRM_BASE } from '$lib/config';
 	import { isBandeauActive } from '$lib/pageBandeau';
+	import { isCoherenceActive } from '$lib/ui/coherence';
 	import { page } from '$app/state';
 	// Audit 360 V2c H-21 : coquille workspace partagée (factorisation CSS cross-pages).
 	import '$lib/styles/workspace.css';
@@ -27,6 +28,11 @@
 	// in-page (source unique isBandeauActive, partagée avec les pages → titre et bandeau ne peuvent
 	// jamais diverger). Calcul serveur-safe via page.url.pathname (pas de flash de titre à l'hydratation).
 	const bandeauHere = $derived(isBandeauActive(data.featureFlags, page.url.pathname));
+
+	// Cohérence UI b/c/d : un seul flag par-user (patron ffCrmListesV2). Quand ON, le shell porte
+	// `.coherence-ui`, ancre des overrides co-localisés `:global(.coherence-ui)` des briques partagées
+	// (Badge/SourcePill/SearchInput…). OFF ⇒ classe absente ⇒ rendu actuel strict.
+	const coherenceUi = $derived(isCoherenceActive(data.featureFlags));
 
 	// Fermer le menu mobile sur navigation (filet de sécurité pour les navigations
 	// programmatiques : un clic dans la page qui change de route alors que le drawer
@@ -51,7 +57,7 @@
      relatifs au viewport) mais porte l'attribut + les overrides de tokens `--color-primary*`
      qui cascadent par héritage vers tout le chrome et le contenu. FilmPro = valeurs par défaut
      (non-régression stricte) ; LED = bleu nuit + magenta. -->
-<div class="crm-shell" data-marque={data.marqueActive}>
+<div class="crm-shell" class:coherence-ui={coherenceUi} data-marque={data.marqueActive}>
 	<!-- Mobile overlay -->
 	{#if mobileMenuOpen}
 		<button

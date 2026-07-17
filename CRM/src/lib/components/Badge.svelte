@@ -28,9 +28,20 @@
 	};
 </script>
 
-<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium {classes[variant]}">
+<span class="crm-badge inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs font-medium {classes[variant]}">
 	{#if dot}
 		<span class="w-2 h-2 rounded-full {dotColors[variant]}"></span>
 	{/if}
 	{label}
 </span>
+
+<style>
+	/* Cohérence UI (b, INC-3, flag ff_ui_coherence) : le badge d'état rejoint la famille pill
+	   (radius-full + poids 600) façon StagePill/SourcePill/.crm-chip. Gated par l'ancêtre .coherence-ui.
+	   Hook NAMESPACÉ `crm-badge` (jamais `badge` nu) : la primitive Badge ne doit PAS hériter du
+	   `:global(.badge)` de FeedbackTable (règle non-layered qui restylerait TOUS les badges, flag OFF compris). */
+	:global(.coherence-ui) .crm-badge {
+		border-radius: var(--radius-full);
+		font-weight: 600;
+	}
+</style>
