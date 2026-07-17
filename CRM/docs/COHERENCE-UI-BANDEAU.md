@@ -73,7 +73,7 @@ Sur-titre imagé (MAJUSCULES, accents inclus) + description factuelle une ligne,
 1. **[LIVRÉ 2026-07-16]** Composant + flag + 1 page témoin (Entreprises) derrière `ff_page_bandeau`. QA avant/après.
 2. **[LIVRÉ 2026-07-17]** Pages liste **calques exacts** du pattern Entreprises : **Contacts, Pipeline, Signaux, Campagnes**. QA par page verte (svelte-check 0/0, Vitest 2824, build OK, revue adversariale 5 dims 0 finding, avant/après vraie vue : 4 pages ON = 1 seul h1 + copy/icône/pastille corrects, mobile desc→variante OK, OFF = bandeau absent + ws-page-actions/FAB présents). Commit `5e0eea3`.
    - **Prospection SORTIE de cet increment** : sa mise en page est dense et **ancrée à la hauteur du viewport** (`md:h-[calc(100dvh-var(--header-height)-3rem)]`) ; y insérer le bandeau mange ce calc et déplace la table. → traité à l'increment 3 (décision design), pas un drop-in mécanique.
-3. **[LIVRÉ 2026-07-17 - 4/5 ; Veille = mockup à valider]** Pages à en-tête bespoke. **Décision Pascal 2026-07-17** : uniformité. **Reporting, Aide, Dashboard, Prospection** alignés sur le bandeau standard (commit `b4fe644`, derrière `ff_page_bandeau` OFF) :
+3. **[LIVRÉ 2026-07-17 - 5/5]** Pages à en-tête bespoke. **Décision Pascal 2026-07-17** : uniformité. **Reporting, Aide, Dashboard, Prospection** alignés sur le bandeau standard (commit `b4fe644`, derrière `ff_page_bandeau` OFF) :
    - **Reporting** : hero → PageBand (drop-in propre).
    - **Aide** : `.aide-head` (titre = niveau dynamique) → PageBand statique « Aide » ; le niveau actif reste porté par les onglets. `let { data }` ajouté (absent avant).
    - **Prospection** : PageBand en tête du conteneur `100dvh` (wrap `shrink-0`, la table absorbe le reste) + pastille `totalLeads`. Layout préservé (QA visuelle OK).
