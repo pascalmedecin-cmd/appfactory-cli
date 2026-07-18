@@ -531,3 +531,38 @@ ouverte dans Chrome). Copies + catégories codées marque-aware, non-régression
   « signalétique, stand, enseigne… » rendus en vrai navigateur ; FilmPro inchangé). Smoke prod vert.
 - **Reste parité : 2** - **bug 1** (bouton import absent LED) = **repro sur env LED réel** avant tout code ;
   **#8** hero Signaux « vitrage » = **Run 7** (veille LED, déjà en WATCH).
+
+## Ré-audit exhaustif + WP-A/B - LIVRÉ + DÉPLOYÉ le 2026-07-18 (`584e937`)
+
+Le 1er audit de parité était **scopé prospection/campagnes**. Un **ré-audit full-surface** (workflow : 6 zones de
+surface visible - dashboard/reporting, entreprises/contacts, pipeline/terrain, campagnes/exports, emails/pages
+publiques, chrome/nav - chaque finding refute-vérifié adversarialement, dedup vs les 8 connues + exclusions dures
+veille/aide/Découpe) a trouvé **~15 divergences que le 1er audit avait manquées**. Triées en 3 lots :
+
+- **WP-A (mécanique, marqueLabel) - DÉPLOYÉ** : « FilmPro » codé en dur dans des `<title>`/hero résolu par
+  `marqueLabel(data.marqueActive)` : titre + sous-titre hero Reporting (`+page.svelte:52,67`, + cadratin→tiret court),
+  titre Log (`log/+page.svelte:58`), titre Coûts API (`dashboard/couts/+page.svelte:10`). Byte-identique FilmPro.
+- **WP-B (mécanique, teinte échappée) - DÉPLOYÉ** : accents navy FilmPro codés en dur (`#2F5A9E`/rgba(47,90,158),
+  `#0A1628`) routés vers le token marque-aware (`var(--color-primary*)` via `color-mix` pour le CSS ; param `accents`
+  marque pour le PDF). Cibles : halos KPI Reporting/Coûts (3 composants), **15 tints** sélection/focus des 3 fichiers
+  Campagnes, accents du **PDF liste** (pastille Maps + filet d'en-tête, `pdf-liste-prospects.ts` via `marqueAccents(marque)`,
+  défaut filmpro = non-régression byte-identique testée), scrim de l'aperçu PDF étiquettes (`--color-primary-dark`).
+  FilmPro reste `#2F5A9E`/`#0A1628` ; LED se teinte magenta `#C6007E` / navy LED `#01003B` par `.crm-shell[data-marque='led']`.
+- **Preuves** : Vitest **2863** (+3 tests parité PDF : `marqueAccents` filmpro/led + rendu SVG pastille/filet), svelte-check
+  **0/0**, build OK. **QA navigateur réelle 2 marques** (base jetable Colima, seed 2 marques) : titres/hero corrects,
+  halo Reporting FilmPro `srgb 0.184 0.353 0.620` = `#2F5A9E` **identique** / LED `srgb 0.776 0 0.494` = `#C6007E` magenta ;
+  0 casse layout. **Revue adversariale** (workflow 3 lentilles + verify) : **1 LOW** (scrim aperçu étiquettes navy-dark oublié)
+  **corrigé** ; reste réfuté. Smoke prod vert (`k29rjd2so` Ready, `/login` 200 « Atelier 209 »).
+
+- **bug 1 - FERMÉ (pas un bug de marque)** : reproduit sur un **vrai env LED peuplé** (Colima + seed 2 marques + session
+  premium + cookie `marque=led`). À 1280px, le bouton « Importer une liste » est **visible et géométriquement identique**
+  en LED comme en FilmPro (`display:flex`, 173×40, x=822). À 767px il passe `display:none` (`hidden md:inline-flex`)
+  **pour les deux marques** → menu overflow « … ». Cause perçue = fenêtre < `md` (ou cache de build), **jamais la marque**.
+  Option marque-indépendante parkée (backlog) : surfacer l'import sur mobile (gate mockup).
+
+- **Reste parité : WP-C + #8** :
+  - **WP-C** (gate maquette Pascal, `.atelier-209/parite-copies-led-wp-c/maquette-wp-c.html` ouverte dans Chrome) : 6 copies
+    métier LED codées en dur vitrage/façade/film solaire (LeadExpress entreprise+note, PipelineQuickAdvance action,
+    PhotoGallery état vide, ImportModal helper Google, modèle CSV ImportListeModal). Code prêt en une passe via extension
+    de `prospection-copies.ts` (FilmPro byte-identique) dès le « ok » de Pascal sur le libellé LED.
+  - **#8** hero Signaux « vitrage » = **Run 7** (veille LED).
