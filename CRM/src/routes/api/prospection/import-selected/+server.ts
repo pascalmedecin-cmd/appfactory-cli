@@ -110,7 +110,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			// cohérence : les types Places n'existent QUE pour google_places (audit 02/07).
 			google_types: sanitizeGoogleTypes(c.google_types, source as LeadPreviewSource),
 		};
-		const score = scoreCandidate(core, { intelligenceSignal });
+		const score = scoreCandidate(core, { intelligenceSignal, marque: locals.marque });
 		inserts.push(candidateToInsertRow(core, score, { now, fromIntelligence: from_intelligence ?? null, fromTerm: from_term ?? null, marque: locals.marque }));
 	}
 

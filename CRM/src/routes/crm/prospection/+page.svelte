@@ -1336,7 +1336,7 @@
 </div>
 
 <!-- Lead detail slide-out -->
-<LeadSlideOut bind:open={slideOutOpen} bind:lead={selectedLead} bind:importResult leads={data.leads} {premium} campagnes={data.campagnes} campagnesByLead={data.campagnesByLead} />
+<LeadSlideOut bind:open={slideOutOpen} bind:lead={selectedLead} bind:importResult leads={data.leads} {premium} campagnes={data.campagnes} campagnesByLead={data.campagnesByLead} marque={data.marqueActive} />
 
 <!-- Lead express modale (F3 V2 mobile terrain) -->
 <LeadExpress bind:open={leadExpressOpen} redirectAfterCreate={false} />

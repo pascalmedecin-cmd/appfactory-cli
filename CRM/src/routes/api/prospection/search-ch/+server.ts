@@ -116,6 +116,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 
 		// Recalculate score with new data
 		const scoreResult = calculerScore({
+			marque: locals.marque,
 			canton: lead.canton,
 			description: lead.description,
 			raison_sociale: lead.raison_sociale,

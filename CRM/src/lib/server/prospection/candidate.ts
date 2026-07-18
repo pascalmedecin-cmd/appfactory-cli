@@ -149,9 +149,10 @@ export function sanitizeGoogleTypes(
  */
 export function scoreCandidate(
 	core: CandidateCore,
-	opts: { intelligenceSignal?: IntelligenceSignalInput | null } = {},
+	opts: { intelligenceSignal?: IntelligenceSignalInput | null; marque?: Marque } = {},
 ): number {
 	return calculerScore({
+		marque: opts.marque,
 		canton: core.canton,
 		description: core.description,
 		raison_sociale: core.raison_sociale,

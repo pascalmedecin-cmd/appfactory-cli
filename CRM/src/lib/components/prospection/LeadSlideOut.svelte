@@ -11,6 +11,7 @@
 	import VisitsPanel from '$lib/components/VisitsPanel.svelte';
 	import { toasts } from '$lib/stores/toast';
 	import { calculerScore } from '$lib/scoring';
+	import type { Marque } from '$lib/marque';
 	import { safeHttpUrl } from '$lib/utils/safe-url';
 	import {
 		cantonNoms, scoreBadgeVariant,
@@ -41,7 +42,7 @@
 		date_publication: string | null;
 	};
 
-	let { open = $bindable(false), lead = $bindable<Lead | null>(null), importResult = $bindable<{ message: string; type: 'success' | 'error' } | null>(null), leads, premium = false, campagnes = [], campagnesByLead = {} }: {
+	let { open = $bindable(false), lead = $bindable<Lead | null>(null), importResult = $bindable<{ message: string; type: 'success' | 'error' } | null>(null), leads, premium = false, campagnes = [], campagnesByLead = {}, marque = 'filmpro' }: {
 		open: boolean;
 		lead: Lead | null;
 		importResult: { message: string; type: 'success' | 'error' } | null;
@@ -49,6 +50,9 @@
 		premium?: boolean;
 		campagnes?: CampagneWithCount[];
 		campagnesByLead?: Record<string, Campagne[]>;
+		// Atelier 209 : marque de la vue active (toutes les fiches affichées en relèvent). Pilote la
+		// ventilation « Secteur » du score comme à l'insert. Défaut 'filmpro' = non-régression.
+		marque?: Marque;
 	} = $props();
 
 	let enriching = $state(false);
@@ -85,6 +89,7 @@
 
 	function getScoreDetail(l: Lead) {
 		const detail = calculerScore({
+			marque,
 			canton: l.canton,
 			description: l.description,
 			raison_sociale: l.raison_sociale,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectSecteur, SECTEUR_KEYWORDS_BY_MARQUE } from './secteurs';
+import { detectSecteur, SECTEUR_KEYWORDS_BY_MARQUE, LED_SECTEURS_CIBLES } from './secteurs';
 import { normalizeNFD } from '$lib/utils/text-normalize';
 import { config } from '$lib/config';
 
@@ -117,6 +117,19 @@ describe('invariant scoring : chaque clé de secteur FilmPro déclenche le bonus
 	for (const key of Object.keys(SECTEUR_KEYWORDS_BY_MARQUE.filmpro)) {
 		it(`clé « ${key} » ⊇ un mot-clé de scoring`, () => {
 			expect(scoringKeywords.some((kw) => key.includes(kw))).toBe(true);
+		});
+	}
+});
+
+describe('invariant scoring : chaque clé de secteur LED déclenche le bonus secteur', () => {
+	// Miroir bi-marque du garde FilmPro ci-dessus (Atelier 209). LED passe TOUJOURS par la branche
+	// V1 de calculerScore (sa veille est FilmPro-only), donc son bonus « Secteur » dépend de ce que
+	// `secteur_detecte` (une CLÉ LED) matche dans LED_SECTEURS_CIBLES. Si une clé n'y correspond à
+	// aucun mot-clé, tout prospect LED de ce secteur perdrait silencieusement les +3 (le bug HIGH
+	// exact corrigé le 2026-07-17 : les clés LED ne matchaient AUCUN mot-clé de scoring FilmPro).
+	for (const key of Object.keys(SECTEUR_KEYWORDS_BY_MARQUE.led)) {
+		it(`clé LED « ${key} » ⊇ un mot-clé de scoring LED`, () => {
+			expect(LED_SECTEURS_CIBLES.some((kw) => key.includes(kw))).toBe(true);
 		});
 	}
 });

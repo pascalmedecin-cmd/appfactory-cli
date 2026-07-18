@@ -4,6 +4,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { calculerScore, type IntelligenceSignalInput } from '$lib/scoring';
+import { parseMarque } from '$lib/marque';
 import { runWithConcurrency } from '$lib/server/utils/concurrency';
 import { ComplianceTagEnum, type ComplianceTag } from './schema';
 import { WEEK_MS } from '$lib/utils/time-constants';
@@ -14,6 +15,7 @@ const RECOMPUTE_BATCH_CONCURRENCY = 4;
 
 interface LeadRow {
 	id: string;
+	marque: string | null;
 	canton: string | null;
 	description: string | null;
 	raison_sociale: string;
@@ -53,7 +55,7 @@ export async function recomputeLeadScore(
 ): Promise<number | null> {
 	const { data: lead, error: leadErr } = await supabase
 		.from('prospect_leads')
-		.select('id, canton, description, raison_sociale, secteur_detecte, source, date_publication, telephone, montant')
+		.select('id, marque, canton, description, raison_sociale, secteur_detecte, source, date_publication, telephone, montant')
 		.eq('id', leadId)
 		.maybeSingle();
 
@@ -77,6 +79,7 @@ export async function recomputeLeadScore(
 	);
 
 	const result = calculerScore({
+		marque: parseMarque(leadRow.marque),
 		canton: leadRow.canton,
 		description: leadRow.description,
 		raison_sociale: leadRow.raison_sociale,

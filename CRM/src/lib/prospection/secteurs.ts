@@ -55,6 +55,24 @@ export const SECTEUR_KEYWORDS_BY_MARQUE: Record<Marque, Record<string, readonly 
 };
 
 /**
+ * Secteurs CIBLES du scoring, par marque (branche V1 legacy de `calculerScore`, quand aucun
+ * mot-clé BDD n'est fourni - le cas de LED, dont la veille reste FilmPro-only, Q2 Run 2).
+ *
+ * Le scoring matche `secteur_detecte` (une CLÉ, ex. « enseigne ») OU la description contre cette
+ * liste (`secteurDetecteNorm.includes(kw)` / `texte.includes(kw)`). FilmPro garde sa liste dans
+ * `config.scoring.secteursCibles.keywords` (INCHANGÉE = non-régression stricte) ; LED a la sienne
+ * ci-dessous. Tokens ASCII sans accent (le haystack est normalisé NFD). L'invariant « chaque clé
+ * de secteur LED déclenche le bonus » est gardé par un test (secteurs.test.ts), miroir du garde
+ * FilmPro. `led` = pas de token « led » nu (trop court : happerait « Toledo »/« Ledermann » -
+ * la clé `ecran_led` est couverte par « ecran »). [À VALIDER PASCAL - contenu métier].
+ */
+export const LED_SECTEURS_CIBLES: readonly string[] = [
+	'signaletique', 'enseigne', 'ecran', 'stand', 'evenementiel', 'evenement',
+	'retail', 'publicite', 'lumineux', 'neon', 'scenographie', 'exposant',
+	'vitrine', 'magasin', 'boutique', 'communication visuelle', 'werbetechnik',
+];
+
+/**
  * Détecte un secteur métier depuis un texte libre (nom + occupation/types/catégorie), pour la
  * marque active. Normalise le haystack (NFD, minuscule) puis renvoie le PREMIER secteur dont un
  * mot-clé est contenu. `null` si aucun match. Déterministe (ordre d'insertion des clés).

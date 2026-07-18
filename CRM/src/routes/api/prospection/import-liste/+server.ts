@@ -153,6 +153,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 	const inserts = result.toImport.map(({ row, sourceId }) => {
 		const secteur = computeSecteur(row.raison_sociale, row.rawSecteur, locals.marque);
 		const score = calculerScore({
+			marque: locals.marque,
 			canton: row.canton,
 			description: null,
 			raison_sociale: row.raison_sociale,

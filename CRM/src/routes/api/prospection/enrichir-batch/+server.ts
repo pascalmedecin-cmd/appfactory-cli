@@ -216,6 +216,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 					if (status === 'enriched') {
 						const merged = { ...lead, ...allFields };
 						const scoreResult = calculerScore({
+							marque: locals.marque,
 							canton: merged.canton as string | null,
 							description: merged.description as string | null,
 							raison_sociale: merged.raison_sociale as string,

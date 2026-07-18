@@ -229,6 +229,48 @@ describe('calculerScore : fixes bimodalité scoring (audit 2026-05-01)', () => {
 		expect(result.total).toBe(3);
 	});
 
+	// Atelier 209 (bi-marque) : le bonus « Secteur » est piloté par la marque du lead (fix HIGH
+	// 2026-07-17). Avant : un prospect LED matchait la liste vitrage FilmPro → 0, priorisation cassée.
+	it('LED : secteur_detecte « enseigne » déclenche +3 quand marque=led', () => {
+		const result = calculerScore({
+			marque: 'led',
+			source: 'manuel',
+			secteur_detecte: 'enseigne',
+			raison_sociale: 'Neon Concept Geneve',
+		});
+		expect(result.total).toBe(3);
+		expect(result.criteres.some((c) => c.includes('Secteur'))).toBe(true);
+	});
+
+	it('LED : régression HIGH — sans marque (défaut filmpro), un secteur LED ne matche PAS', () => {
+		const result = calculerScore({
+			source: 'manuel',
+			secteur_detecte: 'enseigne',
+			raison_sociale: 'Neon Concept Geneve',
+		});
+		expect(result.total).toBe(0);
+	});
+
+	it('cloisonnement : un secteur FilmPro sous marque=led ne matche pas (0)', () => {
+		const result = calculerScore({
+			marque: 'led',
+			source: 'search_ch',
+			secteur_detecte: 'construction',
+			raison_sociale: 'XYZ Holding',
+		});
+		expect(result.total).toBe(0);
+	});
+
+	it('non-régression : marque=filmpro explicite garde le comportement (construction +3)', () => {
+		const result = calculerScore({
+			marque: 'filmpro',
+			source: 'search_ch',
+			secteur_detecte: 'construction',
+			raison_sociale: 'XYZ Holding',
+		});
+		expect(result.total).toBe(3);
+	});
+
 	// Cas réel observé en prod : RegBL canton GE avec description "Bâtiment autorisé".
 	it('lead RegBL canton GE avec description accentuée scoré correctement (cas prod)', () => {
 		const result = calculerScore({

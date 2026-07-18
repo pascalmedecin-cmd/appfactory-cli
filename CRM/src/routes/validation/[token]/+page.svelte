@@ -22,6 +22,7 @@
 	import { SvelteSet } from 'svelte/reactivity';
 	import { page } from '$app/state';
 	import FilmProLogo from '$lib/components/portail/FilmProLogo.svelte';
+	import { marqueLabel } from '$lib/marque';
 	import type { PageData } from './$types';
 	import type { ProspectValidation } from './+page.server';
 
@@ -151,9 +152,13 @@
 		{/if}
 	</div>
 {:else}
-	<div class="val-page">
+	<div class="val-page" data-marque={data.marque}>
 		<header class="val-head">
-			<FilmProLogo class="val-logo" />
+			{#if data.marque === 'led'}
+				<img class="val-logo-led" src="/atelier209/ledstudio-magenta.svg" alt="LED Studio" width="103" height="22" />
+			{:else}
+				<FilmProLogo class="val-logo" />
+			{/if}
 			<p class="val-kick">Vérification des prospects</p>
 			<h1 class="val-title">{data.campagneNom}</h1>
 			{#if dateValidite}<p class="val-hsub">Lien actif jusqu'au {dateValidite}.</p>{/if}
@@ -257,7 +262,7 @@
 				{#if confirmedAt && !editedSinceConfirm}
 					<p class="val-sent" role="status">
 						<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-						Validation envoyée le {dateConfirmation} - merci, l'équipe FilmPro est prévenue.
+						Validation envoyée le {dateConfirmation} - merci, l'équipe {marqueLabel(data.marque)} est prévenue.
 					</p>
 					<p class="val-send-hint">Un changement d'avis ? Modifiez vos choix ci-dessus puis renvoyez la validation : le dernier envoi remplace le précédent.</p>
 				{:else}
@@ -268,7 +273,7 @@
 							Il reste {restants} prospect{restants > 1 ? 's' : ''} à vérifier. Vous pouvez déjà envoyer : vos choix restent modifiables tant que le lien est actif.
 						</p>
 					{:else if total > 0}
-						<p class="val-send-hint">Tout est vérifié : envoyez votre validation pour prévenir l'équipe FilmPro.</p>
+						<p class="val-send-hint">Tout est vérifié : envoyez votre validation pour prévenir l'équipe {marqueLabel(data.marque)}.</p>
 					{/if}
 					<button type="button" class="val-confirm" disabled={confirmBusy || total === 0} onclick={envoyerValidation}>
 						<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></svg>
@@ -277,7 +282,7 @@
 				{/if}
 			</div>
 
-			<p class="val-foot">FilmPro · page de vérification sécurisée</p>
+			<p class="val-foot">{marqueLabel(data.marque)} · page de vérification sécurisée</p>
 		</div>
 	</div>
 {/if}
@@ -308,6 +313,23 @@
 		height: 22px;
 		width: auto;
 		display: block;
+	}
+	/* Logo LED (asset magenta, fond clair) : même gabarit que le wordmark FilmPro. */
+	.val-logo-led {
+		height: 22px;
+		width: auto;
+		display: block;
+	}
+
+	/* Atelier 209 : teinte LED de cette page PUBLIQUE autonome (hors .crm-shell, donc les overrides
+	   de app.css ne s'y appliquent pas). Miroir exact des tokens .crm-shell[data-marque='led'] :
+	   l'accent primaire (barre de progression, bouton « Envoyer », anneaux de focus) passe au
+	   magenta. Garder/Retirer restent sauge/ardoise (prosp-convert/info, inchangés). */
+	.val-page[data-marque='led'] {
+		--color-primary: #c6007e;
+		--color-primary-hover: #a80069;
+		--color-primary-light: #fde9f4;
+		--color-primary-dark: #01003b;
 	}
 	.val-kick {
 		margin: 16px 0 4px;

@@ -234,7 +234,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 		// Score serveur sur le canton RÉEL (null si Google n'a pas su classer le lieu dans un
 		// canton cible → pas de bonus canton, plus honnête qu'un repli sur le canton choisi qui
 		// pourrait être faux). Garantit aperçu == import (même canton stocké, même score).
-		const score = scoreCandidate(core, { intelligenceSignal });
+		const score = scoreCandidate(core, { intelligenceSignal, marque: locals.marque });
 		const baseStatus = statusFor(sourceId, dedup);
 		// known_zefix uniquement si le candidat est par ailleurs « new » (sinon exists/dismissed prime).
 		const status = baseStatus === 'new' && knownEntreprise ? 'known_zefix' : baseStatus;

@@ -18,6 +18,7 @@ base : ni fork, ni deuxième application. Livraison par **runs** pilotés par `/
 
 - Pascal valide **chaque maquette d'écran** dans Chrome avant toute ligne de code.
 - **Non-régression garantie** : colonne `marque` par défaut `filmpro` ; le CRM se comporte exactement comme avant.
+- **Parité bi-marque** : LED est un **miroir fonctionnel ET visuel** de FilmPro (présentation, copies, scoring, exports, pages publiques), pas seulement une base cloisonnée. La QA de sortie inclut une **checklist de parité par marque sur un env LED peuplé** - pas seulement la non-régression FilmPro. → section « Parité bi-marque » en fin de doc + `feedback_bi_marque_parity_qa_en_sortie`.
 - **Zéro dette** : les 4 dettes du code (D1-D4) sont corrigées, pas contournées.
 - **Tout est sourcé et vérifié.** Une affirmation invérifiable est marquée `[hypothèse]` avec le test qui la validerait.
 - Hors scope : refonte du CRM existant, déménagement du module Découpe, renommage du dossier disque, emailing de masse, automatisation LinkedIn.
@@ -425,3 +426,62 @@ et `normalizeCompanyName` garde les accents (« Régie » ≠ « Regie »). Le m
 
 **Bloqués par un geste Pascal** (n'empêchent PAS le Run 3) : V6 Hunter (→ Run 4) et V7 Pingen (→ Run 5),
 comptes à créer.
+
+---
+
+# Parité bi-marque LED ↔ FilmPro - audit (2026-07-17)
+
+**Contexte** : Pascal a remonté à l'usage 2 défauts sur la prospection LED (bouton import « absent », dropdown
+campagne vide « pas propre ») + une directive : **LED et FilmPro doivent être 100 % alignés en UX/UI**. Un
+audit de parité (workflow 4 agents Opus, 91 tool-calls, findings vérifiés) a balayé toute la surface
+prospection/campagnes.
+
+**Verdict** : le **cloisonnement des données** est solide (chaque lecture DB est scopée `marque`, et
+`secteurs.ts` détecte déjà par marque). La parité casse dans la couche **présentation + scoring** : des
+littéraux FilmPro codés en dur **avant** la bascule bi-marque, jamais re-câblés. Un seam marque-aware
+(`SECTEUR_KEYWORDS_BY_MARQUE`, chrome teinté) a été ajouté au coup par coup sans re-câbler ses consommateurs
+aval. **8 divergences réelles**, dont **2 HIGH à régler avant que LED serve en vrai**. Cause profonde :
+aucune checklist de parité ne gardait chaque « touche de marque », plus des décisions « non marque-aware
+pour l'instant » documentées mais jamais refermées.
+
+| # | Sévérité | Divergence | Fichier:ligne | Fix |
+|---|---|---|---|---|
+| 1 | **HIGH** · **CORRIGÉ 17/07** | Page de validation **externe publique** codée FilmPro : `<FilmProLogo/>`, « l'équipe FilmPro », footer. Le destinataire externe du lien d'une campagne LED voit la marque FilmPro. | `src/routes/validation/[token]/+page.svelte:156,260,271,280` ; le load `+page.server.ts` scope par `resolution.marque` mais ne le **retourne pas** (l.62-70) | FAIT : `marque` renvoyée par le load ; logo (LED magenta vs FilmPro) + « l'équipe {marque} » + footer par `marqueLabel(marque)` + teinte `[data-marque]` locale. |
+| 2 | **HIGH** · **CORRIGÉ 17/07** | Scoring **non marque-aware** : tous les chemins d'import appellent `calculerScore` sans `keywords` → branche V1 qui matche la clé secteur contre la liste **vitrage FilmPro** (`config.ts:89`). Les 7 clés secteur LED n'y sont pas → **tout prospect LED score 0** (« Faible signal »), badge/température/tri faussés. | `src/lib/scoring.ts:138` + `src/lib/config.ts:89` ; 7 chemins d'import | FAIT : champ `marque` sur le lead → `secteursCiblesFor(marque)` (FilmPro inchangé, LED = `LED_SECTEURS_CIBLES`) ; câblé aux 10 sites de scoring LED (veille reste FilmPro) ; garde de couplage LED. |
+| 3 | MEDIUM | PDF « liste des prospects » d'une campagne = **logo FilmPro en dur** (partageable, aucun param marque). | `src/lib/campagnes-pdf/pdf-liste-prospects.ts:414,421` | Threader `marque`, sélectionner le logo FilmPro vs LED. |
+| 4 | MEDIUM | Modale d'import (recherche entreprises) = métier FilmPro en dur : activité par défaut `regies_syndics`, placeholders « vitrerie, façade… ». | `src/lib/components/prospection/ImportModal.svelte:74,143,426,502,514,609` | Copies + défauts marque-aware, OU couper les sources FilmPro-only en LED (doctrine « LED passe par l'import de liste »). |
+| 5 | MEDIUM | Catégories Google Places = réseau partenaire FilmPro seul (« Non marque-aware pour l'instant » assumé en commentaire). | `src/lib/prospection/activity-types.ts:14` | Clé par marque, OU couper Google Places en LED jusqu'au cadrage LED. |
+| 6 | MEDIUM | Champs de recherche source (ajout de prospects sur /prospection ET détail campagne) = placeholders « vitrerie, façade, régie… ». | `src/lib/components/prospection/SourceSearchFields.svelte:109,129` | Exemples marque-aware, ou masquer la source en LED. |
+| 7 (**bug 2 Pascal**) | MEDIUM | Filtre « Campagne » = `MultiSelectDropdown` **sans branche `{:else}`** → boîte blanche vide ~192px quand 0 campagne (LED). Le frère `CampagneCombo` gère « Aucune campagne ». | `src/lib/components/MultiSelectDropdown.svelte:88` | Ajouter `{:else}` + prop `emptyLabel` (défaut « Aucune option » ; « Aucune campagne » aux sites d'appel campagne). Brand-agnostic ; Canton/Source non impactés (jamais vides). |
+| 8 | LOW | Hero Signaux = « marché du vitrage » en dur (déjà masqué par cron `marque='filmpro'`). | `src/routes/crm/signaux/+page.svelte:371` | À plier dans le **cadrage Run 7** (veille LED) - déjà en WATCH. |
+
+**Bug 1 Pascal (bouton « Importer une liste » absent sur LED) = NON reproduit en code.** Le bouton
+(`src/routes/crm/prospection/+page.svelte:1079`) n'est verrouillé que par l'onglet (`data.tab !== 'maliste'`),
+**jamais par la marque** ; l'onglet par défaut vient de `config.prospection.sources` (statique, non
+marque-aware) → identique pour les deux marques. Causes probables à écarter par une repro sur l'env LED réel :
+(a) onglet « Ma liste » où l'outlined est remplacé par le CTA bleu principal ; (b) build/cache prod ; (c)
+fenêtre < `md` (bouton `hidden md:inline-flex`). **À reproduire sur un env LED peuplé avant de coder quoi que ce soit.**
+
+**Posture de livraison** : chaque copie/logo visible passe par la règle « miroir exact + QA avant/après » et la
+**checklist de parité par marque**. Les copies métier visibles (4, 5, 6) = **gate maquette Chrome** si on retouche
+le libellé. → mémoire `feedback_bi_marque_parity_qa_en_sortie`.
+
+## Correctif des 2 HIGH - LIVRÉ (code) le 2026-07-17 (go Pascal « reco ok »)
+
+**Items 1 et 2 corrigés**, testés et **prouvés en conditions réelles**. Restent 3-7 (medium, groupés) + 8 (Run 7).
+
+- **HIGH #2 - Scoring marque-aware** : `LeadScoring.marque` (optionnel, défaut `filmpro` = non-régression stricte) ;
+  branche V1 de `calculerScore` résout ses cibles via `secteursCiblesFor(marque)` - FilmPro = `config.scoring.secteursCibles`
+  **verbatim**, LED = `LED_SECTEURS_CIBLES` (secteurs.ts, [À VALIDER PASCAL]). `marque` câblée aux 10 sites qui scorent
+  un lead LED (import-liste, action page prospection, enrichir-batch, search-ch, `scoreCandidate` + ses 4 appelants
+  searchch/zefix/google-places/import-selected, `recompute-score` qui lit la colonne `marque`, `LeadSlideOut` via
+  `data.marqueActive`). **Veille/Signaux laissés FilmPro** (frontière Q2) ; regbl/simap laissés FilmPro (sources
+  coupées, métier construction). Garde de couplage LED ajouté (miroir du garde FilmPro).
+- **HIGH #1 - Page de validation externe** : le load renvoie `marque` (token-bound, jamais input utilisateur) ;
+  logo LED magenta (`/atelier209/ledstudio-magenta.svg`) vs FilmProLogo, « l'équipe {marque} », footer, et teinte
+  `[data-marque='led']` locale (la page est hors `.crm-shell`, donc override co-localisé = miroir des tokens app.css).
+- **Preuves** : Vitest **2838** (2827 + 11 : LED scoré +3, régression HIGH sans marque = 0, cloisonnement, non-régression
+  filmpro ; + garde couplage LED). svelte-check **0/0**. Build **OK**. **QA réelle (base jetable Colima)** : campagne LED
+  et FilmPro semées avec token de validation, les deux pages `/validation/<token>` rendues en navigateur - **LED** = logo
+  LED + accent magenta + « LED Studio · … », **FilmPro** = logo navy + accent bleu inchangé (non-régression visuelle
+  confirmée), 0 erreur console sur l'asset. Revue adversariale sécurité + bugs sur le diff.

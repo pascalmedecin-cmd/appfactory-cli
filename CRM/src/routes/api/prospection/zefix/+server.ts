@@ -161,7 +161,7 @@ export const POST = async ({ request, locals }: RequestEvent) => {
 			date_publication: company.sogcDate ?? null,
 			google_types: null,
 		};
-		const score = scoreCandidate(core, { intelligenceSignal });
+		const score = scoreCandidate(core, { intelligenceSignal, marque: locals.marque });
 		const status = statusFor(core.source_id, dedup);
 		candidates.push(toPublicCandidate(core, score, status));
 	}

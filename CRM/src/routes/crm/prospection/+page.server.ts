@@ -275,6 +275,7 @@ export const actions: Actions = {
 		const fromTerm = ((form.get('from_term') as string) ?? '').slice(0, 200) || null;
 
 		const scoreResult = calculerScore({
+			marque: locals.marque,
 			canton: d.canton || null,
 			description: d.description || null,
 			raison_sociale: d.raison_sociale,

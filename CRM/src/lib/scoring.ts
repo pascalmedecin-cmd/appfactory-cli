@@ -10,8 +10,22 @@ import type { ComplianceTag } from './server/intelligence/schema';
 // V2 scoring : mots-clés FilmPro pilotés depuis la BDD (table signaux_mots_cles)
 // au lieu de la liste hardcodée config.scoring.secteursCibles.
 import { scoreKeywords, type KeywordRow } from './scoring/keywords';
+// Atelier 209 : secteurs cibles par marque (branche V1 legacy). FilmPro = liste config
+// inchangée ; LED = liste dédiée (sa veille étant FilmPro-only, LED passe toujours par V1).
+import type { Marque } from './marque';
+import { LED_SECTEURS_CIBLES } from './prospection/secteurs';
 
 const { scoring } = config;
+
+/**
+ * Secteurs cibles du scoring pour la marque donnée. FilmPro renvoie `config.scoring.secteursCibles`
+ * VERBATIM (non-régression). LED renvoie la liste dédiée (même poids, +3). Défaut sûr : filmpro.
+ */
+function secteursCiblesFor(marque: Marque): { points: number; keywords: readonly string[] } {
+	return marque === 'led'
+		? { points: scoring.secteursCibles.points, keywords: LED_SECTEURS_CIBLES }
+		: scoring.secteursCibles;
+}
 
 // Bloc 3 : Bonus scoring signaux Veille (intelligence_signal).
 // Item Veille avec maturity + compliance_tag bien notés → bonus décroissant dans le temps.
@@ -39,6 +53,9 @@ export interface IntelligenceSignalInput {
 }
 
 interface LeadScoring {
+	// Atelier 209 : marque du lead. Pilote la liste de secteurs cibles (V1 legacy). Absent =
+	// 'filmpro' (non-régression : tous les callers historiques scorent exactement comme avant).
+	marque?: Marque;
 	canton?: string | null;
 	description?: string | null;
 	raison_sociale?: string | null;
@@ -132,14 +149,15 @@ export function calculerScore(lead: LeadScoring, keywords?: KeywordRow[]): Score
 		// 1. secteur_detecte (calculé à l'import, normalisé) → matching direct sur les keywords.
 		// 2. fallback sur description + raison_sociale via normalize() pour gérer les accents
 		//    ("Bâtiment".toLowerCase() = "bâtiment" qui ne matche jamais le keyword "batiment" sans NFD strip).
+		const cibles = secteursCiblesFor(lead.marque ?? 'filmpro');
 		const secteurDetecteNorm = lead.secteur_detecte ? normalize(lead.secteur_detecte) : '';
 		const texte = normalize(`${lead.description || ''} ${lead.raison_sociale || ''}`);
 		const secteurMatch =
-			scoring.secteursCibles.keywords.find((s) => secteurDetecteNorm.includes(s)) ||
-			scoring.secteursCibles.keywords.find((s) => texte.includes(s));
+			cibles.keywords.find((s) => secteurDetecteNorm.includes(s)) ||
+			cibles.keywords.find((s) => texte.includes(s));
 		if (secteurMatch) {
-			total += scoring.secteursCibles.points;
-			criteres.push(`Secteur "${secteurMatch}" (+${scoring.secteursCibles.points})`);
+			total += cibles.points;
+			criteres.push(`Secteur "${secteurMatch}" (+${cibles.points})`);
 		}
 	}
 
