@@ -29,9 +29,12 @@ const CANTON_NAMES: Record<AllowedCanton, string> = {
 
 // Types d'activité : SOURCE UNIQUE dans `$lib/prospection/activity-types` (Run 3, dette D3 -
 // mirror ImportModal supprimé). Ré-exportés ici pour ne pas casser les consommateurs existants.
-import { ACTIVITY_TYPES, type ActivityTypeKey } from '$lib/prospection/activity-types';
+import { ACTIVITY_TYPES, ACTIVITY_TYPES_ALL, type ActivityTypeKey } from '$lib/prospection/activity-types';
 export { ACTIVITY_TYPES, type ActivityTypeKey };
-const ACTIVITY_TYPE_MAP = new Map(ACTIVITY_TYPES.map((a) => [a.key, a]));
+// Parité bi-marque #5 : la map couvre l'UNION des deux marques (clés uniques cross-marque) pour que
+// les catégories LED résolvent leur keyword et passent la validation d'enum. Le client n'affiche que
+// le jeu de la marque active ; la marque scope déjà les insertions (locals.marque), pas le libellé.
+const ACTIVITY_TYPE_MAP = new Map(ACTIVITY_TYPES_ALL.map((a) => [a.key, a]));
 
 /** Mots-vides légaux refusés comme mot-clé libre (mêmes que search.ch). */
 const GENERIC_TERM_DENYLIST = new Set([

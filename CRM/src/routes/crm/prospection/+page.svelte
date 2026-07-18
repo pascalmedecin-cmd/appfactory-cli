@@ -1353,6 +1353,7 @@
 	allowedSources={entrepriseSources}
 	googleQuota={data.googlePlacesQuota}
 	{premium}
+	marque={data.marqueActive}
 	campagnes={data.campagnes}
 />
 
@@ -1366,6 +1367,7 @@
 	defaultSource={importScope.defaultSource}
 	title={importScope.title}
 	googleQuota={data.googlePlacesQuota}
+	marque={data.marqueActive}
 />
 
 <!-- Run 3 Atelier 209 : import de liste (source manuel → onglet « Ma liste »). -->

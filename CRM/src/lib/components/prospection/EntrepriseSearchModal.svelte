@@ -9,6 +9,7 @@
 	import type { PublicCandidate } from '$lib/server/prospection/candidate';
 	import CampagneCombo from '$lib/components/prospection/CampagneCombo.svelte';
 	import type { CampagneWithCount } from '$lib/campagnes';
+	import type { Marque } from '$lib/marque';
 
 	type GoogleQuotaStatus = { used: number; cap: number; remaining: number; exhausted: boolean; warning: string | null };
 
@@ -20,6 +21,7 @@
 		allowedSources,
 		googleQuota = null,
 		premium = false,
+		marque = 'filmpro',
 		campagnes = [],
 		presetCampagneIds = [],
 	}: {
@@ -30,6 +32,8 @@
 		/** Sources entreprises actives (déjà filtrées par flag côté page), ordre canonique appliqué ici. */
 		allowedSources: EntrepriseSource[];
 		googleQuota?: GoogleQuotaStatus | null;
+		/** Parité bi-marque #6 : exemples de secteur + catégories Google selon la marque active. */
+		marque?: Marque;
 		/** Vague 3.2 (flag ffCrmListesV2) : active l'étiquetage campagne du lot importé. */
 		premium?: boolean;
 		campagnes?: CampagneWithCount[];
@@ -225,7 +229,7 @@
 
 		<SourceSelector {sources} bind:active googleQuota={quota} />
 
-		<SourceSearchFields source={active} googleQuota={quota} pending={searching} onsearch={runSearch} />
+		<SourceSearchFields source={active} googleQuota={quota} pending={searching} {marque} onsearch={runSearch} />
 
 		{#if error}
 			<div role="alert" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm bg-danger-light text-danger-deep border border-danger/20">

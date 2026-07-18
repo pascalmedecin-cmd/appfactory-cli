@@ -94,6 +94,13 @@ describe('buildTextQuery / includedTypeFor', () => {
 		expect(includedTypeFor('commerce')).toBeNull();
 		expect(includedTypeFor('other')).toBeNull();
 	});
+	it('parité bi-marque #5 : une catégorie LED valide + résout son keyword (union serveur)', () => {
+		expect(validateGooglePlacesImportInput({ activityType: 'agences_evenementielles', canton: 'GE' }).valid).toBe(true);
+		const q = buildTextQuery({ activityType: 'monteurs_stands', keyword: null, canton: 'VD' });
+		expect(q).toContain('stand d’exposition');
+		expect(q).toContain('Vaud');
+		expect(includedTypeFor('agences_evenementielles')).toBeNull();
+	});
 });
 
 describe('cantonRectangle', () => {

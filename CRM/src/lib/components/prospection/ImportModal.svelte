@@ -8,7 +8,9 @@
 	import { cantonNoms } from '$lib/prospection-utils';
 	// Audit 360 H-22 : normalisation NFD centralisée dans `src/lib/utils/text-normalize.ts`.
 	import { normalizeNFDTrim as searchchTermNormalize } from '$lib/utils/text-normalize';
-	import { GP_ACTIVITY_OPTIONS } from '$lib/prospection/activity-types';
+	import { gpActivityOptionsFor, defaultActivityKey } from '$lib/prospection/activity-types';
+	import { prospectionCopies } from '$lib/prospection/prospection-copies';
+	import type { Marque } from '$lib/marque';
 
 	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
 
@@ -35,6 +37,8 @@
 		// P2 : quota Google Places fourni par le load serveur (compteur visible avant recherche,
 		// sans round-trip). Mis à jour en live après chaque recherche Google via refreshGpQuota().
 		googleQuota = null,
+		// Parité bi-marque #4 : exemples de secteur + catégories Google selon la marque active.
+		marque = 'filmpro',
 	}: {
 		open: boolean;
 		importResult: { message: string; type: 'success' | 'error' } | null;
@@ -44,7 +48,12 @@
 		defaultSource?: ImportSourceKey | null;
 		title?: string | null;
 		googleQuota?: GoogleQuotaStatus | null;
+		marque?: Marque;
 	} = $props();
+
+	// Parité bi-marque #4 : copies + catégories Google de la marque active (défaut filmpro).
+	const copies = $derived(prospectionCopies(marque));
+	const gpOptions = $derived(gpActivityOptionsFor(marque));
 
 	let importing = $state(false);
 	const allowed = $derived.by(() => allowedSources);
@@ -71,8 +80,15 @@
 	let importRegblCantons = $state<string[]>(['GE', 'VD']);
 	let importSearchchTerm = $state('');
 	let importSearchchVille = $state('');
-	let importGpActivityType = $state<string>('regies_syndics');
+	// svelte-ignore state_referenced_locally
+	let importGpActivityType = $state<string>(defaultActivityKey(marque));
 	let importGpKeyword = $state('');
+	// Parité #5 : la clé d'activité sélectionnée doit toujours appartenir au jeu de la marque active. Si
+	// la marque change à chaud (BrandSwitcher → invalidateAll, sans remount), on re-ancre sur son défaut -
+	// sinon un select LED garderait la clé FilmPro et une recherche partirait avec le mauvais keyword.
+	$effect(() => {
+		if (!gpOptions.some((o) => o.key === importGpActivityType)) importGpActivityType = defaultActivityKey(marque);
+	});
 	// Seed depuis le load (affichage immédiat) ; refreshGpQuota() le réactualise après chaque recherche.
 	// svelte-ignore state_referenced_locally
 	let gpQuota = $state<GoogleQuotaStatus | null>(googleQuota);
@@ -225,6 +241,13 @@
 	);
 
 	let activeMeta = $derived(sourceMeta[activeTab]);
+	// Parité bi-marque #4 : le helper du registre (Zefix) cite des exemples de secteur - marque-aware.
+	// FilmPro reconstruit la phrase à l'identique (exemples = « vitrerie, façade, architecte »).
+	const activeHelper = $derived(
+		activeTab === 'zefix'
+			? `Mieux vaut 50 prospects ciblés que 500 à trier - filtrez sur un terme précis (${copies.importRegistreHelperExemples}).`
+			: activeMeta.hero.helper
+	);
 
 	const simapPeriods = [
 		{ value: '7', label: '7 jours', sub: 'Urgences chaudes' },
@@ -406,7 +429,7 @@
 					<div>
 						<p class="text-xs font-bold uppercase tracking-wider mb-1" style={`color: var(${activeMeta.cssVar});`}>{activeMeta.hero.kicker}</p>
 						<p class="text-sm font-semibold text-text">{activeMeta.hero.promise}</p>
-						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeMeta.hero.helper}</p>
+						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeHelper}</p>
 					</div>
 				</div>
 
@@ -423,7 +446,7 @@
 							type="text"
 							required
 							bind:value={importZefixName}
-							placeholder="vitrerie, façade, architecte, construction…"
+							placeholder={copies.importRegistrePlaceholder}
 							class="w-full h-12 pl-11 pr-3 text-base box-border border-2 rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors {zefixNameInvalid ? 'border-danger' : 'border-border'}"
 						/>
 					</div>
@@ -482,7 +505,7 @@
 					<div>
 						<p class="text-xs font-bold uppercase tracking-wider mb-1" style={`color: var(${activeMeta.cssVar});`}>{activeMeta.hero.kicker}</p>
 						<p class="text-sm font-semibold text-text">{activeMeta.hero.promise}</p>
-						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeMeta.hero.helper}</p>
+						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeHelper}</p>
 					</div>
 				</div>
 
@@ -499,7 +522,7 @@
 							type="text"
 							required
 							bind:value={importSearchchTerm}
-							placeholder="vitrerie, façade, miroiterie, store…"
+							placeholder={copies.importAnnuairePlaceholder}
 							class="w-full h-12 pl-11 pr-3 text-base box-border border-2 rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors {searchchTermInvalid && searchchTermTrimmed.length > 0 ? 'border-danger' : 'border-border'}"
 						/>
 					</div>
@@ -511,7 +534,7 @@
 					{:else if searchchTermGeneric}
 						<p class="text-xs text-danger-deep mt-1.5 flex items-center gap-1.5">
 							<Icon name="error" size={13} />
-							Terme trop générique. Préciser un secteur (vitrerie, façade, architecte, …).
+							Terme trop générique. Préciser un secteur ({copies.importAnnuaireGenericExemples}).
 						</p>
 					{:else}
 						<p class="text-xs text-text-muted mt-1.5">Recherché dans le nom et l'activité, max {searchchMaxResults} résultats par requête.</p>
@@ -560,7 +583,7 @@
 					<div>
 						<p class="text-xs font-bold uppercase tracking-wider mb-1" style={`color: var(${activeMeta.cssVar});`}>{activeMeta.hero.kicker}</p>
 						<p class="text-sm font-semibold text-text">{activeMeta.hero.promise}</p>
-						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeMeta.hero.helper}</p>
+						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeHelper}</p>
 					</div>
 				</div>
 
@@ -628,7 +651,7 @@
 					<div>
 						<p class="text-xs font-bold uppercase tracking-wider mb-1" style={`color: var(${activeMeta.cssVar});`}>{activeMeta.hero.kicker}</p>
 						<p class="text-sm font-semibold text-text">{activeMeta.hero.promise}</p>
-						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeMeta.hero.helper}</p>
+						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeHelper}</p>
 					</div>
 				</div>
 
@@ -691,7 +714,7 @@
 					<div>
 						<p class="text-xs font-bold uppercase tracking-wider mb-1" style={`color: var(${activeMeta.cssVar});`}>{activeMeta.hero.kicker}</p>
 						<p class="text-sm font-semibold text-text">{activeMeta.hero.promise}</p>
-						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeMeta.hero.helper}</p>
+						<p class="text-xs text-text-body mt-1.5 leading-relaxed">{activeHelper}</p>
 					</div>
 				</div>
 
@@ -702,7 +725,7 @@
 						<span class="font-normal text-danger-deep ml-0.5">*</span>
 					</label>
 					<select id="gp-activity" bind:value={importGpActivityType} class="w-full h-12 px-3 text-base box-border border-2 border-border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors">
-						{#each GP_ACTIVITY_OPTIONS as opt}
+						{#each gpOptions as opt}
 							<option value={opt.key}>{opt.label}</option>
 						{/each}
 					</select>
@@ -720,7 +743,7 @@
 							id="gp-keyword"
 							type="text"
 							bind:value={importGpKeyword}
-							placeholder={gpRequiresKeyword ? 'ex: agencement de magasins' : 'ex: ventilation, charpente métallique…'}
+							placeholder={gpRequiresKeyword ? copies.importGpKeywordPlaceholderLibre : copies.importGpKeywordPlaceholder}
 							maxlength="80"
 							class="w-full h-10 px-3 text-sm box-border border rounded-lg bg-white focus:ring-2 focus:ring-primary/30 focus:border-primary {(gpKeywordTooShort || gpKeywordGeneric || (gpRequiresKeyword && gpKeywordTrimmed.length < 3 && gpKeywordTrimmed.length > 0)) ? 'border-danger' : 'border-border'}"
 						/>

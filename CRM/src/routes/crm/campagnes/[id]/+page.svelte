@@ -975,6 +975,7 @@ Merci !`
 	bind:importResult={searchImportResult}
 	allowedSources={entrepriseSources}
 	premium={true}
+	marque={data.marqueActive}
 	campagnes={[{ ...campagne, lead_count: prospects.length }]}
 	presetCampagneIds={[campagne.id]}
 />

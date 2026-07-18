@@ -13,8 +13,7 @@
  * Le classement FilmPro doit rester IDENTIQUE à l'avant-fusion : voir le golden `secteurs.test.ts`.
  *
  * LED = secteurs de LED Studio (enseignes lumineuses, stands, signalétique, événementiel, retail),
- * dérivés du brief LED + de la vérification V2 (sourcing). [À VALIDER PASCAL - contenu métier] :
- * valeurs de départ raisonnables et sourcées, à confirmer au fil de l'usage LED.
+ * dérivés du brief LED + de la vérification V2 (sourcing). Validés Pascal 2026-07-18 (maquette parité).
  */
 import { normalizeNFD } from '$lib/utils/text-normalize';
 import type { Marque } from '$lib/marque';
@@ -34,8 +33,8 @@ const FILMPRO_SECTEURS: Record<string, readonly string[]> = {
 
 /**
  * LED Studio : enseignes/écrans lumineux, stands & événementiel, signalétique, retail lumineux.
- * [À VALIDER PASCAL] - dérivé du brief LED Studio + V2 (agences événementielles, monteurs de
- * stands, signalétique/enseigne). Mots-clés ASCII sans accent.
+ * Validés Pascal 2026-07-18 (maquette parité) - dérivé du brief LED Studio + V2 (agences
+ * événementielles, monteurs de stands, signalétique/enseigne). Mots-clés ASCII sans accent.
  */
 const LED_SECTEURS: Record<string, readonly string[]> = {
 	// `signaletique` AVANT `enseigne` : « signaletique » ne doit pas être happé par un token
@@ -64,7 +63,7 @@ export const SECTEUR_KEYWORDS_BY_MARQUE: Record<Marque, Record<string, readonly 
  * ci-dessous. Tokens ASCII sans accent (le haystack est normalisé NFD). L'invariant « chaque clé
  * de secteur LED déclenche le bonus » est gardé par un test (secteurs.test.ts), miroir du garde
  * FilmPro. `led` = pas de token « led » nu (trop court : happerait « Toledo »/« Ledermann » -
- * la clé `ecran_led` est couverte par « ecran »). [À VALIDER PASCAL - contenu métier].
+ * la clé `ecran_led` est couverte par « ecran »). Validés Pascal 2026-07-18 (maquette parité).
  */
 export const LED_SECTEURS_CIBLES: readonly string[] = [
 	'signaletique', 'enseigne', 'ecran', 'stand', 'evenementiel', 'evenement',

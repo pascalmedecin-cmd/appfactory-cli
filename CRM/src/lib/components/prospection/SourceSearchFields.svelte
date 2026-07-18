@@ -5,7 +5,9 @@
 	import { normalizeNFDTrim } from '$lib/utils/text-normalize';
 	import { API_LIMITS } from '$lib/api-limits';
 	import { SOURCE_CARDS, type EntrepriseSource } from './source-meta';
-	import { GP_ACTIVITY_OPTIONS } from '$lib/prospection/activity-types';
+	import { gpActivityOptionsFor, defaultActivityKey } from '$lib/prospection/activity-types';
+	import { prospectionCopies } from '$lib/prospection/prospection-copies';
+	import type { Marque } from '$lib/marque';
 
 	type GoogleQuotaStatus = { used: number; cap: number; remaining: number; exhausted: boolean; warning: string | null };
 
@@ -13,15 +15,20 @@
 		source,
 		googleQuota = null,
 		pending = false,
+		marque = 'filmpro',
 		onsearch,
 	}: {
 		source: EntrepriseSource;
 		googleQuota?: GoogleQuotaStatus | null;
 		pending?: boolean;
+		marque?: Marque;
 		onsearch?: (body: Record<string, unknown>) => void;
 	} = $props();
 
 	const meta = $derived(SOURCE_CARDS[source]);
+	// Parité bi-marque #6 : exemples de secteur + catégories Google selon la marque active.
+	const copies = $derived(prospectionCopies(marque));
+	const gpOptions = $derived(gpActivityOptionsFor(marque));
 	const cantons = [...config.scoring.cantonsPrioritaires.values, ...config.scoring.cantonsSecondaires.values];
 
 	// État partagé entre sources (le canton choisi survit à un changement de source).
@@ -29,11 +36,19 @@
 	// search.ch
 	let searchchTerm = $state('');
 	let searchchVille = $state('');
-	// Google Places
-	let gpActivity = $state<string>('regies_syndics');
+	// Google Places (défaut = 1re catégorie de la marque : filmpro=regies_syndics, led=agences_evenementielles)
+	// svelte-ignore state_referenced_locally
+	let gpActivity = $state<string>(defaultActivityKey(marque));
 	let gpKeyword = $state('');
 	// Zefix
 	let zefixName = $state('');
+
+	// Parité #5 : la clé sélectionnée doit toujours appartenir au jeu de la marque active. Si la marque
+	// change à chaud (BrandSwitcher → invalidateAll, sans remount), on re-ancre sur son défaut. Miroir
+	// du re-ancrage de la source active dans EntrepriseSearchModal.
+	$effect(() => {
+		if (!gpOptions.some((o) => o.key === gpActivity)) gpActivity = defaultActivityKey(marque);
+	});
 
 	// Miroir des denylists serveur pour un feedback immédiat (cohérent ImportModal).
 	// D3 (Run 3) : source UNIQUE des types d'activité Google (plus de miroir inline).
@@ -106,7 +121,7 @@
 				<label for="ssf-term">Activité ou métier <span class="req">*</span></label>
 				<div class="inp"><Icon name="search" size={16} class="lead" />
 					<input id="ssf-term" type="text" bind:value={searchchTerm} onkeydown={onFieldKeydown}
-						placeholder="vitrerie, façade, régie…" class="{searchchInvalid && searchchTrim.length > 0 ? 'err' : ''}" />
+						placeholder={copies.searchchPlaceholder} class="{searchchInvalid && searchchTrim.length > 0 ? 'err' : ''}" />
 				</div>
 			</div>
 			<div class="field">
@@ -126,7 +141,7 @@
 		{#if searchchTooShort}
 			<p class="hint err-text"><Icon name="error" size={12} />Saisir au moins 3 caractères pour économiser le quota.</p>
 		{:else if searchchGeneric}
-			<p class="hint err-text"><Icon name="error" size={12} />Terme trop générique. Préciser un secteur (vitrerie, façade…).</p>
+			<p class="hint err-text"><Icon name="error" size={12} />Terme trop générique. Préciser un secteur ({copies.searchchGenericExemples}).</p>
 		{:else}
 			<p class="hint"><Icon name="info" size={12} />Recherché dans le nom et l’activité, {searchchMax} résultats max par recherche.</p>
 		{/if}
@@ -163,13 +178,13 @@
 			<div class="field">
 				<label for="ssf-gp-act">Type d’activité <span class="req">*</span></label>
 				<select id="ssf-gp-act" bind:value={gpActivity}>
-					{#each GP_ACTIVITY_OPTIONS as o}<option value={o.key}>{o.label}</option>{/each}
+					{#each gpOptions as o}<option value={o.key}>{o.label}</option>{/each}
 				</select>
 			</div>
 			<div class="field">
 				<label for="ssf-gp-kw">Mot-clé {#if gpRequiresKeyword}<span class="req">*</span>{:else}<span class="opt">(option.)</span>{/if}</label>
 				<input id="ssf-gp-kw" type="text" bind:value={gpKeyword} onkeydown={onFieldKeydown} maxlength="80"
-					placeholder={gpRequiresKeyword ? 'ex : agencement magasins' : 'ex : ventilation…'}
+					placeholder={gpRequiresKeyword ? copies.gpKeywordPlaceholderLibre : copies.gpKeywordPlaceholder}
 					class="{(gpKeywordTooShort || gpKeywordGeneric || (gpRequiresKeyword && gpKeywordTrim.length > 0 && gpKeywordTrim.length < 3)) ? 'err' : ''}" />
 			</div>
 			<div class="field">
