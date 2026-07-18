@@ -449,9 +449,9 @@ pour l'instant » documentées mais jamais refermées.
 | 1 | **HIGH** · **CORRIGÉ 17/07** | Page de validation **externe publique** codée FilmPro : `<FilmProLogo/>`, « l'équipe FilmPro », footer. Le destinataire externe du lien d'une campagne LED voit la marque FilmPro. | `src/routes/validation/[token]/+page.svelte:156,260,271,280` ; le load `+page.server.ts` scope par `resolution.marque` mais ne le **retourne pas** (l.62-70) | FAIT : `marque` renvoyée par le load ; logo (LED magenta vs FilmPro) + « l'équipe {marque} » + footer par `marqueLabel(marque)` + teinte `[data-marque]` locale. |
 | 2 | **HIGH** · **CORRIGÉ 17/07** | Scoring **non marque-aware** : tous les chemins d'import appellent `calculerScore` sans `keywords` → branche V1 qui matche la clé secteur contre la liste **vitrage FilmPro** (`config.ts:89`). Les 7 clés secteur LED n'y sont pas → **tout prospect LED score 0** (« Faible signal »), badge/température/tri faussés. | `src/lib/scoring.ts:138` + `src/lib/config.ts:89` ; 7 chemins d'import | FAIT : champ `marque` sur le lead → `secteursCiblesFor(marque)` (FilmPro inchangé, LED = `LED_SECTEURS_CIBLES`) ; câblé aux 10 sites de scoring LED (veille reste FilmPro) ; garde de couplage LED. |
 | 3 | MEDIUM · **CORRIGÉ + DÉPLOYÉ 18/07** (`96dc026`) | PDF « liste des prospects » d'une campagne = **logo FilmPro en dur** (partageable, aucun param marque). | `src/lib/campagnes-pdf/pdf-liste-prospects.ts:414,421` | FAIT : nouveau `src/lib/pdf/ledstudio-logo.ts` (fragment SVG **verbatim** de l'asset validé, prouvé byte-identique) + dispatcher `marque-logo.ts` ; param `marque` threadé dans `exportListeProspectsPdf` (défaut `filmpro` = non-régression **byte-identique**, testée), passé `data.marqueActive` aux 2 call sites. QA réelle : rendu svg2pdf LED magenta net + FilmPro inchangé. |
-| 4 | MEDIUM | Modale d'import (recherche entreprises) = métier FilmPro en dur : activité par défaut `regies_syndics`, placeholders « vitrerie, façade… ». | `src/lib/components/prospection/ImportModal.svelte:74,143,426,502,514,609` | Copies + défauts marque-aware, OU couper les sources FilmPro-only en LED (doctrine « LED passe par l'import de liste »). |
-| 5 | MEDIUM | Catégories Google Places = réseau partenaire FilmPro seul (« Non marque-aware pour l'instant » assumé en commentaire). | `src/lib/prospection/activity-types.ts:14` | Clé par marque, OU couper Google Places en LED jusqu'au cadrage LED. |
-| 6 | MEDIUM | Champs de recherche source (ajout de prospects sur /prospection ET détail campagne) = placeholders « vitrerie, façade, régie… ». | `src/lib/components/prospection/SourceSearchFields.svelte:109,129` | Exemples marque-aware, ou masquer la source en LED. |
+| 4 | MEDIUM · **CORRIGÉ + DÉPLOYÉ 18/07** (`ae438e2`) | Modale d'import (recherche entreprises) = métier FilmPro en dur : activité par défaut `regies_syndics`, placeholders « vitrerie, façade… ». | `src/lib/components/prospection/ImportModal.svelte` | FAIT : prop `marque` ; défaut + placeholders + helper Zefix marque-aware via `prospection-copies.ts` (FilmPro byte-identique) + `gpActivityOptionsFor(marque)`. |
+| 5 | MEDIUM · **CORRIGÉ + DÉPLOYÉ 18/07** (`ae438e2`) | Catégories Google Places = réseau partenaire FilmPro seul (« Non marque-aware pour l'instant » assumé en commentaire). | `src/lib/prospection/activity-types.ts` | FAIT : `ACTIVITY_TYPES_LED` (7 validées Pascal 18/07) + union serveur (`helpers.ts` résout les clés LED). Rétro-compat FilmPro. |
+| 6 | MEDIUM · **CORRIGÉ + DÉPLOYÉ 18/07** (`ae438e2`) | Champs de recherche source (ajout de prospects sur /prospection ET détail campagne) = placeholders « vitrerie, façade, régie… ». | `src/lib/components/prospection/SourceSearchFields.svelte` | FAIT : prop `marque` + placeholders/erreurs/options marque-aware (`prospection-copies.ts`), threadée via `EntrepriseSearchModal`. |
 | 7 (**bug 2 Pascal**) | MEDIUM · **CORRIGÉ + DÉPLOYÉ 18/07** (`96dc026`) | Filtre « Campagne » = `MultiSelectDropdown` **sans branche `{:else}`** → boîte blanche vide ~192px quand 0 campagne (LED). Le frère `CampagneCombo` gère « Aucune campagne ». | `src/lib/components/MultiSelectDropdown.svelte:88` | FAIT : prop `emptyLabel` (défaut « Aucune option ») + branche `{:else}` ; `emptyLabel="Aucune campagne"` aux 2 sites campagne de prospection. Brand-agnostic. QA réelle : 0 campagne → « Aucune campagne », peuplé inchangé. Canton/Source (AlerteModal inclus) = constantes jamais vides, défaut inoffensif. |
 | 8 | LOW | Hero Signaux = « marché du vitrage » en dur (déjà masqué par cron `marque='filmpro'`). | `src/routes/crm/signaux/+page.svelte:371` | À plier dans le **cadrage Run 7** (veille LED) - déjà en WATCH. |
 
@@ -507,3 +507,27 @@ métier LED, gate maquette + validation mots-clés secteur LED) + bug 1 (à repr
   campagne » / peuplé inchangé, tous rendus en vrai navigateur.
 - **Reste (Pascal-gated)** : #4/#5/#6 = **maquette copies LED** (secteurs événementiel/enseigne/stand) + valider
   les mots-clés secteur LED de `secteurs.ts` [À VALIDER PASCAL] ; bug 1 = repro sur un env LED réel d'abord.
+
+## Correctif des copies métier LED (#4/#5/#6) - LIVRÉ + DÉPLOYÉ le 2026-07-18 (`ae438e2`)
+
+Maquette de validation des copies LED **validée par Pascal 18/07** (`.atelier-209/parite-copies-led/`,
+ouverte dans Chrome). Copies + catégories codées marque-aware, non-régression FilmPro byte-identique, déployées.
+
+- **#5 catégories Google** : `activity-types.ts` marque-aware. `ACTIVITY_TYPES_FILMPRO` (9, verbatim de
+  l'ancien) + `ACTIVITY_TYPES_LED` (7 validées : agences événementielles, monteurs de stands, enseignistes,
+  com visuelle, retail, archi d'intérieur/scénographes, mot-clé libre) + `ACTIVITY_TYPES_ALL` (union serveur :
+  `helpers.ts` résout/valide les clés LED). `activityTypesFor`/`defaultActivityKey`/`gpActivityOptionsFor(marque)`.
+- **#4/#6 copies** : nouveau `prospection-copies.ts` (source unique marque-aware, FilmPro **byte-identique** testé).
+  `SourceSearchFields` + `ImportModal` reçoivent une prop `marque` : défaut d'activité, placeholders, messages,
+  options Google et helper Zefix (reconstruit à l'identique en FilmPro) suivent la marque. `marque` threadée aux
+  4 sites de rendu (`EntrepriseSearchModal` ×3 + `ImportModal`). `secteurs.ts` : mots-clés LED validés.
+- **Sources FilmPro-only (SIMAP/RegBL/Minergie)** : déjà **coupées en V5** (`isProspectionSourceEnabled` false pour
+  les 2 marques) → aucun source-gating à coder ; la matrice de la maquette est déjà satisfaite.
+- **Fix revue adversariale (1 CONFIRMED)** : `$effect` re-ancre la clé d'activité sur le défaut de la marque si
+  elle sort du jeu à une **bascule à chaud** (`invalidateAll` sans remount) - sinon un select LED garderait une clé
+  FilmPro et une recherche partirait avec le mauvais keyword. Miroir du re-ancrage de source existant.
+- **Preuves** : Vitest **2860** (+13), svelte-check **0/0**, revue adversariale 4 lentilles (1 CONFIRMED fixé,
+  reste réfuté), **QA réelle 2 marques** (7 catégories LED + défaut « Agences événementielles » + placeholders
+  « signalétique, stand, enseigne… » rendus en vrai navigateur ; FilmPro inchangé). Smoke prod vert.
+- **Reste parité : 2** - **bug 1** (bouton import absent LED) = **repro sur env LED réel** avant tout code ;
+  **#8** hero Signaux « vitrage » = **Run 7** (veille LED, déjà en WATCH).
