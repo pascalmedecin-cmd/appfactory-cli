@@ -8,6 +8,7 @@ import {
 	buildListePagesSvg,
 	buildListeItems,
 	buildListeItemsPagesSvg,
+	marqueAccents,
 	type ListeItem,
 	listeFileName,
 	LISTE_GEOMETRY,
@@ -321,5 +322,26 @@ describe('buildListeItemsPagesSvg (rendu des sections)', () => {
 		const viaItems = buildListeItemsPagesSvg('C', 'd', rws.map((row) => ({ kind: 'row' as const, row })), '');
 		expect(viaRows).toEqual(viaItems);
 		expect(viaRows.links).toHaveLength(1);
+	});
+});
+
+describe('accents de marque (parité bi-marque LED/FilmPro)', () => {
+	it('marqueAccents : FilmPro = tokens @theme d’origine, LED = magenta AA + navy LED', () => {
+		expect(marqueAccents('filmpro')).toEqual({ pill: '#2F5A9E', rule: '#00003B' });
+		expect(marqueAccents('led')).toEqual({ pill: '#C6007E', rule: '#01003B' });
+	});
+
+	it('défaut (aucun accent) = FilmPro : pastille bleu #2F5A9E + filet #00003B, aucun magenta', () => {
+		const { svgs } = buildListePagesSvg('C', 'd', [toListeRow(lead())], '');
+		expect(svgs[0]).toContain('#2F5A9E'); // pastille Maps
+		expect(svgs[0]).toContain('#00003B'); // filet d’en-tête
+		expect(svgs[0]).not.toContain('#C6007E');
+	});
+
+	it('LED : pastille magenta #C6007E + filet navy LED #01003B, aucun bleu FilmPro', () => {
+		const { svgs } = buildListePagesSvg('C', 'd', [toListeRow(lead())], '', marqueAccents('led'));
+		expect(svgs[0]).toContain('#C6007E');
+		expect(svgs[0]).toContain('#01003B');
+		expect(svgs[0]).not.toContain('#2F5A9E');
 	});
 });

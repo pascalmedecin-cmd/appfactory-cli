@@ -97,7 +97,7 @@
 		width: 44px;
 		height: 44px;
 		border-radius: var(--radius-xl);
-		background: radial-gradient(circle at 30% 30%, rgba(47, 90, 158, 0.1), rgba(47, 90, 158, 0.02));
+		background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--color-primary) 10%, transparent), color-mix(in srgb, var(--color-primary) 2%, transparent));
 		display: grid;
 		place-items: center;
 		flex-shrink: 0;

@@ -4,6 +4,7 @@
 	import { page } from '$app/stores';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { isBandeauActive } from '$lib/pageBandeau';
+	import { marqueLabel } from '$lib/marque';
 	import {
 		reportingIndicators,
 		reportingTabs,
@@ -49,7 +50,7 @@
 </script>
 
 <svelte:head>
-	<title>Reporting · FilmPro</title>
+	<title>Reporting · {marqueLabel(data.marqueActive)}</title>
 </svelte:head>
 
 <div class="page">
@@ -64,7 +65,7 @@
 		<header class="hero">
 			<!-- Audit 360 V2c H-26 : h2 (le h1 unique de la page est dans Header.svelte). -->
 			<h2>Reporting</h2>
-			<p>Synthèse opérationnelle FilmPro — pipeline, conversion, activité.</p>
+			<p>Synthèse opérationnelle {marqueLabel(data.marqueActive)} - pipeline, conversion, activité.</p>
 		</header>
 	{/if}
 

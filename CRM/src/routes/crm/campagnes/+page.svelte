@@ -722,7 +722,7 @@
 	.search input:focus {
 		outline: none;
 		border-color: var(--color-primary);
-		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.16);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
 	}
 
 	.listcard {
@@ -842,7 +842,7 @@
 	}
 	button.leadcount:hover {
 		color: var(--color-primary);
-		box-shadow: inset 0 0 0 1px rgba(47, 90, 158, 0.30);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 30%, transparent);
 	}
 	.cstatus {
 		display: inline-flex;
@@ -1006,7 +1006,7 @@
 	.field .txt:focus {
 		outline: none;
 		border-color: var(--color-primary);
-		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.16);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
 	}
 	.swatches {
 		display: flex;

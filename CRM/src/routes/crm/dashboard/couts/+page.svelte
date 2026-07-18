@@ -2,12 +2,13 @@
 	import type { PageData } from './$types';
 	import CoutsIndicators from '$lib/components/couts/CoutsIndicators.svelte';
 	import CoutsChart from '$lib/components/couts/CoutsChart.svelte';
+	import { marqueLabel } from '$lib/marque';
 
 	let { data }: { data: PageData } = $props();
 </script>
 
 <svelte:head>
-	<title>Coûts API · FilmPro</title>
+	<title>Coûts API · {marqueLabel(data.marqueActive)}</title>
 </svelte:head>
 
 <div class="page">

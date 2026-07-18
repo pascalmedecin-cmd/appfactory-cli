@@ -737,7 +737,7 @@
 	.search input:focus {
 		outline: none;
 		border-color: var(--color-primary);
-		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.16);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
 	}
 	.link {
 		display: inline-flex;
@@ -925,10 +925,10 @@
 		transition: opacity 160ms var(--ease-out-expo);
 	}
 	.trow:hover {
-		background: rgba(47, 90, 158, 0.022);
+		background: color-mix(in srgb, var(--color-primary) 2.2%, transparent);
 	}
 	.trow.sel {
-		background: rgba(47, 90, 158, 0.045);
+		background: color-mix(in srgb, var(--color-primary) 4.5%, transparent);
 	}
 	.trow.sel::before {
 		opacity: 1;
@@ -982,7 +982,7 @@
 	}
 	.cbx-input:focus-visible ~ .cbx {
 		outline: none;
-		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.28);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 28%, transparent);
 		border-color: var(--color-primary);
 	}
 
@@ -1055,7 +1055,7 @@
 		outline: none;
 		background: var(--color-surface);
 		border-color: var(--color-primary);
-		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.16);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
 	}
 	.dest-input:disabled {
 		color: var(--color-text-muted);
@@ -1098,7 +1098,7 @@
 		box-shadow: var(--shadow-xs);
 	}
 	.complete:hover:not(:disabled) {
-		border-color: rgba(47, 90, 158, 0.35);
+		border-color: color-mix(in srgb, var(--color-primary) 35%, transparent);
 		background: var(--color-primary-light);
 	}
 	.complete:disabled {
@@ -1225,7 +1225,7 @@
 	.bulk-input:focus {
 		outline: none;
 		border-color: var(--color-primary);
-		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.16);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
 	}
 	.bulk-apply {
 		display: inline-flex;
@@ -1276,7 +1276,9 @@
 	.prev-backdrop {
 		position: fixed;
 		inset: 0;
-		background: rgba(10, 22, 40, 0.45);
+		/* Parité bi-marque : voile teinté par la marque active (FilmPro navy #0A1628 = byte-identique,
+		   LED navy #01003B). Aligné sur le pattern WP-B (accents navy → token --color-primary*). */
+		background: color-mix(in srgb, var(--color-primary-dark) 45%, transparent);
 		z-index: 60;
 	}
 	.prev-layer {

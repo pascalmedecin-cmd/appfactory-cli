@@ -262,7 +262,23 @@ function renderTableHead(top: number): string {
 	return s;
 }
 
-function renderRow(row: ListeProspectRow, rowTop: number, zebra: boolean, pageIndex: number, links: ListeLink[]): string {
+/**
+ * Accents de marque du PDF (parité bi-marque). FilmPro = valeurs @theme d'origine (non-régression
+ * byte-identique) ; LED = magenta AA + navy LED, alignés sur `.crm-shell[data-marque='led']` (app.css).
+ * `pill` = fond de la pastille « Ouvrir sur Google Maps » ; `rule` = filet d'en-tête sous le logo.
+ */
+export function marqueAccents(marque: Marque): { pill: string; rule: string } {
+	return marque === 'led' ? { pill: '#C6007E', rule: '#01003B' } : { pill: C.primary, rule: C.logo };
+}
+
+function renderRow(
+	row: ListeProspectRow,
+	rowTop: number,
+	zebra: boolean,
+	pageIndex: number,
+	links: ListeLink[],
+	pillColor: string = C.primary
+): string {
 	let s = '';
 	if (zebra) s += rect(MARGIN, rowTop, CW, ROW_H, C.zebra);
 	s += line(MARGIN, rowTop + ROW_H, MARGIN + CW, rowTop + ROW_H, C.hairline, 0.6);
@@ -286,7 +302,7 @@ function renderRow(row: ListeProspectRow, rowTop: number, zebra: boolean, pageIn
 	if (row.mapsUrl) {
 		const px = MARGIN + LISTE_COLS.maps.x;
 		const py = rowTop + (ROW_H - PILL_H) / 2;
-		s += rect(px, py, PILL_W, PILL_H, C.primary, PILL_H / 2);
+		s += rect(px, py, PILL_W, PILL_H, pillColor, PILL_H / 2);
 		s += text(px + PILL_W / 2, py + PILL_H / 2 + PILL_FONT * 0.34, PILL_LABEL, {
 			size: PILL_FONT,
 			fill: C.white,
@@ -326,7 +342,8 @@ export function buildListeItemsPagesSvg(
 	campagneNom: string,
 	dateLabel: string,
 	items: ListeItem[],
-	logoFragment: string
+	logoFragment: string,
+	accents: { pill: string; rule: string } = { pill: C.primary, rule: C.logo }
 ): ListePagesResult {
 	const pageItems = paginateItems(items);
 	const total = Math.max(1, pageItems.length);
@@ -338,7 +355,7 @@ export function buildListeItemsPagesSvg(
 		let body = '';
 		// En-tête commun : logo seul + règle (template validé Pascal 02/07 : pas de mention à droite).
 		body += logoFragment;
-		body += line(MARGIN, RULE_Y, PAGE_W - MARGIN, RULE_Y, C.logo, 1.4);
+		body += line(MARGIN, RULE_Y, PAGE_W - MARGIN, RULE_Y, accents.rule, 1.4);
 
 		let tableTop: number;
 		if (pi === 0) {
@@ -362,7 +379,7 @@ export function buildListeItemsPagesSvg(
 				body += renderSection(item.nom, item.count, rowTop);
 				rowParity = 0;
 			} else {
-				body += renderRow(item.row, rowTop, rowParity % 2 === 1, pi, links);
+				body += renderRow(item.row, rowTop, rowParity % 2 === 1, pi, links, accents.pill);
 				rowParity++;
 			}
 		}
@@ -386,9 +403,10 @@ export function buildListePagesSvg(
 	campagneNom: string,
 	dateLabel: string,
 	rows: ListeProspectRow[],
-	logoFragment: string
+	logoFragment: string,
+	accents: { pill: string; rule: string } = { pill: C.primary, rule: C.logo }
 ): ListePagesResult {
-	return buildListeItemsPagesSvg(campagneNom, dateLabel, rows.map((row) => ({ kind: 'row', row })), logoFragment);
+	return buildListeItemsPagesSvg(campagneNom, dateLabel, rows.map((row) => ({ kind: 'row', row })), logoFragment, accents);
 }
 
 // --- Nom de fichier (convention source unique : src/lib/pdf/pdf-filename.ts) --------------------
@@ -421,7 +439,7 @@ export async function exportListeProspectsPdf(
 	const now = new Date();
 	const dateLabel = now.toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' });
 	const logoFragment = logoMod.marqueLogoSvg(marque, MARGIN, MARGIN, 18, C.logo);
-	const { svgs, links } = buildListeItemsPagesSvg(campagneNom, dateLabel, items, logoFragment);
+	const { svgs, links } = buildListeItemsPagesSvg(campagneNom, dateLabel, items, logoFragment, marqueAccents(marque));
 
 	const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape', compress: true });
 	doc.addFileToVFS('Outfit-Regular.ttf', fonts.OUTFIT_400);

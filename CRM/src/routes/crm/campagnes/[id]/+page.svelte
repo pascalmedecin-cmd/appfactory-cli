@@ -1456,7 +1456,7 @@ Merci !`
 	.psearch input:focus {
 		outline: none;
 		border-color: var(--color-primary);
-		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.16);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
 	}
 
 	.grp-row {
@@ -1588,7 +1588,7 @@ Merci !`
 	.grp-form-input:focus {
 		outline: none;
 		border-color: var(--color-primary);
-		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.16);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
 	}
 	.grp-form-hint {
 		margin: 0;
@@ -1682,7 +1682,7 @@ Merci !`
 		border-bottom: none;
 	}
 	.prow.rowsel {
-		background: rgba(47, 90, 158, 0.045);
+		background: color-mix(in srgb, var(--color-primary) 4.5%, transparent);
 	}
 	.prow-side {
 		display: flex;
@@ -1731,7 +1731,7 @@ Merci !`
 		opacity: 1;
 	}
 	.row-cbx-input:focus-visible ~ .row-cbx {
-		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.28);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 28%, transparent);
 		border-color: var(--color-primary);
 	}
 
@@ -1832,7 +1832,7 @@ Merci !`
 	.bulk-select:focus-visible {
 		outline: none;
 		border-color: var(--color-primary);
-		box-shadow: 0 0 0 3px rgba(47, 90, 158, 0.16);
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
 	}
 
 	/* États vide. */

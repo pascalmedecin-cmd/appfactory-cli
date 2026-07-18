@@ -15,6 +15,7 @@
 	import { toExportJson, exportFilename } from '$lib/feedback/export';
 	import type { FeedbackEntry, FeedbackStatus } from '$lib/feedback/types';
 	import type { PageData } from './$types';
+	import { marqueLabel } from '$lib/marque';
 
 	let { data }: { data: PageData } = $props();
 
@@ -55,7 +56,7 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <svelte:head>
-	<title>Log des retours · FilmPro</title>
+	<title>Log des retours · {marqueLabel(data.marqueActive)}</title>
 </svelte:head>
 
 <!-- Encart mobile : page invisible sauf message d'indisponibilité. -->
