@@ -448,11 +448,11 @@ pour l'instant » documentées mais jamais refermées.
 |---|---|---|---|---|
 | 1 | **HIGH** · **CORRIGÉ 17/07** | Page de validation **externe publique** codée FilmPro : `<FilmProLogo/>`, « l'équipe FilmPro », footer. Le destinataire externe du lien d'une campagne LED voit la marque FilmPro. | `src/routes/validation/[token]/+page.svelte:156,260,271,280` ; le load `+page.server.ts` scope par `resolution.marque` mais ne le **retourne pas** (l.62-70) | FAIT : `marque` renvoyée par le load ; logo (LED magenta vs FilmPro) + « l'équipe {marque} » + footer par `marqueLabel(marque)` + teinte `[data-marque]` locale. |
 | 2 | **HIGH** · **CORRIGÉ 17/07** | Scoring **non marque-aware** : tous les chemins d'import appellent `calculerScore` sans `keywords` → branche V1 qui matche la clé secteur contre la liste **vitrage FilmPro** (`config.ts:89`). Les 7 clés secteur LED n'y sont pas → **tout prospect LED score 0** (« Faible signal »), badge/température/tri faussés. | `src/lib/scoring.ts:138` + `src/lib/config.ts:89` ; 7 chemins d'import | FAIT : champ `marque` sur le lead → `secteursCiblesFor(marque)` (FilmPro inchangé, LED = `LED_SECTEURS_CIBLES`) ; câblé aux 10 sites de scoring LED (veille reste FilmPro) ; garde de couplage LED. |
-| 3 | MEDIUM | PDF « liste des prospects » d'une campagne = **logo FilmPro en dur** (partageable, aucun param marque). | `src/lib/campagnes-pdf/pdf-liste-prospects.ts:414,421` | Threader `marque`, sélectionner le logo FilmPro vs LED. |
+| 3 | MEDIUM · **CORRIGÉ + DÉPLOYÉ 18/07** (`96dc026`) | PDF « liste des prospects » d'une campagne = **logo FilmPro en dur** (partageable, aucun param marque). | `src/lib/campagnes-pdf/pdf-liste-prospects.ts:414,421` | FAIT : nouveau `src/lib/pdf/ledstudio-logo.ts` (fragment SVG **verbatim** de l'asset validé, prouvé byte-identique) + dispatcher `marque-logo.ts` ; param `marque` threadé dans `exportListeProspectsPdf` (défaut `filmpro` = non-régression **byte-identique**, testée), passé `data.marqueActive` aux 2 call sites. QA réelle : rendu svg2pdf LED magenta net + FilmPro inchangé. |
 | 4 | MEDIUM | Modale d'import (recherche entreprises) = métier FilmPro en dur : activité par défaut `regies_syndics`, placeholders « vitrerie, façade… ». | `src/lib/components/prospection/ImportModal.svelte:74,143,426,502,514,609` | Copies + défauts marque-aware, OU couper les sources FilmPro-only en LED (doctrine « LED passe par l'import de liste »). |
 | 5 | MEDIUM | Catégories Google Places = réseau partenaire FilmPro seul (« Non marque-aware pour l'instant » assumé en commentaire). | `src/lib/prospection/activity-types.ts:14` | Clé par marque, OU couper Google Places en LED jusqu'au cadrage LED. |
 | 6 | MEDIUM | Champs de recherche source (ajout de prospects sur /prospection ET détail campagne) = placeholders « vitrerie, façade, régie… ». | `src/lib/components/prospection/SourceSearchFields.svelte:109,129` | Exemples marque-aware, ou masquer la source en LED. |
-| 7 (**bug 2 Pascal**) | MEDIUM | Filtre « Campagne » = `MultiSelectDropdown` **sans branche `{:else}`** → boîte blanche vide ~192px quand 0 campagne (LED). Le frère `CampagneCombo` gère « Aucune campagne ». | `src/lib/components/MultiSelectDropdown.svelte:88` | Ajouter `{:else}` + prop `emptyLabel` (défaut « Aucune option » ; « Aucune campagne » aux sites d'appel campagne). Brand-agnostic ; Canton/Source non impactés (jamais vides). |
+| 7 (**bug 2 Pascal**) | MEDIUM · **CORRIGÉ + DÉPLOYÉ 18/07** (`96dc026`) | Filtre « Campagne » = `MultiSelectDropdown` **sans branche `{:else}`** → boîte blanche vide ~192px quand 0 campagne (LED). Le frère `CampagneCombo` gère « Aucune campagne ». | `src/lib/components/MultiSelectDropdown.svelte:88` | FAIT : prop `emptyLabel` (défaut « Aucune option ») + branche `{:else}` ; `emptyLabel="Aucune campagne"` aux 2 sites campagne de prospection. Brand-agnostic. QA réelle : 0 campagne → « Aucune campagne », peuplé inchangé. Canton/Source (AlerteModal inclus) = constantes jamais vides, défaut inoffensif. |
 | 8 | LOW | Hero Signaux = « marché du vitrage » en dur (déjà masqué par cron `marque='filmpro'`). | `src/routes/crm/signaux/+page.svelte:371` | À plier dans le **cadrage Run 7** (veille LED) - déjà en WATCH. |
 
 **Bug 1 Pascal (bouton « Importer une liste » absent sur LED) = NON reproduit en code.** Le bouton
@@ -485,3 +485,25 @@ le libellé. → mémoire `feedback_bi_marque_parity_qa_en_sortie`.
   et FilmPro semées avec token de validation, les deux pages `/validation/<token>` rendues en navigateur - **LED** = logo
   LED + accent magenta + « LED Studio · … », **FilmPro** = logo navy + accent bleu inchangé (non-régression visuelle
   confirmée), 0 erreur console sur l'asset. Revue adversariale sécurité + bugs sur le diff.
+
+## Correctif des 2 divergences gate-free (#3 + bug 2) - LIVRÉ + DÉPLOYÉ le 2026-07-18 (`96dc026`)
+
+Les 2 seules divergences **actionnables sans gate maquette** ont été corrigées, testées, prouvées en
+conditions réelles et déployées en prod (smoke vert, deploy Vercel Ready). **Restent 4** : #4/#5/#6 (copies
+métier LED, gate maquette + validation mots-clés secteur LED) + bug 1 (à reproduire sur env LED réel).
+
+- **#7 (bug 2 Pascal) - dropdown vide** : `MultiSelectDropdown.svelte` reçoit une prop `emptyLabel` (défaut
+  « Aucune option ») + une branche `{:else}` ; `emptyLabel="Aucune campagne"` posé aux 2 sites campagne de
+  `prospection/+page.svelte`. Brand-agnostic. Complétude des call sites vérifiée (déterministe) : seul le
+  dropdown campagne peut être vide ; Canton/Source (y c. `AlerteModal`) = constantes jamais vides.
+- **#3 - logo PDF marque-aware** : `src/lib/pdf/ledstudio-logo.ts` (fragment SVG **verbatim** de
+  `static/atelier209/ledstudio-magenta.svg`, 9 tracés + transforms byte-identiques prouvés) + dispatcher
+  `src/lib/pdf/marque-logo.ts` ; param `marque: Marque = 'filmpro'` threadé dans `exportListeProspectsPdf`,
+  passé `data.marqueActive` aux 2 call sites campagnes. FilmPro = **byte-identique** (test `marqueLogoSvg('filmpro',…)
+  === filmproLogoSvg(…)`).
+- **Preuves** : Vitest **2847** (+9), svelte-check **0/0**, revue adversariale (workflow 4 lentilles + verify
+  indépendant) **0 finding**, QA réelle (dev + Colima) : PDF LED rendu par **svg2pdf réel** (logo magenta net,
+  cadre arrondi + glyphes Q + transforms imbriqués OK) + PDF FilmPro inchangé + dropdown vide → « Aucune
+  campagne » / peuplé inchangé, tous rendus en vrai navigateur.
+- **Reste (Pascal-gated)** : #4/#5/#6 = **maquette copies LED** (secteurs événementiel/enseigne/stand) + valider
+  les mots-clés secteur LED de `secteurs.ts` [À VALIDER PASCAL] ; bug 1 = repro sur un env LED réel d'abord.
