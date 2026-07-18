@@ -6,12 +6,14 @@
 		icon = '',
 		label = '',
 		tooltip = '',
+		emptyLabel = 'Aucune option',
 	}: {
 		selected: string[];
 		options: { value: string; label: string; dotColor?: string }[];
 		icon?: string;
 		label?: string;
 		tooltip?: string;
+		emptyLabel?: string;
 	} = $props();
 
 	let open = $state(false);
@@ -101,6 +103,8 @@
 					{/if}
 					<span class="text-text">{opt.label}</span>
 				</button>
+			{:else}
+				<p class="px-3 py-2.5 text-sm text-text-muted select-none">{emptyLabel}</p>
 			{/each}
 		</div>
 	{/if}

@@ -132,7 +132,7 @@
 				return;
 			}
 			const { exportListeProspectsPdf } = await import('$lib/campagnes-pdf/pdf-liste-prospects');
-			await exportListeProspectsPdf(c.nom, d.prospects);
+			await exportListeProspectsPdf(c.nom, d.prospects, [], data.marqueActive);
 		} catch {
 			toasts.error('Génération du PDF impossible');
 		} finally {

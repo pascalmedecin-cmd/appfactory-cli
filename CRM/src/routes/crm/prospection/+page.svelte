@@ -858,7 +858,7 @@
 				<MultiSelectDropdown bind:selected={filterCantons} options={cantonOptions} icon="location_on" label="Canton" tooltip="Zones géographiques" />
 				<MultiSelectDropdown bind:selected={filterSources} options={sourceOptions} icon="database" label="Source" tooltip="Registres et bases de données" />
 				{#if premium}
-					<MultiSelectDropdown bind:selected={filterCampagnes} options={campagneFilterOptions} icon="sell" label="Campagne" tooltip="Filtrer par campagne" />
+					<MultiSelectDropdown bind:selected={filterCampagnes} options={campagneFilterOptions} icon="sell" label="Campagne" tooltip="Filtrer par campagne" emptyLabel="Aucune campagne" />
 				{/if}
 				<!-- Lot 2 : toggle "Voir les écartés" aussi sur mobile (parité desktop, sinon impossible de réafficher les écartés depuis un téléphone). -->
 				<label class="col-span-2 flex items-center gap-2 text-xs text-text-muted cursor-pointer select-none">
@@ -879,7 +879,7 @@
 			<MultiSelectDropdown bind:selected={filterCantons} options={cantonOptions} icon="location_on" label="Canton" tooltip="Zones géographiques" />
 			<MultiSelectDropdown bind:selected={filterSources} options={sourceOptions} icon="database" label="Source" tooltip="Registres et bases de données" />
 			{#if premium}
-				<MultiSelectDropdown bind:selected={filterCampagnes} options={campagneFilterOptions} icon="sell" label="Campagne" tooltip="Filtrer par campagne" />
+				<MultiSelectDropdown bind:selected={filterCampagnes} options={campagneFilterOptions} icon="sell" label="Campagne" tooltip="Filtrer par campagne" emptyLabel="Aucune campagne" />
 			{/if}
 		</fieldset>
 		<div class="flex flex-wrap items-center gap-2 px-3 pb-3 pt-0">

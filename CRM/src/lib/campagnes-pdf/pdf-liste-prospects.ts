@@ -22,6 +22,7 @@
  * signature (tokens snake_case), format produit par notre propre code - source unique, testé.
  */
 import type { ProspectCampagne } from '$lib/campagnes';
+import type { Marque } from '$lib/marque';
 import { sortGroupes, SANS_GROUPE_LABEL } from '$lib/campagne-groupes';
 import { estWidth, ellipsize } from '$lib/etiquettes/pdf-etiquettes';
 import { GOOGLE_SOURCE, safeMapsUrl } from '$lib/maps-url';
@@ -404,21 +405,22 @@ export function listeFileName(campagneNom: string, date: Date): string {
 export async function exportListeProspectsPdf(
 	campagneNom: string,
 	prospects: ProspectCampagne[],
-	groupes: readonly GroupeLite[] = []
+	groupes: readonly GroupeLite[] = [],
+	marque: Marque = 'filmpro'
 ): Promise<void> {
 	if (prospects.length === 0) return;
 	const [{ jsPDF }, svg2pdfMod, fonts, logoMod] = await Promise.all([
 		import('jspdf'),
 		import('svg2pdf.js'),
 		import('$lib/etiquettes/etiquettes-fonts'),
-		import('$lib/pdf/filmpro-logo')
+		import('$lib/pdf/marque-logo')
 	]);
 	const svg2pdf = (svg2pdfMod as { svg2pdf: (el: Element, doc: unknown, opts?: unknown) => Promise<unknown> }).svg2pdf;
 
 	const items = buildListeItems(prospects, groupes);
 	const now = new Date();
 	const dateLabel = now.toLocaleDateString('fr-CH', { day: 'numeric', month: 'long', year: 'numeric' });
-	const logoFragment = logoMod.filmproLogoSvg(MARGIN, MARGIN, 18, C.logo);
+	const logoFragment = logoMod.marqueLogoSvg(marque, MARGIN, MARGIN, 18, C.logo);
 	const { svgs, links } = buildListeItemsPagesSvg(campagneNom, dateLabel, items, logoFragment);
 
 	const doc = new jsPDF({ unit: 'pt', format: 'a4', orientation: 'landscape', compress: true });

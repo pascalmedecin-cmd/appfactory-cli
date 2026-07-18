@@ -504,7 +504,7 @@ Merci !`
 		pdfBusy = true;
 		try {
 			const { exportListeProspectsPdf } = await import('$lib/campagnes-pdf/pdf-liste-prospects');
-			await exportListeProspectsPdf(campagne.nom, rows, grps);
+			await exportListeProspectsPdf(campagne.nom, rows, grps, data.marqueActive);
 		} catch {
 			toasts.error('Génération du PDF impossible');
 		} finally {
