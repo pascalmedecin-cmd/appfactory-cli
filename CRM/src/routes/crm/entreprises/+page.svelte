@@ -722,7 +722,7 @@
 			<!-- Pipeline rapide (V2 mobile F4) -->
 			<div class="border-t border-border pt-4">
 				{#if activeOpportunite}
-					<PipelineQuickAdvance opp={activeOpportunite} />
+					<PipelineQuickAdvance opp={activeOpportunite} marque={data.marqueActive} />
 				{:else}
 					<div class="rounded-xl border border-border bg-white p-4 flex items-center justify-between gap-3">
 						<div>
@@ -742,7 +742,7 @@
 
 			<!-- Photos chantier (V2 mobile F1) -->
 			<div class="border-t border-border pt-4">
-				<PhotoGallery entrepriseId={selectedEntreprise.id} />
+				<PhotoGallery entrepriseId={selectedEntreprise.id} marque={data.marqueActive} />
 			</div>
 
 			<!-- Visites terrain (V2 mobile F2) -->

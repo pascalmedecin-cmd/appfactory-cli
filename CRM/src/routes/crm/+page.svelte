@@ -132,7 +132,7 @@
 </div>
 {/if}
 
-<LeadExpress bind:open={leadExpressOpen} redirectAfterCreate={true} />
+<LeadExpress bind:open={leadExpressOpen} redirectAfterCreate={true} marque={data.marqueActive} />
 
 <LeadSlideOut
 	bind:open={slideOutOpen}

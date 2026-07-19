@@ -5,6 +5,8 @@
 	import { invalidateAll } from '$app/navigation';
 	import { config, CRM_BASE } from '$lib/config';
 	import { toasts } from '$lib/stores/toast';
+	import { prospectionCopies } from '$lib/prospection/prospection-copies';
+	import type { Marque } from '$lib/marque';
 	import type { ActionResult } from '@sveltejs/kit';
 
 	type Opp = {
@@ -17,9 +19,14 @@
 
 	let {
 		opp,
+		marque = 'filmpro',
 	}: {
 		opp: Opp;
+		// Parité WP-C : placeholder « prochaine action » selon la marque active (défaut filmpro).
+		marque?: Marque;
 	} = $props();
+
+	const copies = $derived(prospectionCopies(marque));
 
 	const ETAPES = config.pipeline.etapes;
 	// Étapes terminales : ne plus proposer "étape suivante" une fois gagné/perdu.
@@ -259,7 +266,7 @@
 					id="pqa-notes"
 					name="notes_libres"
 					bind:value={nextActionNotes}
-					placeholder="Ex : Envoi devis film solaire 80m²"
+					placeholder={copies.pipelineActionPlaceholder}
 					rows="3"
 					maxlength="5000"
 					class="w-full px-3.5 py-2.5 text-base border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"

@@ -14,6 +14,18 @@ describe('prospection-copies marque-aware (#4/#6)', () => {
 		expect(c.importAnnuaireGenericExemples).toBe('vitrerie, façade, architecte, …');
 		expect(c.importGpKeywordPlaceholder).toBe('ex: ventilation, charpente métallique…');
 		expect(c.importGpKeywordPlaceholderLibre).toBe('ex: agencement de magasins');
+		// WP-C : 6 clés ajoutées, FilmPro verbatim des littéraux d'origine.
+		expect(c.expressRaisonPlaceholder).toBe('Ex : Vitrerie Dupond Sàrl');
+		expect(c.expressNotePlaceholder).toBe('Ex : RDV 5 mai vitrage SE');
+		expect(c.pipelineActionPlaceholder).toBe('Ex : Envoi devis film solaire 80m²');
+		expect(c.photoEmptyHint).toBe('Aucune photo. Ajoute une vue façade ou vitrage pour étoffer le dossier.');
+		expect(c.importTemplateExampleRow).toBe(
+			'Miroiterie Cornavin Sàrl,Rue de Cornavin 5,1201,Genève,+41 22 000 00 00,Vitrerie,https://exemple.ch,contact@exemple.ch'
+		);
+		// Helper Google : byte-identique à la source ImportModal (mêmes escapes ’/ /€).
+		expect(c.importGpHelper).toBe(
+			'Ideal pour reperer regies, entreprises generales et corps d’etat dans un canton. Cout : 0 € jusqu’a 900 recherches/mois.'
+		);
 	});
 
 	it('le helper Zefix reconstruit FilmPro reste identique à l’original', () => {
@@ -31,6 +43,15 @@ describe('prospection-copies marque-aware (#4/#6)', () => {
 		}
 		expect(c.searchchPlaceholder).toBe('signalétique, stand, enseigne…');
 		expect(c.importRegistrePlaceholder).toContain('événementiel');
+		// WP-C : libellés LED validés Pascal 2026-07-18 (maquette Chrome).
+		expect(c.expressRaisonPlaceholder).toBe('Ex : Enseignes Dupond Sàrl');
+		expect(c.expressNotePlaceholder).toBe('Ex : RDV 5 mai pose enseigne');
+		expect(c.pipelineActionPlaceholder).toBe('Ex : Envoi devis enseigne lumineuse');
+		expect(c.photoEmptyHint).toContain('enseigne');
+		expect(c.photoEmptyHint).toContain('stand');
+		expect(c.importTemplateExampleRow).toContain('Signalétique');
+		expect(c.importGpHelper).toContain('exploitants de salles');
+		expect(c.importGpHelper).toContain('agences événementielles');
 	});
 
 	it('les 2 marques ont exactement les mêmes clés', () => {

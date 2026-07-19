@@ -5,17 +5,24 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { toasts } from '$lib/stores/toast';
 	import { CRM_BASE } from '$lib/config';
+	import { prospectionCopies } from '$lib/prospection/prospection-copies';
+	import type { Marque } from '$lib/marque';
 	import type { ActionResult } from '@sveltejs/kit';
 
 	let {
 		open = $bindable(false),
 		redirectAfterCreate = false,
+		marque = 'filmpro',
 	}: {
 		open?: boolean;
 		// true : après création, navigue vers /prospection?slideOut=<id> (depuis dashboard).
 		// false : reste sur la page courante, toast + invalidate (depuis /prospection).
 		redirectAfterCreate?: boolean;
+		// Parité WP-C : placeholders métier selon la marque active (défaut filmpro).
+		marque?: Marque;
 	} = $props();
+
+	const copies = $derived(prospectionCopies(marque));
 
 	type Candidate = { id: string; raison_sociale: string; localite: string | null };
 
@@ -201,7 +208,7 @@
 						type="text"
 						name="raison_sociale"
 						bind:value={raison_sociale}
-						placeholder="Ex : Vitrerie Dupond Sàrl"
+						placeholder={copies.expressRaisonPlaceholder}
 						autocomplete="organization"
 						autocapitalize="words"
 						required
@@ -247,7 +254,7 @@
 						type="text"
 						name="notes"
 						bind:value={notes}
-						placeholder="Ex : RDV 5 mai vitrage SE"
+						placeholder={copies.expressNotePlaceholder}
 						maxlength="1000"
 						class="w-full h-11 px-3.5 py-2.5 text-base border border-[var(--color-border-input)] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					/>

@@ -246,7 +246,10 @@
 	const activeHelper = $derived(
 		activeTab === 'zefix'
 			? `Mieux vaut 50 prospects ciblés que 500 à trier - filtrez sur un terme précis (${copies.importRegistreHelperExemples}).`
-			: activeMeta.hero.helper
+			// Parité WP-C #5 : le helper Google Places cite des secteurs cibles - marque-aware (FilmPro verbatim).
+			: activeTab === 'google_places'
+				? copies.importGpHelper
+				: activeMeta.hero.helper
 	);
 
 	const simapPeriods = [

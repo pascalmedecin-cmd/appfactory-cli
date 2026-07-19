@@ -326,7 +326,7 @@
 
 			<!-- Photos chantier (V2 mobile F1) -->
 			<div class="pt-4 border-t border-border">
-				<PhotoGallery leadId={lead.id} />
+				<PhotoGallery leadId={lead.id} {marque} />
 			</div>
 
 			<!-- Visites terrain (V2 mobile F2) -->

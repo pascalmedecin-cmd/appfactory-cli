@@ -19,6 +19,7 @@
 	} from '$lib/prospection/import-mapping';
 	import { marqueLabel } from '$lib/marque';
 	import type { Marque } from '$lib/marque';
+	import { prospectionCopies } from '$lib/prospection/prospection-copies';
 	import { IMPORT_LISTE_MAX_ROWS } from '$lib/schemas';
 
 	let {
@@ -191,9 +192,10 @@
 	}
 
 	function downloadTemplate() {
+		// Parité WP-C #6 : ligne d'exemple métier selon la marque active (FilmPro verbatim ; LED enseigne/signalétique).
 		const csv =
 			'Nom,Adresse,NPA,Ville,Téléphone,Catégorie,Site web,Email\r\n' +
-			'Miroiterie Cornavin Sàrl,Rue de Cornavin 5,1201,Genève,+41 22 000 00 00,Vitrerie,https://exemple.ch,contact@exemple.ch\r\n';
+			prospectionCopies(marque).importTemplateExampleRow + '\r\n';
 		const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
 		const url = URL.createObjectURL(blob);
 		const a = document.createElement('a');

@@ -1339,7 +1339,7 @@
 <LeadSlideOut bind:open={slideOutOpen} bind:lead={selectedLead} bind:importResult leads={data.leads} {premium} campagnes={data.campagnes} campagnesByLead={data.campagnesByLead} marque={data.marqueActive} />
 
 <!-- Lead express modale (F3 V2 mobile terrain) -->
-<LeadExpress bind:open={leadExpressOpen} redirectAfterCreate={false} />
+<LeadExpress bind:open={leadExpressOpen} redirectAfterCreate={false} marque={data.marqueActive} />
 
 <!-- Modal création alerte -->
 <AlerteModal bind:open={alerteModalOpen} />

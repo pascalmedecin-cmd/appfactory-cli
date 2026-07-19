@@ -2,6 +2,8 @@
 	import Icon from '$lib/components/Icon.svelte';
 	import ConfirmModal from '$lib/components/ConfirmModal.svelte';
 	import { toasts } from '$lib/stores/toast';
+	import { prospectionCopies } from '$lib/prospection/prospection-copies';
+	import type { Marque } from '$lib/marque';
 
 	type Photo = {
 		id: string;
@@ -16,7 +18,11 @@
 	let {
 		leadId = null,
 		entrepriseId = null,
-	}: { leadId?: string | null; entrepriseId?: string | null } = $props();
+		marque = 'filmpro',
+	}: { leadId?: string | null; entrepriseId?: string | null; marque?: Marque } = $props();
+
+	// Parité WP-C : état vide métier selon la marque active (défaut filmpro).
+	const copies = $derived(prospectionCopies(marque));
 
 	const MAX_PHOTOS = 10;
 	const COMPRESS_THRESHOLD_BYTES = 2 * 1024 * 1024; // 2 MB
@@ -196,7 +202,7 @@
 	{#if loading}
 		<p class="text-xs text-text-muted">Chargement…</p>
 	{:else if photos.length === 0}
-		<p class="text-xs text-text-muted">Aucune photo. Ajoute une vue façade ou vitrage pour étoffer le dossier.</p>
+		<p class="text-xs text-text-muted">{copies.photoEmptyHint}</p>
 	{:else}
 		<div class="grid grid-cols-3 gap-2">
 			{#each photos as photo (photo.id)}
