@@ -560,9 +560,24 @@ veille/aide/Découpe) a trouvé **~15 divergences que le 1er audit avait manqué
   **pour les deux marques** → menu overflow « … ». Cause perçue = fenêtre < `md` (ou cache de build), **jamais la marque**.
   Option marque-indépendante parkée (backlog) : surfacer l'import sur mobile (gate mockup).
 
-- **Reste parité : WP-C + #8** :
-  - **WP-C** (gate maquette Pascal, `.atelier-209/parite-copies-led-wp-c/maquette-wp-c.html` ouverte dans Chrome) : 6 copies
-    métier LED codées en dur vitrage/façade/film solaire (LeadExpress entreprise+note, PipelineQuickAdvance action,
-    PhotoGallery état vide, ImportModal helper Google, modèle CSV ImportListeModal). Code prêt en une passe via extension
-    de `prospection-copies.ts` (FilmPro byte-identique) dès le « ok » de Pascal sur le libellé LED.
-  - **#8** hero Signaux « vitrage » = **Run 7** (veille LED).
+## WP-C copies métier LED - LIVRÉ + DÉPLOYÉ le 2026-07-18 (`0f27023`)
+
+Maquette (`.atelier-209/parite-copies-led-wp-c/maquette-wp-c.html`) **validée par Pascal dans Chrome** ; #5 corrigé
+par Pascal (« exploitants de salles et agences événementielles » au lieu de la 1re proposition). Les 6 copies métier
+codées en dur (vitrage/façade/film solaire) sont désormais marque-aware via extension de `prospection-copies.ts`
+(SOURCE UNIQUE) :
+
+- **#1/#2 LeadExpress** (saisie rapide) : placeholders entreprise (`Ex : Enseignes Dupond Sàrl`) + note (`Ex : RDV 5 mai
+  pose enseigne`). Prop `marque` ajoutée, threadée depuis dashboard + prospection.
+- **#3 PipelineQuickAdvance** : placeholder action (`Ex : Envoi devis enseigne lumineuse`). Prop `marque` depuis Entreprises.
+- **#4 PhotoGallery** : état vide (`…vue de l'enseigne ou du stand…`). Prop `marque` depuis LeadSlideOut + Entreprises.
+- **#5 ImportModal helper Google** : `Idéal pour repérer exploitants de salles et agences événementielles dans un canton.
+  Coût : 0 € jusqu'à 900 recherches/mois.` (routé par `activeHelper`, pattern #4).
+- **#6 ImportListeModal modèle CSV** : ligne d'exemple `Enseignes Lumino Sàrl,…,Signalétique,…`.
+
+**FilmPro byte-identique** (le helper Google reproduit les mêmes escapes `’`/nbsp/`€` que la source ImportModal - testé
+au caractère près). **Preuves** : Vitest **2863**, svelte-check **0/0**, **QA runtime 2 marques** (PhotoGallery rendu réel :
+FilmPro « façade ou vitrage » / LED « enseigne ou stand » via la vraie chaîne prospection→LeadSlideOut→PhotoGallery),
+0 littéral métier ancien résiduel, tous les sites de montage threadés. Smoke prod vert (deploy Ready, `/login` 200).
+
+**Parité UX/UI LED↔FilmPro = CLOSE hors veille.** Reste **#8** seul : hero Signaux « vitrage » = **Run 7** (veille LED).
