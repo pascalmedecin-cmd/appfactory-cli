@@ -431,6 +431,11 @@ comptes à créer.
 
 # Parité bi-marque LED ↔ FilmPro - audit (2026-07-17)
 
+> **ÉTAT AU 2026-07-18 (fait foi) : parité UX/UI CLOSE hors veille.** Cette section est un log chronologique ;
+> les mentions intermédiaires « Reste parité : 2 / 5-7 » sont **superseded**. État final : original 1-7 + ré-audit
+> WP-A/B/C **tous déployés**, **bug 1 fermé** (breakpoint `md`, pas la marque). Reste **#8** seul (hero Signaux = Run 7).
+> Voir les sections finales « Ré-audit exhaustif + WP-A/B » et « WP-C copies métier LED » en bas.
+
 **Contexte** : Pascal a remonté à l'usage 2 défauts sur la prospection LED (bouton import « absent », dropdown
 campagne vide « pas propre ») + une directive : **LED et FilmPro doivent être 100 % alignés en UX/UI**. Un
 audit de parité (workflow 4 agents Opus, 91 tool-calls, findings vérifiés) a balayé toute la surface
