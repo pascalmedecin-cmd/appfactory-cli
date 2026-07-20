@@ -542,6 +542,7 @@
 				onSelect={openDetail}
 				stageByEntreprise={premium ? stageByEntreprise : undefined}
 				emptyMessage={data.search ? `Aucun résultat pour « ${data.search} »` : emptyMessageForTab(activeTab)}
+				{coherence}
 			/>
 			<!-- Pagination serveur en vue cards (mirror du footer DataTable : mêmes classes/markup). -->
 			{#if totalPages > 1 || data.totalEntreprises > 0}

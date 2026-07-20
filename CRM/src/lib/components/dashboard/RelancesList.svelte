@@ -88,6 +88,12 @@
 		letter-spacing: 0.12em;
 		color: var(--color-text-muted);
 	}
+	/* Cohérence UI (b, flag ff_ui_coherence, INC-8) : sur-titre de section aligné .eyebrow (12px/700).
+	   Tracking 0.12em et couleur muette déjà conformes. OFF ⇒ .coherence-ui absent ⇒ 11px/600 préservé. */
+	:global(.coherence-ui) .panel-meta {
+		font-size: 12px;
+		font-weight: 700;
+	}
 	.panel-title {
 		font-size: 14px;
 		font-weight: 700;

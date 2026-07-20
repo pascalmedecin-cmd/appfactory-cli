@@ -12,13 +12,15 @@
 	 * cadrage refonte CRM. cf. SPEC_VAGUE1_COHERENCE § 1.
 	 */
 	import Icon from '$lib/components/Icon.svelte';
+	import type { Snippet } from 'svelte';
 
 	let {
 		value = '',
 		placeholder = 'Rechercher…',
 		ariaLabel = placeholder,
 		oninput,
-		onclear
+		onclear,
+		trailing
 	}: {
 		value?: string;
 		placeholder?: string;
@@ -27,7 +29,20 @@
 		oninput?: (value: string) => void;
 		/** Appelé au clic sur le bouton clear (sinon `oninput('')`). */
 		onclear?: () => void;
+		/** Contenu optionnel à droite, rendu UNIQUEMENT quand le champ est vide (mutuellement
+		 *  exclusif avec le bouton clear). Ex. indice clavier « / » de la page Aide. */
+		trailing?: Snippet;
 	} = $props();
+
+	// Ref de l'input, pour (1) restituer le focus après le clear - le bouton clear se démonte
+	// quand la valeur devient vide, sans ceci le focus retombe sur <body> - et (2) exposer focus()
+	// aux appelants qui bindent l'instance (raccourci « / » de la page Aide).
+	let inputEl = $state<HTMLInputElement>();
+
+	/** Donne le focus au champ. Consommable via `bind:this` sur l'instance du composant. */
+	export function focus() {
+		inputEl?.focus();
+	}
 
 	function handleInput(e: Event) {
 		oninput?.((e.target as HTMLInputElement).value);
@@ -36,6 +51,9 @@
 	function handleClear() {
 		if (onclear) onclear();
 		else oninput?.('');
+		// a11y : le bouton clear se démonte quand value passe à '' ; on ramène le focus dans
+		// l'input plutôt que de le laisser retomber sur <body>. Synchrone (avant le flush Svelte).
+		inputEl?.focus();
 	}
 
 	// Null-safety : un appelant futur pourrait passer une valeur nullable ; on borne ici
@@ -47,6 +65,7 @@
 	<Icon name="search" size={16} class="search-input__icon" />
 	<input
 		type="search"
+		bind:this={inputEl}
 		value={v}
 		oninput={handleInput}
 		{placeholder}
@@ -62,6 +81,8 @@
 		>
 			<Icon name="close" size={16} />
 		</button>
+	{:else if trailing}
+		{@render trailing()}
 	{/if}
 </div>
 

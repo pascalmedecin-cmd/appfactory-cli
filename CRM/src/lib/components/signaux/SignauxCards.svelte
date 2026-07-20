@@ -1,6 +1,7 @@
 <script lang="ts" generics="T extends import('$lib/utils/signauxFormat').SignalLite & { description_projet?: string | null; commune?: string | null; source_officielle?: string | null }">
 	import Icon from '$lib/components/Icon.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import ScorePill from '$lib/components/prospection/ScorePill.svelte';
 	import {
 		formatTypeLabel,
@@ -30,6 +31,8 @@
 		// V3 (spec § 4 C7) : si fourni, les occurrences du terme dans description_projet
 		// sont surlignées en jaune. Prime visuellement sur la catégorie keyword.
 		searchTerm?: string;
+		/** Cohérence UI (b, INC-7) : route le vide filtré vers <EmptyState>. Défaut false = OFF (legacy). */
+		coherence?: boolean;
 	};
 
 	let {
@@ -41,6 +44,7 @@
 		emptyMessage = 'Aucun signal.',
 		keywords = [],
 		searchTerm = '',
+		coherence = false,
 	}: Props = $props();
 
 	function handleClick(signal: T) {
@@ -60,10 +64,14 @@
 </script>
 
 {#if signaux.length === 0}
-	<div class="empty">
-		<Icon name="filter_alt_off" size={28} class="empty-icon" />
-		<p>{emptyMessage}</p>
-	</div>
+	{#if coherence}
+		<EmptyState icon="filter_alt_off" title={emptyMessage} />
+	{:else}
+		<div class="empty">
+			<Icon name="filter_alt_off" size={28} class="empty-icon" />
+			<p>{emptyMessage}</p>
+		</div>
+	{/if}
 {:else}
 	<div class="cards-grid">
 		{#each signaux as signal (signal.id)}

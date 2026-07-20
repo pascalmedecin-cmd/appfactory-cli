@@ -16,8 +16,13 @@
 	import type { FeedbackEntry, FeedbackStatus } from '$lib/feedback/types';
 	import type { PageData } from './$types';
 	import { marqueLabel } from '$lib/marque';
+	import { isCoherenceActive } from '$lib/ui/coherence';
 
 	let { data }: { data: PageData } = $props();
+
+	// Cohérence UI (b, flag ff_ui_coherence) : route le vide de FeedbackTable vers <EmptyState> (INC-7)
+	// + aligne le titre de page à 700 (INC-9). data.featureFlags fourni par le +layout.server.ts (mergé).
+	const coherence = $derived(isCoherenceActive(data.featureFlags));
 
 	let statusFilter = $state<'all' | FeedbackStatus>('all');
 	let newOpen = $state(false);
@@ -75,7 +80,7 @@
 	<!-- En-tête (kicker / titre / tagline) -->
 	<header class="mb-6">
 		<div class="text-xs font-semibold uppercase tracking-wider text-primary mb-1">Retours</div>
-		<h2 class="text-2xl font-semibold text-text">Log des retours et améliorations</h2>
+		<h2 class="text-2xl font-semibold text-text coh-title">Log des retours et améliorations</h2>
 		<p class="mt-2 text-sm text-text-muted max-w-2xl">
 			Tout ce qui est signalé pendant l'usage du CRM, par toi ou par n'importe quel utilisateur.
 			Triable, exportable, traçable jusqu'à la livraison.
@@ -129,7 +134,7 @@
 		</div>
 	{/if}
 
-	<FeedbackTable entries={filtered as FeedbackEntry[]} isAdmin={data.isAdmin} />
+	<FeedbackTable entries={filtered as FeedbackEntry[]} isAdmin={data.isAdmin} {coherence} />
 
 	<!-- Modal nouveau retour (depuis bouton « + Nouveau retour ») -->
 	{#if newOpen}

@@ -59,6 +59,13 @@
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
 	}
+	/* Cohérence UI (b, flag ff_ui_coherence, INC-8) : sur-titre de carte aligné .eyebrow (700/0.12em).
+	   Ancré à .activity-grid (classe .card générique ailleurs) ⇒ ne fuite pas. size 12/couleur muette
+	   déjà conformes. OFF ⇒ .coherence-ui absent ⇒ 600/0.04em préservé. */
+	:global(.coherence-ui) .activity-grid .card h4 {
+		font-weight: 700;
+		letter-spacing: 0.12em;
+	}
 	.big {
 		font-size: 32px;
 		font-weight: 700;

@@ -6,6 +6,7 @@
 	import { enhance } from '$app/forms';
 	import { toasts } from '$lib/stores/toast';
 	import Icon from '$lib/components/Icon.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import { CRM_BASE } from '$lib/config';
 	import {
 		TYPE_LABELS,
@@ -21,9 +22,12 @@
 	let {
 		entries,
 		isAdmin,
+		coherence = false,
 	}: {
 		entries: FeedbackEntry[];
 		isAdmin: boolean;
+		/** Cohérence UI (b, INC-7) : route le vide vers <EmptyState>. Défaut false = OFF (legacy). */
+		coherence?: boolean;
 	} = $props();
 
 	let expandedId = $state<string | null>(null);
@@ -56,10 +60,14 @@
 </script>
 
 {#if entries.length === 0}
-	<div class="text-center py-12 text-text-muted">
-		<Icon name="inbox" size={32} class="mx-auto mb-3 opacity-60" />
-		<p class="text-sm">Aucun retour pour le moment.</p>
-	</div>
+	{#if coherence}
+		<EmptyState icon="inbox" title="Aucun retour pour le moment." />
+	{:else}
+		<div class="text-center py-12 text-text-muted">
+			<Icon name="inbox" size={32} class="mx-auto mb-3 opacity-60" />
+			<p class="text-sm">Aucun retour pour le moment.</p>
+		</div>
+	{/if}
 {:else}
 	<div class="feedback-table-wrap">
 		<table class="feedback-table w-full text-sm">

@@ -562,6 +562,7 @@
 				emptyMessage={emptyMsg}
 				keywords={data.keywords}
 				searchTerm={searchDebounced}
+				{coherence}
 			/>
 			{#if queueCapActive && queueHiddenCount > 0}
 				<button type="button" class="queue-more" onclick={() => (queueExpanded = true)}>

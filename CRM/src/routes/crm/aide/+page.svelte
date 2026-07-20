@@ -19,6 +19,8 @@
 	import AideBlock from '$lib/components/aide/AideBlock.svelte';
 	import { pageSubtitle } from '$lib/stores/pageSubtitle';
 	import { isBandeauActive } from '$lib/pageBandeau';
+	import { isCoherenceActive } from '$lib/ui/coherence';
+	import SearchInput from '$lib/components/SearchInput.svelte';
 	import { aideContent, levelByKey, type AideLevelKey, type AideSection } from '$lib/aide/content';
 	import { searchAide, type AideSearchResult } from '$lib/aide/search';
 	import type { PageData } from './$types';
@@ -33,13 +35,17 @@
 	// OFF → en-tête `.aide-head` actuel (titre = niveau actif). ON → bandeau standard « Aide » ; le
 	// niveau actif reste porté par les onglets ci-dessous.
 	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
+	// Cohérence UI (b, flag ff_ui_coherence, INC-5) : recherche legacy `.aide-search` routée vers la
+	// primitive SearchInput (kbd « / » via snippet trailing, focus via bind:this). OFF ⇒ champ legacy.
+	const coherence = $derived(isCoherenceActive(data.featureFlags));
 
 	let query = $state('');
 	const results = $derived<AideSearchResult[]>(searchAide(query));
 	const searching = $derived(query.trim().length > 0);
 
-	// Champ de recherche + raccourci « / » pour le focaliser (pattern docs Linear/Vercel).
-	let searchInput = $state<HTMLInputElement>();
+	// Champ de recherche + raccourci « / » pour le focaliser (pattern docs Linear/Vercel). Le bind:this
+	// sert les DEUX branches (input legacy OU instance SearchInput) : chacune expose focus().
+	let searchInput = $state<HTMLInputElement | { focus: () => void }>();
 	$effect(() => {
 		if (typeof document === 'undefined') return;
 		function onKey(e: KeyboardEvent) {
@@ -181,19 +187,35 @@
 			panelIdPrefix="aide-panel"
 		>
 			{#snippet actions()}
-				<div class="aide-search">
-					<Icon name="search" size={16} strokeWidth={2} class="aide-search-icon" />
-					<input
-						type="search"
-						placeholder="Rechercher dans l'aide…"
-						bind:value={query}
-						bind:this={searchInput}
-						aria-label="Rechercher dans l'aide"
-					/>
-					{#if !searching}
-						<kbd class="aide-search-kbd" aria-hidden="true">/</kbd>
-					{/if}
-				</div>
+				{#if coherence}
+					<div class="coh-search">
+						<SearchInput
+							bind:this={searchInput}
+							value={query}
+							oninput={(v) => (query = v)}
+							placeholder="Rechercher dans l'aide…"
+							ariaLabel="Rechercher dans l'aide"
+						>
+							{#snippet trailing()}
+								<kbd class="aide-kbd-coh" aria-hidden="true">/</kbd>
+							{/snippet}
+						</SearchInput>
+					</div>
+				{:else}
+					<div class="aide-search">
+						<Icon name="search" size={16} strokeWidth={2} class="aide-search-icon" />
+						<input
+							type="search"
+							placeholder="Rechercher dans l'aide…"
+							bind:value={query}
+							bind:this={searchInput}
+							aria-label="Rechercher dans l'aide"
+						/>
+						{#if !searching}
+							<kbd class="aide-search-kbd" aria-hidden="true">/</kbd>
+						{/if}
+					</div>
+				{/if}
 			{/snippet}
 		</Tabs>
 	</div>
@@ -422,6 +444,35 @@
 		line-height: 1;
 		pointer-events: none;
 	}
+	/* Cohérence UI (b, flag ff_ui_coherence, INC-5) : wrapper de la recherche routée vers SearchInput.
+	   Classes ON-only (absentes du DOM OFF) ⇒ zéro régression OFF par construction. Largeur alignée sur
+	   le champ legacy (252px) ; hauteur 40px héritée de `:global(.coherence-ui) .search-input`. */
+	.coh-search {
+		width: 252px;
+		max-width: 100%;
+	}
+	.coh-search :global(.search-input) {
+		width: 100%;
+	}
+	/* Indice clavier « / » en enfant flex de SearchInput (pas absolute) : cohabite avec le bouton clear,
+	   mutuellement exclusif (le snippet trailing n'est rendu que quand le champ est vide). Tokens = legacy. */
+	.aide-kbd-coh {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 18px;
+		height: 18px;
+		padding: 0 5px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--radius-sm);
+		background: var(--color-surface-alt);
+		color: var(--color-text-muted);
+		font-family: var(--font-mono);
+		font-size: 11px;
+		line-height: 1;
+		flex-shrink: 0;
+		pointer-events: none;
+	}
 	.aide-search input:focus + .aide-search-kbd {
 		opacity: 0;
 	}
@@ -517,6 +568,14 @@
 		text-transform: uppercase;
 		letter-spacing: 0.06em;
 		margin: 0 0 8px;
+	}
+	/* Cohérence UI (b, flag ff_ui_coherence, INC-8) : titres de colonnes latérales alignés .eyebrow
+	   (700/0.12em). Complète l'INC-9 aide de lot 2A (aide-title/aide-section-title). Size/couleur déjà
+	   conformes. OFF ⇒ .coherence-ui absent ⇒ 600/0.06em préservé. */
+	:global(.coherence-ui) .aide-toc-title,
+	:global(.coherence-ui) .aide-onthispage-title {
+		font-weight: 700;
+		letter-spacing: 0.12em;
 	}
 	.aide-toc ul,
 	.aide-onthispage ul {

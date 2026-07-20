@@ -750,7 +750,7 @@
 						}}
 						placeholder="Tapez pour chercher ou créer…"
 						autocomplete="off"
-						class="flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+						class="crm-field-control flex-1 px-3 py-2 text-sm border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
 					/>
 					{#if entreprise_nom}
 						<button type="button" onclick={clearEntreprise} class="px-2 text-text-muted hover:text-text cursor-pointer">

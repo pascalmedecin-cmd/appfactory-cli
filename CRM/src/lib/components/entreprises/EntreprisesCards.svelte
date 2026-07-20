@@ -1,6 +1,7 @@
 <script lang="ts" generics="T extends { id: string; raison_sociale: string; secteur_activite: string | null; canton: string | null; adresse_siege: string | null; site_web: string | null; statut_qualification: string | null }">
 	import Icon from '$lib/components/Icon.svelte';
 	import Badge from '$lib/components/Badge.svelte';
+	import EmptyState from '$lib/components/EmptyState.svelte';
 	import StagePill from '$lib/components/StagePill.svelte';
 	import { contactCountForEntreprise, type ContactForEntrepriseLite, type StageMeta } from '$lib/utils/entreprisesFormat';
 
@@ -11,9 +12,11 @@
 		emptyMessage?: string;
 		/** Vague 2 (flag ffCrmListesV2) : map entreprise_id -> etape active, pour la pill pipeline. */
 		stageByEntreprise?: ReadonlyMap<string, StageMeta>;
+		/** Cohérence UI (b, INC-7) : route le vide filtré vers <EmptyState>. Défaut false = OFF (legacy). */
+		coherence?: boolean;
 	};
 
-	let { entreprises, contacts, onSelect, emptyMessage = 'Aucune entreprise.', stageByEntreprise }: Props = $props();
+	let { entreprises, contacts, onSelect, emptyMessage = 'Aucune entreprise.', stageByEntreprise, coherence = false }: Props = $props();
 
 	function statutBadgeVariant(statut: string | null): 'default' | 'info' | 'success' | 'warning' | 'muted' {
 		switch (statut) {
@@ -52,9 +55,13 @@
 </script>
 
 {#if entreprises.length === 0}
-	<div class="empty">
-		<p>{emptyMessage}</p>
-	</div>
+	{#if coherence}
+		<EmptyState icon="business" title={emptyMessage} />
+	{:else}
+		<div class="empty">
+			<p>{emptyMessage}</p>
+		</div>
+	{/if}
 {:else}
 	<div class="cards-grid">
 		{#each entreprises as entreprise (entreprise.id)}

@@ -222,6 +222,20 @@
 		border-radius: var(--radius-2xl);
 	}
 }
+/* Cohérence UI (b, flag ff_ui_coherence, INC-10) : hauteur unique des champs de formulaire (Select /
+   FormField input / CantonSelect + input inline « Entreprise » de la modale contacts) alignée à 40px
+   sur les contrôles de barre d'outils déjà à 40px (.ws-btn, MultiSelect h-10, SearchInput). Règle
+   NON-layered ⇒ bat l'utility LAYERED `h-[34px]`. `.crm-field-control` = hook namespacé neuf (0 autre
+   usage, absent de /decoupe). Gated sous .coherence-ui ⇒ OFF la règle n'existe pas ⇒ 34px préservé. */
+.coherence-ui .crm-field-control {
+	height: 40px;
+}
+/* Cohérence UI (b, flag ff_ui_coherence, INC-9) : titre de page workspace en utility-inline (log) porté
+   à 700, aligné sur la convention (aide-title/cp-title déjà à 700 en lot 2A). Classe append gatée : OFF
+   la règle n'existe pas ⇒ font-semibold conservé. NON-layered ⇒ bat l'utility LAYERED `.font-semibold`. */
+.coherence-ui .coh-title {
+	font-weight: 700;
+}
 .mag-display {
 	font-weight: 800;
 	letter-spacing: -0.03em;
