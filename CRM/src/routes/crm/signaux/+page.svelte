@@ -156,7 +156,7 @@
 	const premium = $derived(data.featureFlags?.ffCrmListesV2 === true);
 	// Cohérence UI : bandeau de page in-page (flag ff_page_bandeau). Source unique isBandeauActive,
 	// partagée avec le Header → jamais de titre double ni absent. OFF → rendu actuel strict.
-	// `bandeauCount` est déclaré plus bas, après `filteredSignaux` dont il dépend.
+	// `bandeauCount` est déclaré plus bas (increment c : global de vue `data.signaux.length`).
 	const bandeau = $derived(isBandeauActive(data.featureFlags, $page.url.pathname));
 	// Cohérence UI b/c/d (flag ff_ui_coherence) : class-swap des boutons inline → primitive .ws-btn.
 	// OFF ⇒ rendu actuel strict (mêmes handlers/enfants, seule la chaîne de class bascule).
@@ -222,11 +222,15 @@
 		return out;
 	});
 
-	// Compteur du bandeau (déclaré ici car il dépend de `filteredSignaux` ci-dessus).
+	// Compteur du bandeau. Cohérence UI increment c : la pastille = agrégat GLOBAL de la vue
+	// (`data.signaux.length`, toutes les fiches chargées de la vue courante active/archivées),
+	// jamais le compte FILTRÉ client (`filteredSignaux.length` réagissait aux onglets/recherche).
+	// Aligne signaux sur les pages sœurs (contacts/pipeline/veille = `data.X.length`) et sur la
+	// norme « pastille bandeau = global » (inventory-c #3). Rendu seulement sous ff_page_bandeau.
 	const bandeauCount = $derived(
-		filteredSignaux.length === 0
+		data.signaux.length === 0
 			? 'Aucun signal'
-			: `${filteredSignaux.length} ${filteredSignaux.length > 1 ? 'signaux' : 'signal'}`,
+			: `${data.signaux.length} ${data.signaux.length > 1 ? 'signaux' : 'signal'}`,
 	);
 
 	// V5 (file courte) : sur l'onglet « Nouveau » sans filtre, la page ouvre sur la tête de file

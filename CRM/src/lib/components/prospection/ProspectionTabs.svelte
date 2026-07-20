@@ -210,6 +210,22 @@
 		color: var(--color-border);
 	}
 
+	/* Cohérence UI (increment c, flag ff_ui_coherence) : aligner ce fork sur la primitive
+	   Tabs.svelte — rayon tokenisé (999px → --radius-full, rendu identique) et count actif à
+	   --color-primary (au lieu de --color-primary-dark, cf. Tabs.svelte:182). Override co-localisé :
+	   OFF ⇒ .coherence-ui absent ⇒ inerte. Spec : docs/COHERENCE-UI-BANDEAU.md § increment c
+	   (inventory-c #4/#5). Rayon 999px et --radius-full sont visuellement identiques (source-unité).
+	   `:not(.tab--empty)` : un onglet actif ET vide (count 0) porte les 2 classes ; sans l'exclusion,
+	   l'override (0-3-0) surclasserait `.tab--empty .tab-count{color:border}` (0-2-0) et peindrait le
+	   « 0 » en primary au lieu du gris muted OFF (le fond reste transparent). On préserve donc la
+	   précédence OFF « vide = fané » (base `.tab--active` reste inoffensive : égalité 0-2-0 avec empty). */
+	:global(.coherence-ui) .tab-count {
+		border-radius: var(--radius-full);
+	}
+	:global(.coherence-ui) .tab--active:not(.tab--empty) .tab-count {
+		color: var(--color-primary);
+	}
+
 	.tabs-mobile { display: none; }
 
 	.visually-hidden {
