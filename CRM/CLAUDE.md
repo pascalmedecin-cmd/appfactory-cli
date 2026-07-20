@@ -135,7 +135,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : chantier Atelier 209 à **3/7 runs en prod**, reste 4 runs + améliorations CRM en **5 phases** (tout à livrer, sans priorisation) : (1) figer la base visuelle, (2) timeline, (3) LED autonome (Run 7), (4) pipeline de contact (Runs 4/6/5), (5) coiffer. Phase 1 avance : **lots 2B + 2C livrés** (`ff_ui_coherence` OFF ; 2C = increment **c** compteurs) ; reste Phase 1 = reliquats esthétiques b (mockup), CTAs prospection (passe dédiée), increment **d** (grille 8px), retouches accueil + bandeau. Résumé exécutif validé Pascal 2026-07-20 ; micro validé AVANT Pascal (→ [[feedback_qa_micro_mon_ressort_gate_pas_excuse]]).
+**Prochaine attaque** : **increment d1 (grille)** - cartographié + planifié 20/07, `--content-max=1440` confirmé Pascal, plan prêt (`docs/ATELIER-209-D1-PLAN.md`) : gouttière unique 32px + largeur ancrée à gauche sur les 10 pages, derrière `ff_ui_coherence` OFF, QA avant/après par page + captures (critère dur « attention aux espaces »). Dernier axe structurel pour figer la base visuelle (Phase 1). Contexte : Atelier 209 à **3/7 runs en prod**, 5 phases (figer base, timeline, LED Run 7, pipeline contact, coiffer) ; Phase 1 = lots 2B+2C livrés (`ff_ui_coherence` OFF), reste d1 + reliquats/CTAs (mockup/passe dédiée) + accueil/bandeau. → [[feedback_qa_micro_mon_ressort_gate_pas_excuse]].
 
 ### Directive permanente (Pascal 2026-07-15) : zéro régression + miroir exact + QA avant/après
 
