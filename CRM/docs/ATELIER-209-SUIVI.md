@@ -31,7 +31,7 @@ base : ni fork, ni deuxième application. Livraison par **runs** pilotés par `/
 | 1 | Atelier 209 existe (nom, connexion refaite, droits admin réparés) | **DÉPLOYÉ prod le 2026-07-15** (identité + rôles/RLS + connexion 4 adresses). Seul le renommage d'URL `atelier209.vercel.app` est **différé** (config domaine Vercel à faire proprement) - app à `filmpro-portail.vercel.app` | Portail · Connexion **(validés)** |
 | 2 | Les deux marques cloisonnées (sélecteur, menu teinté, étanchéité en base) + **golden CRM revu (couleurs + Inter partout, pas de refonte) + chrome (sidemenu/header/footer) décliné par marque LED/FilmPro pour distinguer** (note Pascal 15/07) | **DÉPLOYÉ prod le 2026-07-15** (migration marque appliquée + vérifiée, **non-régression prouvée**, smoke prod vert ; logo LED corrigé HD). Live `filmpro-portail.vercel.app`. LED reste vide jusqu'au Run 3. | Sélecteur · Menu teinté · Golden CRM **(validés)** |
 | 3 | Les prospects LED entrent (import de liste, sources par marque, source unique secteurs) | **DÉPLOYÉ prod le 2026-07-16** (D4 appliquée, merge `4e3f149`, smoke vert). Reste : sign-off visuel Pascal sur la prod. | Import **(maquette validée ; sign-off prod à faire)** |
-| 4 | On trouve le décideur (connecteur Hunter) | Bloqué par V6 | Enrichissement |
+| 4 | On trouve le décideur (enrichissement **Dropcontact**, Hunter écarté 20/07) | Chez Pascal : décider l'abo | Enrichissement |
 | 5 | On envoie et on mesure (Pingen, relance, provenance, rendement) | Bloqué par V7 | Envoi postal · Provenance |
 | 6 | L'email personnalisé (moteur, plafond, expéditeurs de marque) | À venir | Email + plafond |
 | 7 | La veille LED Studio (produit + technique) | À venir (gate : cadrage en session) | Veille LED |
@@ -52,7 +52,7 @@ locale exclusive).
 | 3 | Base de prod vs migrations | **Conforme** (schéma en phase ; ledger seul obsolète) | Feu vert sécurité pour le run 1, **sous 5 conditions** |
 | 4 | Base jetable en local | **Fonctionne** (48/48 migrations rejouées, ports 127.0.0.1) | QA 360 possible ; **dette : seed absent** |
 | 5 | Domaine « Atelier 209 » | `atelier209.ch` libre, mais **pas d'achat** (Pascal 14/07) | Adresse = **renommage de l'URL Vercel** |
-| 6 | Couverture Hunter | En attente (compte Pascal) | Forme du run 4 |
+| 6 | Couverture Hunter → **RÉSOLU 20/07** | Testé : Hunter faible sur PME romandes → **Dropcontact retenu** | Run 4 = enrichir via Dropcontact |
 | 7 | Format et coût Pingen | En attente (compte Pascal) | Feu vert run 5 |
 
 ## V1 - Coût réel de la veille FilmPro
@@ -132,7 +132,7 @@ Une **seule** variable de configuration ne peut pas préserver les deux : si ell
 
 Ces deux vérifications ne bloquent **que** les runs 4 et 5. Les runs 1, 2 et 3 démarrent sans elles.
 
-- **V6 - Hunter (bloque run 4)** : Pascal crée le **compte gratuit** (25 recherches/mois, 0 CHF, hunter.io/pricing). Claude testera la couverture sur 20 entreprises romandes réelles. Résultat -> le run 4 livre un bouton « enrichir » (couverture > ~4/10) ou une **saisie assistée** (couverture faible).
+- **V6 - Enrichissement décideur : RÉSOLU 2026-07-20 (Hunter écarté → Dropcontact).** Test réel sur 10 cibles romandes : Hunter faible sur PME < 50 pers. (rend des `info@`) ; **Dropcontact** retenu (6/10 emails nominatifs vérifiés propres, 0 `info@`, détection de changement de poste, RGPD-native/caution CNIL). Run 4 = bouton « enrichir » via Dropcontact ; repli micro-PME sans site = Zefix + téléphone. Geste Pascal = décider l'abo Starter 29 €/mois (500 crédits) quand le volume le justifie (compte gratuit 50 crédits déjà testé). → CLAUDE.md § Chez Pascal + [[project_veille_led_cadrage_test_2026-07-20]].
 - **V7 - Pingen (bloque run 5)** : Pascal crée le compte (sans abonnement, ~1,58 CHF/lettre sous 500/mois, pingen.com/en/prices). Claude enverra une vraie lettre à l'adresse de Pascal -> valide format, coût réel, qualité, délai.
 
 ---
@@ -321,7 +321,7 @@ au Run 2 (reco oui) ; Q3 sélecteur par-appareil ou cross-appareil (reco par-app
 # Gestes Pascal en attente
 
 - ~~Réserver le domaine `atelier209.ch`~~ - **DÉCIDÉ : pas d'achat de domaine** (Pascal 2026-07-14). L'adresse = renommage de l'URL Vercel (`atelier209.vercel.app`, différé, cf. Run 1). `atelier209.ch` reste libre si Pascal change d'avis.
-- [ ] **Créer le compte Hunter gratuit** (25 recherches/mois, 0 CHF). Débloque V6 -> run 4.
+- [x] ~~Créer le compte Hunter~~ - **abandonné 2026-07-20** : Hunter écarté après test (faible sur PME romandes). Enrichissement = **Dropcontact** (compte gratuit déjà testé). Geste restant = décider l'abo Dropcontact quand le volume le justifie. → CLAUDE.md § Chez Pascal.
 - [ ] **Créer le compte Pingen** (sans abonnement, ~1,58 CHF/lettre). Débloque V7 -> run 5.
 
 ---
@@ -630,7 +630,7 @@ Sources : invidis, LEDinside, AV Interactive, Graphiline ; salons EuroShop, FESP
 Réutilise le **panel benchmark UX/UI (28 sites)** du silo ledstudio (`memory/benchmark-ux.md`) comme radar concurrentiel produits/offres/tunnels + **ratisser plus large** (studios internationaux via invidis/salons, concurrents romands, fabricants asiatiques 6-12 mois d'avance). Concurrents de proximité explicités par Pascal : **idneon.ch, vimineon.ch, adp-enseignes.com**. Étalons : logoenseigne.fr, sygns.com, digilor.fr.
 
 ## Destinataires (validé) - dynamiques par domaine
-Brief FilmPro → users CRM `@filmpro.ch` ; brief LED → users CRM `@ledstudio.ch` + `@lamaison…`. **Aucun user LED enregistré aujourd'hui** : mécanisme préparé, envoi dès qu'un compte au bon domaine existe. **[EN ATTENTE Pascal]** domaine exact « @lamaison… ».
+Brief FilmPro → users CRM `@filmpro.ch` ; brief LED → users CRM `@ledstudio.ch` + `@lamaisoncreativedirection.ch` (domaine **connu**, = domaine de login des rôles, cf. §148-152). **Aucun user `@ledstudio.ch` enregistré aujourd'hui** : mécanisme prêt, envoi dès qu'un compte au bon domaine existe. Seul point ouvert = enregistrer les users LED.
 
 ## Décision Zefix (validé) - correction d'une généralisation abusive
 « Radar SIMAP/Zefix reste FilmPro-only » était faux pour Zefix. **SIMAP reste FilmPro** (appels d'offres construction). **Zefix devient marque-aware** (créations d'entreprise = neutre → nouveaux commerces = prospects enseigne LED, filtrés par mots-clés secteur LED). Petit lot distinct du brief éditorial (`SIGNAUX_ZEFIX_ENABLED` + mots-clés LED + `signaux_affaires.marque`).
