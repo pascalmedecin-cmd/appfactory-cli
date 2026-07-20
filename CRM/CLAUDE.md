@@ -182,7 +182,7 @@ Ordre par dépendances, pas par urgence (on a le temps → tout est à livrer). 
 
 ### Gestes Pascal transverses (hors phases, quand tu veux)
 
-- [ ] **[EXÉCUTABLE]** Pousser le commit d1 `a5d5e2b` (local sur `main`, **non poussé** — session autonome, règle « review humaine avant push main » respectée). Auto-déploie la prod mais **zéro effet visible** (`ff_ui_coherence` OFF pour tous, byte-identique prouvé). `git push origin main` quand tu valides.
+- [ ] **[EXÉCUTABLE]** Pousser le commit d1 `6a19adb` (local sur `main`, **non poussé** — session autonome, règle « review humaine avant push main » respectée). Auto-déploie la prod mais **zéro effet visible** (`ff_ui_coherence` OFF pour tous, byte-identique prouvé). `git push origin main` quand tu valides.
 - [ ] **[BLOQUÉ - toi : arbitrer quoi condenser]** Condensation dédiée `CRM/CLAUDE.md` (24007 chars > 20K soft) : le surplus est le roadmap 5 phases + watch list (contexte de décision frais), non charcuté autonomement. Décider avec moi quoi archiver.
 
 - [ ] **[EXÉCUTABLE]** URL Atelier 209 : configurer `atelier209.vercel.app` comme domaine de prod **public** (réglages Vercel), vérifier 200 public, PUIS activer le redirect 308 de `filmpro-portail`. Renommer ne suffit pas (SSO). → [[project_atelier_209_run1_deploiement_2026-07-15]].
@@ -195,7 +195,7 @@ Décisions tranchées (détail en mémoire) : domaine `atelier209.ch` = pas d'ac
 
 ### Livré cette session
 
-- [x] ~~**Cohérence UI increment d1 = gouttière unique 32px + borne 1440 ancrée à gauche**~~ - 2026-07-20 (ultracode, autonome). `a5d5e2b` socle centralisateur, 24 fichiers, `ff_ui_coherence` OFF ; QA DOM 1440/2000/1000 + adversariale 5 lentilles (1 medium Tabs ≤1024 corrigé), svelte-check 0/0, Vitest 2863. → [[project_coherence_ui_d1_grille_2026-07-20]].
+- [x] ~~**Cohérence UI increment d1 = gouttière unique 32px + borne 1440 ancrée à gauche**~~ - 2026-07-20 (ultracode, autonome). `6a19adb` socle centralisateur, 24 fichiers, `ff_ui_coherence` OFF ; QA DOM 1440/2000/1000 + adversariale 5 lentilles (1 medium Tabs ≤1024 corrigé), svelte-check 0/0, Vitest 2863. → [[project_coherence_ui_d1_grille_2026-07-20]].
 - [x] ~~**Cohérence UI lot 2C = increment c compteurs**~~ - 2026-07-20. `78614e9` OFF : ProspectionTabs→primitive Tabs + pastille bandeau signaux→global de vue, veille exemptée rôle C. → [[project_coherence_ui_lot2c_2026-07-20]].
 - [x] ~~**Cohérence UI lot 2B (fin increment b)**~~ - 2026-07-20. `bc74254` OFF (18 fichiers) : champs 40px, vides→EmptyState, kickers, recherche Aide→SearchInput, fix a11y clear-focus (e2e). → [[project_coherence_ui_lot2b_2026-07-20]].
 - [x] ~~**Cockpit renommé « Atelier 209 » + synchro tâches**~~ - 2026-07-20. Label FilmPro→Atelier 209 (slug/dépôt intacts) ; Run 7 veille LED ; CLAUDE.md restructuré en 5 phases. → [[reference_cockpit_pivot_orphelins_manuels_2026-07-20]].
