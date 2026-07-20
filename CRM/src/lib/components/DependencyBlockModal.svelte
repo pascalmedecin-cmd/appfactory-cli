@@ -71,7 +71,7 @@
 				{#if contacts.length > 0}
 					<section aria-label="Contacts rattachés">
 						<div class="flex items-center justify-between mb-2">
-							<h4 class="text-xs font-semibold uppercase tracking-wide text-text-muted">
+							<h4 class="text-xs font-semibold uppercase tracking-wide text-text-muted eyebrow">
 								Contacts ({contacts.length})
 							</h4>
 							<a href="/crm/contacts" class="text-primary text-xs font-medium hover:underline">Gérer</a>
@@ -90,7 +90,7 @@
 				{#if opportunites.length > 0}
 					<section aria-label="Opportunités rattachées">
 						<div class="flex items-center justify-between mb-2">
-							<h4 class="text-xs font-semibold uppercase tracking-wide text-text-muted">
+							<h4 class="text-xs font-semibold uppercase tracking-wide text-text-muted eyebrow">
 								Opportunités ({opportunites.length})
 							</h4>
 							<a href="/crm/pipeline" class="text-primary text-xs font-medium hover:underline">Gérer</a>

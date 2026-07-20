@@ -194,7 +194,7 @@
 
 <div class="space-y-3">
 	<div class="flex items-center justify-between">
-		<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider">
+		<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider eyebrow">
 			Photos chantier{photos.length > 0 ? ` (${photos.length}/${MAX_PHOTOS})` : ''}
 		</h4>
 	</div>

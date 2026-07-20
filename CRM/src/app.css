@@ -214,6 +214,14 @@
 	text-transform: uppercase;
 	color: var(--color-text-muted);
 }
+/* Cohérence UI (b, flag ff_ui_coherence, INC-4) : rayon des modales centrées desktop unifié à radius-2xl (16px),
+   aligné sur ConfirmModal/DependencyBlockModal/EnrichBatchModal. Classe append (jamais de règle hors flag) ⇒ OFF
+   inchangé. Desktop only : la variante bottom-sheet mobile garde son rounded-t-xl (bas à ras de l'écran). */
+@media (min-width: 768px) {
+	.coherence-ui .crm-modal-shell {
+		border-radius: var(--radius-2xl);
+	}
+}
 .mag-display {
 	font-weight: 800;
 	letter-spacing: -0.03em;

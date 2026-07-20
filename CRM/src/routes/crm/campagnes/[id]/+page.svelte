@@ -1024,6 +1024,11 @@ Merci !`
 		letter-spacing: -0.02em;
 		color: var(--color-text);
 	}
+	/* Cohérence UI (b, INC-9, flag ff_ui_coherence) : titre de page workspace unifié à font-weight 700
+	   (800 → 700, aligné sur aide-title et reporting h2). Co-localisé + gaté ⇒ OFF strictement inchangé. */
+	:global(.coherence-ui) .cp-title {
+		font-weight: 700;
+	}
 	.cp-desc {
 		margin: 4px 0 0;
 		font-size: 13.5px;
@@ -1181,6 +1186,11 @@ Merci !`
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
+	}
+	/* Cohérence UI (b, INC-6, flag ff_ui_coherence) : shadow-xs → shadow-card, aligné sur les autres panneaux
+	   de contenu du CRM. Co-localisé + gaté ⇒ OFF strictement inchangé. */
+	:global(.coherence-ui) .card {
+		box-shadow: var(--shadow-card);
 	}
 	.card-head {
 		display: flex;

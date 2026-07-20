@@ -179,7 +179,7 @@
 			{#if premium}
 				<!-- Vague 3.2 : étiquettes campagne (assigner/retirer à tout moment, même combo que l'import). -->
 				<section aria-labelledby="fiche-campagnes-h">
-					<h4 id="fiche-campagnes-h" class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Campagnes</h4>
+					<h4 id="fiche-campagnes-h" class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 eyebrow">Campagnes</h4>
 					<CampagneCombo
 						{campagnes}
 						bind:selected={leadCampagneIds}
@@ -215,7 +215,7 @@
 
 			<!-- Coordonnées -->
 			<div>
-				<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Coordonnées</h4>
+				<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 eyebrow">Coordonnées</h4>
 				{#if premium}
 					<div class="crm-facts">
 						<div class="crm-fact crm-fact--wide">
@@ -285,7 +285,7 @@
 			<!-- Détails métier -->
 			{#if lead.secteur_detecte || lead.montant || lead.description}
 				<div>
-					<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Détails</h4>
+					<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3 eyebrow">Détails</h4>
 					<div class="space-y-3 text-sm">
 						{#if lead.secteur_detecte}
 							<div>
@@ -355,7 +355,7 @@
 			{:else if lead.statut === 'ecarte'}
 				<!-- Vue « Écartés » : réactiver remet le prospect dans la file de tri (statut vide). -->
 				<div class="pt-4 border-t border-border space-y-3">
-					<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider">Actions</h4>
+					<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider eyebrow">Actions</h4>
 					<form method="POST" action="?/updateStatut" use:enhance={enhanceStatut('vide', 'Prospect réactivé')}>
 						<input type="hidden" name="id" value={lead.id} />
 						<input type="hidden" name="statut" value="vide" />
@@ -368,7 +368,7 @@
 			{:else}
 				<!-- File de tri (statut vide) ou déjà au pipeline (a_contacter). -->
 				<div class="pt-4 border-t border-border space-y-3">
-					<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider">Actions</h4>
+					<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider eyebrow">Actions</h4>
 					<div class="flex flex-wrap gap-3">
 						{#if lead.statut !== 'a_contacter'}
 							<form method="POST" action="?/markForContact" use:enhance={() => {

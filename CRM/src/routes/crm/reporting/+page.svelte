@@ -215,6 +215,11 @@
 		border-radius: var(--radius-xl);
 		padding: 24px;
 	}
+	/* Cohérence UI (b, INC-6, flag ff_ui_coherence) : le panneau reporting était le seul panneau de contenu
+	   sans ombre → shadow-card, aligné sur les autres surfaces. Co-localisé + gaté ⇒ OFF strictement inchangé. */
+	:global(.coherence-ui) .panel {
+		box-shadow: var(--shadow-card);
+	}
 	.panel-header {
 		display: flex;
 		align-items: center;

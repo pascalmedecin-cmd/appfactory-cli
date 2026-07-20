@@ -125,7 +125,7 @@
 
 	<!-- Résumé -->
 	<section class="mb-6">
-		<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Résumé</h2>
+		<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 eyebrow">Résumé</h2>
 		<p class="text-base text-text-body leading-relaxed">{data.item.summary}</p>
 	</section>
 
@@ -140,7 +140,7 @@
 	<!-- Deep dive optionnel -->
 	{#if data.item.deep_dive}
 		<section class="mb-6">
-			<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">
+			<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 eyebrow">
 				Analyse approfondie
 			</h2>
 			<p class="text-sm text-text-body leading-relaxed">{data.item.deep_dive}</p>
@@ -149,7 +149,7 @@
 
 	<!-- Source -->
 	<section class="mb-6 p-4 rounded-lg border border-border bg-surface-alt/50">
-		<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">Source</h2>
+		<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 eyebrow">Source</h2>
 		<div class="flex items-center justify-between gap-3 flex-wrap">
 			<div class="flex flex-col gap-0.5">
 				<span class="text-sm font-semibold text-text">{data.item.source.name}</span>
@@ -172,7 +172,7 @@
 	<!-- Search terms -->
 	{#if data.item.search_terms && data.item.search_terms.length > 0}
 		<section class="mb-6">
-			<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2">
+			<h2 class="text-xs font-semibold uppercase tracking-wider text-text-muted mb-2 eyebrow">
 				Prospecter depuis ce signal
 			</h2>
 			<div class="flex flex-wrap gap-2">

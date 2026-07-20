@@ -147,7 +147,7 @@
 <div class="rounded-xl border border-border bg-white p-4 space-y-4">
 	<div class="flex items-start justify-between gap-3">
 		<div>
-			<p class="text-xs uppercase tracking-wide text-text-muted font-semibold">Pipeline</p>
+			<p class="text-xs uppercase tracking-wide text-text-muted font-semibold eyebrow">Pipeline</p>
 			<p class="text-sm font-medium text-text mt-0.5 truncate" title={opp.titre}>{opp.titre}</p>
 		</div>
 		<a
@@ -230,7 +230,7 @@
 
 	{#if opp.date_relance_prevue || opp.notes_libres}
 		<div class="rounded-lg bg-surface px-3 py-2.5">
-			<p class="text-xs uppercase tracking-wide text-text-muted font-semibold">Prochaine action</p>
+			<p class="text-xs uppercase tracking-wide text-text-muted font-semibold eyebrow">Prochaine action</p>
 			{#if opp.date_relance_prevue}
 				<p class="text-sm font-medium text-text mt-1">{formatDate(opp.date_relance_prevue)}</p>
 			{/if}

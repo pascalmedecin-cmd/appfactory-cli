@@ -345,6 +345,11 @@
 		color: var(--color-text);
 		margin: 0 0 8px;
 	}
+	/* Cohérence UI (b, INC-9, flag ff_ui_coherence) : titre de page workspace unifié à font-weight 700
+	   (600 → 700, aligné sur cp-title et reporting h2). Co-localisé + gaté ⇒ OFF strictement inchangé. */
+	:global(.coherence-ui) .aide-title {
+		font-weight: 700;
+	}
 	.aide-tagline {
 		font-size: 14px;
 		line-height: 1.6;
@@ -614,6 +619,11 @@
 		color: var(--color-text);
 		margin: 3px 0 6px;
 		text-wrap: balance;
+	}
+	/* Cohérence UI (b, INC-9, flag ff_ui_coherence) : titre de section unifié à font-weight 700
+	   (600 → 700, aligné sur reporting h2 18px/700). Co-localisé + gaté ⇒ OFF strictement inchangé. */
+	:global(.coherence-ui) .aide-section-title {
+		font-weight: 700;
 	}
 	.aide-section-lead {
 		font-size: 14px;

@@ -291,7 +291,7 @@
 		<div
 			bind:this={dialogEl}
 			tabindex="-1"
-			class="bg-white rounded-t-xl md:rounded-xl shadow-2xl w-full max-w-2xl pointer-events-auto flex flex-col max-h-[92vh] md:max-h-[88vh] overflow-hidden focus:outline-none"
+			class="bg-white rounded-t-xl md:rounded-xl shadow-2xl w-full max-w-2xl pointer-events-auto flex flex-col max-h-[92vh] md:max-h-[88vh] overflow-hidden focus:outline-none crm-modal-shell"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby={titleId}

@@ -218,7 +218,7 @@
 
 <div class="space-y-3">
 	<div class="flex items-center justify-between">
-		<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider">Visites terrain</h4>
+		<h4 class="text-xs font-semibold text-text-muted uppercase tracking-wider eyebrow">Visites terrain</h4>
 		<span class="text-xs text-text-muted">{visits.length} visite{visits.length > 1 ? 's' : ''}</span>
 	</div>
 

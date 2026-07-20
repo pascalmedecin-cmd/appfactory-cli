@@ -243,7 +243,7 @@
 					</div>
 
 					<div class="space-y-3">
-						<p class="text-xs font-semibold text-text-muted uppercase tracking-wide">Sources</p>
+						<p class="text-xs font-semibold text-text-muted uppercase tracking-wide eyebrow">Sources</p>
 						<label class="flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/30 cursor-pointer transition-colors">
 							<input type="checkbox" bind:checked={useSearchCh} class="accent-primary" />
 							<Icon name="phone_forwarded" class="text-text-muted" />

@@ -621,7 +621,7 @@
 
 			<!-- Section : Acteurs -->
 			<div class="space-y-3">
-				<h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Acteurs</h3>
+				<h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted eyebrow">Acteurs</h3>
 				<div class="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<span class="text-text-muted">Maître d'ouvrage</span>
@@ -648,7 +648,7 @@
 
 			<!-- Section : Localisation -->
 			<div class="space-y-3">
-				<h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Localisation</h3>
+				<h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted eyebrow">Localisation</h3>
 				<div class="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<span class="text-text-muted">Canton</span>
@@ -663,7 +663,7 @@
 
 			<!-- Section : Source & Dates -->
 			<div class="space-y-3">
-				<h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Source & dates</h3>
+				<h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted eyebrow">Source & dates</h3>
 				<div class="grid grid-cols-2 gap-4 text-sm">
 					<div>
 						<span class="text-text-muted">Source</span>
@@ -694,7 +694,7 @@
 
 			{#if selectedSignal.notes_libres}
 				<div class="space-y-3">
-					<h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted">Scoring</h3>
+					<h3 class="text-xs font-semibold uppercase tracking-wider text-text-muted eyebrow">Scoring</h3>
 					<div class="flex flex-wrap gap-2">
 						{#each selectedSignal.notes_libres.split(', ') as critere}
 							<span class="px-2 py-1 text-xs rounded-lg bg-surface-alt/60 text-text">{critere}</span>

@@ -1304,6 +1304,12 @@
 		box-shadow: var(--shadow-2xl);
 		overflow: hidden;
 	}
+	/* Cohérence UI (b, INC-4, flag ff_ui_coherence) : rayon des modales centrées unifié à radius-2xl (16px),
+	   aligné sur ConfirmModal/ModalForm ON. Modale centrée (pas de bottom-sheet) ⇒ pas de garde @media.
+	   Co-localisé + gaté ⇒ OFF strictement inchangé. */
+	:global(.coherence-ui) .prev {
+		border-radius: var(--radius-2xl);
+	}
 	.prev-h {
 		display: flex;
 		align-items: center;
