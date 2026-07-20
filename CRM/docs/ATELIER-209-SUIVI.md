@@ -586,3 +586,54 @@ FilmPro « façade ou vitrage » / LED « enseigne ou stand » via la vraie cha�
 0 littéral métier ancien résiduel, tous les sites de montage threadés. Smoke prod vert (deploy Ready, `/login` 200).
 
 **Parité UX/UI LED↔FilmPro = CLOSE hors veille.** Reste **#8** seul : hero Signaux « vitrage » = **Run 7** (veille LED).
+
+---
+
+# Run 7 - Veille LED Studio : CADRAGE VALIDÉ (2026-07-20)
+
+Gate S1 validé par Pascal (« reste validé »). Artefact de relecture : `~/Desktop/cadrage-veille-led-studio.html` (v3, fond noir). Recherche sourcée (web + site ledstudio.ch live + silo `~/Claude/ledstudio.ch` + brochure V3). **Le « Run 7 » = le brief éditorial hebdo (moteur B `intelligence_reports`), PAS le radar signaux d'affaires (moteur A SIMAP/Zefix).**
+
+**Cadrage v1 assumé** (Pascal : « on verra à l'usage ce qui est produit et on recadre si besoin »).
+
+## Principe éditorial (le coeur, validé)
+
+La veille est **éducative et éclairante, PAS une revue de presse**. Elle explique, met en perspective, et fait ressortir les **signaux forts** (opportunité claire, à actionner maintenant) et **signaux faibles** (tendance naissante, à garder à l'oeil). Chaque item répond à « qu'est-ce que ça veut dire, et qu'est-ce qu'on en fait ? », au service des objectifs business. **À inscrire comme critère éditorial dans le prompt de génération LED** (`intelligence/prompt.ts`, `BRAND_PROMPT_CONFIG.led`).
+
+## Modèle produit (validé)
+
+- **Brief hebdomadaire dédié LED**, miroir de FilmPro, monde propre. Mix **~70% business (100% romand) / 30% techno & produits (mondial)**, souple selon l'actu (pas de quota dur).
+- **Cadence** : 1/semaine. **Budget** : ~+12-14 CHF/mois (aligné V1). **Zéro nouveau script IA** (moteur réutilisé, rendu marque-paramétrique).
+
+### Volet BUSINESS (70%, romand) - thèmes
+Salons/foires + exposants · ouvertures commerces/retail · ouvertures hôtellerie-resto · projets immobiliers commerciaux · événements/inaugurations/congrès · **architectes d'intérieur** (prescripteurs de néons sur leurs projets - activité **secondaire à surveiller**, hors coeur de cible, ajout Pascal 20/07).
+Sources clés : **répertoires d'exposants publics** (Palexpo/Automnales, Beaulieu/Habitat-Jardin) + **SHAB/Zefix** (amont) = gisement direct ; calendriers venues (Palexpo, Beaulieu, Forum Fribourg, CERM Martigny, Espace Gruyère ; Polyexpo menacé) ; presse ouverte (RTS, 20min, FashionNetwork, Swiss Retail) + payante titres/chapôs (Le Temps, 24h, TdG, Nouvelliste, ArcInfo, AGEFI, Bilan) ; hôtellerie (GastroSuisse, HTR) ; chantiers (Batimag, Chantiers Magazine, JIM, Implenia).
+
+### Volet TECHNO & PRODUITS (30%, mondial) - 2 AXES (validé)
+Élargi (demande Pascal) : pas que les écrans LED, aussi **salon/stand/promotion visuelle**. Ancré sur le **site ledstudio.ch live** (plus à jour que la brochure). Deux axes explicites, sans rigidité, orientés business ; le tri signal fort/faible s'applique aux deux.
+
+**Axe 1 - Veille PRODUITS (l'offre : quoi vendre)** - 3 statuts :
+- *Existant (site)* : néons (+ configurateur), enseignes LED, cadres+toiles, écrans LED & affichage digital (mur 1x1, totem, chevalet, cube, sac à dos), stands, comptoirs, photocall, tentes + services (conception/PAO-3D/installation-stockage) + secteurs (resto/événementiel/retail/entreprise).
+- *En discussion / à livrer* : **planchers LED / dance floors** (en brochure, absents du site = écart le plus net), lettres boîtier/channel letters, système **cadre alu réutilisable** (beMatrix/Octanorm - ils ont déjà l'alu-lit), configurateur néon interactif.
+- *Non existant, à surveiller* : **LED transparente**, all-in-one dvLED, fan holographique, LED créative/courbe, **capture NFC/RFID sur stand**, projection interactive/3D.
+- Table des ajouts priorisés **validée par Pascal** (planchers en tête, cadre alu, transparente, COB, NFC/RFID, all-in-one/holo/créative, éco, MicroLED/MIP=futur, MiniLED=hors scope).
+
+**Axe 2 - Veille TECHNO & outils (avec quoi / comment)** :
+- Packaging/densité : COB (mainstream), MIP (émergent), GOB (protection), SMD (base), MicroLED émissif (futur), MiniLED (hors scope=TV).
+- Énergie & durabilité : common cathode (-30/-50%), carbone (**myclimate**), réutilisabilité = **passé de marketing à réglementaire** (Messe Frankfurt reporting déchets janv. 2026 ; IFEMA 100% recyclable 2027) = signal fort ESG.
+- Impression/matériaux : UV, latex bas-COV, dye-sub textile.
+- Pilotage & IA : Novastar (standard contrôle), Colorlight ; IA contenu/pilotage signalétique (dominant salons 2026).
+- Interaction/expérientiel (outils) : projection mapping, AR/VR, tactile. Filtrer hype PME (AR hybride, avatars IA, Glambot).
+
+Sources : invidis, LEDinside, AV Interactive, Graphiline ; salons EuroShop, FESPA/European Sign Expo, C!Print, Heavent + ISE/ISLE/InfoComm/DSS.
+
+### Volet CONCURRENTIEL (dans les 30%)
+Réutilise le **panel benchmark UX/UI (28 sites)** du silo ledstudio (`memory/benchmark-ux.md`) comme radar concurrentiel produits/offres/tunnels + **ratisser plus large** (studios internationaux via invidis/salons, concurrents romands, fabricants asiatiques 6-12 mois d'avance). Concurrents de proximité explicités par Pascal : **idneon.ch, vimineon.ch, adp-enseignes.com**. Étalons : logoenseigne.fr, sygns.com, digilor.fr.
+
+## Destinataires (validé) - dynamiques par domaine
+Brief FilmPro → users CRM `@filmpro.ch` ; brief LED → users CRM `@ledstudio.ch` + `@lamaison…`. **Aucun user LED enregistré aujourd'hui** : mécanisme préparé, envoi dès qu'un compte au bon domaine existe. **[EN ATTENTE Pascal]** domaine exact « @lamaison… ».
+
+## Décision Zefix (validé) - correction d'une généralisation abusive
+« Radar SIMAP/Zefix reste FilmPro-only » était faux pour Zefix. **SIMAP reste FilmPro** (appels d'offres construction). **Zefix devient marque-aware** (créations d'entreprise = neutre → nouveaux commerces = prospects enseigne LED, filtrés par mots-clés secteur LED). Petit lot distinct du brief éditorial (`SIGNAUX_ZEFIX_ENABLED` + mots-clés LED + `signaux_affaires.marque`).
+
+## Points d'extension technique (spec Phase 2, prêts, file:line)
+4 tables à rendre marque-aware (`veille_sources`, `veille_themes`, `signaux_mots_cles`, `intelligence_reports` : colonne `marque` + unicité composite, sinon la veille LED écrase FilmPro sur `onConflict: week_label`) ; loaders/repositories filtrés marque ; prompt `intelligence/prompt.ts` (100% FilmPro → `BRAND_PROMPT_CONFIG` par marque) ; `run-generation.ts` + `run-veille.ts --marque led` + 2e job (ou matrice) dans `.github/workflows/cron-veille.yml` ; UI `crm/veille/**` filtrée `locals.marque` ; renommer `impacts_filmpro`/`filmpro_relevance` en neutre + neutraliser enum `compliance_tag 'OK FilmPro'` (testé en dur dans `scoring.ts` `SIGNAL_VEILLE_SCORING`). FilmPro intact par `DEFAULT 'filmpro'` + fallback seed FilmPro. Estimation build : ~2-3 sessions + lot Zefix.
