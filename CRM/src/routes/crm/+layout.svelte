@@ -80,7 +80,11 @@
 		class="pt-(--header-height) min-h-screen bg-surface transition-all duration-200"
 		style="padding-left: {sidebarCollapsed ? 'var(--sidebar-collapsed)' : 'var(--sidebar-width)'}"
 	>
-		<div class="p-4 md:p-6">
+		<!-- Cohérence UI d1 : `crm-page-wrap` = socle centralisateur. Sous .coherence-ui, il porte la
+		     gouttière horizontale UNIQUE (--page-gutter 32/24/16) + la borne ancrée à gauche
+		     (--content-max 1440), et chaque brique remet sa gouttière inline à 0. OFF ⇒ classe inerte
+		     (aucune règle .coherence-ui), le socle reste p-4/md:p-6 strict. -->
+		<div class="p-4 md:p-6 crm-page-wrap">
 			{@render children()}
 		</div>
 	</main>

@@ -220,6 +220,15 @@
 	:global(.coherence-ui) .panel {
 		box-shadow: var(--shadow-card);
 	}
+	/* Cohérence UI d1 : la gouttière horizontale est portée par le socle (.crm-page-wrap) ; le hero et
+	   la zone de contenu remettent la leur à 0. padding-inline seul → vertical (32/24 hero, 32 content,
+	   + paliers 24/16) préservé. Co-localisé 0-3-0 > base + médias 0-1-0. OFF ⇒ inerte. */
+	:global(.coherence-ui) .hero {
+		padding-inline: 0;
+	}
+	:global(.coherence-ui) .content {
+		padding-inline: 0;
+	}
 	.panel-header {
 		display: flex;
 		align-items: center;

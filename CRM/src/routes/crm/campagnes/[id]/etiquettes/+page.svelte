@@ -593,6 +593,19 @@
 		position: relative;
 		padding: 8px 0 96px;
 	}
+	/* Cohérence UI d1 : gouttière portée par le socle (.crm-page-wrap) ; les briques de page remettent la
+	   leur à 0 (padding pour .head/.tools, marge pour .et-opt/.card ; .card porte les deux car @820 lui ajoute
+	   padding ET margin 16px). padding/margin-inline seul → vertical + FAB 96px (.etq) préservés ; .et-opt
+	   garde max-width:620px (bannière ancrée à gauche). Co-localisé 0-3-0 > base + @820 (0-2-0). OFF inerte. */
+	:global(.coherence-ui) .head,
+	:global(.coherence-ui) .tools,
+	:global(.coherence-ui) .card {
+		padding-inline: 0;
+	}
+	:global(.coherence-ui) .et-opt,
+	:global(.coherence-ui) .card {
+		margin-inline: 0;
+	}
 
 	/* ===== Zone 1 : identité de page ===== */
 	.head {

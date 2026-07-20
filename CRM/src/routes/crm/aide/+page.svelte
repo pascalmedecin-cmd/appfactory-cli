@@ -325,6 +325,14 @@
 		max-width: 1280px;
 		margin: 0 auto;
 	}
+	/* Cohérence UI d1 : la page Aide est centrée (max-width 1280 + margin auto). Sous coherence, la borne
+	   (1440 ancrée à gauche) vient du socle (.crm-page-wrap) → dé-centrage (margin-inline:0) + défère la borne
+	   (max-width:none). Pas de padding horizontal propre (rien à zéro). La colonne de lecture .aide-section-body
+	   (700) reste interne, inchangée. Co-localisé 0-3-0 > base. OFF ⇒ centré strict. */
+	:global(.coherence-ui) .aide {
+		margin-inline: 0;
+		max-width: none;
+	}
 
 	/* En-tête */
 	.aide-head {

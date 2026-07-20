@@ -82,6 +82,12 @@
 		padding-left: 0;
 		padding-right: 0;
 	}
+	/* Cohérence UI d1 : la gouttière horizontale est portée par le socle (.crm-page-wrap) ; le bandeau
+	   remet la sienne à 0 (vertical préservé). Co-localisé 0-3-0 > .pband base + média mobile (0-1-0)
+	   à toutes les tailles. OFF ⇒ .coherence-ui absent ⇒ padding 4px 32px 16px conservé. */
+	:global(.coherence-ui) .pband {
+		padding-inline: 0;
+	}
 	.pband__bar {
 		display: flex;
 		align-items: flex-end;

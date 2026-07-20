@@ -174,7 +174,7 @@
 
 <svelte:head><title>Thèmes veille · FilmPro</title></svelte:head>
 
-<div class="px-6 py-6 md:px-8 md:py-8 space-y-6">
+<div class="px-6 py-6 md:px-8 md:py-8 space-y-6 veille-themes-page">
 	<div>
 		<!-- Retour : même pattern breadcrumb que /crm/veille/item/[slug] (cohérence module veille). -->
 		<a
@@ -384,3 +384,12 @@
 	loading={deleteLoading}
 	onConfirm={confirmDelete}
 />
+
+<style>
+	/* Cohérence UI d1 : le wrapper de page (thèmes veille) porte sa gouttière via des utilities (px-6 md:px-8),
+	   non centré. Sous coherence, la gouttière vient du socle (.crm-page-wrap) → padding-inline remis à 0.
+	   CSS scopé NON-layered ⇒ bat les utilities Tailwind LAYERED. Vertical (py) préservé. OFF ⇒ inerte. */
+	:global(.coherence-ui) .veille-themes-page {
+		padding-inline: 0;
+	}
+</style>

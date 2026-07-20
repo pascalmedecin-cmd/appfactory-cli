@@ -714,6 +714,12 @@
 		padding: 24px 32px 32px; /* audit 360 V3b L-22 : sur la grille 8px (était 20/.../40) */
 		overflow-x: auto;
 	}
+	/* Cohérence UI d1 : gouttière portée par le socle (.crm-page-wrap) ; le kanban remet la sienne à 0.
+	   padding-inline seul → bottom 96px (FAB @≤768) + verticaux des paliers préservés ; overflow-x et
+	   .kanban--closed max-width:720 (colonne interne) inchangés. Co-localisé 0-3-0 > base + médias. OFF inerte. */
+	:global(.coherence-ui) .kanban-wrap {
+		padding-inline: 0;
+	}
 	.kanban {
 		display: grid;
 		gap: 16px;

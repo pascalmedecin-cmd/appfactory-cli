@@ -73,7 +73,7 @@
 	}
 </script>
 
-<article class="max-w-5xl mx-auto px-4 md:px-12 py-8 md:py-12">
+<article class="veille-item-wrap max-w-5xl mx-auto px-4 md:px-12 py-8 md:py-12">
 	<!-- Breadcrumb -->
 	<a href="/crm/veille" class="inline-flex items-center gap-1 text-sm text-primary hover:underline mb-4">
 		<Icon name="arrow_back" size={18} />
@@ -197,3 +197,15 @@
 		</section>
 	{/if}
 </article>
+
+<style>
+	/* Cohérence UI d1 : l'article de page (item veille) est centré (max-w-5xl mx-auto) et porte sa gouttière
+	   via des utilities (px-4 md:px-12). Sous coherence, borne (1440 ancrée à gauche) et gouttière viennent du
+	   socle → dé-centrage + défère borne + gouttière. CSS scopé NON-layered ⇒ bat les utilities Tailwind
+	   LAYERED. Vertical (py) préservé. OFF ⇒ centré strict. */
+	:global(.coherence-ui) .veille-item-wrap {
+		margin-inline: 0;
+		max-width: none;
+		padding-inline: 0;
+	}
+</style>

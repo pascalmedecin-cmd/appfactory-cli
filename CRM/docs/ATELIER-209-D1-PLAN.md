@@ -1,5 +1,11 @@
 # Increment d1 - plan d'implémentation (cartographié 2026-07-20, prêt à coder)
 
+> **STATUT : LIVRÉ 2026-07-20** (`ff_ui_coherence` OFF). Réalité vs ce plan : le socle étant global aux **18 routes /crm**,
+> la couverture réelle = **24 fichiers** (2 workflows de fan-out ont ajouté 6 `*Indicators` + la primitive `Tabs` + 6 sous-pages
+> aux 8 pages listées ici). QA DOM prouvée (`tests/_qa-coherence-d1.mjs`, 1440/2000/1000) + revue adversariale 5 lentilles
+> (1 medium Tabs ≤1024 corrigé en 0-4-0). Détail : `memory/project_coherence_ui_d1_grille_2026-07-20.md`. Le plan ci-dessous
+> reste la référence de la MÉCANIQUE (socle centralisateur, padding-inline seul, cascade non-layered/0-3-0).
+
 Cible validée (mockup `coherence-bcd-mockup.html` § d, « ok validé » 17/07) : sous `ff_ui_coherence` ON,
 CHAQUE page a **un retrait horizontal unique 32px** (24 @≤1024, 16 @≤768) + **largeur bornée ancrée à
 gauche** (`margin-inline:0`, jamais centrée). Veille passe de centrée à calée à gauche (peau magazine dessous

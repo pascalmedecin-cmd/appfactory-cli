@@ -844,6 +844,18 @@
 		flex: 1;
 		padding: 24px 32px 32px; /* audit 360 V3b L-22 : sur la grille 8px (était 20/.../40) */
 	}
+	/* Cohérence UI d1 : gouttière portée par le socle (.crm-page-wrap) ; les zones de contenu remettent la
+	   leur à 0. padding-inline seul → bottom 96px (FAB @≤768) + verticaux des paliers préservés. Le sélecteur
+	   mobile-cards (0-4-0 avec :global) bat la règle média 0-3-0. OFF ⇒ .coherence-ui absent ⇒ inerte. */
+	:global(.coherence-ui) .contacts-empty-wrap {
+		padding-inline: 0;
+	}
+	:global(.coherence-ui) .table-wrap {
+		padding-inline: 0;
+	}
+	:global(.coherence-ui) .contacts-shell[data-mobile-enabled='true'] .contacts-mobile-cards {
+		padding-inline: 0;
+	}
 
 	@media (max-width: 1024px) {
 		.table-wrap {

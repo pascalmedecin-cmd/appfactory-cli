@@ -127,6 +127,17 @@
 	.tabs-bar.compact {
 		padding: 0 24px;
 	}
+	/* Cohérence UI d1 (flag ff_ui_coherence) : la gouttière horizontale est portée UNE FOIS par le socle
+	   (.crm-page-wrap) ; la barre d'onglets (primitive partagée par contacts/entreprises/signaux/pipeline/
+	   reporting + aide + veille/editeur) remet la sienne à 0 sous coherence → les onglets s'alignent sur
+	   la gouttière unique. Sticky + border-bottom + vertical (0) préservés. OFF ⇒ padding 0 32px conservé.
+	   Spécificité 0-4-0 (:not(.compact) / .compact = exhaustif) : bat SANS dépendre de l'ordre source la
+	   règle responsive `.tabs-bar:not(.compact){padding:0 24px}` (@≤1024, même 0-3-0, source postérieure) —
+	   sinon 24px résiduel sur les Tabs non-compact en tablette ≤1024 (finding adversarial d1). */
+	:global(.coherence-ui) .tabs-bar:not(.compact),
+	:global(.coherence-ui) .tabs-bar.compact {
+		padding-inline: 0;
+	}
 	[role='tablist'] {
 		display: flex;
 		gap: 4px;

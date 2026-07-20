@@ -228,3 +228,14 @@
 		transform: none;
 	}
 }
+
+/* Cohérence UI (d1, flag ff_ui_coherence) : gouttière horizontale portée par le SOCLE (.crm-page-wrap),
+   les briques workspace remettent la leur à 0 (padding-inline seul → vertical + FAB 96px @≤768 préservés).
+   Spécificité 0-2-0 > base 0-1-0 (et médias 0-1-0) à toutes les tailles. OFF ⇒ .coherence-ui absent ⇒
+   .ws-content 32/24/16 + .ws-page-actions 12x/32-24 strictement conservés. Spec : docs/ATELIER-209-D1-PLAN.md. */
+.coherence-ui .ws-content {
+	padding-inline: 0;
+}
+.coherence-ui .ws-page-actions {
+	padding-inline: 0;
+}

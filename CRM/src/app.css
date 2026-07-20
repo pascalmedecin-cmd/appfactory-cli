@@ -236,6 +236,33 @@
 .coherence-ui .coh-title {
 	font-weight: 700;
 }
+/* Cohérence UI (d1, flag ff_ui_coherence) : gouttière horizontale UNIQUE + largeur bornée ancrée à
+   gauche, posées UNE FOIS sur le socle (main > div.crm-page-wrap). Aujourd'hui = double-gouttière
+   (socle p-4/md:p-6 + gouttière propre de chaque brique 32/24/16 = 48/56/64px effectif). Ici le socle
+   porte la gouttière unique (--page-gutter 32/24/16) et la borne (--content-max) ; chaque brique remet
+   sa gouttière horizontale à 0 (padding-inline seul → vertical + FAB 96px préservés). Custom props sur
+   .crm-shell (.coherence-ui, display:contents) : héritent jusqu'au socle. --content-max: 1440px confirmé
+   Pascal 2026-07-20 (ne mord que sur grand écran). margin-inline non touché = défaut 0 = ancré à gauche,
+   jamais centré. NON-layered ⇒ padding-inline bat l'utility LAYERED p-4/md:p-6 ; OFF ⇒ .coherence-ui
+   absent ⇒ socle = p-4/md:p-6 strict (byte-identique). Spec : docs/ATELIER-209-D1-PLAN.md. */
+.coherence-ui {
+	--page-gutter: 32px;
+	--content-max: 1440px;
+}
+@media (max-width: 1024px) {
+	.coherence-ui {
+		--page-gutter: 24px;
+	}
+}
+@media (max-width: 768px) {
+	.coherence-ui {
+		--page-gutter: 16px;
+	}
+}
+.coherence-ui .crm-page-wrap {
+	padding-inline: var(--page-gutter);
+	max-width: var(--content-max);
+}
 .mag-display {
 	font-weight: 800;
 	letter-spacing: -0.03em;

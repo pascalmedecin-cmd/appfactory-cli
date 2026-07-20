@@ -53,7 +53,7 @@
 	const archives = $derived(data.editions.slice(1));
 </script>
 
-<div class="max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12">
+<div class="veille-page-wrap max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12">
 	{#if bandeau}
 		<!-- Bandeau standard (flush : la page porte déjà px-10) + peau magazine conservée dessous.
 		     Mockup validé Pascal 2026-07-17 ; wrapper mb-10/14 = espace d'origine avant « À la une ». -->
@@ -368,3 +368,17 @@
 		{/if}
 	{/if}
 </div>
+
+<style>
+	/* Cohérence UI d1 (flag ff_ui_coherence) : le wrapper de page Veille est centré (max-w-[1280px] mx-auto)
+	   et porte sa gouttière via des utilities Tailwind (px-4 md:px-10). Sous coherence, la borne (1440 ancrée
+	   à gauche) et la gouttière (32/24/16) viennent du socle (.crm-page-wrap), donc le wrapper se dé-centre
+	   (margin-inline:0), défère sa borne (max-width:none) et sa gouttière (padding-inline:0). CSS scopé Svelte
+	   NON-layered ⇒ bat les utilities Tailwind LAYERED. py-8 md:py-12 (vertical) préservé. La peau magazine
+	   dessous se décale en bloc (pas de gouttière propre). OFF ⇒ .coherence-ui absent ⇒ centré strict. */
+	:global(.coherence-ui) .veille-page-wrap {
+		margin-inline: 0;
+		max-width: none;
+		padding-inline: 0;
+	}
+</style>

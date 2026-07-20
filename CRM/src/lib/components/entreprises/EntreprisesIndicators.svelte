@@ -63,6 +63,12 @@
 		border-top: 1px solid var(--color-border);
 		border-bottom: 1px solid var(--color-border);
 	}
+	/* Cohérence UI d1 : gouttière portée par le socle (.crm-page-wrap) ; la barre de pouls remet la sienne
+	   à 0 (les cellules .indicator gardent leur padding interne). Co-localisé 0-3-0 > base + média (0-1-0).
+	   Vertical + bordures pleine largeur préservés. OFF ⇒ .coherence-ui absent ⇒ inerte. */
+	:global(.coherence-ui) .indicators {
+		padding-inline: 0;
+	}
 	.indicator {
 		display: grid;
 		grid-template-columns: 40px 1fr;

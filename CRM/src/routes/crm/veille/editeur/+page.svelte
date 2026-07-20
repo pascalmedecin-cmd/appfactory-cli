@@ -449,7 +449,7 @@
 
 <svelte:head><title>Éditeur de la veille · FilmPro</title></svelte:head>
 
-<div class="px-6 pt-6 md:px-8 md:pt-8">
+<div class="px-6 pt-6 md:px-8 md:pt-8 veille-editeur-header">
 	<a
 		href="/crm/veille"
 		class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline mb-4"
@@ -478,7 +478,7 @@
 	/>
 </div>
 
-<div class="px-6 py-6 md:px-8 md:py-8">
+<div class="px-6 py-6 md:px-8 md:py-8 veille-editeur-content">
 	{#if activeTab === 'themes'}
 		<!-- ============ ONGLET THÈMES ============ -->
 		<div id="editeur-panel-themes" role="tabpanel" aria-labelledby="editeur-tab-themes">
@@ -845,6 +845,14 @@
 
 <style>
 	/* Layout structurel (doctrine : <style> scoped pour la structure, Tailwind pour le détail). */
+	/* Cohérence UI d1 : les 2 blocs de page (en-tête + panneau) portent leur gouttière via des utilities
+	   (px-6 md:px-8), non centrés. Sous coherence, la gouttière vient du socle (.crm-page-wrap) → padding-inline
+	   remis à 0 (les onglets .tabs-bar sont déjà traités dans Tabs.svelte). CSS scopé NON-layered ⇒ bat les
+	   utilities Tailwind LAYERED. Vertical (pt/py) préservé. OFF ⇒ inerte. */
+	:global(.coherence-ui) .veille-editeur-header,
+	:global(.coherence-ui) .veille-editeur-content {
+		padding-inline: 0;
+	}
 	.mag-kicker {
 		text-transform: uppercase;
 		letter-spacing: 0.14em;

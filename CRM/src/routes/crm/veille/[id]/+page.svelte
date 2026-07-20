@@ -166,7 +166,7 @@
 	}
 </script>
 
-<div class="max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12">
+<div class="veille-detail-page max-w-[1280px] mx-auto px-4 md:px-10 py-8 md:py-12">
 	<div class="mb-6">
 		<a
 			href="/crm/veille"
@@ -667,3 +667,15 @@
 		</div>
 	</div>
 </ModalForm>
+
+<style>
+	/* Cohérence UI d1 : le wrapper de page (détail veille) est centré (max-w-[1280px] mx-auto) et porte sa
+	   gouttière via des utilities (px-4 md:px-10). Sous coherence, borne (1440 ancrée à gauche) et gouttière
+	   viennent du socle → dé-centrage + défère borne + gouttière. CSS scopé NON-layered ⇒ bat les utilities
+	   Tailwind LAYERED. Vertical (py) préservé. OFF ⇒ centré strict. */
+	:global(.coherence-ui) .veille-detail-page {
+		margin-inline: 0;
+		max-width: none;
+		padding-inline: 0;
+	}
+</style>

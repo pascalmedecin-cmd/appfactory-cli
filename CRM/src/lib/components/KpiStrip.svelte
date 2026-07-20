@@ -41,6 +41,12 @@
 		flex-wrap: wrap;
 		padding: 4px 32px 16px;
 	}
+	/* Cohérence UI d1 : gouttière horizontale portée par le socle (.crm-page-wrap) ; la strip remet la
+	   sienne à 0 (vertical préservé). Co-localisé 0-3-0 > .kpi-strip base + média 640 (0-1-0). OFF ⇒
+	   .coherence-ui absent ⇒ padding 4px 32px 16px conservé. */
+	:global(.coherence-ui) .kpi-strip {
+		padding-inline: 0;
+	}
 	.kpi {
 		display: inline-flex;
 		align-items: center;

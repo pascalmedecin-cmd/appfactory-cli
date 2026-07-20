@@ -62,6 +62,20 @@
 	.chart-section {
 		padding: 32px;
 	}
+	/* Cohérence UI d1 : borne + gouttière portées par le socle (.crm-page-wrap). La page Coûts se dé-centre
+	   (.page max-width:none + margin-inline:0) et ses zones remettent leur gouttière horizontale à 0 (vertical
+	   préservé). .mobile-only-banner (marge interne d'une notice mobile-only) laissée telle quelle. Co-localisé
+	   0-3-0 > base. OFF ⇒ .coherence-ui absent ⇒ page centrée 1280 stricte. */
+	:global(.coherence-ui) .page {
+		max-width: none;
+		margin-inline: 0;
+	}
+	:global(.coherence-ui) .page-header {
+		padding-inline: 0;
+	}
+	:global(.coherence-ui) .chart-section {
+		padding-inline: 0;
+	}
 	.section-header {
 		margin-bottom: 16px;
 	}

@@ -593,6 +593,11 @@
 		justify-content: flex-end;
 		padding: 4px 32px 18px;
 	}
+	/* Cohérence UI d1 : gouttière portée par le socle ; .head remet la sienne à 0 (vertical 4/18 préservé).
+	   Co-localisé 0-3-0 > base + @media 720px (0-2-0). OFF inerte. */
+	:global(.coherence-ui) .head {
+		padding-inline: 0;
+	}
 	/* Bannière persistante d'échec d'import/étiquetage (jamais un toast auto-fermé). */
 	.import-alert {
 		display: flex;
@@ -604,6 +609,11 @@
 		border: 1px solid color-mix(in srgb, var(--color-danger) 25%, transparent);
 		border-radius: var(--radius-lg);
 		color: var(--color-danger-deep);
+	}
+	/* Cohérence UI d1 : la gouttière de .import-alert est portée par la MARGE (0 32px) ; la remettre à 0
+	   (margin-bottom 14px + padding interne 12/14 préservés). Co-localisé 0-3-0 > base + @media 720px. OFF inerte. */
+	:global(.coherence-ui) .import-alert {
+		margin-inline: 0;
 	}
 	.import-alert :global(svg) {
 		flex-shrink: 0;
@@ -642,6 +652,11 @@
 		gap: 16px;
 		flex-wrap: wrap;
 		padding: 6px 32px 18px;
+	}
+	/* Cohérence UI d1 : gouttière portée par le socle ; .toolbar remet la sienne à 0 (vertical 6/18 préservé).
+	   Co-localisé 0-3-0 > base + @media 720px. OFF inerte. */
+	:global(.coherence-ui) .toolbar {
+		padding-inline: 0;
 	}
 	.segtabs {
 		display: inline-flex;
@@ -731,6 +746,11 @@
 		border-radius: var(--radius-xl);
 		box-shadow: var(--shadow-card);
 		overflow: visible;
+	}
+	/* Cohérence UI d1 : la carte-liste s'ancre sur la gouttière du socle (marge 0 32px → 0).
+	   Co-localisé 0-3-0 > base + @media 720px. OFF inerte. */
+	:global(.coherence-ui) .listcard {
+		margin-inline: 0;
 	}
 	.lc-head,
 	.lc-row {
