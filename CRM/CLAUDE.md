@@ -138,7 +138,7 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ## Prochaine session
 
-**Prochaine attaque** : deux gros tracks autonomes prêts - **Cohérence UI PART 2 lot 2B+c+d** (`ff_ui_coherence` OFF, mockup b/c/d validé ; **lot 2A livré 4e45bb8**) et **Run 7 veille LED** (cadrage v1 **VALIDÉ 20/07**, build ~2-3 sessions + lot Zefix marque-aware, format golden validé). Aussi : **timeline d'interactions** (prio 1 backlog, GATE mockup). Autres : bandeau (a), option mobile import (gate mockup). Run 4 (enrichissement **Dropcontact** validé) / Run 5 Pingen bloqués chez Pascal. Micro validé AVANT Pascal (→ [[feedback_qa_micro_mon_ressort_gate_pas_excuse]]).
+**Prochaine attaque** : chantier Atelier 209 à **3/7 runs en prod** ; reste 4 runs + les améliorations CRM, livrés en **5 phases logiques** (pas de priorisation, on a le temps → tout est à livrer) : (1) figer la base visuelle, (2) poser la timeline, (3) rendre LED autonome (Run 7 veille), (4) compléter le pipeline de contact (Runs 4/6/5), (5) coiffer (outil Coûts + aide bi-marque). Runs 4/5 bloqués chez Pascal (comptes Dropcontact/Pingen). On **enchaîne par la Phase 1** (Cohérence UI lot 2B, mockup b/c/d déjà validé, `ff_ui_coherence` OFF). Résumé exécutif validé Pascal 2026-07-20. Micro validé AVANT Pascal (→ [[feedback_qa_micro_mon_ressort_gate_pas_excuse]]).
 
 ### Directive permanente (Pascal 2026-07-15) : zéro régression + miroir exact + QA avant/après
 
@@ -146,24 +146,41 @@ FilmPro = spécialiste des **traitements pour vitrage** (films et vernis) en Sui
 
 ### Règle backlog (WIP-limité, gravée 2026-06-28)
 
-Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude sans dépendance externe (gestes Pascal → § Chez Pascal ; attentes datées → § Parking ; idées → Watch). No-debt strict ; titre bloqué = `[BLOQUÉ - {qui/quoi débloque}] {action}`. → [[feedback_backlog_wip_anti_gonflement]]. Baseline saine (**2863 verts**, build OK).
+Le « **backlog dev** » ne liste QUE l'actionnable-par-Claude sans dépendance externe (gestes Pascal → marqueur `[BLOQUÉ - toi : ...]` ; attentes datées → § Parking ; idées → Watch). No-debt strict ; titre bloqué = `[BLOQUÉ - {qui/quoi débloque}] {action}`. → [[feedback_backlog_wip_anti_gonflement]]. Baseline saine (**2863 verts**, build OK).
 
-### Backlog dev (actionnable par Claude)
+### Plan de livraison - 5 phases (ordre logique, tout à livrer, sans priorisation)
 
-- [ ] **[EXÉCUTABLE - priorité 1, GATE mockup]** Timeline d'interactions par prospect : brancher la table `activites` (dormante depuis l'origine, jamais lue dans `src/`) en journal chronologique (appel/email/note/statut/prochaine action) sur la fiche entreprise + slide-out. Pattern `VisitsPanel` (mode timeline) + endpoints d'écriture + parité bi-marque. Comble le trou CRM le plus visible ; schéma déjà en base. Mockup Chrome AVANT code. → analyse concurrentielle Twenty/ScrapeGraph 2026-07-19.
-- [ ] **[EXÉCUTABLE - option, marque-indépendant, GATE mockup]** Surfacer le bouton « Importer une liste » sur mobile (<768px) : aujourd'hui `hidden md:inline-flex` → planqué dans le menu « … » **pour les 2 marques** (cause perçue de bug 1). À décider avec toi (maquette) si tu veux le rendre proéminent sur mobile. → bug 1 fermé, [[feedback_qa_micro_mon_ressort_gate_pas_excuse]].
-- [ ] **[EXÉCUTABLE]** URL Atelier 209 : configurer `atelier209.vercel.app` comme domaine de prod **public** (réglages Vercel), vérifier 200 public, PUIS activer le redirect 308 de `filmpro-portail`. Renommer ne suffit pas (SSO). → [[project_atelier_209_run1_deploiement_2026-07-15]].
-- [ ] **[EXÉCUTABLE]** Emailing prospection automatisée : moteur de séquences d'emails aux prospects (Resend, **templates pré-rédigés, zéro LLM**). Étape 1 = cadrage court Pascal (pas de réunion), puis code + gate OFF par défaut. Gate prod : DNS `send.filmpro.ch`, base légale nLPD, contenu validé. (Ex-« Vague 4 ».)
-- [ ] **[EXÉCUTABLE - pas urgent, GATE mockup d'abord]** Retouches accueil (`AtelierShell.svelte`) : hero HD plus grand (source 2x), proportion 2/3 image / 1/3 bandeau, blocs aérés/alignés grille, boutons OTP mêmes dimensions, fondu premium image↔bandeau. `redesign-skill`, maquette Chrome d'abord. → `docs/ATELIER-209-SUIVI.md` § Retouches accueil.
+Ordre par dépendances, pas par urgence (on a le temps → tout est à livrer). `[BLOQUÉ - toi : ...]` = geste chez Pascal (compte/variable/sign-off) ; le reste = actionnable par Claude. Estimations + « pourquoi cet ordre » : résumé exécutif validé Pascal 2026-07-20.
+
+**Phase 1 - Figer la base visuelle** (avant d'ajouter de nouvelles surfaces)
+
 - [ ] **[EXÉCUTABLE]** Cohérence UI b/c/d - **PART 2 lot 2B + c + d** (lot 1 `7518cc1`, lot 2A `4e45bb8` livrés). Reste : INC-10 hauteurs champs ; états vides composants partagés (prop `coherence`) ; a11y `SearchInput` clear-focus ; recherche Aide ; CTAs prospection ; kickers scopés + titres utility inline ; puis **c** (compteurs) + **d** (grille 8px). Page par page derrière `ff_ui_coherence`, QA OFF/ON DOM, zéro régression. → `docs/COHERENCE-UI-BANDEAU.md` + [[project_coherence_ui_lot2a_2026-07-20]].
+- [ ] **[EXÉCUTABLE - GATE mockup]** Retouches accueil (`AtelierShell.svelte`) : hero HD plus grand (source 2x), proportion 2/3 image / 1/3 bandeau, blocs aérés/alignés grille, boutons OTP mêmes dimensions, fondu premium image↔bandeau. `redesign-skill`, maquette Chrome d'abord. → `docs/ATELIER-209-SUIVI.md` § Retouches accueil.
+- [ ] **[EXÉCUTABLE - GATE mockup]** Surfacer le bouton « Importer une liste » sur mobile (<768px) : aujourd'hui `hidden md:inline-flex` → planqué dans le menu « … » **pour les 2 marques** (cause perçue de bug 1). À décider avec toi (maquette) si tu veux le rendre proéminent sur mobile. → bug 1 fermé, [[feedback_qa_micro_mon_ressort_gate_pas_excuse]].
 - [ ] **[EXÉCUTABLE]** Bandeau (a) : allumer `ff_page_bandeau` sur les fondateurs quand tu veux (option : alléger le greeting Dashboard en vue premium). Rendu déjà en prod derrière le flag OFF. → `docs/COHERENCE-UI-BANDEAU.md`.
-- [ ] **[EXÉCUTABLE - pas urgent, maquette validée]** Outil « Coûts des outils » : sortir la page Coûts du CRM → 3e outil sur l'accueil (premium « Heure bleue »). Agrège 4 sources : veille Claude API, fal.ai, Firecrawl, Dropcontact (29 €/mois fixe). Exclut l'abo Claude perso. Maquette `.atelier-209/retours-maquettes/atelier209-retours.html`. (Pascal 16/07 : pas urgent.)
-- [ ] **[BLOQUÉ - CRM bi-marque 100 % livré]** Mettre à jour les 2 pages d'aide (FilmPro + LED Studio) : contenu majoritairement commun, mais **les spécificités de chaque marque** prises en compte. À faire une fois le CRM bi-marque terminé. (Retour Pascal 16/07.)
 
-### Chez Pascal (hors backlog dev - gestes manuels, quand tu veux)
+**Phase 2 - Poser la mémoire du prospect** (le journal que les canaux de contact alimenteront)
 
+- [ ] **[EXÉCUTABLE - GATE mockup]** Timeline d'interactions par prospect : brancher la table `activites` (dormante depuis l'origine, jamais lue dans `src/`) en journal chronologique (appel/email/note/statut/prochaine action) sur la fiche entreprise + slide-out. Pattern `VisitsPanel` (mode timeline) + endpoints d'écriture + parité bi-marque. Comble le trou CRM le plus visible ; schéma déjà en base. Mockup Chrome AVANT code. → analyse concurrentielle Twenty/ScrapeGraph 2026-07-19.
+
+**Phase 3 - Rendre LED autonome (bi-marque complet)**
+
+- [ ] **[EXÉCUTABLE]** Run 7 - Veille LED Studio : construire le moteur de veille de l'environnement LED (volet business romand + volet techno/produits mondial), cadrage v1 validé 20/07 (2 axes produits/techno, ICP petits commerçants, 2 lentilles prospection≠techno, Zefix marque-aware, format golden). Aujourd'hui l'env LED affiche encore du contenu FilmPro (cron `marque='filmpro'` fixe). Anti-hallu du moteur hérité + validé. → `docs/ATELIER-209-SUIVI.md` (Run 7) + [[project_veille_led_cadrage_test_2026-07-20]].
+
+**Phase 4 - Compléter le pipeline de contact** (trouver le décideur → contacter → mesurer ; Runs 4/6/5)
+
+- [ ] **[EXÉCUTABLE]** Emailing prospection automatisée : moteur de séquences d'emails aux prospects (Resend, **templates pré-rédigés, zéro LLM**). Étape 1 = cadrage court Pascal (pas de réunion), puis code + gate OFF par défaut. Gate prod : DNS `send.filmpro.ch`, base légale nLPD, contenu validé. (Ex-« Vague 4 ».)
 - [ ] **[BLOQUÉ - toi : décider l'abonnement quand le volume le justifie]** Enrichissement décideur = **Dropcontact** (choisi vs Hunter). Validé test réel 20/07 (6/10 nominatifs propres, 0 `info@`, RGPD-native) ; compte gratuit testé, passer au Starter **29 €/mois** quand le volume le justifie. Repli micro-PME sans site = Zefix + appel. Débloque Run 4. → `docs/ATELIER-209-SUIVI.md` + [[project_veille_led_cadrage_test_2026-07-20]].
 - [ ] **[BLOQUÉ - toi : créer le compte]** Compte Pingen (sans abonnement, ~1,58 CHF/lettre, pingen.com). Débloque V7 → Run 5 (envoi postal). → `docs/ATELIER-209-SUIVI.md`.
+
+**Phase 5 - Coiffer : observer et documenter**
+
+- [ ] **[EXÉCUTABLE - maquette validée]** Outil « Coûts des outils » : sortir la page Coûts du CRM → 3e outil sur l'accueil (premium « Heure bleue »). Agrège 4 sources : veille Claude API, fal.ai, Firecrawl, Dropcontact (29 €/mois fixe). Exclut l'abo Claude perso. Maquette `.atelier-209/retours-maquettes/atelier209-retours.html`.
+- [ ] **[BLOQUÉ - CRM bi-marque 100 % livré]** Mettre à jour les 2 pages d'aide (FilmPro + LED Studio) : contenu majoritairement commun, mais **les spécificités de chaque marque** prises en compte. À faire une fois le CRM bi-marque terminé. (Retour Pascal 16/07.)
+
+### Gestes Pascal transverses (hors phases, quand tu veux)
+
+- [ ] **[EXÉCUTABLE]** URL Atelier 209 : configurer `atelier209.vercel.app` comme domaine de prod **public** (réglages Vercel), vérifier 200 public, PUIS activer le redirect 308 de `filmpro-portail`. Renommer ne suffit pas (SSO). → [[project_atelier_209_run1_deploiement_2026-07-15]].
 - [ ] **[BLOQUÉ - toi : poser 1 variable Vercel]** Allumer l'envoi du Daily Email : `EMAIL_DAILY_ENABLED=true` en env Vercel Prod (zéro redéploiement, gate OFF = 0 envoi ; le smoke OTP prérequis est fait). → [[project_daily_email_module_2026-06-25]].
 - [ ] **[BLOQUÉ - toi : sign-off visuel sur la prod]** Valider le flux d'import de liste (Run 3) directement sur la prod : Prospection → onglet « Ma liste » (ou bouton « Importer une liste » sur Entreprises) → déposer un CSV → colonnes → aperçu → import. → `docs/ATELIER-209-SUIVI.md` (Run 3).
 
@@ -173,11 +190,11 @@ Décisions tranchées (détail en mémoire) : domaine `atelier209.ch` = pas d'ac
 
 ### Livré cette session
 
+- [x] ~~**Cockpit renommé « Atelier 209 » + synchro complète des tâches (14 propres)**~~ - 2026-07-20 (ultracode). Label FilmPro→Atelier 209 (6 emplacements cockpit, slug/dépôt intacts) ; Run 7 veille LED créé (pivot `created=1/updated=13`, 0 churn) ; 2 doublons (Hunter, ancienne Cohérence UI) supprimés + tombstone ; blocs remappés (Dropcontact, nouvelle Cohérence) ; intégrité 0 id mort. CLAUDE.md « Prochaine session » restructuré en 5 phases. Fix a11y SearchInput écrit puis reverté (non prouvé e2e, doc `COHERENCE-UI-BANDEAU.md`). → [[reference_cockpit_pivot_orphelins_manuels_2026-07-20]].
 - [x] ~~**Cohérence UI lot 2A - modales/surfaces/eyebrows/titres**~~ - 2026-07-20 (ultracode). `4e45bb8` derrière `ff_ui_coherence` OFF (16 fichiers) : INC-4 modales→radius-2xl (bottom-sheet mobile préservé), INC-6 shadow-card (reporting/campagnes), INC-8 21 eyebrows gatés, INC-9 titres→700. QA OFF/ON DOM réel + mobile + adversarial 3 lentilles REFUTED-clean, svelte-check 0/0, Vitest 2863. → [[project_coherence_ui_lot2a_2026-07-20]].
 - [x] ~~**Veille LED Studio - cadrage v1 + test golden + anti-hallu**~~ - 2026-07-20 (ultracode). Run 7 cadrage figé (2 axes produits/techno, ICP petits commerçants, signaux forts/faibles, Zefix marque-aware, format golden) ; test réel golden + anti-hallu prouvé (fact-check attrape 9/10 hallucinations). → [[project_veille_led_cadrage_test_2026-07-20]], `docs/ATELIER-209-SUIVI.md`.
-- [x] ~~**Analyse concurrentielle Twenty/ScrapeGraph + décisions**~~ - 2026-07-19. Twenty = socle horizontal sans le moat vertical ; ScrapeGraph = scraping risqué nLPD, écarté. Décisions actées : timeline d'interactions (table `activites` dormante) en backlog prio 1 ; **Dropcontact remplace Hunter** (validé test réel 6/10 nominatifs propres, 0 info@, RGPD-native) ; MCP parké (cadrage nLPD, faisable Claude.ai/Cowork/Desktop) ; Dropcontact ajouté au tracker coûts. → CLAUDE.md backlog, [[project_veille_led_cadrage_test_2026-07-20]].
 - [x] ~~**Parité bi-marque WP-A/B/C + 2 HIGH + 2 gate-free (5 déploiements prod 17-18/07)**~~ - condensé → `archive/claude-md-crm-livre-2026-07-20.md` + [[feedback_bi_marque_parity_qa_en_sortie]].
-→ Antérieurs (Cohérence UI b, Campagnes, e2e validation, Run 3/2/1, login OTP, veille/étiquettes/refonte/Aide/Découpe/Daily Email) → archives `claude-md-crm-livre-2026-07-{20,18,17,16,15,14,03,02}.md` + `-06-26.md` ; mémoires [[project_coherence_ui_increment_b_part2_2026-07-17]], [[project_atelier_209_run3_import_liste_2026-07-16]].
+→ Antérieurs (Analyse concurrentielle Twenty/ScrapeGraph 19/07, Cohérence UI b, Campagnes, e2e validation, Run 3/2/1, login OTP, veille/étiquettes/refonte/Aide/Découpe/Daily Email) → archives `claude-md-crm-livre-2026-07-{20,18,17,16,15,14,03,02}.md` + `-06-26.md` ; mémoires [[project_coherence_ui_increment_b_part2_2026-07-17]], [[project_atelier_209_run3_import_liste_2026-07-16]].
 
 ### Watch list active après pivot
 
