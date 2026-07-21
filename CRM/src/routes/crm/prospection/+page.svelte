@@ -1035,7 +1035,7 @@
 					<button
 						type="button"
 						onclick={() => recherchesOpen = !recherchesOpen}
-						class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors"
+						class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors coh-prosp-cta"
 						aria-label="Ouvrir mes recherches sauvegardées"
 					>
 						<Icon name="bookmarks" size={16} />
@@ -1047,7 +1047,7 @@
 					<button
 						type="button"
 						onclick={() => { enrichBatchIds = data.leads.filter(l => l.statut !== 'transfere').map(l => l.id); enrichBatchOpen = true; }}
-						class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich-deep border-prosp-enrich-border hover:bg-prosp-enrich-bg"
+						class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium border rounded-lg cursor-pointer transition-colors text-prosp-enrich-deep border-prosp-enrich-border hover:bg-prosp-enrich-bg coh-prosp-cta"
 						title="Enrichit uniquement les {enrichablesCount} leads de cette page"
 						aria-label="Enrichir les {enrichablesCount} leads de cette page"
 					>
@@ -1063,7 +1063,7 @@
 					<a
 						href="/api/export/prospection{$page.url.search}"
 						data-sveltekit-reload
-						class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors"
+						class="hidden md:inline-flex items-center gap-2 h-10 px-3 box-border text-sm font-medium text-text border border-border rounded-lg hover:bg-surface-alt cursor-pointer transition-colors coh-prosp-cta"
 						title={data.totalLeads > PROSPECTION_EXPORT_CAP
 							? `Export limité aux ${PROSPECTION_EXPORT_CAP} premiers prospects (sur ${data.totalLeads}). Affinez les filtres pour tout exporter.`
 							: `Exporter en CSV les ${data.totalLeads} prospects qui correspondent aux filtres actuels`}
@@ -1081,7 +1081,7 @@
 					type="button"
 					onclick={() => (importListeOpen = true)}
 					aria-label="Importer une liste de prospects depuis un fichier CSV"
-					class="hidden md:inline-flex items-center gap-2 h-10 px-3.5 box-border text-sm font-semibold text-primary border border-primary rounded-lg bg-white hover:bg-primary-light cursor-pointer transition-colors"
+					class="hidden md:inline-flex items-center gap-2 h-10 px-3.5 box-border text-sm font-semibold text-primary border border-primary rounded-lg bg-white hover:bg-primary-light cursor-pointer transition-colors coh-prosp-cta"
 				>
 					<Icon name="cloud_upload" size={16} />
 					<span>Importer une liste</span>
@@ -1093,7 +1093,7 @@
 					type="button"
 					onclick={headerCTA.action}
 					aria-label={headerCTA.ariaLabel}
-					class="hidden md:inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-sm transition-colors"
+					class="hidden md:inline-flex items-center gap-2 h-10 px-4 box-border text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-lg cursor-pointer shadow-sm transition-colors coh-prosp-cta"
 				>
 					<Icon name={headerCTA.icon} size={16} />
 					<span>{headerCTA.label}</span>
@@ -1401,6 +1401,39 @@
 	   le flex gap = redessin). Sélecteur 0-4-0 > .pband de PageBand (0-2-0). OFF ⇒ pas de bandeau ⇒ inerte. */
 	:global(.coherence-ui) .prospection-band :global(.pband) {
 		margin-bottom: 0;
+	}
+
+	/* Cohérence UI (increment CTAs prospection, flag ff_ui_coherence) : aligner les 5 CTAs desktop de la
+	   tabs-bar sur les valeurs de la primitive .ws-btn (workspace.css) - padding 8px 16px uniforme,
+	   poids 600, transition 220ms ease-out-expo. Le hook `coh-prosp-cta` est appendé (inconditionnel) aux
+	   5 boutons ; inerte hors .coherence-ui (OFF byte-identical).
+	   JAMAIS de class-swap vers .ws-btn ici : les 5 CTAs portent `hidden md:inline-flex` et .ws-btn
+	   (non-layered) écraserait le `hidden` (layered) → bouton visible en mobile
+	   (feedback_ws_btn_unlayered_vs_tailwind_layered). L'override ne touche NI display, NI couleur/bordure :
+	   le responsive `hidden md:inline-flex` reste souverain (display none @767 / flex @≥768, OFF==ON) et la
+	   teinte métier violette « Enrichir cette page » (prosp-enrich) est conservée (increment c « la teinte
+	   porte le sens »). Le focus ring n'est PAS redéclaré ici : il est déjà fourni globalement à tout
+	   button/a par app.css:311-325 (outline 2px primary, offset 2px), OFF comme ON - le re-poser serait
+	   du code mort. L'élargissement (px-3/px-3.5 → 16) est absorbé par le wrap content-driven de
+	   .tabs-shell (fix collision 05ee3e6) : actions en 2e rangée si ça ne tient pas, jamais de chevauchement
+	   ni de débordement de page. Non-layered bat les utilities Tailwind layered (même mécanisme que les
+	   autres overrides :global(.coherence-ui)). Spec : docs/COHERENCE-UI-BANDEAU.md § CTAs prospection. */
+	:global(.coherence-ui) .coh-prosp-cta {
+		padding: 8px 16px;
+		font-weight: 600;
+		transition:
+			background 220ms var(--ease-out-expo),
+			color 220ms var(--ease-out-expo),
+			border-color 220ms var(--ease-out-expo);
+	}
+	/* Alignement COMPLET sur la primitive .ws-btn : elle coupe sa transition sous prefers-reduced-motion
+	   (workspace.css:222-226) et il n'existe aucune garde reduced-motion globale. Copier la valeur de
+	   transition sans ce contrat réintroduirait une animation que l'app supprime partout ailleurs pour les
+	   utilisateurs « animations réduites » → on la coupe aussi, gatée (OFF byte-identical). */
+	@media (prefers-reduced-motion: reduce) {
+		:global(.coherence-ui) .coh-prosp-cta {
+			transition: none;
+		}
 	}
 
 	/* Lot 3 : marqueur « campagne lancée » (statut active) dans la pastille de la colonne
