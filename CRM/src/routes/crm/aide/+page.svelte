@@ -395,6 +395,14 @@
 		padding: 0;
 		border-bottom: 1px solid var(--color-border);
 	}
+	/* Cohérence UI d3 : le tabs-bar aide est statique + padding 0, donc bandeau→filtres = pband margin-bottom
+	   12 seul = 12 (hors échelle de 8). +4px de padding-top le remet à 16. SCOPÉ à `.pband + .aide-bar`
+	   (bandeau présent) : ff_page_bandeau et ff_ui_coherence sont INDÉPENDANTS ; sans ce scope, l'état bandeau
+	   OFF (header .aide-head, pb 32) verrait aide-head→onglets passer de 32 (sur échelle) à 36 (hors échelle).
+	   Le legacy tabs-bar (padding 0) reste intact quand le bandeau est absent. OFF ⇒ .coherence-ui absent. */
+	:global(.coherence-ui) .aide :global(.pband) + :global(.aide-bar) :global(.tabs-bar) {
+		padding-top: 4px;
+	}
 	.aide-bar :global(.tabs-actions) {
 		border-left: none;
 		padding-left: 0;

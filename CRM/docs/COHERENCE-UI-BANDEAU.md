@@ -190,6 +190,26 @@ collage (labels inline → block, gouttières cohérentes) sont un critère d'ac
 - **c** compteurs = **LIVRÉ lot 2C** (ci-dessus) : signaux band→global, ProspectionTabs→tokens/primary, contacts/pipeline/entreprises/filter-badge déjà conformes, veille exemptée rôle C.
 - **d** grille 8px (page-gutter tokenisé, largeur ancrée à gauche, Veille→gauche, rythme vertical).
   - **d1 (gouttière unique + largeur bornée/ancrée à gauche) = LIVRÉ 2026-07-20** (`ff_ui_coherence` OFF). Mécanique **socle centralisateur** : le socle `.crm-page-wrap` porte, sous `.coherence-ui`, la gouttière UNIQUE (`--page-gutter` 32/24/16) + la borne (`--content-max: 1440px`, ancrée à gauche, pas de margin-inline) ; **chaque brique remet sa gouttière horizontale à 0** (`padding-inline`/`margin-inline` seul → vertical + FAB 96px préservés) ; Veille/Aide/Couts dé-centrées. **24 fichiers** (la carto initiale « ~13 / 8 pages » sous-estimait : le socle est global aux 18 routes /crm → 6 `*Indicators` + primitive `Tabs` + 6 sous-pages en plus). QA DOM prouvée (`tests/_qa-coherence-d1.mjs`) : gutter unique 32/24/16 sur 11 types ON, borne 1440 ancrée à gauche @2000, legacy inchangé OFF (1440/2000/1000) ; svelte-check 0/0, Vitest 2863 ; revue adversariale 5 lentilles (4 REFUTED-clean + 1 medium Tabs `:not(.compact)` ≤1024 corrigé en 0-4-0). Diagnostic d'origine : double-gouttière (socle 16/24 + brique 32 = 48/56/64 effectif). `/decoupe` = layout séparé, non touché. → `memory/project_coherence_ui_d1_grille_2026-07-20.md`.
-  - d2 (4 zones/trame 12-col) + d3 (rythme vertical échelle de 8 : 16/16/24/32/48) = axes suivants après d1.
+  - **d2 + d3 (4 zones / trame commune + rythme vertical échelle de 8) = LIVRÉ 2026-07-21** (`ff_ui_coherence` OFF).
+    **Scope resserré par la mesure** (cartographie fraîche des 10 pages, harnais DOM avant/après) : l'app avait
+    **déjà largement convergé** vers l'échelle de 8 (contacts + pipeline **déjà 16/16/24** ; bandeau→pouls = 16
+    partout via kpi-strip 4/16). d2 « 4 zones + bords alignés » = **déjà réalisé au niveau 1 par d1** (gouttière
+    unique). La conversion **KpiStrip flex→grille** et le **« 12-col partout »** (proposés dans le scratch
+    `inventory-d-grille.md` D3/D6) sont **HORS scope** : le mockup validé dit noir sur blanc « KpiStrip inchangé »
+    et « rien n'est redessiné » → ce serait un redessin, **parqué en `[GATE mockup]`**. d3 = les seules
+    divergences réelles, **7 fixes chirurgicaux** (tous co-localisés/gatés, OFF byte-identical) :
+    (1) `.ws-content` pt 32→24 (signaux, entreprises) ; (2) reporting `.content` pt 32→24 ; (3) reporting
+    `.indicators` 24/24→4/16 (aligné KpiStrip) ; (4) reporting `.panel.mt-24` 24→32 (entre sections, D4/D6) ;
+    (5) campagnes `.toolbar` 6/18→0/24 ; (6) aide `.aide-bar .tabs-bar` pt 0→4 ; (7) prospection `.pband` mb→0
+    (rythme uniforme 24, exception 100dvh). Tokens `--rhythm-tools-content:24 / --rhythm-section:32` (app.css).
+    **Exemptions signées** (forcer = redessin, non touché) : dashboard LIVE compact « Capsule » (uniforme 16, PAS
+    48), veille magazine (56/80), **sections aide** éditoriales 32/48. `.ws-content` fix gardé `min-width:769px`
+    (au-dessus mobile ; supprime le trou fractionnaire 1024.01-1024.99).
+    **Leçon (revue adversariale 4 lentilles, 3 findings corrigés)** : `ff_ui_coherence` et `ff_page_bandeau` sont
+    **indépendants** → tout fix ADJACENT au bandeau (reporting indicators, aide onglets) doit être **scopé au
+    bandeau présent** (`.pband + X`), sinon l'état mixte (coherence ON / bandeau OFF) dégrade un gap legacy déjà
+    sur l'échelle. QA : property-check DOM (états ON / coh-only / OFF), breakpoints 1440/1024/1025/1000/390,
+    svelte-check 0/0, Vitest 2863. Cibles d3 : bandeau→pouls 16 · pouls→filtres 16 · filtres→contenu 24 ·
+    sections 32 · identité dashboard 48. → `memory/project_coherence_ui_d3_grille_2026-07-21.md`.
 
 **Gotchas gravés** (voir mémoires) : (a) `.ws-btn` non-layered vs Tailwind layered ; (b) QA locale : `updateUserById` **fusionne** `app_metadata` → pour désactiver un flag en test, mettre la clé à `null` (pas `delete`), sinon le « OFF » reste ON en silence.

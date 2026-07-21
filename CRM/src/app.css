@@ -263,6 +263,17 @@
 	padding-inline: var(--page-gutter);
 	max-width: var(--content-max);
 }
+/* Cohérence UI (d3, flag ff_ui_coherence) : rythme vertical = échelle de 8 (mockup validé Pascal 17/07,
+   docs/COHERENCE-UI-BANDEAU.md § d). bandeau→pouls (16) et pouls→filtres (16) sont DÉJÀ atteints par les
+   paddings existants (kpi-strip 4/16, tabs-bar 0) sur la majorité des pages → aucun override. Ces tokens =
+   source unique des 2 seules valeurs à corriger là où un unique padding/margin possède l'écart inter-zone :
+   filtres→contenu (24) et entre 2 sections de contenu (32). Posés sur .coherence-ui (= .crm-shell), ils
+   héritent jusqu'aux briques. Exemptions signées (compact dashboard « Capsule », magazine Veille, sections
+   éditoriales Aide) = non touchées. OFF ⇒ .coherence-ui absent ⇒ inerte. */
+.coherence-ui {
+	--rhythm-tools-content: 24px;
+	--rhythm-section: 32px;
+}
 .mag-display {
 	font-weight: 800;
 	letter-spacing: -0.03em;

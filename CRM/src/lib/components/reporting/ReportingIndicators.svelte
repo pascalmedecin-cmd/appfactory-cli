@@ -78,7 +78,10 @@
 	}
 	/* Cohérence UI d1 : gouttière portée par le socle (.crm-page-wrap) ; la barre de pouls remet la sienne
 	   à 0 (les cellules .indicator gardent leur padding interne). Co-localisé 0-3-0 > base + média (0-1-0).
-	   Vertical + bordures pleine largeur préservés. OFF ⇒ .coherence-ui absent ⇒ inerte. */
+	   Vertical + bordures pleine largeur préservés. OFF ⇒ .coherence-ui absent ⇒ inerte.
+	   d3 : le calibrage vertical du pouls (4/16, aligné KpiStrip) est porté par reporting/+page.svelte, SCOPÉ
+	   au cas bandeau-présent (`.pband + .indicators`) — sinon il dégraderait l'état ff_page_bandeau OFF
+	   (hero→pouls passerait de 48 à 28, hors échelle). Ici on ne touche QUE la gouttière (d1). */
 	:global(.coherence-ui) .indicators {
 		padding-inline: 0;
 	}

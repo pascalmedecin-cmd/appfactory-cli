@@ -239,3 +239,13 @@
 .coherence-ui .ws-page-actions {
 	padding-inline: 0;
 }
+/* Cohérence UI (d3) : filtres→contenu ramené à 24 sur les ws-pages à .ws-content (signaux, entreprises :
+   le gap = toolbar/tabs padding-bottom 0 + ws-content padding-top). `min-width:769px` : au-dessus du mobile,
+   la base est déjà 24 en tablette (no-op) et 32 en desktop (fix) ; ≤768 elle reste 16 + bas 96 (dégagement
+   FAB) — préservés. 769 (et pas 1025) supprime le trou fractionnaire 1024.01-1024.99 où ni max-width:1024
+   ni min-width:1025 ne matchent. padding-top SEUL (jamais padding-block, qui écraserait le 96px). OFF inerte. */
+@media (min-width: 769px) {
+	.coherence-ui .ws-content {
+		padding-top: var(--rhythm-tools-content);
+	}
+}

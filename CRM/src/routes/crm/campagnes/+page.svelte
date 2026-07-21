@@ -653,10 +653,13 @@
 		flex-wrap: wrap;
 		padding: 6px 32px 18px;
 	}
-	/* Cohérence UI d1 : gouttière portée par le socle ; .toolbar remet la sienne à 0 (vertical 6/18 préservé).
-	   Co-localisé 0-3-0 > base + @media 720px. OFF inerte. */
+	/* Cohérence UI d1 : gouttière portée par le socle ; .toolbar remet la sienne à 0. OFF inerte.
+	   d3 : la .toolbar (onglets segmentés + recherche) est l'unique propriétaire des 2 écarts autour d'elle
+	   → padding-block 0/24 : haut 0 (pouls→filtres = kpi-strip padding-bottom 16 + 0 = 16), bas 24
+	   (filtres→contenu = 24 + listcard margin-top 0 = 24). Co-localisé 0-3-0 > base + @media 720px. */
 	:global(.coherence-ui) .toolbar {
 		padding-inline: 0;
+		padding-block: 0 var(--rhythm-tools-content);
 	}
 	.segtabs {
 		display: inline-flex;

@@ -229,6 +229,27 @@
 	:global(.coherence-ui) .content {
 		padding-inline: 0;
 	}
+	/* d3 : filtres→contenu ramené à 24 (tabs-bar padding-bottom 0 + .content padding-top). `min-width:769px`
+	   (pas 1025) : au-dessus du mobile, la base .content est déjà 24 en tablette (no-op) et 32 en desktop (fix) ;
+	   ≤768 la base reste (16 @≤640) — préservé. Choisir 769 (et pas 1025) supprime le trou fractionnaire
+	   1024.01-1024.99 où ni max-width:1024 ni min-width:1025 ne matchent. padding-top SEUL. OFF inerte. */
+	@media (min-width: 769px) {
+		:global(.coherence-ui) .content {
+			padding-top: var(--rhythm-tools-content);
+		}
+	}
+	/* d3 : calibrage vertical du pouls (indicators) = 4/16, aligné KpiStrip → bandeau→pouls 16, pouls→filtres 16.
+	   SCOPÉ à `.pband + .indicators` (bandeau présent) : les flags ff_page_bandeau et ff_ui_coherence sont
+	   INDÉPENDANTS ; sans ce scope, l'état bandeau OFF (header .hero, pb 24) verrait hero→pouls tomber de 48 à
+	   28 (hors échelle). Ici le legacy .indicators (24/24) reste intact quand le bandeau est absent. */
+	:global(.coherence-ui) .page :global(.pband) + :global(.indicators) {
+		padding-block: 4px 16px;
+	}
+	/* d3 : rythme entre 2 sections de contenu = 32 (les .panel séparés par .mt-24 : l.97, l.132). Cible
+	   UNIQUEMENT .panel.mt-24 → exclut .mt-24.desktop-only (l.117, espacement intra-carte). OFF inerte. */
+	:global(.coherence-ui) .panel.mt-24 {
+		margin-block-start: var(--rhythm-section);
+	}
 	.panel-header {
 		display: flex;
 		align-items: center;

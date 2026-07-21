@@ -680,7 +680,7 @@
 	{#if bandeau}
 		<!-- Bandeau en tête du conteneur pleine hauteur : `shrink-0` pour qu'il garde sa hauteur
 		     naturelle (c'est la table qui absorbe le reste et scrolle en interne). -->
-		<div class="shrink-0">
+		<div class="shrink-0 prospection-band">
 			<PageBand
 				icon="search"
 				eyebrow="Le terrain"
@@ -1394,6 +1394,15 @@
 />
 
 <style>
+	/* Cohérence UI d3 : page 100dvh (outlier). Ses zones sont séparées par un unique flex gap (md:gap-6 = 24 /
+	   gap-3 = 12 mobile). Le bandeau ajoutait son margin-bottom 12 EN PLUS du gap → bandeau→pouls = 36
+	   (vs 24 pour les 2 autres écarts). On neutralise ce +12 : rythme UNIFORME 24 (desktop) / 12 (mobile),
+	   sur l'échelle de 8. Exception 100dvh assumée : pas de 16/16/24 forcé sur un layout à gap unique (fighting
+	   le flex gap = redessin). Sélecteur 0-4-0 > .pband de PageBand (0-2-0). OFF ⇒ pas de bandeau ⇒ inerte. */
+	:global(.coherence-ui) .prospection-band :global(.pband) {
+		margin-bottom: 0;
+	}
+
 	/* Lot 3 : marqueur « campagne lancée » (statut active) dans la pastille de la colonne
 	   Campagnes. La pastille .camp est une primitive globale (app.css) : on cible juste
 	   l'icône ajoutée au site d'appel. `currentColor` -> teinte de la pastille. */
