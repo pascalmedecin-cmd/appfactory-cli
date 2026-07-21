@@ -95,8 +95,18 @@
 	/* F-V4-07 : shell horizontal avec tabs à gauche + actions à droite, même hauteur.
 	   Permet de descendre les boutons "Importer / Enrichir / Mes recherches" sur la même ligne
 	   que les onglets pour signaler "actions du contexte courant" et libérer la zone header. */
+	/* Fix collision 2026-07-21 : wrap CONTENT-DRIVEN (pas de seuil px). .tabs-shell autorise le wrap ;
+	   .tabs-bar ne rétrécit JAMAIS sous son contenu (min-width:max-content) → quand onglets + actions ne
+	   tiennent pas sur une ligne, les actions passent d'elles-mêmes à la 2e ligne (au lieu que les onglets,
+	   en overflow:visible, peignent par-dessus les CTA). S'adapte à la largeur réelle (sidebar 240px
+	   déduite) sans magic number. Robuste pour les 3 onglets rendus aujourd'hui (les onglets tiennent
+	   toujours sur leur ligne, les actions wrappent en dessous, et wrappent aussi entre elles si besoin).
+	   LIMITE CONNUE (latente) : avec 5 onglets (simap/regbl réactivés) à fenêtre étroite, la .tabs-bar
+	   (max-content, nowrap interne) peut déborder la carte horizontalement → à traiter alors par un
+	   overflow-x:auto (scroll d'onglets), pas nécessaire tant que simap/regbl sont coupés. */
 	.tabs-shell {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: stretch;
 		justify-content: space-between;
 		border-bottom: 1px solid var(--color-border);
@@ -108,8 +118,8 @@
 	.tabs-bar {
 		display: flex;
 		flex-wrap: nowrap;
-		flex: 1;
-		min-width: 0;
+		flex: 0 1 auto;
+		min-width: max-content;
 		position: relative;
 		z-index: 5;
 		overflow: visible;
@@ -118,10 +128,25 @@
 
 	.tabs-actions {
 		display: flex;
+		/* flex-wrap:wrap → si le cluster de boutons dépasse à lui seul la largeur de sa rangée (beaucoup
+		   de CTA + fenêtre étroite), les boutons wrappent entre eux AU LIEU de déborder la carte à droite
+		   (les CTA desktop sont hidden md:inline-flex → wrap sûr). justify-content:flex-end garde
+		   l'alignement à droite quand ils wrappent. Sans effet sur le cas courant (3 boutons tiennent). */
+		flex-wrap: wrap;
+		justify-content: flex-end;
 		align-items: center;
 		gap: 8px;
 		padding: 0 16px;
 		flex-shrink: 0;
+		/* max-width:100% borne le cluster à la largeur de sa rangée → sur la 2e rangée, un cluster trop
+		   large ne déborde plus la carte : il est contraint et ses boutons wrappent (flex-wrap ci-dessus).
+		   Sans effet quand le cluster tient (largeur = contenu < 100%). */
+		max-width: 100%;
+		/* margin-left:auto → actions alignées à droite qu'elles soient sur la ligne des onglets (1 rangée)
+		   ou reléguées à la 2e rangée par le wrap content-driven. La séparation verticale de la 2e rangée
+		   vient du row-gap de .tabs-shell (16px) ; l'état « wrappé » n'est pas détectable en CSS pur, donc
+		   pas de filet conditionnel (le gap suffit). */
+		margin-left: auto;
 	}
 
 	/* TAB : design distinctif premium pattern Linear/Attio.
@@ -259,18 +284,6 @@
 			font-family: inherit;
 			background: white;
 			color: var(--color-text);
-		}
-	}
-
-	/* Cap responsive : si tabs-actions dépasse, on autorise le wrap sous tablet,
-	   les actions descendent sous la tabs-bar. Évite tronquage sur écran moyen. */
-	@media (min-width: 768px) and (max-width: 1023px) {
-		.tabs-shell { flex-wrap: wrap; }
-		.tabs-actions {
-			border-top: 1px solid var(--color-border);
-			width: 100%;
-			justify-content: flex-end;
-			padding: 8px 16px;
 		}
 	}
 </style>
