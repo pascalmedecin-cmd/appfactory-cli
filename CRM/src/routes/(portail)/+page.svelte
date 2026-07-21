@@ -96,9 +96,20 @@
 				</div>
 			{/if}
 		</div>
+
+		<div class="tool-cell reveal" style="--d:.36s">
+			<div class="tool tool-soon" aria-label="Coûts : bientôt disponible">
+				<span class="tool-icon" aria-hidden="true">
+					<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="12" x="2" y="6" rx="2" /><circle cx="12" cy="12" r="2.5" /><path d="M6 12h.01M18 12h.01" /></svg>
+				</span>
+				<h3>Coûts</h3>
+				<p>Le coût des outils, suivi au même endroit.</p>
+				<span class="status muted"><span class="dot"></span>Bientôt</span>
+			</div>
+		</div>
 	</div>
 
-	<footer class="portal-footer reveal" style="--d:.34s">
+	<footer class="portal-footer reveal" style="--d:.42s">
 		Atelier 209 · La Maison Creative Direction SA
 	</footer>
 </AtelierShell>
@@ -155,10 +166,10 @@
 
 	/* Outils : 2 colonnes, sans cadre. Survol = soulève + éclaire (jamais de contour). */
 	.tools {
-		width: min(760px, 100%);
+		width: min(940px, 100%);
 		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: clamp(20px, 4vw, 40px);
+		grid-template-columns: repeat(3, 1fr);
+		gap: clamp(16px, 2.4vw, 32px);
 	}
 	/* Cellule animée (reveal) ; la carte interactive `.tool` la remplit et garde son lift. */
 	.tool-cell {

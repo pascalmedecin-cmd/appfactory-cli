@@ -1,9 +1,15 @@
 <!--
   AtelierShell : coquille « Heure bleue » partagée par la connexion (/login) et le
-  portail (/). Photo hero en bandeau haut (néon « ATELIER 209 » + Jet d'Eau, jamais
-  recouverte de texte), contenu centré sur béton plein dessous. Chaque écran tient sur
-  une page. Réf design validée Pascal 2026-07-15 :
-  .atelier-209/run1-maquettes/heure-bleue-B-bandeau-dessous.html + image bar-off-1.png.
+  portail (/). Photo hero (néon « ATELIER 209 » + Jet d'Eau) en fond haut, dissoute par
+  un MASQUE vertical long dans le béton (aucune ligne de démarcation) ; le contenu est
+  ancré en bas et son haut (eyebrow/titre) mord proprement sur le fondu, le corps reste
+  sur le béton plein. Réf design validée Pascal 2026-07-21 :
+  .atelier-209/accueil-maquettes/accueil.html (image upscalée fal.ai + layout 60/40).
+
+  Layout fluide : image = 60% de la hauteur, PLAFONNÉE sur écran court (min(60vh,
+  100dvh-380px)) pour toujours réserver la place du formulaire → il ne se retrouve jamais
+  sur le néon plein, au pire il mord sur le fondu, sinon la page défile. Photo en fond
+  absolu (hors flux) ; header absolu au-dessus du contenu (reste cliquable).
 
   Tokens posés sur `.a209` (héritent au contenu slotté). Primitives partagées (eyebrow,
   head, display, subtitle, reveal) stylées ici en `:global` contenu sous `.a209` ; les
@@ -21,19 +27,19 @@
 		<img
 			class="banner-photo"
 			src="/atelier209/hero-1184.webp"
-			srcset="/atelier209/hero-480.webp 480w, /atelier209/hero-768.webp 768w, /atelier209/hero-1184.webp 1184w"
+			srcset="/atelier209/hero-480.webp 480w, /atelier209/hero-768.webp 768w, /atelier209/hero-1184.webp 1184w, /atelier209/hero-1600.webp 1600w, /atelier209/hero-2368.webp 2368w"
 			sizes="100vw"
-			width="1184"
-			height="864"
+			width="2368"
+			height="1728"
 			fetchpriority="high"
 			alt="Atelier 209 : enseigne néon crème « ATELIER 209 » sur béton brut, baie vitrée à montants noirs, Jet d'Eau de Genève à l'heure bleue."
 		/>
 		<div class="banner-scrim" aria-hidden="true"></div>
-		<div class="banner-fade" aria-hidden="true"></div>
-		{#if header}
-			<header class="app-header">{@render header()}</header>
-		{/if}
 	</div>
+
+	{#if header}
+		<header class="app-header">{@render header()}</header>
+	{/if}
 
 	<div class="stage">
 		<div class="col">
@@ -63,8 +69,8 @@
 		text-rendering: optimizeLegibility;
 	}
 
-	/* Écran : une page (100dvh). min-height (pas height) + overflow non bridé sur .screen :
-	   sur très petit écran ou fort zoom, on préfère laisser défiler que rogner le formulaire. */
+	/* Écran : une page (100dvh). min-height (pas height) : si le contenu dépasse (petit écran,
+	   fort zoom, formulaire empilé mobile), la page défile au lieu de rogner le formulaire. */
 	.screen {
 		position: relative;
 		min-height: 100dvh;
@@ -75,15 +81,22 @@
 		line-height: 1.5;
 	}
 
+	/* Bandeau image = 60% de la hauteur, en FOND (absolu, hors flux). Plafonné sur écran court
+	   (min(60vh, 100dvh - 380px)) pour toujours réserver >= 380px au contenu. Béton EXACT en fond
+	   (pas de lueur) : l'image se dissout dans le même béton que la zone contenu = zéro ligne. */
 	.banner {
-		position: relative;
-		width: 100%;
-		flex: 0 0 42vh;
-		min-height: 200px;
+		position: absolute;
+		top: 0;
+		left: 0;
+		right: 0;
+		height: min(60vh, calc(100dvh - 380px));
+		min-height: 300px;
 		overflow: hidden;
-		isolation: isolate;
-		background: var(--concrete-950);
+		z-index: 0;
+		background: var(--concrete-900);
 	}
+	/* Fondu VERTICAL long et TRÈS progressif par MASQUE sur la photo (7 paliers, ~40% de la hauteur) :
+	   opaque sous le néon, puis dissolution jusqu'à transparent → béton. Zéro coupure, zéro ligne. */
 	.banner-photo {
 		position: absolute;
 		inset: 0;
@@ -92,33 +105,40 @@
 		object-fit: cover;
 		object-position: center 40%;
 		display: block;
+		-webkit-mask-image: linear-gradient(
+			180deg,
+			#000 0%,
+			#000 60%,
+			rgba(0, 0, 0, 0.85) 70%,
+			rgba(0, 0, 0, 0.6) 78%,
+			rgba(0, 0, 0, 0.36) 85%,
+			rgba(0, 0, 0, 0.18) 90%,
+			rgba(0, 0, 0, 0.06) 95%,
+			transparent 99%
+		);
+		mask-image: linear-gradient(
+			180deg,
+			#000 0%,
+			#000 60%,
+			rgba(0, 0, 0, 0.85) 70%,
+			rgba(0, 0, 0, 0.6) 78%,
+			rgba(0, 0, 0, 0.36) 85%,
+			rgba(0, 0, 0, 0.18) 90%,
+			rgba(0, 0, 0, 0.06) 95%,
+			transparent 99%
+		);
 	}
 	.banner-scrim {
 		position: absolute;
 		left: 0;
 		right: 0;
 		top: 0;
-		height: 32%;
+		height: 30%;
 		background: linear-gradient(
 			180deg,
-			rgba(var(--shade-0), 0.52) 0%,
-			rgba(var(--shade-0), 0.14) 55%,
+			rgba(var(--shade-0), 0.5) 0%,
+			rgba(var(--shade-0), 0.13) 55%,
 			transparent 100%
-		);
-		pointer-events: none;
-		z-index: 1;
-	}
-	.banner-fade {
-		position: absolute;
-		left: 0;
-		right: 0;
-		bottom: -1px;
-		height: 42%;
-		background: linear-gradient(
-			180deg,
-			transparent 0%,
-			rgba(23, 24, 26, 0.55) 46%,
-			var(--concrete-900) 100%
 		);
 		pointer-events: none;
 		z-index: 1;
@@ -126,7 +146,7 @@
 
 	.app-header {
 		position: absolute;
-		z-index: 3;
+		z-index: 5;
 		top: 0;
 		left: 0;
 		right: 0;
@@ -134,18 +154,29 @@
 		align-items: center;
 		justify-content: flex-end;
 		padding: 20px clamp(20px, 5vw, 60px);
+		/* Le header est pleine largeur mais son seul contenu interactif est à droite : on rend la
+		   bande transparente non-cliquable pour ne pas capter le hit-test du haut du portail (le
+		   `.stage` plein écran passe alors dessous), et on réactive les vrais boutons. */
+		pointer-events: none;
+	}
+	.app-header > :global(*) {
+		pointer-events: auto;
 	}
 
+	/* Béton = le reste de l'écran. Fond TRANSPARENT (le béton vient de .screen) : sinon il couvrirait
+	   le fondu de l'image. Contenu ancré en BAS (justify-content:flex-end) ; padding-top = réserve qui
+	   maintient le haut du contenu dans le fondu (jamais sur le néon plein). flex:1 0 auto = si le
+	   contenu dépasse, la page grandit et défile (jamais rogné). */
 	.stage {
 		position: relative;
-		flex: 1;
-		min-height: 0;
-		background: var(--concrete-900);
-		padding: clamp(28px, 4.5vh, 60px) clamp(22px, 6vw, 60px);
-		overflow: hidden;
+		z-index: 2;
+		flex: 1 0 auto;
+		background: transparent;
 		display: flex;
-		align-items: stretch;
-		justify-content: center;
+		flex-direction: column;
+		align-items: center;
+		justify-content: flex-end;
+		padding: min(39vh, calc(100dvh - 430px)) clamp(22px, 6vw, 60px) clamp(30px, 4.5vh, 56px);
 	}
 	.stage::before {
 		content: '';
@@ -154,8 +185,8 @@
 		pointer-events: none;
 		z-index: 0;
 		background:
-			radial-gradient(56% 46% at 50% 16%, rgba(240, 228, 194, 0.07), transparent 70%),
-			radial-gradient(78% 60% at 50% 108%, rgba(76, 110, 158, 0.12), transparent 72%);
+			radial-gradient(52% 40% at 50% 64%, rgba(240, 228, 194, 0.05), transparent 66%),
+			radial-gradient(80% 55% at 50% 118%, rgba(76, 110, 158, 0.1), transparent 72%);
 	}
 	.col {
 		position: relative;
@@ -164,8 +195,8 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: space-evenly;
-		gap: clamp(18px, 2.4vh, 32px);
+		justify-content: center;
+		gap: clamp(22px, 2.9vh, 36px);
 		text-align: center;
 	}
 
@@ -182,6 +213,9 @@
 		letter-spacing: 0.26em;
 		text-transform: uppercase;
 		color: var(--cream);
+		/* Emphase dédiée eyebrow -> titre (décision Pascal 2026-07-21) : s'ajoute au gap du .col
+		   pour que l'eyebrow respire nettement au-dessus du titre, sans sur-espacer le reste. */
+		margin-bottom: clamp(6px, 1.5vh, 16px);
 	}
 	.a209 :global(.eyebrow)::before {
 		content: '';

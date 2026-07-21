@@ -337,8 +337,13 @@
 		cursor: pointer;
 		display: inline-flex;
 		align-items: center;
+		justify-content: center;
 		gap: 14px;
-		padding: 14px 15px 14px 26px;
+		/* Boutons d'action appariés (Recevoir le code / Se connecter) = MÊME largeur ET même hauteur
+		   (règle globale Pascal 2026-07-21) : min-width partagée + contenu centré → équilibre parfait,
+		   quel que soit le libellé. */
+		min-width: 220px;
+		padding: 14px 22px;
 		border-radius: 999px;
 		color: var(--concrete-950);
 		background: linear-gradient(180deg, var(--cream-bright), var(--cream));
@@ -387,13 +392,15 @@
 
 	.step-hint {
 		margin-top: 9px;
-		/* Réserve 2 lignes (2 × 1.5 × 12px) : le hint étape 1 s'enroule sur 2 lignes, celui de
-		   l'étape 2 sur 1 ; sans hauteur commune le bas des 2 colonnes se désaligne (grille rompue). */
+		/* Réserve 2 lignes : le hint « Pas reçu ? … changez d'adresse » (état renvoi) s'enroule sur
+		   2 lignes ; hauteur commune = bas des 2 colonnes aligné (grille préservée). Le hint initial
+		   « Un code à 6 chiffres… » tient sur UNE ligne (décision Pascal 2026-07-21) : pas de bride de
+		   largeur, il occupe la colonne (≈264px sur ≈330px). */
 		min-height: 36px;
 		font-size: 12px;
 		color: var(--ink-faint);
 		line-height: 1.5;
-		max-width: 34ch;
+		max-width: 100%;
 	}
 	.link-reset {
 		display: inline;
