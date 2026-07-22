@@ -43,7 +43,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import type { IntelligenceItem } from './schema';
 import { costTracker, type CostTracker } from './cost-tracker';
-import { isSafeUrlForFetch } from './url-guard';
+import { isSafeUrlForFetch, safeFetch } from './url-guard';
 import type { VerificationRegime } from './source-allowlist';
 import { getFallbackSourcesBundle, type SourcesBundle } from './sources-loader';
 
@@ -154,15 +154,14 @@ export async function fetchPageContent(url: string): Promise<string | null> {
 	const controller = new AbortController();
 	const timeout = setTimeout(() => controller.abort(), PAGE_FETCH_TIMEOUT_MS);
 	try {
-		const res = await fetch(url, {
+		const res = await safeFetch(url, {
 			method: 'GET',
 			signal: controller.signal,
 			headers: {
 				'User-Agent': USER_AGENT,
 				Accept: 'text/html,application/xhtml+xml',
 				Range: `bytes=0-${PAGE_BODY_MAX_BYTES - 1}`
-			},
-			redirect: 'follow'
+			}
 		});
 		if (!res.ok && res.status !== 206) return null;
 		const text = await res.text();

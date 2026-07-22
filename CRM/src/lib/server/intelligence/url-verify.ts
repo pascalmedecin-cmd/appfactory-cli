@@ -11,7 +11,7 @@
 // - Boucle de redirect (même Location 2x) → paywall
 // - Body GET < 5KB sur domaines paywall connus → paywall
 
-import { isSafeUrlForFetch } from './url-guard';
+import { isSafeUrlForFetch, safeFetch } from './url-guard';
 
 const VERIFY_TIMEOUT_MS = 8000;
 
@@ -66,11 +66,10 @@ async function detectPaywallByBody(
 	signal: AbortSignal
 ): Promise<boolean> {
 	try {
-		const res = await fetch(url, {
+		const res = await safeFetch(url, {
 			method: 'GET',
 			signal,
-			headers: { 'User-Agent': USER_AGENT, Accept: 'text/html', Range: 'bytes=0-10239' },
-			redirect: 'follow'
+			headers: { 'User-Agent': USER_AGENT, Accept: 'text/html', Range: 'bytes=0-10239' }
 		});
 		if (!res.ok) return false; // pas de paywall, juste un statut bizarre traité ailleurs
 		const text = await res.text();
@@ -107,19 +106,17 @@ export async function verifyUrl(rawUrl: string): Promise<UrlVerifyResult> {
 	try {
 		// HEAD d'abord (léger). Certains sites répondent 405/403 sur HEAD : fallback
 		// GET avec Range=0-1024 pour ne pas charger tout le HTML.
-		let res = await fetch(parsed.toString(), {
+		let res = await safeFetch(parsed.toString(), {
 			method: 'HEAD',
 			signal: controller.signal,
-			headers: { 'User-Agent': USER_AGENT, Accept: '*/*' },
-			redirect: 'follow'
+			headers: { 'User-Agent': USER_AGENT, Accept: '*/*' }
 		});
 
 		if (res.status === 405 || res.status === 403 || res.status === 501) {
-			res = await fetch(parsed.toString(), {
+			res = await safeFetch(parsed.toString(), {
 				method: 'GET',
 				signal: controller.signal,
-				headers: { 'User-Agent': USER_AGENT, Accept: '*/*', Range: 'bytes=0-1024' },
-				redirect: 'follow'
+				headers: { 'User-Agent': USER_AGENT, Accept: '*/*', Range: 'bytes=0-1024' }
 			});
 		}
 

@@ -116,3 +116,19 @@ export function isSafeUrlForFetch(rawUrl: string): boolean {
 	if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return false;
 	return !isBlockedHostname(parsed.hostname);
 }
+
+const MAX_REDIRECTS = 5;
+
+/** fetch avec garde SSRF re-appliquée à CHAQUE saut (redirect:"manual"). */
+export async function safeFetch(url: string, init: RequestInit = {}): Promise<Response> {
+	let current = url;
+	for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+		if (!isSafeUrlForFetch(current)) throw new Error('unsafe_redirect');
+		const res = await fetch(current, { ...init, redirect: 'manual' });
+		if (typeof res.status !== 'number' || res.status < 300 || res.status >= 400) return res;
+		const location = res.headers?.get('location') ?? null;
+		if (!location) return res;
+		current = new URL(location, current).toString();
+	}
+	throw new Error('too_many_redirects');
+}

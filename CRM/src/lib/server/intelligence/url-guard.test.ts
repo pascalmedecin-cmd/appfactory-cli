@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { isBlockedHostname, isSafeUrlForFetch } from './url-guard';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { isBlockedHostname, isSafeUrlForFetch, safeFetch } from './url-guard';
 
 describe('isBlockedHostname', () => {
 	it('bloque localhost', () => {
@@ -84,5 +84,47 @@ describe('isSafeUrlForFetch', () => {
 	it('refuse URL malformée', () => {
 		expect(isSafeUrlForFetch('not a url')).toBe(false);
 		expect(isSafeUrlForFetch('')).toBe(false);
+	});
+});
+
+describe('safeFetch', () => {
+	beforeEach(() => {
+		vi.stubGlobal('fetch', vi.fn());
+	});
+	afterEach(() => {
+		vi.unstubAllGlobals();
+	});
+
+	// Réponse simulée : status + Location optionnel (via headers.get, comme un vrai Response).
+	function resp(status: number, location: string | null = null) {
+		return {
+			status,
+			headers: { get: (h: string) => (h.toLowerCase() === 'location' ? location : null) }
+		};
+	}
+
+	it('refuse un redirect 302 vers une IP privée (garde re-appliquée à chaque saut)', async () => {
+		const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+		// 1er hop public → 302 vers metadata cloud interne.
+		fetchMock.mockResolvedValueOnce(resp(302, 'http://169.254.169.254/latest/meta-data/'));
+		await expect(safeFetch('https://example.com/start')).rejects.toThrow('unsafe_redirect');
+		// Le hop privé n'est JAMAIS fetché : garde avant l'appel réseau.
+		expect(fetchMock).toHaveBeenCalledTimes(1);
+	});
+
+	it('suit un redirect 301 public puis renvoie le 200 final (2 hops)', async () => {
+		const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+		fetchMock
+			.mockResolvedValueOnce(resp(301, 'https://example.com/final'))
+			.mockResolvedValueOnce(resp(200));
+		const res = await safeFetch('https://example.com/start');
+		expect(res.status).toBe(200);
+		expect(fetchMock).toHaveBeenCalledTimes(2);
+	});
+
+	it('rejette une boucle de redirects (too_many_redirects)', async () => {
+		const fetchMock = global.fetch as ReturnType<typeof vi.fn>;
+		fetchMock.mockResolvedValue(resp(302, 'https://example.com/loop'));
+		await expect(safeFetch('https://example.com/loop')).rejects.toThrow('too_many_redirects');
 	});
 });
